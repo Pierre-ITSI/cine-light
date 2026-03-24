@@ -128,6 +128,7 @@ padding: 10px 16px; border-radius: 4px; cursor: pointer; white-space: nowrap; tr
 .status-indicator { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.7rem; color: var(--muted); }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: #444; transition: background 0.3s; }
 .dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.dot.p2p { background: #5bc8ff; box-shadow: 0 0 8px #5bc8ff; }
 .dot.connecting { background: var(--accent); animation: pulse 1s infinite; }
 /* SWATCH PREVIEW */
 .swatch-row { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
@@ -232,6 +233,10 @@ background: var(--mid2); transition: all 0.15s; touch-action: manipulation;
 .preset-btn:hover, .preset-btn:active { border-color: rgba(255,255,255,0.2); transform: scale(0.97); }
 .preset-swatch { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); }
 .preset-name { font-size: 0.55rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); text-align: center; line-height: 1.3; }
+/* QR code panel */
+.qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 4px; }
+.qr-wrap canvas { border-radius: 8px; background: #fff; padding: 8px; }
+.qr-url { font-size: 0.58rem; color: var(--muted); letter-spacing: 0.06em; word-break: break-all; text-align: center; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 </style>
@@ -286,6 +291,7 @@ background: var(--mid2); transition: all 0.15s; touch-action: manipulation;
     <button class="tab-btn" onclick="switchTab('green')" id="tab-green">🟢 Green</button>
     <button class="tab-btn" onclick="switchTab('strobe')" id="tab-strobe">⚡ Strobe</button>
     <button class="tab-btn" onclick="switchTab('presets')" id="tab-presets">🎬 Presets</button>
+    <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr">📡 QR</button>
   </div>
   <!-- TAB ROUE -->
   <div class="tab-content active" id="content-wheel">
@@ -414,7 +420,6 @@ background: var(--mid2); transition: all 0.15s; touch-action: manipulation;
         <button class="chip active" onclick="setStrobeMode('regular')" id="chip-regular">Régulier</button>
         <button class="chip" onclick="setStrobeMode('random')" id="chip-random">Aléatoire</button>
       </div>
-      <!-- Paramètres communs -->
       <div class="slider-block">
         <div class="slider-header">
           <label id="freqLabel">Fréquence</label>
@@ -431,7 +436,6 @@ background: var(--mid2); transition: all 0.15s; touch-action: manipulation;
         <input type="range" id="flashDurSlider" min="5" max="500" step="5" value="50"
           style="background:linear-gradient(to right,#111,var(--accent))" oninput="onStrobeParamChange()">
       </div>
-      <!-- Paramètres mode aléatoire -->
       <div id="randomOptions" style="display:none">
         <div style="height:1px;background:var(--border);margin:4px 0 14px"></div>
         <div class="panel-label" style="margin-bottom:10px">Plage aléatoire (max)</div>
@@ -465,23 +469,132 @@ background: var(--mid2); transition: all 0.15s; touch-action: manipulation;
       <div class="presets-grid" id="presetsGrid"></div>
     </div>
   </div>
+  <!-- TAB QR -->
+  <div class="tab-content" id="content-qr">
+    <div class="panel">
+      <div class="panel-label">Ouvrir l'écran sur un autre appareil</div>
+      <div class="qr-wrap">
+        <canvas id="qrCanvas" width="200" height="200"></canvas>
+        <div class="qr-url" id="qrUrl">Connectez-vous d'abord à un canal</div>
+      </div>
+    </div>
+    <div class="panel" style="font-size:0.65rem;color:var(--muted);line-height:1.7;letter-spacing:0.04em">
+      <div class="panel-label">Comment ça marche</div>
+      1. Connectez-vous à un canal ci-dessus<br>
+      2. Scannez ce QR avec l'écran cible<br>
+      3. L'écran s'ouvre directement en mode <em>Projecteur</em> sur le même canal<br>
+      4. Sur le même WiFi : connexion P2P directe ⚡ (pas de relai)
+    </div>
+  </div>
 </div>
 <script>
 // ══════════════════════════ STATE ══════════════════════════
+const MY_ID = Math.random().toString(36).slice(2, 10);
 let mode = null, channel = null, ws = null;
 let currentColor = '#ffffff';
 let showHex = true;
-// Wheel
 let wheelHSLColor = '#ffffff', wheelBrightness = 100;
-// Kelvin
 let kelvinK = 5600, kelvinBrightness = 100;
-// Green
 let greenShift = 0, greenBrightness = 100;
-// Strobe
 let strobeActive = false, strobeMode = 'regular';
 let strobeFreq = 2, strobeFlashDur = 50;
 let strobeFreqMax = 8, strobeFlashDurMax = 200;
 let strobePreviewTimer = null;
+
+// ══════════════════════════ WebRTC P2P ══════════════════════════
+let pc = null, dc = null, rtcReady = false;
+const RTC_CFG = { iceServers: [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' }
+]};
+
+function closeRTC() {
+  if (dc) { try { dc.close(); } catch(_) {} dc = null; }
+  if (pc) { try { pc.close(); } catch(_) {} pc = null; }
+  rtcReady = false;
+}
+
+function initWebRTC(isInitiator) {
+  closeRTC();
+  pc = new RTCPeerConnection(RTC_CFG);
+
+  pc.onicecandidate = ({ candidate }) => {
+    if (candidate) sendSignal({ sub: 'ice', candidate });
+  };
+
+  pc.onconnectionstatechange = () => {
+    if (!pc) return;
+    if (pc.connectionState === 'connected') {
+      if (mode === 'remote') setConnStatus('p2p');
+      else updateScreenStatus('p2p');
+    } else if (['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
+      rtcReady = false;
+      if (mode === 'remote') setConnStatus('relay');
+      else updateScreenStatus('relay');
+    }
+  };
+
+  if (isInitiator) {
+    dc = pc.createDataChannel('cl', { ordered: true });
+    setupDC();
+    pc.createOffer()
+      .then(o => pc.setLocalDescription(o))
+      .then(() => sendSignal({ sub: 'offer', sdp: pc.localDescription }));
+  } else {
+    pc.ondatachannel = ({ channel: ch }) => { dc = ch; setupDC(); };
+  }
+}
+
+function setupDC() {
+  dc.onopen = () => {
+    rtcReady = true;
+    if (mode === 'remote') setConnStatus('p2p');
+    else updateScreenStatus('p2p');
+  };
+  dc.onclose = () => {
+    rtcReady = false;
+    if (mode === 'remote') setConnStatus('relay');
+    else updateScreenStatus('relay');
+  };
+  dc.onmessage = ({ data }) => {
+    try {
+      const msg = JSON.parse(data);
+      if (msg.type === 'color')  receiveColor(msg.color);
+      if (msg.type === 'strobe') receiveStrobe(msg);
+    } catch (_) {}
+  };
+}
+
+function handleWebRTCSignal(msg) {
+  if (msg.sender === MY_ID) return;
+  if (!pc && msg.sub === 'offer') initWebRTC(false);
+  if (!pc) return;
+  if (msg.sub === 'offer') {
+    pc.setRemoteDescription(new RTCSessionDescription(msg.sdp))
+      .then(() => pc.createAnswer())
+      .then(a => pc.setLocalDescription(a))
+      .then(() => sendSignal({ sub: 'answer', sdp: pc.localDescription }))
+      .catch(() => {});
+  } else if (msg.sub === 'answer') {
+    pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)).catch(() => {});
+  } else if (msg.sub === 'ice') {
+    pc.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(() => {});
+  }
+}
+
+function sendSignal(data) {
+  const msg = JSON.stringify({ channel, type: 'signal', sender: MY_ID, ...data });
+  if (ws && ws.readyState === 1) ws.send(msg);
+  else if (window._bc) window._bc.postMessage({ channel, type: 'signal', sender: MY_ID, ...data });
+}
+
+function updateScreenStatus(state) {
+  const el = document.getElementById('screen-status');
+  if (!el) return;
+  if (state === 'p2p')   el.textContent = '⚡ P2P WiFi direct — canal : ' + channel;
+  else if (state === 'relay') el.textContent = 'Relai — canal : ' + channel;
+}
+
 // ══════════════════════════ PRESETS ══════════════════════════
 const PRESETS = [
   { name: 'Bougie', color: '#ff9b4a' }, { name: 'Tungstène', color: '#ffb347' },
@@ -501,13 +614,16 @@ function buildPresets() {
     grid.appendChild(btn);
   });
 }
+
 // ══════════════════════════ TABS ══════════════════════════
 function switchTab(t) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-' + t).classList.add('active');
   document.getElementById('content-' + t).classList.add('active');
+  if (t === 'qr') renderQR();
 }
+
 // ══════════════════════════ MODE ══════════════════════════
 function startMode(m) {
   mode = m;
@@ -527,102 +643,147 @@ function startMode(m) {
 }
 function goBack() {
   stopStrobe();
+  closeRTC();
   if (ws) ws.close();
   document.getElementById('remote-mode').style.display = 'none';
   document.getElementById('splash').style.display = 'flex';
 }
+
 // ══════════════════════════ WS / SYNC ══════════════════════════
 function connectChannel() {
   const ch = document.getElementById('channelInput').value.trim().toLowerCase().replace(/\W/g,'');
   if (!ch) return;
-  channel = ch; setConnStatus('connecting');
+  channel = ch;
+  setConnStatus('connecting');
+  closeRTC();
   if (ws) ws.close();
   try { ws = new WebSocket('wss://ws.vi-server.org/mirror/'); } catch(e) { fallbackLocal(); return; }
-  ws.onopen = () => { setConnStatus('connected'); ws.send(JSON.stringify({ channel, type: 'hello', mode })); };
-  ws.onclose = () => setConnStatus('disconnected');
+
+  ws.onopen = () => {
+    setConnStatus('relay');
+    ws.send(JSON.stringify({ channel, type: 'hello', mode: 'remote', sender: MY_ID }));
+  };
+  ws.onclose = () => { rtcReady = false; setConnStatus('disconnected'); };
   ws.onerror = () => fallbackLocal();
   ws.onmessage = (e) => {
     try {
       const msg = JSON.parse(e.data);
-      if (msg.channel !== channel) return;
-      if (mode === 'screen') {
-        if (msg.type === 'color') receiveColor(msg.color);
-        if (msg.type === 'strobe') receiveStrobe(msg);
-      }
-    } catch {}
+      if (msg.channel !== channel || msg.sender === MY_ID) return;
+      // WebRTC signaling
+      if (msg.type === 'signal') { handleWebRTCSignal(msg); return; }
+      // Screen announced readiness → initiate WebRTC offer
+      if (msg.type === 'rtc-ready') { if (!pc) initWebRTC(true); return; }
+    } catch (_) {}
   };
+
+  // Generate QR once channel is set
+  setTimeout(renderQR, 200);
 }
+
 function fallbackLocal() {
-  setConnStatus('connected');
+  setConnStatus('relay');
   channel = document.getElementById('channelInput')?.value || 'default';
   const bc = new BroadcastChannel('cinelive_' + channel);
   window._bc = bc;
   if (mode === 'screen') {
     bc.onmessage = (e) => {
-      if (e.data.type === 'color') receiveColor(e.data.color);
+      if (e.data.sender === MY_ID) return;
+      if (e.data.type === 'color')  receiveColor(e.data.color);
       if (e.data.type === 'strobe') receiveStrobe(e.data);
+      if (e.data.type === 'signal') handleWebRTCSignal(e.data);
+      if (e.data.type === 'rtc-ready') {
+        bc.postMessage({ channel, type: 'signal', sender: MY_ID, sub: 'offer' }); // trigger offer from remote
+      }
     };
+    bc.postMessage({ channel, type: 'rtc-ready', sender: MY_ID });
   }
 }
+
 function sendMsg(obj) {
-  const msg = JSON.stringify({ channel, ...obj });
+  // Prefer direct P2P data channel when available
+  if (rtcReady && dc && dc.readyState === 'open') {
+    dc.send(JSON.stringify(obj));
+    return;
+  }
+  // Fallback to relay or BroadcastChannel
+  const msg = JSON.stringify({ channel, sender: MY_ID, ...obj });
   if (ws && ws.readyState === 1) ws.send(msg);
-  else if (window._bc) window._bc.postMessage({ channel, ...obj });
+  else if (window._bc) window._bc.postMessage({ channel, sender: MY_ID, ...obj });
 }
+
 function sendColor() {
   sendMsg({ type: 'color', color: currentColor });
   const btn = document.getElementById('sendBtn');
   btn.textContent = '✓ Envoyé';
   setTimeout(() => btn.textContent = 'Envoyer ↗', 1000);
 }
+
 function setConnStatus(s) {
   const dot = document.getElementById('connDot'), lbl = document.getElementById('connLabel');
   dot.className = 'dot';
-  if (s === 'connected') { dot.classList.add('connected'); lbl.textContent = 'Connecté — canal: ' + channel; }
-  else if (s === 'connecting') { dot.classList.add('connecting'); lbl.textContent = 'Connexion…'; }
+  if (s === 'p2p')   { dot.classList.add('p2p');       lbl.textContent = '⚡ P2P WiFi direct — canal : ' + channel; }
+  else if (s === 'relay')       { dot.classList.add('connected'); lbl.textContent = 'Connecté (relai) — canal : ' + channel; }
+  else if (s === 'connecting')  { dot.classList.add('connecting'); lbl.textContent = 'Connexion…'; }
   else { lbl.textContent = 'Non connecté'; }
 }
+
 // ══════════════════════════ SCREEN MODE ══════════════════════════
 function startScreenListener() {
   const hash = location.hash.replace('#','');
   if (hash) connectScreenChannel(hash);
 }
+
 function connectScreenChannel(ch) {
   channel = ch;
   const statusEl = document.getElementById('screen-status');
-  statusEl.textContent = 'Canal: ' + ch + ' — en attente…';
+  statusEl.textContent = 'Canal : ' + ch + ' — en attente…';
+  closeRTC();
+
+  function attachMsgHandler(source) {
+    const handler = (e) => {
+      let msg;
+      try { msg = source === 'ws' ? JSON.parse(e.data) : e.data; } catch(_) { return; }
+      if (msg.channel !== ch) return;
+      if (msg.sender === MY_ID) return;
+      if (msg.type === 'signal')  { handleWebRTCSignal(msg); return; }
+      // Remote just connected → re-announce readiness
+      if (msg.type === 'hello' && msg.mode === 'remote') announceRTCReady();
+      if (msg.type === 'color')  receiveColor(msg.color);
+      if (msg.type === 'strobe') receiveStrobe(msg);
+    };
+    return handler;
+  }
+
+  function announceRTCReady() {
+    const readyMsg = JSON.stringify({ channel: ch, type: 'rtc-ready', sender: MY_ID });
+    if (ws && ws.readyState === 1) ws.send(readyMsg);
+    else if (window._bc) window._bc.postMessage({ channel: ch, type: 'rtc-ready', sender: MY_ID });
+  }
+
   try {
     ws = new WebSocket('wss://ws.vi-server.org/mirror/');
     ws.onopen = () => {
-      ws.send(JSON.stringify({ channel: ch, type: 'hello', mode: 'screen' }));
-      statusEl.textContent = 'Canal: ' + ch + ' ✓';
+      ws.send(JSON.stringify({ channel: ch, type: 'hello', mode: 'screen', sender: MY_ID }));
+      announceRTCReady();
+      statusEl.textContent = 'Canal : ' + ch + ' ✓ (relai)';
     };
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.channel !== ch) return;
-        if (msg.type === 'color') receiveColor(msg.color);
-        if (msg.type === 'strobe') receiveStrobe(msg);
-      } catch {}
-    };
+    ws.onmessage = attachMsgHandler('ws');
     ws.onerror = () => {
+      // Fallback to BroadcastChannel (same device)
       const bc = new BroadcastChannel('cinelive_' + ch);
       window._bc = bc;
-      bc.onmessage = (e) => {
-        if (e.data.type === 'color') receiveColor(e.data.color);
-        if (e.data.type === 'strobe') receiveStrobe(e.data);
-      };
-      statusEl.textContent = 'Canal local: ' + ch;
+      bc.onmessage = attachMsgHandler('bc');
+      bc.postMessage({ channel: ch, type: 'rtc-ready', sender: MY_ID });
+      statusEl.textContent = 'Canal local : ' + ch;
     };
   } catch(e) {
     const bc = new BroadcastChannel('cinelive_' + ch);
     window._bc = bc;
-    bc.onmessage = (e) => {
-      if (e.data.type === 'color') receiveColor(e.data.color);
-      if (e.data.type === 'strobe') receiveStrobe(e.data);
-    };
+    bc.onmessage = attachMsgHandler('bc');
+    bc.postMessage({ channel: ch, type: 'rtc-ready', sender: MY_ID });
   }
 }
+
 let screenStrobeTimer = null, screenBaseColor = '#ffffff';
 function receiveColor(color) {
   screenBaseColor = color;
@@ -639,15 +800,14 @@ function receiveStrobe(msg) {
   const sc = document.getElementById('screen-mode');
   if (!msg.active) {
     sc.style.transition = 'background-color 0.3s ease';
-    sc.style.backgroundColor = screenBaseColor;
-    return;
+    sc.style.backgroundColor = screenBaseColor; return;
   }
   sc.style.transition = 'none';
   function flash() {
     let freq = msg.freq, dur = msg.dur;
     if (msg.random) {
       freq = msg.freqMin + Math.random() * (msg.freqMax - msg.freqMin);
-      dur = msg.durMin + Math.random() * (msg.durMax - msg.durMin);
+      dur  = msg.durMin  + Math.random() * (msg.durMax  - msg.durMin);
     }
     const interval = Math.max(dur + 5, 1000 / freq);
     sc.style.backgroundColor = screenBaseColor;
@@ -662,6 +822,7 @@ function toggleHex() {
   showHex = !showHex;
   document.getElementById('current-hex').style.opacity = showHex ? '1' : '0';
 }
+
 // ══════════════════════════ COLOR WHEEL ══════════════════════════
 function initWheel() {
   const canvas = document.getElementById('colorWheel');
@@ -680,19 +841,19 @@ function initWheel() {
   function pick(ex, ey) {
     const rect = canvas.getBoundingClientRect();
     const x = (ex - rect.left) * (W / rect.width);
-    const y = (ey - rect.top) * (H / rect.height);
+    const y = (ey - rect.top)  * (H / rect.height);
     if (Math.sqrt((x-cx)**2 + (y-cy)**2) > R) return;
-    const px = Math.round(Math.min(Math.max(x,0),W-1));
-    const py = Math.round(Math.min(Math.max(y,0),H-1));
-    const d = ctx.getImageData(px, py, 1, 1).data;
+    const d = ctx.getImageData(
+      Math.round(Math.min(Math.max(x,0),W-1)),
+      Math.round(Math.min(Math.max(y,0),H-1)), 1, 1).data;
     wheelHSLColor = rgbToHex(d[0], d[1], d[2]);
     onBrightnessChange();
   }
-  canvas.addEventListener('mousedown', e => { drag=true; pick(e.clientX,e.clientY); });
-  canvas.addEventListener('mousemove', e => { if(drag) pick(e.clientX,e.clientY); });
-  canvas.addEventListener('mouseup', () => drag=false);
+  canvas.addEventListener('mousedown',  e => { drag=true; pick(e.clientX,e.clientY); });
+  canvas.addEventListener('mousemove',  e => { if(drag) pick(e.clientX,e.clientY); });
+  canvas.addEventListener('mouseup',    () => drag=false);
   canvas.addEventListener('touchstart', e => { e.preventDefault(); pick(e.touches[0].clientX,e.touches[0].clientY); }, {passive:false});
-  canvas.addEventListener('touchmove', e => { e.preventDefault(); pick(e.touches[0].clientX,e.touches[0].clientY); }, {passive:false});
+  canvas.addEventListener('touchmove',  e => { e.preventDefault(); pick(e.touches[0].clientX,e.touches[0].clientY); }, {passive:false});
 }
 function onBrightnessChange() {
   wheelBrightness = parseInt(document.getElementById('brightnessSlider').value);
@@ -700,13 +861,14 @@ function onBrightnessChange() {
   const rgb = hexToRgb(wheelHSLColor), f = wheelBrightness / 100;
   applyColor(rgbToHex(Math.round(rgb.r*f), Math.round(rgb.g*f), Math.round(rgb.b*f)), 'Roue · ' + wheelBrightness + '%');
 }
+
 // ══════════════════════════ KELVIN ══════════════════════════
 function kelvinToRgb(K) {
   const t = K / 100;
   let r, g, b;
-  r = t <= 66 ? 255 : Math.min(255, Math.max(0, 329.698727446 * Math.pow(t-60, -0.1332047592)));
-  if (t <= 66) g = Math.min(255, Math.max(0, 99.4708025861 * Math.log(t) - 161.1195681661));
-  else g = Math.min(255, Math.max(0, 288.1221695283 * Math.pow(t-60, -0.0755148492)));
+  r = t <= 66 ? 255 : Math.min(255, Math.max(0, 329.698727446  * Math.pow(t-60, -0.1332047592)));
+  g = t <= 66 ? Math.min(255, Math.max(0, 99.4708025861 * Math.log(t) - 161.1195681661))
+              : Math.min(255, Math.max(0, 288.1221695283 * Math.pow(t-60, -0.0755148492)));
   b = t >= 66 ? 255 : (t <= 19 ? 0 : Math.min(255, Math.max(0, 138.5177312231 * Math.log(t-10) - 305.0447927307)));
   return { r: Math.round(r), g: Math.round(g), b: Math.round(b) };
 }
@@ -718,9 +880,8 @@ function onKelvinChange() {
   const rgb = kelvinToRgb(kelvinK), f = kelvinBrightness / 100;
   applyColor(rgbToHex(Math.round(rgb.r*f), Math.round(rgb.g*f), Math.round(rgb.b*f)), kelvinK + 'K · ' + kelvinBrightness + '%');
 }
-function setKelvin(k) {
-  document.getElementById('kelvinSlider').value = k; onKelvinChange();
-}
+function setKelvin(k) { document.getElementById('kelvinSlider').value = k; onKelvinChange(); }
+
 // ══════════════════════════ GREEN SHIFT ══════════════════════════
 function onGreenChange() {
   greenShift = parseInt(document.getElementById('greenSlider').value);
@@ -728,22 +889,17 @@ function onGreenChange() {
   const sign = greenShift >= 0 ? '+' : '';
   document.getElementById('greenVal').innerHTML = sign + greenShift + '<span> GM</span>';
   document.getElementById('greenBrightVal').innerHTML = greenBrightness + '<span>%</span>';
-  const f = greenBrightness / 100;
-  const base = 255 * f;
+  const f = greenBrightness / 100, base = 255 * f;
   let r, g, b;
   if (greenShift >= 0) {
     const t = greenShift / 100;
-    r = base * (1 - t * 0.45);
-    g = base;
-    b = base * (1 - t * 0.45);
+    r = base * (1 - t * 0.45); g = base; b = base * (1 - t * 0.45);
   } else {
     const t = Math.abs(greenShift) / 100;
-    r = base;
-    g = base * (1 - t * 0.65);
-    b = base;
+    r = base; g = base * (1 - t * 0.65); b = base;
   }
   applyColor(
-    rgbToHex(Math.min(255, Math.max(0, Math.round(r))), Math.min(255, Math.max(0, Math.round(g))), Math.min(255, Math.max(0, Math.round(b)))),
+    rgbToHex(Math.min(255,Math.max(0,Math.round(r))), Math.min(255,Math.max(0,Math.round(g))), Math.min(255,Math.max(0,Math.round(b)))),
     sign + greenShift + ' GM · ' + greenBrightness + '%'
   );
 }
@@ -751,6 +907,7 @@ function setGreen(v) {
   document.getElementById('greenSlider').value = v; onGreenChange();
   document.querySelectorAll('#content-green .chip').forEach(c => c.classList.remove('active'));
 }
+
 // ══════════════════════════ STROBE ══════════════════════════
 function setStrobeMode(m) {
   strobeMode = m;
@@ -758,33 +915,31 @@ function setStrobeMode(m) {
   document.getElementById('chip-random').classList.toggle('active', m === 'random');
   document.getElementById('randomOptions').style.display = m === 'random' ? 'block' : 'none';
   document.getElementById('freqLabel').textContent = m === 'random' ? 'Fréquence min' : 'Fréquence';
-  document.getElementById('durLabel').textContent = m === 'random' ? 'Durée flash min' : 'Durée du flash';
+  document.getElementById('durLabel').textContent  = m === 'random' ? 'Durée flash min' : 'Durée du flash';
   if (strobeActive) { sendMsg(buildStrobePayload()); runLocalStrobePreview(); }
 }
 function onStrobeToggle() {
   strobeActive = document.getElementById('strobeToggle').checked;
   document.getElementById('strobeActiveBadge').style.display = strobeActive ? 'block' : 'none';
   if (strobeActive) { sendMsg(buildStrobePayload()); runLocalStrobePreview(); }
-  else { stopStrobe(); }
+  else stopStrobe();
 }
 function onStrobeParamChange() {
-  strobeFreq = parseFloat(document.getElementById('freqSlider').value);
-  strobeFlashDur = parseInt(document.getElementById('flashDurSlider').value);
-  strobeFreqMax = parseFloat(document.getElementById('freqMaxSlider').value);
+  strobeFreq       = parseFloat(document.getElementById('freqSlider').value);
+  strobeFlashDur   = parseInt(document.getElementById('flashDurSlider').value);
+  strobeFreqMax    = parseFloat(document.getElementById('freqMaxSlider').value);
   strobeFlashDurMax = parseInt(document.getElementById('flashDurMaxSlider').value);
-  document.getElementById('freqVal').innerHTML = strobeFreq.toFixed(1) + '<span> Hz</span>';
-  document.getElementById('flashDurVal').innerHTML = strobeFlashDur + '<span> ms</span>';
-  document.getElementById('freqMaxVal').innerHTML = strobeFreqMax.toFixed(1) + '<span> Hz</span>';
+  document.getElementById('freqVal').innerHTML      = strobeFreq.toFixed(1) + '<span> Hz</span>';
+  document.getElementById('flashDurVal').innerHTML  = strobeFlashDur + '<span> ms</span>';
+  document.getElementById('freqMaxVal').innerHTML   = strobeFreqMax.toFixed(1) + '<span> Hz</span>';
   document.getElementById('flashDurMaxVal').innerHTML = strobeFlashDurMax + '<span> ms</span>';
   if (strobeActive) { sendMsg(buildStrobePayload()); runLocalStrobePreview(); }
 }
 function buildStrobePayload() {
-  return {
-    type: 'strobe', active: strobeActive, random: strobeMode === 'random',
+  return { type: 'strobe', active: strobeActive, random: strobeMode === 'random',
     freq: strobeFreq, dur: strobeFlashDur,
     freqMin: strobeFreq, freqMax: strobeFreqMax,
-    durMin: strobeFlashDur, durMax: strobeFlashDurMax,
-  };
+    durMin: strobeFlashDur, durMax: strobeFlashDurMax };
 }
 function stopStrobe() {
   strobeActive = false;
@@ -801,7 +956,7 @@ function runLocalStrobePreview() {
     let freq = strobeFreq, dur = strobeFlashDur;
     if (strobeMode === 'random') {
       freq = strobeFreq + Math.random() * (strobeFreqMax - strobeFreq);
-      dur = strobeFlashDur + Math.random() * (strobeFlashDurMax - strobeFlashDur);
+      dur  = strobeFlashDur + Math.random() * (strobeFlashDurMax - strobeFlashDur);
     }
     const interval = Math.max(dur + 5, 1000 / freq);
     flashEl.style.opacity = '0.9';
@@ -818,6 +973,35 @@ function stopLocalStrobePreview() {
   const f = document.getElementById('strobeFlashPreview');
   if (f) f.style.opacity = '0';
 }
+
+// ══════════════════════════ QR CODE ══════════════════════════
+// Minimal QR encoder using qrcodejs (loaded inline via data URI trick → pure JS fallback)
+function renderQR() {
+  const urlEl = document.getElementById('qrUrl');
+  const canvas = document.getElementById('qrCanvas');
+  if (!channel) { urlEl.textContent = 'Connectez-vous d\'abord à un canal'; return; }
+  const url = location.origin + location.pathname + '#' + channel;
+  urlEl.textContent = url;
+  // Use QR Server API (public, no tracking) to generate QR image
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  };
+  img.onerror = () => {
+    // Fallback: draw URL as text
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#000';
+    ctx.font = '10px monospace';
+    ctx.fillText('Scan: ' + url, 5, 20);
+  };
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url);
+}
+
 // ══════════════════════════ UTILS ══════════════════════════
 function applyColor(hex, meta) {
   currentColor = hex;
@@ -831,6 +1015,7 @@ function rgbToHex(r,g,b) {
 function hexToRgb(hex) {
   return { r: parseInt(hex.slice(1,3),16), g: parseInt(hex.slice(3,5),16), b: parseInt(hex.slice(5,7),16) };
 }
+
 // Init from URL hash (screen mode auto-connect)
 if (location.hash) {
   const ch = location.hash.replace('#','');
