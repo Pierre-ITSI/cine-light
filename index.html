@@ -122,6 +122,16 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 .torch-level-bar{height:8px;border-radius:4px;background:linear-gradient(to right,#333,#ffe664);margin-bottom:14px;overflow:hidden;position:relative}
 .torch-level-fill{height:100%;background:#ffe664;border-radius:4px;transition:width .1s;box-shadow:0 0 8px rgba(255,230,100,.5)}
 
+/* EFFECTS TAB */
+.effects-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.effect-card{border:1px solid var(--border);border-radius:8px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;background:var(--mid2);transition:all .2s;touch-action:manipulation;font-family:'DM Mono',monospace;width:100%}
+.effect-card:hover,.effect-card:active{border-color:rgba(255,255,255,.2);transform:scale(.97)}
+.effect-card.active{border-color:var(--accent);background:rgba(232,201,122,.1);box-shadow:0 0 14px rgba(232,201,122,.1)}
+.effect-card-icon{font-size:1.8rem}
+.effect-card-name{font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.3}
+.effect-card.active .effect-card-name{color:var(--accent)}
+.effect-active-row{display:flex;flex-direction:row;align-items:center;gap:10px;margin-bottom:12px}
+
 /* SCREEN BOTTOM BAR */
 #screen-bar{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10}
 .screen-bar-btn{background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:7px 16px;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap}
@@ -190,7 +200,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
     <button class="tab-btn" onclick="switchTab('green')" id="tab-green">🟢 Green</button>
     <button class="tab-btn" onclick="switchTab('strobe')" id="tab-strobe">⚡ Strobe</button>
     <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash">🔦 Flash</button>
-    <button class="tab-btn" onclick="switchTab('presets')" id="tab-presets">🎬 Presets</button>
+    <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects">✨ Effets</button>
     <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr">📡 QR</button>
   </div>
 
@@ -370,9 +380,66 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
     </div>
   </div>
 
-  <div class="tab-content" id="content-presets">
+  <div class="tab-content" id="content-effects">
+    <div id="effectActiveBadge" class="effect-active-row" style="display:none">
+      <span class="strobe-active-badge" id="effectBadgeText">✨ Actif</span>
+      <button class="chip" style="border-color:rgba(220,80,80,.5);color:rgba(220,80,80,.8)" onclick="stopAllEffects()">⏹ Stop</button>
+    </div>
     <div class="panel">
-      <div class="panel-label">Ambiances cinéma</div>
+      <div class="panel-label">Effets dynamiques</div>
+      <div class="effects-grid">
+        <button class="effect-card" id="efxcard-tv" onclick="selectEffect('tv')">
+          <span class="effect-card-icon">📺</span><span class="effect-card-name">TV</span>
+        </button>
+        <button class="effect-card" id="efxcard-candle" onclick="selectEffect('candle')">
+          <span class="effect-card-icon">🕯</span><span class="effect-card-name">Bougie</span>
+        </button>
+        <button class="effect-card" id="efxcard-fire" onclick="selectEffect('fire')">
+          <span class="effect-card-icon">🔥</span><span class="effect-card-name">Feu</span>
+        </button>
+        <button class="effect-card" id="efxcard-police" onclick="selectEffect('police')">
+          <span class="effect-card-icon">🚨</span><span class="effect-card-name">Police</span>
+        </button>
+        <button class="effect-card" id="efxcard-lightning" onclick="selectEffect('lightning')">
+          <span class="effect-card-icon">⚡</span><span class="effect-card-name">Éclair</span>
+        </button>
+        <button class="effect-card" id="efxcard-paparazzi" onclick="selectEffect('paparazzi')">
+          <span class="effect-card-icon">📸</span><span class="effect-card-name">Paparazzi</span>
+        </button>
+      </div>
+    </div>
+    <div class="panel" id="effectSettingsPanel" style="display:none">
+      <div class="panel-label" id="effectSettingsTitle">Réglages</div>
+      <div class="slider-block">
+        <div class="slider-header">
+          <label id="effectSpeedLabel">Vitesse</label>
+          <div class="slider-val" id="effectSpeedVal">1.0</div>
+        </div>
+        <input type="range" id="effectSpeedSlider" min="0.2" max="10" step="0.1" value="1"
+               style="background:linear-gradient(to right,#1a73e8,#e8c97a)"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block">
+        <div class="slider-header">
+          <label>Intensité</label>
+          <div class="slider-val" id="effectIntensityVal">80<span>%</span></div>
+        </div>
+        <input type="range" id="effectIntensitySlider" min="10" max="100" step="5" value="80"
+               style="background:linear-gradient(to right,#333,#fff)"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block" id="effectBurstBlock" style="display:none">
+        <div class="slider-header">
+          <label>Flashes / rafale</label>
+          <div class="slider-val" id="effectBurstVal">3</div>
+        </div>
+        <input type="range" id="effectBurstSlider" min="1" max="10" step="1" value="3"
+               style="background:linear-gradient(to right,#333,#ffe664)"
+               oninput="document.getElementById('effectBurstVal').textContent=this.value;onEffectParamChange()">
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">Couleurs rapides</div>
       <div class="presets-grid" id="presetsGrid"></div>
     </div>
   </div>
@@ -446,6 +513,7 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'torch-onoff')  receiveTorchOnOff(msg.on);
         if (msg.type === 'torch-dim')    receiveTorchDim(msg.level);
         if (msg.type === 'torch-effect') receiveTorchEffect(msg.effect);
+        if (msg.type === 'effect')       receiveEffect(msg);
       }
     } catch (_) {}
   });
@@ -720,6 +788,175 @@ function runLocalStrobePreview() {
   cycle();
 }
 function stopLocalStrobePreview(){if(strobePreviewTimer)clearTimeout(strobePreviewTimer);strobePreviewTimer=null;const f=document.getElementById('strobeFlashPreview');if(f)f.style.opacity='0';}
+
+// ══════════════════════════ EFFECTS TAB — TÉLÉCOMMANDE ══════════════════════════
+let activeScreenEffect = null, effectSendTimer = null;
+
+const EFFECT_CONFIG = {
+  tv:        { label:'📺 TV',          speedLabel:'Vitesse (img/s)',    min:0.5, max:15,  step:0.5, def:4,   intDef:80,  burst:false },
+  candle:    { label:'🕯 Bougie',       speedLabel:'Vacillement',        min:0.2, max:5,   step:0.1, def:1.2, intDef:85,  burst:false },
+  fire:      { label:'🔥 Feu',          speedLabel:'Intensité rapide',   min:0.5, max:10,  step:0.5, def:3,   intDef:90,  burst:false },
+  police:    { label:'🚨 Police',       speedLabel:'Vitesse alternance', min:0.5, max:8,   step:0.5, def:3,   intDef:100, burst:false },
+  lightning: { label:'⚡ Éclair',       speedLabel:'Fréquence',          min:0.1, max:3,   step:0.1, def:0.8, intDef:100, burst:false },
+  paparazzi: { label:'📸 Paparazzi',   speedLabel:'Rafales / sec',      min:0.2, max:4,   step:0.1, def:1,   intDef:100, burst:true  },
+};
+
+function selectEffect(name) {
+  if (activeScreenEffect === name) { stopAllEffects(); return; }
+  activeScreenEffect = name;
+  document.querySelectorAll('.effect-card').forEach(b => b.classList.remove('active'));
+  const card = document.getElementById('efxcard-' + name);
+  if (card) card.classList.add('active');
+  const badge = document.getElementById('effectActiveBadge');
+  if (badge) badge.style.display = 'flex';
+  const cfg = EFFECT_CONFIG[name];
+  const badgeText = document.getElementById('effectBadgeText');
+  if (badgeText && cfg) badgeText.textContent = cfg.label + ' actif';
+  // Populate settings
+  const panel = document.getElementById('effectSettingsPanel');
+  if (panel && cfg) {
+    panel.style.display = 'block';
+    document.getElementById('effectSettingsTitle').textContent = 'Réglages — ' + cfg.label;
+    document.getElementById('effectSpeedLabel').textContent = cfg.speedLabel;
+    const sl = document.getElementById('effectSpeedSlider');
+    sl.min = cfg.min; sl.max = cfg.max; sl.step = cfg.step; sl.value = cfg.def;
+    document.getElementById('effectSpeedVal').textContent = cfg.def.toFixed(1);
+    document.getElementById('effectIntensitySlider').value = cfg.intDef;
+    document.getElementById('effectIntensityVal').innerHTML = cfg.intDef + '<span>%</span>';
+    document.getElementById('effectBurstBlock').style.display = cfg.burst ? 'block' : 'none';
+  }
+  scheduleEffectSend();
+}
+
+function onEffectParamChange() {
+  const speed = parseFloat(document.getElementById('effectSpeedSlider').value);
+  document.getElementById('effectSpeedVal').textContent = speed.toFixed(1);
+  const intensity = parseInt(document.getElementById('effectIntensitySlider').value);
+  document.getElementById('effectIntensityVal').innerHTML = intensity + '<span>%</span>';
+  scheduleEffectSend();
+}
+
+function scheduleEffectSend() {
+  if (effectSendTimer) clearTimeout(effectSendTimer);
+  effectSendTimer = setTimeout(() => {
+    if (!activeScreenEffect) return;
+    const burstEl = document.getElementById('effectBurstSlider');
+    sendMsg({ type:'effect', name:activeScreenEffect, active:true, params:{
+      speed: parseFloat(document.getElementById('effectSpeedSlider').value),
+      intensity: parseInt(document.getElementById('effectIntensitySlider').value),
+      burst: burstEl ? parseInt(burstEl.value) : 3,
+    }});
+  }, 80);
+}
+
+function stopAllEffects() {
+  activeScreenEffect = null;
+  document.querySelectorAll('.effect-card').forEach(b => b.classList.remove('active'));
+  const badge = document.getElementById('effectActiveBadge');
+  if (badge) badge.style.display = 'none';
+  const panel = document.getElementById('effectSettingsPanel');
+  if (panel) panel.style.display = 'none';
+  sendMsg({ type:'effect', name:null, active:false });
+}
+
+// ══════════════════════════ EFFECTS TAB — RÉCEPTEUR (screen) ══════════════════════════
+let _screenEffect = null, _screenEffectTimer = null;
+
+function receiveEffect(msg) {
+  stopScreenEffect();
+  const sc = document.getElementById('screen-mode');
+  if (!msg.active) {
+    if (sc) { sc.style.transition = 'background-color 0.4s'; sc.style.backgroundColor = screenBaseColor; }
+    return;
+  }
+  _screenEffect = msg.name;
+  _runEffect(msg.name, msg.params || {});
+}
+
+function stopScreenEffect() {
+  if (_screenEffectTimer) { clearTimeout(_screenEffectTimer); _screenEffectTimer = null; }
+  _screenEffect = null;
+}
+
+function _runEffect(name, p) {
+  const sc = document.getElementById('screen-mode');
+  if (!sc || _screenEffect !== name) return;
+  const speed = Math.max(0.1, p.speed || 1);
+  const intf = Math.max(0.05, Math.min(1, (p.intensity || 80) / 100));
+  const burst = Math.max(1, p.burst || 3);
+
+  function setBg(r, g, b, transMs) {
+    sc.style.transition = transMs > 0 ? `background-color ${transMs}ms ease` : 'none';
+    sc.style.backgroundColor = `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+  }
+  function next(ms) {
+    _screenEffectTimer = setTimeout(() => _runEffect(name, p), Math.max(16, ms));
+  }
+
+  switch (name) {
+    case 'tv': {
+      const frames = ['#000000','#000000','#101040','#2040b0','#ffffff','#c0c8d0','#404050','#800010','#005010','#000080','#ffffff','#000000'];
+      const c = frames[Math.floor(Math.random() * frames.length)];
+      const rgb = hexToRgb(c);
+      setBg(rgb.r * intf, rgb.g * intf, rgb.b * intf, 0);
+      next(Math.max(30, 400 / speed));
+      break;
+    }
+    case 'candle': {
+      const flk = 0.55 + Math.random() * 0.45;
+      const b2 = flk * intf;
+      setBg(255 * b2, (80 + Math.random() * 60) * b2, (5 + Math.random() * 15) * b2, Math.round(500 / speed * (0.5 + Math.random() * 0.7)));
+      next(Math.max(60, (700 / speed) * (0.6 + Math.random() * 0.8)));
+      break;
+    }
+    case 'fire': {
+      const t = Math.random();
+      setBg(255 * (0.65 + t * 0.35) * intf, 255 * t * 0.45 * intf, 255 * Math.pow(t, 4) * 0.08 * intf, Math.round(150 / speed * 0.4));
+      next(Math.max(30, (200 / speed) * (0.5 + Math.random())));
+      break;
+    }
+    case 'police': {
+      if (!p._tick) p._tick = 0;
+      const isRed = (p._tick % 2 === 0);
+      setBg(isRed ? 255 * intf : 0, 0, isRed ? 0 : 255 * intf, 0);
+      p._tick++;
+      next(Math.max(80, 500 / speed));
+      break;
+    }
+    case 'lightning': {
+      setBg(3, 3, 10, 0);
+      const baseWait = Math.max(300, 5000 / speed);
+      _screenEffectTimer = setTimeout(() => {
+        const flashes = 1 + Math.floor(Math.random() * 3);
+        let f = 0;
+        function doFlash() {
+          if (f >= flashes || _screenEffect !== name) { setBg(3, 3, 10, 0); next(baseWait * (0.5 + Math.random())); return; }
+          setBg(255 * intf, 255 * intf, 245 * intf, 0);
+          const dur = 25 + Math.random() * 90;
+          f++;
+          _screenEffectTimer = setTimeout(() => { setBg(3, 3, 10, 0); _screenEffectTimer = setTimeout(doFlash, 40 + Math.random() * 80); }, dur);
+        }
+        doFlash();
+      }, baseWait * (0.5 + Math.random() * 1.5));
+      break;
+    }
+    case 'paparazzi': {
+      setBg(8, 8, 8, 0);
+      const burstWait = Math.max(400, 3500 / speed);
+      let f = 0;
+      function doFlash() {
+        if (_screenEffect !== name) return;
+        if (f >= burst) { f = 0; _screenEffectTimer = setTimeout(() => _runEffect(name, p), burstWait * (0.7 + Math.random() * 0.6)); return; }
+        setBg(255 * intf, 252 * intf, 230 * intf, 0);
+        f++;
+        const dur = 25 + Math.random() * 55;
+        _screenEffectTimer = setTimeout(() => { setBg(8, 8, 8, 0); _screenEffectTimer = setTimeout(doFlash, 55 + Math.random() * 90); }, dur);
+      }
+      _screenEffectTimer = setTimeout(doFlash, 80);
+      break;
+    }
+  }
+}
 
 // ══════════════════════════ PRESETS ══════════════════════════
 const PRESETS=[
