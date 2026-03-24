@@ -49,7 +49,49 @@ border-radius: 4px; transition: all 0.2s; text-transform: uppercase;
 }
 .splash-btn:hover { border-color: var(--accent); color: var(--accent); }
 .splash-btn.primary { background: var(--accent); color: var(--dark); border-color: var(--accent); font-weight: 500; }
-/* SCREEN MODE */
+
+/* SCREEN CONNECT — saisie du canal côté écran */
+#screen-connect {
+display: none; position: fixed; inset: 0;
+flex-direction: column; align-items: center; justify-content: center;
+background: var(--dark); gap: 24px; padding: 32px;
+animation: fadeIn 0.4s ease;
+}
+#screen-connect h2 {
+font-family: 'Playfair Display', serif;
+font-size: 1.8rem; color: var(--accent); text-align: center;
+}
+#screen-connect p {
+font-size: 0.72rem; color: var(--muted); letter-spacing: 0.12em;
+text-transform: uppercase; text-align: center;
+}
+.screen-input-row {
+display: flex; gap: 10px; width: 100%; max-width: 340px;
+}
+.screen-input-row input {
+flex: 1; background: var(--mid); border: 1px solid var(--border);
+color: var(--text); font-family: 'DM Mono', monospace;
+font-size: 1.1rem; padding: 14px 16px; border-radius: 6px;
+outline: none; letter-spacing: 0.12em; text-align: center;
+transition: border-color 0.2s; text-transform: lowercase;
+}
+.screen-input-row input:focus { border-color: var(--accent); }
+.screen-input-row input::placeholder { color: var(--muted); font-size: 0.85rem; }
+.screen-go-btn {
+background: var(--accent); color: var(--dark); border: none;
+font-family: 'DM Mono', monospace; font-size: 0.85rem; font-weight: 500;
+letter-spacing: 0.1em; text-transform: uppercase;
+padding: 14px 20px; border-radius: 6px; cursor: pointer; transition: background 0.2s;
+}
+.screen-go-btn:hover { background: #d4b468; }
+.screen-back {
+font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em;
+text-transform: uppercase; cursor: pointer; text-decoration: underline;
+background: none; border: none; color: var(--muted);
+}
+.screen-back:hover { color: var(--text); }
+
+/* SCREEN MODE — affichage plein écran */
 #screen-mode {
 display: none; position: fixed; inset: 0;
 flex-direction: column; align-items: center; justify-content: center; cursor: pointer;
@@ -60,6 +102,7 @@ background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
 border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
 padding: 6px 16px; font-size: 0.7rem; letter-spacing: 0.12em;
 color: rgba(255,255,255,0.6); text-transform: uppercase; white-space: nowrap;
+transition: all 0.3s;
 }
 #screen-mode .tap-hint {
 position: absolute; bottom: 30px; font-size: 0.65rem;
@@ -71,6 +114,7 @@ font-size: clamp(1.6rem, 7vw, 4rem); font-weight: 700;
 color: rgba(255,255,255,0.12); letter-spacing: 0.05em;
 pointer-events: none; transition: opacity 0.3s;
 }
+
 /* REMOTE MODE */
 #remote-mode {
 display: none; position: fixed; inset: 0;
@@ -165,7 +209,7 @@ border-radius: 50%; cursor: crosshair; touch-action: none;
 box-shadow: 0 0 0 1px var(--border), 0 8px 32px rgba(0,0,0,0.4);
 max-width: 240px; width: min(240px, 80vw);
 }
-/* KELVIN VISUALS */
+/* KELVIN */
 .kelvin-bar {
 height: 24px; border-radius: 5px; margin-bottom: 8px;
 background: linear-gradient(to right, #ff9b4a, #ffd2a0, #ffffff, #c9dfff, #a0c8ff);
@@ -174,7 +218,7 @@ background: linear-gradient(to right, #ff9b4a, #ffd2a0, #ffffff, #c9dfff, #a0c8f
 display: flex; justify-content: space-between;
 font-size: 0.55rem; color: var(--muted); letter-spacing: 0.06em; margin-bottom: 10px; line-height: 1.4;
 }
-/* GREEN VISUALS */
+/* GREEN */
 .green-bar {
 height: 24px; border-radius: 5px; margin-bottom: 8px;
 background: linear-gradient(to right, #c020c0, #1a1a1a 50%, #20c060);
@@ -233,7 +277,7 @@ background: var(--mid2); transition: all 0.15s; touch-action: manipulation;
 .preset-btn:hover, .preset-btn:active { border-color: rgba(255,255,255,0.2); transform: scale(0.97); }
 .preset-swatch { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); }
 .preset-name { font-size: 0.55rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); text-align: center; line-height: 1.3; }
-/* QR code panel */
+/* QR */
 .qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 4px; }
 .qr-wrap canvas { border-radius: 8px; background: #fff; padding: 8px; }
 .qr-url { font-size: 0.58rem; color: var(--muted); letter-spacing: 0.06em; word-break: break-all; text-align: center; }
@@ -242,6 +286,7 @@ background: var(--mid2); transition: all 0.15s; touch-action: manipulation;
 </style>
 </head>
 <body>
+
 <!-- SPLASH -->
 <div id="splash">
   <h1>Ciné Light</h1>
@@ -251,12 +296,27 @@ background: var(--mid2); transition: all 0.15s; touch-action: manipulation;
     <button class="splash-btn" onclick="startMode('screen')">🟡 Écran projecteur</button>
   </div>
 </div>
-<!-- SCREEN MODE -->
+
+<!-- SCREEN CONNECT — saisie du canal côté écran -->
+<div id="screen-connect">
+  <h2>🟡 Écran projecteur</h2>
+  <p>Entrez le code affiché sur la télécommande</p>
+  <div class="screen-input-row">
+    <input type="text" id="screenChannelInput" placeholder="ex : cine4271"
+           maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false"
+           onkeydown="if(event.key==='Enter') screenConnect()">
+    <button class="screen-go-btn" onclick="screenConnect()">OK →</button>
+  </div>
+  <button class="screen-back" onclick="goBackToSplash()">← Retour</button>
+</div>
+
+<!-- SCREEN MODE — affichage plein écran -->
 <div id="screen-mode" onclick="toggleHex()">
   <div class="status-pill" id="screen-status">En attente de connexion…</div>
   <span id="current-hex">#FFFFFF</span>
   <div class="tap-hint">Toucher pour masquer le code</div>
 </div>
+
 <!-- REMOTE MODE -->
 <div id="remote-mode">
   <div class="remote-header">
@@ -362,9 +422,7 @@ background: var(--mid2); transition: all 0.15s; touch-action: manipulation;
       <div class="panel-label">Correction Magenta ↔ Vert (Green Shift)</div>
       <div class="green-bar"></div>
       <div class="green-labels">
-        <span>−100 Magenta</span>
-        <span>0 Neutre</span>
-        <span>+100 Vert</span>
+        <span>−100 Magenta</span><span>0 Neutre</span><span>+100 Vert</span>
       </div>
       <div class="slider-block">
         <div class="slider-header">
@@ -478,15 +536,16 @@ background: var(--mid2); transition: all 0.15s; touch-action: manipulation;
         <div class="qr-url" id="qrUrl">Connectez-vous d'abord à un canal</div>
       </div>
     </div>
-    <div class="panel" style="font-size:0.65rem;color:var(--muted);line-height:1.7;letter-spacing:0.04em">
-      <div class="panel-label">Comment ça marche</div>
+    <div class="panel" style="font-size:0.65rem;color:var(--muted);line-height:1.8;letter-spacing:0.04em">
+      <div class="panel-label">Comment utiliser</div>
       1. Connectez-vous à un canal ci-dessus<br>
-      2. Scannez ce QR avec l'écran cible<br>
-      3. L'écran s'ouvre directement en mode <em>Projecteur</em> sur le même canal<br>
-      4. Sur le même WiFi : connexion P2P directe ⚡ (pas de relai)
+      2. Sur l'écran : ouvrez l'app → <strong style="color:var(--text)">Écran projecteur</strong> → saisissez le même code<br>
+      3. Ou scannez ce QR pour ouvrir directement<br>
+      4. Même WiFi = connexion P2P directe ⚡
     </div>
   </div>
 </div>
+
 <script>
 // ══════════════════════════ STATE ══════════════════════════
 const MY_ID = Math.random().toString(36).slice(2, 10);
@@ -517,23 +576,20 @@ function closeRTC() {
 function initWebRTC(isInitiator) {
   closeRTC();
   pc = new RTCPeerConnection(RTC_CFG);
-
   pc.onicecandidate = ({ candidate }) => {
     if (candidate) sendSignal({ sub: 'ice', candidate });
   };
-
   pc.onconnectionstatechange = () => {
     if (!pc) return;
     if (pc.connectionState === 'connected') {
       if (mode === 'remote') setConnStatus('p2p');
-      else updateScreenStatus('p2p');
-    } else if (['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
+      else setScreenStatus('p2p');
+    } else if (['failed','disconnected','closed'].includes(pc.connectionState)) {
       rtcReady = false;
       if (mode === 'remote') setConnStatus('relay');
-      else updateScreenStatus('relay');
+      else setScreenStatus('relay');
     }
   };
-
   if (isInitiator) {
     dc = pc.createDataChannel('cl', { ordered: true });
     setupDC();
@@ -546,15 +602,13 @@ function initWebRTC(isInitiator) {
 }
 
 function setupDC() {
-  dc.onopen = () => {
+  dc.onopen  = () => {
     rtcReady = true;
-    if (mode === 'remote') setConnStatus('p2p');
-    else updateScreenStatus('p2p');
+    if (mode === 'remote') setConnStatus('p2p'); else setScreenStatus('p2p');
   };
   dc.onclose = () => {
     rtcReady = false;
-    if (mode === 'remote') setConnStatus('relay');
-    else updateScreenStatus('relay');
+    if (mode === 'remote') setConnStatus('relay'); else setScreenStatus('relay');
   };
   dc.onmessage = ({ data }) => {
     try {
@@ -588,65 +642,70 @@ function sendSignal(data) {
   else if (window._bc) window._bc.postMessage({ channel, type: 'signal', sender: MY_ID, ...data });
 }
 
-function updateScreenStatus(state) {
+function setScreenStatus(state) {
   const el = document.getElementById('screen-status');
   if (!el) return;
-  if (state === 'p2p')   el.textContent = '⚡ P2P WiFi direct — canal : ' + channel;
+  if (state === 'p2p')   el.textContent = '⚡ P2P WiFi direct — ' + channel;
   else if (state === 'relay') el.textContent = 'Relai — canal : ' + channel;
+  else el.textContent = state;
 }
 
-// ══════════════════════════ PRESETS ══════════════════════════
-const PRESETS = [
-  { name: 'Bougie', color: '#ff9b4a' }, { name: 'Tungstène', color: '#ffb347' },
-  { name: 'Jour froid', color: '#a8d8f0' }, { name: 'Coucher', color: '#ff6b35' },
-  { name: 'Nuit bleue', color: '#1a3a6b' }, { name: 'Néon rose', color: '#ff2d78' },
-  { name: 'Forêt', color: '#2d6b3a' }, { name: 'Amber', color: '#ff8c00' },
-  { name: 'Morgue', color: '#00ffe7' }, { name: 'Crimson', color: '#b80000' },
-  { name: 'Lavande', color: '#7b5ea7' }, { name: 'Blanc pur', color: '#ffffff' },
-];
-function buildPresets() {
-  const grid = document.getElementById('presetsGrid');
-  PRESETS.forEach(p => {
-    const btn = document.createElement('button');
-    btn.className = 'preset-btn';
-    btn.innerHTML = `<div class="preset-swatch" style="background:${p.color}"></div><div class="preset-name">${p.name}</div>`;
-    btn.onclick = () => { applyColor(p.color, p.name); sendColor(); };
-    grid.appendChild(btn);
-  });
-}
-
-// ══════════════════════════ TABS ══════════════════════════
-function switchTab(t) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.getElementById('tab-' + t).classList.add('active');
-  document.getElementById('content-' + t).classList.add('active');
-  if (t === 'qr') renderQR();
-}
-
-// ══════════════════════════ MODE ══════════════════════════
+// ══════════════════════════ NAVIGATION ══════════════════════════
 function startMode(m) {
-  mode = m;
   document.getElementById('splash').style.display = 'none';
-  if (m === 'screen') {
-    const el = document.getElementById('screen-mode');
-    el.style.display = 'flex';
-    el.style.backgroundColor = '#ffffff';
-    startScreenListener();
-  } else {
+  if (m === 'remote') {
+    mode = 'remote';
     document.getElementById('remote-mode').style.display = 'block';
     buildPresets();
     initWheel();
     applyColor('#ffffff', 'Blanc pur');
     document.getElementById('channelInput').value = 'cine' + Math.floor(Math.random()*9000+1000);
+  } else {
+    // Toujours afficher l'écran de saisie du canal (sauf si hash dans URL)
+    const hash = location.hash.replace('#','');
+    if (hash) {
+      enterScreenMode(hash);
+    } else {
+      document.getElementById('screen-connect').style.display = 'flex';
+      setTimeout(() => document.getElementById('screenChannelInput').focus(), 100);
+    }
   }
 }
+
+function screenConnect() {
+  const ch = document.getElementById('screenChannelInput').value.trim().toLowerCase().replace(/\W/g,'');
+  if (!ch) return;
+  document.getElementById('screen-connect').style.display = 'none';
+  enterScreenMode(ch);
+}
+
+function enterScreenMode(ch) {
+  mode = 'screen';
+  const el = document.getElementById('screen-mode');
+  el.style.display = 'flex';
+  el.style.backgroundColor = '#1a1a1a';
+  connectScreenChannel(ch);
+}
+
+function goBackToSplash() {
+  document.getElementById('screen-connect').style.display = 'none';
+  document.getElementById('splash').style.display = 'flex';
+}
+
 function goBack() {
   stopStrobe();
   closeRTC();
   if (ws) ws.close();
   document.getElementById('remote-mode').style.display = 'none';
   document.getElementById('splash').style.display = 'flex';
+}
+
+function switchTab(t) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  document.getElementById('content-' + t).classList.add('active');
+  if (t === 'qr') renderQR();
 }
 
 // ══════════════════════════ WS / SYNC ══════════════════════════
@@ -658,7 +717,6 @@ function connectChannel() {
   closeRTC();
   if (ws) ws.close();
   try { ws = new WebSocket('wss://ws.vi-server.org/mirror/'); } catch(e) { fallbackLocal(); return; }
-
   ws.onopen = () => {
     setConnStatus('relay');
     ws.send(JSON.stringify({ channel, type: 'hello', mode: 'remote', sender: MY_ID }));
@@ -669,43 +727,70 @@ function connectChannel() {
     try {
       const msg = JSON.parse(e.data);
       if (msg.channel !== channel || msg.sender === MY_ID) return;
-      // WebRTC signaling
-      if (msg.type === 'signal') { handleWebRTCSignal(msg); return; }
-      // Screen announced readiness → initiate WebRTC offer
+      if (msg.type === 'signal')   { handleWebRTCSignal(msg); return; }
       if (msg.type === 'rtc-ready') { if (!pc) initWebRTC(true); return; }
     } catch (_) {}
   };
-
-  // Generate QR once channel is set
   setTimeout(renderQR, 200);
 }
 
-function fallbackLocal() {
-  setConnStatus('relay');
-  channel = document.getElementById('channelInput')?.value || 'default';
-  const bc = new BroadcastChannel('cinelive_' + channel);
-  window._bc = bc;
-  if (mode === 'screen') {
-    bc.onmessage = (e) => {
-      if (e.data.sender === MY_ID) return;
-      if (e.data.type === 'color')  receiveColor(e.data.color);
-      if (e.data.type === 'strobe') receiveStrobe(e.data);
-      if (e.data.type === 'signal') handleWebRTCSignal(e.data);
-      if (e.data.type === 'rtc-ready') {
-        bc.postMessage({ channel, type: 'signal', sender: MY_ID, sub: 'offer' }); // trigger offer from remote
-      }
+function connectScreenChannel(ch) {
+  channel = ch;
+  setScreenStatus('Canal : ' + ch + ' — connexion…');
+
+  function handleMsg(msg) {
+    if (!msg || msg.channel !== ch || msg.sender === MY_ID) return;
+    if (msg.type === 'signal') { handleWebRTCSignal(msg); return; }
+    if (msg.type === 'hello' && msg.mode === 'remote') announceRTCReady();
+    if (msg.type === 'color')  receiveColor(msg.color);
+    if (msg.type === 'strobe') receiveStrobe(msg);
+  }
+
+  function announceRTCReady() {
+    const m = JSON.stringify({ channel: ch, type: 'rtc-ready', sender: MY_ID });
+    if (ws && ws.readyState === 1) ws.send(m);
+    else if (window._bc) window._bc.postMessage({ channel: ch, type: 'rtc-ready', sender: MY_ID });
+  }
+
+  try {
+    ws = new WebSocket('wss://ws.vi-server.org/mirror/');
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ channel: ch, type: 'hello', mode: 'screen', sender: MY_ID }));
+      announceRTCReady();
+      setScreenStatus('relay');
     };
-    bc.postMessage({ channel, type: 'rtc-ready', sender: MY_ID });
+    ws.onmessage = (e) => { try { handleMsg(JSON.parse(e.data)); } catch(_) {} };
+    ws.onerror = () => {
+      const bc = new BroadcastChannel('cinelive_' + ch);
+      window._bc = bc;
+      bc.onmessage = (e) => handleMsg(e.data);
+      bc.postMessage({ channel: ch, type: 'rtc-ready', sender: MY_ID });
+      setScreenStatus('Canal local : ' + ch);
+    };
+  } catch(e) {
+    const bc = new BroadcastChannel('cinelive_' + ch);
+    window._bc = bc;
+    bc.onmessage = (e) => handleMsg(e.data);
   }
 }
 
+function fallbackLocal() {
+  channel = document.getElementById('channelInput')?.value || 'default';
+  setConnStatus('relay');
+  const bc = new BroadcastChannel('cinelive_' + channel);
+  window._bc = bc;
+  bc.onmessage = (e) => {
+    const msg = e.data;
+    if (!msg || msg.sender === MY_ID) return;
+    if (msg.type === 'signal') handleWebRTCSignal(msg);
+    if (msg.type === 'rtc-ready' && !pc) initWebRTC(true);
+  };
+}
+
 function sendMsg(obj) {
-  // Prefer direct P2P data channel when available
   if (rtcReady && dc && dc.readyState === 'open') {
-    dc.send(JSON.stringify(obj));
-    return;
+    dc.send(JSON.stringify(obj)); return;
   }
-  // Fallback to relay or BroadcastChannel
   const msg = JSON.stringify({ channel, sender: MY_ID, ...obj });
   if (ws && ws.readyState === 1) ws.send(msg);
   else if (window._bc) window._bc.postMessage({ channel, sender: MY_ID, ...obj });
@@ -721,70 +806,14 @@ function sendColor() {
 function setConnStatus(s) {
   const dot = document.getElementById('connDot'), lbl = document.getElementById('connLabel');
   dot.className = 'dot';
-  if (s === 'p2p')   { dot.classList.add('p2p');       lbl.textContent = '⚡ P2P WiFi direct — canal : ' + channel; }
-  else if (s === 'relay')       { dot.classList.add('connected'); lbl.textContent = 'Connecté (relai) — canal : ' + channel; }
-  else if (s === 'connecting')  { dot.classList.add('connecting'); lbl.textContent = 'Connexion…'; }
+  if (s === 'p2p')         { dot.classList.add('p2p');       lbl.textContent = '⚡ P2P WiFi direct — canal : ' + channel; }
+  else if (s === 'relay')  { dot.classList.add('connected'); lbl.textContent = 'Connecté (relai) — canal : ' + channel; }
+  else if (s === 'connecting') { dot.classList.add('connecting'); lbl.textContent = 'Connexion…'; }
   else { lbl.textContent = 'Non connecté'; }
 }
 
-// ══════════════════════════ SCREEN MODE ══════════════════════════
-function startScreenListener() {
-  const hash = location.hash.replace('#','');
-  if (hash) connectScreenChannel(hash);
-}
-
-function connectScreenChannel(ch) {
-  channel = ch;
-  const statusEl = document.getElementById('screen-status');
-  statusEl.textContent = 'Canal : ' + ch + ' — en attente…';
-  closeRTC();
-
-  function attachMsgHandler(source) {
-    const handler = (e) => {
-      let msg;
-      try { msg = source === 'ws' ? JSON.parse(e.data) : e.data; } catch(_) { return; }
-      if (msg.channel !== ch) return;
-      if (msg.sender === MY_ID) return;
-      if (msg.type === 'signal')  { handleWebRTCSignal(msg); return; }
-      // Remote just connected → re-announce readiness
-      if (msg.type === 'hello' && msg.mode === 'remote') announceRTCReady();
-      if (msg.type === 'color')  receiveColor(msg.color);
-      if (msg.type === 'strobe') receiveStrobe(msg);
-    };
-    return handler;
-  }
-
-  function announceRTCReady() {
-    const readyMsg = JSON.stringify({ channel: ch, type: 'rtc-ready', sender: MY_ID });
-    if (ws && ws.readyState === 1) ws.send(readyMsg);
-    else if (window._bc) window._bc.postMessage({ channel: ch, type: 'rtc-ready', sender: MY_ID });
-  }
-
-  try {
-    ws = new WebSocket('wss://ws.vi-server.org/mirror/');
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ channel: ch, type: 'hello', mode: 'screen', sender: MY_ID }));
-      announceRTCReady();
-      statusEl.textContent = 'Canal : ' + ch + ' ✓ (relai)';
-    };
-    ws.onmessage = attachMsgHandler('ws');
-    ws.onerror = () => {
-      // Fallback to BroadcastChannel (same device)
-      const bc = new BroadcastChannel('cinelive_' + ch);
-      window._bc = bc;
-      bc.onmessage = attachMsgHandler('bc');
-      bc.postMessage({ channel: ch, type: 'rtc-ready', sender: MY_ID });
-      statusEl.textContent = 'Canal local : ' + ch;
-    };
-  } catch(e) {
-    const bc = new BroadcastChannel('cinelive_' + ch);
-    window._bc = bc;
-    bc.onmessage = attachMsgHandler('bc');
-    bc.postMessage({ channel: ch, type: 'rtc-ready', sender: MY_ID });
-  }
-}
-
-let screenStrobeTimer = null, screenBaseColor = '#ffffff';
+// ══════════════════════════ SCREEN DISPLAY ══════════════════════════
+let screenStrobeTimer = null, screenBaseColor = '#1a1a1a';
 function receiveColor(color) {
   screenBaseColor = color;
   if (!screenStrobeTimer) {
@@ -793,7 +822,7 @@ function receiveColor(color) {
     sc.style.backgroundColor = color;
   }
   document.getElementById('current-hex').textContent = color.toUpperCase();
-  if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(()=>{});
+  if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(() => {});
 }
 function receiveStrobe(msg) {
   if (screenStrobeTimer) { clearTimeout(screenStrobeTimer); screenStrobeTimer = null; }
@@ -812,7 +841,7 @@ function receiveStrobe(msg) {
     const interval = Math.max(dur + 5, 1000 / freq);
     sc.style.backgroundColor = screenBaseColor;
     screenStrobeTimer = setTimeout(() => {
-      sc.style.backgroundColor = '#000000';
+      sc.style.backgroundColor = '#000';
       screenStrobeTimer = setTimeout(flash, interval - dur);
     }, dur);
   }
@@ -827,7 +856,7 @@ function toggleHex() {
 function initWheel() {
   const canvas = document.getElementById('colorWheel');
   const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height, R = W / 2, cx = R, cy = R;
+  const W = canvas.width, R = W / 2, cx = R, cy = R;
   for (let a = 0; a < 360; a++) {
     const rad = (a - 90) * Math.PI / 180;
     const grad = ctx.createLinearGradient(cx, cy, cx + Math.cos(rad)*R, cy + Math.sin(rad)*R);
@@ -841,11 +870,11 @@ function initWheel() {
   function pick(ex, ey) {
     const rect = canvas.getBoundingClientRect();
     const x = (ex - rect.left) * (W / rect.width);
-    const y = (ey - rect.top)  * (H / rect.height);
+    const y = (ey - rect.top)  * (W / rect.height);
     if (Math.sqrt((x-cx)**2 + (y-cy)**2) > R) return;
     const d = ctx.getImageData(
       Math.round(Math.min(Math.max(x,0),W-1)),
-      Math.round(Math.min(Math.max(y,0),H-1)), 1, 1).data;
+      Math.round(Math.min(Math.max(y,0),W-1)), 1, 1).data;
     wheelHSLColor = rgbToHex(d[0], d[1], d[2]);
     onBrightnessChange();
   }
@@ -866,7 +895,7 @@ function onBrightnessChange() {
 function kelvinToRgb(K) {
   const t = K / 100;
   let r, g, b;
-  r = t <= 66 ? 255 : Math.min(255, Math.max(0, 329.698727446  * Math.pow(t-60, -0.1332047592)));
+  r = t <= 66 ? 255 : Math.min(255, Math.max(0, 329.698727446 * Math.pow(t-60, -0.1332047592)));
   g = t <= 66 ? Math.min(255, Math.max(0, 99.4708025861 * Math.log(t) - 161.1195681661))
               : Math.min(255, Math.max(0, 288.1221695283 * Math.pow(t-60, -0.0755148492)));
   b = t >= 66 ? 255 : (t <= 19 ? 0 : Math.min(255, Math.max(0, 138.5177312231 * Math.log(t-10) - 305.0447927307)));
@@ -892,11 +921,9 @@ function onGreenChange() {
   const f = greenBrightness / 100, base = 255 * f;
   let r, g, b;
   if (greenShift >= 0) {
-    const t = greenShift / 100;
-    r = base * (1 - t * 0.45); g = base; b = base * (1 - t * 0.45);
+    const t = greenShift / 100; r = base*(1-t*0.45); g = base; b = base*(1-t*0.45);
   } else {
-    const t = Math.abs(greenShift) / 100;
-    r = base; g = base * (1 - t * 0.65); b = base;
+    const t = Math.abs(greenShift)/100; r = base; g = base*(1-t*0.65); b = base;
   }
   applyColor(
     rgbToHex(Math.min(255,Math.max(0,Math.round(r))), Math.min(255,Math.max(0,Math.round(g))), Math.min(255,Math.max(0,Math.round(b)))),
@@ -925,9 +952,9 @@ function onStrobeToggle() {
   else stopStrobe();
 }
 function onStrobeParamChange() {
-  strobeFreq       = parseFloat(document.getElementById('freqSlider').value);
-  strobeFlashDur   = parseInt(document.getElementById('flashDurSlider').value);
-  strobeFreqMax    = parseFloat(document.getElementById('freqMaxSlider').value);
+  strobeFreq = parseFloat(document.getElementById('freqSlider').value);
+  strobeFlashDur = parseInt(document.getElementById('flashDurSlider').value);
+  strobeFreqMax = parseFloat(document.getElementById('freqMaxSlider').value);
   strobeFlashDurMax = parseInt(document.getElementById('flashDurMaxSlider').value);
   document.getElementById('freqVal').innerHTML      = strobeFreq.toFixed(1) + '<span> Hz</span>';
   document.getElementById('flashDurVal').innerHTML  = strobeFlashDur + '<span> ms</span>';
@@ -936,10 +963,10 @@ function onStrobeParamChange() {
   if (strobeActive) { sendMsg(buildStrobePayload()); runLocalStrobePreview(); }
 }
 function buildStrobePayload() {
-  return { type: 'strobe', active: strobeActive, random: strobeMode === 'random',
-    freq: strobeFreq, dur: strobeFlashDur,
-    freqMin: strobeFreq, freqMax: strobeFreqMax,
-    durMin: strobeFlashDur, durMax: strobeFlashDurMax };
+  return { type:'strobe', active:strobeActive, random:strobeMode==='random',
+    freq:strobeFreq, dur:strobeFlashDur,
+    freqMin:strobeFreq, freqMax:strobeFreqMax,
+    durMin:strobeFlashDur, durMax:strobeFlashDurMax };
 }
 function stopStrobe() {
   strobeActive = false;
@@ -955,14 +982,14 @@ function runLocalStrobePreview() {
   function cycle() {
     let freq = strobeFreq, dur = strobeFlashDur;
     if (strobeMode === 'random') {
-      freq = strobeFreq + Math.random() * (strobeFreqMax - strobeFreq);
-      dur  = strobeFlashDur + Math.random() * (strobeFlashDurMax - strobeFlashDur);
+      freq = strobeFreq + Math.random()*(strobeFreqMax-strobeFreq);
+      dur  = strobeFlashDur + Math.random()*(strobeFlashDurMax-strobeFlashDur);
     }
-    const interval = Math.max(dur + 5, 1000 / freq);
+    const interval = Math.max(dur+5, 1000/freq);
     flashEl.style.opacity = '0.9';
     strobePreviewTimer = setTimeout(() => {
       flashEl.style.opacity = '0';
-      if (strobeActive) strobePreviewTimer = setTimeout(cycle, interval - dur);
+      if (strobeActive) strobePreviewTimer = setTimeout(cycle, interval-dur);
     }, dur);
   }
   cycle();
@@ -974,30 +1001,39 @@ function stopLocalStrobePreview() {
   if (f) f.style.opacity = '0';
 }
 
+// ══════════════════════════ PRESETS ══════════════════════════
+const PRESETS = [
+  { name:'Bougie', color:'#ff9b4a' }, { name:'Tungstène', color:'#ffb347' },
+  { name:'Jour froid', color:'#a8d8f0' }, { name:'Coucher', color:'#ff6b35' },
+  { name:'Nuit bleue', color:'#1a3a6b' }, { name:'Néon rose', color:'#ff2d78' },
+  { name:'Forêt', color:'#2d6b3a' }, { name:'Amber', color:'#ff8c00' },
+  { name:'Morgue', color:'#00ffe7' }, { name:'Crimson', color:'#b80000' },
+  { name:'Lavande', color:'#7b5ea7' }, { name:'Blanc pur', color:'#ffffff' },
+];
+function buildPresets() {
+  const grid = document.getElementById('presetsGrid');
+  PRESETS.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.innerHTML = `<div class="preset-swatch" style="background:${p.color}"></div><div class="preset-name">${p.name}</div>`;
+    btn.onclick = () => { applyColor(p.color, p.name); sendColor(); };
+    grid.appendChild(btn);
+  });
+}
+
 // ══════════════════════════ QR CODE ══════════════════════════
-// Minimal QR encoder using qrcodejs (loaded inline via data URI trick → pure JS fallback)
 function renderQR() {
   const urlEl = document.getElementById('qrUrl');
   const canvas = document.getElementById('qrCanvas');
   if (!channel) { urlEl.textContent = 'Connectez-vous d\'abord à un canal'; return; }
   const url = location.origin + location.pathname + '#' + channel;
   urlEl.textContent = url;
-  // Use QR Server API (public, no tracking) to generate QR image
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.onload = () => {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  };
-  img.onerror = () => {
-    // Fallback: draw URL as text
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#000';
-    ctx.font = '10px monospace';
-    ctx.fillText('Scan: ' + url, 5, 20);
   };
   img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url);
 }
@@ -1013,14 +1049,12 @@ function rgbToHex(r,g,b) {
   return '#' + [r,g,b].map(v => Math.round(v).toString(16).padStart(2,'0')).join('');
 }
 function hexToRgb(hex) {
-  return { r: parseInt(hex.slice(1,3),16), g: parseInt(hex.slice(3,5),16), b: parseInt(hex.slice(5,7),16) };
+  return { r:parseInt(hex.slice(1,3),16), g:parseInt(hex.slice(3,5),16), b:parseInt(hex.slice(5,7),16) };
 }
 
-// Init from URL hash (screen mode auto-connect)
+// Auto-connect via URL hash (QR scan)
 if (location.hash) {
-  const ch = location.hash.replace('#','');
-  startMode('screen');
-  connectScreenChannel(ch);
+  enterScreenMode(location.hash.replace('#',''));
 }
 </script>
 </body>
