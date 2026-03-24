@@ -111,6 +111,13 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 .qr-wrap canvas{border-radius:8px;background:#fff;padding:8px}
 .qr-url{font-size:.58rem;color:var(--muted);letter-spacing:.06em;word-break:break-all;text-align:center}
 
+
+/* SCREEN BOTTOM BAR */
+#screen-bar{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10}
+.screen-bar-btn{background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:7px 16px;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap}
+.screen-bar-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(232,201,122,.12)}
+.screen-bar-btn.unavail{opacity:.3;cursor:default}
+
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 </style>
@@ -291,6 +298,23 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
         </div>
       </div>
       <div class="strobe-preview">Aperçu local<div class="strobe-flash" id="strobeFlashPreview"></div></div>
+      <div style="height:1px;background:var(--border);margin:14px 0"></div>
+      <div class="panel-label">Effets sur le récepteur</div>
+      <div class="toggle-row" style="margin-bottom:10px">
+        <div><div class="toggle-label" style="font-size:.75rem">🔦 Torche synchronisée</div><div class="toggle-sub">Flash la torche du récepteur avec le strobe</div></div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="torchSyncToggle" onchange="onStrobeParamChange()">
+          <div class="toggle-track"></div><div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="panel-label" style="margin-top:4px">📳 Vibration rapide</div>
+      <div class="chips-wrap">
+        <button class="chip" onclick="sendVibrate([80])">Court</button>
+        <button class="chip" onclick="sendVibrate([300])">Long</button>
+        <button class="chip" onclick="sendVibrate([80,80,80])">Double</button>
+        <button class="chip" onclick="sendVibrate([80,60,80,60,300])">Alerte</button>
+        <button class="chip" onclick="sendVibrate([50,30,50,30,50,30,300,50,300,50,300,50,50,30,50,30,50])">SOS</button>
+      </div>
     </div>
   </div>
 
@@ -366,6 +390,7 @@ function connectMQTT(ch, onConnected) {
       if (mode === 'screen') {
         if (msg.type === 'color')  receiveColor(msg.color);
         if (msg.type === 'strobe') receiveStrobe(msg);
+        if (msg.type === 'vibrate') doVibrate(msg.pattern);
       }
     } catch (_) {}
   });
@@ -427,6 +452,7 @@ function enterScreenMode(ch) {
   el.style.backgroundColor = '#1a1a1a';
   setScreenStatus('Connexion à ' + ch + '…');
   requestFS();
+  if (!navigator.vibrate) { const b=document.getElementById('vibrateBtn'); if(b){b.classList.add('unavail');b.textContent='📳 N/A';b.classList.remove('on');} vibrateEnabled=false; }
   initBCFallback(ch);
   connectMQTT(ch, () => setScreenStatus('✓ En écoute — canal : ' + ch));
 }
@@ -500,19 +526,26 @@ function receiveColor(color) {
     sc.style.backgroundColor = color;
   }
   document.getElementById('current-hex').textContent = color.toUpperCase();
+  doVibrate([40]);
   if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(() => {});
 }
 function receiveStrobe(msg) {
   if (screenStrobeTimer) { clearTimeout(screenStrobeTimer); screenStrobeTimer = null; }
   const sc = document.getElementById('screen-mode');
-  if (!msg.active) { sc.style.transition = 'background-color 0.3s'; sc.style.backgroundColor = screenBaseColor; return; }
+  if (!msg.active) { sc.style.transition = 'background-color 0.3s'; sc.style.backgroundColor = screenBaseColor; setTorch(false); return; }
   sc.style.transition = 'none';
+  const useTorch = msg.torch;
   function flash() {
     let freq = msg.freq, dur = msg.dur;
     if (msg.random) { freq = msg.freqMin+Math.random()*(msg.freqMax-msg.freqMin); dur = msg.durMin+Math.random()*(msg.durMax-msg.durMin); }
     const interval = Math.max(dur+5, 1000/freq);
     sc.style.backgroundColor = screenBaseColor;
-    screenStrobeTimer = setTimeout(() => { sc.style.backgroundColor='#000'; screenStrobeTimer=setTimeout(flash,interval-dur); }, dur);
+    if (useTorch) setTorch(true);
+    screenStrobeTimer = setTimeout(() => {
+      sc.style.backgroundColor='#000';
+      if (useTorch) setTorch(false);
+      screenStrobeTimer=setTimeout(flash,interval-dur);
+    }, dur);
   }
   flash();
 }
@@ -611,7 +644,7 @@ function onStrobeParamChange() {
   document.getElementById('flashDurMaxVal').innerHTML=strobeFlashDurMax+'<span> ms</span>';
   if(strobeActive){sendMsg(buildStrobePayload());runLocalStrobePreview();}
 }
-function buildStrobePayload(){return{type:'strobe',active:strobeActive,random:strobeMode==='random',freq:strobeFreq,dur:strobeFlashDur,freqMin:strobeFreq,freqMax:strobeFreqMax,durMin:strobeFlashDur,durMax:strobeFlashDurMax};}
+function buildStrobePayload(){const ts=document.getElementById('torchSyncToggle');return{type:'strobe',active:strobeActive,torch:ts?ts.checked:false,random:strobeMode==='random',freq:strobeFreq,dur:strobeFlashDur,freqMin:strobeFreq,freqMax:strobeFreqMax,durMin:strobeFlashDur,durMax:strobeFlashDurMax};}
 function stopStrobe() {
   strobeActive=false;
   if(document.getElementById('strobeToggle'))document.getElementById('strobeToggle').checked=false;
@@ -668,6 +701,50 @@ function applyColor(hex,meta){currentColor=hex;document.getElementById('previewS
 function rgbToHex(r,g,b){return'#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');}
 function hexToRgb(hex){return{r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)};}
 
+
+
+// ══════════════════════════ TORCH & VIBRATE (receiver) ══════════════════════════
+let torchEnabled = false, torchTrack = null, vibrateEnabled = true;
+
+async function toggleScreenTorch() {
+  const btn = document.getElementById('torchBtn');
+  if (torchEnabled) {
+    torchEnabled = false;
+    if (torchTrack) { try { await torchTrack.applyConstraints({ advanced:[{torch:false}] }); } catch(_){} torchTrack.stop(); torchTrack = null; }
+    btn.classList.remove('on'); btn.textContent = '🔦 Torche';
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
+    const track = stream.getVideoTracks()[0];
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    if (!caps.torch) { stream.getTracks().forEach(t=>t.stop()); btn.classList.add('unavail'); btn.textContent = '🔦 N/A'; return; }
+    torchTrack = track; torchEnabled = true;
+    btn.classList.add('on'); btn.textContent = '🔦 Torche ON';
+  } catch(e) { btn.classList.add('unavail'); btn.textContent = '🔦 Refusé'; }
+}
+
+async function setTorch(on) {
+  if (!torchEnabled || !torchTrack) return;
+  try { await torchTrack.applyConstraints({ advanced:[{torch:on}] }); } catch(_){}
+}
+
+function toggleScreenVibrate() {
+  vibrateEnabled = !vibrateEnabled;
+  const btn = document.getElementById('vibrateBtn');
+  btn.classList.toggle('on', vibrateEnabled);
+  btn.textContent = vibrateEnabled ? '📳 Vibreur' : '📳 Muet';
+  if (!navigator.vibrate) { btn.classList.add('unavail'); btn.textContent = '📳 N/A'; vibrateEnabled = false; }
+}
+
+function doVibrate(pattern) {
+  if (vibrateEnabled && navigator.vibrate) navigator.vibrate(pattern);
+}
+
+// Remote: send vibration command to receiver
+function sendVibrate(pattern) {
+  sendMsg({ type:'vibrate', pattern });
+}
 
 // ══════════════════════════ FULLSCREEN ══════════════════════════
 function requestFS() {
