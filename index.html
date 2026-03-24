@@ -111,6 +111,16 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 .qr-wrap canvas{border-radius:8px;background:#fff;padding:8px}
 .qr-url{font-size:.58rem;color:var(--muted);letter-spacing:.06em;word-break:break-all;text-align:center}
 
+/* FLASH TAB */
+.torch-onoff-btn{width:100%;padding:18px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:1rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
+.torch-onoff-btn.on{background:rgba(255,230,100,.12);border-color:#ffe664;color:#ffe664;box-shadow:0 0 20px rgba(255,230,100,.15)}
+.torch-dim-disabled{opacity:.35;pointer-events:none}
+.effect-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.effect-btn{border:1px solid var(--border);border-radius:6px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--mid2);transition:all .15s;touch-action:manipulation;font-family:'DM Mono',monospace;color:var(--muted);font-size:.6rem;letter-spacing:.07em;text-transform:uppercase}
+.effect-btn:hover,.effect-btn.active{border-color:rgba(255,255,255,.25);color:var(--text);transform:scale(.97)}
+.effect-btn .effect-icon{font-size:1.4rem}
+.torch-level-bar{height:8px;border-radius:4px;background:linear-gradient(to right,#333,#ffe664);margin-bottom:14px;overflow:hidden;position:relative}
+.torch-level-fill{height:100%;background:#ffe664;border-radius:4px;transition:width .1s;box-shadow:0 0 8px rgba(255,230,100,.5)}
 
 /* SCREEN BOTTOM BAR */
 #screen-bar{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10}
@@ -179,6 +189,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
     <button class="tab-btn" onclick="switchTab('kelvin')" id="tab-kelvin">🌡 Kelvin</button>
     <button class="tab-btn" onclick="switchTab('green')" id="tab-green">🟢 Green</button>
     <button class="tab-btn" onclick="switchTab('strobe')" id="tab-strobe">⚡ Strobe</button>
+    <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash">🔦 Flash</button>
     <button class="tab-btn" onclick="switchTab('presets')" id="tab-presets">🎬 Presets</button>
     <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr">📡 QR</button>
   </div>
@@ -318,6 +329,47 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
     </div>
   </div>
 
+  <div class="tab-content" id="content-flash">
+    <div class="panel">
+      <div class="panel-label">Torche récepteur</div>
+      <button class="torch-onoff-btn" id="remoteTorchBtn" onclick="onRemoteTorchToggle()">
+        <span id="remoteTorchIcon">🔦</span><span id="remoteTorchLabel">Allumer la torche</span>
+      </button>
+      <div id="torchDimSection">
+        <div class="torch-level-bar"><div class="torch-level-fill" id="torchLevelFill" style="width:100%"></div></div>
+        <div class="slider-block">
+          <div class="slider-header"><label>Intensité</label><div class="slider-val" id="torchDimVal">100<span>%</span></div></div>
+          <input type="range" id="torchDimSlider" min="5" max="100" value="100"
+                 style="background:linear-gradient(to right,#333,#ffe664)"
+                 oninput="onTorchDimChange()">
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">Effets</div>
+      <div class="effect-grid">
+        <button class="effect-btn" id="efx-sos" onclick="sendTorchEffect('sos')">
+          <span class="effect-icon">🆘</span>SOS
+        </button>
+        <button class="effect-btn" id="efx-blink-slow" onclick="sendTorchEffect('blink-slow')">
+          <span class="effect-icon">🔁</span>Clignotement lent
+        </button>
+        <button class="effect-btn" id="efx-blink-fast" onclick="sendTorchEffect('blink-fast')">
+          <span class="effect-icon">⚡</span>Clignotement rapide
+        </button>
+        <button class="effect-btn" id="efx-police" onclick="sendTorchEffect('police')">
+          <span class="effect-icon">🚨</span>Police
+        </button>
+        <button class="effect-btn" id="efx-heartbeat" onclick="sendTorchEffect('heartbeat')">
+          <span class="effect-icon">💓</span>Battement
+        </button>
+        <button class="effect-btn" id="efx-stop" onclick="sendTorchEffect('stop')" style="border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.7)">
+          <span class="effect-icon">⏹</span>Stop effet
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="tab-content" id="content-presets">
     <div class="panel">
       <div class="panel-label">Ambiances cinéma</div>
@@ -388,9 +440,12 @@ function connectMQTT(ch, onConnected) {
       // Ignorer ses propres messages (même clientId dans le payload)
       if (msg._id === clientId) return;
       if (mode === 'screen') {
-        if (msg.type === 'color')  receiveColor(msg.color);
-        if (msg.type === 'strobe') receiveStrobe(msg);
-        if (msg.type === 'vibrate') doVibrate(msg.pattern);
+        if (msg.type === 'color')        receiveColor(msg.color);
+        if (msg.type === 'strobe')       receiveStrobe(msg);
+        if (msg.type === 'vibrate')      doVibrate(msg.pattern);
+        if (msg.type === 'torch-onoff')  receiveTorchOnOff(msg.on);
+        if (msg.type === 'torch-dim')    receiveTorchDim(msg.level);
+        if (msg.type === 'torch-effect') receiveTorchEffect(msg.effect);
       }
     } catch (_) {}
   });
@@ -725,7 +780,7 @@ async function toggleScreenTorch() {
 }
 
 async function setTorch(on) {
-  if (!torchEnabled || !torchTrack) return;
+  if (!torchTrack) return;
   try { await torchTrack.applyConstraints({ advanced:[{torch:on}] }); } catch(_){}
 }
 
@@ -745,6 +800,91 @@ function doVibrate(pattern) {
 function sendVibrate(pattern) {
   sendMsg({ type:'vibrate', pattern });
 }
+
+// ══════════════════════════ FLASH TAB — TÉLÉCOMMANDE ══════════════════════════
+let remoteTorchOn = false, activeEffect = null;
+
+function onRemoteTorchToggle() {
+  remoteTorchOn = !remoteTorchOn;
+  const btn = document.getElementById('remoteTorchBtn');
+  btn.classList.toggle('on', remoteTorchOn);
+  document.getElementById('remoteTorchLabel').textContent = remoteTorchOn ? 'Torche allumée' : 'Allumer la torche';
+  document.getElementById('remoteTorchIcon').textContent = remoteTorchOn ? '💡' : '🔦';
+  document.getElementById('torchDimSection').classList.toggle('torch-dim-disabled', !remoteTorchOn);
+  if (!remoteTorchOn) stopActiveEffect();
+  sendMsg({ type:'torch-onoff', on: remoteTorchOn });
+}
+
+function onTorchDimChange() {
+  const level = parseInt(document.getElementById('torchDimSlider').value);
+  document.getElementById('torchDimVal').innerHTML = level + '<span>%</span>';
+  document.getElementById('torchLevelFill').style.width = level + '%';
+  sendMsg({ type:'torch-dim', level });
+}
+
+function sendTorchEffect(effect) {
+  stopActiveEffect();
+  if (effect === 'stop') { sendMsg({ type:'torch-effect', effect:'stop' }); return; }
+  activeEffect = effect;
+  document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('efx-' + effect);
+  if (btn) btn.classList.add('active');
+  if (!remoteTorchOn) {
+    remoteTorchOn = true;
+    document.getElementById('remoteTorchBtn').classList.add('on');
+    document.getElementById('remoteTorchLabel').textContent = 'Torche allumée';
+    document.getElementById('remoteTorchIcon').textContent = '💡';
+  }
+  sendMsg({ type:'torch-effect', effect });
+}
+
+function stopActiveEffect() {
+  activeEffect = null;
+  document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
+}
+
+// ══════════════════════════ FLASH TAB — RÉCEPTEUR (web) ══════════════════════════
+let _torchDimTimer = null, _torchEffectTimer = null;
+
+function receiveTorchOnOff(on) {
+  stopTorchDimLoop(); stopTorchEffectLoop();
+  setTorch(on);
+}
+
+function receiveTorchDim(level) {
+  stopTorchDimLoop(); stopTorchEffectLoop();
+  if (level >= 100) { setTorch(true); return; }
+  if (level <= 0)   { setTorch(false); return; }
+  const period = 33, onTime = Math.max(3, Math.round(period * level / 100));
+  function cycle() {
+    setTorch(true);
+    _torchDimTimer = setTimeout(() => { setTorch(false); _torchDimTimer = setTimeout(cycle, period - onTime); }, onTime);
+  }
+  cycle();
+}
+
+function receiveTorchEffect(effect) {
+  stopTorchDimLoop(); stopTorchEffectLoop();
+  if (effect === 'stop') { setTorch(false); return; }
+  const patterns = {
+    'sos':        [200,100,200,100,200,400,500,100,500,100,500,400,200,100,200,100,200,1200],
+    'blink-slow': [600,400],
+    'blink-fast': [80,80],
+    'police':     [60,40,60,40,60,200,60,40,60,40,60,500],
+    'heartbeat':  [80,80,160,600],
+  };
+  const p = patterns[effect]; if (!p) return;
+  let idx = 0, state = true;
+  function step() {
+    setTorch(state); state = !state;
+    _torchEffectTimer = setTimeout(() => { idx = (idx + 1) % p.length; step(); }, p[idx]);
+    idx = (idx + 1) % p.length;
+  }
+  step();
+}
+
+function stopTorchDimLoop() { if (_torchDimTimer) { clearTimeout(_torchDimTimer); _torchDimTimer = null; } }
+function stopTorchEffectLoop() { if (_torchEffectTimer) { clearTimeout(_torchEffectTimer); _torchEffectTimer = null; } }
 
 // ══════════════════════════ FULLSCREEN ══════════════════════════
 function requestFS() {
