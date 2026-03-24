@@ -845,6 +845,7 @@ function stopActiveEffect() {
 
 // ══════════════════════════ FLASH TAB — RÉCEPTEUR (web) ══════════════════════════
 let _torchDimTimer = null, _torchEffectTimer = null;
+let _torchDimLevel = 100;
 
 function receiveTorchOnOff(on) {
   stopTorchDimLoop(); stopTorchEffectLoop();
@@ -852,13 +853,25 @@ function receiveTorchOnOff(on) {
 }
 
 function receiveTorchDim(level) {
-  stopTorchDimLoop(); stopTorchEffectLoop();
-  if (level >= 100) { setTorch(true); return; }
-  if (level <= 0)   { setTorch(false); return; }
-  const period = 33, onTime = Math.max(3, Math.round(period * level / 100));
+  stopTorchEffectLoop();
+  _torchDimLevel = level;
+  if (level <= 0)   { stopTorchDimLoop(); setTorch(false); return; }
+  if (level >= 100) { stopTorchDimLoop(); setTorch(true); return; }
+  // Met à jour le niveau sans redémarrer la boucle si déjà active
+  if (_torchDimTimer) return;
+  _startWebTorchDimLoop();
+}
+
+function _startWebTorchDimLoop() {
+  const period = 50; // 20Hz
   function cycle() {
+    if (_torchDimLevel >= 100) { setTorch(true); _torchDimTimer = null; return; }
+    const onTime = Math.max(3, Math.round(period * _torchDimLevel / 100));
     setTorch(true);
-    _torchDimTimer = setTimeout(() => { setTorch(false); _torchDimTimer = setTimeout(cycle, period - onTime); }, onTime);
+    _torchDimTimer = setTimeout(() => {
+      setTorch(false);
+      _torchDimTimer = setTimeout(cycle, period - onTime);
+    }, onTime);
   }
   cycle();
 }
