@@ -630,10 +630,8 @@ function startMode(m) {
                       && !!(window.Capacitor?.Plugins?.SACN);
     const bridgeSec = document.getElementById('screenSacnBridgeSection');
     const nativeBadge = document.getElementById('screenSacnNativeBadge');
-    const chip9 = document.getElementById('screenSacnMode-9ch');
     if (bridgeSec) bridgeSec.style.display = hasNative ? 'none' : 'flex';
     if (nativeBadge) nativeBadge.style.display = hasNative ? 'block' : 'none';
-    if (chip9) chip9.style.display = hasNative ? 'inline-flex' : 'none';
     if (hasNative) selectScreenSacnMode('9ch');
     return;
   }
