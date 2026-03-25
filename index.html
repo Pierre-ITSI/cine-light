@@ -163,9 +163,10 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 .sacn-bridge-ip-row{display:flex;gap:6px;align-items:center}
 .sacn-native-badge{background:rgba(232,201,122,.12);border:1px solid rgba(232,201,122,.3);border-radius:6px;padding:10px 16px;font-size:.65rem;color:var(--accent);letter-spacing:.08em;text-align:center;width:100%;max-width:380px}
 /* SCREEN BOTTOM BAR */
-#screen-bar{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10}
-.screen-bar-btn{background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:7px 16px;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap}
-.screen-bar-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(232,201,122,.12)}
+#screen-bar{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);display:flex;gap:12px;z-index:100}
+.screen-bar-btn{background:rgba(0,0,0,.75);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.35);border-radius:24px;padding:10px 22px;font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;color:rgba(255,255,255,.9);cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.screen-bar-btn:active{transform:scale(.95);background:rgba(0,0,0,.9)}
+.screen-bar-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(232,201,122,.15)}
 .screen-bar-btn.unavail{opacity:.3;cursor:default}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
@@ -244,8 +245,6 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
   <div id="screen-bar">
     <button class="screen-bar-btn" onclick="event.stopPropagation();goBackToSplash()">← Retour</button>
     <button class="screen-bar-btn" onclick="event.stopPropagation();suspendScreen()">⏸ Suspendre</button>
-    <button class="screen-bar-btn" id="torchBtn" onclick="event.stopPropagation();toggleWebTorch(this)">🔦 Torche</button>
-    <button class="screen-bar-btn" id="vibrateBtn" onclick="event.stopPropagation();toggleVibrate(this)">📳 Vibreur</button>
   </div>
 </div>
 
