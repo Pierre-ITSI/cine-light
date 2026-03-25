@@ -148,6 +148,20 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 .sacn-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .sacn-code{display:block;background:var(--dark);border:1px solid var(--border);border-radius:4px;padding:10px 12px;font-size:.72rem;color:var(--accent);margin-bottom:8px;word-break:break-all;font-family:'DM Mono',monospace}
 
+/* SCREEN sACN CONFIG */
+#screen-sacn-config{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:20px;padding:32px;animation:fadeIn .4s ease;overflow-y:auto}
+#screen-sacn-config h2{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);text-align:center;margin-bottom:0}
+#screen-sacn-config p{font-size:.7rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;text-align:center;margin:0}
+.sacn-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:380px}
+.sacn-config-field{display:flex;flex-direction:column;gap:6px}
+.sacn-config-field label{font-size:.58rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.sacn-screen-go{padding:14px 40px;background:var(--accent);color:var(--dark);border:none;font-family:'DM Mono',monospace;font-size:.9rem;letter-spacing:.1em;cursor:pointer;border-radius:4px;font-weight:600;width:100%;max-width:380px;transition:opacity .2s}
+.sacn-screen-go:hover{opacity:.85}
+.screen-sacn-back{background:none;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;cursor:pointer;padding:8px;text-transform:uppercase}
+.sacn-bridge-row{width:100%;max-width:380px;display:flex;flex-direction:column;gap:8px}
+.sacn-bridge-row label{font-size:.58rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.sacn-bridge-ip-row{display:flex;gap:6px;align-items:center}
+.sacn-native-badge{background:rgba(232,201,122,.12);border:1px solid rgba(232,201,122,.3);border-radius:6px;padding:10px 16px;font-size:.65rem;color:var(--accent);letter-spacing:.08em;text-align:center;width:100%;max-width:380px}
 /* SCREEN BOTTOM BAR */
 #screen-bar{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10}
 .screen-bar-btn{background:rgba(0,0,0,.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:7px 16px;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap}
@@ -166,7 +180,52 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
   <div class="splash-btns">
     <button class="splash-btn primary" onclick="startMode('remote')">📱→🎬 Télécommande</button>
     <button class="splash-btn" onclick="startMode('screen')">🟡 Écran projecteur</button>
+    <button class="splash-btn" onclick="startMode('screen-sacn')">🎛 Écran sACN</button>
   </div>
+</div>
+
+<div id="screen-sacn-config">
+  <h2>🎛 Écran sACN</h2>
+  <p>Réception directe de données DMX</p>
+
+  <div id="screenSacnNativeBadge" class="sacn-native-badge" style="display:none">
+    📡 Réception UDP native — aucun bridge requis
+  </div>
+
+  <div id="screenSacnBridgeSection" class="sacn-bridge-row">
+    <label>Bridge WebSocket</label>
+    <div class="sacn-bridge-ip-row">
+      <span style="font-size:.6rem;color:var(--muted)">ws://</span>
+      <input type="text" id="screenSacnBridgeIP" class="sacn-input" placeholder="192.168.1.100"
+             value="localhost" style="flex:1"
+             onkeydown="if(event.key==='Enter')enterScreenSACN()">
+      <span style="font-size:.6rem;color:var(--muted)">:</span>
+      <input type="text" id="screenSacnBridgePort" class="sacn-input" value="3001"
+             style="width:58px;text-align:center">
+    </div>
+  </div>
+
+  <div class="sacn-config-grid">
+    <div class="sacn-config-field">
+      <label>Univers sACN</label>
+      <input type="number" id="screenSacnUniverse" class="sacn-input" value="1" min="1" max="63999"
+             style="width:100%;text-align:center">
+    </div>
+    <div class="sacn-config-field">
+      <label>Adresse de départ</label>
+      <input type="number" id="screenSacnBaseAddr" class="sacn-input" value="1" min="1" max="512"
+             style="width:100%;text-align:center">
+    </div>
+  </div>
+
+  <div class="chips-wrap" style="max-width:380px;width:100%">
+    <button class="chip active" id="screenSacnMode-3ch" onclick="selectScreenSacnMode('3ch')">3CH · Dimmer CCT +/−</button>
+    <button class="chip" id="screenSacnMode-8ch" onclick="selectScreenSacnMode('8ch')">8CH · Full</button>
+    <button class="chip" id="screenSacnMode-9ch" onclick="selectScreenSacnMode('9ch')" style="display:none">9CH · Natif iOS</button>
+  </div>
+
+  <button class="sacn-screen-go" onclick="enterScreenSACN()">▶ Démarrer</button>
+  <button class="screen-sacn-back" onclick="goBackToSplash()">← Retour</button>
 </div>
 
 <div id="screen-connect">
@@ -614,6 +673,20 @@ function initBCFallback(ch) {
 // ══════════════════════════ NAVIGATION ══════════════════════════
 function startMode(m) {
   document.getElementById('splash').style.display = 'none';
+  if (m === 'screen-sacn') {
+    const cfgDiv = document.getElementById('screen-sacn-config');
+    if (cfgDiv) cfgDiv.style.display = 'flex';
+    const hasNative = (typeof IS_NATIVE !== 'undefined' && IS_NATIVE)
+                      && !!(window.Capacitor?.Plugins?.SACN);
+    const bridgeSec = document.getElementById('screenSacnBridgeSection');
+    const nativeBadge = document.getElementById('screenSacnNativeBadge');
+    const chip9 = document.getElementById('screenSacnMode-9ch');
+    if (bridgeSec) bridgeSec.style.display = hasNative ? 'none' : 'flex';
+    if (nativeBadge) nativeBadge.style.display = hasNative ? 'block' : 'none';
+    if (chip9) chip9.style.display = hasNative ? 'inline-flex' : 'none';
+    if (hasNative) selectScreenSacnMode('9ch');
+    return;
+  }
   if (m === 'remote') {
     mode = 'remote';
     document.getElementById('remote-mode').style.display = 'block';
@@ -665,6 +738,9 @@ function connectChannel() {
 
 function goBackToSplash() {
   exitFS();
+  const cfgDiv = document.getElementById('screen-sacn-config');
+  if (cfgDiv) cfgDiv.style.display = 'none';
+  stopScreenSACN();
   document.getElementById('screen-connect').style.display = 'none';
   document.getElementById('splash').style.display = 'flex';
 }
@@ -1024,6 +1100,133 @@ function _runEffect(name, p) {
       _screenEffectTimer = setTimeout(doFlash, 80);
       break;
     }
+  }
+}
+
+// ══════════════════════════ SCREEN sACN MODE ══════════════════════════
+let _screenSacnWs = null, _screenSacnMode = '3ch';
+
+function selectScreenSacnMode(mode) {
+  _screenSacnMode = mode;
+  ['3ch','8ch','9ch'].forEach(m => {
+    const b = document.getElementById('screenSacnMode-' + m);
+    if (b) b.classList.toggle('active', m === mode);
+  });
+}
+
+function enterScreenSACN() {
+  const universe = parseInt(document.getElementById('screenSacnUniverse').value) || 1;
+  const baseAddr = parseInt(document.getElementById('screenSacnBaseAddr').value) || 1;
+  sacnUniverse  = universe;
+  sacnStartAddr = baseAddr;
+  sacnMode      = _screenSacnMode;
+
+  document.getElementById('screen-sacn-config').style.display = 'none';
+  mode = 'screen-sacn';
+  const el = document.getElementById('screen-mode');
+  el.style.display   = 'flex';
+  el.style.backgroundColor = '#000000';
+  setScreenStatus('sACN · Connexion…');
+  requestFS();
+
+  const CapSACN = (typeof IS_NATIVE !== 'undefined' && IS_NATIVE)
+                  ? (window.Capacitor?.Plugins?.SACN || null) : null;
+
+  if (CapSACN) {
+    CapSACN.start({ universe, baseAddr })
+      .then(() => {
+        setScreenStatus('sACN ✓ U' + universe + ' · @' + baseAddr);
+        CapSACN.addListener('dmxUpdate', (f) => screenApplyNativeFixture(f));
+      })
+      .catch(() => setScreenStatus('⚠ sACN erreur'));
+  } else {
+    const ip   = (document.getElementById('screenSacnBridgeIP')?.value  || '').trim();
+    const port = (document.getElementById('screenSacnBridgePort')?.value || '3001').trim();
+    if (!ip) { setScreenStatus('⚠ Bridge IP manquant'); return; }
+    try {
+      _screenSacnWs = new WebSocket(`ws://${ip}:${port}`);
+    } catch(e) { setScreenStatus('⚠ Bridge erreur'); return; }
+    _screenSacnWs.onopen = () => {
+      setScreenStatus('sACN ✓ U' + universe + ' · @' + baseAddr);
+      _screenSacnWs.send(JSON.stringify({ type: 'setUniverse', universe }));
+    };
+    _screenSacnWs.onmessage = (e) => {
+      try { const m = JSON.parse(e.data); if (m.type === 'dmx') screenApplyDmx(m.dmx); } catch(_){}
+    };
+    _screenSacnWs.onerror  = () => setScreenStatus('⚠ Bridge déconnecté');
+    _screenSacnWs.onclose  = () => setScreenStatus('⚠ Bridge fermé');
+  }
+}
+
+function stopScreenSACN() {
+  if (_screenSacnWs) { _screenSacnWs.close(); _screenSacnWs = null; }
+  const CapSACN = (typeof IS_NATIVE !== 'undefined' && IS_NATIVE)
+                  ? (window.Capacitor?.Plugins?.SACN || null) : null;
+  if (CapSACN) CapSACN.stop().catch(() => {});
+}
+
+function screenApplyNativeFixture(f) {
+  const el = document.getElementById('screen-mode');
+  if (!el) return;
+  if (f.isStrobe) {
+    receiveStrobe({ active:true, torch:false, random:false,
+      freq:f.strobeHz||1, dur:f.strobeMs||50,
+      freqMin:f.strobeHz||1, freqMax:f.strobeHz||1,
+      durMin:f.strobeMs||50, durMax:f.strobeMs||50 });
+  } else {
+    receiveStrobe({ active:false });
+    el.style.transition = 'background-color .05s';
+    el.style.backgroundColor = rgbToHex(
+      Math.min(255, Math.round(f.finalR * 255)),
+      Math.min(255, Math.round(f.finalG * 255)),
+      Math.min(255, Math.round(f.finalB * 255))
+    );
+  }
+}
+
+function screenApplyDmx(dmx) {
+  const el = document.getElementById('screen-mode');
+  if (!el) return;
+  const addr = sacnStartAddr - 1;
+  const ch   = (n) => Math.max(0, Math.min(255, dmx[addr + n] || 0));
+  const dimmer = ch(0) / 255;
+
+  if (sacnMode === '3ch') {
+    const kelvin = Math.round(1700 + (ch(1) / 255) * 18300);
+    const gm = ch(2) <= 127 ? ((ch(2)/127)-1)*100 : ((ch(2)-128)/127)*100;
+    receiveStrobe({ active:false });
+    el.style.transition = 'background-color .05s';
+    el.style.backgroundColor = dmxKelvinGM(kelvin, gm, dimmer);
+  } else if (sacnMode === '8ch') {
+    const kelvin    = Math.round(1700 + (ch(1)/255) * 18300);
+    const gmRaw     = ch(2);
+    const gm        = gmRaw <= 127 ? ((gmRaw/127)-1)*100 : ((gmRaw-128)/127)*100;
+    const crossfade = ch(3) / 255;
+    const r=ch(4), g=ch(5), b=ch(6);
+    const shutter   = ch(7);
+    if (shutter === 0) {
+      receiveStrobe({ active:false });
+      el.style.transition = 'none';
+      el.style.backgroundColor = '#000000';
+      return;
+    }
+    if (shutter >= 1 && shutter <= 127) {
+      const freq = 0.5 + (shutter/127) * 19.5;
+      receiveStrobe({ active:true, torch:false, random:false,
+        freq, dur:40, freqMin:freq, freqMax:freq, durMin:40, durMax:40 });
+      return;
+    }
+    receiveStrobe({ active:false });
+    const cctRgb = kelvinToRgb(kelvin);
+    let cr=cctRgb.r, cg=cctRgb.g, cb=cctRgb.b;
+    if (gm>0) { cr*=(1-gm/100*0.45); cb*=(1-gm/100*0.45); }
+    else if (gm<0) { const t=Math.abs(gm)/100; cg*=(1-t*0.65); }
+    const fr=Math.min(255, cr*(1-crossfade)+r*crossfade);
+    const fg=Math.min(255, cg*(1-crossfade)+g*crossfade);
+    const fb=Math.min(255, cb*(1-crossfade)+b*crossfade);
+    el.style.transition = 'background-color .05s';
+    el.style.backgroundColor = rgbToHex(
+      Math.round(fr*dimmer), Math.round(fg*dimmer), Math.round(fb*dimmer));
   }
 }
 
