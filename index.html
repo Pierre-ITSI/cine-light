@@ -220,7 +220,6 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 
   <div class="chips-wrap" style="max-width:380px;width:100%">
     <button class="chip active" id="screenSacnMode-3ch" onclick="selectScreenSacnMode('3ch')">3CH · Dimmer CCT +/−</button>
-    <button class="chip" id="screenSacnMode-8ch" onclick="selectScreenSacnMode('8ch')">8CH · Full</button>
     <button class="chip" id="screenSacnMode-9ch" onclick="selectScreenSacnMode('9ch')" style="display:none">9CH · Natif iOS</button>
   </div>
 
@@ -276,7 +275,6 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
     <button class="tab-btn" onclick="switchTab('strobe')" id="tab-strobe">⚡ Strobe</button>
     <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash">🔦 Flash</button>
     <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects">✨ Effets</button>
-    <button class="tab-btn" onclick="switchTab('sacn')" id="tab-sacn">🎛 sACN</button>
     <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr">📡 QR</button>
   </div>
 
@@ -533,58 +531,6 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
       1. Sur l'écran : <strong style="color:var(--text)">Écran projecteur</strong> → taper le même code<br>
       2. Ou scanner ce QR pour ouvrir directement<br>
       3. Les couleurs s'envoient en temps réel ⚡
-    </div>
-  </div>
-  <div class="tab-content" id="content-sacn">
-    <div class="panel">
-      <div class="panel-label">Bridge WebSocket</div>
-      <div class="sacn-row">
-        <span style="font-size:.62rem;color:var(--muted);white-space:nowrap">ws://</span>
-        <input type="text" id="sacnBridgeIP" class="sacn-input" placeholder="192.168.1.100"
-               value="localhost" style="flex:1"
-               onkeydown="if(event.key==='Enter')sacnConnect()">
-        <span style="font-size:.62rem;color:var(--muted)">:</span>
-        <input type="text" id="sacnBridgePort" class="sacn-input" value="3001"
-               style="width:60px;text-align:center">
-      </div>
-      <div class="status-indicator" style="margin-bottom:10px">
-        <div class="dot" id="sacnDot"></div>
-        <span id="sacnLabel">Non connecté</span>
-      </div>
-      <button class="connect-btn" id="sacnConnectBtn" onclick="sacnConnect()" style="width:100%">Connecter</button>
-    </div>
-
-    <div class="panel">
-      <div class="panel-label">Configuration DMX</div>
-      <div class="sacn-grid2">
-        <div>
-          <div class="sacn-label-sm">Univers sACN</div>
-          <input type="number" id="sacnUniverse" class="sacn-input" value="1" min="1" max="63999" style="width:100%;text-align:center">
-        </div>
-        <div>
-          <div class="sacn-label-sm">Adresse de départ</div>
-          <input type="number" id="sacnStartAddr" class="sacn-input" value="1" min="1" max="512" style="width:100%;text-align:center">
-        </div>
-      </div>
-      <div class="panel-label">Mode DMX</div>
-      <div class="chips-wrap">
-        <button class="chip active" id="sacnmode-3ch" onclick="setSacnMode('3ch')">3CH · Dimmer CCT +/−</button>
-        <button class="chip" id="sacnmode-8ch" onclick="setSacnMode('8ch')">8CH · Full</button>
-      </div>
-    </div>
-
-    <div class="panel" id="sacnDmxPanel">
-      <div class="panel-label">Canaux DMX en direct</div>
-      <div class="dmx-grid" id="dmxChannelGrid"></div>
-      <div style="font-size:.55rem;color:var(--muted);margin-top:10px;letter-spacing:.06em;line-height:1.7">Valeurs reçues appliquées en temps réel aux écrans connectés via MQTT.</div>
-    </div>
-
-    <div class="panel" style="font-size:.62rem;color:var(--muted);line-height:1.9">
-      <div class="panel-label">Démarrer le bridge</div>
-      <code class="sacn-code">node sacn-bridge.js</code>
-      Prérequis : <strong style="color:var(--text)">Node.js</strong> installé sur un ordinateur du réseau<br>
-      Dépendance : <code style="color:var(--text)">npm install ws</code><br>
-      Options : <code style="color:var(--text)">--universe 2 --ws-port 3001</code>
     </div>
   </div>
 </div>
@@ -1108,7 +1054,7 @@ let _screenSacnWs = null, _screenSacnMode = '3ch';
 
 function selectScreenSacnMode(mode) {
   _screenSacnMode = mode;
-  ['3ch','8ch','9ch'].forEach(m => {
+  ['3ch','9ch'].forEach(m => {
     const b = document.getElementById('screenSacnMode-' + m);
     if (b) b.classList.toggle('active', m === mode);
   });
@@ -1197,36 +1143,6 @@ function screenApplyDmx(dmx) {
     receiveStrobe({ active:false });
     el.style.transition = 'background-color .05s';
     el.style.backgroundColor = dmxKelvinGM(kelvin, gm, dimmer);
-  } else if (sacnMode === '8ch') {
-    const kelvin    = Math.round(1700 + (ch(1)/255) * 18300);
-    const gmRaw     = ch(2);
-    const gm        = gmRaw <= 127 ? ((gmRaw/127)-1)*100 : ((gmRaw-128)/127)*100;
-    const crossfade = ch(3) / 255;
-    const r=ch(4), g=ch(5), b=ch(6);
-    const shutter   = ch(7);
-    if (shutter === 0) {
-      receiveStrobe({ active:false });
-      el.style.transition = 'none';
-      el.style.backgroundColor = '#000000';
-      return;
-    }
-    if (shutter >= 1 && shutter <= 127) {
-      const freq = 0.5 + (shutter/127) * 19.5;
-      receiveStrobe({ active:true, torch:false, random:false,
-        freq, dur:40, freqMin:freq, freqMax:freq, durMin:40, durMax:40 });
-      return;
-    }
-    receiveStrobe({ active:false });
-    const cctRgb = kelvinToRgb(kelvin);
-    let cr=cctRgb.r, cg=cctRgb.g, cb=cctRgb.b;
-    if (gm>0) { cr*=(1-gm/100*0.45); cb*=(1-gm/100*0.45); }
-    else if (gm<0) { const t=Math.abs(gm)/100; cg*=(1-t*0.65); }
-    const fr=Math.min(255, cr*(1-crossfade)+r*crossfade);
-    const fg=Math.min(255, cg*(1-crossfade)+g*crossfade);
-    const fb=Math.min(255, cb*(1-crossfade)+b*crossfade);
-    el.style.transition = 'background-color .05s';
-    el.style.backgroundColor = rgbToHex(
-      Math.round(fr*dimmer), Math.round(fg*dimmer), Math.round(fb*dimmer));
   }
 }
 
@@ -1242,16 +1158,6 @@ const SACN_MODES = {
     { label:'CCT',       short:'CCT' },
     { label:'+/− GM',    short:'+/−' },
   ],
-  '8ch': [
-    { label:'Dimmer',    short:'DIM' },
-    { label:'CCT',       short:'CCT' },
-    { label:'+/− GM',    short:'+/−' },
-    { label:'Crossfade', short:'XFD' },
-    { label:'Red',       short:'R'   },
-    { label:'Green',     short:'G'   },
-    { label:'Blue',      short:'B'   },
-    { label:'Shutter',   short:'SHT' },
-  ],
 };
 
 function sacnConnect() {
@@ -1260,7 +1166,7 @@ function sacnConnect() {
   if (!ip) return;
   sacnUniverse  = parseInt(document.getElementById('sacnUniverse').value)  || 1;
   sacnStartAddr = parseInt(document.getElementById('sacnStartAddr').value) || 1;
-  sacnMode = document.getElementById('sacnmode-8ch')?.classList.contains('active') ? '8ch' : '3ch';
+  sacnMode = sacnMode || '3ch';
   if (sacnWs) { sacnWs.close(); sacnWs = null; }
   setSacnStatus('connecting');
   try {
@@ -1299,7 +1205,6 @@ function setSacnStatus(s) {
 function setSacnMode(mode) {
   sacnMode = mode;
   document.getElementById('sacnmode-3ch').classList.toggle('active', mode === '3ch');
-  document.getElementById('sacnmode-8ch').classList.toggle('active', mode === '8ch');
   updateDmxGrid();
 }
 
@@ -1344,47 +1249,6 @@ function applyDmxToOutput(dmx) {
     const gm     = gmRaw <= 127 ? ((gmRaw / 127) - 1) * 100 : ((gmRaw - 128) / 127) * 100;
     const color  = dmxKelvinGM(kelvin, gm, dimmer);
     sacnSendColor(color, `sACN 3CH`);
-  } else if (sacnMode === '8ch') {
-    const kelvin    = Math.round(1700 + (ch(1) / 255) * (20000 - 1700));
-    const gmRaw     = ch(2);
-    const gm        = gmRaw <= 127 ? ((gmRaw / 127) - 1) * 100 : ((gmRaw - 128) / 127) * 100;
-    const crossfade = ch(3) / 255; // 0=full CCT, 255=full RGB
-    const r         = ch(4);
-    const g         = ch(5);
-    const b         = ch(6);
-    const shutter   = ch(7);
-
-    // Shutter channel
-    if (shutter === 0) {
-      sacnSendColor('#000000', 'sACN Blackout');
-      if (_sacnStrobeActive) { sendMsg({ type:'strobe', active:false }); _sacnStrobeActive = false; }
-      return;
-    }
-    if (shutter >= 1 && shutter <= 127) {
-      // Map 127=fast (20Hz) → 1=slow (0.5Hz)
-      const freq = 0.5 + (shutter / 127) * 19.5;
-      const now  = Date.now();
-      if (now - _sacnLastSend > 200) {
-        _sacnLastSend = now;
-        sendMsg({ type:'strobe', active:true, torch:false, random:false, freq, dur:40, freqMin:freq, freqMax:freq, durMin:40, durMax:40 });
-        _sacnStrobeActive = true;
-      }
-      return;
-    }
-    // Normal output (shutter 128-255)
-    if (_sacnStrobeActive) { sendMsg({ type:'strobe', active:false }); _sacnStrobeActive = false; }
-
-    // Mix CCT and RGB via crossfade
-    const cctRgb = kelvinToRgb(kelvin);
-    let cr = cctRgb.r, cg = cctRgb.g, cb = cctRgb.b;
-    if (gm > 0) { cr *= (1 - gm/100 * 0.45); cb *= (1 - gm/100 * 0.45); }
-    else if (gm < 0) { const t = Math.abs(gm)/100; cg *= (1 - t * 0.65); }
-
-    const fr = Math.min(255, cr * (1 - crossfade) + r * crossfade);
-    const fg = Math.min(255, cg * (1 - crossfade) + g * crossfade);
-    const fb = Math.min(255, cb * (1 - crossfade) + b * crossfade);
-    const color = rgbToHex(Math.round(fr * dimmer), Math.round(fg * dimmer), Math.round(fb * dimmer));
-    sacnSendColor(color, 'sACN 8CH');
   }
 }
 
