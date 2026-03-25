@@ -180,12 +180,12 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
   <div class="splash-btns">
     <button class="splash-btn primary" onclick="startMode('remote')">📱→🎬 Télécommande</button>
     <button class="splash-btn" onclick="startMode('screen')">🟡 Écran projecteur</button>
-    <button class="splash-btn" onclick="startMode('screen-sacn')">🎛 Écran sACN</button>
+    <button class="splash-btn" onclick="startMode('screen-sacn')">🎛 Mode DMX</button>
   </div>
 </div>
 
 <div id="screen-sacn-config">
-  <h2>🎛 Écran sACN</h2>
+  <h2>🎛 Mode DMX</h2>
   <p>Réception directe de données DMX</p>
 
   <div id="screenSacnNativeBadge" class="sacn-native-badge" style="display:none">
@@ -220,11 +220,11 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 
   <div class="chips-wrap" style="max-width:380px;width:100%">
     <button class="chip active" id="screenSacnMode-3ch" onclick="selectScreenSacnMode('3ch')">3CH · Dimmer CCT +/−</button>
-    <button class="chip" id="screenSacnMode-9ch" onclick="selectScreenSacnMode('9ch')" style="display:none">9CH · Natif iOS</button>
+    <button class="chip" id="screenSacnMode-9ch" onclick="selectScreenSacnMode('9ch')">9CH</button>
   </div>
 
   <button class="sacn-screen-go" onclick="enterScreenSACN()">▶ Démarrer</button>
-  <button class="screen-sacn-back" onclick="goBackToSplash()">← Retour</button>
+  <button class="screen-sacn-back" onclick="goBackToSplash()">← Fermer mode DMX</button>
 </div>
 
 <div id="screen-connect">
@@ -241,7 +241,11 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 
 <div id="screen-mode" onclick="requestFS()">
   <div class="status-pill" id="screen-status">Connexion…</div>
-
+  <div id="screen-bar">
+    <button class="screen-bar-btn" onclick="event.stopPropagation();goBackToSplash()">← Retour</button>
+    <button class="screen-bar-btn" id="torchBtn" onclick="event.stopPropagation();toggleWebTorch(this)">🔦 Torche</button>
+    <button class="screen-bar-btn" id="vibrateBtn" onclick="event.stopPropagation();toggleVibrate(this)">📳 Vibreur</button>
+  </div>
 </div>
 
 <div id="remote-mode">
@@ -1143,6 +1147,26 @@ function screenApplyDmx(dmx) {
     receiveStrobe({ active:false });
     el.style.transition = 'background-color .05s';
     el.style.backgroundColor = dmxKelvinGM(kelvin, gm, dimmer);
+  } else if (sacnMode === '9ch') {
+    const r = ch(0), g = ch(1), b = ch(2);
+    const dimmer = ch(3) / 255;
+    const gmRaw  = ch(6);
+    const gm     = gmRaw <= 127 ? ((gmRaw/127)-1)*100 : ((gmRaw-128)/127)*100;
+    const strobeHz = ch(7);
+    const strobeMs = Math.round(5 + (ch(8)/255)*495);
+    if (strobeHz > 0) {
+      const freq = 0.5 + (strobeHz/255)*24.5;
+      receiveStrobe({ active:true, torch:false, random:false,
+        freq, dur:strobeMs, freqMin:freq, freqMax:freq, durMin:strobeMs, durMax:strobeMs });
+      return;
+    }
+    receiveStrobe({ active:false });
+    let fr = r/255, fg = g/255, fb = b/255;
+    if (gm > 0)      { fr *= (1-gm/100*0.45); fb *= (1-gm/100*0.45); }
+    else if (gm < 0) { const t=Math.abs(gm)/100; fg *= (1-t*0.65); }
+    el.style.transition = 'background-color .05s';
+    el.style.backgroundColor = rgbToHex(
+      Math.round(fr*dimmer*255), Math.round(fg*dimmer*255), Math.round(fb*dimmer*255));
   }
 }
 
@@ -1157,6 +1181,17 @@ const SACN_MODES = {
     { label:'Dimmer',    short:'DIM' },
     { label:'CCT',       short:'CCT' },
     { label:'+/− GM',    short:'+/−' },
+  ],
+  '9ch': [
+    { label:'Red',       short:'R'   },
+    { label:'Green',     short:'G'   },
+    { label:'Blue',      short:'B'   },
+    { label:'Dimmer',    short:'DIM' },
+    { label:'Kelvin L',  short:'K-L' },
+    { label:'Kelvin H',  short:'K-H' },
+    { label:'GM Shift',  short:'+/−' },
+    { label:'Strobe Hz', short:'S-F' },
+    { label:'Strobe ms', short:'S-D' },
   ],
 };
 
