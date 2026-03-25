@@ -243,6 +243,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
   <div class="status-pill" id="screen-status">Connexion…</div>
   <div id="screen-bar">
     <button class="screen-bar-btn" onclick="event.stopPropagation();goBackToSplash()">← Retour</button>
+    <button class="screen-bar-btn" onclick="event.stopPropagation();suspendScreen()">⏸ Suspendre</button>
     <button class="screen-bar-btn" id="torchBtn" onclick="event.stopPropagation();toggleWebTorch(this)">🔦 Torche</button>
     <button class="screen-bar-btn" id="vibrateBtn" onclick="event.stopPropagation();toggleVibrate(this)">📳 Vibreur</button>
   </div>
@@ -684,6 +685,20 @@ function connectChannel() {
     sendMsg({ type: 'color', color: currentColor });
   });
   setTimeout(renderQR, 300);
+}
+
+function suspendScreen() {
+  exitFS();
+  // Déconnecter MQTT mais garder le canal en mémoire
+  if (mqttClient) { mqttClient.end(true); mqttClient = null; }
+  // Cacher l'écran et revenir à la saisie de canal
+  const el = document.getElementById('screen-mode');
+  if (el) el.style.display = 'none';
+  // Pré-remplir le champ avec le canal actuel
+  const inp = document.getElementById('screenChannelInput');
+  if (inp && channel) inp.value = channel;
+  document.getElementById('screen-connect').style.display = 'flex';
+  setTimeout(() => { if (inp) inp.focus(); }, 100);
 }
 
 function goBackToSplash() {
