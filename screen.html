@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Ciné Light</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --bg: #0E0E10; --surface: #1C1C21; --accent: #C9A84C;
+      --text: #EDE9E3; --muted: #666; --green: #34D399; --red: #FF5F57; --border: #2A2A30;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; display: flex; flex-direction: column; }
+
+    /* ── LANDING (GitHub Pages / HTTPS) ─────────── */
+    #landing {
+      display: none; flex: 1; flex-direction: column; align-items: center;
+      padding: 48px 24px 64px; gap: 40px; max-width: 480px; margin: 0 auto; width: 100%;
+    }
+    .landing-logo { text-align: center; }
+    .landing-logo h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); }
+    .landing-logo h1 span { color: var(--text); font-weight: 300; }
+    .landing-logo p { font-size: 12px; color: var(--muted); margin-top: 6px; letter-spacing: 0.06em; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 100%; display: flex; flex-direction: column; gap: 16px; }
+    .card-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 500; }
+    .card p { font-size: 13px; color: var(--text); line-height: 1.6; }
+    .card code { font-family: monospace; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; color: var(--accent); font-size: 12px; }
+
+    .steps { display: flex; flex-direction: column; gap: 10px; }
+    .step { display: flex; gap: 12px; align-items: flex-start; }
+    .step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--bg); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .step p { font-size: 13px; line-height: 1.5; }
+
+    .dl-btn {
+      width: 100%; padding: 14px 16px; background: var(--accent); color: var(--bg);
+      border: none; border-radius: 10px; font-size: 14px; font-weight: 600; letter-spacing: 0.05em;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+      text-decoration: none; transition: opacity 0.15s, transform 0.1s;
+    }
+    .dl-btn:hover { opacity: 0.9; }
+    .dl-btn:active { transform: scale(0.98); }
+    .dl-btn.secondary { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+    .dl-sub { font-size: 11px; color: var(--muted); text-align: center; }
+
+    /* ── DMX table ───────────────────────────── */
+    .dmx-toggle { background: none; border: none; color: var(--muted); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 0; }
+    .dmx-toggle:hover { color: var(--text); }
+    .dmx-table-wrap { display: none; margin-top: 12px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    .dmx-table-wrap.open { display: block; }
+    table.dmx { width: 100%; border-collapse: collapse; font-size: 11px; }
+    table.dmx th { background: rgba(255,255,255,0.04); color: var(--muted); font-weight: 500; text-align: left; padding: 6px 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+    table.dmx td { padding: 5px 10px; border-top: 1px solid var(--border); color: var(--text); }
+    table.dmx td:first-child { color: var(--accent); font-family: monospace; }
+
+    footer { text-align: center; font-size: 10px; color: var(--muted); padding: 16px; }
+    footer a { color: var(--muted); }
+
+    /* ── SCREEN (HTTP / bridge local) ───────────── */
+    body.screen-mode { height: 100dvh; overflow: hidden; }
+    #connect-screen {
+      display: none; flex: 1; flex-direction: column; align-items: center;
+      justify-content: center; gap: 20px; padding: 32px 24px; overflow-y: auto;
+    }
+    .logo { font-size: 18px; font-weight: 600; letter-spacing: 0.15em; color: var(--accent); }
+    .logo span { color: var(--text); font-weight: 300; }
+    .connect-card { width: 100%; max-width: 340px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+    .field-group { display: flex; flex-direction: column; gap: 8px; }
+    label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; font-size: 16px; font-family: 'SF Mono', Consolas, monospace; color: var(--text); outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
+    input:focus { border-color: var(--accent); }
+    input.code-input { font-size: 22px; font-weight: 500; text-align: center; letter-spacing: 0.2em; text-transform: uppercase; }
+    input::placeholder { color: var(--muted); text-transform: none; letter-spacing: normal; }
+    .ip-row { display: flex; gap: 8px; }
+    .ip-row input:first-child { flex: 1; }
+    .ip-row input:last-child { width: 72px; }
+    .connect-btn { width: 100%; padding: 14px; background: var(--accent); color: var(--bg); border: none; border-radius: 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
+    .connect-btn:active { transform: scale(0.98); opacity: 0.85; }
+    .connect-btn:disabled { opacity: 0.4; cursor: default; }
+    .error-msg { font-size: 12px; color: var(--red); text-align: center; min-height: 18px; }
+    .divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .manual-section { display: flex; flex-direction: column; gap: 8px; }
+    #download-section { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 10px; }
+    .download-btn { width: 100%; padding: 12px 16px; background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; transition: background 0.15s, transform 0.1s; }
+    .download-btn:hover { background: rgba(201,168,76,0.1); }
+    .download-sub { font-size: 10px; color: var(--muted); text-align: center; }
+    #dmx-notice { width: 100%; max-width: 340px; }
+    .dmx-toggle2 { width: 100%; background: none; border: none; color: var(--muted); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 0; }
+    .dmx-toggle2:hover { color: var(--text); }
+
+    #panel { position: fixed; inset: 0; display: none; z-index: 10; }
+    #color-display { position: fixed; inset: 0; border-radius: 0; transition: background-color 80ms ease-out; background: #111; cursor: pointer; }
+    .info-row { display: none; }
+    #hud { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 20; }
+    #hud.visible { opacity: 1; pointer-events: all; }
+    #hud-disconnect { background: rgba(0,0,0,0.72); border: 1px solid rgba(255,255,255,0.18); color: #fff; font-size: 15px; font-weight: 500; padding: 14px 28px; border-radius: 40px; cursor: pointer; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); transition: background 0.15s, transform 0.1s; }
+    #hud-disconnect:active { transform: scale(0.96); }
+    #status { position: fixed; top: env(safe-area-inset-top, 12px); right: 12px; display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.4); background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 20px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 5; }
+    #status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); transition: background 0.3s; }
+    #status-dot.connected { background: var(--green); animation: pulse 2s infinite; }
+    #status-dot.connecting { background: var(--accent); }
+    #status-dot.error { background: var(--red); }
+    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.3 } }
+  </style>
+</head>
+<body>
+
+<!-- ══ LANDING PAGE (GitHub Pages / HTTPS) ══════════════════════════ -->
+<div id="landing">
+  <div class="landing-logo">
+    <h1>CINÉ <span>LIGHT</span></h1>
+    <p>Bridge sACN E1.31 → WebSocket — Éclairage cinéma pilotable à distance</p>
+  </div>
+
+  <div class="card" id="dl-card">
+    <p class="card-title">⬇ Télécharger l'app bridge</p>
+    <a id="dl-btn" class="dl-btn" href="https://github.com/Pierre-ITSI/cine-light/releases" target="_blank" rel="noopener">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M8 10l-3-3M8 10l3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span id="dl-label">Télécharger l'app bridge</span>
+    </a>
+    <p class="dl-sub">Installe l'app sur le Mac ou PC qui reçoit le sACN</p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">📱 Connecter un écran</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><p>Lance <strong>Ciné Light Bridge</strong> sur l'ordinateur du technicien et démarre le bridge</p></div>
+      <div class="step"><div class="step-num">2</div><p>Sur l'écran projecteur, ouvre <code>http://&lt;IP du Mac&gt;:8080</code> dans le navigateur</p></div>
+      <div class="step"><div class="step-num">3</div><p>Saisis le <strong>code écran</strong> affiché dans l'app et connecte-toi</p></div>
+      <div class="step"><div class="step-num">4</div><p>L'écran passe en plein écran et reflète les données DMX en temps réel</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <button class="dmx-toggle" onclick="toggleDmxLanding()">
+      <span>▼ Mapping DMX (9 canaux)</span>
+    </button>
+    <div id="dmx-landing" class="dmx-table-wrap">
+      <table class="dmx">
+        <thead><tr><th>CH</th><th>Fonction</th><th>Plage</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Dim</td><td>0–255 → 0–100%</td></tr>
+          <tr><td>2</td><td>CCT</td><td>0–255 → 1700–20000 K</td></tr>
+          <tr><td>3</td><td>Tint</td><td>0–255 → −128 à +127</td></tr>
+          <tr><td>4</td><td>Color XFade</td><td>0–255 → 0–100%</td></tr>
+          <tr><td>5</td><td>Rouge (R)</td><td>0–255</td></tr>
+          <tr><td>6</td><td>Vert (G)</td><td>0–255</td></tr>
+          <tr><td>7</td><td>Bleu (B)</td><td>0–255</td></tr>
+          <tr><td>8</td><td>Shutter Hz</td><td>0=OFF · 1–255 → 0.5–25 Hz</td></tr>
+          <tr><td>9</td><td>Shutter ms</td><td>0–255 → 5–500 ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer><a href="https://github.com/Pierre-ITSI/cine-light" target="_blank">GitHub — Pierre-ITSI/cine-light</a></footer>
+</div>
+
+<!-- ══ SCREEN MODE (HTTP — bridge local) ════════════════════════════ -->
+<div id="connect-screen">
+  <div class="logo">CINÉ <span>LIGHT</span></div>
+  <div class="connect-card">
+    <div class="field-group">
+      <label>Code écran</label>
+      <input id="code-input" class="code-input" type="text" placeholder="CINE-4271" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="9" />
+    </div>
+    <div class="error-msg" id="error-msg"></div>
+    <button id="connect-btn" class="connect-btn">SE CONNECTER</button>
+    <div class="divider">ou saisissez l'IP</div>
+    <div class="manual-section">
+      <label>IP du bridge</label>
+      <div class="ip-row">
+        <input id="ip-input" type="text" placeholder="172.16.0.1" inputmode="decimal" autocomplete="off" />
+        <input id="port-input" type="number" value="3000" min="1024" max="65535" />
+      </div>
+    </div>
+  </div>
+  <div id="download-section" style="display:none">
+    <a id="download-btn" class="download-btn" href="#" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M8 10l-3-3M8 10l3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span id="download-label">Télécharger l'app bridge</span>
+    </a>
+    <p class="download-sub">Lance le bridge sACN→WebSocket sur ton ordinateur</p>
+  </div>
+  <div id="dmx-notice">
+    <button class="dmx-toggle2" onclick="toggleDmx()">Mapping DMX <span id="dmx-arrow">▼</span></button>
+    <div id="dmx-table-wrap" class="dmx-table-wrap">
+      <table class="dmx">
+        <thead><tr><th>CH</th><th>Fonction</th><th>Plage</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Dim</td><td>0–255 → 0–100%</td></tr>
+          <tr><td>2</td><td>CCT</td><td>0–255 → 1700–20000 K</td></tr>
+          <tr><td>3</td><td>Tint</td><td>0–255 → −128 à +127</td></tr>
+          <tr><td>4</td><td>Color XFade</td><td>0–255 → 0–100%</td></tr>
+          <tr><td>5</td><td>Rouge (R)</td><td>0–255</td></tr>
+          <tr><td>6</td><td>Vert (G)</td><td>0–255</td></tr>
+          <tr><td>7</td><td>Bleu (B)</td><td>0–255</td></tr>
+          <tr><td>8</td><td>Shutter Hz</td><td>0=OFF · 1–255 → 0.5–25 Hz</td></tr>
+          <tr><td>9</td><td>Shutter ms</td><td>0–255 → 5–500 ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="panel">
+  <div id="color-display"></div>
+  <div class="info-row"><span>Dim <span id="val-dim">—</span></span><span>CCT <span id="val-cct">—</span></span><span>Tint <span id="val-tint">—</span></span></div>
+  <div class="info-row"><span>R <span id="val-r">—</span></span><span>G <span id="val-g">—</span></span><span>B <span id="val-b">—</span></span></div>
+</div>
+<div id="hud"><button id="hud-disconnect">↩ Déconnecter</button></div>
+<div id="status"><div id="status-dot"></div><span id="status-label">Déconnecté</span></div>
+
+<script>
+'use strict'
+
+const isHttps = location.protocol === 'https:'
+
+// ── Mode switch ───────────────────────────────────────────────────────
+if (isHttps) {
+  // Landing mode (GitHub Pages)
+  document.getElementById('landing').style.display = 'flex'
+  // Detect OS for download button
+  const ua = navigator.userAgent
+  const btn = document.getElementById('dl-btn')
+  const lbl = document.getElementById('dl-label')
+  const MAC = 'https://github.com/Pierre-ITSI/cine-light/releases/download/v1.0.0/cinelight-bridge-1.0.0-arm64.dmg'
+  const REL = 'https://github.com/Pierre-ITSI/cine-light/releases'
+  if (/Mac/.test(ua) && !/iPhone|iPad/.test(ua)) { btn.href = MAC; lbl.textContent = 'Télécharger pour Mac (Apple Silicon)' }
+  else if (/Win/.test(ua))                        { btn.href = REL; lbl.textContent = 'Télécharger pour Windows' }
+  else                                            { btn.href = REL; lbl.textContent = 'Voir les téléchargements' }
+} else {
+  // Screen mode (HTTP — local bridge)
+  document.body.classList.add('screen-mode')
+  document.getElementById('connect-screen').style.display = 'flex'
+  initScreenMode()
+}
+
+// ── Landing helpers ────────────────────────────────────────────────────
+function toggleDmxLanding() {
+  const w = document.getElementById('dmx-landing')
+  const btn = document.querySelector('.dmx-toggle span')
+  const open = w.classList.toggle('open')
+  btn.textContent = (open ? '▲' : '▼') + ' Mapping DMX (9 canaux)'
+}
+
+// ── Screen mode ────────────────────────────────────────────────────────
+function initScreenMode() {
+  // Download button (desktop only)
+  ;(function() {
+    const ua = navigator.userAgent
+    if (/iPhone|iPad|iPod|Android/i.test(ua)) return
+    const MAC = 'https://github.com/Pierre-ITSI/cine-light/releases/download/v1.0.0/cinelight-bridge-1.0.0-arm64.dmg'
+    const REL = 'https://github.com/Pierre-ITSI/cine-light/releases'
+    const sec = document.getElementById('download-section')
+    const btn = document.getElementById('download-btn')
+    const lbl = document.getElementById('download-label')
+    if (/Mac/.test(ua)) { btn.href = MAC; lbl.textContent = 'Télécharger pour Mac (Apple Silicon)' }
+    else { btn.href = REL; lbl.textContent = 'Télécharger l\'app bridge' }
+    sec.style.display = 'flex'
+  })()
+
+  const $ = id => document.getElementById(id)
+  const connectScreen = $('connect-screen'), panel = $('panel')
+  const codeInput = $('code-input'), ipInput = $('ip-input'), portInput = $('port-input')
+  const connectBtn = $('connect-btn'), errorMsg = $('error-msg')
+  const statusEl = $('status'), statusDot = $('status-dot'), statusLabel = $('status-label')
+  const colorDisplay = $('color-display'), hud = $('hud'), hudDisconnect = $('hud-disconnect')
+
+  let ws = null, reconnectTimer = null
+
+  const params = new URLSearchParams(location.search)
+  const urlCode = params.get('code')?.toUpperCase()
+  if (urlCode) codeInput.value = urlCode
+  if (urlCode && location.hostname && location.hostname !== 'localhost') {
+    const httpPort = parseInt(location.port, 10) || 8080
+    setTimeout(() => autoConnect(urlCode, location.hostname, httpPort), 300)
+  }
+
+  function clamp(v, lo=0, hi=255) { return Math.max(lo, Math.min(hi, v)) }
+  function cctToRgb(k) {
+    const t = k/100; let r,g,b
+    r = t<=66?255:clamp(329.698727446*Math.pow(t-60,-0.1332047592))
+    g = t<=66?clamp(99.4708025861*Math.log(t)-161.1195681661):clamp(288.1221695283*Math.pow(t-60,-0.0755148492))
+    b = t>=66?255:t<=19?0:clamp(138.5177312231*Math.log(t-10)-305.0447927307)
+    return {r:Math.round(r),g:Math.round(g),b:Math.round(b)}
+  }
+  function computeColor(d) {
+    const dim=d.dim/255, k=1700+(d.cct/255)*18300, tint=d.tint-128, xf=d.colorXFade/255
+    const c=cctToRgb(k), abs=Math.abs(tint)/128
+    let ar=c.r,ag=c.g,ab=c.b
+    if(tint>0){ag=clamp(ag+abs*60);ar=clamp(ar-abs*20);ab=clamp(ab-abs*20)}
+    else if(tint<0){ar=clamp(ar+abs*30);ab=clamp(ab+abs*30);ag=clamp(ag-abs*40)}
+    return {r:Math.round(clamp((ar*(1-xf)+d.r*xf)*dim)),g:Math.round(clamp((ag*(1-xf)+d.g*xf)*dim)),b:Math.round(clamp((ab*(1-xf)+d.b*xf)*dim)),kelvin:Math.round(k)}
+  }
+
+  let pending=null
+  function applyDmx(d) {
+    if(pending) cancelAnimationFrame(pending)
+    pending=requestAnimationFrame(()=>{
+      const c=computeColor(d)
+      colorDisplay.style.backgroundColor=`rgb(${c.r},${c.g},${c.b})`
+      document.body.style.backgroundColor=`rgb(${Math.round(c.r*.25)},${Math.round(c.g*.25)},${Math.round(c.b*.25)})`
+      $('val-dim').textContent=Math.round((d.dim/255)*100)+'%'
+      $('val-cct').textContent=c.kelvin.toLocaleString()+'K'
+      const t=d.tint-128; $('val-tint').textContent=(t>=0?'+':'')+t
+      $('val-r').textContent=d.r; $('val-g').textContent=d.g; $('val-b').textContent=d.b
+    })
+  }
+
+  function setStatus(s,t){statusDot.className=s;statusLabel.textContent=t}
+  function reqFS(){const e=document.documentElement;if(e.requestFullscreen)e.requestFullscreen().catch(()=>{});else if(e.webkitRequestFullscreen)e.webkitRequestFullscreen()}
+  function exitFS(){if(document.exitFullscreen)document.exitFullscreen().catch(()=>{});else if(document.webkitExitFullscreen)document.webkitExitFullscreen()}
+
+  function showPanel(){connectScreen.style.display='none';panel.style.display='block';statusEl.style.display='none';hud.classList.remove('visible');document.body.style.background='#000';reqFS()}
+  function showConnect(){panel.style.display='none';connectScreen.style.display='flex';statusEl.style.display='flex';hud.classList.remove('visible');document.body.style.background='var(--bg)';exitFS()}
+  function showError(m){errorMsg.textContent=m;setTimeout(()=>{if(errorMsg.textContent===m)errorMsg.textContent=''},4000)}
+
+  colorDisplay.addEventListener('click',()=>hud.classList.toggle('visible'))
+  hudDisconnect.addEventListener('click',e=>{e.stopPropagation();disconnect()})
+
+  async function discover(code,host,httpPort){
+    try{
+      let sig;try{sig=AbortSignal.timeout(800)}catch{const c=new AbortController();setTimeout(()=>c.abort(),800);sig=c.signal}
+      const r=await fetch(`http://${host}:${httpPort}/discover?code=${encodeURIComponent(code)}`,{signal:sig})
+      if(!r.ok)return null; const d=await r.json(); return d.wsPort?d:null
+    }catch{return null}
+  }
+
+  function connectWs(url){
+    if(ws){try{ws.close()}catch{}}
+    ws=new WebSocket(url); setStatus('connecting','Connexion…')
+    ws.onopen=()=>{setStatus('connected',url.replace('ws://','').split('?')[0]);showPanel();connectBtn.disabled=false}
+    ws.onmessage=e=>{
+      try{
+        const m=JSON.parse(e.data)
+        if(m.type==='dmx')applyDmx(m)
+        else if(m.type==='code_changed'){disconnect();showError('Le code écran a changé. Reconnectez-vous.')}
+        else if(m.type==='error'){disconnect();showError(m.message||'Erreur de connexion')}
+      }catch{}
+    }
+    ws.onclose=e=>{
+      if(e.code===4001){showError('Code incorrect');showConnect();setStatus('error','Code invalide');return}
+      if(e.code===4002){showError('Code régénéré — saisissez le nouveau code');showConnect();codeInput.value='';setStatus('','Déconnecté');return}
+      setStatus('','Déconnecté — reconnexion…')
+      if(panel.style.display==='block')reconnectTimer=setTimeout(()=>connectWs(url),2500)
+    }
+    ws.onerror=()=>setStatus('error','Erreur réseau')
+  }
+
+  async function autoConnect(code,host,httpPort=8080){
+    setStatus('connecting','Découverte…')
+    const r=await discover(code,host,httpPort)
+    connectWs(`ws://${host}:${r?r.wsPort:3000}?code=${code}`)
+  }
+
+  async function handleConnect(){
+    const code=codeInput.value.trim().toUpperCase()||null
+    const ip=ipInput.value.trim()||null
+    const wsPort=parseInt(portInput.value,10)||3000
+    errorMsg.textContent=''
+    if(!code&&!ip){showError('Saisissez un code écran ou une adresse IP');return}
+    connectBtn.disabled=true; setStatus('connecting','Connexion…')
+    if(code&&ip){const r=await discover(code,ip,8080);connectWs(`ws://${ip}:${r?.wsPort??wsPort}?code=${code}`)}
+    else if(code){
+      const host=location.hostname
+      if(!host){showError('IP introuvable — saisissez-la manuellement');connectBtn.disabled=false;setStatus('','Déconnecté');return}
+      const hp=parseInt(location.port,10)||8080; const r=await discover(code,host,hp)
+      connectWs(`ws://${host}:${r?.wsPort??wsPort}?code=${code}`)
+    }else{connectWs(`ws://${ip}:${wsPort}`)}
+    connectBtn.disabled=false
+  }
+
+  function disconnect(){clearTimeout(reconnectTimer);if(ws){try{ws.close()}catch{};ws=null};showConnect();setStatus('','Déconnecté')}
+
+  connectBtn.addEventListener('click',handleConnect)
+  codeInput.addEventListener('keydown',e=>{if(e.key==='Enter')handleConnect()})
+  ipInput.addEventListener('keydown',e=>{if(e.key==='Enter')handleConnect()})
+  codeInput.addEventListener('input',()=>{codeInput.value=codeInput.value.toUpperCase().replace(/[^A-Z0-9-]/g,'')})
+}
+
+function toggleDmx(){const w=document.getElementById('dmx-table-wrap'),a=document.getElementById('dmx-arrow'),o=w.classList.toggle('open');a.textContent=o?'▲':'▼'}
+</script>
+</body>
+</html>
