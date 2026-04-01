@@ -1,1513 +1,386 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Ciné Light</title>
-<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--accent:#e8c97a;--dark:#0e0e10;--mid:#1c1c1f;--mid2:#252528;--border:rgba(255,255,255,0.08);--text:#f0ede8;--muted:#777;--green:#5fdf8a}
-html,body{width:100%;height:100%;background:var(--dark);color:var(--text);font-family:'DM Mono',monospace;overflow:hidden;touch-action:manipulation}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Ciné Light</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --bg: #0E0E10; --surface: #1C1C21; --accent: #C9A84C;
+      --text: #EDE9E3; --muted: #666; --green: #34D399; --red: #FF5F57; --border: #2A2A30;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; display: flex; flex-direction: column; }
 
-#splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:40px;z-index:100;animation:fadeIn .6s ease}
-#splash h1{font-family:'Playfair Display',serif;font-size:clamp(2.5rem,8vw,4rem);letter-spacing:-.02em;background:linear-gradient(135deg,#e8c97a,#f0ede8 60%,#b08d4a);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-#splash p{color:var(--muted);font-size:.8rem;letter-spacing:.15em;text-transform:uppercase}
-.splash-btns{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
-.splash-btn{padding:16px 36px;border:1px solid var(--border);background:var(--mid);color:var(--text);font-family:'DM Mono',monospace;font-size:.85rem;letter-spacing:.1em;cursor:pointer;border-radius:4px;transition:all .2s;text-transform:uppercase}
-.splash-btn:hover{border-color:var(--accent);color:var(--accent)}
-.splash-btn.primary{background:var(--accent);color:var(--dark);border-color:var(--accent);font-weight:500}
+    /* ── LANDING (GitHub Pages / HTTPS) ─────────── */
+    #landing {
+      display: none; flex: 1; flex-direction: column; align-items: center;
+      padding: 48px 24px 64px; gap: 40px; max-width: 480px; margin: 0 auto; width: 100%;
+    }
+    .landing-logo { text-align: center; }
+    .landing-logo h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); }
+    .landing-logo h1 span { color: var(--text); font-weight: 300; }
+    .landing-logo p { font-size: 12px; color: var(--muted); margin-top: 6px; letter-spacing: 0.06em; }
 
-#screen-connect{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:24px;padding:32px;animation:fadeIn .4s ease}
-#screen-connect h2{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);text-align:center}
-#screen-connect p{font-size:.72rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;text-align:center}
-.screen-input-row{display:flex;gap:10px;width:100%;max-width:340px}
-.screen-input-row input{flex:1;background:var(--mid);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:1.1rem;padding:14px 16px;border-radius:6px;outline:none;letter-spacing:.12em;text-align:center;transition:border-color .2s}
-.screen-input-row input:focus{border-color:var(--accent)}
-.screen-input-row input::placeholder{color:var(--muted);font-size:.85rem}
-.screen-go-btn{background:var(--accent);color:var(--dark);border:none;font-family:'DM Mono',monospace;font-size:.85rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:14px 20px;border-radius:6px;cursor:pointer}
-.screen-back{font-size:.65rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;background:none;border:none}
-.screen-back:hover{color:var(--text)}
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 100%; display: flex; flex-direction: column; gap: 16px; }
+    .card-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 500; }
+    .card p { font-size: 13px; color: var(--text); line-height: 1.6; }
+    .card code { font-family: monospace; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; color: var(--accent); font-size: 12px; }
 
-#screen-mode{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
-#screen-mode .status-pill{position:absolute;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:6px 16px;font-size:.7rem;letter-spacing:.12em;color:rgba(255,255,255,.6);text-transform:uppercase;white-space:nowrap;transition:all .3s}
+    .steps { display: flex; flex-direction: column; gap: 10px; }
+    .step { display: flex; gap: 12px; align-items: flex-start; }
+    .step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--bg); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .step p { font-size: 13px; line-height: 1.5; }
 
+    .dl-btn {
+      width: 100%; padding: 14px 16px; background: var(--accent); color: var(--bg);
+      border: none; border-radius: 10px; font-size: 14px; font-weight: 600; letter-spacing: 0.05em;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+      text-decoration: none; transition: opacity 0.15s, transform 0.1s;
+    }
+    .dl-btn:hover { opacity: 0.9; }
+    .dl-btn:active { transform: scale(0.98); }
+    .dl-btn.secondary { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+    .dl-sub { font-size: 11px; color: var(--muted); text-align: center; }
 
+    /* ── DMX table ───────────────────────────── */
+    .dmx-toggle { background: none; border: none; color: var(--muted); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 0; }
+    .dmx-toggle:hover { color: var(--text); }
+    .dmx-table-wrap { display: none; margin-top: 12px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    .dmx-table-wrap.open { display: block; }
+    table.dmx { width: 100%; border-collapse: collapse; font-size: 11px; }
+    table.dmx th { background: rgba(255,255,255,0.04); color: var(--muted); font-weight: 500; text-align: left; padding: 6px 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+    table.dmx td { padding: 5px 10px; border-top: 1px solid var(--border); color: var(--text); }
+    table.dmx td:first-child { color: var(--accent); font-family: monospace; }
 
-#remote-mode{display:none;position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;padding:14px 14px 60px}
-.remote-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
-.remote-header h2{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--accent)}
-.back-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;padding:6px 12px;border-radius:4px;cursor:pointer;text-transform:uppercase;transition:all .2s}
-.back-btn:hover{border-color:var(--text);color:var(--text)}
+    footer { text-align: center; font-size: 10px; color: var(--muted); padding: 16px; }
+    footer a { color: var(--muted); }
 
-.tabs{display:flex;gap:3px;margin-bottom:14px;background:var(--mid);border-radius:8px;padding:4px}
-.tab-btn{flex:1;padding:8px 2px;background:none;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border-radius:5px;transition:all .2s;line-height:1.4;text-align:center}
-.tab-btn.active{background:var(--mid2);color:var(--accent)}
-.tab-content{display:none}
-.tab-content.active{display:block}
+    /* ── SCREEN (HTTP / bridge local) ───────────── */
+    body.screen-mode { height: 100dvh; overflow: hidden; }
+    #connect-screen {
+      display: none; flex: 1; flex-direction: column; align-items: center;
+      justify-content: center; gap: 20px; padding: 32px 24px; overflow-y: auto;
+    }
+    .logo { font-size: 18px; font-weight: 600; letter-spacing: 0.15em; color: var(--accent); }
+    .logo span { color: var(--text); font-weight: 300; }
+    .connect-card { width: 100%; max-width: 340px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+    .field-group { display: flex; flex-direction: column; gap: 8px; }
+    label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; font-size: 16px; font-family: 'SF Mono', Consolas, monospace; color: var(--text); outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
+    input:focus { border-color: var(--accent); }
+    input.code-input { font-size: 22px; font-weight: 500; text-align: center; letter-spacing: 0.2em; text-transform: uppercase; }
+    input::placeholder { color: var(--muted); text-transform: none; letter-spacing: normal; }
+    .ip-row { display: flex; gap: 8px; }
+    .ip-row input:first-child { flex: 1; }
+    .ip-row input:last-child { width: 72px; }
+    .connect-btn { width: 100%; padding: 14px; background: var(--accent); color: var(--bg); border: none; border-radius: 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
+    .connect-btn:active { transform: scale(0.98); opacity: 0.85; }
+    .connect-btn:disabled { opacity: 0.4; cursor: default; }
+    .error-msg { font-size: 12px; color: var(--red); text-align: center; min-height: 18px; }
+    .divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .manual-section { display: flex; flex-direction: column; gap: 8px; }
+    #download-section { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 10px; }
+    .download-btn { width: 100%; padding: 12px 16px; background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; transition: background 0.15s, transform 0.1s; }
+    .download-btn:hover { background: rgba(201,168,76,0.1); }
+    .download-sub { font-size: 10px; color: var(--muted); text-align: center; }
+    #dmx-notice { width: 100%; max-width: 340px; }
+    .dmx-toggle2 { width: 100%; background: none; border: none; color: var(--muted); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 0; }
+    .dmx-toggle2:hover { color: var(--text); }
 
-.panel{background:var(--mid);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:12px}
-.panel-label{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
-
-.channel-row{display:flex;gap:8px;align-items:center}
-.channel-row input{flex:1;background:var(--dark);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:.9rem;padding:10px 14px;border-radius:4px;outline:none;letter-spacing:.1em;transition:border-color .2s}
-.channel-row input:focus{border-color:var(--accent)}
-.connect-btn{background:var(--accent);color:var(--dark);border:none;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:10px 16px;border-radius:4px;cursor:pointer;white-space:nowrap}
-.status-indicator{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.7rem;color:var(--muted)}
-.dot{width:7px;height:7px;border-radius:50%;background:#444;transition:background .3s}
-.dot.connected{background:var(--green);box-shadow:0 0 6px var(--green)}
-.dot.connecting{background:var(--accent);animation:pulse 1s infinite}
-.dot.error{background:#e05050}
-
-.swatch-row{display:flex;gap:12px;align-items:center;margin-bottom:12px}
-.swatch{width:50px;height:50px;border-radius:6px;border:1px solid var(--border);flex-shrink:0;transition:background-color .1s}
-.swatch-info{flex:1}
-.swatch-hex{font-family:'Playfair Display',serif;font-size:1.3rem;letter-spacing:.04em}
-.swatch-label{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:2px}
-.autosend-badge{font-size:.55rem;color:var(--green);letter-spacing:.1em;margin-top:4px;text-transform:uppercase;opacity:0;transition:opacity .3s}
-.autosend-badge.visible{opacity:1}
-
-.slider-block{margin-bottom:14px}
-.slider-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-.slider-header label{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
-.slider-val{font-size:.85rem;color:var(--text);letter-spacing:.05em;font-variant-numeric:tabular-nums}
-.slider-val span{color:var(--muted);font-size:.65rem}
-input[type="range"]{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;outline:none;cursor:pointer}
-input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);border:2px solid var(--dark);box-shadow:0 2px 8px rgba(0,0,0,.5)}
-
-.wheel-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
-#colorWheel{border-radius:50%;cursor:crosshair;touch-action:none;box-shadow:0 0 0 1px var(--border),0 8px 32px rgba(0,0,0,.4);max-width:240px;width:min(240px,80vw)}
-
-.kelvin-bar{height:24px;border-radius:5px;margin-bottom:8px;background:linear-gradient(to right,#ff9b4a,#ffd2a0,#fff,#c9dfff,#a0c8ff)}
-.kelvin-labels{display:flex;justify-content:space-between;font-size:.55rem;color:var(--muted);letter-spacing:.06em;margin-bottom:10px;line-height:1.4}
-.green-bar{height:24px;border-radius:5px;margin-bottom:8px;background:linear-gradient(to right,#c020c0,#1a1a1a 50%,#20c060)}
-.green-labels{display:flex;justify-content:space-between;font-size:.55rem;color:var(--muted);letter-spacing:.06em;margin-bottom:10px}
-
-.chips-wrap{display:flex;gap:6px;flex-wrap:wrap}
-.chip{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--mid2);color:var(--muted);font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s}
-.chip:hover,.chip.active{border-color:var(--accent);color:var(--accent);background:rgba(232,201,122,.1)}
-
-.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.toggle-label{font-size:.85rem;color:var(--text)}
-.toggle-sub{font-size:.6rem;color:var(--muted);margin-top:2px}
-.toggle-switch{position:relative;width:52px;height:28px;cursor:pointer}
-.toggle-switch input{opacity:0;width:0;height:0}
-.toggle-track{position:absolute;inset:0;border-radius:14px;background:#333;transition:background .25s;border:1px solid var(--border)}
-.toggle-switch input:checked+.toggle-track{background:var(--accent);border-color:var(--accent)}
-.toggle-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .25s;box-shadow:0 1px 4px rgba(0,0,0,.4);pointer-events:none}
-.toggle-switch input:checked~.toggle-thumb{transform:translateX(24px)}
-.strobe-active-badge{display:inline-block;padding:4px 14px;background:rgba(232,201,122,.12);border:1px solid var(--accent);border-radius:12px;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);animation:pulse .7s infinite;margin-bottom:14px}
-.strobe-preview{height:36px;border-radius:6px;background:var(--mid2);border:1px solid var(--border);margin-top:12px;display:flex;align-items:center;justify-content:center;font-size:.58rem;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;overflow:hidden;position:relative}
-.strobe-flash{position:absolute;inset:0;border-radius:6px;background:#fff;opacity:0}
-
-.presets-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.preset-btn{border:1px solid var(--border);border-radius:6px;padding:10px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--mid2);transition:all .15s;touch-action:manipulation}
-.preset-btn:hover,.preset-btn:active{border-color:rgba(255,255,255,.2);transform:scale(.97)}
-.preset-swatch{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.1)}
-.preset-name{font-size:.55rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.3}
-
-.qr-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:4px}
-.qr-wrap canvas{border-radius:8px;background:#fff;padding:8px}
-.qr-url{font-size:.58rem;color:var(--muted);letter-spacing:.06em;word-break:break-all;text-align:center}
-
-/* FLASH TAB */
-.torch-onoff-btn{width:100%;padding:18px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:1rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
-.torch-onoff-btn.on{background:rgba(255,230,100,.12);border-color:#ffe664;color:#ffe664;box-shadow:0 0 20px rgba(255,230,100,.15)}
-.torch-dim-disabled{opacity:.35;pointer-events:none}
-.effect-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.effect-btn{border:1px solid var(--border);border-radius:6px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--mid2);transition:all .15s;touch-action:manipulation;font-family:'DM Mono',monospace;color:var(--muted);font-size:.6rem;letter-spacing:.07em;text-transform:uppercase}
-.effect-btn:hover,.effect-btn.active{border-color:rgba(255,255,255,.25);color:var(--text);transform:scale(.97)}
-.effect-btn .effect-icon{font-size:1.4rem}
-.torch-level-bar{height:8px;border-radius:4px;background:linear-gradient(to right,#333,#ffe664);margin-bottom:14px;overflow:hidden;position:relative}
-.torch-level-fill{height:100%;background:#ffe664;border-radius:4px;transition:width .1s;box-shadow:0 0 8px rgba(255,230,100,.5)}
-
-/* EFFECTS TAB */
-.effects-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.effect-card{border:1px solid var(--border);border-radius:8px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;background:var(--mid2);transition:all .2s;touch-action:manipulation;font-family:'DM Mono',monospace;width:100%}
-.effect-card:hover,.effect-card:active{border-color:rgba(255,255,255,.2);transform:scale(.97)}
-.effect-card.active{border-color:var(--accent);background:rgba(232,201,122,.1);box-shadow:0 0 14px rgba(232,201,122,.1)}
-.effect-card-icon{font-size:1.8rem}
-.effect-card-name{font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.3}
-.effect-card.active .effect-card-name{color:var(--accent)}
-.effect-active-row{display:flex;flex-direction:row;align-items:center;gap:10px;margin-bottom:12px}
-
-/* sACN TAB */
-.dmx-grid{display:grid;gap:8px}
-.dmx-tile{background:var(--dark);border:1px solid var(--border);border-radius:6px;padding:10px 8px;text-align:center}
-.dmx-ch{font-size:.52rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
-.dmx-label{font-size:.58rem;color:var(--text);letter-spacing:.06em;margin-bottom:6px;text-transform:uppercase}
-.dmx-val{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--accent);margin-bottom:6px;font-variant-numeric:tabular-nums;min-height:1.6rem}
-.dmx-bar{height:3px;border-radius:2px;background:rgba(255,255,255,.08)}
-.dmx-bar-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .06s}
-.sacn-input{background:var(--dark);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:.9rem;padding:10px 12px;border-radius:4px;outline:none;transition:border-color .2s;-moz-appearance:textfield}
-.sacn-input:focus{border-color:var(--accent)}
-.sacn-input::-webkit-inner-spin-button{-webkit-appearance:none}
-.sacn-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-.sacn-label-sm{font-size:.58rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
-.sacn-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.sacn-code{display:block;background:var(--dark);border:1px solid var(--border);border-radius:4px;padding:10px 12px;font-size:.72rem;color:var(--accent);margin-bottom:8px;word-break:break-all;font-family:'DM Mono',monospace}
-
-/* SCREEN sACN CONFIG */
-#screen-sacn-config{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:20px;padding:32px;animation:fadeIn .4s ease;overflow-y:auto}
-#screen-sacn-config h2{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);text-align:center;margin-bottom:0}
-#screen-sacn-config p{font-size:.7rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;text-align:center;margin:0}
-.sacn-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:380px}
-.sacn-config-field{display:flex;flex-direction:column;gap:6px}
-.sacn-config-field label{font-size:.58rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
-.sacn-screen-go{padding:14px 40px;background:var(--accent);color:var(--dark);border:none;font-family:'DM Mono',monospace;font-size:.9rem;letter-spacing:.1em;cursor:pointer;border-radius:4px;font-weight:600;width:100%;max-width:380px;transition:opacity .2s}
-.sacn-screen-go:hover{opacity:.85}
-.screen-sacn-back{background:none;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;cursor:pointer;padding:8px;text-transform:uppercase}
-.sacn-bridge-row{width:100%;max-width:380px;display:flex;flex-direction:column;gap:8px}
-.sacn-bridge-row label{font-size:.58rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
-.sacn-bridge-ip-row{display:flex;gap:6px;align-items:center}
-.sacn-native-badge{background:rgba(232,201,122,.12);border:1px solid rgba(232,201,122,.3);border-radius:6px;padding:10px 16px;font-size:.65rem;color:var(--accent);letter-spacing:.08em;text-align:center;width:100%;max-width:380px}
-/* SCREEN BOTTOM BAR */
-#screen-bar{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);display:flex;gap:12px;z-index:100}
-.screen-bar-btn{background:rgba(0,0,0,.75);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.35);border-radius:24px;padding:10px 22px;font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;color:rgba(255,255,255,.9);cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap;-webkit-tap-highlight-color:transparent}
-.screen-bar-btn:active{transform:scale(.95);background:rgba(0,0,0,.9)}
-.screen-bar-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(232,201,122,.15)}
-.screen-bar-btn.unavail{opacity:.3;cursor:default}
-
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-</style>
+    #panel { position: fixed; inset: 0; display: none; z-index: 10; }
+    #color-display { position: fixed; inset: 0; border-radius: 0; transition: background-color 80ms ease-out; background: #111; cursor: pointer; }
+    .info-row { display: none; }
+    #hud { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 20; }
+    #hud.visible { opacity: 1; pointer-events: all; }
+    #hud-disconnect { background: rgba(0,0,0,0.72); border: 1px solid rgba(255,255,255,0.18); color: #fff; font-size: 15px; font-weight: 500; padding: 14px 28px; border-radius: 40px; cursor: pointer; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); transition: background 0.15s, transform 0.1s; }
+    #hud-disconnect:active { transform: scale(0.96); }
+    #status { position: fixed; top: env(safe-area-inset-top, 12px); right: 12px; display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.4); background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 20px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 5; }
+    #status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); transition: background 0.3s; }
+    #status-dot.connected { background: var(--green); animation: pulse 2s infinite; }
+    #status-dot.connecting { background: var(--accent); }
+    #status-dot.error { background: var(--red); }
+    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.3 } }
+  </style>
 </head>
 <body>
 
-<div id="splash">
-  <h1>Ciné Light</h1>
-  <p>Panneau lumineux cinéma</p>
-  <div class="splash-btns">
-    <button class="splash-btn primary" onclick="startMode('remote')">📱→🎬 Télécommande</button>
-    <button class="splash-btn" onclick="startMode('screen')">🟡 Écran projecteur</button>
-    <button class="splash-btn" onclick="startMode('screen-sacn')">🎛 Mode DMX</button>
+<!-- ══ LANDING PAGE (GitHub Pages / HTTPS) ══════════════════════════ -->
+<div id="landing">
+  <div class="landing-logo">
+    <h1>CINÉ <span>LIGHT</span></h1>
+    <p>Bridge sACN E1.31 → WebSocket — Éclairage cinéma pilotable à distance</p>
+  </div>
+
+  <div class="card" id="dl-card">
+    <p class="card-title">⬇ Télécharger l'app bridge</p>
+    <a id="dl-btn" class="dl-btn" href="https://github.com/Pierre-ITSI/cine-light/releases" target="_blank" rel="noopener">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M8 10l-3-3M8 10l3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span id="dl-label">Télécharger l'app bridge</span>
+    </a>
+    <p class="dl-sub">Installe l'app sur le Mac ou PC qui reçoit le sACN</p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">📱 Connecter un écran</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><p>Lance <strong>Ciné Light Bridge</strong> sur l'ordinateur du technicien et démarre le bridge</p></div>
+      <div class="step"><div class="step-num">2</div><p>Sur l'écran projecteur, ouvre <code>http://&lt;IP du Mac&gt;:8080</code> dans le navigateur</p></div>
+      <div class="step"><div class="step-num">3</div><p>Saisis le <strong>code écran</strong> affiché dans l'app et connecte-toi</p></div>
+      <div class="step"><div class="step-num">4</div><p>L'écran passe en plein écran et reflète les données DMX en temps réel</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <button class="dmx-toggle" onclick="toggleDmxLanding()">
+      <span>▼ Mapping DMX (9 canaux)</span>
+    </button>
+    <div id="dmx-landing" class="dmx-table-wrap">
+      <table class="dmx">
+        <thead><tr><th>CH</th><th>Fonction</th><th>Plage</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Dim</td><td>0–255 → 0–100%</td></tr>
+          <tr><td>2</td><td>CCT</td><td>0–255 → 1700–20000 K</td></tr>
+          <tr><td>3</td><td>Tint</td><td>0–255 → −128 à +127</td></tr>
+          <tr><td>4</td><td>Color XFade</td><td>0–255 → 0–100%</td></tr>
+          <tr><td>5</td><td>Rouge (R)</td><td>0–255</td></tr>
+          <tr><td>6</td><td>Vert (G)</td><td>0–255</td></tr>
+          <tr><td>7</td><td>Bleu (B)</td><td>0–255</td></tr>
+          <tr><td>8</td><td>Shutter Hz</td><td>0=OFF · 1–255 → 0.5–25 Hz</td></tr>
+          <tr><td>9</td><td>Shutter ms</td><td>0–255 → 5–500 ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer><a href="https://github.com/Pierre-ITSI/cine-light" target="_blank">GitHub — Pierre-ITSI/cine-light</a></footer>
+</div>
+
+<!-- ══ SCREEN MODE (HTTP — bridge local) ════════════════════════════ -->
+<div id="connect-screen">
+  <div class="logo">CINÉ <span>LIGHT</span></div>
+  <div class="connect-card">
+    <div class="field-group">
+      <label>Code écran</label>
+      <input id="code-input" class="code-input" type="text" placeholder="CINE-4271" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="9" />
+    </div>
+    <div class="error-msg" id="error-msg"></div>
+    <button id="connect-btn" class="connect-btn">SE CONNECTER</button>
+    <div class="divider">ou saisissez l'IP</div>
+    <div class="manual-section">
+      <label>IP du bridge</label>
+      <div class="ip-row">
+        <input id="ip-input" type="text" placeholder="172.16.0.1" inputmode="decimal" autocomplete="off" />
+        <input id="port-input" type="number" value="3000" min="1024" max="65535" />
+      </div>
+    </div>
+  </div>
+  <div id="download-section" style="display:none">
+    <a id="download-btn" class="download-btn" href="#" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M8 10l-3-3M8 10l3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span id="download-label">Télécharger l'app bridge</span>
+    </a>
+    <p class="download-sub">Lance le bridge sACN→WebSocket sur ton ordinateur</p>
+  </div>
+  <div id="dmx-notice">
+    <button class="dmx-toggle2" onclick="toggleDmx()">Mapping DMX <span id="dmx-arrow">▼</span></button>
+    <div id="dmx-table-wrap" class="dmx-table-wrap">
+      <table class="dmx">
+        <thead><tr><th>CH</th><th>Fonction</th><th>Plage</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Dim</td><td>0–255 → 0–100%</td></tr>
+          <tr><td>2</td><td>CCT</td><td>0–255 → 1700–20000 K</td></tr>
+          <tr><td>3</td><td>Tint</td><td>0–255 → −128 à +127</td></tr>
+          <tr><td>4</td><td>Color XFade</td><td>0–255 → 0–100%</td></tr>
+          <tr><td>5</td><td>Rouge (R)</td><td>0–255</td></tr>
+          <tr><td>6</td><td>Vert (G)</td><td>0–255</td></tr>
+          <tr><td>7</td><td>Bleu (B)</td><td>0–255</td></tr>
+          <tr><td>8</td><td>Shutter Hz</td><td>0=OFF · 1–255 → 0.5–25 Hz</td></tr>
+          <tr><td>9</td><td>Shutter ms</td><td>0–255 → 5–500 ms</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<div id="screen-sacn-config">
-  <h2>🎛 Mode DMX</h2>
-  <p>Réception directe de données DMX</p>
-
-  <div id="screenSacnNativeBadge" class="sacn-native-badge" style="display:none">
-    📡 Réception UDP native — aucun bridge requis
-  </div>
-
-  <div id="screenSacnBridgeSection" class="sacn-bridge-row">
-    <label>Bridge WebSocket</label>
-    <div class="sacn-bridge-ip-row">
-      <span style="font-size:.6rem;color:var(--muted)">ws://</span>
-      <input type="text" id="screenSacnBridgeIP" class="sacn-input" placeholder="192.168.1.100"
-             value="localhost" style="flex:1"
-             onkeydown="if(event.key==='Enter')enterScreenSACN()">
-      <span style="font-size:.6rem;color:var(--muted)">:</span>
-      <input type="text" id="screenSacnBridgePort" class="sacn-input" value="3001"
-             style="width:58px;text-align:center">
-    </div>
-  </div>
-
-  <div class="sacn-config-grid">
-    <div class="sacn-config-field">
-      <label>Univers sACN</label>
-      <input type="number" id="screenSacnUniverse" class="sacn-input" value="1" min="1" max="63999"
-             style="width:100%;text-align:center">
-    </div>
-    <div class="sacn-config-field">
-      <label>Adresse de départ</label>
-      <input type="number" id="screenSacnBaseAddr" class="sacn-input" value="1" min="1" max="512"
-             style="width:100%;text-align:center">
-    </div>
-  </div>
-
-  <div class="chips-wrap" style="max-width:380px;width:100%">
-    <button class="chip active" id="screenSacnMode-3ch" onclick="selectScreenSacnMode('3ch')">3CH • DIM CCT TINT</button>
-    <button class="chip" id="screenSacnMode-9ch" onclick="selectScreenSacnMode('9ch')">9CH • DIM CCT TINT XC RGB STROB STROB+</button>
-  </div>
-
-  <button class="sacn-screen-go" onclick="enterScreenSACN()">▶ Démarrer</button>
-  <button class="screen-sacn-back" onclick="goBackToSplash()">← Fermer mode DMX</button>
+<div id="panel">
+  <div id="color-display"></div>
+  <div class="info-row"><span>Dim <span id="val-dim">—</span></span><span>CCT <span id="val-cct">—</span></span><span>Tint <span id="val-tint">—</span></span></div>
+  <div class="info-row"><span>R <span id="val-r">—</span></span><span>G <span id="val-g">—</span></span><span>B <span id="val-b">—</span></span></div>
 </div>
-
-<div id="screen-connect">
-  <h2>🟡 Écran projecteur</h2>
-  <p>Entrez le code affiché sur la télécommande</p>
-  <div class="screen-input-row">
-    <input type="text" id="screenChannelInput" placeholder="ex : cine4271"
-           maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false"
-           onkeydown="if(event.key==='Enter') screenConnect()">
-    <button class="screen-go-btn" onclick="screenConnect()">OK →</button>
-  </div>
-  <button class="screen-back" onclick="goBackToSplash()">← Retour</button>
-</div>
-
-<div id="screen-mode" onclick="requestFS()">
-  <div class="status-pill" id="screen-status">Connexion…</div>
-  <div id="screen-bar">
-    <button class="screen-bar-btn" onclick="event.stopPropagation();goBackToSplash()">← Retour</button>
-    <button class="screen-bar-btn" onclick="event.stopPropagation();suspendScreen()">⏸ Suspendre</button>
-  </div>
-</div>
-
-<div id="remote-mode">
-  <div class="remote-header">
-    <h2>Ciné Light</h2>
-    <button class="back-btn" onclick="goBack()">← Retour</button>
-  </div>
-  <div class="panel">
-    <div class="panel-label">Canal de synchronisation</div>
-    <div class="channel-row">
-      <input type="text" id="channelInput" placeholder="ex: cinelive42" maxlength="20"/>
-      <button class="connect-btn" onclick="connectChannel()">Connecter</button>
-    </div>
-    <div class="status-indicator">
-      <div class="dot" id="connDot"></div>
-      <span id="connLabel">Non connecté</span>
-    </div>
-  </div>
-  <div class="swatch-row">
-    <div class="swatch" id="previewSwatch" style="background:#fff"></div>
-    <div class="swatch-info">
-      <div class="swatch-hex" id="previewHex">#FFFFFF</div>
-      <div class="swatch-label" id="previewMeta">—</div>
-      <div class="autosend-badge" id="autosendBadge">↗ envoyé</div>
-    </div>
-  </div>
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('wheel')" id="tab-wheel">🎨 Roue</button>
-    <button class="tab-btn" onclick="switchTab('kelvin')" id="tab-kelvin">🌡 Kelvin</button>
-    <button class="tab-btn" onclick="switchTab('green')" id="tab-green">🟢 Green</button>
-    <button class="tab-btn" onclick="switchTab('strobe')" id="tab-strobe">⚡ Strobe</button>
-    <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash">🔦 Flash</button>
-    <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects">✨ Effets</button>
-    <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr">📡 QR</button>
-  </div>
-
-  <div class="tab-content active" id="content-wheel">
-    <div class="panel">
-      <div class="panel-label">Roue chromatique</div>
-      <div class="wheel-wrap">
-        <canvas id="colorWheel" width="240" height="240"></canvas>
-        <div style="width:100%;max-width:260px">
-          <div class="slider-block">
-            <div class="slider-header"><label>Luminosité</label><div class="slider-val" id="brightVal">100<span>%</span></div></div>
-            <input type="range" id="brightnessSlider" min="0" max="100" value="100" style="background:linear-gradient(to right,#000,#fff)" oninput="onBrightnessChange()">
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="tab-content" id="content-kelvin">
-    <div class="panel">
-      <div class="panel-label">Température de couleur</div>
-      <div class="kelvin-bar"></div>
-      <div class="kelvin-labels">
-        <span>1700K<br>Bougie</span><span style="text-align:center">3200K<br>Tungstène</span>
-        <span style="text-align:center">5600K<br>Daylight</span><span style="text-align:right">20000K<br>Ciel</span>
-      </div>
-      <div class="slider-block">
-        <div class="slider-header"><label>Température</label><div class="slider-val" id="kelvinVal">5600<span> K</span></div></div>
-        <input type="range" id="kelvinSlider" min="1700" max="20000" value="5600" style="background:linear-gradient(to right,#ff9b4a,#ffd2a0,#fff,#c9dfff,#a0c8ff)" oninput="onKelvinChange()">
-      </div>
-      <div class="slider-block">
-        <div class="slider-header"><label>Luminosité</label><div class="slider-val" id="kelvinBrightVal">100<span>%</span></div></div>
-        <input type="range" id="kelvinBrightnessSlider" min="0" max="100" value="100" style="background:linear-gradient(to right,#000,#fff)" oninput="onKelvinChange()">
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-label">Références rapides</div>
-      <div class="chips-wrap">
-        <button class="chip" onclick="setKelvin(1700)">1700K Bougie</button>
-        <button class="chip" onclick="setKelvin(2400)">2400K Feu</button>
-        <button class="chip" onclick="setKelvin(2700)">2700K Ampoule</button>
-        <button class="chip" onclick="setKelvin(3200)">3200K Tungstène</button>
-        <button class="chip" onclick="setKelvin(4300)">4300K Aube</button>
-        <button class="chip" onclick="setKelvin(5600)">5600K Daylight</button>
-        <button class="chip" onclick="setKelvin(6500)">6500K Overcast</button>
-        <button class="chip" onclick="setKelvin(9000)">9000K Ciel bleu</button>
-        <button class="chip" onclick="setKelvin(12000)">12000K Ciel voilé</button>
-        <button class="chip" onclick="setKelvin(20000)">20000K Bleu profond</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="tab-content" id="content-green">
-    <div class="panel">
-      <div class="panel-label">Correction Magenta ↔ Vert</div>
-      <div class="green-bar"></div>
-      <div class="green-labels"><span>−100 Magenta</span><span>0 Neutre</span><span>+100 Vert</span></div>
-      <div class="slider-block">
-        <div class="slider-header"><label>Green / Magenta</label><div class="slider-val" id="greenVal">0<span> GM</span></div></div>
-        <input type="range" id="greenSlider" min="-100" max="100" value="0" style="background:linear-gradient(to right,#c020c0,#1a1a1a 50%,#20c060)" oninput="onGreenChange()">
-      </div>
-      <div class="slider-block">
-        <div class="slider-header"><label>Luminosité</label><div class="slider-val" id="greenBrightVal">100<span>%</span></div></div>
-        <input type="range" id="greenBrightnessSlider" min="0" max="100" value="100" style="background:linear-gradient(to right,#000,#fff)" oninput="onGreenChange()">
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-label">Références rapides</div>
-      <div class="chips-wrap">
-        <button class="chip" onclick="setGreen(-100)">−100 Full Magenta</button>
-        <button class="chip" onclick="setGreen(-60)">−60 Magenta fort</button>
-        <button class="chip" onclick="setGreen(-30)">−30 Magenta doux</button>
-        <button class="chip" onclick="setGreen(-10)">−10 Légère mag.</button>
-        <button class="chip active" onclick="setGreen(0)">0 Neutre</button>
-        <button class="chip" onclick="setGreen(10)">+10 Légère vert</button>
-        <button class="chip" onclick="setGreen(30)">+30 Vert doux</button>
-        <button class="chip" onclick="setGreen(60)">+60 Vert fort</button>
-        <button class="chip" onclick="setGreen(100)">+100 Full Vert</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="tab-content" id="content-strobe">
-    <div class="panel">
-      <div class="toggle-row">
-        <div><div class="toggle-label">Stroboscope</div><div class="toggle-sub">Flash sur l'écran distant</div></div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="strobeToggle" onchange="onStrobeToggle()">
-          <div class="toggle-track"></div><div class="toggle-thumb"></div>
-        </label>
-      </div>
-      <div id="strobeActiveBadge" style="display:none"><span class="strobe-active-badge">⚡ Strobe actif</span></div>
-      <div class="panel-label" style="margin:14px 0 8px">Mode</div>
-      <div class="chips-wrap" style="margin-bottom:16px">
-        <button class="chip active" onclick="setStrobeMode('regular')" id="chip-regular">Régulier</button>
-        <button class="chip" onclick="setStrobeMode('random')" id="chip-random">Aléatoire</button>
-      </div>
-      <div class="slider-block">
-        <div class="slider-header"><label id="freqLabel">Fréquence</label><div class="slider-val" id="freqVal">2.0<span> Hz</span></div></div>
-        <input type="range" id="freqSlider" min="0.5" max="30" step="0.5" value="2" style="background:linear-gradient(to right,#1a73e8,#e8c97a)" oninput="onStrobeParamChange()">
-      </div>
-      <div class="slider-block">
-        <div class="slider-header"><label id="durLabel">Durée du flash</label><div class="slider-val" id="flashDurVal">50<span> ms</span></div></div>
-        <input type="range" id="flashDurSlider" min="5" max="500" step="5" value="50" style="background:linear-gradient(to right,#111,var(--accent))" oninput="onStrobeParamChange()">
-      </div>
-      <div id="randomOptions" style="display:none">
-        <div style="height:1px;background:var(--border);margin:4px 0 14px"></div>
-        <div class="panel-label" style="margin-bottom:10px">Plage aléatoire (max)</div>
-        <div class="slider-block">
-          <div class="slider-header"><label>Fréquence max</label><div class="slider-val" id="freqMaxVal">8.0<span> Hz</span></div></div>
-          <input type="range" id="freqMaxSlider" min="0.5" max="30" step="0.5" value="8" style="background:linear-gradient(to right,#1a73e8,#e8c97a)" oninput="onStrobeParamChange()">
-        </div>
-        <div class="slider-block">
-          <div class="slider-header"><label>Durée flash max</label><div class="slider-val" id="flashDurMaxVal">200<span> ms</span></div></div>
-          <input type="range" id="flashDurMaxSlider" min="5" max="500" step="5" value="200" style="background:linear-gradient(to right,#111,var(--accent))" oninput="onStrobeParamChange()">
-        </div>
-      </div>
-      <div class="strobe-preview">Aperçu local<div class="strobe-flash" id="strobeFlashPreview"></div></div>
-      <div style="height:1px;background:var(--border);margin:14px 0"></div>
-      <div class="panel-label">Effets sur le récepteur</div>
-      <div class="toggle-row" style="margin-bottom:10px">
-        <div><div class="toggle-label" style="font-size:.75rem">🔦 Torche synchronisée</div><div class="toggle-sub">Flash la torche du récepteur avec le strobe</div></div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="torchSyncToggle" onchange="onStrobeParamChange()">
-          <div class="toggle-track"></div><div class="toggle-thumb"></div>
-        </label>
-      </div>
-      <div class="panel-label" style="margin-top:4px">📳 Vibration rapide</div>
-      <div class="chips-wrap">
-        <button class="chip" onclick="sendVibrate([80])">Court</button>
-        <button class="chip" onclick="sendVibrate([300])">Long</button>
-        <button class="chip" onclick="sendVibrate([80,80,80])">Double</button>
-        <button class="chip" onclick="sendVibrate([80,60,80,60,300])">Alerte</button>
-        <button class="chip" onclick="sendVibrate([50,30,50,30,50,30,300,50,300,50,300,50,50,30,50,30,50])">SOS</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="tab-content" id="content-flash">
-    <div class="panel">
-      <div class="panel-label">Torche récepteur</div>
-      <button class="torch-onoff-btn" id="remoteTorchBtn" onclick="onRemoteTorchToggle()">
-        <span id="remoteTorchIcon">🔦</span><span id="remoteTorchLabel">Allumer la torche</span>
-      </button>
-      <div id="torchDimSection">
-        <div class="torch-level-bar"><div class="torch-level-fill" id="torchLevelFill" style="width:100%"></div></div>
-        <div class="slider-block">
-          <div class="slider-header"><label>Intensité</label><div class="slider-val" id="torchDimVal">100<span>%</span></div></div>
-          <input type="range" id="torchDimSlider" min="5" max="100" value="100"
-                 style="background:linear-gradient(to right,#333,#ffe664)"
-                 oninput="onTorchDimChange()">
-        </div>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-label">Effets</div>
-      <div class="effect-grid">
-        <button class="effect-btn" id="efx-sos" onclick="sendTorchEffect('sos')">
-          <span class="effect-icon">🆘</span>SOS
-        </button>
-        <button class="effect-btn" id="efx-blink-slow" onclick="sendTorchEffect('blink-slow')">
-          <span class="effect-icon">🔁</span>Clignotement lent
-        </button>
-        <button class="effect-btn" id="efx-blink-fast" onclick="sendTorchEffect('blink-fast')">
-          <span class="effect-icon">⚡</span>Clignotement rapide
-        </button>
-        <button class="effect-btn" id="efx-police" onclick="sendTorchEffect('police')">
-          <span class="effect-icon">🚨</span>Police
-        </button>
-        <button class="effect-btn" id="efx-heartbeat" onclick="sendTorchEffect('heartbeat')">
-          <span class="effect-icon">💓</span>Battement
-        </button>
-        <button class="effect-btn" id="efx-stop" onclick="sendTorchEffect('stop')" style="border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.7)">
-          <span class="effect-icon">⏹</span>Stop effet
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div class="tab-content" id="content-effects">
-    <div id="effectActiveBadge" class="effect-active-row" style="display:none">
-      <span class="strobe-active-badge" id="effectBadgeText">✨ Actif</span>
-      <button class="chip" style="border-color:rgba(220,80,80,.5);color:rgba(220,80,80,.8)" onclick="stopAllEffects()">⏹ Stop</button>
-    </div>
-    <div class="panel">
-      <div class="panel-label">Effets dynamiques</div>
-      <div class="effects-grid">
-        <button class="effect-card" id="efxcard-tv" onclick="selectEffect('tv')">
-          <span class="effect-card-icon">📺</span><span class="effect-card-name">TV</span>
-        </button>
-        <button class="effect-card" id="efxcard-candle" onclick="selectEffect('candle')">
-          <span class="effect-card-icon">🕯</span><span class="effect-card-name">Bougie</span>
-        </button>
-        <button class="effect-card" id="efxcard-fire" onclick="selectEffect('fire')">
-          <span class="effect-card-icon">🔥</span><span class="effect-card-name">Feu</span>
-        </button>
-        <button class="effect-card" id="efxcard-police" onclick="selectEffect('police')">
-          <span class="effect-card-icon">🚨</span><span class="effect-card-name">Police</span>
-        </button>
-        <button class="effect-card" id="efxcard-lightning" onclick="selectEffect('lightning')">
-          <span class="effect-card-icon">⚡</span><span class="effect-card-name">Éclair</span>
-        </button>
-        <button class="effect-card" id="efxcard-paparazzi" onclick="selectEffect('paparazzi')">
-          <span class="effect-card-icon">📸</span><span class="effect-card-name">Paparazzi</span>
-        </button>
-      </div>
-    </div>
-    <div class="panel" id="effectSettingsPanel" style="display:none">
-      <div class="panel-label" id="effectSettingsTitle">Réglages</div>
-      <div class="slider-block">
-        <div class="slider-header">
-          <label id="effectSpeedLabel">Vitesse</label>
-          <div class="slider-val" id="effectSpeedVal">1.0</div>
-        </div>
-        <input type="range" id="effectSpeedSlider" min="0.2" max="10" step="0.1" value="1"
-               style="background:linear-gradient(to right,#1a73e8,#e8c97a)"
-               oninput="onEffectParamChange()">
-      </div>
-      <div class="slider-block">
-        <div class="slider-header">
-          <label>Intensité</label>
-          <div class="slider-val" id="effectIntensityVal">80<span>%</span></div>
-        </div>
-        <input type="range" id="effectIntensitySlider" min="10" max="100" step="5" value="80"
-               style="background:linear-gradient(to right,#333,#fff)"
-               oninput="onEffectParamChange()">
-      </div>
-      <div class="slider-block" id="effectBurstBlock" style="display:none">
-        <div class="slider-header">
-          <label>Flashes / rafale</label>
-          <div class="slider-val" id="effectBurstVal">3</div>
-        </div>
-        <input type="range" id="effectBurstSlider" min="1" max="10" step="1" value="3"
-               style="background:linear-gradient(to right,#333,#ffe664)"
-               oninput="document.getElementById('effectBurstVal').textContent=this.value;onEffectParamChange()">
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-label">Couleurs rapides</div>
-      <div class="presets-grid" id="presetsGrid"></div>
-    </div>
-  </div>
-
-  <div class="tab-content" id="content-qr">
-    <div class="panel">
-      <div class="panel-label">Ouvrir l'écran sur un autre appareil</div>
-      <div class="qr-wrap">
-        <canvas id="qrCanvas" width="200" height="200"></canvas>
-        <div class="qr-url" id="qrUrl">Connectez-vous d'abord à un canal</div>
-      </div>
-    </div>
-    <div class="panel" style="font-size:.65rem;color:var(--muted);line-height:1.8">
-      <div class="panel-label">Comment utiliser</div>
-      1. Sur l'écran : <strong style="color:var(--text)">Écran projecteur</strong> → taper le même code<br>
-      2. Ou scanner ce QR pour ouvrir directement<br>
-      3. Les couleurs s'envoient en temps réel ⚡
-    </div>
-  </div>
-</div>
+<div id="hud"><button id="hud-disconnect">↩ Déconnecter</button></div>
+<div id="status"><div id="status-dot"></div><span id="status-label">Déconnecté</span></div>
 
 <script>
-// ══════════════════════════ STATE ══════════════════════════
-let mode = null, channel = null, mqttClient = null;
-let currentColor = '#ffffff';
-let showHex = true;
-let wheelHSLColor = '#ffffff', wheelBrightness = 100;
-let kelvinK = 5600, kelvinBrightness = 100;
-let greenShift = 0, greenBrightness = 100;
-let strobeActive = false, strobeMode = 'regular';
-let strobeFreq = 2, strobeFlashDur = 50, strobeFreqMax = 8, strobeFlashDurMax = 200;
-let strobePreviewTimer = null, autoSendTimer = null;
+'use strict'
 
-// ══════════════════════════ MQTT ══════════════════════════
-const BROKER = 'wss://broker.hivemq.com:8884/mqtt';
+const isHttps = location.protocol === 'https:'
 
-function mqttTopic(ch) { return 'cinelight/v1/' + ch + '/cmd'; }
-
-function connectMQTT(ch, onConnected) {
-  if (mqttClient) { mqttClient.end(true); mqttClient = null; }
-
-  const clientId = 'cl-' + mode + '-' + Math.random().toString(36).slice(2, 8);
-  mqttClient = mqtt.connect(BROKER, {
-    clientId,
-    clean: true,
-    connectTimeout: 8000,
-    reconnectPeriod: 3000,
-  });
-
-  mqttClient.on('connect', () => {
-    mqttClient.subscribe(mqttTopic(ch), { qos: 0 }, () => {
-      onConnected();
-    });
-  });
-
-  mqttClient.on('error', err => {
-    console.warn('MQTT error', err);
-    if (mode === 'remote') setConnStatus('error');
-    else setScreenStatus('Erreur broker — rechargez');
-  });
-
-  mqttClient.on('message', (topic, payload) => {
-    try {
-      const msg = JSON.parse(payload.toString());
-      // Ignorer ses propres messages (même clientId dans le payload)
-      if (msg._id === clientId) return;
-      if (mode === 'screen') {
-        if (msg.type === 'color')        receiveColor(msg.color);
-        if (msg.type === 'strobe')       receiveStrobe(msg);
-        if (msg.type === 'vibrate')      doVibrate(msg.pattern);
-        if (msg.type === 'torch-onoff')  receiveTorchOnOff(msg.on);
-        if (msg.type === 'torch-dim')    receiveTorchDim(msg.level);
-        if (msg.type === 'torch-effect') receiveTorchEffect(msg.effect);
-        if (msg.type === 'effect')       receiveEffect(msg);
-      }
-    } catch (_) {}
-  });
-
-  // Stocker l'ID pour filtrer l'echo
-  mqttClient._myId = clientId;
+// ── Mode switch ───────────────────────────────────────────────────────
+if (isHttps) {
+  // Landing mode (GitHub Pages)
+  document.getElementById('landing').style.display = 'flex'
+  // Detect OS for download button
+  const ua = navigator.userAgent
+  const btn = document.getElementById('dl-btn')
+  const lbl = document.getElementById('dl-label')
+  const MAC = 'https://github.com/Pierre-ITSI/cine-light/releases/download/v1.0.0/cinelight-bridge-1.0.0-arm64.dmg'
+  const REL = 'https://github.com/Pierre-ITSI/cine-light/releases'
+  if (/Mac/.test(ua) && !/iPhone|iPad/.test(ua)) { btn.href = MAC; lbl.textContent = 'Télécharger pour Mac (Apple Silicon)' }
+  else if (/Win/.test(ua))                        { btn.href = REL; lbl.textContent = 'Télécharger pour Windows' }
+  else                                            { btn.href = REL; lbl.textContent = 'Voir les téléchargements' }
+} else {
+  // Screen mode (HTTP — local bridge)
+  document.body.classList.add('screen-mode')
+  document.getElementById('connect-screen').style.display = 'flex'
+  initScreenMode()
 }
 
-function sendMsg(obj) {
-  if (!mqttClient || !mqttClient.connected) return;
-  const payload = JSON.stringify({ ...obj, _id: mqttClient._myId });
-  mqttClient.publish(mqttTopic(channel), payload, { qos: 0 });
-  // Fallback BroadcastChannel (même device)
-  if (window._bc) window._bc.postMessage(obj);
+// ── Landing helpers ────────────────────────────────────────────────────
+function toggleDmxLanding() {
+  const w = document.getElementById('dmx-landing')
+  const btn = document.querySelector('.dmx-toggle span')
+  const open = w.classList.toggle('open')
+  btn.textContent = (open ? '▲' : '▼') + ' Mapping DMX (9 canaux)'
 }
 
-// BroadcastChannel fallback (même navigateur, même device)
-function initBCFallback(ch) {
-  const bc = new BroadcastChannel('cinelight_' + ch);
-  window._bc = bc;
-  if (mode === 'screen') {
-    bc.onmessage = e => {
-      if (e.data.type === 'color')  receiveColor(e.data.color);
-      if (e.data.type === 'strobe') receiveStrobe(e.data);
-    };
+// ── Screen mode ────────────────────────────────────────────────────────
+function initScreenMode() {
+  // Download button (desktop only)
+  ;(function() {
+    const ua = navigator.userAgent
+    if (/iPhone|iPad|iPod|Android/i.test(ua)) return
+    const MAC = 'https://github.com/Pierre-ITSI/cine-light/releases/download/v1.0.0/cinelight-bridge-1.0.0-arm64.dmg'
+    const REL = 'https://github.com/Pierre-ITSI/cine-light/releases'
+    const sec = document.getElementById('download-section')
+    const btn = document.getElementById('download-btn')
+    const lbl = document.getElementById('download-label')
+    if (/Mac/.test(ua)) { btn.href = MAC; lbl.textContent = 'Télécharger pour Mac (Apple Silicon)' }
+    else { btn.href = REL; lbl.textContent = 'Télécharger l\'app bridge' }
+    sec.style.display = 'flex'
+  })()
+
+  const $ = id => document.getElementById(id)
+  const connectScreen = $('connect-screen'), panel = $('panel')
+  const codeInput = $('code-input'), ipInput = $('ip-input'), portInput = $('port-input')
+  const connectBtn = $('connect-btn'), errorMsg = $('error-msg')
+  const statusEl = $('status'), statusDot = $('status-dot'), statusLabel = $('status-label')
+  const colorDisplay = $('color-display'), hud = $('hud'), hudDisconnect = $('hud-disconnect')
+
+  let ws = null, reconnectTimer = null
+
+  const params = new URLSearchParams(location.search)
+  const urlCode = params.get('code')?.toUpperCase()
+  if (urlCode) codeInput.value = urlCode
+  if (urlCode && location.hostname && location.hostname !== 'localhost') {
+    const httpPort = parseInt(location.port, 10) || 8080
+    setTimeout(() => autoConnect(urlCode, location.hostname, httpPort), 300)
   }
-}
 
-// ══════════════════════════ NAVIGATION ══════════════════════════
-function startMode(m) {
-  document.getElementById('splash').style.display = 'none';
-  if (m === 'screen-sacn') {
-    const cfgDiv = document.getElementById('screen-sacn-config');
-    if (cfgDiv) cfgDiv.style.display = 'flex';
-    const hasNative = (typeof IS_NATIVE !== 'undefined' && IS_NATIVE)
-                      && !!(window.Capacitor?.Plugins?.SACN);
-    const bridgeSec = document.getElementById('screenSacnBridgeSection');
-    const nativeBadge = document.getElementById('screenSacnNativeBadge');
-    if (bridgeSec) bridgeSec.style.display = hasNative ? 'none' : 'flex';
-    if (nativeBadge) nativeBadge.style.display = hasNative ? 'block' : 'none';
-    if (hasNative) selectScreenSacnMode('9ch');
-    return;
+  function clamp(v, lo=0, hi=255) { return Math.max(lo, Math.min(hi, v)) }
+  function cctToRgb(k) {
+    const t = k/100; let r,g,b
+    r = t<=66?255:clamp(329.698727446*Math.pow(t-60,-0.1332047592))
+    g = t<=66?clamp(99.4708025861*Math.log(t)-161.1195681661):clamp(288.1221695283*Math.pow(t-60,-0.0755148492))
+    b = t>=66?255:t<=19?0:clamp(138.5177312231*Math.log(t-10)-305.0447927307)
+    return {r:Math.round(r),g:Math.round(g),b:Math.round(b)}
   }
-  if (m === 'remote') {
-    mode = 'remote';
-    document.getElementById('remote-mode').style.display = 'block';
-    buildPresets(); initWheel();
-    applyColor('#ffffff', 'Blanc pur');
-    document.getElementById('channelInput').value = 'cine' + Math.floor(Math.random()*9000+1000);
-  } else {
-    const hash = location.hash.replace('#','');
-    if (hash) { enterScreenMode(hash); }
-    else {
-      document.getElementById('screen-connect').style.display = 'flex';
-      setTimeout(() => document.getElementById('screenChannelInput').focus(), 100);
+  function computeColor(d) {
+    const dim=d.dim/255, k=1700+(d.cct/255)*18300, tint=d.tint-128, xf=d.colorXFade/255
+    const c=cctToRgb(k), abs=Math.abs(tint)/128
+    let ar=c.r,ag=c.g,ab=c.b
+    if(tint>0){ag=clamp(ag+abs*60);ar=clamp(ar-abs*20);ab=clamp(ab-abs*20)}
+    else if(tint<0){ar=clamp(ar+abs*30);ab=clamp(ab+abs*30);ag=clamp(ag-abs*40)}
+    return {r:Math.round(clamp((ar*(1-xf)+d.r*xf)*dim)),g:Math.round(clamp((ag*(1-xf)+d.g*xf)*dim)),b:Math.round(clamp((ab*(1-xf)+d.b*xf)*dim)),kelvin:Math.round(k)}
+  }
+
+  let pending=null
+  function applyDmx(d) {
+    if(pending) cancelAnimationFrame(pending)
+    pending=requestAnimationFrame(()=>{
+      const c=computeColor(d)
+      colorDisplay.style.backgroundColor=`rgb(${c.r},${c.g},${c.b})`
+      document.body.style.backgroundColor=`rgb(${Math.round(c.r*.25)},${Math.round(c.g*.25)},${Math.round(c.b*.25)})`
+      $('val-dim').textContent=Math.round((d.dim/255)*100)+'%'
+      $('val-cct').textContent=c.kelvin.toLocaleString()+'K'
+      const t=d.tint-128; $('val-tint').textContent=(t>=0?'+':'')+t
+      $('val-r').textContent=d.r; $('val-g').textContent=d.g; $('val-b').textContent=d.b
+    })
+  }
+
+  function setStatus(s,t){statusDot.className=s;statusLabel.textContent=t}
+  function reqFS(){const e=document.documentElement;if(e.requestFullscreen)e.requestFullscreen().catch(()=>{});else if(e.webkitRequestFullscreen)e.webkitRequestFullscreen()}
+  function exitFS(){if(document.exitFullscreen)document.exitFullscreen().catch(()=>{});else if(document.webkitExitFullscreen)document.webkitExitFullscreen()}
+
+  function showPanel(){connectScreen.style.display='none';panel.style.display='block';statusEl.style.display='none';hud.classList.remove('visible');document.body.style.background='#000';reqFS()}
+  function showConnect(){panel.style.display='none';connectScreen.style.display='flex';statusEl.style.display='flex';hud.classList.remove('visible');document.body.style.background='var(--bg)';exitFS()}
+  function showError(m){errorMsg.textContent=m;setTimeout(()=>{if(errorMsg.textContent===m)errorMsg.textContent=''},4000)}
+
+  colorDisplay.addEventListener('click',()=>hud.classList.toggle('visible'))
+  hudDisconnect.addEventListener('click',e=>{e.stopPropagation();disconnect()})
+
+  async function discover(code,host,httpPort){
+    try{
+      let sig;try{sig=AbortSignal.timeout(800)}catch{const c=new AbortController();setTimeout(()=>c.abort(),800);sig=c.signal}
+      const r=await fetch(`http://${host}:${httpPort}/discover?code=${encodeURIComponent(code)}`,{signal:sig})
+      if(!r.ok)return null; const d=await r.json(); return d.wsPort?d:null
+    }catch{return null}
+  }
+
+  function connectWs(url){
+    if(ws){try{ws.close()}catch{}}
+    ws=new WebSocket(url); setStatus('connecting','Connexion…')
+    ws.onopen=()=>{setStatus('connected',url.replace('ws://','').split('?')[0]);showPanel();connectBtn.disabled=false}
+    ws.onmessage=e=>{
+      try{
+        const m=JSON.parse(e.data)
+        if(m.type==='dmx')applyDmx(m)
+        else if(m.type==='code_changed'){disconnect();showError('Le code écran a changé. Reconnectez-vous.')}
+        else if(m.type==='error'){disconnect();showError(m.message||'Erreur de connexion')}
+      }catch{}
     }
-  }
-}
-
-function screenConnect() {
-  const ch = document.getElementById('screenChannelInput').value.trim().toLowerCase().replace(/\W/g,'');
-  if (!ch) return;
-  document.getElementById('screen-connect').style.display = 'none';
-  enterScreenMode(ch);
-}
-
-function enterScreenMode(ch) {
-  mode = 'screen'; channel = ch;
-  const el = document.getElementById('screen-mode');
-  el.style.display = 'flex';
-  el.style.backgroundColor = '#1a1a1a';
-  setScreenStatus('Connexion à ' + ch + '…');
-  requestFS();
-  if (!navigator.vibrate) { const b=document.getElementById('vibrateBtn'); if(b){b.classList.add('unavail');b.textContent='📳 N/A';b.classList.remove('on');} vibrateEnabled=false; }
-  initBCFallback(ch);
-  connectMQTT(ch, () => setScreenStatus('✓ En écoute — canal : ' + ch));
-}
-
-function connectChannel() {
-  const ch = document.getElementById('channelInput').value.trim().toLowerCase().replace(/\W/g,'');
-  if (!ch) return;
-  channel = ch;
-  setConnStatus('connecting');
-  initBCFallback(ch);
-  connectMQTT(ch, () => {
-    setConnStatus('connected');
-    // Envoyer la couleur courante dès la connexion
-    sendMsg({ type: 'color', color: currentColor });
-  });
-  setTimeout(renderQR, 300);
-}
-
-function suspendScreen() {
-  exitFS();
-  // Déconnecter MQTT mais garder le canal en mémoire
-  if (mqttClient) { mqttClient.end(true); mqttClient = null; }
-  // Cacher l'écran et revenir à la saisie de canal
-  const el = document.getElementById('screen-mode');
-  if (el) el.style.display = 'none';
-  // Pré-remplir le champ avec le canal actuel
-  const inp = document.getElementById('screenChannelInput');
-  if (inp && channel) inp.value = channel;
-  document.getElementById('screen-connect').style.display = 'flex';
-  setTimeout(() => { if (inp) inp.focus(); }, 100);
-}
-
-function goBackToSplash() {
-  exitFS();
-  const cfgDiv = document.getElementById('screen-sacn-config');
-  if (cfgDiv) cfgDiv.style.display = 'none';
-  stopScreenSACN();
-  document.getElementById('screen-connect').style.display = 'none';
-  document.getElementById('splash').style.display = 'flex';
-}
-
-function goBack() {
-  stopStrobe();
-  if (mqttClient) { mqttClient.end(true); mqttClient = null; }
-  document.getElementById('remote-mode').style.display = 'none';
-  document.getElementById('splash').style.display = 'flex';
-}
-
-function switchTab(t) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.getElementById('tab-' + t).classList.add('active');
-  document.getElementById('content-' + t).classList.add('active');
-  if (t === 'qr') renderQR();
-}
-
-// ══════════════════════════ STATUS ══════════════════════════
-function setConnStatus(s) {
-  const dot = document.getElementById('connDot'), lbl = document.getElementById('connLabel');
-  dot.className = 'dot';
-  if (s === 'connected')   { dot.classList.add('connected');  lbl.textContent = '✓ Connecté — canal : ' + channel; }
-  else if (s === 'connecting') { dot.classList.add('connecting'); lbl.textContent = 'Connexion…'; }
-  else if (s === 'error')      { dot.classList.add('error');      lbl.textContent = 'Erreur — réessayez'; }
-  else { lbl.textContent = 'Non connecté'; }
-}
-function setScreenStatus(msg) {
-  const el = document.getElementById('screen-status');
-  if (el) el.textContent = msg;
-}
-
-// ══════════════════════════ AUTO-SEND ══════════════════════════
-function scheduleAutoSend() {
-  if (autoSendTimer) clearTimeout(autoSendTimer);
-  autoSendTimer = setTimeout(() => {
-    sendMsg({ type: 'color', color: currentColor });
-    const el = document.getElementById('autosendBadge');
-    if (el) { el.classList.add('visible'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('visible'), 600); }
-  }, 40);
-}
-
-// ══════════════════════════ SCREEN DISPLAY ══════════════════════════
-let screenStrobeTimer = null, screenBaseColor = '#1a1a1a';
-function receiveColor(color) {
-  screenBaseColor = color;
-  if (!screenStrobeTimer) {
-    const sc = document.getElementById('screen-mode');
-    sc.style.transition = 'background-color 0.15s ease';
-    sc.style.backgroundColor = color;
-  }
-  document.getElementById('current-hex').textContent = color.toUpperCase();
-  doVibrate([40]);
-  if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(() => {});
-}
-function receiveStrobe(msg) {
-  if (screenStrobeTimer) { clearTimeout(screenStrobeTimer); screenStrobeTimer = null; }
-  const sc = document.getElementById('screen-mode');
-  if (!msg.active) { sc.style.transition = 'background-color 0.3s'; sc.style.backgroundColor = screenBaseColor; setTorch(false); return; }
-  sc.style.transition = 'none';
-  const useTorch = msg.torch;
-  function flash() {
-    let freq = msg.freq, dur = msg.dur;
-    if (msg.random) { freq = msg.freqMin+Math.random()*(msg.freqMax-msg.freqMin); dur = msg.durMin+Math.random()*(msg.durMax-msg.durMin); }
-    const interval = Math.max(dur+5, 1000/freq);
-    sc.style.backgroundColor = screenBaseColor;
-    if (useTorch) setTorch(true);
-    screenStrobeTimer = setTimeout(() => {
-      sc.style.backgroundColor='#000';
-      if (useTorch) setTorch(false);
-      screenStrobeTimer=setTimeout(flash,interval-dur);
-    }, dur);
-  }
-  flash();
-}
-function toggleHex() {}
-
-// ══════════════════════════ COLOR WHEEL ══════════════════════════
-function initWheel() {
-  const canvas=document.getElementById('colorWheel'), ctx=canvas.getContext('2d');
-  const W=canvas.width, R=W/2, cx=R, cy=R;
-  for (let a=0;a<360;a++) {
-    const rad=(a-90)*Math.PI/180;
-    const grad=ctx.createLinearGradient(cx,cy,cx+Math.cos(rad)*R,cy+Math.sin(rad)*R);
-    grad.addColorStop(0,`hsl(${a},0%,100%)`); grad.addColorStop(1,`hsl(${a},100%,50%)`);
-    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,(a-91)*Math.PI/180,(a-89)*Math.PI/180);
-    ctx.fillStyle=grad; ctx.fill();
-  }
-  let drag=false;
-  function pick(ex,ey) {
-    const rect=canvas.getBoundingClientRect();
-    const x=(ex-rect.left)*(W/rect.width), y=(ey-rect.top)*(W/rect.height);
-    if (Math.sqrt((x-cx)**2+(y-cy)**2)>R) return;
-    const d=ctx.getImageData(Math.round(Math.min(Math.max(x,0),W-1)),Math.round(Math.min(Math.max(y,0),W-1)),1,1).data;
-    wheelHSLColor=rgbToHex(d[0],d[1],d[2]); onBrightnessChange();
-  }
-  canvas.addEventListener('mousedown',e=>{drag=true;pick(e.clientX,e.clientY)});
-  canvas.addEventListener('mousemove',e=>{if(drag)pick(e.clientX,e.clientY)});
-  canvas.addEventListener('mouseup',()=>drag=false);
-  canvas.addEventListener('touchstart',e=>{e.preventDefault();pick(e.touches[0].clientX,e.touches[0].clientY)},{passive:false});
-  canvas.addEventListener('touchmove',e=>{e.preventDefault();pick(e.touches[0].clientX,e.touches[0].clientY)},{passive:false});
-}
-function onBrightnessChange() {
-  wheelBrightness=parseInt(document.getElementById('brightnessSlider').value);
-  document.getElementById('brightVal').innerHTML=wheelBrightness+'<span>%</span>';
-  const rgb=hexToRgb(wheelHSLColor),f=wheelBrightness/100;
-  applyColor(rgbToHex(Math.round(rgb.r*f),Math.round(rgb.g*f),Math.round(rgb.b*f)),'Roue · '+wheelBrightness+'%');
-  scheduleAutoSend();
-}
-
-// ══════════════════════════ KELVIN ══════════════════════════
-function kelvinToRgb(K) {
-  const t=K/100; let r,g,b;
-  r=t<=66?255:Math.min(255,Math.max(0,329.698727446*Math.pow(t-60,-0.1332047592)));
-  g=t<=66?Math.min(255,Math.max(0,99.4708025861*Math.log(t)-161.1195681661)):Math.min(255,Math.max(0,288.1221695283*Math.pow(t-60,-0.0755148492)));
-  b=t>=66?255:(t<=19?0:Math.min(255,Math.max(0,138.5177312231*Math.log(t-10)-305.0447927307)));
-  return{r:Math.round(r),g:Math.round(g),b:Math.round(b)};
-}
-function onKelvinChange() {
-  kelvinK=parseInt(document.getElementById('kelvinSlider').value);
-  kelvinBrightness=parseInt(document.getElementById('kelvinBrightnessSlider').value);
-  document.getElementById('kelvinVal').innerHTML=kelvinK.toLocaleString('fr')+'<span> K</span>';
-  document.getElementById('kelvinBrightVal').innerHTML=kelvinBrightness+'<span>%</span>';
-  const rgb=kelvinToRgb(kelvinK),f=kelvinBrightness/100;
-  applyColor(rgbToHex(Math.round(rgb.r*f),Math.round(rgb.g*f),Math.round(rgb.b*f)),kelvinK+'K · '+kelvinBrightness+'%');
-  scheduleAutoSend();
-}
-function setKelvin(k){document.getElementById('kelvinSlider').value=k;onKelvinChange();}
-
-// ══════════════════════════ GREEN SHIFT ══════════════════════════
-function onGreenChange() {
-  greenShift=parseInt(document.getElementById('greenSlider').value);
-  greenBrightness=parseInt(document.getElementById('greenBrightnessSlider').value);
-  const sign=greenShift>=0?'+':'';
-  document.getElementById('greenVal').innerHTML=sign+greenShift+'<span> GM</span>';
-  document.getElementById('greenBrightVal').innerHTML=greenBrightness+'<span>%</span>';
-  const f=greenBrightness/100,base=255*f; let r,g,b;
-  if(greenShift>=0){const t=greenShift/100;r=base*(1-t*0.45);g=base;b=base*(1-t*0.45);}
-  else{const t=Math.abs(greenShift)/100;r=base;g=base*(1-t*0.65);b=base;}
-  applyColor(rgbToHex(Math.min(255,Math.max(0,Math.round(r))),Math.min(255,Math.max(0,Math.round(g))),Math.min(255,Math.max(0,Math.round(b)))),sign+greenShift+' GM · '+greenBrightness+'%');
-  scheduleAutoSend();
-}
-function setGreen(v){document.getElementById('greenSlider').value=v;onGreenChange();document.querySelectorAll('#content-green .chip').forEach(c=>c.classList.remove('active'));}
-
-// ══════════════════════════ STROBE ══════════════════════════
-function setStrobeMode(m) {
-  strobeMode=m;
-  document.getElementById('chip-regular').classList.toggle('active',m==='regular');
-  document.getElementById('chip-random').classList.toggle('active',m==='random');
-  document.getElementById('randomOptions').style.display=m==='random'?'block':'none';
-  document.getElementById('freqLabel').textContent=m==='random'?'Fréquence min':'Fréquence';
-  document.getElementById('durLabel').textContent=m==='random'?'Durée flash min':'Durée du flash';
-  if(strobeActive){sendMsg(buildStrobePayload());runLocalStrobePreview();}
-}
-function onStrobeToggle() {
-  strobeActive=document.getElementById('strobeToggle').checked;
-  document.getElementById('strobeActiveBadge').style.display=strobeActive?'block':'none';
-  if(strobeActive){sendMsg(buildStrobePayload());runLocalStrobePreview();}else stopStrobe();
-}
-function onStrobeParamChange() {
-  strobeFreq=parseFloat(document.getElementById('freqSlider').value);
-  strobeFlashDur=parseInt(document.getElementById('flashDurSlider').value);
-  strobeFreqMax=parseFloat(document.getElementById('freqMaxSlider').value);
-  strobeFlashDurMax=parseInt(document.getElementById('flashDurMaxSlider').value);
-  document.getElementById('freqVal').innerHTML=strobeFreq.toFixed(1)+'<span> Hz</span>';
-  document.getElementById('flashDurVal').innerHTML=strobeFlashDur+'<span> ms</span>';
-  document.getElementById('freqMaxVal').innerHTML=strobeFreqMax.toFixed(1)+'<span> Hz</span>';
-  document.getElementById('flashDurMaxVal').innerHTML=strobeFlashDurMax+'<span> ms</span>';
-  if(strobeActive){sendMsg(buildStrobePayload());runLocalStrobePreview();}
-}
-function buildStrobePayload(){const ts=document.getElementById('torchSyncToggle');return{type:'strobe',active:strobeActive,torch:ts?ts.checked:false,random:strobeMode==='random',freq:strobeFreq,dur:strobeFlashDur,freqMin:strobeFreq,freqMax:strobeFreqMax,durMin:strobeFlashDur,durMax:strobeFlashDurMax};}
-function stopStrobe() {
-  strobeActive=false;
-  if(document.getElementById('strobeToggle'))document.getElementById('strobeToggle').checked=false;
-  if(document.getElementById('strobeActiveBadge'))document.getElementById('strobeActiveBadge').style.display='none';
-  sendMsg({type:'strobe',active:false}); stopLocalStrobePreview();
-}
-function runLocalStrobePreview() {
-  stopLocalStrobePreview();
-  const flashEl=document.getElementById('strobeFlashPreview');
-  if(!flashEl||!strobeActive)return;
-  function cycle(){
-    let freq=strobeFreq,dur=strobeFlashDur;
-    if(strobeMode==='random'){freq=strobeFreq+Math.random()*(strobeFreqMax-strobeFreq);dur=strobeFlashDur+Math.random()*(strobeFlashDurMax-strobeFlashDur);}
-    const interval=Math.max(dur+5,1000/freq);
-    flashEl.style.opacity='0.9';
-    strobePreviewTimer=setTimeout(()=>{flashEl.style.opacity='0';if(strobeActive)strobePreviewTimer=setTimeout(cycle,interval-dur);},dur);
-  }
-  cycle();
-}
-function stopLocalStrobePreview(){if(strobePreviewTimer)clearTimeout(strobePreviewTimer);strobePreviewTimer=null;const f=document.getElementById('strobeFlashPreview');if(f)f.style.opacity='0';}
-
-// ══════════════════════════ EFFECTS TAB — TÉLÉCOMMANDE ══════════════════════════
-let activeScreenEffect = null, effectSendTimer = null;
-
-const EFFECT_CONFIG = {
-  tv:        { label:'📺 TV',          speedLabel:'Vitesse (img/s)',    min:0.5, max:15,  step:0.5, def:4,   intDef:80,  burst:false },
-  candle:    { label:'🕯 Bougie',       speedLabel:'Vacillement',        min:0.2, max:5,   step:0.1, def:1.2, intDef:85,  burst:false },
-  fire:      { label:'🔥 Feu',          speedLabel:'Intensité rapide',   min:0.5, max:10,  step:0.5, def:3,   intDef:90,  burst:false },
-  police:    { label:'🚨 Police',       speedLabel:'Vitesse alternance', min:0.5, max:8,   step:0.5, def:3,   intDef:100, burst:false },
-  lightning: { label:'⚡ Éclair',       speedLabel:'Fréquence',          min:0.1, max:3,   step:0.1, def:0.8, intDef:100, burst:false },
-  paparazzi: { label:'📸 Paparazzi',   speedLabel:'Rafales / sec',      min:0.2, max:4,   step:0.1, def:1,   intDef:100, burst:true  },
-};
-
-function selectEffect(name) {
-  if (activeScreenEffect === name) { stopAllEffects(); return; }
-  activeScreenEffect = name;
-  document.querySelectorAll('.effect-card').forEach(b => b.classList.remove('active'));
-  const card = document.getElementById('efxcard-' + name);
-  if (card) card.classList.add('active');
-  const badge = document.getElementById('effectActiveBadge');
-  if (badge) badge.style.display = 'flex';
-  const cfg = EFFECT_CONFIG[name];
-  const badgeText = document.getElementById('effectBadgeText');
-  if (badgeText && cfg) badgeText.textContent = cfg.label + ' actif';
-  // Populate settings
-  const panel = document.getElementById('effectSettingsPanel');
-  if (panel && cfg) {
-    panel.style.display = 'block';
-    document.getElementById('effectSettingsTitle').textContent = 'Réglages — ' + cfg.label;
-    document.getElementById('effectSpeedLabel').textContent = cfg.speedLabel;
-    const sl = document.getElementById('effectSpeedSlider');
-    sl.min = cfg.min; sl.max = cfg.max; sl.step = cfg.step; sl.value = cfg.def;
-    document.getElementById('effectSpeedVal').textContent = cfg.def.toFixed(1);
-    document.getElementById('effectIntensitySlider').value = cfg.intDef;
-    document.getElementById('effectIntensityVal').innerHTML = cfg.intDef + '<span>%</span>';
-    document.getElementById('effectBurstBlock').style.display = cfg.burst ? 'block' : 'none';
-  }
-  scheduleEffectSend();
-}
-
-function onEffectParamChange() {
-  const speed = parseFloat(document.getElementById('effectSpeedSlider').value);
-  document.getElementById('effectSpeedVal').textContent = speed.toFixed(1);
-  const intensity = parseInt(document.getElementById('effectIntensitySlider').value);
-  document.getElementById('effectIntensityVal').innerHTML = intensity + '<span>%</span>';
-  scheduleEffectSend();
-}
-
-function scheduleEffectSend() {
-  if (effectSendTimer) clearTimeout(effectSendTimer);
-  effectSendTimer = setTimeout(() => {
-    if (!activeScreenEffect) return;
-    const burstEl = document.getElementById('effectBurstSlider');
-    sendMsg({ type:'effect', name:activeScreenEffect, active:true, params:{
-      speed: parseFloat(document.getElementById('effectSpeedSlider').value),
-      intensity: parseInt(document.getElementById('effectIntensitySlider').value),
-      burst: burstEl ? parseInt(burstEl.value) : 3,
-    }});
-  }, 80);
-}
-
-function stopAllEffects() {
-  activeScreenEffect = null;
-  document.querySelectorAll('.effect-card').forEach(b => b.classList.remove('active'));
-  const badge = document.getElementById('effectActiveBadge');
-  if (badge) badge.style.display = 'none';
-  const panel = document.getElementById('effectSettingsPanel');
-  if (panel) panel.style.display = 'none';
-  sendMsg({ type:'effect', name:null, active:false });
-}
-
-// ══════════════════════════ EFFECTS TAB — RÉCEPTEUR (screen) ══════════════════════════
-let _screenEffect = null, _screenEffectTimer = null;
-
-function receiveEffect(msg) {
-  stopScreenEffect();
-  const sc = document.getElementById('screen-mode');
-  if (!msg.active) {
-    if (sc) { sc.style.transition = 'background-color 0.4s'; sc.style.backgroundColor = screenBaseColor; }
-    return;
-  }
-  _screenEffect = msg.name;
-  _runEffect(msg.name, msg.params || {});
-}
-
-function stopScreenEffect() {
-  if (_screenEffectTimer) { clearTimeout(_screenEffectTimer); _screenEffectTimer = null; }
-  _screenEffect = null;
-}
-
-function _runEffect(name, p) {
-  const sc = document.getElementById('screen-mode');
-  if (!sc || _screenEffect !== name) return;
-  const speed = Math.max(0.1, p.speed || 1);
-  const intf = Math.max(0.05, Math.min(1, (p.intensity || 80) / 100));
-  const burst = Math.max(1, p.burst || 3);
-
-  function setBg(r, g, b, transMs) {
-    sc.style.transition = transMs > 0 ? `background-color ${transMs}ms ease` : 'none';
-    sc.style.backgroundColor = `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
-  }
-  function next(ms) {
-    _screenEffectTimer = setTimeout(() => _runEffect(name, p), Math.max(16, ms));
-  }
-
-  switch (name) {
-    case 'tv': {
-      const frames = ['#000000','#000000','#101040','#2040b0','#ffffff','#c0c8d0','#404050','#800010','#005010','#000080','#ffffff','#000000'];
-      const c = frames[Math.floor(Math.random() * frames.length)];
-      const rgb = hexToRgb(c);
-      setBg(rgb.r * intf, rgb.g * intf, rgb.b * intf, 0);
-      next(Math.max(30, 400 / speed));
-      break;
+    ws.onclose=e=>{
+      if(e.code===4001){showError('Code incorrect');showConnect();setStatus('error','Code invalide');return}
+      if(e.code===4002){showError('Code régénéré — saisissez le nouveau code');showConnect();codeInput.value='';setStatus('','Déconnecté');return}
+      setStatus('','Déconnecté — reconnexion…')
+      if(panel.style.display==='block')reconnectTimer=setTimeout(()=>connectWs(url),2500)
     }
-    case 'candle': {
-      const flk = 0.55 + Math.random() * 0.45;
-      const b2 = flk * intf;
-      setBg(255 * b2, (80 + Math.random() * 60) * b2, (5 + Math.random() * 15) * b2, Math.round(500 / speed * (0.5 + Math.random() * 0.7)));
-      next(Math.max(60, (700 / speed) * (0.6 + Math.random() * 0.8)));
-      break;
-    }
-    case 'fire': {
-      const t = Math.random();
-      setBg(255 * (0.65 + t * 0.35) * intf, 255 * t * 0.45 * intf, 255 * Math.pow(t, 4) * 0.08 * intf, Math.round(150 / speed * 0.4));
-      next(Math.max(30, (200 / speed) * (0.5 + Math.random())));
-      break;
-    }
-    case 'police': {
-      if (!p._tick) p._tick = 0;
-      const isRed = (p._tick % 2 === 0);
-      setBg(isRed ? 255 * intf : 0, 0, isRed ? 0 : 255 * intf, 0);
-      p._tick++;
-      next(Math.max(80, 500 / speed));
-      break;
-    }
-    case 'lightning': {
-      setBg(3, 3, 10, 0);
-      const baseWait = Math.max(300, 5000 / speed);
-      _screenEffectTimer = setTimeout(() => {
-        const flashes = 1 + Math.floor(Math.random() * 3);
-        let f = 0;
-        function doFlash() {
-          if (f >= flashes || _screenEffect !== name) { setBg(3, 3, 10, 0); next(baseWait * (0.5 + Math.random())); return; }
-          setBg(255 * intf, 255 * intf, 245 * intf, 0);
-          const dur = 25 + Math.random() * 90;
-          f++;
-          _screenEffectTimer = setTimeout(() => { setBg(3, 3, 10, 0); _screenEffectTimer = setTimeout(doFlash, 40 + Math.random() * 80); }, dur);
-        }
-        doFlash();
-      }, baseWait * (0.5 + Math.random() * 1.5));
-      break;
-    }
-    case 'paparazzi': {
-      setBg(8, 8, 8, 0);
-      const burstWait = Math.max(400, 3500 / speed);
-      let f = 0;
-      function doFlash() {
-        if (_screenEffect !== name) return;
-        if (f >= burst) { f = 0; _screenEffectTimer = setTimeout(() => _runEffect(name, p), burstWait * (0.7 + Math.random() * 0.6)); return; }
-        setBg(255 * intf, 252 * intf, 230 * intf, 0);
-        f++;
-        const dur = 25 + Math.random() * 55;
-        _screenEffectTimer = setTimeout(() => { setBg(8, 8, 8, 0); _screenEffectTimer = setTimeout(doFlash, 55 + Math.random() * 90); }, dur);
-      }
-      _screenEffectTimer = setTimeout(doFlash, 80);
-      break;
-    }
+    ws.onerror=()=>setStatus('error','Erreur réseau')
   }
-}
 
-// ══════════════════════════ SCREEN sACN MODE ══════════════════════════
-let _screenSacnWs = null, _screenSacnMode = '3ch';
-
-function selectScreenSacnMode(mode) {
-  _screenSacnMode = mode;
-  ['3ch','9ch'].forEach(m => {
-    const b = document.getElementById('screenSacnMode-' + m);
-    if (b) b.classList.toggle('active', m === mode);
-  });
-}
-
-function enterScreenSACN() {
-  const universe = parseInt(document.getElementById('screenSacnUniverse').value) || 1;
-  const baseAddr = parseInt(document.getElementById('screenSacnBaseAddr').value) || 1;
-  sacnUniverse  = universe;
-  sacnStartAddr = baseAddr;
-  sacnMode      = _screenSacnMode;
-
-  document.getElementById('screen-sacn-config').style.display = 'none';
-  mode = 'screen-sacn';
-  const el = document.getElementById('screen-mode');
-  el.style.display   = 'flex';
-  el.style.backgroundColor = '#000000';
-  setScreenStatus('sACN · Connexion…');
-  requestFS();
-
-  const CapSACN = (typeof IS_NATIVE !== 'undefined' && IS_NATIVE)
-                  ? (window.Capacitor?.Plugins?.SACN || null) : null;
-
-  if (CapSACN) {
-    CapSACN.start({ universe, baseAddr })
-      .then(() => {
-        setScreenStatus('sACN ✓ U' + universe + ' · @' + baseAddr);
-        CapSACN.addListener('dmxUpdate', (f) => screenApplyNativeFixture(f));
-      })
-      .catch(() => setScreenStatus('⚠ sACN erreur'));
-  } else {
-    const ip   = (document.getElementById('screenSacnBridgeIP')?.value  || '').trim();
-    const port = (document.getElementById('screenSacnBridgePort')?.value || '3001').trim();
-    if (!ip) { setScreenStatus('⚠ Bridge IP manquant'); return; }
-    try {
-      _screenSacnWs = new WebSocket(`ws://${ip}:${port}`);
-    } catch(e) { setScreenStatus('⚠ Bridge erreur'); return; }
-    _screenSacnWs.onopen = () => {
-      setScreenStatus('sACN ✓ U' + universe + ' · @' + baseAddr);
-      _screenSacnWs.send(JSON.stringify({ type: 'setUniverse', universe }));
-    };
-    _screenSacnWs.onmessage = (e) => {
-      try { const m = JSON.parse(e.data); if (m.type === 'dmx') screenApplyDmx(m.dmx); } catch(_){}
-    };
-    _screenSacnWs.onerror  = () => setScreenStatus('⚠ Bridge déconnecté');
-    _screenSacnWs.onclose  = () => setScreenStatus('⚠ Bridge fermé');
+  async function autoConnect(code,host,httpPort=8080){
+    setStatus('connecting','Découverte…')
+    const r=await discover(code,host,httpPort)
+    connectWs(`ws://${host}:${r?r.wsPort:3000}?code=${code}`)
   }
-}
 
-function stopScreenSACN() {
-  if (_screenSacnWs) { _screenSacnWs.close(); _screenSacnWs = null; }
-  const CapSACN = (typeof IS_NATIVE !== 'undefined' && IS_NATIVE)
-                  ? (window.Capacitor?.Plugins?.SACN || null) : null;
-  if (CapSACN) CapSACN.stop().catch(() => {});
-}
-
-function screenApplyNativeFixture(f) {
-  const el = document.getElementById('screen-mode');
-  if (!el) return;
-  if (f.isStrobe) {
-    receiveStrobe({ active:true, torch:false, random:false,
-      freq:f.strobeHz||1, dur:f.strobeMs||50,
-      freqMin:f.strobeHz||1, freqMax:f.strobeHz||1,
-      durMin:f.strobeMs||50, durMax:f.strobeMs||50 });
-  } else {
-    receiveStrobe({ active:false });
-    el.style.transition = 'background-color .05s';
-    el.style.backgroundColor = rgbToHex(
-      Math.min(255, Math.round(f.finalR * 255)),
-      Math.min(255, Math.round(f.finalG * 255)),
-      Math.min(255, Math.round(f.finalB * 255))
-    );
+  async function handleConnect(){
+    const code=codeInput.value.trim().toUpperCase()||null
+    const ip=ipInput.value.trim()||null
+    const wsPort=parseInt(portInput.value,10)||3000
+    errorMsg.textContent=''
+    if(!code&&!ip){showError('Saisissez un code écran ou une adresse IP');return}
+    connectBtn.disabled=true; setStatus('connecting','Connexion…')
+    if(code&&ip){const r=await discover(code,ip,8080);connectWs(`ws://${ip}:${r?.wsPort??wsPort}?code=${code}`)}
+    else if(code){
+      const host=location.hostname
+      if(!host){showError('IP introuvable — saisissez-la manuellement');connectBtn.disabled=false;setStatus('','Déconnecté');return}
+      const hp=parseInt(location.port,10)||8080; const r=await discover(code,host,hp)
+      connectWs(`ws://${host}:${r?.wsPort??wsPort}?code=${code}`)
+    }else{connectWs(`ws://${ip}:${wsPort}`)}
+    connectBtn.disabled=false
   }
+
+  function disconnect(){clearTimeout(reconnectTimer);if(ws){try{ws.close()}catch{};ws=null};showConnect();setStatus('','Déconnecté')}
+
+  connectBtn.addEventListener('click',handleConnect)
+  codeInput.addEventListener('keydown',e=>{if(e.key==='Enter')handleConnect()})
+  ipInput.addEventListener('keydown',e=>{if(e.key==='Enter')handleConnect()})
+  codeInput.addEventListener('input',()=>{codeInput.value=codeInput.value.toUpperCase().replace(/[^A-Z0-9-]/g,'')})
 }
 
-function screenApplyDmx(dmx) {
-  const el = document.getElementById('screen-mode');
-  if (!el) return;
-  const addr = sacnStartAddr - 1;
-  const ch   = (n) => Math.max(0, Math.min(255, dmx[addr + n] || 0));
-  const dimmer = ch(0) / 255;
-
-  if (sacnMode === '3ch') {
-    const kelvin = Math.round(1700 + (ch(1) / 255) * 18300);
-    const gm = ch(2) <= 127 ? ((ch(2)/127)-1)*100 : ((ch(2)-128)/127)*100;
-    receiveStrobe({ active:false });
-    el.style.transition = 'background-color .05s';
-    el.style.backgroundColor = dmxKelvinGM(kelvin, gm, dimmer);
-  } else if (sacnMode === '9ch') {
-    const r = ch(0), g = ch(1), b = ch(2);
-    const dimmer = ch(3) / 255;
-    const gmRaw  = ch(6);
-    const gm     = gmRaw <= 127 ? ((gmRaw/127)-1)*100 : ((gmRaw-128)/127)*100;
-    const strobeHz = ch(7);
-    const strobeMs = Math.round(5 + (ch(8)/255)*495);
-    if (strobeHz > 0) {
-      const freq = 0.5 + (strobeHz/255)*24.5;
-      receiveStrobe({ active:true, torch:false, random:false,
-        freq, dur:strobeMs, freqMin:freq, freqMax:freq, durMin:strobeMs, durMax:strobeMs });
-      return;
-    }
-    receiveStrobe({ active:false });
-    let fr = r/255, fg = g/255, fb = b/255;
-    if (gm > 0)      { fr *= (1-gm/100*0.45); fb *= (1-gm/100*0.45); }
-    else if (gm < 0) { const t=Math.abs(gm)/100; fg *= (1-t*0.65); }
-    el.style.transition = 'background-color .05s';
-    el.style.backgroundColor = rgbToHex(
-      Math.round(fr*dimmer*255), Math.round(fg*dimmer*255), Math.round(fb*dimmer*255));
-  }
-}
-
-// ══════════════════════════ sACN / DMX ══════════════════════════
-let sacnWs = null, sacnConnected = false;
-let sacnUniverse = 1, sacnStartAddr = 1, sacnMode = '3ch';
-let sacnDmxValues = new Array(512).fill(0);
-let _sacnLastSend = 0, _sacnStrobeActive = false;
-
-const SACN_MODES = {
-  '3ch': [
-    { label:'Dimmer',    short:'DIM' },
-    { label:'CCT',       short:'CCT' },
-    { label:'+/− GM',    short:'+/−' },
-  ],
-  '9ch': [
-    { label:'Red',       short:'R'   },
-    { label:'Green',     short:'G'   },
-    { label:'Blue',      short:'B'   },
-    { label:'Dimmer',    short:'DIM' },
-    { label:'Kelvin L',  short:'K-L' },
-    { label:'Kelvin H',  short:'K-H' },
-    { label:'GM Shift',  short:'+/−' },
-    { label:'Strobe Hz', short:'S-F' },
-    { label:'Strobe ms', short:'S-D' },
-  ],
-};
-
-function sacnConnect() {
-  const ip   = document.getElementById('sacnBridgeIP').value.trim();
-  const port = document.getElementById('sacnBridgePort').value.trim() || '3001';
-  if (!ip) return;
-  sacnUniverse  = parseInt(document.getElementById('sacnUniverse').value)  || 1;
-  sacnStartAddr = parseInt(document.getElementById('sacnStartAddr').value) || 1;
-  sacnMode = sacnMode || '3ch';
-  if (sacnWs) { sacnWs.close(); sacnWs = null; }
-  setSacnStatus('connecting');
-  try {
-    sacnWs = new WebSocket(`ws://${ip}:${port}`);
-  } catch(e) { setSacnStatus('error'); return; }
-  sacnWs.onopen  = () => {
-    sacnConnected = true;
-    setSacnStatus('connected');
-    sacnWs.send(JSON.stringify({ type:'setUniverse', universe: sacnUniverse }));
-    updateDmxGrid();
-  };
-  sacnWs.onmessage = (e) => {
-    try { const m = JSON.parse(e.data); if (m.type === 'dmx') receiveDmx(m.dmx); } catch(_){}
-  };
-  sacnWs.onerror  = () => setSacnStatus('error');
-  sacnWs.onclose  = () => { sacnConnected = false; setSacnStatus('disconnected'); };
-}
-
-function sacnDisconnect() {
-  if (sacnWs) { sacnWs.close(); sacnWs = null; }
-  setSacnStatus('disconnected');
-}
-
-function setSacnStatus(s) {
-  const dot = document.getElementById('sacnDot');
-  const lbl = document.getElementById('sacnLabel');
-  const btn = document.getElementById('sacnConnectBtn');
-  if (!dot) return;
-  dot.className = 'dot';
-  if (s === 'connected')   { dot.classList.add('connected');  lbl.textContent = '✓ Connecté — univers ' + sacnUniverse; btn.textContent = 'Déconnecter'; btn.onclick = sacnDisconnect; }
-  else if (s === 'connecting') { dot.classList.add('connecting'); lbl.textContent = 'Connexion…'; btn.textContent = 'Annuler'; btn.onclick = sacnDisconnect; }
-  else if (s === 'error')  { dot.classList.add('error');      lbl.textContent = 'Erreur bridge';     btn.textContent = 'Réessayer'; btn.onclick = sacnConnect; }
-  else                     { lbl.textContent = 'Non connecté'; btn.textContent = 'Connecter'; btn.onclick = sacnConnect; }
-}
-
-function setSacnMode(mode) {
-  sacnMode = mode;
-  document.getElementById('sacnmode-3ch').classList.toggle('active', mode === '3ch');
-  updateDmxGrid();
-}
-
-function updateDmxGrid() {
-  const grid = document.getElementById('dmxChannelGrid');
-  if (!grid) return;
-  const channels = SACN_MODES[sacnMode] || SACN_MODES['3ch'];
-  const cols = Math.min(channels.length, 4);
-  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-  grid.innerHTML = '';
-  channels.forEach((ch, i) => {
-    const addr = sacnStartAddr + i;
-    const val = sacnDmxValues[addr - 1] || 0;
-    const tile = document.createElement('div');
-    tile.className = 'dmx-tile';
-    tile.innerHTML = `<div class="dmx-ch">CH ${addr}</div><div class="dmx-label">${ch.short}</div><div class="dmx-val" id="dmxval-${i}">${val}</div><div class="dmx-bar"><div class="dmx-bar-fill" id="dmxbar-${i}" style="width:${(val/255*100).toFixed(1)}%"></div></div>`;
-    grid.appendChild(tile);
-  });
-}
-
-function receiveDmx(dmx) {
-  sacnDmxValues = dmx;
-  const channels = SACN_MODES[sacnMode] || [];
-  channels.forEach((_, i) => {
-    const val = dmx[sacnStartAddr - 1 + i] || 0;
-    const valEl = document.getElementById(`dmxval-${i}`);
-    const barEl = document.getElementById(`dmxbar-${i}`);
-    if (valEl) valEl.textContent = val;
-    if (barEl) barEl.style.width = (val / 255 * 100).toFixed(1) + '%';
-  });
-  applyDmxToOutput(dmx);
-}
-
-function applyDmxToOutput(dmx) {
-  const addr = sacnStartAddr - 1; // 0-indexed
-  const ch   = (n) => Math.max(0, Math.min(255, dmx[addr + n] || 0));
-  const dimmer = ch(0) / 255;
-
-  if (sacnMode === '3ch') {
-    const kelvin = Math.round(1700 + (ch(1) / 255) * (20000 - 1700));
-    const gmRaw  = ch(2);
-    const gm     = gmRaw <= 127 ? ((gmRaw / 127) - 1) * 100 : ((gmRaw - 128) / 127) * 100;
-    const color  = dmxKelvinGM(kelvin, gm, dimmer);
-    sacnSendColor(color, `sACN 3CH`);
-  }
-}
-
-function dmxKelvinGM(kelvin, gm, dimmer) {
-  const rgb = kelvinToRgb(kelvin);
-  let r = rgb.r, g = rgb.g, b = rgb.b;
-  if (gm > 0)      { r *= (1 - gm/100 * 0.45); b *= (1 - gm/100 * 0.45); }
-  else if (gm < 0) { const t = Math.abs(gm)/100; g *= (1 - t * 0.65); }
-  return rgbToHex(Math.round(r * dimmer), Math.round(g * dimmer), Math.round(b * dimmer));
-}
-
-function sacnSendColor(color, meta) {
-  applyColor(color, meta);
-  const now = Date.now();
-  if (now - _sacnLastSend < 40) return; // Throttle → max 25Hz vers MQTT
-  _sacnLastSend = now;
-  sendMsg({ type:'color', color });
-  const el = document.getElementById('autosendBadge');
-  if (el) { el.classList.add('visible'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('visible'), 300); }
-}
-
-// ══════════════════════════ PRESETS ══════════════════════════
-const PRESETS=[
-  {name:'Bougie',color:'#ff9b4a'},{name:'Tungstène',color:'#ffb347'},
-  {name:'Jour froid',color:'#a8d8f0'},{name:'Coucher',color:'#ff6b35'},
-  {name:'Nuit bleue',color:'#1a3a6b'},{name:'Néon rose',color:'#ff2d78'},
-  {name:'Forêt',color:'#2d6b3a'},{name:'Amber',color:'#ff8c00'},
-  {name:'Morgue',color:'#00ffe7'},{name:'Crimson',color:'#b80000'},
-  {name:'Lavande',color:'#7b5ea7'},{name:'Blanc pur',color:'#ffffff'},
-];
-function buildPresets(){
-  const grid=document.getElementById('presetsGrid');
-  PRESETS.forEach(p=>{
-    const btn=document.createElement('button');btn.className='preset-btn';
-    btn.innerHTML=`<div class="preset-swatch" style="background:${p.color}"></div><div class="preset-name">${p.name}</div>`;
-    btn.onclick=()=>{applyColor(p.color,p.name);sendMsg({type:'color',color:p.color});const el=document.getElementById('autosendBadge');if(el){el.classList.add('visible');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('visible'),600);}};
-    grid.appendChild(btn);
-  });
-}
-
-// ══════════════════════════ QR ══════════════════════════
-function renderQR(){
-  const urlEl=document.getElementById('qrUrl'),canvas=document.getElementById('qrCanvas');
-  if(!channel){urlEl.textContent='Connectez-vous d\'abord à un canal';return;}
-  const url=location.origin+location.pathname+'#'+channel;
-  urlEl.textContent=url;
-  const img=new Image();img.crossOrigin='anonymous';
-  img.onload=()=>{const ctx=canvas.getContext('2d');ctx.clearRect(0,0,200,200);ctx.drawImage(img,0,0,200,200);};
-  img.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(url);
-}
-
-// ══════════════════════════ UTILS ══════════════════════════
-function applyColor(hex,meta){currentColor=hex;document.getElementById('previewSwatch').style.backgroundColor=hex;document.getElementById('previewHex').textContent=hex.toUpperCase();if(meta)document.getElementById('previewMeta').textContent=meta;}
-function rgbToHex(r,g,b){return'#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');}
-function hexToRgb(hex){return{r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)};}
-
-
-
-// ══════════════════════════ TORCH & VIBRATE (receiver) ══════════════════════════
-let torchEnabled = false, torchTrack = null, vibrateEnabled = true;
-
-async function toggleScreenTorch() {
-  const btn = document.getElementById('torchBtn');
-  if (torchEnabled) {
-    torchEnabled = false;
-    if (torchTrack) { try { await torchTrack.applyConstraints({ advanced:[{torch:false}] }); } catch(_){} torchTrack.stop(); torchTrack = null; }
-    btn.classList.remove('on'); btn.textContent = '🔦 Torche';
-    return;
-  }
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
-    const track = stream.getVideoTracks()[0];
-    const caps = track.getCapabilities ? track.getCapabilities() : {};
-    if (!caps.torch) { stream.getTracks().forEach(t=>t.stop()); btn.classList.add('unavail'); btn.textContent = '🔦 N/A'; return; }
-    torchTrack = track; torchEnabled = true;
-    btn.classList.add('on'); btn.textContent = '🔦 Torche ON';
-  } catch(e) { btn.classList.add('unavail'); btn.textContent = '🔦 Refusé'; }
-}
-
-async function setTorch(on) {
-  if (!torchTrack) return;
-  try { await torchTrack.applyConstraints({ advanced:[{torch:on}] }); } catch(_){}
-}
-
-function toggleScreenVibrate() {
-  vibrateEnabled = !vibrateEnabled;
-  const btn = document.getElementById('vibrateBtn');
-  btn.classList.toggle('on', vibrateEnabled);
-  btn.textContent = vibrateEnabled ? '📳 Vibreur' : '📳 Muet';
-  if (!navigator.vibrate) { btn.classList.add('unavail'); btn.textContent = '📳 N/A'; vibrateEnabled = false; }
-}
-
-function doVibrate(pattern) {
-  if (vibrateEnabled && navigator.vibrate) navigator.vibrate(pattern);
-}
-
-// Remote: send vibration command to receiver
-function sendVibrate(pattern) {
-  sendMsg({ type:'vibrate', pattern });
-}
-
-// ══════════════════════════ FLASH TAB — TÉLÉCOMMANDE ══════════════════════════
-let remoteTorchOn = false, activeEffect = null;
-
-function onRemoteTorchToggle() {
-  remoteTorchOn = !remoteTorchOn;
-  const btn = document.getElementById('remoteTorchBtn');
-  btn.classList.toggle('on', remoteTorchOn);
-  document.getElementById('remoteTorchLabel').textContent = remoteTorchOn ? 'Torche allumée' : 'Allumer la torche';
-  document.getElementById('remoteTorchIcon').textContent = remoteTorchOn ? '💡' : '🔦';
-  document.getElementById('torchDimSection').classList.toggle('torch-dim-disabled', !remoteTorchOn);
-  if (!remoteTorchOn) stopActiveEffect();
-  sendMsg({ type:'torch-onoff', on: remoteTorchOn });
-}
-
-function onTorchDimChange() {
-  const level = parseInt(document.getElementById('torchDimSlider').value);
-  document.getElementById('torchDimVal').innerHTML = level + '<span>%</span>';
-  document.getElementById('torchLevelFill').style.width = level + '%';
-  sendMsg({ type:'torch-dim', level });
-}
-
-function sendTorchEffect(effect) {
-  stopActiveEffect();
-  if (effect === 'stop') { sendMsg({ type:'torch-effect', effect:'stop' }); return; }
-  activeEffect = effect;
-  document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('efx-' + effect);
-  if (btn) btn.classList.add('active');
-  if (!remoteTorchOn) {
-    remoteTorchOn = true;
-    document.getElementById('remoteTorchBtn').classList.add('on');
-    document.getElementById('remoteTorchLabel').textContent = 'Torche allumée';
-    document.getElementById('remoteTorchIcon').textContent = '💡';
-  }
-  sendMsg({ type:'torch-effect', effect });
-}
-
-function stopActiveEffect() {
-  activeEffect = null;
-  document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
-}
-
-// ══════════════════════════ FLASH TAB — RÉCEPTEUR (web) ══════════════════════════
-let _torchDimTimer = null, _torchEffectTimer = null;
-let _torchDimLevel = 100;
-
-function receiveTorchOnOff(on) {
-  stopTorchDimLoop(); stopTorchEffectLoop();
-  setTorch(on);
-}
-
-function receiveTorchDim(level) {
-  stopTorchEffectLoop();
-  _torchDimLevel = level;
-  if (level <= 0)   { stopTorchDimLoop(); setTorch(false); return; }
-  if (level >= 100) { stopTorchDimLoop(); setTorch(true); return; }
-  // Met à jour le niveau sans redémarrer la boucle si déjà active
-  if (_torchDimTimer) return;
-  _startWebTorchDimLoop();
-}
-
-function _startWebTorchDimLoop() {
-  const period = 50; // 20Hz
-  function cycle() {
-    if (_torchDimLevel >= 100) { setTorch(true); _torchDimTimer = null; return; }
-    const onTime = Math.max(3, Math.round(period * _torchDimLevel / 100));
-    setTorch(true);
-    _torchDimTimer = setTimeout(() => {
-      setTorch(false);
-      _torchDimTimer = setTimeout(cycle, period - onTime);
-    }, onTime);
-  }
-  cycle();
-}
-
-function receiveTorchEffect(effect) {
-  stopTorchDimLoop(); stopTorchEffectLoop();
-  if (effect === 'stop') { setTorch(false); return; }
-  const patterns = {
-    'sos':        [200,100,200,100,200,400,500,100,500,100,500,400,200,100,200,100,200,1200],
-    'blink-slow': [600,400],
-    'blink-fast': [80,80],
-    'police':     [60,40,60,40,60,200,60,40,60,40,60,500],
-    'heartbeat':  [80,80,160,600],
-  };
-  const p = patterns[effect]; if (!p) return;
-  let idx = 0, state = true;
-  function step() {
-    setTorch(state); state = !state;
-    _torchEffectTimer = setTimeout(() => { idx = (idx + 1) % p.length; step(); }, p[idx]);
-    idx = (idx + 1) % p.length;
-  }
-  step();
-}
-
-function stopTorchDimLoop() { if (_torchDimTimer) { clearTimeout(_torchDimTimer); _torchDimTimer = null; } }
-function stopTorchEffectLoop() { if (_torchEffectTimer) { clearTimeout(_torchEffectTimer); _torchEffectTimer = null; } }
-
-// ══════════════════════════ FULLSCREEN ══════════════════════════
-function requestFS() {
-  const el = document.documentElement;
-  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-  if (req) req.call(el).catch(() => {});
-}
-// Quitter le plein écran si on quitte le mode écran
-function exitFS() {
-  const ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
-  if (ex && document.fullscreenElement) ex.call(document).catch(() => {});
-}
-
-if(location.hash) enterScreenMode(location.hash.replace('#',''));
+function toggleDmx(){const w=document.getElementById('dmx-table-wrap'),a=document.getElementById('dmx-arrow'),o=w.classList.toggle('open');a.textContent=o?'▲':'▼'}
 </script>
 </body>
 </html>
