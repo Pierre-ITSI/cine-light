@@ -225,7 +225,7 @@ if (isHttps) {
   const ua = navigator.userAgent
   const btn = document.getElementById('dl-btn')
   const lbl = document.getElementById('dl-label')
-  const MAC = 'https://github.com/Pierre-ITSI/cine-light/releases/download/v1.0.0/cinelight-bridge-1.0.0-arm64.dmg'
+  const MAC = 'https://github.com/Pierre-ITSI/cine-light/releases/download/v1.0.0/Cine.Light.Bridge-1.0.0-universal.dmg'
   const REL = 'https://github.com/Pierre-ITSI/cine-light/releases'
   if (/Mac/.test(ua) && !/iPhone|iPad/.test(ua)) { btn.href = MAC; lbl.textContent = 'Télécharger pour Mac (Apple Silicon)' }
   else if (/Win/.test(ua))                        { btn.href = REL; lbl.textContent = 'Télécharger pour Windows' }
@@ -251,7 +251,7 @@ function initScreenMode() {
   ;(function() {
     const ua = navigator.userAgent
     if (/iPhone|iPad|iPod|Android/i.test(ua)) return
-    const MAC = 'https://github.com/Pierre-ITSI/cine-light/releases/download/v1.0.0/cinelight-bridge-1.0.0-arm64.dmg'
+    const MAC = 'https://github.com/Pierre-ITSI/cine-light/releases/download/v1.0.0/Cine.Light.Bridge-1.0.0-universal.dmg'
     const REL = 'https://github.com/Pierre-ITSI/cine-light/releases'
     const sec = document.getElementById('download-section')
     const btn = document.getElementById('download-btn')
