@@ -640,8 +640,9 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'rtc-answer')   remoteHandleAnswer(msg.sdp);
         if (msg.type === 'rtc-ice' && msg.from === 'screen') remoteAddIce(msg.candidate);
         if (msg.type === 'media-meta')     remoteOnMeta(msg.dur);
-        if (msg.type === 'media-progress') remoteOnProgress(msg.cur, msg.dur);
+        if (msg.type === 'media-progress') remoteOnProgress(msg.cur, msg.dur, msg.playing);
         if (msg.type === 'media-ended')    remoteOnEnded();
+        if (msg.type === 'media-error')    remoteOnError(msg.reason);
       }
     } catch (_) {}
   });
@@ -1701,9 +1702,11 @@ function remoteOnMeta(dur) {
   showMediaPlay(true); setPlayBtn(_remotePlaying); showMediaTimeline(true);
   setMediaStatus('🎬 Vidéo en diffusion', true);
 }
-// Reçoit la position de lecture depuis l'écran
-function remoteOnProgress(cur, dur) {
+// Reçoit la position de lecture depuis l'écran (source de vérité = l'écran)
+function remoteOnProgress(cur, dur, playing) {
   if (dur) { _remoteDur = dur; const d = document.getElementById('mediaDurTime'); if (d) d.textContent = fmtTime(dur); const s = document.getElementById('mediaSeek'); if (s && isFinite(dur)) s.max = dur; }
+  if (typeof playing === 'boolean') { _remotePlaying = playing; setPlayBtn(playing); }
+  if (playing) setMediaStatus('🎬 Vidéo en diffusion', true);
   _remoteCur = cur || 0;
   if (_mediaSeeking) return;
   const s = document.getElementById('mediaSeek');
@@ -1714,6 +1717,14 @@ function remoteOnProgress(cur, dur) {
 }
 function remoteOnEnded() {
   _remotePlaying = false; setPlayBtn(false);
+}
+// L'écran n'a pas pu lire la vidéo (codec non supporté, etc.)
+function remoteOnError(reason) {
+  _remotePlaying = false; setPlayBtn(false);
+  if (reason === 'decode' || reason === 'src')
+    setMediaStatus('⚠ Format non lisible sur l\'écran (essayez un MP4/H.264)');
+  else
+    setMediaStatus('⚠ Lecture impossible sur l\'écran');
 }
 let _seekSendTimer = null;
 function onSeekInput() {
@@ -1893,13 +1904,22 @@ function mediaImgChunk(msg) {
   }
 }
 
+// — Lecture robuste : tente avec son, repli en muet si l'autoplay est bloqué —
+function playScreenVid(vid) {
+  const p = vid.play();
+  if (p && p.catch) p.catch(() => { vid.muted = true; const p2 = vid.play(); if (p2 && p2.catch) p2.catch(() => {}); });
+}
+// — État courant renvoyé à la télécommande (source de vérité) —
+function sendScreenState(vid) {
+  sendMsg({ type: 'media-progress', cur: vid.currentTime || 0, dur: vid.duration || 0, playing: !vid.paused });
+}
 // — Contrôle de lecture envoyé par la télécommande —
 function screenMediaCtrl(msg) {
   const vid = document.getElementById('screen-media-video');
-  if (!vid) return;
-  if (msg.action === 'play')  { vid.play().catch(() => {}); }
+  if (!vid || !vid.src) return;
+  if (msg.action === 'play')  { playScreenVid(vid); }
   else if (msg.action === 'pause') { try { vid.pause(); } catch (_) {} }
-  else if (msg.action === 'seek' && isFinite(msg.time)) { try { vid.currentTime = msg.time; } catch (_) {} }
+  else if (msg.action === 'seek' && isFinite(msg.time)) { try { vid.currentTime = msg.time; } catch (_) {} sendScreenState(vid); }
 }
 
 async function screenHandleOffer(sdp) {
@@ -1940,19 +1960,29 @@ function screenAssembleVideo() {
   _vidParts = [];
   if (_screenVidUrl) { try { URL.revokeObjectURL(_screenVidUrl); } catch (_) {} }
   _screenVidUrl = URL.createObjectURL(blob);
+  setScreenStatus('🎬 Vidéo reçue (' + Math.round(blob.size / 1048576) + ' Mo)');
   vid.srcObject = null;
-  vid.loop = true; vid.playsInline = true; vid.muted = false;
-  vid.src = _screenVidUrl;
-  vid.onloadedmetadata = () => { sendMsg({ type: 'media-meta', dur: vid.duration }); };
+  vid.loop = true; vid.playsInline = true; vid.muted = false; vid.preload = 'auto';
+  vid.onloadedmetadata = () => { sendMsg({ type: 'media-meta', dur: vid.duration }); sendScreenState(vid); };
+  vid.onloadeddata = () => { showScreenMedia('video'); }; // première image visible dès que prête
   vid.ontimeupdate = () => {
     const now = Date.now();
     if (now - _screenProgTimer < 250) return;
     _screenProgTimer = now;
-    sendMsg({ type: 'media-progress', cur: vid.currentTime, dur: vid.duration });
+    sendScreenState(vid);
   };
+  vid.onplay  = () => sendScreenState(vid);
+  vid.onpause = () => sendScreenState(vid);
   vid.onended = () => sendMsg({ type: 'media-ended' });
+  vid.onerror = () => {
+    const code = vid.error && vid.error.code;
+    const reason = (code === 4) ? 'src' : (code === 3) ? 'decode' : 'load';
+    setScreenStatus('⚠ Format vidéo non supporté');
+    sendMsg({ type: 'media-error', reason });
+  };
+  vid.src = _screenVidUrl;
   showScreenMedia('video');
-  vid.play().catch(() => { vid.muted = true; vid.play().catch(() => {}); });
+  playScreenVid(vid); // démarre la lecture (muet si l'autoplay bloque le son)
 }
 
 function screenAddIce(cand) {
