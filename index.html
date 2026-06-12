@@ -169,6 +169,10 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 .screen-bar-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(232,201,122,.15)}
 .screen-bar-btn.unavail{opacity:.3;cursor:default}
 
+/* AUTO-HIDE des contrôles écran (barre + statut) après inactivité */
+#screen-bar,#screen-status{transition:opacity .6s ease}
+#screen-bar.ui-hidden,#screen-status.ui-hidden{opacity:0;pointer-events:none}
+
 /* SCREEN MEDIA (image / vidéo diffusée) */
 #screen-media-img,#screen-media-video{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:50}
 #screen-blackout{display:none;position:absolute;inset:0;background:#000;z-index:90}
@@ -706,6 +710,7 @@ function enterScreenMode(ch) {
   el.style.backgroundColor = '#1a1a1a';
   setScreenStatus('Connexion à ' + ch + '…');
   requestFS();
+  setupScreenAutohide();
   if (!navigator.vibrate) { const b=document.getElementById('vibrateBtn'); if(b){b.classList.add('unavail');b.textContent='📳 N/A';b.classList.remove('on');} vibrateEnabled=false; }
   initBCFallback(ch);
   connectMQTT(ch, () => setScreenStatus('✓ En écoute — canal : ' + ch));
@@ -727,6 +732,7 @@ function connectChannel() {
 
 function suspendScreen() {
   exitFS();
+  cancelScreenAutohide();
   hideScreenMedia();
   setBlackout(false);
   // Déconnecter MQTT mais garder le canal en mémoire
@@ -743,6 +749,7 @@ function suspendScreen() {
 
 function goBackToSplash() {
   exitFS();
+  cancelScreenAutohide();
   hideScreenMedia();
   setBlackout(false);
   const cfgDiv = document.getElementById('screen-sacn-config');
@@ -1159,6 +1166,7 @@ function enterScreenSACN() {
   el.style.backgroundColor = '#000000';
   setScreenStatus('sACN · Connexion…');
   requestFS();
+  setupScreenAutohide();
 
   const CapSACN = (typeof IS_NATIVE !== 'undefined' && IS_NATIVE)
                   ? (window.Capacitor?.Plugins?.SACN || null) : null;
@@ -1589,7 +1597,37 @@ function setBlackout(on) {
 }
 
 // — Écran : bouton local de la barre —
-function toggleScreenBlackout() { setBlackout(!screenBlackoutOn); }
+function toggleScreenBlackout() { setBlackout(!screenBlackoutOn); pokeScreenControls(); }
+
+// — Auto-masquage des contrôles écran (barre + statut) après 5 s d'inactivité —
+let _uiHideTimer = null, _autohideBound = false;
+function pokeScreenControls() {
+  const bar = document.getElementById('screen-bar');
+  const st  = document.getElementById('screen-status');
+  if (bar) bar.classList.remove('ui-hidden');
+  if (st)  st.classList.remove('ui-hidden');
+  if (_uiHideTimer) clearTimeout(_uiHideTimer);
+  _uiHideTimer = setTimeout(() => {
+    if (bar) bar.classList.add('ui-hidden');
+    if (st)  st.classList.add('ui-hidden');
+  }, 5000);
+}
+function setupScreenAutohide() {
+  if (!_autohideBound) {
+    const el = document.getElementById('screen-mode');
+    if (el) ['mousemove', 'touchstart', 'click'].forEach(ev =>
+      el.addEventListener(ev, pokeScreenControls, { passive: true }));
+    _autohideBound = true;
+  }
+  pokeScreenControls();
+}
+function cancelScreenAutohide() {
+  if (_uiHideTimer) { clearTimeout(_uiHideTimer); _uiHideTimer = null; }
+  const bar = document.getElementById('screen-bar');
+  const st  = document.getElementById('screen-status');
+  if (bar) bar.classList.remove('ui-hidden');
+  if (st)  st.classList.remove('ui-hidden');
+}
 
 // ══════════════════════════ MÉDIA — TÉLÉCOMMANDE ══════════════════════════
 let _rtcPc = null, _rtcStream = null, _rtcVideoEl = null, _remotePendingIce = [];
