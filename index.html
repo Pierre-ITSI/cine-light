@@ -533,6 +533,9 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
       <input type="file" id="mediaImgInput" accept="image/*" style="display:none" onchange="onPickImage(this.files[0])">
       <input type="file" id="mediaVidInput" accept="video/*" style="display:none" onchange="onPickVideo(this.files[0])">
       <div class="media-status" id="mediaStatus">Aucun média diffusé</div>
+      <button class="media-btn" id="mediaPlayBtn" onclick="toggleVideoPlayback()" style="display:none">
+        <span class="media-icon" id="mediaPlayIcon">⏸</span><span id="mediaPlayLabel">Pause</span>
+      </button>
       <button class="media-btn" id="mediaStopBtn" onclick="stopMediaBroadcast()" style="display:none;border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)">
         <span class="media-icon">⏹</span> Arrêter la diffusion
       </button>
@@ -890,13 +893,11 @@ function setCrossfade(v) {
 }
 function onWheelPick(hex) {
   colorWheelHex=hex;
-  setCrossfade(100); // toucher la roue bascule en couleur pleine
   recomputeColor();
 }
 function onKelvinChange() {
   kelvinK=parseInt(document.getElementById('kelvinSlider').value);
   document.getElementById('kelvinVal').innerHTML=kelvinK.toLocaleString('fr')+'<span> K</span>';
-  setCrossfade(0); // régler la température bascule en blanc
   recomputeColor();
 }
 function setKelvin(k){document.getElementById('kelvinSlider').value=k;onKelvinChange();}
@@ -904,7 +905,6 @@ function onTintChange() {
   colorTint=parseInt(document.getElementById('tintSlider').value);
   const sign=colorTint>=0?'+':'';
   document.getElementById('tintVal').innerHTML=sign+colorTint+'<span> GM</span>';
-  setCrossfade(0);
   recomputeColor();
 }
 function setTint(v){document.getElementById('tintSlider').value=v;onTintChange();}
@@ -1594,6 +1594,21 @@ function showMediaStop(show) {
   const b = document.getElementById('mediaStopBtn');
   if (b) b.style.display = show ? 'flex' : 'none';
 }
+function showMediaPlay(show) {
+  const b = document.getElementById('mediaPlayBtn');
+  if (b) b.style.display = show ? 'flex' : 'none';
+}
+function setPlayBtn(playing) {
+  const ic = document.getElementById('mediaPlayIcon');
+  const lb = document.getElementById('mediaPlayLabel');
+  if (ic) ic.textContent = playing ? '⏸' : '▶';
+  if (lb) lb.textContent = playing ? 'Pause' : 'Lecture';
+}
+function toggleVideoPlayback() {
+  if (!_rtcVideoEl) return;
+  if (_rtcVideoEl.paused) { _rtcVideoEl.play().catch(() => {}); setPlayBtn(true); }
+  else { _rtcVideoEl.pause(); setPlayBtn(false); }
+}
 function setMediaBtnActive(which) {
   const i = document.getElementById('mediaImgBtn'), v = document.getElementById('mediaVidBtn');
   if (i) i.classList.toggle('active', which === 'img');
@@ -1663,7 +1678,7 @@ async function startVideoRtc() {
   const offer = await _rtcPc.createOffer();
   await _rtcPc.setLocalDescription(offer);
   sendMsg({ type: 'rtc-offer', sdp: _rtcPc.localDescription });
-  setMediaBtnActive('vid'); showMediaStop(true);
+  setMediaBtnActive('vid'); showMediaStop(true); showMediaPlay(true); setPlayBtn(true);
   setMediaStatus('🎬 Connexion à l\'écran…');
 }
 
@@ -1685,7 +1700,7 @@ function stopMediaBroadcast(notify = true) {
   if (_rtcStream) { _rtcStream.getTracks().forEach(t => t.stop()); _rtcStream = null; }
   if (_rtcVideoEl) { try { _rtcVideoEl.pause(); } catch (_) {} if (_rtcVideoEl.src) URL.revokeObjectURL(_rtcVideoEl.src); _rtcVideoEl = null; }
   _remotePendingIce = [];
-  setMediaBtnActive(null); showMediaStop(false);
+  setMediaBtnActive(null); showMediaStop(false); showMediaPlay(false);
   setMediaStatus('Aucun média diffusé');
   if (notify) sendMsg({ type: 'media-stop' });
 }
