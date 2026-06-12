@@ -536,6 +536,14 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
       <button class="media-btn" id="mediaPlayBtn" onclick="toggleVideoPlayback()" style="display:none">
         <span class="media-icon" id="mediaPlayIcon">⏸</span><span id="mediaPlayLabel">Pause</span>
       </button>
+      <div id="mediaTimeline" style="display:none;margin:4px 0 12px">
+        <input type="range" id="mediaSeek" min="0" max="100" step="0.1" value="0"
+               style="background:linear-gradient(to right,var(--accent),var(--accent) 0%,#333 0%)"
+               oninput="onSeekInput()" onchange="onSeekEnd()">
+        <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums">
+          <span id="mediaCurTime">0:00</span><span id="mediaDurTime">0:00</span>
+        </div>
+      </div>
       <button class="media-btn" id="mediaStopBtn" onclick="stopMediaBroadcast()" style="display:none;border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)">
         <span class="media-icon">⏹</span> Arrêter la diffusion
       </button>
@@ -1609,6 +1617,55 @@ function toggleVideoPlayback() {
   if (_rtcVideoEl.paused) { _rtcVideoEl.play().catch(() => {}); setPlayBtn(true); }
   else { _rtcVideoEl.pause(); setPlayBtn(false); }
 }
+
+// — Timeline / scrubber —
+let _mediaSeeking = false;
+function showMediaTimeline(show) {
+  const t = document.getElementById('mediaTimeline');
+  if (t) t.style.display = show ? 'block' : 'none';
+  if (!show) {
+    const s = document.getElementById('mediaSeek'); if (s) { s.value = 0; paintSeek(0); }
+    const c = document.getElementById('mediaCurTime'); if (c) c.textContent = '0:00';
+    const d = document.getElementById('mediaDurTime'); if (d) d.textContent = '0:00';
+  }
+}
+function fmtTime(s) {
+  if (!isFinite(s) || s < 0) s = 0;
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  return m + ':' + String(sec).padStart(2, '0');
+}
+function paintSeek(pct) {
+  const s = document.getElementById('mediaSeek');
+  if (s) s.style.background = `linear-gradient(to right,var(--accent) ${pct}%,#333 ${pct}%)`;
+}
+function updateSeekRange() {
+  if (!_rtcVideoEl) return;
+  const dur = _rtcVideoEl.duration;
+  const s = document.getElementById('mediaSeek');
+  if (s && isFinite(dur)) s.max = dur;
+  const d = document.getElementById('mediaDurTime');
+  if (d) d.textContent = fmtTime(dur);
+}
+function updateSeekProgress() {
+  if (!_rtcVideoEl || _mediaSeeking) return;
+  const cur = _rtcVideoEl.currentTime, dur = _rtcVideoEl.duration || 0;
+  const s = document.getElementById('mediaSeek');
+  if (s) s.value = cur;
+  const c = document.getElementById('mediaCurTime');
+  if (c) c.textContent = fmtTime(cur);
+  paintSeek(dur ? (cur / dur) * 100 : 0);
+}
+function onSeekInput() {
+  _mediaSeeking = true;
+  const s = document.getElementById('mediaSeek');
+  if (!s || !_rtcVideoEl) return;
+  const cur = parseFloat(s.value), dur = _rtcVideoEl.duration || 0;
+  _rtcVideoEl.currentTime = cur; // seek live → se répercute sur l'écran
+  const c = document.getElementById('mediaCurTime');
+  if (c) c.textContent = fmtTime(cur);
+  paintSeek(dur ? (cur / dur) * 100 : 0);
+}
+function onSeekEnd() { _mediaSeeking = false; }
 function setMediaBtnActive(which) {
   const i = document.getElementById('mediaImgBtn'), v = document.getElementById('mediaVidBtn');
   if (i) i.classList.toggle('active', which === 'img');
@@ -1655,6 +1712,8 @@ function onPickVideo(file) {
   v.loop = true; v.playsInline = true; v.muted = false;
   _rtcVideoEl = v;
   setMediaStatus('🎬 Préparation…');
+  v.onloadedmetadata = () => updateSeekRange();
+  v.ontimeupdate = () => updateSeekProgress();
   v.onloadeddata = () => {
     v.play().catch(() => {});
     try {
@@ -1679,6 +1738,7 @@ async function startVideoRtc() {
   await _rtcPc.setLocalDescription(offer);
   sendMsg({ type: 'rtc-offer', sdp: _rtcPc.localDescription });
   setMediaBtnActive('vid'); showMediaStop(true); showMediaPlay(true); setPlayBtn(true);
+  showMediaTimeline(true); updateSeekRange();
   setMediaStatus('🎬 Connexion à l\'écran…');
 }
 
@@ -1700,7 +1760,8 @@ function stopMediaBroadcast(notify = true) {
   if (_rtcStream) { _rtcStream.getTracks().forEach(t => t.stop()); _rtcStream = null; }
   if (_rtcVideoEl) { try { _rtcVideoEl.pause(); } catch (_) {} if (_rtcVideoEl.src) URL.revokeObjectURL(_rtcVideoEl.src); _rtcVideoEl = null; }
   _remotePendingIce = [];
-  setMediaBtnActive(null); showMediaStop(false); showMediaPlay(false);
+  setMediaBtnActive(null); showMediaStop(false); showMediaPlay(false); showMediaTimeline(false);
+  _mediaSeeking = false;
   setMediaStatus('Aucun média diffusé');
   if (notify) sendMsg({ type: 'media-stop' });
 }
