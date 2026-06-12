@@ -185,6 +185,21 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 .media-btn .media-icon{font-size:1.3rem}
 .media-status{font-size:.62rem;color:var(--muted);letter-spacing:.08em;margin-top:6px;text-align:center;min-height:1rem}
 .media-status.live{color:var(--green)}
+.media-add-row{display:flex;gap:10px}
+.media-add-row .media-btn{margin-bottom:10px}
+.media-pool{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 6px}
+.media-pool:empty{display:none}
+.media-pool-empty{font-size:.62rem;color:var(--muted);letter-spacing:.06em;text-align:center;padding:14px 6px;border:1px dashed var(--border);border-radius:8px;margin:4px 0 8px}
+.pool-tile{position:relative;aspect-ratio:1/1;border-radius:7px;overflow:hidden;border:1px solid var(--border);background:var(--mid2);cursor:pointer;transition:border-color .15s,transform .1s}
+.pool-tile:active{transform:scale(.96)}
+.pool-tile.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.pool-tile img{width:100%;height:100%;object-fit:cover;display:block}
+.pool-tile .pool-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--muted)}
+.pool-tile .pool-kind{position:absolute;top:3px;left:3px;font-size:.7rem;line-height:1;background:rgba(0,0,0,.55);border-radius:4px;padding:2px 3px}
+.pool-tile .pool-name{position:absolute;left:0;right:0;bottom:0;font-size:.5rem;letter-spacing:.02em;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.78));padding:8px 4px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pool-tile .pool-del{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(0,0,0,.6);color:#fff;font-size:.75rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.pool-tile .pool-del:hover{background:rgba(220,80,80,.9)}
+.pool-tile.live-dot::after{content:'';position:absolute;top:4px;right:24px;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
 .blackout-btn{width:100%;padding:18px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:1rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px}
 .blackout-btn.on{background:#000;border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 24px rgba(0,0,0,.8)}
 
@@ -528,15 +543,19 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 
   <div class="tab-content" id="content-media">
     <div class="panel">
-      <div class="panel-label">Diffuser sur l'écran</div>
-      <button class="media-btn" id="mediaImgBtn" onclick="document.getElementById('mediaImgInput').click()">
-        <span class="media-icon">🖼</span> Envoyer une image
-      </button>
-      <button class="media-btn" id="mediaVidBtn" onclick="document.getElementById('mediaVidInput').click()">
-        <span class="media-icon">🎬</span> Diffuser une vidéo
-      </button>
-      <input type="file" id="mediaImgInput" accept="image/*" style="display:none" onchange="onPickImage(this.files[0])">
-      <input type="file" id="mediaVidInput" accept="video/*" style="display:none" onchange="onPickVideo(this.files[0])">
+      <div class="panel-label">Pool média</div>
+      <div class="media-add-row">
+        <button class="media-btn" id="mediaImgBtn" onclick="document.getElementById('mediaImgInput').click()">
+          <span class="media-icon">🖼</span> Images
+        </button>
+        <button class="media-btn" id="mediaVidBtn" onclick="document.getElementById('mediaVidInput').click()">
+          <span class="media-icon">🎬</span> Vidéos
+        </button>
+      </div>
+      <input type="file" id="mediaImgInput" accept="image/*" multiple style="display:none" onchange="onAddImages(this.files);this.value=''">
+      <input type="file" id="mediaVidInput" accept="video/*" multiple style="display:none" onchange="onAddVideos(this.files);this.value=''">
+      <div id="mediaPool" class="media-pool"></div>
+      <div id="mediaPoolEmpty" class="media-pool-empty">Ajoutez des images ou vidéos, puis touchez-les pour les diffuser.</div>
       <div class="media-status" id="mediaStatus">Aucun média diffusé</div>
       <button class="media-btn" id="mediaPlayBtn" onclick="toggleVideoPlayback()" style="display:none">
         <span class="media-icon" id="mediaPlayIcon">⏸</span><span id="mediaPlayLabel">Pause</span>
@@ -1748,16 +1767,100 @@ function onSeekEnd() {
   if (s) sendMsg({ type: 'media-ctrl', action: 'seek', time: parseFloat(s.value) });
   _mediaSeeking = false;
 }
-function setMediaBtnActive(which) {
-  const i = document.getElementById('mediaImgBtn'), v = document.getElementById('mediaVidBtn');
-  if (i) i.classList.toggle('active', which === 'img');
-  if (v) v.classList.toggle('active', which === 'vid');
+// ══════════════════════════ POOL MÉDIA ══════════════════════════
+let _mediaPool = [];        // { id, kind:'img'|'vid', name, file, thumb }
+let _activeMediaId = null;
+let _poolSeq = 0;
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function onAddImages(files) {
+  if (!files || !files.length) return;
+  const wasEmpty = _mediaPool.length === 0;
+  let first = null;
+  for (const f of files) {
+    const item = { id: 'm' + (++_poolSeq), kind: 'img', name: f.name || 'image', file: f, thumb: URL.createObjectURL(f) };
+    _mediaPool.push(item); if (!first) first = item;
+  }
+  renderPool();
+  if (wasEmpty && first) selectMedia(first.id);
+}
+function onAddVideos(files) {
+  if (!files || !files.length) return;
+  const wasEmpty = _mediaPool.length === 0;
+  let first = null;
+  for (const f of files) {
+    const item = { id: 'm' + (++_poolSeq), kind: 'vid', name: f.name || 'vidéo', file: f, thumb: null };
+    _mediaPool.push(item); makeVideoThumb(item); if (!first) first = item;
+  }
+  renderPool();
+  if (wasEmpty && first) selectMedia(first.id);
+}
+
+// Génère une vignette à partir de la première image de la vidéo
+function makeVideoThumb(item) {
+  try {
+    const v = document.createElement('video');
+    v.muted = true; v.playsInline = true; v.preload = 'metadata';
+    v.src = URL.createObjectURL(item.file);
+    const cleanup = () => { try { URL.revokeObjectURL(v.src); } catch (_) {} };
+    v.onloadeddata = () => { try { v.currentTime = Math.min(0.1, (v.duration || 1) * 0.1); } catch (_) {} };
+    v.onseeked = () => {
+      try {
+        const w = 160, ratio = (v.videoWidth && v.videoHeight) ? v.videoHeight / v.videoWidth : 1;
+        const c = document.createElement('canvas'); c.width = w; c.height = Math.max(1, Math.round(w * ratio));
+        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+        item.thumb = c.toDataURL('image/jpeg', 0.6);
+        renderPool();
+      } catch (_) {}
+      cleanup();
+    };
+    v.onerror = cleanup;
+  } catch (_) {}
+}
+
+function renderPool() {
+  const grid = document.getElementById('mediaPool');
+  const empty = document.getElementById('mediaPoolEmpty');
+  if (empty) empty.style.display = _mediaPool.length ? 'none' : 'block';
+  if (!grid) return;
+  grid.innerHTML = _mediaPool.map(it => {
+    const active = it.id === _activeMediaId;
+    const thumb = it.thumb
+      ? `<img src="${it.thumb}" alt="">`
+      : `<div class="pool-fallback">${it.kind === 'vid' ? '🎬' : '🖼'}</div>`;
+    return `<div class="pool-tile${active ? ' active live-dot' : ''}" onclick="selectMedia('${it.id}')">`
+      + thumb
+      + `<span class="pool-kind">${it.kind === 'vid' ? '🎬' : '🖼'}</span>`
+      + `<button class="pool-del" onclick="event.stopPropagation();removeMedia('${it.id}')">×</button>`
+      + `<span class="pool-name">${escapeHtml(it.name)}</span></div>`;
+  }).join('');
+}
+
+function selectMedia(id) {
+  const it = _mediaPool.find(m => m.id === id);
+  if (!it) return;
+  teardownBroadcast();
+  _activeMediaId = id;
+  renderPool();
+  if (it.kind === 'img') broadcastImage(it.file);
+  else broadcastVideo(it.file);
+}
+
+function removeMedia(id) {
+  const idx = _mediaPool.findIndex(m => m.id === id);
+  if (idx < 0) return;
+  const it = _mediaPool[idx];
+  if (it.thumb && it.thumb.indexOf('blob:') === 0) { try { URL.revokeObjectURL(it.thumb); } catch (_) {} }
+  const wasActive = (_activeMediaId === id);
+  _mediaPool.splice(idx, 1);
+  if (wasActive) stopMediaBroadcast(true); else renderPool();
 }
 
 // — Image : compression + envoi en morceaux via MQTT —
-function onPickImage(file) {
-  if (!file) return;
-  stopMediaBroadcast(false);
+function broadcastImage(file) {
   const img = new Image();
   img.onload = () => {
     const max = 1280;
@@ -1768,7 +1871,7 @@ function onPickImage(file) {
     const dataUrl = c.toDataURL('image/jpeg', 0.72);
     URL.revokeObjectURL(img.src);
     sendImageChunks(dataUrl);
-    setMediaBtnActive('img'); showMediaStop(true);
+    showMediaStop(true);
     setMediaStatus('🖼 Image diffusée (' + Math.round(dataUrl.length / 1024) + ' Ko)', true);
   };
   img.onerror = () => setMediaStatus('⚠ Image illisible');
@@ -1787,12 +1890,10 @@ function sendImageChunks(dataUrl) {
 
 // — Vidéo : transfert du fichier vers l'écran via DataChannel —
 let _fileChannel = null;
-function onPickVideo(file) {
-  if (!file) return;
-  stopMediaBroadcast(false);
+function broadcastVideo(file) {
   _mediaIsVideo = true;
   _remotePlaying = false; _remoteDur = 0; _remoteCur = 0;
-  setMediaBtnActive('vid'); showMediaStop(true);
+  showMediaStop(true);
   setMediaStatus('🎬 Préparation du transfert…');
   startFileTransfer(file);
 }
@@ -1852,14 +1953,23 @@ function remoteAddIce(cand) {
   _rtcPc.addIceCandidate(new RTCIceCandidate(cand)).catch(() => {});
 }
 
-function stopMediaBroadcast(notify = true) {
+// Ferme le transfert/diffusion en cours sans toucher au pool ni notifier l'écran
+function teardownBroadcast() {
   if (_fileChannel) { try { _fileChannel.close(); } catch (_) {} _fileChannel = null; }
   if (_rtcPc) { try { _rtcPc.close(); } catch (_) {} _rtcPc = null; }
   _remotePendingIce = [];
   _mediaIsVideo = false; _remotePlaying = false; _remoteDur = 0; _remoteCur = 0;
   if (_seekSendTimer) { clearTimeout(_seekSendTimer); _seekSendTimer = null; }
-  setMediaBtnActive(null); showMediaStop(false); showMediaPlay(false); showMediaTimeline(false);
+  showMediaPlay(false); showMediaTimeline(false);
   _mediaSeeking = false;
+}
+
+// Arrêt complet (bouton « Arrêter la diffusion ») : vide la sélection + éteint l'écran
+function stopMediaBroadcast(notify = true) {
+  teardownBroadcast();
+  _activeMediaId = null;
+  renderPool();
+  showMediaStop(false);
   setMediaStatus('Aucun média diffusé');
   if (notify) sendMsg({ type: 'media-stop' });
 }
@@ -1872,7 +1982,10 @@ function showScreenMedia(kind) {
   const img = document.getElementById('screen-media-img');
   const vid = document.getElementById('screen-media-video');
   if (img) img.style.display = kind === 'img' ? 'block' : 'none';
-  if (vid) vid.style.display = kind === 'video' ? 'block' : 'none';
+  if (vid) {
+    vid.style.display = kind === 'video' ? 'block' : 'none';
+    if (kind !== 'video') { try { vid.pause(); } catch (_) {} } // coupe le son si une image prend le relais
+  }
 }
 
 function hideScreenMedia() {
@@ -1900,6 +2013,7 @@ function mediaImgChunk(msg) {
     const dataUrl = _imgBuf.parts.join('');
     const im = document.getElementById('screen-media-img');
     if (im) { im.src = dataUrl; showScreenMedia('img'); }
+    cleanupScreenRtc(); // une image remplace la vidéo : libère la connexion de transfert
     _imgBuf = null;
   }
 }
@@ -1926,6 +2040,8 @@ async function screenHandleOffer(sdp) {
   cleanupScreenRtc();
   _screenPendingIce = [];
   _vidParts = []; _vidMeta = null;
+  const oldVid = document.getElementById('screen-media-video'); // stoppe la vidéo précédente pendant le transfert
+  if (oldVid) { try { oldVid.pause(); } catch (_) {} }
   _screenPc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
   _screenPc.onicecandidate = e => { if (e.candidate) sendMsg({ type: 'rtc-ice', from: 'screen', candidate: e.candidate }); };
   _screenPc.ondatachannel = e => setupScreenFileChannel(e.channel);
@@ -1962,7 +2078,7 @@ function screenAssembleVideo() {
   _screenVidUrl = URL.createObjectURL(blob);
   setScreenStatus('🎬 Vidéo reçue (' + Math.round(blob.size / 1048576) + ' Mo)');
   vid.srcObject = null;
-  vid.loop = true; vid.playsInline = true; vid.muted = false; vid.preload = 'auto';
+  vid.loop = false; vid.playsInline = true; vid.muted = false; vid.preload = 'auto';
   vid.onloadedmetadata = () => { sendMsg({ type: 'media-meta', dur: vid.duration }); sendScreenState(vid); };
   vid.onloadeddata = () => { showScreenMedia('video'); }; // première image visible dès que prête
   vid.ontimeupdate = () => {
