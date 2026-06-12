@@ -75,11 +75,18 @@ html,body{width:100%;height:100%;background:var(--dark);color:var(--text);font-f
 .slider-val span{color:var(--muted);font-size:.65rem}
 input[type="range"]{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;outline:none;cursor:pointer}
 input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);border:2px solid var(--dark);box-shadow:0 2px 8px rgba(0,0,0,.5)}
-/* Curseurs épais dans l'onglet Couleur : la jauge dégradée fait office d'aperçu */
-#content-color input[type="range"]{height:24px;border-radius:6px}
-#content-color input[type="range"]::-webkit-slider-thumb{width:14px;height:30px;border-radius:6px}
-#content-color input[type="range"]::-moz-range-track{height:24px;border-radius:6px}
-#content-color input[type="range"]::-moz-range-thumb{width:14px;height:30px;border-radius:6px;background:var(--accent);border:2px solid var(--dark);box-shadow:0 2px 8px rgba(0,0,0,.5)}
+/* Curseurs épais dans les onglets Couleur et Effets : la jauge dégradée fait office d'aperçu */
+#content-color input[type="range"],#content-effects input[type="range"]{height:24px;border-radius:6px}
+#content-color input[type="range"]::-webkit-slider-thumb,#content-effects input[type="range"]::-webkit-slider-thumb{width:14px;height:30px;border-radius:6px}
+#content-color input[type="range"]::-moz-range-track,#content-effects input[type="range"]::-moz-range-track{height:24px;border-radius:6px}
+#content-color input[type="range"]::-moz-range-thumb,#content-effects input[type="range"]::-moz-range-thumb{width:14px;height:30px;border-radius:6px;background:var(--accent);border:2px solid var(--dark);box-shadow:0 2px 8px rgba(0,0,0,.5)}
+/* Sélecteurs de couleur des effets */
+.effect-colors-row{display:flex;gap:10px}
+.effect-colors-row .slider-block{flex:1;min-width:0}
+input[type="color"]{-webkit-appearance:none;appearance:none;width:100%;height:38px;border:1px solid var(--border);border-radius:8px;background:var(--mid2);cursor:pointer;padding:4px}
+input[type="color"]::-webkit-color-swatch-wrapper{padding:0}
+input[type="color"]::-webkit-color-swatch{border:none;border-radius:5px}
+input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 
 .wheel-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
 #colorWheel{border-radius:50%;cursor:crosshair;touch-action:none;box-shadow:0 0 0 1px var(--border),0 8px 32px rgba(0,0,0,.4);max-width:240px;width:min(240px,80vw)}
@@ -534,6 +541,34 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
         <input type="range" id="effectBurstSlider" min="1" max="10" step="1" value="3"
                style="background:linear-gradient(to right,#333,#ffe664)"
                oninput="document.getElementById('effectBurstVal').textContent=this.value;onEffectParamChange()">
+      </div>
+      <div class="effect-colors-row">
+        <div class="slider-block" id="effectColor1Block" style="display:none">
+          <div class="slider-header"><label id="effectColor1Label">Couleur 1</label></div>
+          <input type="color" id="effectColor1" value="#ffffff" oninput="onEffectParamChange()">
+        </div>
+        <div class="slider-block" id="effectColor2Block" style="display:none">
+          <div class="slider-header"><label id="effectColor2Label">Couleur 2</label></div>
+          <input type="color" id="effectColor2" value="#0040ff" oninput="onEffectParamChange()">
+        </div>
+      </div>
+      <div class="slider-block" id="effectRandBlock" style="display:none">
+        <div class="slider-header">
+          <label>Facteur aléatoire</label>
+          <div class="slider-val" id="effectRandVal">70<span>%</span></div>
+        </div>
+        <input type="range" id="effectRandSlider" min="0" max="100" step="5" value="70"
+               style="background:linear-gradient(to right,#1a73e8,#e8c97a)"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block" id="effectFadeBlock" style="display:none;margin-bottom:0">
+        <div class="slider-header">
+          <label>Fondu d'extinction</label>
+          <div class="slider-val" id="effectFadeVal">0<span> ms</span></div>
+        </div>
+        <input type="range" id="effectFadeSlider" min="0" max="600" step="10" value="0"
+               style="background:linear-gradient(to right,#333,#888)"
+               oninput="onEffectParamChange()">
       </div>
     </div>
     <div class="panel">
@@ -1005,10 +1040,20 @@ const EFFECT_CONFIG = {
   tv:        { label:'📺 TV',          speedLabel:'Vitesse (img/s)',    min:0.5, max:15,  step:0.5, def:4,   intDef:80,  burst:false },
   candle:    { label:'🕯 Bougie',       speedLabel:'Vacillement',        min:0.2, max:5,   step:0.1, def:1.2, intDef:85,  burst:false },
   fire:      { label:'🔥 Feu',          speedLabel:'Intensité rapide',   min:0.5, max:10,  step:0.5, def:3,   intDef:90,  burst:false },
-  police:    { label:'🚨 Police',       speedLabel:'Vitesse alternance', min:0.5, max:8,   step:0.5, def:3,   intDef:100, burst:false },
-  lightning: { label:'⚡ Éclair',       speedLabel:'Fréquence',          min:0.1, max:3,   step:0.1, def:0.8, intDef:100, burst:false },
-  paparazzi: { label:'📸 Paparazzi',   speedLabel:'Rafales / sec',      min:0.2, max:4,   step:0.1, def:1,   intDef:100, burst:true  },
+  police:    { label:'🚨 Police',       speedLabel:'Vitesse alternance', min:0.5, max:8,   step:0.5, def:3,   intDef:100, burst:false,
+              color1:'#ff2020', color2:'#2040ff', c1Label:'Couleur A', c2Label:'Couleur B' },
+  lightning: { label:'⚡ Éclair',       speedLabel:'Fréquence',          min:0.1, max:3,   step:0.1, def:0.8, intDef:100, burst:false,
+              color1:'#f4f0ff', color2:'#03030a', c1Label:'Couleur éclair', c2Label:'Couleur ambiante', rand:70, fade:0 },
+  paparazzi: { label:'📸 Paparazzi',   speedLabel:'Rafales / sec',      min:0.2, max:4,   step:0.1, def:1,   intDef:100, burst:true,
+              color1:'#fffce6', color2:'#080808', c1Label:'Couleur flash', c2Label:'Couleur ambiante', rand:70, fade:0 },
 };
+
+// Affiche/masque + initialise un bloc optionnel de réglage d'effet
+function _setupEffectOpt(blockId, show) {
+  const b = document.getElementById(blockId);
+  if (b) b.style.display = show ? 'block' : 'none';
+  return !!show;
+}
 
 function selectEffect(name) {
   if (activeScreenEffect === name) { stopAllEffects(); return; }
@@ -1033,6 +1078,25 @@ function selectEffect(name) {
     document.getElementById('effectIntensitySlider').value = cfg.intDef;
     document.getElementById('effectIntensityVal').innerHTML = cfg.intDef + '<span>%</span>';
     document.getElementById('effectBurstBlock').style.display = cfg.burst ? 'block' : 'none';
+    // Couleurs
+    if (_setupEffectOpt('effectColor1Block', cfg.color1)) {
+      document.getElementById('effectColor1Label').textContent = cfg.c1Label || 'Couleur 1';
+      document.getElementById('effectColor1').value = cfg.color1;
+    }
+    if (_setupEffectOpt('effectColor2Block', cfg.color2)) {
+      document.getElementById('effectColor2Label').textContent = cfg.c2Label || 'Couleur 2';
+      document.getElementById('effectColor2').value = cfg.color2;
+    }
+    // Facteur aléatoire
+    if (_setupEffectOpt('effectRandBlock', cfg.rand != null)) {
+      document.getElementById('effectRandSlider').value = cfg.rand;
+      document.getElementById('effectRandVal').innerHTML = cfg.rand + '<span>%</span>';
+    }
+    // Fondu d'extinction
+    if (_setupEffectOpt('effectFadeBlock', cfg.fade != null)) {
+      document.getElementById('effectFadeSlider').value = cfg.fade;
+      document.getElementById('effectFadeVal').innerHTML = cfg.fade + '<span> ms</span>';
+    }
   }
   scheduleEffectSend();
 }
@@ -1042,6 +1106,10 @@ function onEffectParamChange() {
   document.getElementById('effectSpeedVal').textContent = speed.toFixed(1);
   const intensity = parseInt(document.getElementById('effectIntensitySlider').value);
   document.getElementById('effectIntensityVal').innerHTML = intensity + '<span>%</span>';
+  const randEl = document.getElementById('effectRandSlider');
+  if (randEl) document.getElementById('effectRandVal').innerHTML = randEl.value + '<span>%</span>';
+  const fadeEl = document.getElementById('effectFadeSlider');
+  if (fadeEl) document.getElementById('effectFadeVal').innerHTML = fadeEl.value + '<span> ms</span>';
   scheduleEffectSend();
 }
 
@@ -1050,11 +1118,17 @@ function scheduleEffectSend() {
   effectSendTimer = setTimeout(() => {
     if (!activeScreenEffect) return;
     const burstEl = document.getElementById('effectBurstSlider');
-    sendMsg({ type:'effect', name:activeScreenEffect, active:true, params:{
+    const cfg = EFFECT_CONFIG[activeScreenEffect] || {};
+    const params = {
       speed: parseFloat(document.getElementById('effectSpeedSlider').value),
       intensity: parseInt(document.getElementById('effectIntensitySlider').value),
       burst: burstEl ? parseInt(burstEl.value) : 3,
-    }});
+    };
+    if (cfg.color1) params.color1 = document.getElementById('effectColor1').value;
+    if (cfg.color2) params.color2 = document.getElementById('effectColor2').value;
+    if (cfg.rand != null) params.rand = parseInt(document.getElementById('effectRandSlider').value);
+    if (cfg.fade != null) params.fade = parseInt(document.getElementById('effectFadeSlider').value);
+    sendMsg({ type:'effect', name:activeScreenEffect, active:true, params });
   }, 80);
 }
 
@@ -1093,6 +1167,12 @@ function _runEffect(name, p) {
   const speed = Math.max(0.1, p.speed || 1);
   const intf = Math.max(0.05, Math.min(1, (p.intensity || 80) / 100));
   const burst = Math.max(1, p.burst || 3);
+  const col1 = p.color1 ? hexToRgb(p.color1) : null;
+  const col2 = p.color2 ? hexToRgb(p.color2) : null;
+  const R = (p.rand != null) ? Math.max(0, Math.min(1, p.rand / 100)) : 0.7;
+  const fade = Math.max(0, p.fade || 0);
+  // Aléa modulé : ~0.5 (régulier) quand R=0, uniforme [0,1] quand R=1
+  function jit() { return 0.5 + (Math.random() - 0.5) * R; }
 
   function setBg(r, g, b, transMs) {
     sc.style.transition = transMs > 0 ? `background-color ${transMs}ms ease` : 'none';
@@ -1126,40 +1206,46 @@ function _runEffect(name, p) {
     }
     case 'police': {
       if (!p._tick) p._tick = 0;
-      const isRed = (p._tick % 2 === 0);
-      setBg(isRed ? 255 * intf : 0, 0, isRed ? 0 : 255 * intf, 0);
+      const a = col1 || { r: 255, g: 32, b: 32 };
+      const b = col2 || { r: 32, g: 64, b: 255 };
+      const c = (p._tick % 2 === 0) ? a : b;
+      setBg(c.r * intf, c.g * intf, c.b * intf, 0);
       p._tick++;
       next(Math.max(80, 500 / speed));
       break;
     }
     case 'lightning': {
-      setBg(3, 3, 10, 0);
+      const rest = col2 || { r: 3, g: 3, b: 10 };
+      const flash = col1 || { r: 255, g: 255, b: 245 };
+      setBg(rest.r, rest.g, rest.b, 0);
       const baseWait = Math.max(300, 5000 / speed);
       _screenEffectTimer = setTimeout(() => {
-        const flashes = 1 + Math.floor(Math.random() * 3);
+        const flashes = 1 + Math.floor(jit() * 3);
         let f = 0;
         function doFlash() {
-          if (f >= flashes || _screenEffect !== name) { setBg(3, 3, 10, 0); next(baseWait * (0.5 + Math.random())); return; }
-          setBg(255 * intf, 255 * intf, 245 * intf, 0);
-          const dur = 25 + Math.random() * 90;
+          if (f >= flashes || _screenEffect !== name) { setBg(rest.r, rest.g, rest.b, fade); next(baseWait * (0.5 + jit())); return; }
+          setBg(flash.r * intf, flash.g * intf, flash.b * intf, 0);
+          const dur = 25 + jit() * 90;
           f++;
-          _screenEffectTimer = setTimeout(() => { setBg(3, 3, 10, 0); _screenEffectTimer = setTimeout(doFlash, 40 + Math.random() * 80); }, dur);
+          _screenEffectTimer = setTimeout(() => { setBg(rest.r, rest.g, rest.b, fade); _screenEffectTimer = setTimeout(doFlash, 40 + jit() * 80); }, dur);
         }
         doFlash();
-      }, baseWait * (0.5 + Math.random() * 1.5));
+      }, baseWait * (0.5 + jit() * 1.5));
       break;
     }
     case 'paparazzi': {
-      setBg(8, 8, 8, 0);
+      const rest = col2 || { r: 8, g: 8, b: 8 };
+      const flash = col1 || { r: 255, g: 252, b: 230 };
+      setBg(rest.r, rest.g, rest.b, 0);
       const burstWait = Math.max(400, 3500 / speed);
       let f = 0;
       function doFlash() {
         if (_screenEffect !== name) return;
-        if (f >= burst) { f = 0; _screenEffectTimer = setTimeout(() => _runEffect(name, p), burstWait * (0.7 + Math.random() * 0.6)); return; }
-        setBg(255 * intf, 252 * intf, 230 * intf, 0);
+        if (f >= burst) { f = 0; _screenEffectTimer = setTimeout(() => _runEffect(name, p), burstWait * (0.7 + jit() * 0.6)); return; }
+        setBg(flash.r * intf, flash.g * intf, flash.b * intf, 0);
         f++;
-        const dur = 25 + Math.random() * 55;
-        _screenEffectTimer = setTimeout(() => { setBg(8, 8, 8, 0); _screenEffectTimer = setTimeout(doFlash, 55 + Math.random() * 90); }, dur);
+        const dur = 25 + jit() * 55;
+        _screenEffectTimer = setTimeout(() => { setBg(rest.r, rest.g, rest.b, fade); _screenEffectTimer = setTimeout(doFlash, 55 + jit() * 90); }, dur);
       }
       _screenEffectTimer = setTimeout(doFlash, 80);
       break;
