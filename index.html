@@ -169,6 +169,20 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 .screen-bar-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(232,201,122,.15)}
 .screen-bar-btn.unavail{opacity:.3;cursor:default}
 
+/* SCREEN MEDIA (image / vidéo diffusée) */
+#screen-media-img,#screen-media-video{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:50}
+#screen-blackout{display:none;position:absolute;inset:0;background:#000;z-index:90}
+
+/* MÉDIA TAB (remote) */
+.media-btn{width:100%;padding:16px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:.85rem;letter-spacing:.06em;cursor:pointer;transition:all .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px}
+.media-btn:hover{border-color:var(--accent);color:var(--accent)}
+.media-btn.active{background:rgba(232,201,122,.12);border-color:var(--accent);color:var(--accent)}
+.media-btn .media-icon{font-size:1.3rem}
+.media-status{font-size:.62rem;color:var(--muted);letter-spacing:.08em;margin-top:6px;text-align:center;min-height:1rem}
+.media-status.live{color:var(--green)}
+.blackout-btn{width:100%;padding:18px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:1rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px}
+.blackout-btn.on{background:#000;border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 24px rgba(0,0,0,.8)}
+
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 </style>
@@ -241,10 +255,14 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 </div>
 
 <div id="screen-mode" onclick="requestFS()">
+  <img id="screen-media-img" alt="">
+  <video id="screen-media-video" playsinline autoplay></video>
+  <div id="screen-blackout"></div>
   <div class="status-pill" id="screen-status">Connexion…</div>
   <div id="screen-bar">
     <button class="screen-bar-btn" onclick="event.stopPropagation();goBackToSplash()">← Retour</button>
     <button class="screen-bar-btn" onclick="event.stopPropagation();suspendScreen()">⏸ Suspendre</button>
+    <button class="screen-bar-btn" id="screenBlackoutBtn" onclick="event.stopPropagation();toggleScreenBlackout()">⚫ Off</button>
   </div>
 </div>
 
@@ -279,6 +297,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
     <button class="tab-btn" onclick="switchTab('strobe')" id="tab-strobe">⚡ Strobe</button>
     <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash">🔦 Flash</button>
     <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects">✨ Effets</button>
+    <button class="tab-btn" onclick="switchTab('media')" id="tab-media">🎞 Média</button>
     <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr">📡 QR</button>
   </div>
 
@@ -522,6 +541,31 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
     </div>
   </div>
 
+  <div class="tab-content" id="content-media">
+    <div class="panel">
+      <div class="panel-label">Diffuser sur l'écran</div>
+      <button class="media-btn" id="mediaImgBtn" onclick="document.getElementById('mediaImgInput').click()">
+        <span class="media-icon">🖼</span> Envoyer une image
+      </button>
+      <button class="media-btn" id="mediaVidBtn" onclick="document.getElementById('mediaVidInput').click()">
+        <span class="media-icon">🎬</span> Diffuser une vidéo
+      </button>
+      <input type="file" id="mediaImgInput" accept="image/*" style="display:none" onchange="onPickImage(this.files[0])">
+      <input type="file" id="mediaVidInput" accept="video/*" style="display:none" onchange="onPickVideo(this.files[0])">
+      <div class="media-status" id="mediaStatus">Aucun média diffusé</div>
+      <button class="media-btn" id="mediaStopBtn" onclick="stopMediaBroadcast()" style="display:none;border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)">
+        <span class="media-icon">⏹</span> Arrêter la diffusion
+      </button>
+    </div>
+    <div class="panel">
+      <div class="panel-label">Écran</div>
+      <button class="blackout-btn" id="blackoutBtn" onclick="toggleBlackout()">
+        <span id="blackoutIcon">⚫</span><span id="blackoutLabel">Éteindre l'écran (Off)</span>
+      </button>
+      <div class="media-status" style="margin-top:10px">Bascule l'écran distant en noir total, puis restaure.</div>
+    </div>
+  </div>
+
   <div class="tab-content" id="content-qr">
     <div class="panel">
       <div class="panel-label">Ouvrir l'écran sur un autre appareil</div>
@@ -592,6 +636,16 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'torch-dim')    receiveTorchDim(msg.level);
         if (msg.type === 'torch-effect') receiveTorchEffect(msg.effect);
         if (msg.type === 'effect')       receiveEffect(msg);
+        if (msg.type === 'blackout')     setBlackout(msg.on);
+        if (msg.type === 'media-img-start') mediaImgStart(msg);
+        if (msg.type === 'media-img-chunk') mediaImgChunk(msg);
+        if (msg.type === 'media-stop')   hideScreenMedia();
+        if (msg.type === 'rtc-offer')    screenHandleOffer(msg.sdp);
+        if (msg.type === 'rtc-ice' && msg.from === 'remote') screenAddIce(msg.candidate);
+      }
+      if (mode === 'remote') {
+        if (msg.type === 'rtc-answer')   remoteHandleAnswer(msg.sdp);
+        if (msg.type === 'rtc-ice' && msg.from === 'screen') remoteAddIce(msg.candidate);
       }
     } catch (_) {}
   });
@@ -686,6 +740,8 @@ function connectChannel() {
 
 function suspendScreen() {
   exitFS();
+  hideScreenMedia();
+  setBlackout(false);
   // Déconnecter MQTT mais garder le canal en mémoire
   if (mqttClient) { mqttClient.end(true); mqttClient = null; }
   // Cacher l'écran et revenir à la saisie de canal
@@ -700,6 +756,8 @@ function suspendScreen() {
 
 function goBackToSplash() {
   exitFS();
+  hideScreenMedia();
+  setBlackout(false);
   const cfgDiv = document.getElementById('screen-sacn-config');
   if (cfgDiv) cfgDiv.style.display = 'none';
   stopScreenSACN();
@@ -709,6 +767,7 @@ function goBackToSplash() {
 
 function goBack() {
   stopStrobe();
+  stopMediaBroadcast(true);
   if (mqttClient) { mqttClient.end(true); mqttClient = null; }
   document.getElementById('remote-mode').style.display = 'none';
   document.getElementById('splash').style.display = 'flex';
@@ -1495,11 +1554,213 @@ function receiveTorchEffect(effect) {
 function stopTorchDimLoop() { if (_torchDimTimer) { clearTimeout(_torchDimTimer); _torchDimTimer = null; } }
 function stopTorchEffectLoop() { if (_torchEffectTimer) { clearTimeout(_torchEffectTimer); _torchEffectTimer = null; } }
 
+// ══════════════════════════ BLACKOUT (Off écran) ══════════════════════════
+let remoteBlackout = false, screenBlackoutOn = false;
+
+// — Télécommande : envoie l'ordre à l'écran —
+function toggleBlackout() {
+  remoteBlackout = !remoteBlackout;
+  const btn = document.getElementById('blackoutBtn');
+  if (btn) btn.classList.toggle('on', remoteBlackout);
+  const lbl = document.getElementById('blackoutLabel');
+  if (lbl) lbl.textContent = remoteBlackout ? 'Rallumer l\'écran' : 'Éteindre l\'écran (Off)';
+  const ic = document.getElementById('blackoutIcon');
+  if (ic) ic.textContent = remoteBlackout ? '⬛' : '⚫';
+  sendMsg({ type: 'blackout', on: remoteBlackout });
+}
+
+// — Écran : applique le noir total —
+function setBlackout(on) {
+  screenBlackoutOn = !!on;
+  const ov = document.getElementById('screen-blackout');
+  if (ov) ov.style.display = screenBlackoutOn ? 'block' : 'none';
+  const btn = document.getElementById('screenBlackoutBtn');
+  if (btn) { btn.classList.toggle('on', screenBlackoutOn); btn.textContent = screenBlackoutOn ? '◻ On' : '⚫ Off'; }
+}
+
+// — Écran : bouton local de la barre —
+function toggleScreenBlackout() { setBlackout(!screenBlackoutOn); }
+
+// ══════════════════════════ MÉDIA — TÉLÉCOMMANDE ══════════════════════════
+let _rtcPc = null, _rtcStream = null, _rtcVideoEl = null, _remotePendingIce = [];
+
+function setMediaStatus(txt, live) {
+  const el = document.getElementById('mediaStatus');
+  if (el) { el.textContent = txt; el.classList.toggle('live', !!live); }
+}
+function showMediaStop(show) {
+  const b = document.getElementById('mediaStopBtn');
+  if (b) b.style.display = show ? 'flex' : 'none';
+}
+function setMediaBtnActive(which) {
+  const i = document.getElementById('mediaImgBtn'), v = document.getElementById('mediaVidBtn');
+  if (i) i.classList.toggle('active', which === 'img');
+  if (v) v.classList.toggle('active', which === 'vid');
+}
+
+// — Image : compression + envoi en morceaux via MQTT —
+function onPickImage(file) {
+  if (!file) return;
+  stopMediaBroadcast(false);
+  const img = new Image();
+  img.onload = () => {
+    const max = 1280;
+    let w = img.width, h = img.height;
+    if (w > max || h > max) { const s = Math.min(max / w, max / h); w = Math.round(w * s); h = Math.round(h * s); }
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    const dataUrl = c.toDataURL('image/jpeg', 0.72);
+    URL.revokeObjectURL(img.src);
+    sendImageChunks(dataUrl);
+    setMediaBtnActive('img'); showMediaStop(true);
+    setMediaStatus('🖼 Image diffusée (' + Math.round(dataUrl.length / 1024) + ' Ko)', true);
+  };
+  img.onerror = () => setMediaStatus('⚠ Image illisible');
+  img.src = URL.createObjectURL(file);
+}
+
+function sendImageChunks(dataUrl) {
+  const id = Math.random().toString(36).slice(2, 8);
+  const CHUNK = 12000;
+  const total = Math.ceil(dataUrl.length / CHUNK);
+  sendMsg({ type: 'media-img-start', id, total });
+  for (let i = 0; i < total; i++) {
+    sendMsg({ type: 'media-img-chunk', id, i, data: dataUrl.slice(i * CHUNK, (i + 1) * CHUNK) });
+  }
+}
+
+// — Vidéo : lecture locale + diffusion WebRTC (signaling sur MQTT) —
+function onPickVideo(file) {
+  if (!file) return;
+  stopMediaBroadcast(false);
+  const v = document.createElement('video');
+  v.src = URL.createObjectURL(file);
+  v.loop = true; v.playsInline = true; v.muted = false;
+  _rtcVideoEl = v;
+  setMediaStatus('🎬 Préparation…');
+  v.onloadeddata = () => {
+    v.play().catch(() => {});
+    try {
+      _rtcStream = v.captureStream ? v.captureStream() : v.mozCaptureStream();
+    } catch (e) { setMediaStatus('⚠ captureStream non supporté'); return; }
+    startVideoRtc();
+  };
+  v.onerror = () => setMediaStatus('⚠ Vidéo illisible');
+}
+
+async function startVideoRtc() {
+  _remotePendingIce = [];
+  _rtcPc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+  _rtcStream.getTracks().forEach(t => _rtcPc.addTrack(t, _rtcStream));
+  _rtcPc.onicecandidate = e => { if (e.candidate) sendMsg({ type: 'rtc-ice', from: 'remote', candidate: e.candidate }); };
+  _rtcPc.onconnectionstatechange = () => {
+    const st = _rtcPc.connectionState;
+    if (st === 'connected') setMediaStatus('🎬 Vidéo en diffusion', true);
+    else if (st === 'failed' || st === 'disconnected') setMediaStatus('⚠ Connexion vidéo perdue');
+  };
+  const offer = await _rtcPc.createOffer();
+  await _rtcPc.setLocalDescription(offer);
+  sendMsg({ type: 'rtc-offer', sdp: _rtcPc.localDescription });
+  setMediaBtnActive('vid'); showMediaStop(true);
+  setMediaStatus('🎬 Connexion à l\'écran…');
+}
+
+async function remoteHandleAnswer(sdp) {
+  if (!_rtcPc) return;
+  try {
+    await _rtcPc.setRemoteDescription(new RTCSessionDescription(sdp));
+    for (const c of _remotePendingIce) { try { await _rtcPc.addIceCandidate(c); } catch (_) {} }
+    _remotePendingIce = [];
+  } catch (_) {}
+}
+function remoteAddIce(cand) {
+  if (!_rtcPc || !_rtcPc.remoteDescription) { _remotePendingIce.push(cand); return; }
+  _rtcPc.addIceCandidate(new RTCIceCandidate(cand)).catch(() => {});
+}
+
+function stopMediaBroadcast(notify = true) {
+  if (_rtcPc) { try { _rtcPc.close(); } catch (_) {} _rtcPc = null; }
+  if (_rtcStream) { _rtcStream.getTracks().forEach(t => t.stop()); _rtcStream = null; }
+  if (_rtcVideoEl) { try { _rtcVideoEl.pause(); } catch (_) {} if (_rtcVideoEl.src) URL.revokeObjectURL(_rtcVideoEl.src); _rtcVideoEl = null; }
+  _remotePendingIce = [];
+  setMediaBtnActive(null); showMediaStop(false);
+  setMediaStatus('Aucun média diffusé');
+  if (notify) sendMsg({ type: 'media-stop' });
+}
+
+// ══════════════════════════ MÉDIA — ÉCRAN (récepteur) ══════════════════════════
+let _imgBuf = null, _screenPc = null, _screenPendingIce = [];
+
+function showScreenMedia(kind) {
+  const img = document.getElementById('screen-media-img');
+  const vid = document.getElementById('screen-media-video');
+  if (img) img.style.display = kind === 'img' ? 'block' : 'none';
+  if (vid) vid.style.display = kind === 'video' ? 'block' : 'none';
+}
+
+function hideScreenMedia() {
+  const img = document.getElementById('screen-media-img');
+  const vid = document.getElementById('screen-media-video');
+  if (img) { img.style.display = 'none'; img.removeAttribute('src'); }
+  if (vid) { vid.style.display = 'none'; if (vid.srcObject) { try { vid.pause(); } catch (_) {} vid.srcObject = null; } }
+  _imgBuf = null;
+  cleanupScreenRtc();
+}
+
+function mediaImgStart(msg) {
+  _imgBuf = { id: msg.id, total: msg.total, parts: new Array(msg.total), got: 0 };
+}
+function mediaImgChunk(msg) {
+  if (!_imgBuf || _imgBuf.id !== msg.id) return;
+  if (_imgBuf.parts[msg.i] === undefined) { _imgBuf.parts[msg.i] = msg.data; _imgBuf.got++; }
+  if (_imgBuf.got === _imgBuf.total) {
+    const dataUrl = _imgBuf.parts.join('');
+    cleanupScreenRtc();
+    const im = document.getElementById('screen-media-img');
+    if (im) { im.src = dataUrl; showScreenMedia('img'); }
+    _imgBuf = null;
+  }
+}
+
+async function screenHandleOffer(sdp) {
+  cleanupScreenRtc();
+  _screenPendingIce = [];
+  _screenPc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+  _screenPc.onicecandidate = e => { if (e.candidate) sendMsg({ type: 'rtc-ice', from: 'screen', candidate: e.candidate }); };
+  _screenPc.ontrack = e => {
+    const vid = document.getElementById('screen-media-video');
+    if (vid && vid.srcObject !== e.streams[0]) {
+      vid.srcObject = e.streams[0];
+      vid.play().catch(() => {});
+      showScreenMedia('video');
+    }
+  };
+  try {
+    await _screenPc.setRemoteDescription(new RTCSessionDescription(sdp));
+    const answer = await _screenPc.createAnswer();
+    await _screenPc.setLocalDescription(answer);
+    sendMsg({ type: 'rtc-answer', sdp: _screenPc.localDescription });
+    for (const c of _screenPendingIce) { try { await _screenPc.addIceCandidate(c); } catch (_) {} }
+    _screenPendingIce = [];
+  } catch (_) {}
+}
+function screenAddIce(cand) {
+  if (!_screenPc || !_screenPc.remoteDescription) { _screenPendingIce.push(cand); return; }
+  _screenPc.addIceCandidate(new RTCIceCandidate(cand)).catch(() => {});
+}
+function cleanupScreenRtc() {
+  if (_screenPc) { try { _screenPc.close(); } catch (_) {} _screenPc = null; }
+  _screenPendingIce = [];
+}
+
 // ══════════════════════════ FULLSCREEN ══════════════════════════
 function requestFS() {
   const el = document.documentElement;
   const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
   if (req) req.call(el).catch(() => {});
+  // Relance la lecture vidéo si l'autoplay a été bloqué (geste utilisateur)
+  const vid = document.getElementById('screen-media-video');
+  if (vid && vid.srcObject) vid.play().catch(() => {});
 }
 // Quitter le plein écran si on quitte le mode écran
 function exitFS() {
