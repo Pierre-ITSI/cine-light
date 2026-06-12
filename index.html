@@ -75,13 +75,16 @@ html,body{width:100%;height:100%;background:var(--dark);color:var(--text);font-f
 .slider-val span{color:var(--muted);font-size:.65rem}
 input[type="range"]{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;outline:none;cursor:pointer}
 input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);border:2px solid var(--dark);box-shadow:0 2px 8px rgba(0,0,0,.5)}
+/* Curseurs épais dans l'onglet Couleur : la jauge dégradée fait office d'aperçu */
+#content-color input[type="range"]{height:24px;border-radius:6px}
+#content-color input[type="range"]::-webkit-slider-thumb{width:14px;height:30px;border-radius:6px}
+#content-color input[type="range"]::-moz-range-track{height:24px;border-radius:6px}
+#content-color input[type="range"]::-moz-range-thumb{width:14px;height:30px;border-radius:6px;background:var(--accent);border:2px solid var(--dark);box-shadow:0 2px 8px rgba(0,0,0,.5)}
 
 .wheel-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
 #colorWheel{border-radius:50%;cursor:crosshair;touch-action:none;box-shadow:0 0 0 1px var(--border),0 8px 32px rgba(0,0,0,.4);max-width:240px;width:min(240px,80vw)}
 
-.kelvin-bar{height:24px;border-radius:5px;margin-bottom:8px;background:linear-gradient(to right,#ff9b4a,#ffd2a0,#fff,#c9dfff,#a0c8ff)}
 .kelvin-labels{display:flex;justify-content:space-between;font-size:.55rem;color:var(--muted);letter-spacing:.06em;margin-bottom:10px;line-height:1.4}
-.green-bar{height:24px;border-radius:5px;margin-bottom:8px;background:linear-gradient(to right,#c020c0,#1a1a1a 50%,#20c060)}
 .green-labels{display:flex;justify-content:space-between;font-size:.55rem;color:var(--muted);letter-spacing:.06em;margin-bottom:10px}
 
 .chips-wrap{display:flex;gap:6px;flex-wrap:wrap}
@@ -350,7 +353,6 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 
     <div class="panel">
       <div class="panel-label">Température de couleur</div>
-      <div class="kelvin-bar"></div>
       <div class="kelvin-labels">
         <span>1700K<br>Bougie</span><span style="text-align:center">3200K<br>Tungstène</span>
         <span style="text-align:center">5600K<br>Daylight</span><span style="text-align:right">20000K<br>Ciel</span>
@@ -373,7 +375,6 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 
     <div class="panel">
       <div class="panel-label">Tint · Magenta ↔ Vert</div>
-      <div class="green-bar"></div>
       <div class="green-labels"><span>−100 Magenta</span><span>0 Neutre</span><span>+100 Vert</span></div>
       <div class="slider-block" style="margin-bottom:0">
         <div class="slider-header"><label>Green / Magenta</label><div class="slider-val" id="tintVal">0<span> GM</span></div></div>
