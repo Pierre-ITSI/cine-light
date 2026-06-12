@@ -183,6 +183,12 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 .blackout-btn{width:100%;padding:18px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:1rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px}
 .blackout-btn.on{background:#000;border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 24px rgba(0,0,0,.8)}
 
+/* GLOBAL SCREEN ON/OFF (au-dessus des onglets) */
+.screen-toggle-btn{width:100%;padding:13px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px}
+.screen-toggle-btn:hover{border-color:var(--accent)}
+.screen-toggle-btn.on{background:#000;border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 22px rgba(0,0,0,.85)}
+.beta-badge{display:inline-block;font-size:.42rem;font-weight:500;letter-spacing:.1em;padding:1px 4px;margin-left:3px;border-radius:6px;background:rgba(232,201,122,.18);color:var(--accent);vertical-align:middle;text-transform:uppercase}
+
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 </style>
@@ -290,33 +296,38 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
       <div class="autosend-badge" id="autosendBadge">↗ envoyé</div>
     </div>
   </div>
+  <button class="screen-toggle-btn" id="blackoutBtn" onclick="toggleBlackout()">
+    <span id="blackoutIcon">⚫</span><span id="blackoutLabel">Écran ON — appuyer pour éteindre</span>
+  </button>
+
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('wheel')" id="tab-wheel">🎨 Roue</button>
-    <button class="tab-btn" onclick="switchTab('kelvin')" id="tab-kelvin">🌡 Kelvin</button>
-    <button class="tab-btn" onclick="switchTab('green')" id="tab-green">🟢 Green</button>
-    <button class="tab-btn" onclick="switchTab('strobe')" id="tab-strobe">⚡ Strobe</button>
-    <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash">🔦 Flash</button>
+    <button class="tab-btn active" onclick="switchTab('color')" id="tab-color">🎨 Couleur</button>
     <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects">✨ Effets</button>
+    <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash">🔦 Flash<span class="beta-badge">Bêta</span></button>
     <button class="tab-btn" onclick="switchTab('media')" id="tab-media">🎞 Média</button>
     <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr">📡 QR</button>
   </div>
 
-  <div class="tab-content active" id="content-wheel">
+  <div class="tab-content active" id="content-color">
+    <div class="panel">
+      <div class="panel-label">Intensité (Dimmer)</div>
+      <div class="slider-block" style="margin-bottom:0">
+        <div class="slider-header"><label>Luminosité maître</label><div class="slider-val" id="dimmerVal">100<span>%</span></div></div>
+        <input type="range" id="dimmerSlider" min="0" max="100" value="100" style="background:linear-gradient(to right,#000,#fff)" oninput="onDimmerChange()">
+      </div>
+    </div>
+
     <div class="panel">
       <div class="panel-label">Roue chromatique</div>
       <div class="wheel-wrap">
         <canvas id="colorWheel" width="240" height="240"></canvas>
-        <div style="width:100%;max-width:260px">
-          <div class="slider-block">
-            <div class="slider-header"><label>Luminosité</label><div class="slider-val" id="brightVal">100<span>%</span></div></div>
-            <input type="range" id="brightnessSlider" min="0" max="100" value="100" style="background:linear-gradient(to right,#000,#fff)" oninput="onBrightnessChange()">
-          </div>
-        </div>
+      </div>
+      <div class="slider-block" style="margin:14px 0 0">
+        <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="crossfadeVal">0<span>%</span></div></div>
+        <input type="range" id="crossfadeSlider" min="0" max="100" value="0" style="background:linear-gradient(to right,#f0ede8,#e8c97a,#ff2d78)" oninput="onCrossfadeChange()">
       </div>
     </div>
-  </div>
 
-  <div class="tab-content" id="content-kelvin">
     <div class="panel">
       <div class="panel-label">Température de couleur</div>
       <div class="kelvin-bar"></div>
@@ -328,59 +339,28 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
         <div class="slider-header"><label>Température</label><div class="slider-val" id="kelvinVal">5600<span> K</span></div></div>
         <input type="range" id="kelvinSlider" min="1700" max="20000" value="5600" style="background:linear-gradient(to right,#ff9b4a,#ffd2a0,#fff,#c9dfff,#a0c8ff)" oninput="onKelvinChange()">
       </div>
-      <div class="slider-block">
-        <div class="slider-header"><label>Luminosité</label><div class="slider-val" id="kelvinBrightVal">100<span>%</span></div></div>
-        <input type="range" id="kelvinBrightnessSlider" min="0" max="100" value="100" style="background:linear-gradient(to right,#000,#fff)" oninput="onKelvinChange()">
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-label">Références rapides</div>
       <div class="chips-wrap">
-        <button class="chip" onclick="setKelvin(1700)">1700K Bougie</button>
-        <button class="chip" onclick="setKelvin(2400)">2400K Feu</button>
-        <button class="chip" onclick="setKelvin(2700)">2700K Ampoule</button>
-        <button class="chip" onclick="setKelvin(3200)">3200K Tungstène</button>
-        <button class="chip" onclick="setKelvin(4300)">4300K Aube</button>
-        <button class="chip" onclick="setKelvin(5600)">5600K Daylight</button>
-        <button class="chip" onclick="setKelvin(6500)">6500K Overcast</button>
-        <button class="chip" onclick="setKelvin(9000)">9000K Ciel bleu</button>
-        <button class="chip" onclick="setKelvin(12000)">12000K Ciel voilé</button>
-        <button class="chip" onclick="setKelvin(20000)">20000K Bleu profond</button>
+        <button class="chip" onclick="setKelvin(1700)">1700K</button>
+        <button class="chip" onclick="setKelvin(2700)">2700K</button>
+        <button class="chip" onclick="setKelvin(3200)">3200K</button>
+        <button class="chip" onclick="setKelvin(4300)">4300K</button>
+        <button class="chip" onclick="setKelvin(5600)">5600K</button>
+        <button class="chip" onclick="setKelvin(6500)">6500K</button>
+        <button class="chip" onclick="setKelvin(9000)">9000K</button>
+        <button class="chip" onclick="setKelvin(20000)">20000K</button>
       </div>
     </div>
-  </div>
 
-  <div class="tab-content" id="content-green">
     <div class="panel">
-      <div class="panel-label">Correction Magenta ↔ Vert</div>
+      <div class="panel-label">Tint · Magenta ↔ Vert</div>
       <div class="green-bar"></div>
       <div class="green-labels"><span>−100 Magenta</span><span>0 Neutre</span><span>+100 Vert</span></div>
-      <div class="slider-block">
-        <div class="slider-header"><label>Green / Magenta</label><div class="slider-val" id="greenVal">0<span> GM</span></div></div>
-        <input type="range" id="greenSlider" min="-100" max="100" value="0" style="background:linear-gradient(to right,#c020c0,#1a1a1a 50%,#20c060)" oninput="onGreenChange()">
-      </div>
-      <div class="slider-block">
-        <div class="slider-header"><label>Luminosité</label><div class="slider-val" id="greenBrightVal">100<span>%</span></div></div>
-        <input type="range" id="greenBrightnessSlider" min="0" max="100" value="100" style="background:linear-gradient(to right,#000,#fff)" oninput="onGreenChange()">
+      <div class="slider-block" style="margin-bottom:0">
+        <div class="slider-header"><label>Green / Magenta</label><div class="slider-val" id="tintVal">0<span> GM</span></div></div>
+        <input type="range" id="tintSlider" min="-100" max="100" value="0" style="background:linear-gradient(to right,#c020c0,#1a1a1a 50%,#20c060)" oninput="onTintChange()">
       </div>
     </div>
-    <div class="panel">
-      <div class="panel-label">Références rapides</div>
-      <div class="chips-wrap">
-        <button class="chip" onclick="setGreen(-100)">−100 Full Magenta</button>
-        <button class="chip" onclick="setGreen(-60)">−60 Magenta fort</button>
-        <button class="chip" onclick="setGreen(-30)">−30 Magenta doux</button>
-        <button class="chip" onclick="setGreen(-10)">−10 Légère mag.</button>
-        <button class="chip active" onclick="setGreen(0)">0 Neutre</button>
-        <button class="chip" onclick="setGreen(10)">+10 Légère vert</button>
-        <button class="chip" onclick="setGreen(30)">+30 Vert doux</button>
-        <button class="chip" onclick="setGreen(60)">+60 Vert fort</button>
-        <button class="chip" onclick="setGreen(100)">+100 Full Vert</button>
-      </div>
-    </div>
-  </div>
 
-  <div class="tab-content" id="content-strobe">
     <div class="panel">
       <div class="toggle-row">
         <div><div class="toggle-label">Stroboscope</div><div class="toggle-sub">Flash sur l'écran distant</div></div>
@@ -557,13 +537,6 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
         <span class="media-icon">⏹</span> Arrêter la diffusion
       </button>
     </div>
-    <div class="panel">
-      <div class="panel-label">Écran</div>
-      <button class="blackout-btn" id="blackoutBtn" onclick="toggleBlackout()">
-        <span id="blackoutIcon">⚫</span><span id="blackoutLabel">Éteindre l'écran (Off)</span>
-      </button>
-      <div class="media-status" style="margin-top:10px">Bascule l'écran distant en noir total, puis restaure.</div>
-    </div>
   </div>
 
   <div class="tab-content" id="content-qr">
@@ -588,9 +561,12 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 let mode = null, channel = null, mqttClient = null;
 let currentColor = '#ffffff';
 let showHex = true;
-let wheelHSLColor = '#ffffff', wheelBrightness = 100;
-let kelvinK = 5600, kelvinBrightness = 100;
-let greenShift = 0, greenBrightness = 100;
+// Modèle couleur unifié : blanc (kelvin+tint) ↔ couleur (roue), mixés par crossfade, × dimmer
+let colorDimmer = 100;        // luminosité maître %
+let kelvinK = 5600;           // température °K
+let colorTint = 0;            // Green/Magenta -100..+100
+let colorWheelHex = '#ffffff';// teinte choisie sur la roue (pleine saturation)
+let colorCrossfade = 0;       // 0 = blanc CCT/tint · 100 = couleur roue
 let strobeActive = false, strobeMode = 'regular';
 let strobeFreq = 2, strobeFlashDur = 50, strobeFreqMax = 8, strobeFlashDurMax = 200;
 let strobePreviewTimer = null, autoSendTimer = null;
@@ -693,7 +669,7 @@ function startMode(m) {
     mode = 'remote';
     document.getElementById('remote-mode').style.display = 'block';
     buildPresets(); initWheel();
-    applyColor('#ffffff', 'Blanc pur');
+    recomputeColor();
     document.getElementById('channelInput').value = 'cine' + Math.floor(Math.random()*9000+1000);
   } else {
     const hash = location.hash.replace('#','');
@@ -857,7 +833,7 @@ function initWheel() {
     const x=(ex-rect.left)*(W/rect.width), y=(ey-rect.top)*(W/rect.height);
     if (Math.sqrt((x-cx)**2+(y-cy)**2)>R) return;
     const d=ctx.getImageData(Math.round(Math.min(Math.max(x,0),W-1)),Math.round(Math.min(Math.max(y,0),W-1)),1,1).data;
-    wheelHSLColor=rgbToHex(d[0],d[1],d[2]); onBrightnessChange();
+    onWheelPick(rgbToHex(d[0],d[1],d[2]));
   }
   canvas.addEventListener('mousedown',e=>{drag=true;pick(e.clientX,e.clientY)});
   canvas.addEventListener('mousemove',e=>{if(drag)pick(e.clientX,e.clientY)});
@@ -865,14 +841,6 @@ function initWheel() {
   canvas.addEventListener('touchstart',e=>{e.preventDefault();pick(e.touches[0].clientX,e.touches[0].clientY)},{passive:false});
   canvas.addEventListener('touchmove',e=>{e.preventDefault();pick(e.touches[0].clientX,e.touches[0].clientY)},{passive:false});
 }
-function onBrightnessChange() {
-  wheelBrightness=parseInt(document.getElementById('brightnessSlider').value);
-  document.getElementById('brightVal').innerHTML=wheelBrightness+'<span>%</span>';
-  const rgb=hexToRgb(wheelHSLColor),f=wheelBrightness/100;
-  applyColor(rgbToHex(Math.round(rgb.r*f),Math.round(rgb.g*f),Math.round(rgb.b*f)),'Roue · '+wheelBrightness+'%');
-  scheduleAutoSend();
-}
-
 // ══════════════════════════ KELVIN ══════════════════════════
 function kelvinToRgb(K) {
   const t=K/100; let r,g,b;
@@ -881,31 +849,65 @@ function kelvinToRgb(K) {
   b=t>=66?255:(t<=19?0:Math.min(255,Math.max(0,138.5177312231*Math.log(t-10)-305.0447927307)));
   return{r:Math.round(r),g:Math.round(g),b:Math.round(b)};
 }
+
+// ══════════════════════════ COULEUR UNIFIÉE ══════════════════════════
+function tintWhite(rgb, gm) {
+  let r=rgb.r,g=rgb.g,b=rgb.b;
+  if(gm>0){r*=(1-gm/100*0.45);b*=(1-gm/100*0.45);}
+  else if(gm<0){const t=Math.abs(gm)/100;g*=(1-t*0.65);}
+  return {r,g,b};
+}
+function recomputeColor() {
+  const white=tintWhite(kelvinToRgb(kelvinK),colorTint);
+  const col=hexToRgb(colorWheelHex);
+  const mix=colorCrossfade/100, f=colorDimmer/100;
+  const cl=v=>Math.min(255,Math.max(0,Math.round(v)));
+  const r=cl((white.r*(1-mix)+col.r*mix)*f);
+  const g=cl((white.g*(1-mix)+col.g*mix)*f);
+  const b=cl((white.b*(1-mix)+col.b*mix)*f);
+  const sign=colorTint>=0?'+':'';
+  let meta;
+  if(colorCrossfade<5)       meta=kelvinK+'K · '+sign+colorTint+'GM · '+colorDimmer+'%';
+  else if(colorCrossfade>95) meta='Roue · '+colorDimmer+'%';
+  else                       meta='Mix '+colorCrossfade+'% · '+colorDimmer+'%';
+  applyColor(rgbToHex(r,g,b),meta);
+  scheduleAutoSend();
+}
+function onDimmerChange() {
+  colorDimmer=parseInt(document.getElementById('dimmerSlider').value);
+  document.getElementById('dimmerVal').innerHTML=colorDimmer+'<span>%</span>';
+  recomputeColor();
+}
+function onCrossfadeChange() {
+  colorCrossfade=parseInt(document.getElementById('crossfadeSlider').value);
+  document.getElementById('crossfadeVal').innerHTML=colorCrossfade+'<span>%</span>';
+  recomputeColor();
+}
+function setCrossfade(v) {
+  colorCrossfade=v;
+  const s=document.getElementById('crossfadeSlider'); if(s) s.value=v;
+  const l=document.getElementById('crossfadeVal'); if(l) l.innerHTML=v+'<span>%</span>';
+}
+function onWheelPick(hex) {
+  colorWheelHex=hex;
+  setCrossfade(100); // toucher la roue bascule en couleur pleine
+  recomputeColor();
+}
 function onKelvinChange() {
   kelvinK=parseInt(document.getElementById('kelvinSlider').value);
-  kelvinBrightness=parseInt(document.getElementById('kelvinBrightnessSlider').value);
   document.getElementById('kelvinVal').innerHTML=kelvinK.toLocaleString('fr')+'<span> K</span>';
-  document.getElementById('kelvinBrightVal').innerHTML=kelvinBrightness+'<span>%</span>';
-  const rgb=kelvinToRgb(kelvinK),f=kelvinBrightness/100;
-  applyColor(rgbToHex(Math.round(rgb.r*f),Math.round(rgb.g*f),Math.round(rgb.b*f)),kelvinK+'K · '+kelvinBrightness+'%');
-  scheduleAutoSend();
+  setCrossfade(0); // régler la température bascule en blanc
+  recomputeColor();
 }
 function setKelvin(k){document.getElementById('kelvinSlider').value=k;onKelvinChange();}
-
-// ══════════════════════════ GREEN SHIFT ══════════════════════════
-function onGreenChange() {
-  greenShift=parseInt(document.getElementById('greenSlider').value);
-  greenBrightness=parseInt(document.getElementById('greenBrightnessSlider').value);
-  const sign=greenShift>=0?'+':'';
-  document.getElementById('greenVal').innerHTML=sign+greenShift+'<span> GM</span>';
-  document.getElementById('greenBrightVal').innerHTML=greenBrightness+'<span>%</span>';
-  const f=greenBrightness/100,base=255*f; let r,g,b;
-  if(greenShift>=0){const t=greenShift/100;r=base*(1-t*0.45);g=base;b=base*(1-t*0.45);}
-  else{const t=Math.abs(greenShift)/100;r=base;g=base*(1-t*0.65);b=base;}
-  applyColor(rgbToHex(Math.min(255,Math.max(0,Math.round(r))),Math.min(255,Math.max(0,Math.round(g))),Math.min(255,Math.max(0,Math.round(b)))),sign+greenShift+' GM · '+greenBrightness+'%');
-  scheduleAutoSend();
+function onTintChange() {
+  colorTint=parseInt(document.getElementById('tintSlider').value);
+  const sign=colorTint>=0?'+':'';
+  document.getElementById('tintVal').innerHTML=sign+colorTint+'<span> GM</span>';
+  setCrossfade(0);
+  recomputeColor();
 }
-function setGreen(v){document.getElementById('greenSlider').value=v;onGreenChange();document.querySelectorAll('#content-green .chip').forEach(c=>c.classList.remove('active'));}
+function setTint(v){document.getElementById('tintSlider').value=v;onTintChange();}
 
 // ══════════════════════════ STROBE ══════════════════════════
 function setStrobeMode(m) {
@@ -1390,7 +1392,7 @@ function buildPresets(){
   PRESETS.forEach(p=>{
     const btn=document.createElement('button');btn.className='preset-btn';
     btn.innerHTML=`<div class="preset-swatch" style="background:${p.color}"></div><div class="preset-name">${p.name}</div>`;
-    btn.onclick=()=>{applyColor(p.color,p.name);sendMsg({type:'color',color:p.color});const el=document.getElementById('autosendBadge');if(el){el.classList.add('visible');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('visible'),600);}};
+    btn.onclick=()=>{colorWheelHex=p.color;colorDimmer=100;const ds=document.getElementById('dimmerSlider');if(ds)ds.value=100;const dv=document.getElementById('dimmerVal');if(dv)dv.innerHTML='100<span>%</span>';setCrossfade(100);recomputeColor();};
     grid.appendChild(btn);
   });
 }
@@ -1563,7 +1565,7 @@ function toggleBlackout() {
   const btn = document.getElementById('blackoutBtn');
   if (btn) btn.classList.toggle('on', remoteBlackout);
   const lbl = document.getElementById('blackoutLabel');
-  if (lbl) lbl.textContent = remoteBlackout ? 'Rallumer l\'écran' : 'Éteindre l\'écran (Off)';
+  if (lbl) lbl.textContent = remoteBlackout ? 'Écran OFF — appuyer pour rallumer' : 'Écran ON — appuyer pour éteindre';
   const ic = document.getElementById('blackoutIcon');
   if (ic) ic.textContent = remoteBlackout ? '⬛' : '⚫';
   sendMsg({ type: 'blackout', on: remoteBlackout });
