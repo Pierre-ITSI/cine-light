@@ -172,6 +172,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;hei
 /* AUTO-HIDE des contrôles écran (barre + statut) après inactivité */
 #screen-bar,#screen-status{transition:opacity .6s ease}
 #screen-bar.ui-hidden,#screen-status.ui-hidden{opacity:0;pointer-events:none}
+#screen-mode.cursor-hidden{cursor:none}
 
 /* SCREEN MEDIA (image / vidéo diffusée) */
 #screen-media-img,#screen-media-video{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:50}
@@ -631,12 +632,16 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'media-img-start') mediaImgStart(msg);
         if (msg.type === 'media-img-chunk') mediaImgChunk(msg);
         if (msg.type === 'media-stop')   hideScreenMedia();
+        if (msg.type === 'media-ctrl')   screenMediaCtrl(msg);
         if (msg.type === 'rtc-offer')    screenHandleOffer(msg.sdp);
         if (msg.type === 'rtc-ice' && msg.from === 'remote') screenAddIce(msg.candidate);
       }
       if (mode === 'remote') {
         if (msg.type === 'rtc-answer')   remoteHandleAnswer(msg.sdp);
         if (msg.type === 'rtc-ice' && msg.from === 'screen') remoteAddIce(msg.candidate);
+        if (msg.type === 'media-meta')     remoteOnMeta(msg.dur);
+        if (msg.type === 'media-progress') remoteOnProgress(msg.cur, msg.dur);
+        if (msg.type === 'media-ended')    remoteOnEnded();
       }
     } catch (_) {}
   });
@@ -1604,12 +1609,15 @@ let _uiHideTimer = null, _autohideBound = false;
 function pokeScreenControls() {
   const bar = document.getElementById('screen-bar');
   const st  = document.getElementById('screen-status');
+  const sm  = document.getElementById('screen-mode');
   if (bar) bar.classList.remove('ui-hidden');
   if (st)  st.classList.remove('ui-hidden');
+  if (sm)  sm.classList.remove('cursor-hidden');
   if (_uiHideTimer) clearTimeout(_uiHideTimer);
   _uiHideTimer = setTimeout(() => {
     if (bar) bar.classList.add('ui-hidden');
     if (st)  st.classList.add('ui-hidden');
+    if (sm)  sm.classList.add('cursor-hidden');
   }, 5000);
 }
 function setupScreenAutohide() {
@@ -1625,12 +1633,18 @@ function cancelScreenAutohide() {
   if (_uiHideTimer) { clearTimeout(_uiHideTimer); _uiHideTimer = null; }
   const bar = document.getElementById('screen-bar');
   const st  = document.getElementById('screen-status');
+  const sm  = document.getElementById('screen-mode');
   if (bar) bar.classList.remove('ui-hidden');
   if (st)  st.classList.remove('ui-hidden');
+  if (sm)  sm.classList.remove('cursor-hidden');
 }
 
 // ══════════════════════════ MÉDIA — TÉLÉCOMMANDE ══════════════════════════
-let _rtcPc = null, _rtcStream = null, _rtcVideoEl = null, _remotePendingIce = [];
+// Vidéo : transfert du FICHIER vers l'écran via DataChannel WebRTC.
+// L'ordinateur lit la vidéo localement (vraie timeline/seek/play-pause natifs),
+// piloté depuis le téléphone par messages MQTT « media-ctrl ».
+let _rtcPc = null, _remotePendingIce = [];
+let _remotePlaying = false, _remoteDur = 0, _remoteCur = 0, _mediaIsVideo = false;
 
 function setMediaStatus(txt, live) {
   const el = document.getElementById('mediaStatus');
@@ -1651,12 +1665,13 @@ function setPlayBtn(playing) {
   if (lb) lb.textContent = playing ? 'Pause' : 'Lecture';
 }
 function toggleVideoPlayback() {
-  if (!_rtcVideoEl) return;
-  if (_rtcVideoEl.paused) { _rtcVideoEl.play().catch(() => {}); setPlayBtn(true); }
-  else { _rtcVideoEl.pause(); setPlayBtn(false); }
+  if (!_mediaIsVideo) return;
+  _remotePlaying = !_remotePlaying;
+  setPlayBtn(_remotePlaying);
+  sendMsg({ type: 'media-ctrl', action: _remotePlaying ? 'play' : 'pause' });
 }
 
-// — Timeline / scrubber —
+// — Timeline / scrubber (pilotage distant) —
 let _mediaSeeking = false;
 function showMediaTimeline(show) {
   const t = document.getElementById('mediaTimeline');
@@ -1676,34 +1691,52 @@ function paintSeek(pct) {
   const s = document.getElementById('mediaSeek');
   if (s) s.style.background = `linear-gradient(to right,var(--accent) ${pct}%,#333 ${pct}%)`;
 }
-function updateSeekRange() {
-  if (!_rtcVideoEl) return;
-  const dur = _rtcVideoEl.duration;
+// Reçoit la durée depuis l'écran (métadonnées de la vidéo lue localement par l'écran)
+function remoteOnMeta(dur) {
+  _remoteDur = dur || 0;
   const s = document.getElementById('mediaSeek');
-  if (s && isFinite(dur)) s.max = dur;
+  if (s && isFinite(_remoteDur)) s.max = _remoteDur;
   const d = document.getElementById('mediaDurTime');
-  if (d) d.textContent = fmtTime(dur);
+  if (d) d.textContent = fmtTime(_remoteDur);
+  showMediaPlay(true); setPlayBtn(_remotePlaying); showMediaTimeline(true);
+  setMediaStatus('🎬 Vidéo en diffusion', true);
 }
-function updateSeekProgress() {
-  if (!_rtcVideoEl || _mediaSeeking) return;
-  const cur = _rtcVideoEl.currentTime, dur = _rtcVideoEl.duration || 0;
+// Reçoit la position de lecture depuis l'écran
+function remoteOnProgress(cur, dur) {
+  if (dur) { _remoteDur = dur; const d = document.getElementById('mediaDurTime'); if (d) d.textContent = fmtTime(dur); const s = document.getElementById('mediaSeek'); if (s && isFinite(dur)) s.max = dur; }
+  _remoteCur = cur || 0;
+  if (_mediaSeeking) return;
   const s = document.getElementById('mediaSeek');
-  if (s) s.value = cur;
+  if (s) s.value = _remoteCur;
   const c = document.getElementById('mediaCurTime');
-  if (c) c.textContent = fmtTime(cur);
-  paintSeek(dur ? (cur / dur) * 100 : 0);
+  if (c) c.textContent = fmtTime(_remoteCur);
+  paintSeek(_remoteDur ? (_remoteCur / _remoteDur) * 100 : 0);
 }
+function remoteOnEnded() {
+  _remotePlaying = false; setPlayBtn(false);
+}
+let _seekSendTimer = null;
 function onSeekInput() {
   _mediaSeeking = true;
   const s = document.getElementById('mediaSeek');
-  if (!s || !_rtcVideoEl) return;
-  const cur = parseFloat(s.value), dur = _rtcVideoEl.duration || 0;
-  _rtcVideoEl.currentTime = cur; // seek live → se répercute sur l'écran
+  if (!s) return;
+  const cur = parseFloat(s.value);
   const c = document.getElementById('mediaCurTime');
   if (c) c.textContent = fmtTime(cur);
-  paintSeek(dur ? (cur / dur) * 100 : 0);
+  paintSeek(_remoteDur ? (cur / _remoteDur) * 100 : 0);
+  // seek live throttlé → se répercute sur l'écran
+  if (!_seekSendTimer) {
+    _seekSendTimer = setTimeout(() => {
+      _seekSendTimer = null;
+      sendMsg({ type: 'media-ctrl', action: 'seek', time: parseFloat(s.value) });
+    }, 120);
+  }
 }
-function onSeekEnd() { _mediaSeeking = false; }
+function onSeekEnd() {
+  const s = document.getElementById('mediaSeek');
+  if (s) sendMsg({ type: 'media-ctrl', action: 'seek', time: parseFloat(s.value) });
+  _mediaSeeking = false;
+}
 function setMediaBtnActive(which) {
   const i = document.getElementById('mediaImgBtn'), v = document.getElementById('mediaVidBtn');
   if (i) i.classList.toggle('active', which === 'img');
@@ -1741,43 +1774,58 @@ function sendImageChunks(dataUrl) {
   }
 }
 
-// — Vidéo : lecture locale + diffusion WebRTC (signaling sur MQTT) —
+// — Vidéo : transfert du fichier vers l'écran via DataChannel —
+let _fileChannel = null;
 function onPickVideo(file) {
   if (!file) return;
   stopMediaBroadcast(false);
-  const v = document.createElement('video');
-  v.src = URL.createObjectURL(file);
-  v.loop = true; v.playsInline = true; v.muted = false;
-  _rtcVideoEl = v;
-  setMediaStatus('🎬 Préparation…');
-  v.onloadedmetadata = () => updateSeekRange();
-  v.ontimeupdate = () => updateSeekProgress();
-  v.onloadeddata = () => {
-    v.play().catch(() => {});
-    try {
-      _rtcStream = v.captureStream ? v.captureStream() : v.mozCaptureStream();
-    } catch (e) { setMediaStatus('⚠ captureStream non supporté'); return; }
-    startVideoRtc();
-  };
-  v.onerror = () => setMediaStatus('⚠ Vidéo illisible');
+  _mediaIsVideo = true;
+  _remotePlaying = false; _remoteDur = 0; _remoteCur = 0;
+  setMediaBtnActive('vid'); showMediaStop(true);
+  setMediaStatus('🎬 Préparation du transfert…');
+  startFileTransfer(file);
 }
 
-async function startVideoRtc() {
+async function startFileTransfer(file) {
   _remotePendingIce = [];
   _rtcPc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-  _rtcStream.getTracks().forEach(t => _rtcPc.addTrack(t, _rtcStream));
   _rtcPc.onicecandidate = e => { if (e.candidate) sendMsg({ type: 'rtc-ice', from: 'remote', candidate: e.candidate }); };
   _rtcPc.onconnectionstatechange = () => {
     const st = _rtcPc.connectionState;
-    if (st === 'connected') setMediaStatus('🎬 Vidéo en diffusion', true);
-    else if (st === 'failed' || st === 'disconnected') setMediaStatus('⚠ Connexion vidéo perdue');
+    if (st === 'failed' || st === 'disconnected') setMediaStatus('⚠ Connexion à l\'écran perdue');
   };
+  _fileChannel = _rtcPc.createDataChannel('file', { ordered: true });
+  _fileChannel.binaryType = 'arraybuffer';
+  _fileChannel.onopen = () => sendFileOverChannel(_fileChannel, file);
   const offer = await _rtcPc.createOffer();
   await _rtcPc.setLocalDescription(offer);
-  sendMsg({ type: 'rtc-offer', sdp: _rtcPc.localDescription });
-  setMediaBtnActive('vid'); showMediaStop(true); showMediaPlay(true); setPlayBtn(true);
-  showMediaTimeline(true); updateSeekRange();
+  sendMsg({ type: 'rtc-offer', sdp: _rtcPc.localDescription, kind: 'file' });
   setMediaStatus('🎬 Connexion à l\'écran…');
+}
+
+async function sendFileOverChannel(ch, file) {
+  const CHUNK = 16 * 1024;
+  const HIGH = 4 * 1024 * 1024; // backpressure à 4 Mo
+  ch.bufferedAmountLowThreshold = 1 * 1024 * 1024;
+  ch.send(JSON.stringify({ meta: true, name: file.name, size: file.size, mime: file.type || 'video/mp4' }));
+  let offset = 0;
+  setMediaStatus('📤 Transfert… 0 %');
+  try {
+    while (offset < file.size) {
+      if (ch.readyState !== 'open') return;
+      const buf = await file.slice(offset, offset + CHUNK).arrayBuffer();
+      ch.send(buf);
+      offset += buf.byteLength;
+      if (ch.bufferedAmount > HIGH) {
+        await new Promise(res => { ch.onbufferedamountlow = () => { ch.onbufferedamountlow = null; res(); }; });
+      }
+      const pct = Math.round((offset / file.size) * 100);
+      if (pct % 5 === 0) setMediaStatus('📤 Transfert… ' + pct + ' %');
+    }
+    ch.send(JSON.stringify({ done: true }));
+    setMediaStatus('🎬 Lecture sur l\'écran', true);
+    showMediaPlay(true); setPlayBtn(false); showMediaTimeline(true);
+  } catch (e) { setMediaStatus('⚠ Échec du transfert'); }
 }
 
 async function remoteHandleAnswer(sdp) {
@@ -1794,10 +1842,11 @@ function remoteAddIce(cand) {
 }
 
 function stopMediaBroadcast(notify = true) {
+  if (_fileChannel) { try { _fileChannel.close(); } catch (_) {} _fileChannel = null; }
   if (_rtcPc) { try { _rtcPc.close(); } catch (_) {} _rtcPc = null; }
-  if (_rtcStream) { _rtcStream.getTracks().forEach(t => t.stop()); _rtcStream = null; }
-  if (_rtcVideoEl) { try { _rtcVideoEl.pause(); } catch (_) {} if (_rtcVideoEl.src) URL.revokeObjectURL(_rtcVideoEl.src); _rtcVideoEl = null; }
   _remotePendingIce = [];
+  _mediaIsVideo = false; _remotePlaying = false; _remoteDur = 0; _remoteCur = 0;
+  if (_seekSendTimer) { clearTimeout(_seekSendTimer); _seekSendTimer = null; }
   setMediaBtnActive(null); showMediaStop(false); showMediaPlay(false); showMediaTimeline(false);
   _mediaSeeking = false;
   setMediaStatus('Aucun média diffusé');
@@ -1806,6 +1855,7 @@ function stopMediaBroadcast(notify = true) {
 
 // ══════════════════════════ MÉDIA — ÉCRAN (récepteur) ══════════════════════════
 let _imgBuf = null, _screenPc = null, _screenPendingIce = [];
+let _vidParts = [], _vidMeta = null, _screenVidUrl = null, _screenProgTimer = 0;
 
 function showScreenMedia(kind) {
   const img = document.getElementById('screen-media-img');
@@ -1818,8 +1868,14 @@ function hideScreenMedia() {
   const img = document.getElementById('screen-media-img');
   const vid = document.getElementById('screen-media-video');
   if (img) { img.style.display = 'none'; img.removeAttribute('src'); }
-  if (vid) { vid.style.display = 'none'; if (vid.srcObject) { try { vid.pause(); } catch (_) {} vid.srcObject = null; } }
-  _imgBuf = null;
+  if (vid) {
+    vid.style.display = 'none';
+    try { vid.pause(); } catch (_) {}
+    if (vid.srcObject) vid.srcObject = null;
+    vid.removeAttribute('src'); vid.load && vid.load();
+  }
+  if (_screenVidUrl) { try { URL.revokeObjectURL(_screenVidUrl); } catch (_) {} _screenVidUrl = null; }
+  _imgBuf = null; _vidParts = []; _vidMeta = null;
   cleanupScreenRtc();
 }
 
@@ -1831,26 +1887,28 @@ function mediaImgChunk(msg) {
   if (_imgBuf.parts[msg.i] === undefined) { _imgBuf.parts[msg.i] = msg.data; _imgBuf.got++; }
   if (_imgBuf.got === _imgBuf.total) {
     const dataUrl = _imgBuf.parts.join('');
-    cleanupScreenRtc();
     const im = document.getElementById('screen-media-img');
     if (im) { im.src = dataUrl; showScreenMedia('img'); }
     _imgBuf = null;
   }
 }
 
+// — Contrôle de lecture envoyé par la télécommande —
+function screenMediaCtrl(msg) {
+  const vid = document.getElementById('screen-media-video');
+  if (!vid) return;
+  if (msg.action === 'play')  { vid.play().catch(() => {}); }
+  else if (msg.action === 'pause') { try { vid.pause(); } catch (_) {} }
+  else if (msg.action === 'seek' && isFinite(msg.time)) { try { vid.currentTime = msg.time; } catch (_) {} }
+}
+
 async function screenHandleOffer(sdp) {
   cleanupScreenRtc();
   _screenPendingIce = [];
+  _vidParts = []; _vidMeta = null;
   _screenPc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
   _screenPc.onicecandidate = e => { if (e.candidate) sendMsg({ type: 'rtc-ice', from: 'screen', candidate: e.candidate }); };
-  _screenPc.ontrack = e => {
-    const vid = document.getElementById('screen-media-video');
-    if (vid && vid.srcObject !== e.streams[0]) {
-      vid.srcObject = e.streams[0];
-      vid.play().catch(() => {});
-      showScreenMedia('video');
-    }
-  };
+  _screenPc.ondatachannel = e => setupScreenFileChannel(e.channel);
   try {
     await _screenPc.setRemoteDescription(new RTCSessionDescription(sdp));
     const answer = await _screenPc.createAnswer();
@@ -1860,6 +1918,43 @@ async function screenHandleOffer(sdp) {
     _screenPendingIce = [];
   } catch (_) {}
 }
+
+function setupScreenFileChannel(ch) {
+  ch.binaryType = 'arraybuffer';
+  _vidParts = []; _vidMeta = null;
+  ch.onmessage = ev => {
+    if (typeof ev.data === 'string') {
+      let m; try { m = JSON.parse(ev.data); } catch (_) { return; }
+      if (m.meta) { _vidMeta = m; _vidParts = []; }
+      else if (m.done) screenAssembleVideo();
+    } else {
+      _vidParts.push(ev.data); // ArrayBuffer
+    }
+  };
+}
+
+function screenAssembleVideo() {
+  const vid = document.getElementById('screen-media-video');
+  if (!vid || !_vidParts.length) return;
+  const blob = new Blob(_vidParts, { type: (_vidMeta && _vidMeta.mime) || 'video/mp4' });
+  _vidParts = [];
+  if (_screenVidUrl) { try { URL.revokeObjectURL(_screenVidUrl); } catch (_) {} }
+  _screenVidUrl = URL.createObjectURL(blob);
+  vid.srcObject = null;
+  vid.loop = true; vid.playsInline = true; vid.muted = false;
+  vid.src = _screenVidUrl;
+  vid.onloadedmetadata = () => { sendMsg({ type: 'media-meta', dur: vid.duration }); };
+  vid.ontimeupdate = () => {
+    const now = Date.now();
+    if (now - _screenProgTimer < 250) return;
+    _screenProgTimer = now;
+    sendMsg({ type: 'media-progress', cur: vid.currentTime, dur: vid.duration });
+  };
+  vid.onended = () => sendMsg({ type: 'media-ended' });
+  showScreenMedia('video');
+  vid.play().catch(() => { vid.muted = true; vid.play().catch(() => {}); });
+}
+
 function screenAddIce(cand) {
   if (!_screenPc || !_screenPc.remoteDescription) { _screenPendingIce.push(cand); return; }
   _screenPc.addIceCandidate(new RTCIceCandidate(cand)).catch(() => {});
@@ -1876,7 +1971,7 @@ function requestFS() {
   if (req) req.call(el).catch(() => {});
   // Relance la lecture vidéo si l'autoplay a été bloqué (geste utilisateur)
   const vid = document.getElementById('screen-media-video');
-  if (vid && vid.srcObject) vid.play().catch(() => {});
+  if (vid && (vid.src || vid.srcObject)) vid.play().catch(() => {});
 }
 // Quitter le plein écran si on quitte le mode écran
 function exitFS() {
