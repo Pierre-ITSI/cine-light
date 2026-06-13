@@ -87,6 +87,13 @@ input[type="color"]{-webkit-appearance:none;appearance:none;width:100%;height:38
 input[type="color"]::-webkit-color-swatch-wrapper{padding:0}
 input[type="color"]::-webkit-color-swatch{border:none;border-radius:5px}
 input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
+/* Blocs couleurs TV */
+.tv-blocks-strip{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.tv-block-swatch{position:relative;width:46px;height:46px;border-radius:10px;border:2px solid var(--border);cursor:pointer;transition:all .12s}
+.tv-block-swatch.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.tv-block-swatch .rm{position:absolute;top:-8px;right:-8px;width:19px;height:19px;border-radius:50%;background:#c4382f;color:#fff;border:2px solid var(--dark);font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.tv-block-editor{background:var(--mid2);border:1px solid var(--border);border-radius:10px;padding:14px}
+#tvWheel{border-radius:50%;cursor:crosshair;touch-action:none;box-shadow:0 0 0 1px var(--border);max-width:180px;width:min(180px,60vw)}
 
 .wheel-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
 #colorWheel{border-radius:50%;cursor:crosshair;touch-action:none;box-shadow:0 0 0 1px var(--border),0 8px 32px rgba(0,0,0,.4);max-width:240px;width:min(240px,80vw)}
@@ -570,6 +577,34 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
                style="background:linear-gradient(to right,#333,#888)"
                oninput="onEffectParamChange()">
       </div>
+      <div id="effectTvBlocksPanel" style="display:none">
+        <div class="slider-header" style="margin-bottom:10px">
+          <label>Blocs couleurs</label>
+          <button class="chip" id="tvAddBlockBtn" onclick="tvAddBlock()" style="padding:3px 12px">+ Bloc</button>
+        </div>
+        <div class="tv-blocks-strip" id="tvBlocksStrip"></div>
+        <div class="tv-block-editor">
+          <div class="wheel-wrap" style="gap:8px;margin-bottom:14px">
+            <canvas id="tvWheel" width="200" height="200"></canvas>
+          </div>
+          <div class="slider-block">
+            <div class="slider-header"><label>Luminosité</label><div class="slider-val" id="tvDimmerVal">100<span>%</span></div></div>
+            <input type="range" id="tvDimmerSlider" min="0" max="100" value="100" style="background:linear-gradient(to right,#000,#fff)" oninput="onTvBlockParam()">
+          </div>
+          <div class="slider-block">
+            <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="tvCrossfadeVal">0<span>%</span></div></div>
+            <input type="range" id="tvCrossfadeSlider" min="0" max="100" value="0" style="background:linear-gradient(to right,#f0ede8,#e8c97a,#ff2d78)" oninput="onTvBlockParam()">
+          </div>
+          <div class="slider-block">
+            <div class="slider-header"><label>Température</label><div class="slider-val" id="tvKelvinVal">6500<span> K</span></div></div>
+            <input type="range" id="tvKelvinSlider" min="1700" max="20000" value="6500" style="background:linear-gradient(to right,#ff9b4a,#ffd2a0,#fff,#c9dfff,#a0c8ff)" oninput="onTvBlockParam()">
+          </div>
+          <div class="slider-block" style="margin-bottom:0">
+            <div class="slider-header"><label>Tint · Magenta ↔ Vert</label><div class="slider-val" id="tvTintVal">0<span> GM</span></div></div>
+            <input type="range" id="tvTintSlider" min="-100" max="100" value="0" style="background:linear-gradient(to right,#c020c0,#1a1a1a 50%,#20c060)" oninput="onTvBlockParam()">
+          </div>
+        </div>
+      </div>
     </div>
     <div class="panel">
       <div class="panel-label">Couleurs rapides</div>
@@ -896,8 +931,10 @@ function receiveStrobe(msg) {
 function toggleHex() {}
 
 // ══════════════════════════ COLOR WHEEL ══════════════════════════
-function initWheel() {
-  const canvas=document.getElementById('colorWheel'), ctx=canvas.getContext('2d');
+function initWheel() { _bindColorWheel('colorWheel', onWheelPick); }
+function _bindColorWheel(canvasId, onPick) {
+  const canvas=document.getElementById(canvasId); if(!canvas) return;
+  const ctx=canvas.getContext('2d');
   const W=canvas.width, R=W/2, cx=R, cy=R;
   for (let a=0;a<360;a++) {
     const rad=(a-90)*Math.PI/180;
@@ -912,7 +949,7 @@ function initWheel() {
     const x=(ex-rect.left)*(W/rect.width), y=(ey-rect.top)*(W/rect.height);
     if (Math.sqrt((x-cx)**2+(y-cy)**2)>R) return;
     const d=ctx.getImageData(Math.round(Math.min(Math.max(x,0),W-1)),Math.round(Math.min(Math.max(y,0),W-1)),1,1).data;
-    onWheelPick(rgbToHex(d[0],d[1],d[2]));
+    onPick(rgbToHex(d[0],d[1],d[2]));
   }
   canvas.addEventListener('mousedown',e=>{drag=true;pick(e.clientX,e.clientY)});
   canvas.addEventListener('mousemove',e=>{if(drag)pick(e.clientX,e.clientY)});
@@ -1037,9 +1074,11 @@ function stopLocalStrobePreview(){if(strobePreviewTimer)clearTimeout(strobePrevi
 let activeScreenEffect = null, effectSendTimer = null;
 
 const EFFECT_CONFIG = {
-  tv:        { label:'📺 TV',          speedLabel:'Vitesse (img/s)',    min:0.5, max:15,  step:0.5, def:4,   intDef:80,  burst:false },
-  candle:    { label:'🕯 Bougie',       speedLabel:'Vacillement',        min:0.2, max:5,   step:0.1, def:1.2, intDef:85,  burst:false },
-  fire:      { label:'🔥 Feu',          speedLabel:'Intensité rapide',   min:0.5, max:10,  step:0.5, def:3,   intDef:90,  burst:false },
+  tv:        { label:'📺 TV',          speedLabel:'Vitesse (img/s)',    min:0.5, max:15,  step:0.5, def:4,   intDef:80,  burst:false, blocks:true },
+  candle:    { label:'🕯 Bougie',       speedLabel:'Vacillement',        min:0.2, max:5,   step:0.1, def:1.2, intDef:85,  burst:false,
+              color1:'#ff7814', c1Label:'Flamme' },
+  fire:      { label:'🔥 Feu',          speedLabel:'Intensité rapide',   min:0.5, max:10,  step:0.5, def:3,   intDef:90,  burst:false,
+              color1:'#ff7314', color2:'#3c0a00', c1Label:'Flamme', c2Label:'Braise' },
   police:    { label:'🚨 Police',       speedLabel:'Vitesse alternance', min:0.5, max:8,   step:0.5, def:3,   intDef:100, burst:false,
               color1:'#ff2020', color2:'#2040ff', c1Label:'Couleur A', c2Label:'Couleur B' },
   lightning: { label:'⚡ Éclair',       speedLabel:'Fréquence',          min:0.1, max:3,   step:0.1, def:0.8, intDef:100, burst:false,
@@ -1097,6 +1136,12 @@ function selectEffect(name) {
       document.getElementById('effectFadeSlider').value = cfg.fade;
       document.getElementById('effectFadeVal').innerHTML = cfg.fade + '<span> ms</span>';
     }
+    // Blocs couleurs (TV)
+    if (_setupEffectOpt('effectTvBlocksPanel', cfg.blocks)) {
+      initTvWheel();
+      renderTvBlocks();
+      loadTvBlockEditor();
+    }
   }
   scheduleEffectSend();
 }
@@ -1128,8 +1173,108 @@ function scheduleEffectSend() {
     if (cfg.color2) params.color2 = document.getElementById('effectColor2').value;
     if (cfg.rand != null) params.rand = parseInt(document.getElementById('effectRandSlider').value);
     if (cfg.fade != null) params.fade = parseInt(document.getElementById('effectFadeSlider').value);
+    if (cfg.blocks) params.blocks = tvBlocks.map(resolveColorSpec);
     sendMsg({ type:'effect', name:activeScreenEffect, active:true, params });
   }, 80);
+}
+
+// ── Blocs couleurs TV (chaque bloc = mêmes paramètres que l'onglet Couleur) ──
+let tvBlocks = [
+  { kelvin:6500, tint:0, dimmer:100, wheelHex:'#2552ff', crossfade:70 },
+  { kelvin:3200, tint:0, dimmer:100, wheelHex:'#ff3414', crossfade:60 },
+];
+let tvSelectedBlock = 0;
+let _tvWheelInit = false;
+
+function initTvWheel() {
+  if (_tvWheelInit) return;
+  _tvWheelInit = true;
+  _bindColorWheel('tvWheel', onTvWheelPick);
+}
+
+// Résout un bloc en couleur finale (même formule que recomputeColor)
+function resolveColorSpec(s) {
+  const white = tintWhite(kelvinToRgb(s.kelvin), s.tint);
+  const col = hexToRgb(s.wheelHex);
+  const mix = s.crossfade / 100, f = s.dimmer / 100;
+  const cl = v => Math.min(255, Math.max(0, Math.round(v)));
+  return rgbToHex(
+    cl((white.r * (1 - mix) + col.r * mix) * f),
+    cl((white.g * (1 - mix) + col.g * mix) * f),
+    cl((white.b * (1 - mix) + col.b * mix) * f)
+  );
+}
+
+function renderTvBlocks() {
+  const strip = document.getElementById('tvBlocksStrip');
+  if (!strip) return;
+  strip.innerHTML = '';
+  tvBlocks.forEach((b, i) => {
+    const d = document.createElement('div');
+    d.className = 'tv-block-swatch' + (i === tvSelectedBlock ? ' active' : '');
+    d.style.background = resolveColorSpec(b);
+    d.onclick = () => { tvSelectedBlock = i; renderTvBlocks(); loadTvBlockEditor(); };
+    if (tvBlocks.length > 1) {
+      const rm = document.createElement('button');
+      rm.className = 'rm'; rm.textContent = '×';
+      rm.onclick = e => { e.stopPropagation(); tvRemoveBlock(i); };
+      d.appendChild(rm);
+    }
+    strip.appendChild(d);
+  });
+  const addBtn = document.getElementById('tvAddBlockBtn');
+  if (addBtn) addBtn.style.display = tvBlocks.length >= 8 ? 'none' : 'inline-block';
+}
+
+function loadTvBlockEditor() {
+  const b = tvBlocks[tvSelectedBlock];
+  if (!b) return;
+  document.getElementById('tvDimmerSlider').value = b.dimmer;
+  document.getElementById('tvDimmerVal').innerHTML = b.dimmer + '<span>%</span>';
+  document.getElementById('tvCrossfadeSlider').value = b.crossfade;
+  document.getElementById('tvCrossfadeVal').innerHTML = b.crossfade + '<span>%</span>';
+  document.getElementById('tvKelvinSlider').value = b.kelvin;
+  document.getElementById('tvKelvinVal').innerHTML = b.kelvin.toLocaleString('fr') + '<span> K</span>';
+  const sign = b.tint >= 0 ? '+' : '';
+  document.getElementById('tvTintSlider').value = b.tint;
+  document.getElementById('tvTintVal').innerHTML = sign + b.tint + '<span> GM</span>';
+}
+
+function onTvBlockParam() {
+  const b = tvBlocks[tvSelectedBlock];
+  if (!b) return;
+  b.dimmer = parseInt(document.getElementById('tvDimmerSlider').value);
+  b.crossfade = parseInt(document.getElementById('tvCrossfadeSlider').value);
+  b.kelvin = parseInt(document.getElementById('tvKelvinSlider').value);
+  b.tint = parseInt(document.getElementById('tvTintSlider').value);
+  loadTvBlockEditor();
+  renderTvBlocks();
+  scheduleEffectSend();
+}
+
+function onTvWheelPick(hex) {
+  const b = tvBlocks[tvSelectedBlock];
+  if (!b) return;
+  b.wheelHex = hex;
+  if (b.crossfade < 5) { b.crossfade = 100; } // rend la teinte choisie visible
+  loadTvBlockEditor();
+  renderTvBlocks();
+  scheduleEffectSend();
+}
+
+function tvAddBlock() {
+  if (tvBlocks.length >= 8) return;
+  const src = tvBlocks[tvSelectedBlock] || { kelvin:6500, tint:0, dimmer:100, wheelHex:'#ffffff', crossfade:0 };
+  tvBlocks.push({ ...src });
+  tvSelectedBlock = tvBlocks.length - 1;
+  renderTvBlocks(); loadTvBlockEditor(); scheduleEffectSend();
+}
+
+function tvRemoveBlock(i) {
+  if (tvBlocks.length <= 1) return;
+  tvBlocks.splice(i, 1);
+  if (tvSelectedBlock >= tvBlocks.length) tvSelectedBlock = tvBlocks.length - 1;
+  renderTvBlocks(); loadTvBlockEditor(); scheduleEffectSend();
 }
 
 function stopAllEffects() {
@@ -1184,23 +1329,32 @@ function _runEffect(name, p) {
 
   switch (name) {
     case 'tv': {
-      const frames = ['#000000','#000000','#101040','#2040b0','#ffffff','#c0c8d0','#404050','#800010','#005010','#000080','#ffffff','#000000'];
-      const c = frames[Math.floor(Math.random() * frames.length)];
+      const palette = (p.blocks && p.blocks.length) ? p.blocks
+        : ['#000000','#101040','#2040b0','#ffffff','#c0c8d0','#800010'];
+      const c = palette[Math.floor(Math.random() * palette.length)];
       const rgb = hexToRgb(c);
       setBg(rgb.r * intf, rgb.g * intf, rgb.b * intf, 0);
       next(Math.max(30, 400 / speed));
       break;
     }
     case 'candle': {
-      const flk = 0.55 + Math.random() * 0.45;
+      const flame = col1 || { r: 255, g: 110, b: 15 };
+      const flk = 0.55 + Math.random() * 0.45;       // vacillement de luminosité
       const b2 = flk * intf;
-      setBg(255 * b2, (80 + Math.random() * 60) * b2, (5 + Math.random() * 15) * b2, Math.round(500 / speed * (0.5 + Math.random() * 0.7)));
+      const gj = 0.82 + Math.random() * 0.36;         // léger frémissement chaud
+      setBg(flame.r * b2, flame.g * b2 * gj, flame.b * b2, Math.round(500 / speed * (0.5 + Math.random() * 0.7)));
       next(Math.max(60, (700 / speed) * (0.6 + Math.random() * 0.8)));
       break;
     }
     case 'fire': {
-      const t = Math.random();
-      setBg(255 * (0.65 + t * 0.35) * intf, 255 * t * 0.45 * intf, 255 * Math.pow(t, 4) * 0.08 * intf, Math.round(150 / speed * 0.4));
+      const hot = col1 || { r: 255, g: 115, b: 20 };
+      const cool = col2 || { r: 60, g: 10, b: 0 };
+      const t = Math.random();                        // chaleur instantanée 0..1
+      const bright = (0.45 + t * 0.55) * intf;
+      setBg((cool.r + (hot.r - cool.r) * t) * bright,
+            (cool.g + (hot.g - cool.g) * t) * bright,
+            (cool.b + (hot.b - cool.b) * t) * bright,
+            Math.round(150 / speed * 0.4));
       next(Math.max(30, (200 / speed) * (0.5 + Math.random())));
       break;
     }
