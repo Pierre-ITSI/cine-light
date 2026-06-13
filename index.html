@@ -20,7 +20,7 @@
 :root{--accent:#e8c97a;--dark:#0e0e10;--mid:#1c1c1f;--mid2:#252528;--border:rgba(255,255,255,0.08);--text:#f0ede8;--muted:#777;--green:#5fdf8a}
 html,body{width:100%;height:100%;background:var(--dark);color:var(--text);font-family:'DM Mono',monospace;overflow:hidden;touch-action:manipulation}
 
-#splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:40px;z-index:100;animation:fadeIn .6s ease}
+#splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:40px;z-index:100;animation:fadeIn .6s ease;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 #splash h1{font-family:'Playfair Display',serif;font-size:clamp(2.5rem,8vw,4rem);letter-spacing:-.02em;background:linear-gradient(135deg,#e8c97a,#f0ede8 60%,#b08d4a);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 #splash p{color:var(--muted);font-size:.8rem;letter-spacing:.15em;text-transform:uppercase}
 .splash-btns{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
@@ -31,8 +31,13 @@ html,body{width:100%;height:100%;background:var(--dark);color:var(--text);font-f
 .install-btn:hover{background:rgba(232,201,122,.16)}
 .install-hint{margin-top:4px;max-width:320px;text-align:center;font-size:.62rem;line-height:1.6;color:var(--muted);letter-spacing:.04em}
 .install-hint strong{color:var(--text)}
+.flash-unavail-notice{background:rgba(220,120,80,.1);border:1px solid rgba(220,120,80,.35);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:.66rem;line-height:1.6;color:var(--muted);letter-spacing:.03em}
+.flash-unavail-notice strong{display:block;color:#e0a070;font-size:.72rem;margin-bottom:5px;letter-spacing:.06em}
+#content-flash.torch-unavailable .torch-onoff-btn,
+#content-flash.torch-unavailable #torchDimSection,
+#content-flash.torch-unavailable .effect-grid{opacity:.4;pointer-events:none;filter:grayscale(.55)}
 
-#screen-connect{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:24px;padding:32px;animation:fadeIn .4s ease}
+#screen-connect{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:24px;padding:max(32px,env(safe-area-inset-top)) max(32px,env(safe-area-inset-right)) max(32px,env(safe-area-inset-bottom)) max(32px,env(safe-area-inset-left));animation:fadeIn .4s ease}
 #screen-connect h2{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);text-align:center}
 #screen-connect p{font-size:.72rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;text-align:center}
 .screen-input-row{display:flex;gap:10px;width:100%;max-width:340px}
@@ -44,11 +49,11 @@ html,body{width:100%;height:100%;background:var(--dark);color:var(--text);font-f
 .screen-back:hover{color:var(--text)}
 
 #screen-mode{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
-#screen-mode .status-pill{position:absolute;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:6px 16px;font-size:.7rem;letter-spacing:.12em;color:rgba(255,255,255,.6);text-transform:uppercase;white-space:nowrap;transition:all .3s}
+#screen-mode .status-pill{position:absolute;top:calc(20px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:rgba(0,0,0,.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:6px 16px;font-size:.7rem;letter-spacing:.12em;color:rgba(255,255,255,.6);text-transform:uppercase;white-space:nowrap;transition:all .3s}
 
 
 
-#remote-mode{display:none;position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;padding:14px 14px 60px}
+#remote-mode{display:none;position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;padding:calc(14px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
 .remote-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
 .remote-header h2{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--accent)}
 .back-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;padding:6px 12px;border-radius:4px;cursor:pointer;text-transform:uppercase;transition:all .2s}
@@ -179,7 +184,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .sacn-code{display:block;background:var(--dark);border:1px solid var(--border);border-radius:4px;padding:10px 12px;font-size:.72rem;color:var(--accent);margin-bottom:8px;word-break:break-all;font-family:'DM Mono',monospace}
 
 /* SCREEN sACN CONFIG */
-#screen-sacn-config{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:20px;padding:32px;animation:fadeIn .4s ease;overflow-y:auto}
+#screen-sacn-config{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:20px;padding:max(32px,env(safe-area-inset-top)) max(32px,env(safe-area-inset-right)) max(32px,env(safe-area-inset-bottom)) max(32px,env(safe-area-inset-left));animation:fadeIn .4s ease;overflow-y:auto}
 #screen-sacn-config h2{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);text-align:center;margin-bottom:0}
 #screen-sacn-config p{font-size:.7rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;text-align:center;margin:0}
 .sacn-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:380px}
@@ -193,7 +198,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .sacn-bridge-ip-row{display:flex;gap:6px;align-items:center}
 .sacn-native-badge{background:rgba(232,201,122,.12);border:1px solid rgba(232,201,122,.3);border-radius:6px;padding:10px 16px;font-size:.65rem;color:var(--accent);letter-spacing:.08em;text-align:center;width:100%;max-width:380px}
 /* SCREEN BOTTOM BAR */
-#screen-bar{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);display:flex;gap:12px;z-index:100}
+#screen-bar{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:12px;z-index:100}
 .screen-bar-btn{background:rgba(0,0,0,.75);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.35);border-radius:24px;padding:10px 22px;font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;color:rgba(255,255,255,.9);cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap;-webkit-tap-highlight-color:transparent}
 .screen-bar-btn:active{transform:scale(.95);background:rgba(0,0,0,.9)}
 .screen-bar-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(232,201,122,.15)}
@@ -469,6 +474,10 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
   </div>
 
   <div class="tab-content" id="content-flash">
+    <div class="flash-unavail-notice" id="flashUnavailNotice" style="display:none">
+      <strong>🔦 Non disponible sur iPhone</strong>
+      Le récepteur est un iPhone : iOS ne permet pas de piloter la torche LED ni le vibreur depuis le web. Utilisez le strobe par l'écran (onglet Effets) ou un récepteur Android.
+    </div>
     <div class="panel">
       <div class="panel-label">Torche récepteur</div>
       <button class="torch-onoff-btn" id="remoteTorchBtn" onclick="onRemoteTorchToggle()">
@@ -734,6 +743,7 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'torch-onoff')  receiveTorchOnOff(msg.on);
         if (msg.type === 'torch-dim')    receiveTorchDim(msg.level);
         if (msg.type === 'torch-effect') receiveTorchEffect(msg.effect);
+        if (msg.type === 'hello')        sendCaps();
         if (msg.type === 'effect')       receiveEffect(msg);
         if (msg.type === 'blackout')     setBlackout(msg.on);
         if (msg.type === 'media-img-start') mediaImgStart(msg);
@@ -750,6 +760,7 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'media-progress') remoteOnProgress(msg.cur, msg.dur, msg.playing);
         if (msg.type === 'media-ended')    remoteOnEnded();
         if (msg.type === 'media-error')    remoteOnError(msg.reason);
+        if (msg.type === 'caps')           applyReceiverCaps(msg);
       }
     } catch (_) {}
   });
@@ -824,9 +835,9 @@ function enterScreenMode(ch) {
   setScreenStatus('Connexion à ' + ch + '…');
   requestFS();
   setupScreenAutohide();
-  if (!navigator.vibrate) { const b=document.getElementById('vibrateBtn'); if(b){b.classList.add('unavail');b.textContent='📳 N/A';b.classList.remove('on');} vibrateEnabled=false; }
+  if (!navigator.vibrate) { const b=document.getElementById('vibrateBtn'); if(b){b.classList.add('unavail');b.textContent='📳 Indispo (iPhone)';b.classList.remove('on');} vibrateEnabled=false; }
   initBCFallback(ch);
-  connectMQTT(ch, () => setScreenStatus('✓ En écoute — canal : ' + ch));
+  connectMQTT(ch, () => { setScreenStatus('✓ En écoute — canal : ' + ch); sendCaps(); });
 }
 
 function connectChannel() {
@@ -839,6 +850,8 @@ function connectChannel() {
     setConnStatus('connected');
     // Envoyer la couleur courante dès la connexion
     sendMsg({ type: 'color', color: currentColor });
+    // Demander au récepteur ses capacités (torche / vibreur)
+    sendMsg({ type: 'hello' });
   });
   setTimeout(renderQR, 300);
 }
@@ -1729,7 +1742,7 @@ async function toggleScreenTorch() {
     const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
     const track = stream.getVideoTracks()[0];
     const caps = track.getCapabilities ? track.getCapabilities() : {};
-    if (!caps.torch) { stream.getTracks().forEach(t=>t.stop()); btn.classList.add('unavail'); btn.textContent = '🔦 N/A'; return; }
+    if (!caps.torch) { stream.getTracks().forEach(t=>t.stop()); btn.classList.add('unavail'); btn.textContent = '🔦 Indispo (iPhone)'; return; }
     torchTrack = track; torchEnabled = true;
     btn.classList.add('on'); btn.textContent = '🔦 Torche ON';
   } catch(e) { btn.classList.add('unavail'); btn.textContent = '🔦 Refusé'; }
@@ -1755,6 +1768,28 @@ function doVibrate(pattern) {
 // Remote: send vibration command to receiver
 function sendVibrate(pattern) {
   sendMsg({ type:'vibrate', pattern });
+}
+
+// ══════════════════════════ CAPACITÉS APPAREIL (torche / vibreur) ══════════════════════════
+// iOS/WebKit n'expose ni la torche LED ni l'API Vibration → indisponible sur iPhone/iPad.
+function _isIOSDevice() {
+  const ua = navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+// Récepteur : annonce ses capacités à la télécommande
+function sendCaps() {
+  const ios = _isIOSDevice();
+  sendMsg({ type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate });
+}
+
+// Télécommande : applique les capacités reçues à l'onglet Flash
+function applyReceiverCaps(caps) {
+  const flash = document.getElementById('content-flash');
+  const notice = document.getElementById('flashUnavailNotice');
+  const unavailable = caps && caps.torch === false;
+  if (flash) flash.classList.toggle('torch-unavailable', unavailable);
+  if (notice) notice.style.display = unavailable ? 'block' : 'none';
 }
 
 // ══════════════════════════ FLASH TAB — TÉLÉCOMMANDE ══════════════════════════
