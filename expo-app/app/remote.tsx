@@ -8,10 +8,13 @@ import QRCode from 'react-native-qrcode-svg';
 import { ColorWheel } from '../src/components/ColorWheel';
 import { computeColor, ColorSpec } from '../src/lib/color';
 import { generateChannel } from '../src/lib/channel';
+import { useMediaPool } from '../src/lib/useMediaPool';
 import { MqttTransport } from '../src/transport/MqttTransport';
 import type { TransportStatus } from '../src/transport/RemoteTransport';
 
-type Tab = 'color' | 'strobe' | 'channel';
+const MEDIA_ENABLED = Platform.OS !== 'web';
+
+type Tab = 'color' | 'strobe' | 'media' | 'channel';
 
 function useTransport() {
   const transport = useRef(new MqttTransport()).current;
@@ -42,6 +45,8 @@ export default function RemoteScreen() {
   const [strobeRandom, setStrobeRandom] = useState(false);
   const [strobeFreqMax, setStrobeFreqMax] = useState(8);
   const [strobeDurMax, setStrobeDurMax] = useState(200);
+
+  const media = useMediaPool(transport, connected && MEDIA_ENABLED);
 
   const sendTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -125,13 +130,15 @@ export default function RemoteScreen() {
       </View>
 
       <View style={styles.tabs}>
-        {(['color', 'strobe', 'channel'] as Tab[]).map(t => (
-          <Pressable key={t} style={[styles.tabBtn, tab === t && styles.tabBtnActive]} onPress={() => setTab(t)}>
-            <Text style={[styles.tabBtnText, tab === t && styles.tabBtnTextActive]}>
-              {t === 'color' ? 'Couleur' : t === 'strobe' ? 'Strobe' : 'Canal'}
-            </Text>
-          </Pressable>
-        ))}
+        {(['color', 'strobe', 'media', 'channel'] as Tab[])
+          .filter(t => t !== 'media' || MEDIA_ENABLED)
+          .map(t => (
+            <Pressable key={t} style={[styles.tabBtn, tab === t && styles.tabBtnActive]} onPress={() => setTab(t)}>
+              <Text style={[styles.tabBtnText, tab === t && styles.tabBtnTextActive]}>
+                {t === 'color' ? 'Couleur' : t === 'strobe' ? 'Strobe' : t === 'media' ? 'Média' : 'Canal'}
+              </Text>
+            </Pressable>
+          ))}
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
@@ -195,6 +202,85 @@ export default function RemoteScreen() {
                 </View>
               </>
             )}
+          </View>
+        )}
+
+        {tab === 'media' && (
+          <View style={styles.panel}>
+            <Text style={styles.panelLabel}>Pool média</Text>
+            <Text style={styles.mediaHint}>
+              Transférez vos médias à l'avance : ils sont mis en cache sur l'écran
+              et se déclenchent instantanément pendant la prise.
+            </Text>
+            {!connected && (
+              <Text style={styles.mediaWarn}>Connectez un canal pour transférer des médias.</Text>
+            )}
+            <View style={styles.mediaActions}>
+              <Pressable
+                style={[styles.mediaBtn, !connected && styles.mediaBtnDisabled]}
+                disabled={!connected}
+                onPress={() => media.pickAndUpload('image')}
+              >
+                <Text style={styles.mediaBtnText}>🖼  Ajouter une image</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.mediaBtn, !connected && styles.mediaBtnDisabled]}
+                disabled={!connected}
+                onPress={() => media.pickAndUpload('video')}
+              >
+                <Text style={styles.mediaBtnText}>🎬  Ajouter une vidéo</Text>
+              </Pressable>
+            </View>
+
+            {media.items.length === 0 && (
+              <Text style={styles.mediaEmpty}>Aucun média transféré.</Text>
+            )}
+
+            {media.items.map(item => (
+              <View key={item.id} style={styles.mediaItem}>
+                <View style={styles.mediaItemHead}>
+                  <Text style={styles.mediaItemName} numberOfLines={1}>
+                    {item.kind === 'video' ? '🎬' : '🖼'} {item.name}
+                  </Text>
+                  <Text style={styles.mediaItemStatus}>
+                    {item.status === 'uploading'
+                      ? `Transfert ${Math.round(item.progress * 100)}%`
+                      : item.status === 'ready'
+                        ? '✓ En cache'
+                        : '⚠ Erreur'}
+                  </Text>
+                </View>
+                {item.status === 'uploading' && (
+                  <View style={styles.mediaProgressTrack}>
+                    <View style={[styles.mediaProgressFill, { width: `${item.progress * 100}%` }]} />
+                  </View>
+                )}
+                <View style={styles.mediaItemActions}>
+                  <Pressable
+                    style={[
+                      styles.mediaSmallBtn,
+                      styles.mediaPlayBtn,
+                      item.status !== 'ready' && styles.mediaBtnDisabled,
+                      media.playingId === item.id && styles.mediaPlayBtnActive,
+                    ]}
+                    disabled={item.status !== 'ready'}
+                    onPress={() => media.play(item.id)}
+                  >
+                    <Text style={styles.mediaSmallBtnText}>
+                      {media.playingId === item.id ? '▶ En lecture' : '▶ Jouer'}
+                    </Text>
+                  </Pressable>
+                  {media.playingId === item.id && (
+                    <Pressable style={styles.mediaSmallBtn} onPress={media.stop}>
+                      <Text style={styles.mediaSmallBtnText}>■ Stop</Text>
+                    </Pressable>
+                  )}
+                  <Pressable style={styles.mediaSmallBtn} onPress={() => media.clear(item.id)}>
+                    <Text style={[styles.mediaSmallBtnText, styles.mediaDanger]}>✕</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))}
           </View>
         )}
 
@@ -390,4 +476,37 @@ const styles = StyleSheet.create({
   generateBtnText: { color: '#777', fontSize: 12 },
   qrWrap: { alignItems: 'center', gap: 12, paddingVertical: 8 },
   qrLabel: { color: '#777', fontSize: 11, textAlign: 'center' },
+
+  mediaHint: { color: '#777', fontSize: 11, lineHeight: 17, alignSelf: 'stretch' },
+  mediaWarn: { color: '#e0a070', fontSize: 11, alignSelf: 'stretch' },
+  mediaActions: { flexDirection: 'row', gap: 10, alignSelf: 'stretch' },
+  mediaBtn: {
+    flex: 1,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: '#252528',
+    paddingVertical: 14, borderRadius: 8, alignItems: 'center',
+  },
+  mediaBtnDisabled: { opacity: 0.4 },
+  mediaBtnText: { color: '#f0ede8', fontSize: 12 },
+  mediaEmpty: { color: '#555', fontSize: 12, alignSelf: 'stretch', textAlign: 'center', paddingVertical: 8 },
+  mediaItem: {
+    alignSelf: 'stretch',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#000',
+    borderRadius: 8, padding: 12, gap: 10,
+  },
+  mediaItemHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  mediaItemName: { color: '#f0ede8', fontSize: 12, flex: 1 },
+  mediaItemStatus: { color: '#777', fontSize: 10 },
+  mediaProgressTrack: { height: 4, backgroundColor: '#252528', borderRadius: 2, overflow: 'hidden' },
+  mediaProgressFill: { height: 4, backgroundColor: '#e8c97a' },
+  mediaItemActions: { flexDirection: 'row', gap: 8 },
+  mediaSmallBtn: {
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
+    paddingVertical: 8, paddingHorizontal: 14, borderRadius: 6,
+  },
+  mediaPlayBtn: { flex: 1, alignItems: 'center' },
+  mediaPlayBtnActive: { borderColor: '#5fdf8a', backgroundColor: 'rgba(95,223,138,0.12)' },
+  mediaSmallBtnText: { color: '#f0ede8', fontSize: 12 },
+  mediaDanger: { color: '#ff8080' },
 });

@@ -9,9 +9,10 @@ interface Props {
   onChangeChannel: () => void;
   onHome: () => void;
   onDisconnect: () => void;
+  onClearCache?: () => void;
 }
 
-export function ExitMenu({ channel, onResume, onChangeChannel, onHome, onDisconnect }: Props) {
+export function ExitMenu({ channel, onResume, onChangeChannel, onHome, onDisconnect, onClearCache }: Props) {
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -47,6 +48,11 @@ export function ExitMenu({ channel, onResume, onChangeChannel, onHome, onDisconn
           <Pressable style={styles.btn} onPress={() => { setOpen(false); onHome(); }}>
             <Text style={styles.btnText}>Retour à l'accueil</Text>
           </Pressable>
+          {onClearCache && (
+            <Pressable style={styles.btn} onPress={() => { setOpen(false); onClearCache(); }}>
+              <Text style={styles.btnText}>Vider le cache média</Text>
+            </Pressable>
+          )}
           <Pressable style={[styles.btn, styles.btnDanger]} onPress={() => { setOpen(false); onDisconnect(); }}>
             <Text style={[styles.btnText, styles.btnTextDanger]}>Se déconnecter</Text>
           </Pressable>

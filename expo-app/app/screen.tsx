@@ -4,8 +4,13 @@ import { useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { StatusBar } from 'expo-status-bar';
 import { ExitMenu } from '../src/components/ExitMenu';
+import { MediaOverlay } from '../src/components/MediaOverlay';
 import { MqttTransport } from '../src/transport/MqttTransport';
 import type { TransportStatus } from '../src/transport/RemoteTransport';
+import {
+  beginUpload, addChunk, getMedia, clearMedia, isMediaCacheAvailable,
+  type CachedMedia,
+} from '../src/lib/mediaCache';
 
 type ScreenState = 'connect' | 'active' | 'disconnected';
 
@@ -32,6 +37,8 @@ export default function ScreenMode() {
   const [channelInput, setChannelInput] = useState('');
   const [bgColor, setBgColor] = useState('#000000');
   const [statusText, setStatusText] = useState('');
+  const [playingMedia, setPlayingMedia] = useState<CachedMedia | null>(null);
+  const playingMediaId = useRef<string | null>(null);
 
   const strobeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const strobeActive = useRef(false);
@@ -68,6 +75,7 @@ export default function ScreenMode() {
     transport.onMessage(msg => {
       if (msg.type === 'color' && typeof msg.color === 'string') {
         stopStrobe();
+        if (playingMediaId.current) { playingMediaId.current = null; setPlayingMedia(null); }
         setBgColor(msg.color);
       }
       if (msg.type === 'strobe') runStrobe(msg as unknown as StrobeMsg, bgColor);
@@ -76,6 +84,37 @@ export default function ScreenMode() {
         if (Array.isArray(pattern)) Vibration.vibrate(pattern as number[]);
       }
       if (msg.type === 'hello') sendCaps();
+
+      // ── Pool Média ──
+      if (msg.type === 'media:upload') {
+        const already = beginUpload(
+          String(msg.mediaId),
+          msg.kind === 'video' ? 'video' : 'image',
+          String(msg.mime || ''),
+          Number(msg.totalChunks) || 0,
+        );
+        if (already) transport.send({ type: 'media:ready', mediaId: msg.mediaId });
+      }
+      if (msg.type === 'media:chunk') {
+        const entry = addChunk(String(msg.mediaId), Number(msg.index), String(msg.data));
+        if (entry) transport.send({ type: 'media:ready', mediaId: entry.mediaId });
+      }
+      if (msg.type === 'media:play') {
+        const m = getMedia(String(msg.mediaId));
+        if (m) { playingMediaId.current = m.mediaId; setPlayingMedia(m); }
+      }
+      if (msg.type === 'media:stop') {
+        playingMediaId.current = null;
+        setPlayingMedia(null);
+      }
+      if (msg.type === 'media:clear') {
+        const id = String(msg.mediaId);
+        clearMedia(id);
+        if (id === 'all' || id === playingMediaId.current) {
+          playingMediaId.current = null;
+          setPlayingMedia(null);
+        }
+      }
     });
     return () => { transport.disconnect(); stopStrobe(); };
   }, []);
@@ -85,6 +124,7 @@ export default function ScreenMode() {
       type: 'caps',
       torch: false,
       vibrate: Platform.OS !== 'web' && Platform.OS !== 'ios',
+      media: isMediaCacheAvailable,
     });
   }
 
@@ -161,7 +201,8 @@ export default function ScreenMode() {
   return (
     <View style={[styles.screen, { backgroundColor: bgColor }]}>
       <StatusBar style="light" hidden />
-      {state === 'active' && (
+      {playingMedia && <MediaOverlay media={playingMedia} />}
+      {state === 'active' && !playingMedia && (
         <Text style={styles.pill} numberOfLines={1}>{statusText}</Text>
       )}
       {state === 'disconnected' && (
@@ -178,6 +219,11 @@ export default function ScreenMode() {
         onChangeChannel={handleChangeChannel}
         onHome={handleHome}
         onDisconnect={handleDisconnect}
+        onClearCache={isMediaCacheAvailable ? () => {
+          clearMedia('all');
+          playingMediaId.current = null;
+          setPlayingMedia(null);
+        } : undefined}
       />
     </View>
   );

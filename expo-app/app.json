@@ -38,7 +38,14 @@
         {
           "position": "absolute"
         }
-      ]
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Ciné Light accède à vos photos et vidéos pour les diffuser sur l'écran projecteur."
+        }
+      ],
+      "expo-video"
     ]
   }
 }
