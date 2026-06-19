@@ -9,8 +9,9 @@ import { ColorWheel } from '../src/components/ColorWheel';
 import { computeColor, ColorSpec } from '../src/lib/color';
 import { generateChannel } from '../src/lib/channel';
 import { useMediaPool } from '../src/lib/useMediaPool';
-import { MqttTransport } from '../src/transport/MqttTransport';
-import type { TransportStatus } from '../src/transport/RemoteTransport';
+import { createTransport } from '../src/transport/createTransport';
+import type { RemoteTransport, TransportStatus, TransportMode } from '../src/transport/RemoteTransport';
+import { AVAILABLE_MODES, MODE_LABELS, suggestMode } from '../src/lib/connectivity';
 
 const MEDIA_ENABLED = Platform.OS !== 'web';
 const FLASH_ENABLED = Platform.OS !== 'web';
@@ -18,22 +19,42 @@ const FLASH_ENABLED = Platform.OS !== 'web';
 type Tab = 'color' | 'strobe' | 'flash' | 'media' | 'channel';
 
 function useTransport() {
-  const transport = useRef(new MqttTransport()).current;
+  const [mode, setMode] = useState<TransportMode>('internet');
+  const transportRef = useRef<RemoteTransport>(createTransport('internet', 'remote'));
   const [status, setStatus] = useState<TransportStatus>('idle');
+  const [, force] = useState(0);
+
   useEffect(() => {
-    transport.onStatusChange(setStatus);
-    return () => transport.disconnect();
+    transportRef.current.onStatusChange(setStatus);
+    return () => transportRef.current.disconnect();
   }, []);
-  return { transport, status };
+
+  const changeMode = useCallback((m: TransportMode) => {
+    if (m === mode) return;
+    transportRef.current.disconnect();
+    const t = createTransport(m, 'remote');
+    t.onStatusChange(setStatus);
+    transportRef.current = t;
+    setMode(m);
+    setStatus('idle');
+    force(x => x + 1);
+  }, [mode]);
+
+  return { transport: transportRef.current, status, mode, changeMode };
 }
 
 export default function RemoteScreen() {
   const router = useRouter();
-  const { transport, status } = useTransport();
+  const { transport, status, mode, changeMode } = useTransport();
 
   const [channel, setChannel] = useState(generateChannel);
   const [connected, setConnected] = useState(false);
   const [tab, setTab] = useState<Tab>('color');
+  const [descriptor, setDescriptor] = useState<string | null>(null);
+  const [suggested, setSuggested] = useState<TransportMode | null>(null);
+
+  // Suggestion indicative du mode le plus fiable selon la connectivité.
+  useEffect(() => { suggestMode().then(setSuggested).catch(() => {}); }, []);
 
   const [spec, setSpec] = useState<ColorSpec>({
     kelvin: 5600, tint: 0, dimmer: 100, wheelHex: '#ffffff', crossfade: 0,
@@ -102,19 +123,22 @@ export default function RemoteScreen() {
 
   const connect = useCallback(() => {
     const ch = channel.trim().toLowerCase();
-    if (!ch) return;
+    // En Wi-Fi/Bluetooth, le code canal n'est pas requis (hôte / scan direct).
+    if (mode === 'internet' && !ch) return;
     transport.connect(ch);
-  }, [channel, transport]);
+  }, [channel, transport, mode]);
 
   useEffect(() => {
     if (status === 'connected') {
       setConnected(true);
       setScreenOn(true);
       setTorchState('off');
+      setDescriptor(transport.getDescriptor?.() ?? null);
       transport.send({ type: 'color', color });
       transport.send({ type: 'hello' });
-    } else if (status === 'disconnected' || status === 'error') {
+    } else {
       setConnected(false);
+      if (status !== 'connecting') setDescriptor(null);
     }
   }, [status]);
 
@@ -433,31 +457,94 @@ export default function RemoteScreen() {
 
         {tab === 'channel' && (
           <View style={styles.panel}>
-            <Text style={styles.panelLabel}>Code canal</Text>
-            <View style={styles.channelRow}>
-              <TextInput
-                style={styles.channelInput}
-                value={channel}
-                onChangeText={setChannel}
-                placeholder="ex : cine4271"
-                placeholderTextColor="#555"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <Pressable style={styles.connectBtn} onPress={connect}>
-                <Text style={styles.connectBtnText}>{connected ? 'Reconnecter' : 'Connecter'}</Text>
-              </Pressable>
-            </View>
-            {connected && (
-              <View style={styles.qrWrap}>
-                <QRCode value={channel} size={180} color="#f0ede8" backgroundColor="#000000" />
-                <Text style={styles.qrLabel}>Montrez ce QR à l'écran projecteur</Text>
-              </View>
+            {AVAILABLE_MODES.length > 1 && (
+              <>
+                <Text style={styles.panelLabel}>Mode de connexion</Text>
+                <View style={styles.modeRow}>
+                  {AVAILABLE_MODES.map(m => (
+                    <Pressable
+                      key={m}
+                      style={[styles.modeBtn, mode === m && styles.modeBtnActive]}
+                      onPress={() => { changeMode(m); }}
+                    >
+                      <Text style={[styles.modeBtnText, mode === m && styles.modeBtnTextActive]}>
+                        {MODE_LABELS[m]}
+                      </Text>
+                      {suggested === m && (
+                        <Text style={styles.modeBadge}>recommandé</Text>
+                      )}
+                    </Pressable>
+                  ))}
+                </View>
+              </>
             )}
-            {!connected && (
-              <Pressable style={styles.generateBtn} onPress={() => setChannel(generateChannel())}>
-                <Text style={styles.generateBtnText}>Générer un code aléatoire</Text>
-              </Pressable>
+
+            {mode === 'internet' && (
+              <>
+                <Text style={styles.panelLabel}>Code canal</Text>
+                <View style={styles.channelRow}>
+                  <TextInput
+                    style={styles.channelInput}
+                    value={channel}
+                    onChangeText={setChannel}
+                    placeholder="ex : cine4271"
+                    placeholderTextColor="#555"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <Pressable style={styles.connectBtn} onPress={connect}>
+                    <Text style={styles.connectBtnText}>{connected ? 'Reconnecter' : 'Connecter'}</Text>
+                  </Pressable>
+                </View>
+                {connected && (
+                  <View style={styles.qrWrap}>
+                    <QRCode value={channel} size={180} color="#f0ede8" backgroundColor="#000000" />
+                    <Text style={styles.qrLabel}>Montrez ce QR à l'écran projecteur</Text>
+                  </View>
+                )}
+                {!connected && (
+                  <Pressable style={styles.generateBtn} onPress={() => setChannel(generateChannel())}>
+                    <Text style={styles.generateBtnText}>Générer un code aléatoire</Text>
+                  </Pressable>
+                )}
+              </>
+            )}
+
+            {mode === 'wifi' && (
+              <>
+                <Text style={styles.mediaHint}>
+                  La télécommande héberge le serveur local. Aucun Internet requis :
+                  l'écran doit être sur le même réseau Wi-Fi.
+                </Text>
+                <Pressable style={[styles.connectBtn, styles.connectBtnWide]} onPress={connect}>
+                  <Text style={styles.connectBtnText}>{connected ? 'Redémarrer l’hôte' : 'Démarrer l’hôte'}</Text>
+                </Pressable>
+                {connected && descriptor && (
+                  <View style={styles.qrWrap}>
+                    <QRCode value={descriptor} size={180} color="#f0ede8" backgroundColor="#000000" />
+                    <Text style={styles.qrLabel}>{descriptor}</Text>
+                    <Text style={styles.qrLabel}>L'écran scanne ce QR ou saisit cette adresse</Text>
+                  </View>
+                )}
+                {connected && !descriptor && (
+                  <Text style={styles.mediaWarn}>Recherche de l'adresse locale…</Text>
+                )}
+              </>
+            )}
+
+            {mode === 'bluetooth' && (
+              <>
+                <Text style={styles.mediaHint}>
+                  Liaison directe sans Wi-Fi ni Internet. La télécommande recherche
+                  l'écran projecteur à proximité et s'y connecte.
+                </Text>
+                <Pressable style={[styles.connectBtn, styles.connectBtnWide]} onPress={connect}>
+                  <Text style={styles.connectBtnText}>{connected ? 'Reconnecter' : 'Rechercher l’écran'}</Text>
+                </Pressable>
+                {connected && descriptor && (
+                  <Text style={styles.qrLabel}>Connecté à {descriptor}</Text>
+                )}
+              </>
             )}
           </View>
         )}
@@ -626,6 +713,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   connectBtnText: { color: '#000', fontWeight: '600', fontSize: 12 },
+  connectBtnWide: { alignSelf: 'stretch', paddingVertical: 14, alignItems: 'center' },
+  modeRow: { flexDirection: 'row', gap: 8, alignSelf: 'stretch' },
+  modeBtn: {
+    flex: 1,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: '#252528',
+    paddingVertical: 10, borderRadius: 8, alignItems: 'center', gap: 3,
+  },
+  modeBtnActive: { borderColor: '#e8c97a', backgroundColor: 'rgba(232,201,122,0.12)' },
+  modeBtnText: { color: '#f0ede8', fontSize: 11 },
+  modeBtnTextActive: { color: '#e8c97a' },
+  modeBadge: { color: '#5fdf8a', fontSize: 8, letterSpacing: 0.5, textTransform: 'uppercase' },
   generateBtn: {
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
     paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20,

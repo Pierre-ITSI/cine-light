@@ -7,8 +7,9 @@ import * as NavigationBar from 'expo-navigation-bar';
 import { ExitMenu } from '../src/components/ExitMenu';
 import { MediaOverlay } from '../src/components/MediaOverlay';
 import { TorchController, type TorchCommand } from '../src/components/TorchController';
-import { MqttTransport } from '../src/transport/MqttTransport';
-import type { TransportStatus } from '../src/transport/RemoteTransport';
+import { createTransport } from '../src/transport/createTransport';
+import type { RemoteTransport, TransportStatus, TransportMode } from '../src/transport/RemoteTransport';
+import { AVAILABLE_MODES, MODE_LABELS, suggestMode } from '../src/lib/connectivity';
 import {
   beginUpload, addChunk, getMedia, clearMedia, isMediaCacheAvailable,
   type CachedMedia,
@@ -32,9 +33,11 @@ export default function ScreenMode() {
   const router = useRouter();
   useKeepAwake();
 
-  const transport = useRef(new MqttTransport()).current;
+  const transportRef = useRef<RemoteTransport | null>(null);
   const [transportStatus, setTransportStatus] = useState<TransportStatus>('idle');
 
+  const [mode, setMode] = useState<TransportMode>('internet');
+  const [suggested, setSuggested] = useState<TransportMode | null>(null);
   const [state, setState] = useState<ScreenState>('connect');
   const [channel, setChannel] = useState('');
   const [channelInput, setChannelInput] = useState('');
@@ -80,15 +83,29 @@ export default function ScreenMode() {
     cycle();
   }, [stopStrobe]);
 
-  useEffect(() => {
-    transport.onStatusChange(setTransportStatus);
-    transport.onMessage(msg => {
+  const sendCaps = useCallback(() => {
+    transportRef.current?.send({
+      type: 'caps',
+      // Natif : torche via expo-camera + vibration disponibles (iOS et Android).
+      torch: Platform.OS !== 'web',
+      vibrate: Platform.OS !== 'web',
+      media: isMediaCacheAvailable,
+    });
+  }, []);
+
+  // Crée (ou recrée) le transport pour le mode choisi et y rattache les
+  // handlers de messages. Le reste de l'écran ignore le transport sous-jacent.
+  const setupTransport = useCallback((m: TransportMode): RemoteTransport => {
+    transportRef.current?.disconnect();
+    const t = createTransport(m, 'screen');
+    t.onStatusChange(setTransportStatus);
+    t.onMessage(msg => {
       if (msg.type === 'color' && typeof msg.color === 'string') {
         stopStrobe();
         if (playingMediaId.current) { playingMediaId.current = null; setPlayingMedia(null); }
         setBgColor(msg.color);
       }
-      if (msg.type === 'strobe') runStrobe(msg as unknown as StrobeMsg, bgColor);
+      if (msg.type === 'strobe') runStrobe(msg as unknown as StrobeMsg, '#000000');
       if (msg.type === 'vibrate' && Platform.OS !== 'web') {
         const pattern = msg.pattern;
         if (Array.isArray(pattern)) Vibration.vibrate(pattern as number[]);
@@ -100,9 +117,9 @@ export default function ScreenMode() {
 
       // ── Torche / Flash (expo-camera) ──
       if (msg.type === 'torch' && Platform.OS !== 'web') {
-        const mode = msg.mode === 'on' || msg.mode === 'flash' ? msg.mode : 'off';
+        const tmode = msg.mode === 'on' || msg.mode === 'flash' ? msg.mode : 'off';
         setTorchCmd({
-          mode,
+          mode: tmode,
           onMs: typeof msg.onMs === 'number' ? msg.onMs : undefined,
           offMs: typeof msg.offMs === 'number' ? msg.offMs : undefined,
           repeats: typeof msg.repeats === 'number' ? msg.repeats : undefined,
@@ -119,15 +136,15 @@ export default function ScreenMode() {
           String(msg.mime || ''),
           Number(msg.totalChunks) || 0,
         );
-        if (already) transport.send({ type: 'media:ready', mediaId: msg.mediaId });
+        if (already) transportRef.current?.send({ type: 'media:ready', mediaId: msg.mediaId });
       }
       if (msg.type === 'media:chunk') {
         const entry = addChunk(String(msg.mediaId), Number(msg.index), String(msg.data));
-        if (entry) transport.send({ type: 'media:ready', mediaId: entry.mediaId });
+        if (entry) transportRef.current?.send({ type: 'media:ready', mediaId: entry.mediaId });
       }
       if (msg.type === 'media:play') {
-        const m = getMedia(String(msg.mediaId));
-        if (m) { playingMediaId.current = m.mediaId; setPlayingMedia(m); }
+        const md = getMedia(String(msg.mediaId));
+        if (md) { playingMediaId.current = md.mediaId; setPlayingMedia(md); }
       }
       if (msg.type === 'media:stop') {
         playingMediaId.current = null;
@@ -142,18 +159,13 @@ export default function ScreenMode() {
         }
       }
     });
-    return () => { transport.disconnect(); stopStrobe(); };
-  }, []);
+    transportRef.current = t;
+    return t;
+  }, [runStrobe, stopStrobe, sendCaps]);
 
-  function sendCaps() {
-    transport.send({
-      type: 'caps',
-      // Natif : torche via expo-camera + vibration disponibles (iOS et Android).
-      torch: Platform.OS !== 'web',
-      vibrate: Platform.OS !== 'web',
-      media: isMediaCacheAvailable,
-    });
-  }
+  // Suggestion indicative + nettoyage au démontage.
+  useEffect(() => { suggestMode().then(setSuggested).catch(() => {}); }, []);
+  useEffect(() => () => { transportRef.current?.disconnect(); stopStrobe(); }, [stopStrobe]);
 
   // Plein écran immersif : masquer la barre de navigation Android en mode actif.
   useEffect(() => {
@@ -179,58 +191,103 @@ export default function ScreenMode() {
   }, [transportStatus]);
 
   const connect = useCallback(() => {
-    const ch = channelInput.trim().toLowerCase();
-    if (!ch) return;
-    setChannel(ch);
+    let ch = channelInput.trim();
+    if (mode === 'internet') ch = ch.toLowerCase();
+    // Bluetooth : pas de saisie (scan/annonce direct). Wi-Fi : « ip:port ».
+    if (mode !== 'bluetooth' && !ch) return;
+    setChannel(ch || MODE_LABELS[mode]);
     setStatusText('Connexion…');
-    transport.connect(ch);
-  }, [channelInput, transport]);
+    const t = setupTransport(mode);
+    t.connect(ch);
+  }, [channelInput, mode, setupTransport]);
 
   const handleDisconnect = useCallback(() => {
-    transport.disconnect();
+    transportRef.current?.disconnect();
     stopStrobe();
     setBgColor('#000000');
     setBlackout(false);
     setStatusText('Déconnecté');
     setState('disconnected');
-  }, [transport, stopStrobe]);
+  }, [stopStrobe]);
 
   const handleChangeChannel = useCallback(() => {
-    transport.disconnect();
+    transportRef.current?.disconnect();
     stopStrobe();
     setBgColor('#000000');
     setBlackout(false);
     setChannelInput('');
     setState('connect');
-  }, [transport, stopStrobe]);
+  }, [stopStrobe]);
 
   const handleHome = useCallback(() => {
-    transport.disconnect();
+    transportRef.current?.disconnect();
     stopStrobe();
     router.replace('/');
-  }, [transport, stopStrobe, router]);
+  }, [stopStrobe, router]);
 
   if (state === 'connect') {
     return (
       <View style={styles.connect}>
         <StatusBar style="light" />
         <Text style={styles.connectTitle}>Écran projecteur</Text>
-        <Text style={styles.connectSub}>Entrez le code canal de la télécommande</Text>
-        <View style={styles.inputRow}>
-          <TextInput
-            style={styles.input}
-            value={channelInput}
-            onChangeText={setChannelInput}
-            placeholder="ex : cine4271"
-            placeholderTextColor="#555"
-            autoCapitalize="none"
-            autoCorrect={false}
-            onSubmitEditing={connect}
-          />
-          <Pressable style={styles.goBtn} onPress={connect}>
-            <Text style={styles.goBtnText}>OK</Text>
-          </Pressable>
-        </View>
+
+        {AVAILABLE_MODES.length > 1 && (
+          <View style={styles.modeRow}>
+            {AVAILABLE_MODES.map(m => (
+              <Pressable
+                key={m}
+                style={[styles.modeBtn, mode === m && styles.modeBtnActive]}
+                onPress={() => setMode(m)}
+              >
+                <Text style={[styles.modeBtnText, mode === m && styles.modeBtnTextActive]}>
+                  {MODE_LABELS[m]}
+                </Text>
+                {suggested === m && <Text style={styles.modeBadge}>recommandé</Text>}
+              </Pressable>
+            ))}
+          </View>
+        )}
+
+        {mode !== 'bluetooth' && (
+          <>
+            <Text style={styles.connectSub}>
+              {mode === 'wifi'
+                ? 'Adresse de la télécommande (ip:port)'
+                : 'Entrez le code canal de la télécommande'}
+            </Text>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.input}
+                value={channelInput}
+                onChangeText={setChannelInput}
+                placeholder={mode === 'wifi' ? 'ex : 192.168.1.5:8777' : 'ex : cine4271'}
+                placeholderTextColor="#555"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType={mode === 'wifi' ? 'numbers-and-punctuation' : 'default'}
+                onSubmitEditing={connect}
+              />
+              <Pressable style={styles.goBtn} onPress={connect}>
+                <Text style={styles.goBtnText}>OK</Text>
+              </Pressable>
+            </View>
+          </>
+        )}
+
+        {mode === 'bluetooth' && (
+          <>
+            <Text style={styles.connectSub}>Liaison Bluetooth directe</Text>
+            <Text style={styles.bleNote}>
+              ⚠️ Le mode périphérique BLE (écran annonçant le service) nécessite
+              un module natif dédié, non encore intégré. À finaliser et valider
+              sur appareil. La télécommande (rôle central) est, elle, prête.
+            </Text>
+            <Pressable style={styles.goBtnWide} onPress={connect}>
+              <Text style={styles.goBtnText}>Démarrer l’annonce</Text>
+            </Pressable>
+          </>
+        )}
+
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Text style={styles.backBtnText}>← Retour</Text>
         </Pressable>
@@ -312,6 +369,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   goBtnText: { color: '#000', fontWeight: '700', fontSize: 14 },
+  goBtnWide: {
+    backgroundColor: '#e8c97a',
+    paddingHorizontal: 24, paddingVertical: 14, borderRadius: 6,
+    alignItems: 'center', alignSelf: 'stretch', maxWidth: 340,
+  },
+  modeRow: { flexDirection: 'row', gap: 8, width: '100%', maxWidth: 340 },
+  modeBtn: {
+    flex: 1,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: '#1c1c1f',
+    paddingVertical: 10, borderRadius: 8, alignItems: 'center', gap: 3,
+  },
+  modeBtnActive: { borderColor: '#e8c97a', backgroundColor: 'rgba(232,201,122,0.12)' },
+  modeBtnText: { color: '#f0ede8', fontSize: 11 },
+  modeBtnTextActive: { color: '#e8c97a' },
+  modeBadge: { color: '#5fdf8a', fontSize: 8, letterSpacing: 0.5, textTransform: 'uppercase' },
+  bleNote: {
+    color: '#e0a070', fontSize: 11, lineHeight: 17,
+    textAlign: 'center', maxWidth: 340,
+  },
   backBtn: { marginTop: 8 },
   backBtnText: { color: '#555', fontSize: 12 },
   screen: {

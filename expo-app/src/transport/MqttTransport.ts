@@ -1,5 +1,5 @@
 import mqtt, { MqttClient } from 'mqtt';
-import type { RemoteTransport, MessageHandler, StatusHandler, TransportStatus } from './RemoteTransport';
+import type { RemoteTransport, MessageHandler, StatusHandler, TransportStatus, TransportMode } from './RemoteTransport';
 
 const BROKER = 'wss://broker.hivemq.com:8884/mqtt';
 
@@ -8,6 +8,7 @@ function topic(channel: string) {
 }
 
 export class MqttTransport implements RemoteTransport {
+  readonly mode: TransportMode = 'internet';
   private client: MqttClient | null = null;
   private clientId = '';
   private channel = '';

@@ -14,7 +14,8 @@
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": []
+        "UIBackgroundModes": [],
+        "NSLocalNetworkUsageDescription": "Ciné Light relie la télécommande et l'écran projecteur sur le réseau Wi-Fi local, sans Internet."
       }
     },
     "android": {
@@ -50,7 +51,14 @@
           "photosPermission": "Ciné Light accède à vos photos et vidéos pour les diffuser sur l'écran projecteur."
         }
       ],
-      "expo-video"
+      "expo-video",
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": false,
+          "bluetoothAlwaysPermission": "Ciné Light utilise le Bluetooth pour relier la télécommande et l'écran sans Wi-Fi ni Internet."
+        }
+      ]
     ]
   }
 }
