@@ -13,8 +13,9 @@ import { MqttTransport } from '../src/transport/MqttTransport';
 import type { TransportStatus } from '../src/transport/RemoteTransport';
 
 const MEDIA_ENABLED = Platform.OS !== 'web';
+const FLASH_ENABLED = Platform.OS !== 'web';
 
-type Tab = 'color' | 'strobe' | 'media' | 'channel';
+type Tab = 'color' | 'strobe' | 'flash' | 'media' | 'channel';
 
 function useTransport() {
   const transport = useRef(new MqttTransport()).current;
@@ -45,9 +46,35 @@ export default function RemoteScreen() {
   const [strobeRandom, setStrobeRandom] = useState(false);
   const [strobeFreqMax, setStrobeFreqMax] = useState(8);
   const [strobeDurMax, setStrobeDurMax] = useState(200);
+  const [strobeVibrate, setStrobeVibrate] = useState(false);
+
+  const [caps, setCaps] = useState({ torch: true, vibrate: true });
+  const [torchState, setTorchState] = useState<'off' | 'on' | 'flash'>('off');
 
   const media = useMediaPool(transport, connected && MEDIA_ENABLED);
   const [screenOn, setScreenOn] = useState(true);
+
+  // Capacités annoncées par l'écran connecté (torche/vibreur selon plateforme).
+  useEffect(() => {
+    transport.onMessage(msg => {
+      if (msg.type === 'caps') setCaps({ torch: !!msg.torch, vibrate: !!msg.vibrate });
+    });
+  }, [transport]);
+
+  const setTorch = useCallback((mode: 'off' | 'on' | 'flash', opts?: { loop?: boolean }) => {
+    if (mode === 'flash') {
+      transport.send(opts?.loop
+        ? { type: 'torch', mode: 'flash', loop: true }
+        : { type: 'torch', mode: 'flash', onMs: 150, offMs: 150, repeats: 6 });
+    } else {
+      transport.send({ type: 'torch', mode });
+    }
+    setTorchState(mode);
+  }, [transport]);
+
+  const vibrateNow = useCallback(() => {
+    transport.send({ type: 'vibrate', pattern: [0, 200, 100, 200], repeat: false });
+  }, [transport]);
 
   const toggleScreen = useCallback(() => {
     setScreenOn(on => {
@@ -83,6 +110,7 @@ export default function RemoteScreen() {
     if (status === 'connected') {
       setConnected(true);
       setScreenOn(true);
+      setTorchState('off');
       transport.send({ type: 'color', color });
       transport.send({ type: 'hello' });
     } else if (status === 'disconnected' || status === 'error') {
@@ -101,8 +129,9 @@ export default function RemoteScreen() {
       freqMax: strobeFreqMax,
       durMin: strobeDur,
       durMax: strobeDurMax,
+      vibrate: strobeVibrate,
     });
-  }, [transport, strobeActive, strobeRandom, strobeFreq, strobeDur, strobeFreqMax, strobeDurMax]);
+  }, [transport, strobeActive, strobeRandom, strobeFreq, strobeDur, strobeFreqMax, strobeDurMax, strobeVibrate]);
 
   useEffect(() => {
     if (!connected) return;
@@ -113,7 +142,7 @@ export default function RemoteScreen() {
   useEffect(() => {
     if (!connected || !strobeActive) return;
     sendStrobe();
-  }, [strobeFreq, strobeDur, strobeRandom, strobeFreqMax, strobeDurMax]);
+  }, [strobeFreq, strobeDur, strobeRandom, strobeFreqMax, strobeDurMax, strobeVibrate]);
 
   const statusLabel: Record<TransportStatus, string> = {
     idle: 'Non connecté',
@@ -155,12 +184,16 @@ export default function RemoteScreen() {
       </View>
 
       <View style={styles.tabs}>
-        {(['color', 'strobe', 'media', 'channel'] as Tab[])
-          .filter(t => t !== 'media' || MEDIA_ENABLED)
+        {(['color', 'strobe', 'flash', 'media', 'channel'] as Tab[])
+          .filter(t => (t !== 'media' || MEDIA_ENABLED) && (t !== 'flash' || FLASH_ENABLED))
           .map(t => (
             <Pressable key={t} style={[styles.tabBtn, tab === t && styles.tabBtnActive]} onPress={() => setTab(t)}>
               <Text style={[styles.tabBtnText, tab === t && styles.tabBtnTextActive]}>
-                {t === 'color' ? 'Couleur' : t === 'strobe' ? 'Strobe' : t === 'media' ? 'Média' : 'Canal'}
+                {t === 'color' ? 'Couleur'
+                  : t === 'strobe' ? 'Strobe'
+                  : t === 'flash' ? 'Flash'
+                  : t === 'media' ? 'Média'
+                  : 'Canal'}
               </Text>
             </Pressable>
           ))}
@@ -226,6 +259,95 @@ export default function RemoteScreen() {
                   <SliderRN min={strobeDur} max={1000} step={10} value={strobeDurMax} onChange={setStrobeDurMax} />
                 </View>
               </>
+            )}
+            <View style={styles.toggleRow}>
+              <Text style={styles.sliderLabel}>Synchroniser le vibreur</Text>
+              <Switch
+                value={strobeVibrate}
+                onValueChange={setStrobeVibrate}
+                disabled={!caps.vibrate}
+                trackColor={{ true: '#e8c97a' }}
+              />
+            </View>
+            {!caps.vibrate && (
+              <Text style={styles.flashUnavailable}>
+                L'écran connecté ne prend pas en charge le vibreur.
+              </Text>
+            )}
+          </View>
+        )}
+
+        {tab === 'flash' && (
+          <View style={styles.panel}>
+            <Text style={styles.panelLabel}>Torche de l'écran</Text>
+            <Text style={styles.mediaHint}>
+              Pilote le flash matériel de l'appareil qui sert d'écran projecteur.
+              Idéal comme signal lumineux ou notification sur le plateau.
+            </Text>
+            {!connected && (
+              <Text style={styles.mediaWarn}>Connectez un canal pour piloter la torche.</Text>
+            )}
+            {connected && !caps.torch && (
+              <Text style={styles.flashUnavailable}>
+                L'écran connecté ne dispose pas d'une torche pilotable.
+              </Text>
+            )}
+            <View style={styles.flashGrid}>
+              <Pressable
+                style={[
+                  styles.flashBtn,
+                  torchState === 'on' && styles.flashBtnActive,
+                  (!connected || !caps.torch) && styles.mediaBtnDisabled,
+                ]}
+                disabled={!connected || !caps.torch}
+                onPress={() => setTorch(torchState === 'on' ? 'off' : 'on')}
+              >
+                <Text style={styles.flashBtnIcon}>🔦</Text>
+                <Text style={styles.flashBtnText}>{torchState === 'on' ? 'Éteindre' : 'Allumer'}</Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.flashBtn,
+                  (!connected || !caps.torch) && styles.mediaBtnDisabled,
+                ]}
+                disabled={!connected || !caps.torch}
+                onPress={() => setTorch('flash')}
+              >
+                <Text style={styles.flashBtnIcon}>✨</Text>
+                <Text style={styles.flashBtnText}>Flash notif</Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.flashBtn,
+                  torchState === 'flash' && styles.flashBtnActive,
+                  (!connected || !caps.torch) && styles.mediaBtnDisabled,
+                ]}
+                disabled={!connected || !caps.torch}
+                onPress={() => setTorch(torchState === 'flash' ? 'off' : 'flash', { loop: true })}
+              >
+                <Text style={styles.flashBtnIcon}>⚡</Text>
+                <Text style={styles.flashBtnText}>{torchState === 'flash' ? 'Stop' : 'Flash continu'}</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.flashDivider} />
+
+            <Text style={styles.panelLabel}>Vibreur de l'écran</Text>
+            <Pressable
+              style={[
+                styles.mediaBtn,
+                { alignSelf: 'stretch' },
+                (!connected || !caps.vibrate) && styles.mediaBtnDisabled,
+              ]}
+              disabled={!connected || !caps.vibrate}
+              onPress={vibrateNow}
+            >
+              <Text style={styles.mediaBtnText}>📳  Vibrer maintenant</Text>
+            </Pressable>
+            {connected && !caps.vibrate && (
+              <Text style={styles.flashUnavailable}>
+                L'écran connecté ne prend pas en charge le vibreur.
+              </Text>
             )}
           </View>
         )}
@@ -544,4 +666,17 @@ const styles = StyleSheet.create({
   mediaPlayBtnActive: { borderColor: '#5fdf8a', backgroundColor: 'rgba(95,223,138,0.12)' },
   mediaSmallBtnText: { color: '#f0ede8', fontSize: 12 },
   mediaDanger: { color: '#ff8080' },
+
+  flashUnavailable: { color: '#e0a070', fontSize: 11, alignSelf: 'stretch' },
+  flashGrid: { flexDirection: 'row', gap: 10, alignSelf: 'stretch' },
+  flashBtn: {
+    flex: 1,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: '#252528',
+    paddingVertical: 16, borderRadius: 8, alignItems: 'center', gap: 6,
+  },
+  flashBtnActive: { borderColor: '#e8c97a', backgroundColor: 'rgba(232,201,122,0.12)' },
+  flashBtnIcon: { fontSize: 22 },
+  flashBtnText: { color: '#f0ede8', fontSize: 11, textAlign: 'center' },
+  flashDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.08)', alignSelf: 'stretch' },
 });

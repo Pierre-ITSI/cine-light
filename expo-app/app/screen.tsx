@@ -3,8 +3,10 @@ import { View, Text, TextInput, Pressable, StyleSheet, Platform, Vibration } fro
 import { useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { StatusBar } from 'expo-status-bar';
+import * as NavigationBar from 'expo-navigation-bar';
 import { ExitMenu } from '../src/components/ExitMenu';
 import { MediaOverlay } from '../src/components/MediaOverlay';
+import { TorchController, type TorchCommand } from '../src/components/TorchController';
 import { MqttTransport } from '../src/transport/MqttTransport';
 import type { TransportStatus } from '../src/transport/RemoteTransport';
 import {
@@ -23,6 +25,7 @@ interface StrobeMsg {
   freqMax?: number;
   durMin?: number;
   durMax?: number;
+  vibrate?: boolean;
 }
 
 export default function ScreenMode() {
@@ -40,6 +43,7 @@ export default function ScreenMode() {
   const [playingMedia, setPlayingMedia] = useState<CachedMedia | null>(null);
   const playingMediaId = useRef<string | null>(null);
   const [blackout, setBlackout] = useState(false);
+  const [torchCmd, setTorchCmd] = useState<TorchCommand | null>(null);
 
   const strobeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const strobeActive = useRef(false);
@@ -47,6 +51,7 @@ export default function ScreenMode() {
   const stopStrobe = useCallback(() => {
     strobeActive.current = false;
     if (strobeTimer.current) { clearTimeout(strobeTimer.current); strobeTimer.current = null; }
+    if (Platform.OS !== 'web') Vibration.cancel();
   }, []);
 
   const runStrobe = useCallback((msg: StrobeMsg, baseColor: string) => {
@@ -63,6 +68,10 @@ export default function ScreenMode() {
       }
       const interval = Math.max(dur + 5, 1000 / freq);
       setBgColor('#ffffff');
+      // Vibration synchronisée : un buzz court à chaque flash (pattern dérivé du timing).
+      if (msg.vibrate && Platform.OS !== 'web') {
+        Vibration.vibrate(Math.min(Math.round(dur), 100));
+      }
       strobeTimer.current = setTimeout(() => {
         setBgColor('#000000');
         if (strobeActive.current) strobeTimer.current = setTimeout(cycle, interval - dur);
@@ -88,6 +97,19 @@ export default function ScreenMode() {
 
       // ── Écran ON/OFF (état conservé : l'overlay masque sans démonter) ──
       if (msg.type === 'blackout') setBlackout(!!msg.on);
+
+      // ── Torche / Flash (expo-camera) ──
+      if (msg.type === 'torch' && Platform.OS !== 'web') {
+        const mode = msg.mode === 'on' || msg.mode === 'flash' ? msg.mode : 'off';
+        setTorchCmd({
+          mode,
+          onMs: typeof msg.onMs === 'number' ? msg.onMs : undefined,
+          offMs: typeof msg.offMs === 'number' ? msg.offMs : undefined,
+          repeats: typeof msg.repeats === 'number' ? msg.repeats : undefined,
+          loop: msg.loop === true,
+          nonce: Date.now(),
+        });
+      }
 
       // ── Pool Média ──
       if (msg.type === 'media:upload') {
@@ -126,11 +148,23 @@ export default function ScreenMode() {
   function sendCaps() {
     transport.send({
       type: 'caps',
-      torch: false,
-      vibrate: Platform.OS !== 'web' && Platform.OS !== 'ios',
+      // Natif : torche via expo-camera + vibration disponibles (iOS et Android).
+      torch: Platform.OS !== 'web',
+      vibrate: Platform.OS !== 'web',
       media: isMediaCacheAvailable,
     });
   }
+
+  // Plein écran immersif : masquer la barre de navigation Android en mode actif.
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    if (state === 'active') {
+      NavigationBar.setVisibilityAsync('hidden').catch(() => {});
+    } else {
+      NavigationBar.setVisibilityAsync('visible').catch(() => {});
+    }
+    return () => { NavigationBar.setVisibilityAsync('visible').catch(() => {}); };
+  }, [state]);
 
   useEffect(() => {
     if (transportStatus === 'connected') {
@@ -212,6 +246,7 @@ export default function ScreenMode() {
         <Text style={styles.pill} numberOfLines={1}>{statusText}</Text>
       )}
       {blackout && <View style={styles.blackout} pointerEvents="none" />}
+      {Platform.OS !== 'web' && <TorchController command={torchCmd} />}
       {state === 'disconnected' && (
         <View style={styles.disconnectedWrap}>
           <Text style={styles.disconnectedText}>Déconnecté</Text>
