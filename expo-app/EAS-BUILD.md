@@ -91,6 +91,60 @@ rebuild tant que tu ne touches pas aux modules natifs.
 
 ---
 
+## Dev client — tester Wi-Fi local & Bluetooth (spec 5)
+
+Les modes **Wi-Fi local** et **Bluetooth** reposent sur des modules natifs
+(`react-native-tcp-socket`, `react-native-ble-plx`) **absents d'Expo Go**. Il
+faut un **dev client** — c'est le profil `development`.
+
+### Approche CNG (aucun dossier natif à committer)
+
+Le projet est en **Continuous Native Generation** : les dossiers `ios/` et
+`android/` ne sont **pas** versionnés (ils sont dans `.gitignore`). EAS
+exécute `expo prebuild` automatiquement dans le cloud à chaque build, en
+appliquant les config plugins (permissions Bluetooth, réseau local, etc.).
+Rien à générer ni committer manuellement.
+
+> Vérifié : `expo prebuild` applique bien le plugin `react-native-ble-plx`
+> (permissions `BLUETOOTH_SCAN/CONNECT`, `ACCESS_FINE_LOCATION`) et la
+> permission réseau local iOS (`NSLocalNetworkUsageDescription`).
+
+### Construire et lancer le dev client
+
+```bash
+cd expo-app
+npx expo install --fix        # aligne les versions natives sur le SDK 56
+npm run build:ios:dev         # build dev client (cloud EAS) → QR à scanner
+# puis, une fois installé sur l'iPhone :
+npx expo start --dev-client   # serveur Metro ; scanne le QR depuis l'app
+```
+
+Le JS se recharge à chaud ; un rebuild n'est nécessaire que si tu ajoutes ou
+changes un module **natif**.
+
+### Tester le Wi-Fi local
+
+1. Mets l'iPhone (écran projecteur) et le téléphone télécommande sur le
+   **même Wi-Fi** — aucune connexion Internet requise.
+2. Télécommande → onglet **Canal** → mode **Wi-Fi local** → « Démarrer l'hôte ».
+   Un QR `ip:port` (ex. `192.168.1.5:8777`) s'affiche.
+3. Écran projecteur → mode **Wi-Fi local** → saisis `ip:port` (ou scanne).
+4. Pilote couleur / strobe / torche : tout passe par le réseau local.
+
+### Bluetooth — état
+
+La télécommande (rôle central) est prête. Le rôle **périphérique** de l'écran
+nécessite encore un module natif dédié à trancher — voir `CONNECTIVITY.md`.
+
+### Option locale sans EAS (Mac uniquement)
+
+```bash
+npx expo run:ios --device     # prebuild + build + install via Xcode
+```
+Nécessite un Mac avec Xcode ; certificat gratuit valable 7 jours.
+
+---
+
 ## Plus tard : TestFlight / App Store
 
 ```bash

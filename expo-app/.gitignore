@@ -3,3 +3,9 @@ dist/
 .expo/
 *.log
 .DS_Store
+
+# Dossiers natifs générés par `expo prebuild` (CNG : régénérés par EAS au build)
+/ios
+/android
+*.orig.*
+web-build/
