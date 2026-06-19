@@ -1,0 +1,105 @@
+import React, { useRef, useState, useCallback } from 'react';
+import { View, Text, Pressable, StyleSheet, Vibration, Platform } from 'react-native';
+
+const LONG_PRESS_MS = 1500;
+
+interface Props {
+  channel: string;
+  onResume: () => void;
+  onChangeChannel: () => void;
+  onHome: () => void;
+  onDisconnect: () => void;
+}
+
+export function ExitMenu({ channel, onResume, onChangeChannel, onHome, onDisconnect }: Props) {
+  const [open, setOpen] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const startPress = useCallback(() => {
+    if (open) return;
+    timer.current = setTimeout(() => {
+      if (Platform.OS !== 'web') Vibration.vibrate(40);
+      setOpen(true);
+    }, LONG_PRESS_MS);
+  }, [open]);
+
+  const cancelPress = useCallback(() => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+  }, []);
+
+  return (
+    <>
+      <Pressable
+        style={styles.zone}
+        onPressIn={startPress}
+        onPressOut={cancelPress}
+        delayLongPress={LONG_PRESS_MS}
+      />
+      {open && (
+        <View style={styles.overlay}>
+          <Text style={styles.info}>Canal : {channel || '—'}</Text>
+          <Pressable style={styles.btn} onPress={() => setOpen(false)}>
+            <Text style={styles.btnText}>Reprendre l'affichage</Text>
+          </Pressable>
+          <Pressable style={styles.btn} onPress={() => { setOpen(false); onChangeChannel(); }}>
+            <Text style={styles.btnText}>Changer de code canal</Text>
+          </Pressable>
+          <Pressable style={styles.btn} onPress={() => { setOpen(false); onHome(); }}>
+            <Text style={styles.btnText}>Retour à l'accueil</Text>
+          </Pressable>
+          <Pressable style={[styles.btn, styles.btnDanger]} onPress={() => { setOpen(false); onDisconnect(); }}>
+            <Text style={[styles.btnText, styles.btnTextDanger]}>Se déconnecter</Text>
+          </Pressable>
+        </View>
+      )}
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  zone: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 80,
+    height: 80,
+    zIndex: 9999,
+    backgroundColor: 'transparent',
+  },
+  overlay: {
+    position: 'absolute',
+    inset: 0,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    zIndex: 10000,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 14,
+    padding: 32,
+  },
+  info: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 13,
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  btn: {
+    width: '100%',
+    maxWidth: 300,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  btnText: {
+    color: '#f0ede8',
+    fontSize: 15,
+    letterSpacing: 0.5,
+  },
+  btnDanger: {
+    borderColor: 'rgba(255,100,100,0.3)',
+  },
+  btnTextDanger: {
+    color: '#ff8080',
+  },
+});

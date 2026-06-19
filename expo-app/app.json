@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Ciné Light",
+    "slug": "cine-light",
+    "version": "1.0.0",
+    "orientation": "any",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#000000",
+    "scheme": "cinelight",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pikoo.cinelight"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#000000",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png"
+      },
+      "package": "com.pikoo.cinelight"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Ciné Light utilise la caméra pour scanner les codes QR et accéder au flash. Aucune photo n'est capturée."
+        }
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "position": "absolute"
+        }
+      ]
+    ]
+  }
+}
