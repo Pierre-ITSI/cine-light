@@ -10,7 +10,12 @@
     "scheme": "cinelight",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.pikoo.cinelight"
+      "bundleIdentifier": "com.pikoo.cinelight",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": []
+      }
     },
     "android": {
       "adaptiveIcon": {
