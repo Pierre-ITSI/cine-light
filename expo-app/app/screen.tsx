@@ -39,6 +39,7 @@ export default function ScreenMode() {
   const [statusText, setStatusText] = useState('');
   const [playingMedia, setPlayingMedia] = useState<CachedMedia | null>(null);
   const playingMediaId = useRef<string | null>(null);
+  const [blackout, setBlackout] = useState(false);
 
   const strobeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const strobeActive = useRef(false);
@@ -84,6 +85,9 @@ export default function ScreenMode() {
         if (Array.isArray(pattern)) Vibration.vibrate(pattern as number[]);
       }
       if (msg.type === 'hello') sendCaps();
+
+      // ── Écran ON/OFF (état conservé : l'overlay masque sans démonter) ──
+      if (msg.type === 'blackout') setBlackout(!!msg.on);
 
       // ── Pool Média ──
       if (msg.type === 'media:upload') {
@@ -152,6 +156,7 @@ export default function ScreenMode() {
     transport.disconnect();
     stopStrobe();
     setBgColor('#000000');
+    setBlackout(false);
     setStatusText('Déconnecté');
     setState('disconnected');
   }, [transport, stopStrobe]);
@@ -160,6 +165,7 @@ export default function ScreenMode() {
     transport.disconnect();
     stopStrobe();
     setBgColor('#000000');
+    setBlackout(false);
     setChannelInput('');
     setState('connect');
   }, [transport, stopStrobe]);
@@ -202,9 +208,10 @@ export default function ScreenMode() {
     <View style={[styles.screen, { backgroundColor: bgColor }]}>
       <StatusBar style="light" hidden />
       {playingMedia && <MediaOverlay media={playingMedia} />}
-      {state === 'active' && !playingMedia && (
+      {state === 'active' && !playingMedia && !blackout && (
         <Text style={styles.pill} numberOfLines={1}>{statusText}</Text>
       )}
+      {blackout && <View style={styles.blackout} pointerEvents="none" />}
       {state === 'disconnected' && (
         <View style={styles.disconnectedWrap}>
           <Text style={styles.disconnectedText}>Déconnecté</Text>
@@ -275,6 +282,12 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     position: 'relative',
+  },
+  blackout: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: '#000000',
+    zIndex: 500,
   },
   pill: {
     position: 'absolute',

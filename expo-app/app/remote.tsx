@@ -47,6 +47,15 @@ export default function RemoteScreen() {
   const [strobeDurMax, setStrobeDurMax] = useState(200);
 
   const media = useMediaPool(transport, connected && MEDIA_ENABLED);
+  const [screenOn, setScreenOn] = useState(true);
+
+  const toggleScreen = useCallback(() => {
+    setScreenOn(on => {
+      const next = !on;
+      transport.send({ type: 'blackout', on: !next });
+      return next;
+    });
+  }, [transport]);
 
   const sendTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -73,6 +82,7 @@ export default function RemoteScreen() {
   useEffect(() => {
     if (status === 'connected') {
       setConnected(true);
+      setScreenOn(true);
       transport.send({ type: 'color', color });
       transport.send({ type: 'hello' });
     } else if (status === 'disconnected' || status === 'error') {
@@ -120,7 +130,22 @@ export default function RemoteScreen() {
           <Text style={styles.backBtnText}>← Retour</Text>
         </Pressable>
         <Text style={styles.title}>Ciné Light</Text>
-        <View style={[styles.statusDot, connected ? styles.dotGreen : styles.dotGray]} />
+        <View style={styles.headerRight}>
+          <Pressable
+            style={[
+              styles.powerBtn,
+              !connected && styles.powerBtnDisabled,
+              connected && !screenOn && styles.powerBtnOff,
+            ]}
+            disabled={!connected}
+            onPress={toggleScreen}
+          >
+            <Text style={[styles.powerBtnText, connected && !screenOn && styles.powerBtnTextOff]}>
+              ⏻ {screenOn ? 'ON' : 'OFF'}
+            </Text>
+          </Pressable>
+          <View style={[styles.statusDot, connected ? styles.dotGreen : styles.dotGray]} />
+        </View>
       </View>
 
       <View style={styles.colorPreview}>
@@ -384,6 +409,16 @@ const styles = StyleSheet.create({
   },
   backBtnText: { color: '#777', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' },
   title: { color: '#e8c97a', fontSize: 18, fontWeight: '500' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  powerBtn: {
+    borderWidth: 1, borderColor: 'rgba(95,223,138,0.4)',
+    backgroundColor: 'rgba(95,223,138,0.1)',
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 4,
+  },
+  powerBtnDisabled: { opacity: 0.35, borderColor: 'rgba(255,255,255,0.15)', backgroundColor: 'transparent' },
+  powerBtnOff: { borderColor: 'rgba(255,120,120,0.5)', backgroundColor: 'rgba(255,120,120,0.12)' },
+  powerBtnText: { color: '#5fdf8a', fontSize: 11, letterSpacing: 1, fontWeight: '600' },
+  powerBtnTextOff: { color: '#ff8080' },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
   dotGreen: { backgroundColor: '#5fdf8a' },
   dotGray: { backgroundColor: '#444' },
