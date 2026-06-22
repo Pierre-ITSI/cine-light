@@ -50,15 +50,37 @@ export function useMediaPool(transport: RemoteTransport, enabled: boolean) {
   useEffect(() => { itemsRef.current = items; }, [items]);
   useEffect(() => { playingRef.current = playingId; }, [playingId]);
 
+  // Cache local des données image (base64 + mime), pour pouvoir aussi diffuser
+  // vers un écran PWA — qui ignore le protocole natif (media:upload/play) et
+  // n'affiche que via media-img-start/media-img-chunk (data URL).
+  const dataRef = useRef<Map<string, { mime: string; base64: string }>>(new Map());
+
   const update = useCallback((id: string, patch: Partial<RemoteMediaItem>) => {
     setItems(list => list.map(it => (it.id === id ? { ...it, ...patch } : it)));
   }, []);
 
-  // Lecture d'un média déjà en cache sur l'écran.
+  // Diffuse une image à l'écran PWA via son protocole (data URL chunkée),
+  // identique à `sendImageChunks` de la PWA (chunk de 12000, type media-img-*).
+  const broadcastImagePwa = useCallback(async (id: string) => {
+    const entry = dataRef.current.get(id);
+    if (!entry) return; // vidéo ou donnée absente : rien à diffuser en PWA
+    const dataUrl = `data:${entry.mime};base64,${entry.base64}`;
+    const CHUNK = 12000;
+    const total = Math.ceil(dataUrl.length / CHUNK);
+    transport.send({ type: 'media-img-start', id, total });
+    for (let i = 0; i < total; i++) {
+      transport.send({ type: 'media-img-chunk', id, i, data: dataUrl.slice(i * CHUNK, (i + 1) * CHUNK) });
+      if (i % 16 === 15) await new Promise(r => setTimeout(r, 8));
+    }
+  }, [transport]);
+
+  // Lecture d'un média : pour l'écran natif (media:play, déjà en cache) ET pour
+  // l'écran PWA (re-diffusion de l'image via son protocole).
   const play = useCallback((id: string) => {
     transport.send({ type: 'media:play', mediaId: id });
+    broadcastImagePwa(id);
     setPlayingId(id);
-  }, [transport]);
+  }, [transport, broadcastImagePwa]);
 
   // Avance/recul dans la liste des médias *prêts*, en boucle. Pilote aussi le
   // tap sur l'écran (message media:advance) et les flèches de la télécommande.
@@ -115,6 +137,8 @@ export function useMediaPool(transport: RemoteTransport, enabled: boolean) {
 
     try {
       const base64 = await readBase64(asset.uri, asset.base64);
+      // On conserve les images pour pouvoir aussi les diffuser à une PWA.
+      if (kind === 'image') dataRef.current.set(id, { mime, base64 });
       const total = Math.ceil(base64.length / MEDIA_CHUNK_SIZE);
       transport.send({ type: 'media:upload', mediaId: id, kind, mime, totalChunks: total });
       await sendChunks(id, base64);
@@ -128,11 +152,14 @@ export function useMediaPool(transport: RemoteTransport, enabled: boolean) {
 
   const stop = useCallback(() => {
     transport.send({ type: 'media:stop' });
+    transport.send({ type: 'media-stop' }); // écran PWA
     setPlayingId(null);
   }, [transport]);
 
   const clear = useCallback((id: string) => {
     transport.send({ type: 'media:clear', mediaId: id });
+    if (playingRef.current === id) transport.send({ type: 'media-stop' }); // écran PWA
+    dataRef.current.delete(id);
     setItems(list => list.filter(it => it.id !== id));
     setPlayingId(p => (p === id ? null : p));
   }, [transport]);
