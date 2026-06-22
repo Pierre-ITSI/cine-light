@@ -1,7 +1,7 @@
-import React, { useCallback, useRef } from 'react';
-import { View, PanResponder, StyleSheet } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { View, PanResponder } from 'react-native';
 import Svg, { Defs, RadialGradient, Stop, Circle, G, Path } from 'react-native-svg';
-import { polarToHex } from '../lib/color';
+import { polarToHex, hexToWheelPos } from '../lib/color';
 
 const SECTORS = 72; // 5° per sector
 
@@ -21,21 +21,30 @@ function sectorColor(i: number, total: number): string {
 interface Props {
   size: number;
   onPick: (hex: string) => void;
+  /** Couleur de roue actuellement sélectionnée (teinte/saturation, valeur = 1). */
+  selectedHex?: string;
 }
 
-export function ColorWheel({ size, onPick }: Props) {
+export function ColorWheel({ size, onPick, selectedHex }: Props) {
   const r = size / 2;
-  const layoutRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Position « live » du doigt + couleur, pour afficher la loupe pendant le glisser.
+  const [drag, setDrag] = useState<{ x: number; y: number; hex: string } | null>(null);
 
   const pick = useCallback((px: number, py: number) => {
     const hex = polarToHex(px, py, r, r, r);
     onPick(hex);
+    setDrag({ x: px, y: py, hex });
   }, [r, onPick]);
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
       onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: (e) => {
         const { locationX, locationY } = e.nativeEvent;
         const dx = locationX - r, dy = locationY - r;
@@ -46,8 +55,20 @@ export function ColorWheel({ size, onPick }: Props) {
         const dx = locationX - r, dy = locationY - r;
         if (Math.hypot(dx, dy) <= r) pick(locationX, locationY);
       },
+      onPanResponderRelease: () => setDrag(null),
+      onPanResponderTerminate: () => setDrag(null),
     })
   ).current;
+
+  // Marqueur permanent : position de la couleur sélectionnée sur la roue.
+  const markerPos = selectedHex ? hexToWheelPos(selectedHex) : null;
+  const mx = markerPos ? markerPos.x * size : r;
+  const my = markerPos ? markerPos.y * size : r;
+
+  // Loupe : bulle agrandie de la couleur, décalée au-dessus du doigt.
+  const loupeR = Math.max(24, size * 0.16);
+  const loupeX = drag ? Math.min(size - loupeR, Math.max(loupeR, drag.x)) : 0;
+  const loupeY = drag ? Math.max(loupeR, drag.y - loupeR - 18) : 0;
 
   return (
     <View style={{ width: size, height: size }} {...panResponder.panHandlers}>
@@ -64,6 +85,23 @@ export function ColorWheel({ size, onPick }: Props) {
           ))}
         </G>
         <Circle cx={r} cy={r} r={r} fill="url(#sat)" />
+
+        {/* Marqueur de la couleur sélectionnée */}
+        {markerPos && (
+          <>
+            <Circle cx={mx} cy={my} r={11} fill="none" stroke="#000000" strokeOpacity={0.5} strokeWidth={4} />
+            <Circle cx={mx} cy={my} r={11} fill="none" stroke="#ffffff" strokeWidth={2.5} />
+            <Circle cx={mx} cy={my} r={6} fill={selectedHex} />
+          </>
+        )}
+
+        {/* Loupe pendant le glisser */}
+        {drag && (
+          <>
+            <Circle cx={loupeX} cy={loupeY} r={loupeR + 3} fill="#000000" fillOpacity={0.35} />
+            <Circle cx={loupeX} cy={loupeY} r={loupeR} fill={drag.hex} stroke="#ffffff" strokeWidth={3} />
+          </>
+        )}
       </Svg>
     </View>
   );

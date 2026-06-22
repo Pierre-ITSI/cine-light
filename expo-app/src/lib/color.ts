@@ -59,6 +59,33 @@ export function polarToHex(px: number, py: number, cx: number, cy: number, radiu
   const dx = px - cx, dy = py - cy;
   const dist = Math.hypot(dx, dy);
   const sat = Math.min(1, dist / radius);
-  const hue = ((Math.atan2(dy, dx) * 180 / Math.PI) + 360) % 360;
+  // La roue affiche la teinte h à l'angle écran (h − 90°) — comme la PWA.
+  // L'inverse du picking est donc h = θ + 90° (θ mesuré depuis l'axe +x).
+  const hue = ((Math.atan2(dy, dx) * 180 / Math.PI) + 90 + 360) % 360;
   return hsvToHex(hue, sat, 1);
+}
+
+export function rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v: number } {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  if (d) {
+    if (mx === r) h = ((g - b) / d) % 6;
+    else if (mx === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  return { h, s: mx ? d / mx : 0, v: mx };
+}
+
+/**
+ * Position (0..1 en x/y, centre = 0.5) du marqueur sur la roue pour une
+ * couleur donnée — inverse de `polarToHex`. Sert à placer la loupe.
+ */
+export function hexToWheelPos(hex: string): { x: number; y: number } {
+  const { h, s } = rgbToHsv(...(Object.values(hexToRgb(hex)) as [number, number, number]));
+  const angle = (h - 90) * Math.PI / 180;
+  const radius = s * 0.5;
+  return { x: 0.5 + radius * Math.cos(angle), y: 0.5 + radius * Math.sin(angle) };
 }

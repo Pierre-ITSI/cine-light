@@ -63,6 +63,13 @@ export default function RemoteScreen() {
     kelvin: 5600, tint: 0, dimmer: 100, wheelHex: '#ffffff', crossfade: 0,
   });
   const color = useMemo(() => computeColor(spec), [spec]);
+  // Libellé descriptif de la couleur, à l'identique de la PWA (recomputeColor).
+  const colorMeta = useMemo(() => {
+    const sign = spec.tint >= 0 ? '+' : '';
+    if (spec.crossfade < 5) return `${spec.kelvin}K · ${sign}${spec.tint}GM · ${spec.dimmer}%`;
+    if (spec.crossfade > 95) return `Roue · ${spec.dimmer}%`;
+    return `Mix ${spec.crossfade}% · ${spec.dimmer}%`;
+  }, [spec]);
 
   const [strobeActive, setStrobeActive] = useState(false);
   const [strobeFreq, setStrobeFreq] = useState(2);
@@ -239,23 +246,71 @@ export default function RemoteScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {tab === 'color' && (
-          <View style={styles.panel}>
-            <ColorWheel size={220} onPick={hex => { updateSpec({ wheelHex: hex, crossfade: Math.max(spec.crossfade, 20) }); }} />
-            <View style={styles.sliderRow}>
-              <Text style={styles.sliderLabel}>Luminosité {spec.dimmer}%</Text>
-              <SliderRN min={0} max={100} value={spec.dimmer} onChange={v => updateSpec({ dimmer: v })} />
+          <View style={styles.colorTab}>
+            {/* Intensité (Dimmer) */}
+            <View style={styles.panel}>
+              <Text style={styles.panelLabel}>Intensité (Dimmer)</Text>
+              <View style={styles.sliderRow}>
+                <Text style={styles.sliderLabel}>Luminosité maître {spec.dimmer}%</Text>
+                <SliderRN min={0} max={100} value={spec.dimmer} onChange={v => updateSpec({ dimmer: v })} />
+              </View>
             </View>
-            <View style={styles.sliderRow}>
-              <Text style={styles.sliderLabel}>Température {spec.kelvin.toLocaleString('fr')} K</Text>
-              <SliderRN min={1700} max={20000} value={spec.kelvin} onChange={v => updateSpec({ kelvin: v })} />
+
+            {/* Roue chromatique + encart de la couleur sélectionnée + crossfade */}
+            <View style={styles.panel}>
+              <Text style={styles.panelLabel}>Roue chromatique</Text>
+              <View style={styles.wheelWrap}>
+                <ColorWheel
+                  size={240}
+                  selectedHex={spec.wheelHex}
+                  onPick={hex => updateSpec({ wheelHex: hex })}
+                />
+              </View>
+              <View style={styles.swatchRow}>
+                <View style={[styles.swatch, { backgroundColor: color }]} />
+                <View style={styles.swatchInfo}>
+                  <Text style={styles.swatchHex}>{color.toUpperCase()}</Text>
+                  <Text style={styles.swatchMeta}>{colorMeta}</Text>
+                </View>
+              </View>
+              <View style={styles.sliderRow}>
+                <Text style={styles.sliderLabel}>Color crossfade · Blanc ↔ Couleur {spec.crossfade}%</Text>
+                <SliderRN min={0} max={100} value={spec.crossfade} onChange={v => updateSpec({ crossfade: v })} />
+              </View>
             </View>
-            <View style={styles.sliderRow}>
-              <Text style={styles.sliderLabel}>Tint {spec.tint >= 0 ? '+' : ''}{spec.tint} GM</Text>
-              <SliderRN min={-100} max={100} value={spec.tint} onChange={v => updateSpec({ tint: v })} />
+
+            {/* Température de couleur */}
+            <View style={styles.panel}>
+              <Text style={styles.panelLabel}>Température de couleur</Text>
+              <View style={styles.sliderRow}>
+                <Text style={styles.sliderLabel}>Température {spec.kelvin.toLocaleString('fr')} K</Text>
+                <SliderRN min={1700} max={20000} value={spec.kelvin} onChange={v => updateSpec({ kelvin: v })} />
+              </View>
+              <View style={styles.chipsWrap}>
+                {[1700, 2700, 3200, 4300, 5600, 6500, 9000, 20000].map(k => (
+                  <Pressable
+                    key={k}
+                    style={[styles.chip, spec.kelvin === k && styles.chipActive]}
+                    onPress={() => updateSpec({ kelvin: k })}
+                  >
+                    <Text style={[styles.chipText, spec.kelvin === k && styles.chipTextActive]}>{k}K</Text>
+                  </Pressable>
+                ))}
+              </View>
             </View>
-            <View style={styles.sliderRow}>
-              <Text style={styles.sliderLabel}>Couleur {spec.crossfade}%</Text>
-              <SliderRN min={0} max={100} value={spec.crossfade} onChange={v => updateSpec({ crossfade: v })} />
+
+            {/* Tint · Magenta ↔ Vert */}
+            <View style={styles.panel}>
+              <Text style={styles.panelLabel}>Tint · Magenta ↔ Vert</Text>
+              <View style={styles.tintLabels}>
+                <Text style={styles.tintLabel}>−100 Magenta</Text>
+                <Text style={styles.tintLabel}>0 Neutre</Text>
+                <Text style={styles.tintLabel}>+100 Vert</Text>
+              </View>
+              <View style={styles.sliderRow}>
+                <Text style={styles.sliderLabel}>Green / Magenta {spec.tint >= 0 ? '+' : ''}{spec.tint} GM</Text>
+                <SliderRN min={-100} max={100} value={spec.tint} onChange={v => updateSpec({ tint: v })} />
+              </View>
             </View>
           </View>
         )}
@@ -698,6 +753,30 @@ const styles = StyleSheet.create({
   panelLabel: { color: '#777', fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', alignSelf: 'flex-start' },
   sliderRow: { width: '100%', gap: 8 },
   sliderLabel: { color: '#f0ede8', fontSize: 12, letterSpacing: 0.5 },
+  colorTab: { gap: 16 },
+  wheelWrap: { alignItems: 'center', alignSelf: 'center' },
+  swatchRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 14, width: '100%',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', borderRadius: 8,
+    padding: 12, backgroundColor: '#000',
+  },
+  swatch: {
+    width: 56, height: 56, borderRadius: 10,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
+  },
+  swatchInfo: { flex: 1, gap: 4 },
+  swatchHex: { color: '#f0ede8', fontSize: 18, fontWeight: '700', letterSpacing: 1, fontVariant: ['tabular-nums'] },
+  swatchMeta: { color: '#999', fontSize: 12 },
+  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, width: '100%' },
+  chip: {
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
+    paddingVertical: 7, paddingHorizontal: 12, borderRadius: 16,
+  },
+  chipActive: { borderColor: '#e8c97a', backgroundColor: 'rgba(232,201,122,0.15)' },
+  chipText: { color: '#bbb', fontSize: 12 },
+  chipTextActive: { color: '#e8c97a', fontWeight: '700' },
+  tintLabels: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+  tintLabel: { color: '#777', fontSize: 10 },
   sliderTrack: {
     height: 20,
     backgroundColor: '#252528',
