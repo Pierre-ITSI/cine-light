@@ -8,6 +8,8 @@ import QRCode from 'react-native-qrcode-svg';
 import { ColorWheel } from '../src/components/ColorWheel';
 import { computeColor, ColorSpec } from '../src/lib/color';
 import { generateChannel } from '../src/lib/channel';
+import { useLocalIp } from '../src/lib/useLocalIp';
+import { WIFI_PORT } from '../src/transport/transportConfig';
 import { useMediaPool } from '../src/lib/useMediaPool';
 import { createTransport } from '../src/transport/createTransport';
 import type { RemoteTransport, TransportStatus, TransportMode } from '../src/transport/RemoteTransport';
@@ -74,6 +76,9 @@ export default function RemoteScreen() {
 
   const media = useMediaPool(transport, connected && MEDIA_ENABLED);
   const [screenOn, setScreenOn] = useState(true);
+
+  // Adresse IP locale de cet appareil (rafraîchie en continu) pour le Wi-Fi local.
+  const localIp = useLocalIp();
 
   // Capacités annoncées par l'écran connecté (torche/vibreur selon plateforme).
   useEffect(() => {
@@ -542,6 +547,11 @@ export default function RemoteScreen() {
                     <Text style={styles.connectBtnText}>{connected ? 'Reconnecter' : 'Connecter'}</Text>
                   </Pressable>
                 </View>
+                <View style={styles.ipBox}>
+                  <Text style={styles.ipLabel}>Adresse locale de cet appareil (Wi-Fi)</Text>
+                  <Text style={styles.ipValue}>{localIp ? `${localIp}:${WIFI_PORT}` : 'Recherche…'}</Text>
+                  <Text style={styles.ipHint}>Mise à jour automatique à chaque changement de réseau.</Text>
+                </View>
                 {connected && (
                   <View style={styles.qrWrap}>
                     <QRCode value={channel} size={180} color="#f0ede8" backgroundColor="#000000" />
@@ -562,6 +572,14 @@ export default function RemoteScreen() {
                   La télécommande héberge le serveur local. Aucun Internet requis :
                   l'écran doit être sur le même réseau Wi-Fi.
                 </Text>
+                <View style={styles.ipBox}>
+                  <Text style={styles.ipLabel}>Adresse locale de cet appareil</Text>
+                  <Text style={styles.ipValue}>{localIp ? `${localIp}:${WIFI_PORT}` : 'Recherche…'}</Text>
+                  <Text style={styles.ipHint}>
+                    L'écran saisit cette adresse. Mise à jour automatique à chaque
+                    changement de réseau.
+                  </Text>
+                </View>
                 <Pressable style={[styles.connectBtn, styles.connectBtnWide]} onPress={connect}>
                   <Text style={styles.connectBtnText}>{connected ? 'Redémarrer l’hôte' : 'Démarrer l’hôte'}</Text>
                 </Pressable>
@@ -778,6 +796,16 @@ const styles = StyleSheet.create({
   generateBtnText: { color: '#777', fontSize: 12 },
   qrWrap: { alignItems: 'center', gap: 12, paddingVertical: 8 },
   qrLabel: { color: '#777', fontSize: 11, textAlign: 'center' },
+
+  ipBox: {
+    alignSelf: 'stretch',
+    borderWidth: 1, borderColor: 'rgba(232,201,122,0.25)',
+    backgroundColor: 'rgba(232,201,122,0.06)',
+    borderRadius: 8, padding: 12, gap: 4,
+  },
+  ipLabel: { color: '#777', fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
+  ipValue: { color: '#e8c97a', fontSize: 18, letterSpacing: 1, fontVariant: ['tabular-nums'] },
+  ipHint: { color: '#777', fontSize: 10, lineHeight: 15 },
 
   mediaHint: { color: '#777', fontSize: 11, lineHeight: 17, alignSelf: 'stretch' },
   mediaWarn: { color: '#e0a070', fontSize: 11, alignSelf: 'stretch' },
