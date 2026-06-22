@@ -47,6 +47,8 @@ export default function ScreenMode() {
   const playingMediaId = useRef<string | null>(null);
   // Réassemblage des images diffusées par la télécommande web (PWA index.html).
   const pwaImg = useRef<{ id: string; total: number; chunks: string[]; received: number } | null>(null);
+  // « Avancer au clic sur l'écran » : piloté par la télécommande (media:autoadvance).
+  const autoAdvance = useRef(false);
   const [blackout, setBlackout] = useState(false);
   const [torchCmd, setTorchCmd] = useState<TorchCommand | null>(null);
 
@@ -159,6 +161,9 @@ export default function ScreenMode() {
           playingMediaId.current = null;
           setPlayingMedia(null);
         }
+      }
+      if (msg.type === 'media:autoadvance') {
+        autoAdvance.current = !!msg.on;
       }
 
       // ── Compatibilité télécommande web (PWA index.html) ──
@@ -280,6 +285,14 @@ export default function ScreenMode() {
     router.replace('/');
   }, [stopStrobe, router]);
 
+  // Tap sur l'écran : si la télécommande a activé l'option, demande le média
+  // suivant (la télécommande détient l'ordre du pool et diffuse le M+1).
+  const handleScreenTap = useCallback(() => {
+    if (autoAdvance.current && playingMediaId.current) {
+      transportRef.current?.send({ type: 'media:advance', dir: 1 });
+    }
+  }, []);
+
   if (state === 'connect') {
     return (
       <View style={styles.connect}>
@@ -354,6 +367,7 @@ export default function ScreenMode() {
     <View style={[styles.screen, { backgroundColor: bgColor }]}>
       <StatusBar style="light" hidden />
       {playingMedia && <MediaOverlay media={playingMedia} />}
+      <Pressable style={styles.tapLayer} onPress={handleScreenTap} />
       {blackout && <View style={styles.blackout} pointerEvents="none" />}
       {Platform.OS !== 'web' && <TorchController command={torchCmd} />}
       {state === 'disconnected' && (
@@ -446,6 +460,11 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     position: 'relative',
+  },
+  tapLayer: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    zIndex: 200,
   },
   blackout: {
     position: 'absolute',

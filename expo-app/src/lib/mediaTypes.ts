@@ -8,6 +8,11 @@
  *   { type:'media:play',   mediaId }
  *   { type:'media:stop' }                            // masque le média, revient à la lumière
  *   { type:'media:clear',  mediaId }                 // mediaId='all' pour tout vider
+ *   { type:'media:autoadvance', on }                 // télécommande → écran : tap = média suivant
+ *   { type:'media:advance', dir }                    // écran → télécommande : +1 suivant / -1 précédent
+ *
+ * La télécommande détient l'ordre du pool et le pointeur courant : sur un
+ * media:advance (tap écran) ou les flèches, elle diffuse le média cible (M±1).
  *
  * Le transfert se fait À L'AVANCE (dès la sélection). La lecture pendant la
  * prise (media:play) est instantanée : elle lit un fichier déjà en cache.

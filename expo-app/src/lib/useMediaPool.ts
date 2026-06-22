@@ -41,19 +41,47 @@ async function readBase64(uri: string, fromPicker?: string | null): Promise<stri
 export function useMediaPool(transport: RemoteTransport, enabled: boolean) {
   const [items, setItems] = useState<RemoteMediaItem[]>([]);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [autoAdvance, setAutoAdvanceState] = useState(false);
+
+  // Refs « miroir » pour lire l'état courant dans les callbacks sans
+  // re-souscrire les handlers (onMessage est additif et non démontable).
+  const itemsRef = useRef<RemoteMediaItem[]>([]);
+  const playingRef = useRef<string | null>(null);
+  useEffect(() => { itemsRef.current = items; }, [items]);
+  useEffect(() => { playingRef.current = playingId; }, [playingId]);
 
   const update = useCallback((id: string, patch: Partial<RemoteMediaItem>) => {
     setItems(list => list.map(it => (it.id === id ? { ...it, ...patch } : it)));
   }, []);
 
-  // Accusés de réception de l'écran.
+  // Lecture d'un média déjà en cache sur l'écran.
+  const play = useCallback((id: string) => {
+    transport.send({ type: 'media:play', mediaId: id });
+    setPlayingId(id);
+  }, [transport]);
+
+  // Avance/recul dans la liste des médias *prêts*, en boucle. Pilote aussi le
+  // tap sur l'écran (message media:advance) et les flèches de la télécommande.
+  const advance = useCallback((dir: number) => {
+    const ready = itemsRef.current.filter(it => it.status === 'ready');
+    if (ready.length === 0) return;
+    const cur = ready.findIndex(it => it.id === playingRef.current);
+    const base = cur < 0 ? (dir > 0 ? -1 : 0) : cur;
+    const nextIdx = (((base + dir) % ready.length) + ready.length) % ready.length;
+    play(ready[nextIdx].id);
+  }, [play]);
+
+  // Accusés de réception + demandes d'avance émises par l'écran.
   useEffect(() => {
     transport.onMessage(msg => {
       if (msg.type === 'media:ready' && typeof msg.mediaId === 'string') {
         update(msg.mediaId, { status: 'ready', progress: 1 });
       }
+      if (msg.type === 'media:advance') {
+        advance(typeof msg.dir === 'number' ? msg.dir : 1);
+      }
     });
-  }, [transport, update]);
+  }, [transport, update, advance]);
 
   const sendChunks = useCallback(async (id: string, base64: string) => {
     const total = Math.ceil(base64.length / MEDIA_CHUNK_SIZE);
@@ -95,11 +123,6 @@ export function useMediaPool(transport: RemoteTransport, enabled: boolean) {
     }
   }, [enabled, items.length, transport, sendChunks, update]);
 
-  const play = useCallback((id: string) => {
-    transport.send({ type: 'media:play', mediaId: id });
-    setPlayingId(id);
-  }, [transport]);
-
   const stop = useCallback(() => {
     transport.send({ type: 'media:stop' });
     setPlayingId(null);
@@ -111,5 +134,29 @@ export function useMediaPool(transport: RemoteTransport, enabled: boolean) {
     setPlayingId(p => (p === id ? null : p));
   }, [transport]);
 
-  return { items, playingId, pickAndUpload, play, stop, clear };
+  // Déplace un média dans l'ordre du pool (−1 = vers le haut, +1 = vers le bas).
+  const reorder = useCallback((id: string, dir: -1 | 1) => {
+    setItems(list => {
+      const idx = list.findIndex(it => it.id === id);
+      const j = idx + dir;
+      if (idx < 0 || j < 0 || j >= list.length) return list;
+      const copy = list.slice();
+      [copy[idx], copy[j]] = [copy[j], copy[idx]];
+      return copy;
+    });
+  }, []);
+
+  // Active/désactive « passer au média suivant d'un clic sur l'écran ».
+  const setAutoAdvance = useCallback((on: boolean) => {
+    setAutoAdvanceState(on);
+    transport.send({ type: 'media:autoadvance', on });
+  }, [transport]);
+
+  const next = useCallback(() => advance(1), [advance]);
+  const prev = useCallback(() => advance(-1), [advance]);
+
+  return {
+    items, playingId, pickAndUpload, play, stop, clear,
+    reorder, next, prev, autoAdvance, setAutoAdvance,
+  };
 }

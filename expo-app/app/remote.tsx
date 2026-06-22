@@ -403,13 +403,59 @@ export default function RemoteScreen() {
               </Pressable>
             </View>
 
+            {media.items.length > 0 && (
+              <>
+                <View style={styles.mediaNavRow}>
+                  <Pressable
+                    style={[styles.mediaNavBtn, !connected && styles.mediaBtnDisabled]}
+                    disabled={!connected}
+                    onPress={media.prev}
+                  >
+                    <Text style={styles.mediaNavText}>◀ Précédent</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.mediaNavBtn, !connected && styles.mediaBtnDisabled]}
+                    disabled={!connected}
+                    onPress={media.next}
+                  >
+                    <Text style={styles.mediaNavText}>Suivant ▶</Text>
+                  </Pressable>
+                </View>
+                <View style={styles.toggleRow}>
+                  <Text style={styles.sliderLabel}>Avancer au clic sur l'écran</Text>
+                  <Switch
+                    value={media.autoAdvance}
+                    onValueChange={media.setAutoAdvance}
+                    disabled={!connected}
+                    trackColor={{ true: '#e8c97a' }}
+                  />
+                </View>
+              </>
+            )}
+
             {media.items.length === 0 && (
               <Text style={styles.mediaEmpty}>Aucun média transféré.</Text>
             )}
 
-            {media.items.map(item => (
+            {media.items.map((item, idx) => (
               <View key={item.id} style={styles.mediaItem}>
                 <View style={styles.mediaItemHead}>
+                  <View style={styles.mediaReorder}>
+                    <Pressable
+                      style={[styles.mediaReorderBtn, idx === 0 && styles.mediaBtnDisabled]}
+                      disabled={idx === 0}
+                      onPress={() => media.reorder(item.id, -1)}
+                    >
+                      <Text style={styles.mediaReorderText}>▲</Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.mediaReorderBtn, idx === media.items.length - 1 && styles.mediaBtnDisabled]}
+                      disabled={idx === media.items.length - 1}
+                      onPress={() => media.reorder(item.id, 1)}
+                    >
+                      <Text style={styles.mediaReorderText}>▼</Text>
+                    </Pressable>
+                  </View>
                   <Text style={styles.mediaItemName} numberOfLines={1}>
                     {item.kind === 'video' ? '🎬' : '🖼'} {item.name}
                   </Text>
@@ -745,6 +791,21 @@ const styles = StyleSheet.create({
   mediaBtnDisabled: { opacity: 0.4 },
   mediaBtnText: { color: '#f0ede8', fontSize: 12 },
   mediaEmpty: { color: '#555', fontSize: 12, alignSelf: 'stretch', textAlign: 'center', paddingVertical: 8 },
+  mediaNavRow: { flexDirection: 'row', gap: 10, alignSelf: 'stretch' },
+  mediaNavBtn: {
+    flex: 1,
+    borderWidth: 1, borderColor: 'rgba(232,201,122,0.4)',
+    backgroundColor: 'rgba(232,201,122,0.08)',
+    paddingVertical: 12, borderRadius: 8, alignItems: 'center',
+  },
+  mediaNavText: { color: '#e8c97a', fontSize: 13, fontWeight: '600' },
+  mediaReorder: { flexDirection: 'row', gap: 4 },
+  mediaReorderBtn: {
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
+    width: 26, height: 26, borderRadius: 5,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  mediaReorderText: { color: '#f0ede8', fontSize: 11 },
   mediaItem: {
     alignSelf: 'stretch',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
