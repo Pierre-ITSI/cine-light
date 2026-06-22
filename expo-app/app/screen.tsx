@@ -45,6 +45,8 @@ export default function ScreenMode() {
   const [statusText, setStatusText] = useState('');
   const [playingMedia, setPlayingMedia] = useState<CachedMedia | null>(null);
   const playingMediaId = useRef<string | null>(null);
+  // Réassemblage des images diffusées par la télécommande web (PWA index.html).
+  const pwaImg = useRef<{ id: string; total: number; chunks: string[]; received: number } | null>(null);
   const [blackout, setBlackout] = useState(false);
   const [torchCmd, setTorchCmd] = useState<TorchCommand | null>(null);
 
@@ -157,6 +159,59 @@ export default function ScreenMode() {
           playingMediaId.current = null;
           setPlayingMedia(null);
         }
+      }
+
+      // ── Compatibilité télécommande web (PWA index.html) ──
+      // La PWA emploie un vocabulaire différent pour la torche et les images ;
+      // on le traduit ici pour que l'écran natif réponde aux deux protocoles.
+
+      // Torche : torch-onoff / torch-dim / torch-effect.
+      if (msg.type === 'torch-onoff' && Platform.OS !== 'web') {
+        setTorchCmd({ mode: msg.on ? 'on' : 'off', nonce: Date.now() });
+      }
+      if (msg.type === 'torch-dim' && Platform.OS !== 'web') {
+        // La torche native est binaire (pas de gradation matérielle) : >0 ⇒ allumée.
+        const level = typeof msg.level === 'number' ? msg.level : 0;
+        setTorchCmd({ mode: level > 0 ? 'on' : 'off', nonce: Date.now() });
+      }
+      if (msg.type === 'torch-effect' && Platform.OS !== 'web') {
+        const eff = String(msg.effect || '');
+        if (eff === 'stop') {
+          setTorchCmd({ mode: 'off', nonce: Date.now() });
+        } else {
+          const presets: Record<string, { onMs: number; offMs: number }> = {
+            'blink-slow': { onMs: 600, offMs: 400 },
+            'blink-fast': { onMs: 80, offMs: 80 },
+            'police': { onMs: 60, offMs: 60 },
+            'heartbeat': { onMs: 90, offMs: 200 },
+            'sos': { onMs: 200, offMs: 200 },
+          };
+          const p = presets[eff] ?? { onMs: 120, offMs: 120 };
+          setTorchCmd({ mode: 'flash', onMs: p.onMs, offMs: p.offMs, loop: true, nonce: Date.now() });
+        }
+      }
+
+      // Images : media-img-start / media-img-chunk / media-stop. Les morceaux
+      // reconstituent une data-URL JPEG affichable directement (expo-image).
+      if (msg.type === 'media-img-start') {
+        pwaImg.current = { id: String(msg.id), total: Number(msg.total) || 0, chunks: [], received: 0 };
+      }
+      if (msg.type === 'media-img-chunk' && pwaImg.current && String(msg.id) === pwaImg.current.id) {
+        const buf = pwaImg.current;
+        const i = Number(msg.i);
+        if (buf.chunks[i] === undefined) { buf.chunks[i] = String(msg.data); buf.received++; }
+        if (buf.total > 0 && buf.received >= buf.total) {
+          const dataUrl = buf.chunks.join('');
+          pwaImg.current = null;
+          stopStrobe();
+          playingMediaId.current = 'pwa-img';
+          setPlayingMedia({ mediaId: 'pwa-img', kind: 'image', mime: 'image/jpeg', uri: dataUrl, date: Date.now() });
+        }
+      }
+      if (msg.type === 'media-stop') {
+        pwaImg.current = null;
+        playingMediaId.current = null;
+        setPlayingMedia(null);
       }
     });
     transportRef.current = t;
@@ -299,9 +354,6 @@ export default function ScreenMode() {
     <View style={[styles.screen, { backgroundColor: bgColor }]}>
       <StatusBar style="light" hidden />
       {playingMedia && <MediaOverlay media={playingMedia} />}
-      {state === 'active' && !playingMedia && !blackout && (
-        <Text style={styles.pill} numberOfLines={1}>{statusText}</Text>
-      )}
       {blackout && <View style={styles.blackout} pointerEvents="none" />}
       {Platform.OS !== 'web' && <TorchController command={torchCmd} />}
       {state === 'disconnected' && (
