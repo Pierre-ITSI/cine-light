@@ -6,6 +6,7 @@ import {
 import { useRouter } from 'expo-router';
 import QRCode from 'react-native-qrcode-svg';
 import { ColorWheel } from '../src/components/ColorWheel';
+import { MediaPoolList } from '../src/components/MediaPoolList';
 import { computeColor, ColorSpec } from '../src/lib/color';
 import { generateChannel } from '../src/lib/channel';
 import { useLocalIp } from '../src/lib/useLocalIp';
@@ -79,6 +80,9 @@ export default function RemoteScreen() {
 
   // Adresse IP locale de cet appareil (rafraîchie en continu) pour le Wi-Fi local.
   const localIp = useLocalIp();
+
+  // Fige le défilement pendant un cliquer-glisser du pool média.
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   // Capacités annoncées par l'écran connecté (torche/vibreur selon plateforme).
   useEffect(() => {
@@ -228,7 +232,12 @@ export default function RemoteScreen() {
           ))}
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentInner}
+        scrollEnabled={scrollEnabled}
+        keyboardShouldPersistTaps="handled"
+      >
         {tab === 'color' && (
           <View style={styles.panel}>
             <ColorWheel size={220} onPick={hex => { updateSpec({ wheelHex: hex, crossfade: Math.max(spec.crossfade, 20) }); }} />
@@ -408,101 +417,53 @@ export default function RemoteScreen() {
               </Pressable>
             </View>
 
+            <View style={styles.toggleRow}>
+              <Text style={styles.sliderLabel}>Avancer au clic sur l'écran de jeu</Text>
+              <Switch
+                value={media.autoAdvance}
+                onValueChange={media.setAutoAdvance}
+                disabled={!connected}
+                trackColor={{ true: '#e8c97a' }}
+              />
+            </View>
+
             {media.items.length > 0 && (
-              <>
-                <View style={styles.mediaNavRow}>
-                  <Pressable
-                    style={[styles.mediaNavBtn, !connected && styles.mediaBtnDisabled]}
-                    disabled={!connected}
-                    onPress={media.prev}
-                  >
-                    <Text style={styles.mediaNavText}>◀ Précédent</Text>
-                  </Pressable>
-                  <Pressable
-                    style={[styles.mediaNavBtn, !connected && styles.mediaBtnDisabled]}
-                    disabled={!connected}
-                    onPress={media.next}
-                  >
-                    <Text style={styles.mediaNavText}>Suivant ▶</Text>
-                  </Pressable>
-                </View>
-                <View style={styles.toggleRow}>
-                  <Text style={styles.sliderLabel}>Avancer au clic sur l'écran</Text>
-                  <Switch
-                    value={media.autoAdvance}
-                    onValueChange={media.setAutoAdvance}
-                    disabled={!connected}
-                    trackColor={{ true: '#e8c97a' }}
-                  />
-                </View>
-              </>
+              <View style={styles.mediaNavRow}>
+                <Pressable
+                  style={[styles.mediaNavBtn, !connected && styles.mediaBtnDisabled]}
+                  disabled={!connected}
+                  onPress={media.prev}
+                >
+                  <Text style={styles.mediaNavText}>◀ Précédent</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.mediaNavBtn, !connected && styles.mediaBtnDisabled]}
+                  disabled={!connected}
+                  onPress={media.next}
+                >
+                  <Text style={styles.mediaNavText}>Suivant ▶</Text>
+                </Pressable>
+              </View>
             )}
 
             {media.items.length === 0 && (
               <Text style={styles.mediaEmpty}>Aucun média transféré.</Text>
             )}
 
-            {media.items.map((item, idx) => (
-              <View key={item.id} style={styles.mediaItem}>
-                <View style={styles.mediaItemHead}>
-                  <View style={styles.mediaReorder}>
-                    <Pressable
-                      style={[styles.mediaReorderBtn, idx === 0 && styles.mediaBtnDisabled]}
-                      disabled={idx === 0}
-                      onPress={() => media.reorder(item.id, -1)}
-                    >
-                      <Text style={styles.mediaReorderText}>▲</Text>
-                    </Pressable>
-                    <Pressable
-                      style={[styles.mediaReorderBtn, idx === media.items.length - 1 && styles.mediaBtnDisabled]}
-                      disabled={idx === media.items.length - 1}
-                      onPress={() => media.reorder(item.id, 1)}
-                    >
-                      <Text style={styles.mediaReorderText}>▼</Text>
-                    </Pressable>
-                  </View>
-                  <Text style={styles.mediaItemName} numberOfLines={1}>
-                    {item.kind === 'video' ? '🎬' : '🖼'} {item.name}
-                  </Text>
-                  <Text style={styles.mediaItemStatus}>
-                    {item.status === 'uploading'
-                      ? `Transfert ${Math.round(item.progress * 100)}%`
-                      : item.status === 'ready'
-                        ? '✓ En cache'
-                        : '⚠ Erreur'}
-                  </Text>
-                </View>
-                {item.status === 'uploading' && (
-                  <View style={styles.mediaProgressTrack}>
-                    <View style={[styles.mediaProgressFill, { width: `${item.progress * 100}%` }]} />
-                  </View>
-                )}
-                <View style={styles.mediaItemActions}>
-                  <Pressable
-                    style={[
-                      styles.mediaSmallBtn,
-                      styles.mediaPlayBtn,
-                      item.status !== 'ready' && styles.mediaBtnDisabled,
-                      media.playingId === item.id && styles.mediaPlayBtnActive,
-                    ]}
-                    disabled={item.status !== 'ready'}
-                    onPress={() => media.play(item.id)}
-                  >
-                    <Text style={styles.mediaSmallBtnText}>
-                      {media.playingId === item.id ? '▶ En lecture' : '▶ Jouer'}
-                    </Text>
-                  </Pressable>
-                  {media.playingId === item.id && (
-                    <Pressable style={styles.mediaSmallBtn} onPress={media.stop}>
-                      <Text style={styles.mediaSmallBtnText}>■ Stop</Text>
-                    </Pressable>
-                  )}
-                  <Pressable style={styles.mediaSmallBtn} onPress={() => media.clear(item.id)}>
-                    <Text style={[styles.mediaSmallBtnText, styles.mediaDanger]}>✕</Text>
-                  </Pressable>
-                </View>
-              </View>
-            ))}
+            {media.items.length > 0 && (
+              <>
+                <Text style={styles.mediaReorderHint}>Glissez la poignée ≡ pour réordonner.</Text>
+                <MediaPoolList
+                  items={media.items}
+                  playingId={media.playingId}
+                  onPlay={media.play}
+                  onStop={media.stop}
+                  onClear={media.clear}
+                  onMove={media.moveItem}
+                  onDragChange={active => setScrollEnabled(!active)}
+                />
+              </>
+            )}
           </View>
         )}
 
@@ -634,7 +595,12 @@ function SliderRN({ min, max, value, step = 1, onChange }: SliderProps) {
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
       onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      // Empêche le ScrollView parent de « voler » le geste en cours de glissement.
+      onPanResponderTerminationRequest: () => false,
+      onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: (e) => {
         const { min: mn, max: mx, step: st } = paramsRef.current;
         const ratio = Math.min(1, Math.max(0, e.nativeEvent.locationX / trackWidthRef.current));
@@ -655,6 +621,7 @@ function SliderRN({ min, max, value, step = 1, onChange }: SliderProps) {
   return (
     <View
       style={styles.sliderTrack}
+      hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }}
       onLayout={e => { trackWidthRef.current = e.nativeEvent.layout.width; }}
       {...panResponder.panHandlers}
     >
@@ -819,6 +786,7 @@ const styles = StyleSheet.create({
   mediaBtnDisabled: { opacity: 0.4 },
   mediaBtnText: { color: '#f0ede8', fontSize: 12 },
   mediaEmpty: { color: '#555', fontSize: 12, alignSelf: 'stretch', textAlign: 'center', paddingVertical: 8 },
+  mediaReorderHint: { color: '#777', fontSize: 10, alignSelf: 'stretch' },
   mediaNavRow: { flexDirection: 'row', gap: 10, alignSelf: 'stretch' },
   mediaNavBtn: {
     flex: 1,

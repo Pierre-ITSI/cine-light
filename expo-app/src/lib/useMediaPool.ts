@@ -118,6 +118,9 @@ export function useMediaPool(transport: RemoteTransport, enabled: boolean) {
       const total = Math.ceil(base64.length / MEDIA_CHUNK_SIZE);
       transport.send({ type: 'media:upload', mediaId: id, kind, mime, totalChunks: total });
       await sendChunks(id, base64);
+      // Le transfert est terminé : on rend le média jouable sans attendre
+      // l'accusé « media:ready » (qui n'arrive pas si l'écran est une PWA).
+      update(id, { status: 'ready', progress: 1 });
     } catch (_) {
       update(id, { status: 'error' });
     }
@@ -146,6 +149,17 @@ export function useMediaPool(transport: RemoteTransport, enabled: boolean) {
     });
   }, []);
 
+  // Déplace un média de la position `from` à la position `to` (cliquer-glisser).
+  const moveItem = useCallback((from: number, to: number) => {
+    setItems(list => {
+      if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return list;
+      const copy = list.slice();
+      const [moved] = copy.splice(from, 1);
+      copy.splice(to, 0, moved);
+      return copy;
+    });
+  }, []);
+
   // Active/désactive « passer au média suivant d'un clic sur l'écran ».
   const setAutoAdvance = useCallback((on: boolean) => {
     setAutoAdvanceState(on);
@@ -157,6 +171,6 @@ export function useMediaPool(transport: RemoteTransport, enabled: boolean) {
 
   return {
     items, playingId, pickAndUpload, play, stop, clear,
-    reorder, next, prev, autoAdvance, setAutoAdvance,
+    reorder, moveItem, next, prev, autoAdvance, setAutoAdvance,
   };
 }
