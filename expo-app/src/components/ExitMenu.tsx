@@ -15,6 +15,7 @@ interface Props {
 export function ExitMenu({ channel, onResume, onChangeChannel, onHome, onDisconnect, onClearCache }: Props) {
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTap = useRef(0);
 
   const startPress = useCallback(() => {
     if (open) return;
@@ -28,12 +29,27 @@ export function ExitMenu({ channel, onResume, onChangeChannel, onHome, onDisconn
     if (timer.current) { clearTimeout(timer.current); timer.current = null; }
   }, []);
 
+  // Double-tap (deux contacts à moins de 300 ms) : alternative tactile rapide
+  // à l'appui long, identique au hotspot du PWA.
+  const handleTap = useCallback(() => {
+    if (open) return;
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      lastTap.current = 0;
+      if (Platform.OS !== 'web') Vibration.vibrate(40);
+      setOpen(true);
+    } else {
+      lastTap.current = now;
+    }
+  }, [open]);
+
   return (
     <>
       <Pressable
         style={styles.zone}
         onPressIn={startPress}
         onPressOut={cancelPress}
+        onPress={handleTap}
         delayLongPress={LONG_PRESS_MS}
       />
       {open && (
@@ -67,8 +83,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    width: 80,
-    height: 80,
+    // Même zone que le hotspot du PWA (45vw × 45vh) : coin haut-gauche.
+    width: '45%',
+    height: '45%',
     zIndex: 9999,
     backgroundColor: 'transparent',
   },
