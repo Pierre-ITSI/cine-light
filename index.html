@@ -377,7 +377,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
     <button class="screen-bar-btn" onclick="event.stopPropagation();suspendScreen()">⏸ Suspendre</button>
     <button class="screen-bar-btn" id="screenBlackoutBtn" onclick="event.stopPropagation();toggleScreenBlackout()">⚫ Off</button>
   </div>
-  <!-- Zone tactile (haut-gauche, 1/5 de l'écran) : double-clic = menu -->
+  <!-- Zone tactile (haut-gauche, 1/5 de l'écran) : double-clic OU appui long = menu -->
   <div id="screen-menu-hotspot" onclick="event.stopPropagation()" ondblclick="event.stopPropagation();openScreenMenu()"></div>
   <!-- Menu plein écran identique à l'app native -->
   <div id="screen-menu" onclick="event.stopPropagation()">
@@ -943,13 +943,56 @@ function suspendScreen() {
   setTimeout(() => { if (inp) inp.focus(); }, 100);
 }
 
-// ── Menu de l'écran de jeu (double-clic coin haut-gauche) ──
+// ── Menu de l'écran de jeu (double-clic OU appui long, coin haut-gauche) ──
 function openScreenMenu() {
   const m = document.getElementById('screen-menu');
   const c = document.getElementById('screenMenuChannel');
   if (c) c.textContent = 'Canal : ' + (channel || '—');
   if (m) m.style.display = 'flex';
 }
+
+// Appui long (~600 ms) sur le hotspot : fiable sur mobile, où le double-clic
+// est souvent intercepté/ignoré par le navigateur. On gère aussi un double-tap
+// manuel (deux contacts rapprochés) en secours.
+(function setupScreenMenuHotspot() {
+  const hot = document.getElementById('screen-menu-hotspot');
+  if (!hot) return;
+  let pressTimer = null;
+  let startX = 0, startY = 0;
+  let lastTap = 0;
+  const LONG_MS = 600;
+  const MOVE_TOL = 14; // px de tolérance avant d'annuler l'appui long
+
+  const cancel = () => {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  };
+
+  hot.addEventListener('touchstart', (e) => {
+    e.stopPropagation();
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY;
+    cancel();
+    pressTimer = setTimeout(() => { pressTimer = null; openScreenMenu(); }, LONG_MS);
+  }, { passive: true });
+
+  hot.addEventListener('touchmove', (e) => {
+    const t = e.touches[0];
+    if (Math.abs(t.clientX - startX) > MOVE_TOL || Math.abs(t.clientY - startY) > MOVE_TOL) cancel();
+  }, { passive: true });
+
+  hot.addEventListener('touchend', (e) => {
+    e.stopPropagation();
+    const wasLong = pressTimer === null; // le timer a déjà déclenché le menu
+    cancel();
+    if (wasLong) return;
+    // Double-tap manuel en secours (deux contacts à moins de 300 ms).
+    const now = Date.now();
+    if (now - lastTap < 300) { lastTap = 0; openScreenMenu(); }
+    else lastTap = now;
+  });
+
+  hot.addEventListener('touchcancel', cancel, { passive: true });
+})();
 function closeScreenMenu() {
   const m = document.getElementById('screen-menu');
   if (m) m.style.display = 'none';
