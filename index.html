@@ -236,6 +236,16 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 #screen-bar.ui-hidden,#screen-status.ui-hidden{opacity:0;pointer-events:none}
 #screen-mode.cursor-hidden{cursor:none}
 
+/* Écran de jeu épuré : aucune information visible. Seul un double-clic dans le
+   coin haut-gauche (zone = 1/5 de l'écran) ouvre le menu (comme l'app native). */
+#screen-bar,#screen-status{display:none!important}
+#screen-menu-hotspot{position:absolute;top:0;left:0;width:45vw;height:45vh;z-index:300;background:transparent}
+#screen-menu{display:none;position:absolute;inset:0;z-index:400;background:rgba(0,0,0,.92);flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px}
+.screen-menu-info{color:rgba(255,255,255,.5);font-size:.82rem;letter-spacing:.06em;margin-bottom:8px}
+.screen-menu-btn{width:100%;max-width:300px;padding:16px;border:1px solid rgba(255,255,255,.15);border-radius:8px;background:transparent;color:#f0ede8;font-size:.95rem;font-family:inherit;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.screen-menu-btn:active{background:rgba(255,255,255,.06)}
+.screen-menu-btn.danger{border-color:rgba(255,100,100,.3);color:#ff8080}
+
 /* SCREEN MEDIA (image / vidéo diffusée) */
 #screen-media-img,#screen-media-video{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:50}
 #screen-blackout{display:none;position:absolute;inset:0;background:#000;z-index:90}
@@ -365,6 +375,16 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
     <button class="screen-bar-btn" onclick="event.stopPropagation();goBackToSplash()">← Retour</button>
     <button class="screen-bar-btn" onclick="event.stopPropagation();suspendScreen()">⏸ Suspendre</button>
     <button class="screen-bar-btn" id="screenBlackoutBtn" onclick="event.stopPropagation();toggleScreenBlackout()">⚫ Off</button>
+  </div>
+  <!-- Zone tactile (haut-gauche, 1/5 de l'écran) : double-clic = menu -->
+  <div id="screen-menu-hotspot" onclick="event.stopPropagation()" ondblclick="event.stopPropagation();openScreenMenu()"></div>
+  <!-- Menu plein écran identique à l'app native -->
+  <div id="screen-menu" onclick="event.stopPropagation()">
+    <div class="screen-menu-info" id="screenMenuChannel">Canal : —</div>
+    <button class="screen-menu-btn" onclick="closeScreenMenu()">Reprendre l'affichage</button>
+    <button class="screen-menu-btn" onclick="closeScreenMenu();suspendScreen()">Changer de code canal</button>
+    <button class="screen-menu-btn" onclick="closeScreenMenu();goBackToSplash()">Retour à l'accueil</button>
+    <button class="screen-menu-btn danger" onclick="screenDisconnect()">Se déconnecter</button>
   </div>
 </div>
 
@@ -922,9 +942,27 @@ function suspendScreen() {
   setTimeout(() => { if (inp) inp.focus(); }, 100);
 }
 
+// ── Menu de l'écran de jeu (double-clic coin haut-gauche) ──
+function openScreenMenu() {
+  const m = document.getElementById('screen-menu');
+  const c = document.getElementById('screenMenuChannel');
+  if (c) c.textContent = 'Canal : ' + (channel || '—');
+  if (m) m.style.display = 'flex';
+}
+function closeScreenMenu() {
+  const m = document.getElementById('screen-menu');
+  if (m) m.style.display = 'none';
+}
+function screenDisconnect() {
+  closeScreenMenu();
+  if (mqttClient) { try { mqttClient.end(true); } catch (_) {} mqttClient = null; }
+  goBackToSplash();
+}
+
 function goBackToSplash() {
   exitFS();
   cancelScreenAutohide();
+  closeScreenMenu();
   hideScreenMedia();
   setBlackout(false);
   const cfgDiv = document.getElementById('screen-sacn-config');
@@ -2194,7 +2232,8 @@ function renderPool() {
   const advRow = document.getElementById('mediaAutoAdvRow');
   const hasItems = _mediaPool.length > 0;
   if (nav) nav.style.display = hasItems ? 'flex' : 'none';
-  if (advRow) advRow.style.display = hasItems ? 'flex' : 'none';
+  // Le toggle « avancer au clic sur l'écran » est toujours visible (comme le natif).
+  if (advRow) advRow.style.display = 'flex';
   if (!grid) return;
   grid.innerHTML = _mediaPool.map((it, idx) => {
     const active = it.id === _activeMediaId;
