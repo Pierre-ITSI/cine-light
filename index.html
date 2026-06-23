@@ -2654,10 +2654,28 @@ if(location.hash) enterScreenMode(location.hash.replace('#',''));
 // ══════════════════════════ PWA — installation & hors-ligne ══════════════════════════
 let _deferredInstall = null;
 
-// Enregistrement du service worker
+// Enregistrement du service worker + rechargement auto sur mise à jour.
+// Quand une nouvelle version du SW prend le contrôle (skipWaiting + clients.claim),
+// l'évènement `controllerchange` se déclenche : on recharge la page une seule fois
+// pour servir le nouvel index.html, sans que l'utilisateur ait à réinstaller la PWA.
 if ('serviceWorker' in navigator) {
+  // Vrai seulement s'il existait déjà un SW au chargement (donc : mise à jour, pas
+  // première installation) → évite un rechargement inutile au tout premier lancement.
+  const _hadController = !!navigator.serviceWorker.controller;
+  let _swReloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!_hadController || _swReloaded) return;
+    _swReloaded = true;
+    window.location.reload();
+  });
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      // Vérifie une mise à jour à chaque ouverture et au retour au premier plan.
+      reg.update().catch(() => {});
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+      });
+    }).catch(() => {});
   });
 }
 
