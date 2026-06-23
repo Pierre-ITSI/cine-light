@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
+import * as Brightness from 'expo-brightness';
 import { ExitMenu } from '../src/components/ExitMenu';
 import { MediaOverlay } from '../src/components/MediaOverlay';
 import { TorchController, type TorchCommand } from '../src/components/TorchController';
@@ -239,6 +240,28 @@ export default function ScreenMode() {
       NavigationBar.setVisibilityAsync('visible').catch(() => {});
     }
     return () => { NavigationBar.setVisibilityAsync('visible').catch(() => {}); };
+  }, [state]);
+
+  // Forçage de la luminosité maximale tant que l'écran est connecté à un canal
+  // (quel que soit le mode : code canal / Wi-Fi / Bluetooth). On restaure la
+  // luminosité système en quittant l'état actif ou en démontant l'écran.
+  // La non-mise-en-veille est, elle, déjà garantie par useKeepAwake() ci-dessus.
+  useEffect(() => {
+    if (Platform.OS === 'web' || state !== 'active') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        if (await Brightness.isAvailableAsync() && !cancelled) {
+          await Brightness.setBrightnessAsync(1);
+        }
+      } catch (_) { /* indisponible : on garde la luminosité courante */ }
+    })();
+    return () => {
+      cancelled = true;
+      // restoreSystemBrightnessAsync est Android-only ; sur iOS la luminosité
+      // revient d'elle-même au verrouillage. On ignore les erreurs éventuelles.
+      Brightness.restoreSystemBrightnessAsync().catch(() => {});
+    };
   }, [state]);
 
   useEffect(() => {
