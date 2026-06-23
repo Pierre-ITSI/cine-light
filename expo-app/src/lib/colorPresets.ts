@@ -9,10 +9,24 @@
 import { Platform } from 'react-native';
 import type { ColorSpec } from './color';
 
+/** État du stroboscope mémorisé avec un preset (toutes plateformes). */
+export interface StrobeState {
+  active: boolean;
+  random: boolean; // false = régulier
+  freq: number;
+  dur: number;
+  freqMax: number;
+  durMax: number;
+  vibrate?: boolean; // natif : vibreur synchronisé
+  torch?: boolean;   // PWA : torche synchronisée
+}
+
 export interface ColorPreset {
   id: string;
   name: string;
   spec: ColorSpec;
+  /** État stroboscope mémorisé (absent sur les anciennes mémoires). */
+  strobe?: StrobeState;
 }
 
 const DIRNAME = 'cinelight';

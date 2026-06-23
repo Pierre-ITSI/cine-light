@@ -12,7 +12,7 @@ import { generateChannel } from '../src/lib/channel';
 import { useLocalIp } from '../src/lib/useLocalIp';
 import { WIFI_PORT } from '../src/transport/transportConfig';
 import { useMediaPool } from '../src/lib/useMediaPool';
-import { loadPresets, savePresets, newPresetId, type ColorPreset } from '../src/lib/colorPresets';
+import { loadPresets, savePresets, newPresetId, type ColorPreset, type StrobeState } from '../src/lib/colorPresets';
 import { createTransport } from '../src/transport/createTransport';
 import type { RemoteTransport, TransportStatus, TransportMode } from '../src/transport/RemoteTransport';
 import { AVAILABLE_MODES, MODE_LABELS, suggestMode } from '../src/lib/connectivity';
@@ -100,21 +100,41 @@ export default function RemoteScreen() {
     setPresets(list);
     savePresets(list);
   }, []);
+  // Capture l'état stroboscope courant pour le mémoriser avec un preset.
+  const currentStrobe = useCallback((): StrobeState => ({
+    active: strobeActive, random: strobeRandom,
+    freq: strobeFreq, dur: strobeDur,
+    freqMax: strobeFreqMax, durMax: strobeDurMax,
+    vibrate: strobeVibrate,
+  }), [strobeActive, strobeRandom, strobeFreq, strobeDur, strobeFreqMax, strobeDurMax, strobeVibrate]);
   const saveNewPreset = useCallback(() => {
     const preset: ColorPreset = {
       id: newPresetId(),
       name: 'Mémoire ' + (presets.length + 1),
       spec: { ...spec },
+      strobe: currentStrobe(),
     };
     persistPresets([...presets, preset]);
     setSelectedPresetId(preset.id);
-  }, [presets, spec, persistPresets]);
+  }, [presets, spec, currentStrobe, persistPresets]);
   const updateSelectedPreset = useCallback(() => {
     if (!selectedPresetId) return;
-    persistPresets(presets.map(p => (p.id === selectedPresetId ? { ...p, spec: { ...spec } } : p)));
-  }, [selectedPresetId, presets, spec, persistPresets]);
+    persistPresets(presets.map(p => (
+      p.id === selectedPresetId ? { ...p, spec: { ...spec }, strobe: currentStrobe() } : p
+    )));
+  }, [selectedPresetId, presets, spec, currentStrobe, persistPresets]);
   const applyPreset = useCallback((p: ColorPreset) => {
     setSpec({ ...p.spec });
+    // Restaure aussi l'état stroboscope (les effets le rediffusent à l'écran).
+    if (p.strobe) {
+      setStrobeActive(p.strobe.active);
+      setStrobeRandom(p.strobe.random);
+      setStrobeFreq(p.strobe.freq);
+      setStrobeDur(p.strobe.dur);
+      setStrobeFreqMax(p.strobe.freqMax);
+      setStrobeDurMax(p.strobe.durMax);
+      setStrobeVibrate(!!p.strobe.vibrate);
+    }
     setSelectedPresetId(p.id);
   }, []);
   const deletePreset = useCallback((id: string) => {

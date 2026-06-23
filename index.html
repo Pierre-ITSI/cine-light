@@ -1896,6 +1896,36 @@ function persistColorMemories(){
 function currentColorSpec(){
   return { kelvin:kelvinK, tint:colorTint, dimmer:colorDimmer, wheelHex:colorWheelHex, crossfade:colorCrossfade };
 }
+// État stroboscope courant, mémorisé avec la mémoire de couleur.
+function currentStrobeState(){
+  const ts=document.getElementById('torchSyncToggle');
+  return { active:strobeActive, random:strobeMode==='random', freq:strobeFreq, dur:strobeFlashDur,
+           freqMax:strobeFreqMax, durMax:strobeFlashDurMax, torch: ts?ts.checked:false };
+}
+// Restaure l'état stroboscope (contrôles + diffusion à l'écran).
+function applyStrobeState(s){
+  if(!s) return;
+  // Couper d'abord pour neutraliser l'envoi interne de setStrobeMode.
+  strobeActive=false;
+  strobeFreq=s.freq; strobeFlashDur=s.dur; strobeFreqMax=s.freqMax; strobeFlashDurMax=s.durMax;
+  let el;
+  el=document.getElementById('freqSlider');       if(el) el.value=strobeFreq;
+  el=document.getElementById('flashDurSlider');    if(el) el.value=strobeFlashDur;
+  el=document.getElementById('freqMaxSlider');     if(el) el.value=strobeFreqMax;
+  el=document.getElementById('flashDurMaxSlider'); if(el) el.value=strobeFlashDurMax;
+  el=document.getElementById('freqVal');        if(el) el.innerHTML=strobeFreq.toFixed(1)+'<span> Hz</span>';
+  el=document.getElementById('flashDurVal');    if(el) el.innerHTML=strobeFlashDur+'<span> ms</span>';
+  el=document.getElementById('freqMaxVal');     if(el) el.innerHTML=strobeFreqMax.toFixed(1)+'<span> Hz</span>';
+  el=document.getElementById('flashDurMaxVal'); if(el) el.innerHTML=strobeFlashDurMax+'<span> ms</span>';
+  const ts=document.getElementById('torchSyncToggle'); if(ts) ts.checked=!!s.torch;
+  setStrobeMode(s.random?'random':'regular');
+  // Appliquer l'état actif/inactif réel et (re)diffuser.
+  strobeActive=!!s.active;
+  const tog=document.getElementById('strobeToggle');     if(tog) tog.checked=strobeActive;
+  const badge=document.getElementById('strobeActiveBadge'); if(badge) badge.style.display=strobeActive?'block':'none';
+  if(strobeActive){ sendMsg(buildStrobePayload()); runLocalStrobePreview(); }
+  else { sendMsg({type:'strobe',active:false}); stopLocalStrobePreview(); }
+}
 // Couleur affichée pour une mémoire (même calcul que recomputeColor).
 function memorySwatch(s){
   const white=tintWhite(kelvinToRgb(s.kelvin),s.tint);
@@ -1921,19 +1951,20 @@ function applyColorState(s){
 }
 function saveColorMemory(){
   const m={ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
-            name: 'Mémoire '+(colorMemories.length+1), spec: currentColorSpec() };
+            name: 'Mémoire '+(colorMemories.length+1),
+            spec: currentColorSpec(), strobe: currentStrobeState() };
   colorMemories.push(m); selectedMemoryId=m.id;
   persistColorMemories(); renderColorMemories();
 }
 function updateColorMemory(){
   if(!selectedMemoryId) return;
   const m=colorMemories.find(x=>x.id===selectedMemoryId); if(!m) return;
-  m.spec=currentColorSpec();
+  m.spec=currentColorSpec(); m.strobe=currentStrobeState();
   persistColorMemories(); renderColorMemories();
 }
 function applyColorMemory(id){
   const m=colorMemories.find(x=>x.id===id); if(!m) return;
-  selectedMemoryId=id; applyColorState(m.spec); renderColorMemories();
+  selectedMemoryId=id; applyColorState(m.spec); applyStrobeState(m.strobe); renderColorMemories();
 }
 function deleteColorMemory(id){
   colorMemories=colorMemories.filter(x=>x.id!==id);
