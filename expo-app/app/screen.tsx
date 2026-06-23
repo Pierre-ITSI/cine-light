@@ -52,6 +52,8 @@ export default function ScreenMode() {
   const autoAdvance = useRef(false);
   const [blackout, setBlackout] = useState(false);
   const [torchCmd, setTorchCmd] = useState<TorchCommand | null>(null);
+  // Luminosité matérielle de l'écran (0..1), pilotée par la télécommande. 1 = max.
+  const [screenBrightness, setScreenBrightness] = useState(1);
 
   const strobeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const strobeActive = useRef(false);
@@ -122,6 +124,12 @@ export default function ScreenMode() {
 
       // ── Écran ON/OFF (état conservé : l'overlay masque sans démonter) ──
       if (msg.type === 'blackout') setBlackout(!!msg.on);
+
+      // ── Luminosité de l'écran pilotée à distance (0..1) ──
+      if (msg.type === 'screen:brightness') {
+        const v = Number(msg.value);
+        if (!Number.isNaN(v)) setScreenBrightness(Math.min(1, Math.max(0, v)));
+      }
 
       // ── Torche / Flash (expo-camera) ──
       if (msg.type === 'torch' && Platform.OS !== 'web') {
@@ -242,9 +250,10 @@ export default function ScreenMode() {
     return () => { NavigationBar.setVisibilityAsync('visible').catch(() => {}); };
   }, [state]);
 
-  // Forçage de la luminosité maximale tant que l'écran est connecté à un canal
-  // (quel que soit le mode : code canal / Wi-Fi / Bluetooth). On restaure la
-  // luminosité système en quittant l'état actif ou en démontant l'écran.
+  // Forçage de la luminosité tant que l'écran est connecté à un canal (quel que
+  // soit le mode : code canal / Wi-Fi / Bluetooth). Par défaut au maximum (1),
+  // ajustable à distance via la télécommande (message screen:brightness). On
+  // restaure la luminosité système en quittant l'état actif ou au démontage.
   // La non-mise-en-veille est, elle, déjà garantie par useKeepAwake() ci-dessus.
   useEffect(() => {
     if (Platform.OS === 'web' || state !== 'active') return;
@@ -252,7 +261,7 @@ export default function ScreenMode() {
     (async () => {
       try {
         if (await Brightness.isAvailableAsync() && !cancelled) {
-          await Brightness.setBrightnessAsync(1);
+          await Brightness.setBrightnessAsync(screenBrightness);
         }
       } catch (_) { /* indisponible : on garde la luminosité courante */ }
     })();
@@ -262,7 +271,7 @@ export default function ScreenMode() {
       // revient d'elle-même au verrouillage. On ignore les erreurs éventuelles.
       Brightness.restoreSystemBrightnessAsync().catch(() => {});
     };
-  }, [state]);
+  }, [state, screenBrightness]);
 
   useEffect(() => {
     if (transportStatus === 'connected') {

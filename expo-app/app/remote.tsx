@@ -12,6 +12,7 @@ import { generateChannel } from '../src/lib/channel';
 import { useLocalIp } from '../src/lib/useLocalIp';
 import { WIFI_PORT } from '../src/transport/transportConfig';
 import { useMediaPool } from '../src/lib/useMediaPool';
+import { loadPresets, savePresets, newPresetId, type ColorPreset } from '../src/lib/colorPresets';
 import { createTransport } from '../src/transport/createTransport';
 import type { RemoteTransport, TransportStatus, TransportMode } from '../src/transport/RemoteTransport';
 import { AVAILABLE_MODES, MODE_LABELS, suggestMode } from '../src/lib/connectivity';
@@ -85,6 +86,42 @@ export default function RemoteScreen() {
   const media = useMediaPool(transport, connected && MEDIA_ENABLED);
   const [screenOn, setScreenOn] = useState(true);
 
+  // Luminosité de l'écran de jeu, pilotée à distance (0..100). 100 = max.
+  const [screenBrightness, setScreenBrightness] = useState(100);
+  const setScreenBrightnessRemote = useCallback((v: number) => {
+    setScreenBrightness(v);
+    transport.send({ type: 'screen:brightness', value: v / 100 });
+  }, [transport]);
+
+  // Mémoires de couleur (presets) : état complet enregistré et rappelable.
+  const [presets, setPresets] = useState<ColorPreset[]>(() => loadPresets());
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const persistPresets = useCallback((list: ColorPreset[]) => {
+    setPresets(list);
+    savePresets(list);
+  }, []);
+  const saveNewPreset = useCallback(() => {
+    const preset: ColorPreset = {
+      id: newPresetId(),
+      name: 'Mémoire ' + (presets.length + 1),
+      spec: { ...spec },
+    };
+    persistPresets([...presets, preset]);
+    setSelectedPresetId(preset.id);
+  }, [presets, spec, persistPresets]);
+  const updateSelectedPreset = useCallback(() => {
+    if (!selectedPresetId) return;
+    persistPresets(presets.map(p => (p.id === selectedPresetId ? { ...p, spec: { ...spec } } : p)));
+  }, [selectedPresetId, presets, spec, persistPresets]);
+  const applyPreset = useCallback((p: ColorPreset) => {
+    setSpec({ ...p.spec });
+    setSelectedPresetId(p.id);
+  }, []);
+  const deletePreset = useCallback((id: string) => {
+    persistPresets(presets.filter(p => p.id !== id));
+    setSelectedPresetId(cur => (cur === id ? null : cur));
+  }, [presets, persistPresets]);
+
   // Adresse IP locale de cet appareil (rafraîchie en continu) pour le Wi-Fi local.
   const localIp = useLocalIp();
 
@@ -151,6 +188,7 @@ export default function RemoteScreen() {
       setTorchState('off');
       setDescriptor(transport.getDescriptor?.() ?? null);
       transport.send({ type: 'color', color });
+      transport.send({ type: 'screen:brightness', value: screenBrightness / 100 });
       transport.send({ type: 'hello' });
     } else {
       setConnected(false);
@@ -313,6 +351,50 @@ export default function RemoteScreen() {
                 <SliderRN min={-100} max={100} value={spec.tint} onChange={v => updateSpec({ tint: v })} />
               </View>
             </View>
+
+            {/* Mémoires de couleur : sauvegarde de l'état complet + mise à jour */}
+            <View style={styles.panel}>
+              <Text style={styles.panelLabel}>Mémoires de couleur</Text>
+              <View style={styles.presetActions}>
+                <Pressable style={styles.presetSaveBtn} onPress={saveNewPreset}>
+                  <Text style={styles.presetSaveText}>＋ Enregistrer</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.presetUpdateBtn, !selectedPresetId && styles.mediaBtnDisabled]}
+                  disabled={!selectedPresetId}
+                  onPress={updateSelectedPreset}
+                >
+                  <Text style={styles.presetUpdateText}>⟳ Mettre à jour</Text>
+                </Pressable>
+              </View>
+              {presets.length === 0 ? (
+                <Text style={styles.mediaEmpty}>
+                  Réglez une couleur puis « Enregistrer » pour créer une mémoire.
+                </Text>
+              ) : (
+                <View style={styles.presetGrid}>
+                  {presets.map(p => {
+                    const sel = p.id === selectedPresetId;
+                    return (
+                      <Pressable
+                        key={p.id}
+                        style={[styles.presetItem, sel && styles.presetItemActive]}
+                        onPress={() => applyPreset(p)}
+                        onLongPress={() => deletePreset(p.id)}
+                      >
+                        <View style={[styles.presetSwatch, { backgroundColor: computeColor(p.spec) }]} />
+                        <Text style={[styles.presetName, sel && styles.presetNameActive]} numberOfLines={1}>
+                          {p.name}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
+              {presets.length > 0 && (
+                <Text style={styles.presetHint}>Touchez pour rappeler · appui long pour supprimer.</Text>
+              )}
+            </View>
           </View>
         )}
 
@@ -447,6 +529,22 @@ export default function RemoteScreen() {
         )}
 
         {tab === 'media' && (
+          <View style={styles.colorTab}>
+          <View style={styles.panel}>
+            <Text style={styles.panelLabel}>Luminosité de l'écran de jeu</Text>
+            <View style={styles.sliderRow}>
+              <Text style={styles.sliderLabel}>Luminosité écran {screenBrightness}%</Text>
+              <SliderRN
+                min={0}
+                max={100}
+                value={screenBrightness}
+                onChange={setScreenBrightnessRemote}
+              />
+            </View>
+            {!connected && (
+              <Text style={styles.mediaWarn}>Connectez un canal pour régler l'écran à distance.</Text>
+            )}
+          </View>
           <View style={styles.panel}>
             <Text style={styles.panelLabel}>Pool média</Text>
             <Text style={styles.mediaHint}>
@@ -520,6 +618,7 @@ export default function RemoteScreen() {
                 />
               </>
             )}
+          </View>
           </View>
         )}
 
@@ -866,6 +965,36 @@ const styles = StyleSheet.create({
 
   mediaHint: { color: '#777', fontSize: 11, lineHeight: 17, alignSelf: 'stretch' },
   mediaWarn: { color: '#e0a070', fontSize: 11, alignSelf: 'stretch' },
+
+  // Mémoires de couleur
+  presetActions: { flexDirection: 'row', gap: 10, alignSelf: 'stretch', marginBottom: 4 },
+  presetSaveBtn: {
+    flex: 1,
+    borderWidth: 1, borderColor: 'rgba(95,223,138,0.4)',
+    backgroundColor: 'rgba(95,223,138,0.1)',
+    paddingVertical: 12, borderRadius: 8, alignItems: 'center',
+  },
+  presetSaveText: { color: '#5fdf8a', fontSize: 12, fontWeight: '600' },
+  presetUpdateBtn: {
+    flex: 1,
+    borderWidth: 1, borderColor: 'rgba(232,201,122,0.4)',
+    backgroundColor: 'rgba(232,201,122,0.08)',
+    paddingVertical: 12, borderRadius: 8, alignItems: 'center',
+  },
+  presetUpdateText: { color: '#e8c97a', fontSize: 12, fontWeight: '600' },
+  presetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignSelf: 'stretch' },
+  presetItem: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: '#252528',
+    paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8,
+    minWidth: '47%', flexGrow: 1,
+  },
+  presetItemActive: { borderColor: '#e8c97a', backgroundColor: 'rgba(232,201,122,0.15)' },
+  presetSwatch: { width: 22, height: 22, borderRadius: 5, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
+  presetName: { color: '#cfcfcf', fontSize: 12, flexShrink: 1 },
+  presetNameActive: { color: '#e8c97a', fontWeight: '600' },
+  presetHint: { color: '#777', fontSize: 10, alignSelf: 'stretch' },
   mediaActions: { flexDirection: 'row', gap: 10, alignSelf: 'stretch' },
   mediaBtn: {
     flex: 1,
