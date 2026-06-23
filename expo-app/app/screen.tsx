@@ -94,6 +94,9 @@ export default function ScreenMode() {
       torch: Platform.OS !== 'web',
       vibrate: Platform.OS !== 'web',
       media: isMediaCacheAvailable,
+      // Protocole vidéo accepté : l'écran natif lit la vidéo en base64 chunké
+      // (media:upload/chunk/play), pas en WebRTC. La PWA s'y adapte.
+      videoMode: isMediaCacheAvailable ? 'b64' : 'none',
     });
   }, []);
 

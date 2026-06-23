@@ -23,9 +23,11 @@ interface Props {
   onPick: (hex: string) => void;
   /** Couleur de roue actuellement sélectionnée (teinte/saturation, valeur = 1). */
   selectedHex?: string;
+  /** Signale au parent le début/la fin de l'interaction (pour figer le scroll). */
+  onInteract?: (active: boolean) => void;
 }
 
-export function ColorWheel({ size, onPick, selectedHex }: Props) {
+export function ColorWheel({ size, onPick, selectedHex, onInteract }: Props) {
   const r = size / 2;
 
   // Position « live » du doigt + couleur, pour afficher la loupe pendant le glisser.
@@ -46,6 +48,7 @@ export function ColorWheel({ size, onPick, selectedHex }: Props) {
       onPanResponderTerminationRequest: () => false,
       onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: (e) => {
+        onInteract?.(true);
         const { locationX, locationY } = e.nativeEvent;
         const dx = locationX - r, dy = locationY - r;
         if (Math.hypot(dx, dy) <= r) pick(locationX, locationY);
@@ -55,8 +58,8 @@ export function ColorWheel({ size, onPick, selectedHex }: Props) {
         const dx = locationX - r, dy = locationY - r;
         if (Math.hypot(dx, dy) <= r) pick(locationX, locationY);
       },
-      onPanResponderRelease: () => setDrag(null),
-      onPanResponderTerminate: () => setDrag(null),
+      onPanResponderRelease: () => { setDrag(null); onInteract?.(false); },
+      onPanResponderTerminate: () => { setDrag(null); onInteract?.(false); },
     })
   ).current;
 

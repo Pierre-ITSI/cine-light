@@ -247,11 +247,11 @@ export default function RemoteScreen() {
       >
         {tab === 'color' && (
           <View style={styles.colorTab}>
-            {/* Intensité (Dimmer) */}
+            {/* Dimmer */}
             <View style={styles.panel}>
-              <Text style={styles.panelLabel}>Intensité (Dimmer)</Text>
+              <Text style={styles.panelLabel}>Dimmer</Text>
               <View style={styles.sliderRow}>
-                <Text style={styles.sliderLabel}>Luminosité maître {spec.dimmer}%</Text>
+                <Text style={styles.sliderLabel}>Dimmer {spec.dimmer}%</Text>
                 <SliderRN min={0} max={100} value={spec.dimmer} onChange={v => updateSpec({ dimmer: v })} />
               </View>
             </View>
@@ -264,6 +264,7 @@ export default function RemoteScreen() {
                   size={240}
                   selectedHex={spec.wheelHex}
                   onPick={hex => updateSpec({ wheelHex: hex })}
+                  onInteract={active => setScrollEnabled(!active)}
                 />
               </View>
               <View style={styles.swatchRow}>
@@ -640,12 +641,31 @@ interface SliderProps {
 }
 
 function SliderRN({ min, max, value, step = 1, onChange }: SliderProps) {
-  const progress = (value - min) / (max - min);
-  const trackWidthRef = useRef(300);
+  const progress = Math.min(1, Math.max(0, (value - min) / (max - min)));
+  const trackRef = useRef<View>(null);
+  // Géométrie absolue de la piste (coord. fenêtre), pour calculer le ratio à
+  // partir de pageX. On évite locationX, relatif à la sous-vue sous le doigt
+  // (le pouce/le remplissage), qui rendait la jauge erratique.
+  const geomRef = useRef({ x: 0, width: 1 });
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const paramsRef = useRef({ min, max, step });
   paramsRef.current = { min, max, step };
+
+  const measure = useCallback(() => {
+    trackRef.current?.measureInWindow((x, _y, width) => {
+      if (width > 0) geomRef.current = { x, width };
+    });
+  }, []);
+
+  const emit = useCallback((pageX: number) => {
+    const { x, width } = geomRef.current;
+    const { min: mn, max: mx, step: st } = paramsRef.current;
+    const ratio = Math.min(1, Math.max(0, (pageX - x) / (width || 1)));
+    let v = mn + ratio * (mx - mn);
+    if (st > 0) v = Math.round(v / st) * st;
+    onChangeRef.current(Number(v.toFixed(st < 1 ? 1 : 0)));
+  }, []);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -656,32 +676,23 @@ function SliderRN({ min, max, value, step = 1, onChange }: SliderProps) {
       // Empêche le ScrollView parent de « voler » le geste en cours de glissement.
       onPanResponderTerminationRequest: () => false,
       onShouldBlockNativeResponder: () => true,
-      onPanResponderGrant: (e) => {
-        const { min: mn, max: mx, step: st } = paramsRef.current;
-        const ratio = Math.min(1, Math.max(0, e.nativeEvent.locationX / trackWidthRef.current));
-        let v = mn + ratio * (mx - mn);
-        if (st > 0) v = Math.round(v / st) * st;
-        onChangeRef.current(Number(v.toFixed(st < 1 ? 1 : 0)));
-      },
-      onPanResponderMove: (e) => {
-        const { min: mn, max: mx, step: st } = paramsRef.current;
-        const ratio = Math.min(1, Math.max(0, e.nativeEvent.locationX / trackWidthRef.current));
-        let v = mn + ratio * (mx - mn);
-        if (st > 0) v = Math.round(v / st) * st;
-        onChangeRef.current(Number(v.toFixed(st < 1 ? 1 : 0)));
-      },
+      // g.x0 / g.moveX sont des coordonnées écran (pageX), indépendantes de la
+      // sous-vue touchée → calcul du ratio fiable.
+      onPanResponderGrant: (_e, g) => { measure(); emit(g.x0); },
+      onPanResponderMove: (_e, g) => emit(g.moveX),
     })
   ).current;
 
   return (
     <View
+      ref={trackRef}
       style={styles.sliderTrack}
       hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }}
-      onLayout={e => { trackWidthRef.current = e.nativeEvent.layout.width; }}
+      onLayout={measure}
       {...panResponder.panHandlers}
     >
-      <View style={[styles.sliderFill, { width: `${progress * 100}%` }]} />
-      <View style={[styles.sliderThumb, { left: `${progress * 100}%` as any }]} />
+      <View pointerEvents="none" style={[styles.sliderFill, { width: `${progress * 100}%` }]} />
+      <View pointerEvents="none" style={[styles.sliderThumb, { left: `${progress * 100}%` as any }]} />
     </View>
   );
 }

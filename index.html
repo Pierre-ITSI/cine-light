@@ -1829,11 +1829,15 @@ function _isIOSDevice() {
 // Récepteur : annonce ses capacités à la télécommande
 function sendCaps() {
   const ios = _isIOSDevice();
-  sendMsg({ type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate });
+  // L'écran PWA reçoit la vidéo via WebRTC (DataChannel).
+  sendMsg({ type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate, videoMode: 'rtc' });
 }
 
+// Capacités du récepteur connecté (mémorisées pour choisir le transport vidéo).
+let _recvCaps = null;
 // Télécommande : applique les capacités reçues à l'onglet Flash
 function applyReceiverCaps(caps) {
+  _recvCaps = caps || null;
   const flash = document.getElementById('content-flash');
   const notice = document.getElementById('flashUnavailNotice');
   const unavailable = caps && caps.torch === false;
@@ -2293,8 +2297,45 @@ function broadcastVideo(file) {
   _mediaIsVideo = true;
   _remotePlaying = false; _remoteDur = 0; _remoteCur = 0;
   showMediaStop(true);
+  // Écran natif : il ne parle pas WebRTC → on diffuse la vidéo en base64
+  // chunké (protocole media:upload/chunk/play), qu'il reconstitue en fichier.
+  if (_recvCaps && _recvCaps.videoMode === 'b64') { broadcastVideoBase64(file); return; }
   setMediaStatus('🎬 Préparation du transfert…');
   startFileTransfer(file);
+}
+
+// Lit un fichier en base64 pur (sans le préfixe data:…;base64,).
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1] || '');
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+// Diffusion vidéo vers un écran natif : base64 chunké via le transport (MQTT).
+async function broadcastVideoBase64(file) {
+  setMediaStatus('🎬 Préparation… (écran natif)');
+  let b64;
+  try { b64 = await fileToBase64(file); }
+  catch (_) { setMediaStatus('⚠ Lecture du fichier impossible'); return; }
+  const id = Math.random().toString(36).slice(2, 8);
+  const mime = file.type || 'video/mp4';
+  const CHUNK = 12000;
+  const total = Math.ceil(b64.length / CHUNK);
+  sendMsg({ type: 'media:upload', mediaId: id, kind: 'video', mime, totalChunks: total });
+  setMediaStatus('📤 Transfert… 0 %');
+  for (let i = 0; i < total; i++) {
+    sendMsg({ type: 'media:chunk', mediaId: id, index: i, data: b64.slice(i * CHUNK, (i + 1) * CHUNK) });
+    // Laisser respirer le broker + rafraîchir la progression.
+    if (i % 16 === 15) {
+      await new Promise(r => setTimeout(r, 8));
+      setMediaStatus('📤 Transfert… ' + Math.round(((i + 1) / total) * 100) + ' %');
+    }
+  }
+  sendMsg({ type: 'media:play', mediaId: id });
+  setMediaStatus('🎬 Lecture sur l\'écran natif', true);
 }
 
 async function startFileTransfer(file) {
