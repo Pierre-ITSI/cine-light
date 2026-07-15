@@ -3197,6 +3197,8 @@ document.querySelectorAll('input[type="range"]').forEach(slider => {
     valLabel.classList.add('slider-val-click');
     valLabel.onclick = (e) => {
       e.stopPropagation();
+      if (valLabel._editing) return; // un seul champ de saisie à la fois
+      valLabel._editing = true;
       const input = document.createElement('input');
       input.type = 'number';
       input.min = min;
@@ -3204,13 +3206,22 @@ document.querySelectorAll('input[type="range"]').forEach(slider => {
       input.step = step;
       input.value = slider.value;
       input.style = 'width:80px;padding:4px;background:var(--mid);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:inherit';
-      input.onblur = () => {
-        slider.value = Math.min(max, Math.max(min, parseFloat(input.value) || min));
-        slider.dispatchEvent(new Event('input', { bubbles: true }));
+      let done = false;
+      const commit = () => {
+        if (done) return; // évite le double appel Enter + blur
+        done = true;
+        const v = parseFloat(input.value);
+        if (!isNaN(v)) {
+          slider.value = Math.min(max, Math.max(min, v));
+          slider.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        input.remove();              // supprime le champ du DOM
         valLabel.style.display = '';
+        valLabel._editing = false;
       };
-      input.onkeydown = (e) => {
-        if (e.key === 'Enter') input.onblur();
+      input.onblur = commit;
+      input.onkeydown = (ev) => {
+        if (ev.key === 'Enter') input.blur();
       };
       valLabel.style.display = 'none';
       valLabel.parentElement.insertBefore(input, valLabel);
