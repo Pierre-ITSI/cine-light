@@ -1264,7 +1264,11 @@ function updateCrossfadeGradient() {
   const wheelHex=colorWheelHex;
   const gradient=`linear-gradient(to right,${cctHex},${wheelHex})`;
   const slider=document.getElementById('crossfadeSlider');
+  const hueSlider=document.getElementById('hueCrossfadeSlider');
+  const rgbSlider=document.getElementById('rgbCrossfadeSlider');
   if(slider) slider.style.background=gradient;
+  if(hueSlider) hueSlider.style.background=gradient;
+  if(rgbSlider) rgbSlider.style.background=gradient;
 }
 function setCrossfade(v) {
   colorCrossfade=v;
@@ -1299,8 +1303,9 @@ function setColorPickMode(mode) {
   document.getElementById('colorPickWheel').style.display=mode==='wheel'?'block':'none';
   document.getElementById('colorPickHue').style.display=mode==='hue'?'block':'none';
   document.getElementById('colorPickRgb').style.display=mode==='rgb'?'block':'none';
-  if(mode==='hue') updateHueGradient();
-  if(mode==='rgb') updateRgbGradients();
+  if(mode==='hue') { updateHueGradient(); updateCrossfadeGradient(); }
+  if(mode==='rgb') { updateRgbGradients(); updateCrossfadeGradient(); }
+  if(mode==='wheel') updateCrossfadeGradient();
 }
 
 function onHueChange() {
