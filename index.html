@@ -119,13 +119,19 @@ html,body{width:100%;height:100%;background:radial-gradient(ellipse at center,#1
 .slider-header label{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
 .slider-val{font-size:.85rem;color:var(--text);letter-spacing:.05em;font-variant-numeric:tabular-nums}
 .slider-val span{color:var(--muted);font-size:.65rem}
-input[type="range"]{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;outline:none;cursor:pointer}
-input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);border:2px solid var(--dark);box-shadow:0 2px 8px rgba(0,0,0,.5)}
-/* Curseurs épais dans les onglets Couleur et Effets : la jauge dégradée fait office d'aperçu */
-#content-color input[type="range"],#content-effects input[type="range"]{height:24px;border-radius:6px}
-#content-color input[type="range"]::-webkit-slider-thumb,#content-effects input[type="range"]::-webkit-slider-thumb{width:14px;height:30px;border-radius:6px}
-#content-color input[type="range"]::-moz-range-track,#content-effects input[type="range"]::-moz-range-track{height:24px;border-radius:6px}
-#content-color input[type="range"]::-moz-range-thumb,#content-effects input[type="range"]::-moz-range-thumb{width:14px;height:30px;border-radius:6px;background:var(--accent);border:2px solid var(--dark);box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.slider-row{display:flex;align-items:center;gap:10px;width:100%}
+.slider-btn{background:rgba(245,242,236,.15);border:1px solid rgba(245,242,236,.2);color:var(--text);width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:.9rem;font-weight:600;transition:all .15s}
+.slider-btn:hover{background:rgba(245,242,236,.25);border-color:rgba(245,242,236,.4)}
+.slider-input{flex:1}
+.slider-val-click{cursor:pointer;padding:4px 8px;border-radius:4px;user-select:none;transition:background .15s}
+.slider-val-click:hover{background:rgba(245,242,236,.1)}
+input[type="range"]{-webkit-appearance:none;width:100%;height:8px;border-radius:4px;background:rgba(245,242,236,.12);outline:none;cursor:pointer;border:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:rgba(245,242,236,.6);border:1px solid rgba(245,242,236,.3);box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:grab}
+input[type="range"]::-moz-range-track{background:rgba(245,242,236,.12);border:none;border-radius:4px}
+input[type="range"]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:rgba(245,242,236,.6);border:1px solid rgba(245,242,236,.3);box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:grab}
+#content-color input[type="range"],#content-effects input[type="range"]{height:10px}
+#content-color input[type="range"]::-webkit-slider-thumb,#content-effects input[type="range"]::-webkit-slider-thumb{width:32px;height:32px}
+#content-color input[type="range"]::-moz-range-thumb,#content-effects input[type="range"]::-moz-range-thumb{width:32px;height:32px}
 /* Sélecteurs de couleur des effets */
 .effect-colors-row{display:flex;gap:10px}
 .effect-colors-row .slider-block{flex:1;min-width:0}
@@ -466,7 +472,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       </div>
       <div class="slider-block" style="margin:14px 0 0">
         <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="crossfadeVal">0<span>%</span></div></div>
-        <input type="range" id="crossfadeSlider" min="0" max="100" value="0" style="background:linear-gradient(to right,#F5F2EC,#FF6B2C,#ff2d78)" oninput="onCrossfadeChange()">
+        <input type="range" id="crossfadeSlider" min="0" max="100" value="0" oninput="onCrossfadeChange()">
       </div>
     </div>
 
@@ -648,8 +654,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           <div class="slider-val" id="effectSpeedVal">1.0</div>
         </div>
         <input type="range" id="effectSpeedSlider" min="0.2" max="10" step="0.1" value="1"
-               style="background:linear-gradient(to right,#FF6B2C,#FF6B2C)"
-               oninput="onEffectParamChange()">
+                             oninput="onEffectParamChange()">
       </div>
       <div class="slider-block">
         <div class="slider-header">
@@ -685,8 +690,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           <div class="slider-val" id="effectRandVal">70<span>%</span></div>
         </div>
         <input type="range" id="effectRandSlider" min="0" max="100" step="5" value="70"
-               style="background:linear-gradient(to right,#FF6B2C,#FF6B2C)"
-               oninput="onEffectParamChange()">
+                             oninput="onEffectParamChange()">
       </div>
       <div class="slider-block" id="effectFadeBlock" style="display:none;margin-bottom:0">
         <div class="slider-header">
@@ -713,7 +717,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           </div>
           <div class="slider-block">
             <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="tvCrossfadeVal">0<span>%</span></div></div>
-            <input type="range" id="tvCrossfadeSlider" min="0" max="100" value="0" style="background:linear-gradient(to right,#F5F2EC,#FF6B2C,#ff2d78)" oninput="onTvBlockParam()">
+            <input type="range" id="tvCrossfadeSlider" min="0" max="100" value="0" oninput="onTvBlockParam()">
           </div>
           <div class="slider-block">
             <div class="slider-header"><label>Température</label><div class="slider-val" id="tvKelvinVal">6500<span> K</span></div></div>
@@ -2924,6 +2928,77 @@ async function installPWA() {
     }, 420);                                  // = durée de la transition CSS
   }, 2400);
 })();
+
+// Initialiser tous les sliders avec boutons +/- et valeurs cliquables
+document.querySelectorAll('input[type="range"]').forEach(slider => {
+  if (slider.parentElement.classList.contains('slider-row')) return; // déjà transformé
+  const parent = slider.parentElement;
+  const step = parseFloat(slider.step) || 1;
+  const min = parseFloat(slider.min) || 0;
+  const max = parseFloat(slider.max) || 100;
+
+  // Wrapper avec boutons +/-
+  const wrapper = document.createElement('div');
+  wrapper.className = 'slider-row';
+
+  // Bouton -
+  const btnMinus = document.createElement('button');
+  btnMinus.className = 'slider-btn';
+  btnMinus.textContent = '−';
+  btnMinus.type = 'button';
+  btnMinus.onclick = (e) => {
+    e.preventDefault();
+    slider.value = Math.max(min, parseFloat(slider.value) - step);
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+
+  // Slider
+  slider.classList.add('slider-input');
+
+  // Bouton +
+  const btnPlus = document.createElement('button');
+  btnPlus.className = 'slider-btn';
+  btnPlus.textContent = '+';
+  btnPlus.type = 'button';
+  btnPlus.onclick = (e) => {
+    e.preventDefault();
+    slider.value = Math.min(max, parseFloat(slider.value) + step);
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+
+  wrapper.appendChild(btnMinus);
+  wrapper.appendChild(slider);
+  wrapper.appendChild(btnPlus);
+  parent.insertBefore(wrapper, slider);
+
+  // Rendre la valeur cliquable pour entrée numérique
+  const valLabel = parent.querySelector('[id*="Val"]');
+  if (valLabel && !valLabel.classList.contains('slider-val-click')) {
+    valLabel.classList.add('slider-val-click');
+    valLabel.onclick = (e) => {
+      e.stopPropagation();
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = min;
+      input.max = max;
+      input.step = step;
+      input.value = slider.value;
+      input.style = 'width:80px;padding:4px;background:var(--mid);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:inherit';
+      input.onblur = () => {
+        slider.value = Math.min(max, Math.max(min, parseFloat(input.value) || min));
+        slider.dispatchEvent(new Event('input', { bubbles: true }));
+        valLabel.style.display = '';
+      };
+      input.onkeydown = (e) => {
+        if (e.key === 'Enter') input.onblur();
+      };
+      valLabel.style.display = 'none';
+      valLabel.parentElement.insertBefore(input, valLabel);
+      input.focus();
+      input.select();
+    };
+  }
+});
 </script>
 </body>
 </html>
