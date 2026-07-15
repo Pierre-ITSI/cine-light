@@ -38,7 +38,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Lato:wght@400;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--accent:#FF6B2C;--dark:#000000;--mid:#1c1c1f;--mid2:#252528;--border:rgba(255,255,255,0.08);--text:#F5F2EC;--muted:#777;--green:#FF6B2C}
+:root{--accent:#FF6B2C;--dark:#000000;--mid:#1c1c1f;--mid2:#252528;--border:rgba(255,255,255,0.08);--text:#F5F2EC;--muted:#777;--green:#5fdf8a}
 html,body{width:100%;min-height:100vh;background:radial-gradient(ellipse at center,#141920 0%,#0E0E10 70%,var(--dark) 100%);color:var(--text);font-family:'DM Mono',monospace;overflow:hidden;touch-action:manipulation}
 
 #splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);gap:40px;z-index:100;animation:fadeIn .6s ease;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);min-height:100vh}
@@ -298,10 +298,10 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .pool-tile .pool-del{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(0,0,0,.6);color:#fff;font-size:.75rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .pool-tile .pool-del:hover{background:rgba(220,80,80,.9)}
 .pool-tile.live-dot::after{content:'';position:absolute;top:4px;right:24px;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
-.pool-tile .pool-order{position:absolute;top:22px;right:2px;display:flex;flex-direction:column;gap:2px}
-.pool-tile .pool-ord{width:18px;height:18px;border-radius:4px;border:none;background:rgba(0,0,0,.6);color:#fff;font-size:.55rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
-.pool-tile .pool-ord:hover{background:rgba(232,201,122,.85);color:#000}
-.pool-tile .pool-ord:disabled{opacity:.25;cursor:default}
+/* Réordonnancement par glisser-déposer */
+.pool-tile{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.pool-tile.pool-drag-src{opacity:.35;border-style:dashed;border-color:var(--accent)}
+.pool-ghost{position:fixed;z-index:1000;pointer-events:none;margin:0;transform:scale(1.08);opacity:.93;box-shadow:0 12px 32px rgba(0,0,0,.65);border-color:var(--accent)}
 .blackout-btn{width:100%;padding:18px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:1rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px}
 .blackout-btn.on{background:#000;border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 24px rgba(0,0,0,.8)}
 
@@ -817,9 +817,12 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
         <button class="media-btn" onclick="advancePool(-1)" style="flex:1">◀ Précédent</button>
         <button class="media-btn" onclick="advancePool(1)" style="flex:1">Suivant ▶</button>
       </div>
-      <label id="mediaAutoAdvRow" style="display:none;align-items:center;justify-content:space-between;font-size:.72rem;color:var(--text);margin:6px 2px 10px;cursor:pointer">
+      <label id="mediaAutoAdvRow" style="display:none;align-items:center;justify-content:space-between;gap:12px;font-size:.72rem;color:var(--text);margin:6px 2px 10px;cursor:pointer">
         <span>Avancer au clic sur l'écran de jeu</span>
-        <input type="checkbox" id="mediaAutoAdvToggle" onchange="setAutoAdvance(this.checked)">
+        <span class="toggle-switch" style="flex-shrink:0">
+          <input type="checkbox" id="mediaAutoAdvToggle" onchange="setAutoAdvance(this.checked)">
+          <span class="toggle-track"></span><span class="toggle-thumb"></span>
+        </span>
       </label>
       <div class="media-status" id="mediaStatus">Aucun média diffusé</div>
       <button class="media-btn" id="mediaPlayBtn" onclick="toggleVideoPlayback()" style="display:none">
@@ -2733,29 +2736,88 @@ function renderPool() {
     const thumb = it.thumb
       ? `<img src="${it.thumb}" alt="">`
       : `<div class="pool-fallback">${it.kind === 'vid' ? '🎬' : '🖼'}</div>`;
-    const upDis = idx === 0 ? ' disabled' : '';
-    const downDis = idx === _mediaPool.length - 1 ? ' disabled' : '';
-    return `<div class="pool-tile${active ? ' active live-dot' : ''}" onclick="selectMedia('${it.id}')">`
+    return `<div class="pool-tile${active ? ' active live-dot' : ''}" data-id="${it.id}" onclick="selectMedia('${it.id}')">`
       + thumb
       + `<span class="pool-num">${idx + 1}</span>`
       + `<span class="pool-kind">${it.kind === 'vid' ? '🎬' : '🖼'}</span>`
-      + `<div class="pool-order">`
-      + `<button class="pool-ord" title="Avancer dans l'ordre" onclick="event.stopPropagation();moveMedia('${it.id}',-1)"${upDis}>▲</button>`
-      + `<button class="pool-ord" title="Reculer dans l'ordre" onclick="event.stopPropagation();moveMedia('${it.id}',1)"${downDis}>▼</button>`
-      + `</div>`
       + `<button class="pool-del" onclick="event.stopPropagation();removeMedia('${it.id}')">×</button>`
       + `<span class="pool-name">${escapeHtml(it.name)}</span></div>`;
   }).join('');
 }
 
-// Déplace un média dans l'ordre du pool (−1 = avant, +1 = après).
-function moveMedia(id, dir) {
-  const idx = _mediaPool.findIndex(m => m.id === id);
-  const j = idx + dir;
-  if (idx < 0 || j < 0 || j >= _mediaPool.length) return;
-  const tmp = _mediaPool[idx]; _mediaPool[idx] = _mediaPool[j]; _mediaPool[j] = tmp;
-  renderPool();
-}
+// ── Réordonnancement du pool par glisser-déposer (tactile + souris) ──
+// Appui maintenu (~200 ms) sur une tuile → elle se « soulève » (fantôme sous
+// le doigt) et se réordonne en direct en survolant les autres tuiles.
+let _poolDrag = null, _poolSuppressClick = false;
+(function initPoolDrag() {
+  const grid = document.getElementById('mediaPool');
+  if (!grid) return;
+  const HOLD = 200, TOL = 12;
+  const blockScroll = e => e.preventDefault();
+
+  grid.addEventListener('pointerdown', e => {
+    const tile = e.target.closest('.pool-tile');
+    if (!tile || e.target.closest('.pool-del')) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    _poolDrag = { tile, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, active: false, ghost: null };
+    _poolDrag.timer = setTimeout(startDrag, HOLD);
+  });
+
+  function startDrag() {
+    const d = _poolDrag; if (!d) return;
+    d.active = true;
+    const r = d.tile.getBoundingClientRect();
+    d.dx = d.x - r.left; d.dy = d.y - r.top;
+    const g = d.tile.cloneNode(true);
+    g.classList.add('pool-ghost');
+    g.classList.remove('active', 'live-dot');
+    g.style.width = r.width + 'px'; g.style.height = r.height + 'px';
+    g.style.left = (d.x - d.dx) + 'px'; g.style.top = (d.y - d.dy) + 'px';
+    document.body.appendChild(g);
+    d.ghost = g;
+    d.tile.classList.add('pool-drag-src');
+    document.addEventListener('touchmove', blockScroll, { passive: false }); // fige le scroll pendant le drag
+    if (navigator.vibrate) navigator.vibrate(30);
+  }
+
+  document.addEventListener('pointermove', e => {
+    const d = _poolDrag; if (!d) return;
+    d.x = e.clientX; d.y = e.clientY;
+    if (!d.active) {
+      // Le doigt bouge avant la fin de l'appui : c'est un scroll, pas un drag.
+      if (Math.abs(d.x - d.sx) > TOL || Math.abs(d.y - d.sy) > TOL) { clearTimeout(d.timer); _poolDrag = null; }
+      return;
+    }
+    d.ghost.style.left = (d.x - d.dx) + 'px';
+    d.ghost.style.top = (d.y - d.dy) + 'px';
+    // Réordonne le DOM en direct selon la tuile survolée
+    const over = document.elementFromPoint(d.x, d.y);
+    const t = over && over.closest ? over.closest('#mediaPool .pool-tile') : null;
+    if (t && t !== d.tile) {
+      const rect = t.getBoundingClientRect();
+      const before = (d.x - rect.left) < rect.width / 2;
+      t.parentNode.insertBefore(d.tile, before ? t : t.nextSibling);
+    }
+  });
+
+  function endDrag() {
+    const d = _poolDrag; if (!d) return;
+    clearTimeout(d.timer);
+    if (d.active) {
+      document.removeEventListener('touchmove', blockScroll);
+      if (d.ghost) d.ghost.remove();
+      d.tile.classList.remove('pool-drag-src');
+      // Reconstruit l'ordre du pool depuis l'ordre du DOM
+      const order = [...document.querySelectorAll('#mediaPool .pool-tile')].map(el => el.dataset.id);
+      _mediaPool.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+      _poolSuppressClick = true; setTimeout(() => { _poolSuppressClick = false; }, 350);
+      renderPool();
+    }
+    _poolDrag = null;
+  }
+  document.addEventListener('pointerup', endDrag);
+  document.addEventListener('pointercancel', endDrag);
+})();
 
 // Diffuse le média suivant (+1) ou précédent (−1) selon l'ordre du pool, en boucle.
 // Déclenché par les flèches de la télécommande ET par le tap sur l'écran de jeu.
@@ -2776,6 +2838,7 @@ function setAutoAdvance(on) {
 }
 
 function selectMedia(id) {
+  if (_poolSuppressClick) return; // ignore le clic résiduel après un glisser-déposer
   const it = _mediaPool.find(m => m.id === id);
   if (!it) return;
   teardownBroadcast();
