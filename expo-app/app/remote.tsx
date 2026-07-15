@@ -895,7 +895,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
   },
   swatchInfo: { flex: 1, gap: 4 },
-  swatchHex: { color: '#F5F2EC', fontSize: 18, fontWeight: '700', letterSpacing: 1, fontVariant: ['tabular-nums'] },
+  swatchHex: { color: '#F5F2EC', fontSize: 18, fontWeight: '600', letterSpacing: 1, fontVariant: ['tabular-nums'] },
   swatchMeta: { color: '#999', fontSize: 12 },
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, width: '100%' },
   chip: {
@@ -904,7 +904,7 @@ const styles = StyleSheet.create({
   },
   chipActive: { borderColor: '#FF6B2C', backgroundColor: 'rgba(255,107,44,0.15)' },
   chipText: { color: '#bbb', fontSize: 12 },
-  chipTextActive: { color: '#FF6B2C', fontWeight: '700' },
+  chipTextActive: { color: '#FF6B2C', fontWeight: '600' },
   tintLabels: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
   tintLabel: { color: '#777', fontSize: 10 },
   sliderTrack: {

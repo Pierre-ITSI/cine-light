@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     justifyContent: 'center',
   },
-  goBtnText: { color: '#000', fontWeight: '700', fontSize: 14 },
+  goBtnText: { color: '#000', fontWeight: '600', fontSize: 14 },
   goBtnWide: {
     backgroundColor: '#FF6B2C',
     paddingHorizontal: 24, paddingVertical: 14, borderRadius: 6,
