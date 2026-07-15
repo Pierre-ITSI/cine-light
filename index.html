@@ -1287,6 +1287,8 @@ function setColorPickMode(mode) {
   document.getElementById('colorPickWheel').style.display=mode==='wheel'?'block':'none';
   document.getElementById('colorPickHue').style.display=mode==='hue'?'block':'none';
   document.getElementById('colorPickRgb').style.display=mode==='rgb'?'block':'none';
+  if(mode==='hue') updateHueGradient();
+  if(mode==='rgb') updateRgbGradients();
 }
 
 function onHueChange() {
@@ -1294,7 +1296,23 @@ function onHueChange() {
   document.getElementById('hueVal').innerHTML=h+'<span>°</span>';
   const rgb=hslToRgb(h, 100, 50);
   colorWheelHex='#'+[rgb.r,rgb.g,rgb.b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  updateHueGradient();
   recomputeColor();
+}
+
+function updateHueGradient() {
+  const hueSlider=document.getElementById('hueSlider');
+  if(!hueSlider) return;
+  const stops=[
+    'hsl(0,100%,50%)',
+    'hsl(60,100%,50%)',
+    'hsl(120,100%,50%)',
+    'hsl(180,100%,50%)',
+    'hsl(240,100%,50%)',
+    'hsl(300,100%,50%)',
+    'hsl(0,100%,50%)'
+  ];
+  hueSlider.style.background=`linear-gradient(to right,${stops.join(',')})`;
 }
 
 function onRgbChange() {
@@ -1305,7 +1323,17 @@ function onRgbChange() {
   document.getElementById('rgbGreenVal').textContent=g;
   document.getElementById('rgbBlueVal').textContent=b;
   colorWheelHex='#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  updateRgbGradients();
   recomputeColor();
+}
+
+function updateRgbGradients() {
+  const redSlider=document.getElementById('rgbRedSlider');
+  const greenSlider=document.getElementById('rgbGreenSlider');
+  const blueSlider=document.getElementById('rgbBlueSlider');
+  if(redSlider) redSlider.style.background=`linear-gradient(to right,#000,rgb(255,0,0))`;
+  if(greenSlider) greenSlider.style.background=`linear-gradient(to right,#000,rgb(0,255,0))`;
+  if(blueSlider) blueSlider.style.background=`linear-gradient(to right,#000,rgb(0,0,255))`;
 }
 
 function hslToRgb(h, s, l) {

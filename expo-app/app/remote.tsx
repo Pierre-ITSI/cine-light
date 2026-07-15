@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import QRCode from 'react-native-qrcode-svg';
+import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { ColorWheel } from '../src/components/ColorWheel';
 import { MediaPoolList } from '../src/components/MediaPoolList';
 import { computeColor, ColorSpec } from '../src/lib/color';
@@ -371,6 +372,22 @@ export default function RemoteScreen() {
                 <Text style={styles.panelLabel}>Teinte (HUE)</Text>
                 <View style={styles.sliderRow}>
                   <Text style={styles.sliderLabel}>Teinte {hueValue}°</Text>
+                  <View style={{ height: 20, marginBottom: 8, borderRadius: 10, overflow: 'hidden' }}>
+                    <Svg height={20} width="100%">
+                      <Defs>
+                        <LinearGradient id="hueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <Stop offset="0%" stopColor="hsl(0,100%,50%)" />
+                          <Stop offset="16.67%" stopColor="hsl(60,100%,50%)" />
+                          <Stop offset="33.33%" stopColor="hsl(120,100%,50%)" />
+                          <Stop offset="50%" stopColor="hsl(180,100%,50%)" />
+                          <Stop offset="66.67%" stopColor="hsl(240,100%,50%)" />
+                          <Stop offset="83.33%" stopColor="hsl(300,100%,50%)" />
+                          <Stop offset="100%" stopColor="hsl(0,100%,50%)" />
+                        </LinearGradient>
+                      </Defs>
+                      <Rect width="100%" height={20} fill="url(#hueGrad)" />
+                    </Svg>
+                  </View>
                   <SliderRN min={0} max={360} value={hueValue} onChange={v => {
                     setHueValue(v);
                     const rgb = hslToRgb(v, 100, 50);
@@ -386,6 +403,17 @@ export default function RemoteScreen() {
                 <Text style={styles.panelLabel}>RGB</Text>
                 <View style={styles.sliderRow}>
                   <Text style={styles.sliderLabel}>Rouge {rgbRed}</Text>
+                  <View style={{ height: 20, marginBottom: 8, borderRadius: 10, overflow: 'hidden' }}>
+                    <Svg height={20} width="100%">
+                      <Defs>
+                        <LinearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <Stop offset="0%" stopColor="rgb(0,0,0)" />
+                          <Stop offset="100%" stopColor="rgb(255,0,0)" />
+                        </LinearGradient>
+                      </Defs>
+                      <Rect width="100%" height={20} fill="url(#redGrad)" />
+                    </Svg>
+                  </View>
                   <SliderRN min={0} max={255} value={rgbRed} onChange={v => {
                     setRgbRed(v);
                     updateSpec({ wheelHex: `#${v.toString(16).padStart(2, '0')}${rgbGreen.toString(16).padStart(2, '0')}${rgbBlue.toString(16).padStart(2, '0')}` });
@@ -393,6 +421,17 @@ export default function RemoteScreen() {
                 </View>
                 <View style={styles.sliderRow}>
                   <Text style={styles.sliderLabel}>Vert {rgbGreen}</Text>
+                  <View style={{ height: 20, marginBottom: 8, borderRadius: 10, overflow: 'hidden' }}>
+                    <Svg height={20} width="100%">
+                      <Defs>
+                        <LinearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <Stop offset="0%" stopColor="rgb(0,0,0)" />
+                          <Stop offset="100%" stopColor="rgb(0,255,0)" />
+                        </LinearGradient>
+                      </Defs>
+                      <Rect width="100%" height={20} fill="url(#greenGrad)" />
+                    </Svg>
+                  </View>
                   <SliderRN min={0} max={255} value={rgbGreen} onChange={v => {
                     setRgbGreen(v);
                     updateSpec({ wheelHex: `#${rgbRed.toString(16).padStart(2, '0')}${v.toString(16).padStart(2, '0')}${rgbBlue.toString(16).padStart(2, '0')}` });
@@ -400,6 +439,17 @@ export default function RemoteScreen() {
                 </View>
                 <View style={styles.sliderRow}>
                   <Text style={styles.sliderLabel}>Bleu {rgbBlue}</Text>
+                  <View style={{ height: 20, marginBottom: 8, borderRadius: 10, overflow: 'hidden' }}>
+                    <Svg height={20} width="100%">
+                      <Defs>
+                        <LinearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <Stop offset="0%" stopColor="rgb(0,0,0)" />
+                          <Stop offset="100%" stopColor="rgb(0,0,255)" />
+                        </LinearGradient>
+                      </Defs>
+                      <Rect width="100%" height={20} fill="url(#blueGrad)" />
+                    </Svg>
+                  </View>
                   <SliderRN min={0} max={255} value={rgbBlue} onChange={v => {
                     setRgbBlue(v);
                     updateSpec({ wheelHex: `#${rgbRed.toString(16).padStart(2, '0')}${rgbGreen.toString(16).padStart(2, '0')}${v.toString(16).padStart(2, '0')}` });
