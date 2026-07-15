@@ -391,8 +391,16 @@ export default function RemoteScreen() {
                   <SliderRN min={0} max={360} value={hueValue} onChange={v => {
                     setHueValue(v);
                     const rgb = hslToRgb(v, 100, 50);
-                    updateSpec({ wheelHex: `#${rgb.r.toString(16).padStart(2, '0')}${rgb.g.toString(16).padStart(2, '0')}${rgb.b.toString(16).padStart(2, '0')}` });
+                    const hex = `#${rgb.r.toString(16).padStart(2, '0')}${rgb.g.toString(16).padStart(2, '0')}${rgb.b.toString(16).padStart(2, '0')}`;
+                    updateSpec({ wheelHex: hex });
+                    setRgbRed(rgb.r);
+                    setRgbGreen(rgb.g);
+                    setRgbBlue(rgb.b);
                   }} />
+                </View>
+                <View style={styles.sliderRow}>
+                  <Text style={styles.sliderLabel}>Color crossfade · Blanc ↔ Couleur {spec.crossfade}%</Text>
+                  <SliderRN min={0} max={100} value={spec.crossfade} onChange={v => updateSpec({ crossfade: v })} />
                 </View>
               </View>
             )}
@@ -416,7 +424,10 @@ export default function RemoteScreen() {
                   </View>
                   <SliderRN min={0} max={255} value={rgbRed} onChange={v => {
                     setRgbRed(v);
-                    updateSpec({ wheelHex: `#${v.toString(16).padStart(2, '0')}${rgbGreen.toString(16).padStart(2, '0')}${rgbBlue.toString(16).padStart(2, '0')}` });
+                    const hex = `#${v.toString(16).padStart(2, '0')}${rgbGreen.toString(16).padStart(2, '0')}${rgbBlue.toString(16).padStart(2, '0')}`;
+                    updateSpec({ wheelHex: hex });
+                    const hsl = rgbToHsl(v, rgbGreen, rgbBlue);
+                    setHueValue(hsl.h);
                   }} />
                 </View>
                 <View style={styles.sliderRow}>
@@ -434,7 +445,10 @@ export default function RemoteScreen() {
                   </View>
                   <SliderRN min={0} max={255} value={rgbGreen} onChange={v => {
                     setRgbGreen(v);
-                    updateSpec({ wheelHex: `#${rgbRed.toString(16).padStart(2, '0')}${v.toString(16).padStart(2, '0')}${rgbBlue.toString(16).padStart(2, '0')}` });
+                    const hex = `#${rgbRed.toString(16).padStart(2, '0')}${v.toString(16).padStart(2, '0')}${rgbBlue.toString(16).padStart(2, '0')}`;
+                    updateSpec({ wheelHex: hex });
+                    const hsl = rgbToHsl(rgbRed, v, rgbBlue);
+                    setHueValue(hsl.h);
                   }} />
                 </View>
                 <View style={styles.sliderRow}>
@@ -452,8 +466,15 @@ export default function RemoteScreen() {
                   </View>
                   <SliderRN min={0} max={255} value={rgbBlue} onChange={v => {
                     setRgbBlue(v);
-                    updateSpec({ wheelHex: `#${rgbRed.toString(16).padStart(2, '0')}${rgbGreen.toString(16).padStart(2, '0')}${v.toString(16).padStart(2, '0')}` });
+                    const hex = `#${rgbRed.toString(16).padStart(2, '0')}${rgbGreen.toString(16).padStart(2, '0')}${v.toString(16).padStart(2, '0')}`;
+                    updateSpec({ wheelHex: hex });
+                    const hsl = rgbToHsl(rgbRed, rgbGreen, v);
+                    setHueValue(hsl.h);
                   }} />
+                </View>
+                <View style={styles.sliderRow}>
+                  <Text style={styles.sliderLabel}>Color crossfade · Blanc ↔ Couleur {spec.crossfade}%</Text>
+                  <SliderRN min={0} max={100} value={spec.crossfade} onChange={v => updateSpec({ crossfade: v })} />
                 </View>
               </View>
             )}
@@ -884,6 +905,22 @@ function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: n
     g: Math.round(255 * f(8)),
     b: Math.round(255 * f(4)),
   };
+}
+
+function rgbToHsl(r: number, g: number, b: number): { h: number; l: number } {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return { h: Math.round(h * 360), l: Math.round(l * 100) };
 }
 
 interface SliderProps {

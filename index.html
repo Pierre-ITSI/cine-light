@@ -495,6 +495,10 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           <div class="slider-header"><label>Teinte (HUE)</label><div class="slider-val" id="hueVal">0<span>°</span></div></div>
           <input type="range" id="hueSlider" min="0" max="360" value="0" oninput="onHueChange()">
         </div>
+        <div class="slider-block" style="margin:14px 0 0">
+          <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="hueCrossfadeVal">0<span>%</span></div></div>
+          <input type="range" id="hueCrossfadeSlider" min="0" max="100" value="0" oninput="onHueCrossfadeChange()">
+        </div>
       </div>
 
       <div id="colorPickRgb" style="display:none">
@@ -509,6 +513,10 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
         <div class="slider-block">
           <div class="slider-header"><label>Bleu</label><div class="slider-val" id="rgbBlueVal">255</div></div>
           <input type="range" id="rgbBlueSlider" min="0" max="255" value="255" oninput="onRgbChange()">
+        </div>
+        <div class="slider-block" style="margin:14px 0 0">
+          <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="rgbCrossfadeVal">0<span>%</span></div></div>
+          <input type="range" id="rgbCrossfadeSlider" min="0" max="100" value="0" oninput="onRgbCrossfadeChange()">
         </div>
       </div>
     </div>
@@ -1300,6 +1308,7 @@ function onHueChange() {
   document.getElementById('hueVal').innerHTML=h+'<span>°</span>';
   const rgb=hslToRgb(h, 100, 50);
   colorWheelHex='#'+[rgb.r,rgb.g,rgb.b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  syncRgbValues();
   updateHueGradient();
   recomputeColor();
 }
@@ -1327,6 +1336,7 @@ function onRgbChange() {
   document.getElementById('rgbGreenVal').textContent=g;
   document.getElementById('rgbBlueVal').textContent=b;
   colorWheelHex='#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  syncHueValue();
   updateRgbGradients();
   recomputeColor();
 }
@@ -1338,6 +1348,69 @@ function updateRgbGradients() {
   if(redSlider) redSlider.style.background=`linear-gradient(to right,#000,rgb(255,0,0))`;
   if(greenSlider) greenSlider.style.background=`linear-gradient(to right,#000,rgb(0,255,0))`;
   if(blueSlider) blueSlider.style.background=`linear-gradient(to right,#000,rgb(0,0,255))`;
+}
+
+function onHueCrossfadeChange() {
+  colorCrossfade=parseInt(document.getElementById('hueCrossfadeSlider').value);
+  document.getElementById('hueCrossfadeVal').innerHTML=colorCrossfade+'<span>%</span>';
+  syncCrossfadeValues();
+  updateCrossfadeGradient();
+  recomputeColor();
+}
+
+function onRgbCrossfadeChange() {
+  colorCrossfade=parseInt(document.getElementById('rgbCrossfadeSlider').value);
+  document.getElementById('rgbCrossfadeVal').innerHTML=colorCrossfade+'<span>%</span>';
+  syncCrossfadeValues();
+  updateCrossfadeGradient();
+  recomputeColor();
+}
+
+function syncRgbValues() {
+  const r=parseInt(colorWheelHex.substr(1,2),16);
+  const g=parseInt(colorWheelHex.substr(3,2),16);
+  const b=parseInt(colorWheelHex.substr(5,2),16);
+  document.getElementById('rgbRedSlider').value=r;
+  document.getElementById('rgbGreenSlider').value=g;
+  document.getElementById('rgbBlueSlider').value=b;
+  document.getElementById('rgbRedVal').textContent=r;
+  document.getElementById('rgbGreenVal').textContent=g;
+  document.getElementById('rgbBlueVal').textContent=b;
+}
+
+function syncHueValue() {
+  const r=parseInt(colorWheelHex.substr(1,2),16);
+  const g=parseInt(colorWheelHex.substr(3,2),16);
+  const b=parseInt(colorWheelHex.substr(5,2),16);
+  const hsl=rgbToHsl(r,g,b);
+  document.getElementById('hueSlider').value=hsl.h;
+  document.getElementById('hueVal').innerHTML=hsl.h+'<span>°</span>';
+}
+
+function syncCrossfadeValues() {
+  const cs=document.getElementById('crossfadeSlider');
+  const hcs=document.getElementById('hueCrossfadeSlider');
+  const rcs=document.getElementById('rgbCrossfadeSlider');
+  if(cs) cs.value=colorCrossfade;
+  if(hcs) hcs.value=colorCrossfade;
+  if(rcs) rcs.value=colorCrossfade;
+  if(cs) document.getElementById('crossfadeVal').innerHTML=colorCrossfade+'<span>%</span>';
+}
+
+function rgbToHsl(r, g, b) {
+  r/=255; g/=255; b/=255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b);
+  let h=0, l=(max+min)/2;
+  if(max!==min) {
+    const d=max-min;
+    const s=l>0.5?d/(2-max-min):d/(max+min);
+    switch(max) {
+      case r: h=((g-b)/d+(g<b?6:0))/6; break;
+      case g: h=((b-r)/d+2)/6; break;
+      case b: h=((r-g)/d+4)/6; break;
+    }
+  }
+  return {h:Math.round(h*360), l:Math.round(l*100)};
 }
 
 function hslToRgb(h, s, l) {
