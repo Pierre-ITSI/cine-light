@@ -523,10 +523,6 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 
     <div class="panel">
       <div class="panel-label">Température de couleur</div>
-      <div class="kelvin-labels">
-        <span>1700K<br>Bougie</span><span style="text-align:center">3200K<br>Tungstène</span>
-        <span style="text-align:center">5600K<br>Daylight</span><span style="text-align:right">20000K<br>Ciel</span>
-      </div>
       <div class="slider-block">
         <div class="slider-header"><label>Température</label><div class="slider-val" id="kelvinVal">5600<span> K</span></div></div>
         <input type="range" id="kelvinSlider" min="1700" max="20000" value="5600" oninput="onKelvinChange()">
@@ -545,10 +541,18 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 
     <div class="panel">
       <div class="panel-label">Tint · Magenta ↔ Vert</div>
-      <div class="green-labels"><span>−100 Magenta</span><span>0 Neutre</span><span>+100 Vert</span></div>
-      <div class="slider-block" style="margin-bottom:0">
+      <div class="slider-block">
         <div class="slider-header"><label>Green / Magenta</label><div class="slider-val" id="tintVal">0<span> GM</span></div></div>
         <input type="range" id="tintSlider" min="-100" max="100" value="0" oninput="onTintChange()">
+      </div>
+      <div class="chips-wrap">
+        <button class="chip" onclick="setTint(-100)">−100 Magenta</button>
+        <button class="chip" onclick="setTint(-50)">−50</button>
+        <button class="chip" onclick="setTint(-25)">−25</button>
+        <button class="chip" onclick="setTint(0)">0 Neutre</button>
+        <button class="chip" onclick="setTint(25)">+25</button>
+        <button class="chip" onclick="setTint(50)">+50</button>
+        <button class="chip" onclick="setTint(100)">+100 Vert</button>
       </div>
     </div>
 

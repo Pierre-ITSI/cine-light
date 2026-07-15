@@ -502,14 +502,28 @@ export default function RemoteScreen() {
             {/* Tint · Magenta ↔ Vert */}
             <View style={styles.panel}>
               <Text style={styles.panelLabel}>Tint · Magenta ↔ Vert</Text>
-              <View style={styles.tintLabels}>
-                <Text style={styles.tintLabel}>−100 Magenta</Text>
-                <Text style={styles.tintLabel}>0 Neutre</Text>
-                <Text style={styles.tintLabel}>+100 Vert</Text>
-              </View>
               <View style={styles.sliderRow}>
                 <Text style={styles.sliderLabel}>Green / Magenta {spec.tint >= 0 ? '+' : ''}{spec.tint} GM</Text>
                 <SliderRN min={-100} max={100} value={spec.tint} onChange={v => updateSpec({ tint: v })} />
+              </View>
+              <View style={styles.chipsWrap}>
+                {[
+                  { v: -100, label: '−100 Magenta' },
+                  { v: -50, label: '−50' },
+                  { v: -25, label: '−25' },
+                  { v: 0, label: '0 Neutre' },
+                  { v: 25, label: '+25' },
+                  { v: 50, label: '+50' },
+                  { v: 100, label: '+100 Vert' },
+                ].map(t => (
+                  <Pressable
+                    key={t.v}
+                    style={[styles.chip, spec.tint === t.v && styles.chipActive]}
+                    onPress={() => updateSpec({ tint: t.v })}
+                  >
+                    <Text style={[styles.chipText, spec.tint === t.v && styles.chipTextActive]}>{t.label}</Text>
+                  </Pressable>
+                ))}
               </View>
             </View>
 
