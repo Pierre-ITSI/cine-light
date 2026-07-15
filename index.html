@@ -119,10 +119,10 @@ html,body{width:100%;height:100%;background:radial-gradient(ellipse at center,#1
 .slider-header label{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
 .slider-val{font-size:.85rem;color:var(--text);letter-spacing:.05em;font-variant-numeric:tabular-nums}
 .slider-val span{color:var(--muted);font-size:.65rem}
-.slider-row{display:flex;align-items:center;gap:10px;width:100%}
-.slider-btn{background:rgba(245,242,236,.15);border:1px solid rgba(245,242,236,.2);color:var(--text);width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:.9rem;font-weight:600;transition:all .15s}
+.slider-row{display:flex;align-items:center;gap:10px;width:100%;min-height:40px}
+.slider-btn{background:rgba(245,242,236,.15);border:1px solid rgba(245,242,236,.2);color:var(--text);width:36px;height:36px;border-radius:6px;cursor:pointer;font-size:.9rem;font-weight:600;transition:all .15s;flex-shrink:0}
 .slider-btn:hover{background:rgba(245,242,236,.25);border-color:rgba(245,242,236,.4)}
-.slider-input{flex:1}
+.slider-input{flex:1;min-height:12px}
 .slider-val-click{cursor:pointer;padding:4px 8px;border-radius:4px;user-select:none;transition:background .15s}
 .slider-val-click:hover{background:rgba(245,242,236,.1)}
 input[type="range"]{-webkit-appearance:none;width:100%;height:8px;border-radius:4px;background:rgba(245,242,236,.12);outline:none;cursor:pointer;border:none}
@@ -465,7 +465,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       <div class="panel-label">Intensité (Dimmer)</div>
       <div class="slider-block" style="margin-bottom:0">
         <div class="slider-header"><label>Luminosité maître</label><div class="slider-val" id="dimmerVal">100<span>%</span></div></div>
-        <input type="range" id="dimmerSlider" min="0" max="100" value="100" oninput="onDimmerChange()">
+        <input type="range" id="dimmerSlider" min="0" max="100" value="100" oninput="onDimmerChange()" style="width:100%;height:12px;margin:10px 0;">
       </div>
     </div>
 
