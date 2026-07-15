@@ -921,6 +921,9 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'media-img-start') mediaImgStart(msg);
         if (msg.type === 'media-img-chunk') mediaImgChunk(msg);
         if (msg.type === 'media-stop')   hideScreenMedia();
+        if (msg.type === 'media:show')   screenShowCached(msg.id);
+        if (msg.type === 'media:order')  _mediaOrder = msg.ids || [];
+        if (msg.type === 'media:evict')  screenEvictCached(msg.id);
         if (msg.type === 'media:autoadvance') _screenAutoAdvance = !!msg.on;
         if (msg.type === 'media-ctrl')   screenMediaCtrl(msg);
         if (msg.type === 'rtc-offer')    screenHandleOffer(msg.sdp);
@@ -934,6 +937,9 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'media-ended')    remoteOnEnded();
         if (msg.type === 'media-error')    remoteOnError(msg.reason);
         if (msg.type === 'media:advance')  advancePool(typeof msg.dir === 'number' ? msg.dir : 1);
+        if (msg.type === 'media:cached')   { _screenCached.add(msg.id); _preloadInflight.delete(msg.id); }
+        if (msg.type === 'media:advanced') remoteOnScreenAdvanced(msg.id);
+        if (msg.type === 'media:need')     remoteOnScreenNeeds(msg.id);
         if (msg.type === 'caps')           applyReceiverCaps(msg);
       }
     } catch (_) {}
@@ -1031,6 +1037,9 @@ function connectChannel() {
     sendMsg({ type: 'media:autoadvance', on: _autoAdvance });
     // Resynchroniser la luminosité de l'écran de jeu
     sendMsg({ type: 'screen:brightness', value: screenBrightnessPct / 100 });
+    // Synchroniser l'ordre du pool et précharger les médias sur l'écran
+    sendPoolOrder();
+    schedulePreload();
   });
   setTimeout(renderQR, 300);
 }
@@ -2535,7 +2544,20 @@ function screenMediaVisible() {
 function onScreenAdvanceClick(e) {
   if (mode !== 'screen' || !_screenAutoAdvance || !screenMediaVisible()) return;
   if (e && e.target && e.target.closest && e.target.closest('#screen-bar')) return;
-  sendMsg({ type: 'media:advance', dir: 1 });
+  // Avance locale instantanée : si l'ordre du pool est connu et que le média
+  // suivant est déjà en cache, on l'affiche sans aller-retour réseau.
+  if (_mediaOrder.length && _screenActiveId) {
+    const cur = _mediaOrder.indexOf(_screenActiveId);
+    if (cur >= 0) {
+      const nextId = _mediaOrder[(cur + 1) % _mediaOrder.length];
+      if (_mediaCache.has(nextId)) {
+        screenShowCached(nextId);
+        sendMsg({ type: 'media:advanced', id: nextId }); // informe la télécommande
+        return;
+      }
+    }
+  }
+  sendMsg({ type: 'media:advance', dir: 1 }); // repli : la télécommande gère
 }
 function cancelScreenAutohide() {
   if (_uiHideTimer) { clearTimeout(_uiHideTimer); _uiHideTimer = null; }
@@ -2684,6 +2706,8 @@ function onAddImages(files) {
     _mediaPool.push(item); if (!first) first = item;
   }
   renderPool();
+  sendPoolOrder();
+  schedulePreload();
   if (wasEmpty && first) selectMedia(first.id);
 }
 function onAddVideos(files) {
@@ -2695,6 +2719,8 @@ function onAddVideos(files) {
     _mediaPool.push(item); makeVideoThumb(item); if (!first) first = item;
   }
   renderPool();
+  sendPoolOrder();
+  schedulePreload();
   if (wasEmpty && first) selectMedia(first.id);
 }
 
@@ -2812,6 +2838,7 @@ let _poolDrag = null, _poolSuppressClick = false;
       _mediaPool.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
       _poolSuppressClick = true; setTimeout(() => { _poolSuppressClick = false; }, 350);
       renderPool();
+      sendPoolOrder(); // l'écran suit le nouvel ordre pour l'avance locale
     }
     _poolDrag = null;
   }
@@ -2844,8 +2871,45 @@ function selectMedia(id) {
   teardownBroadcast();
   _activeMediaId = id;
   renderPool();
-  if (it.kind === 'img') broadcastImage(it.file);
-  else broadcastVideo(it.file);
+  // Chemin rapide : déjà en cache sur l'écran → simple message, affichage instantané
+  if (_screenCached.has(id)) {
+    sendMsg({ type: 'media:show', id });
+    showMediaStop(true);
+    if (it.kind === 'vid') {
+      _mediaIsVideo = true; _remotePlaying = true;
+      showMediaPlay(true); setPlayBtn(true); showMediaTimeline(true);
+      setMediaStatus('🎬 Lecture instantanée (cache écran)', true);
+    } else {
+      setMediaStatus('🖼 Affichage instantané (cache écran)', true);
+    }
+    return;
+  }
+  if (it.kind === 'img') broadcastImage(it.file, it.id);
+  else broadcastVideo(it.file, it.id);
+}
+
+// L'écran a avancé tout seul (avance locale) : on aligne l'interface
+function remoteOnScreenAdvanced(id) {
+  const it = _mediaPool.find(m => m.id === id);
+  if (!it) return;
+  teardownBroadcast();
+  _activeMediaId = id;
+  renderPool();
+  showMediaStop(true);
+  if (it.kind === 'vid') {
+    _mediaIsVideo = true; _remotePlaying = true;
+    showMediaPlay(true); setPlayBtn(true); showMediaTimeline(true);
+  }
+  setMediaStatus((it.kind === 'vid' ? '🎬 ' : '🖼 ') + it.name + ' (avance écran)', true);
+}
+
+// L'écran ne possède pas ce média en cache : repli sur le transfert complet
+function remoteOnScreenNeeds(id) {
+  _screenCached.delete(id);
+  const it = _mediaPool.find(m => m.id === id);
+  if (!it) return;
+  if (it.kind === 'img') broadcastImage(it.file, it.id);
+  else broadcastVideo(it.file, it.id);
 }
 
 function removeMedia(id) {
@@ -2855,41 +2919,100 @@ function removeMedia(id) {
   if (it.thumb && it.thumb.indexOf('blob:') === 0) { try { URL.revokeObjectURL(it.thumb); } catch (_) {} }
   const wasActive = (_activeMediaId === id);
   _mediaPool.splice(idx, 1);
+  _screenCached.delete(id);
+  sendMsg({ type: 'media:evict', id });
+  sendPoolOrder();
   if (wasActive) stopMediaBroadcast(true); else renderPool();
 }
 
-// — Image : compression + envoi en morceaux via MQTT —
-function broadcastImage(file) {
-  const img = new Image();
-  img.onload = () => {
-    const max = 1280;
-    let w = img.width, h = img.height;
-    if (w > max || h > max) { const s = Math.min(max / w, max / h); w = Math.round(w * s); h = Math.round(h * s); }
-    const c = document.createElement('canvas'); c.width = w; c.height = h;
-    c.getContext('2d').drawImage(img, 0, 0, w, h);
-    const dataUrl = c.toDataURL('image/jpeg', 0.72);
-    URL.revokeObjectURL(img.src);
-    sendImageChunks(dataUrl);
-    showMediaStop(true);
-    setMediaStatus('🖼 Image diffusée (' + Math.round(dataUrl.length / 1024) + ' Ko)', true);
-  };
-  img.onerror = () => setMediaStatus('⚠ Image illisible');
-  img.src = URL.createObjectURL(file);
+// ── Cache écran : suivi des médias déjà transférés + préchargement ──
+// L'écran met en cache chaque média reçu (par id) et accuse réception
+// (media:cached). Les affichages suivants ne coûtent qu'un mini message
+// media:show au lieu d'un re-transfert complet → quasi instantané.
+const _screenCached = new Set();    // ids confirmés en cache sur l'écran
+const _preloadInflight = new Set(); // préchargements en cours
+let _preloadRunning = false;
+
+function sendPoolOrder() {
+  if (_mediaPool.length) sendMsg({ type: 'media:order', ids: _mediaPool.map(m => m.id) });
 }
 
-function sendImageChunks(dataUrl) {
+function schedulePreload() { setTimeout(preloadPoolToScreen, 300); }
+
+// Précharge en arrière-plan les images du pool vers l'écran (séquentiel).
+// Les vidéos sont mises en cache par l'écran à leur première lecture.
+async function preloadPoolToScreen() {
+  if (_preloadRunning || mode !== 'remote') return;
+  if (!mqttClient || !mqttClient.connected) return;
+  _preloadRunning = true;
+  try {
+    for (const it of [..._mediaPool]) {
+      if (it.kind !== 'img') continue;
+      if (_screenCached.has(it.id) || _preloadInflight.has(it.id)) continue;
+      _preloadInflight.add(it.id);
+      try {
+        const dataUrl = await compressImageFile(it.file);
+        await sendImageChunks(dataUrl, { mediaId: it.id, show: false });
+        await _waitForCached(it.id, 5000);
+      } catch (_) {}
+      _preloadInflight.delete(it.id);
+      await new Promise(r => setTimeout(r, 150)); // souffle pour le broker
+    }
+  } finally { _preloadRunning = false; }
+}
+
+function _waitForCached(id, ms) {
+  return new Promise(res => {
+    const t0 = Date.now();
+    (function poll() {
+      if (_screenCached.has(id) || Date.now() - t0 > ms) return res();
+      setTimeout(poll, 150);
+    })();
+  });
+}
+
+// — Image : compression (réutilisée par diffusion et préchargement) —
+function compressImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 1280;
+      let w = img.width, h = img.height;
+      if (w > max || h > max) { const s = Math.min(max / w, max / h); w = Math.round(w * s); h = Math.round(h * s); }
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(img.src);
+      resolve(c.toDataURL('image/jpeg', 0.72));
+    };
+    img.onerror = () => { URL.revokeObjectURL(img.src); reject(new Error('image illisible')); };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+async function broadcastImage(file, mediaId) {
+  let dataUrl;
+  try { dataUrl = await compressImageFile(file); }
+  catch (_) { setMediaStatus('⚠ Image illisible'); return; }
+  sendImageChunks(dataUrl, { mediaId: mediaId || null, show: true });
+  showMediaStop(true);
+  setMediaStatus('🖼 Image diffusée (' + Math.round(dataUrl.length / 1024) + ' Ko)', true);
+}
+
+async function sendImageChunks(dataUrl, opts) {
+  const o = opts || {};
   const id = Math.random().toString(36).slice(2, 8);
   const CHUNK = 12000;
   const total = Math.ceil(dataUrl.length / CHUNK);
-  sendMsg({ type: 'media-img-start', id, total });
+  sendMsg({ type: 'media-img-start', id, total, mediaId: o.mediaId || null, show: o.show !== false });
   for (let i = 0; i < total; i++) {
     sendMsg({ type: 'media-img-chunk', id, i, data: dataUrl.slice(i * CHUNK, (i + 1) * CHUNK) });
+    if (i % 16 === 15) await new Promise(r => setTimeout(r, 8)); // laisse respirer le broker
   }
 }
 
 // — Vidéo : transfert du fichier vers l'écran via DataChannel —
 let _fileChannel = null;
-function broadcastVideo(file) {
+function broadcastVideo(file, mediaId) {
   _mediaIsVideo = true;
   _remotePlaying = false; _remoteDur = 0; _remoteCur = 0;
   showMediaStop(true);
@@ -2897,7 +3020,7 @@ function broadcastVideo(file) {
   // chunké (protocole media:upload/chunk/play), qu'il reconstitue en fichier.
   if (_recvCaps && _recvCaps.videoMode === 'b64') { broadcastVideoBase64(file); return; }
   setMediaStatus('🎬 Préparation du transfert…');
-  startFileTransfer(file);
+  startFileTransfer(file, mediaId);
 }
 
 // Lit un fichier en base64 pur (sans le préfixe data:…;base64,).
@@ -2934,7 +3057,7 @@ async function broadcastVideoBase64(file) {
   setMediaStatus('🎬 Lecture sur l\'écran natif', true);
 }
 
-async function startFileTransfer(file) {
+async function startFileTransfer(file, mediaId) {
   _remotePendingIce = [];
   _rtcPc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
   _rtcPc.onicecandidate = e => { if (e.candidate) sendMsg({ type: 'rtc-ice', from: 'remote', candidate: e.candidate }); };
@@ -2944,18 +3067,18 @@ async function startFileTransfer(file) {
   };
   _fileChannel = _rtcPc.createDataChannel('file', { ordered: true });
   _fileChannel.binaryType = 'arraybuffer';
-  _fileChannel.onopen = () => sendFileOverChannel(_fileChannel, file);
+  _fileChannel.onopen = () => sendFileOverChannel(_fileChannel, file, mediaId);
   const offer = await _rtcPc.createOffer();
   await _rtcPc.setLocalDescription(offer);
   sendMsg({ type: 'rtc-offer', sdp: _rtcPc.localDescription, kind: 'file' });
   setMediaStatus('🎬 Connexion à l\'écran…');
 }
 
-async function sendFileOverChannel(ch, file) {
+async function sendFileOverChannel(ch, file, mediaId) {
   const CHUNK = 16 * 1024;
   const HIGH = 4 * 1024 * 1024; // backpressure à 4 Mo
   ch.bufferedAmountLowThreshold = 1 * 1024 * 1024;
-  ch.send(JSON.stringify({ meta: true, name: file.name, size: file.size, mime: file.type || 'video/mp4' }));
+  ch.send(JSON.stringify({ meta: true, name: file.name, size: file.size, mime: file.type || 'video/mp4', mediaId: mediaId || null }));
   let offset = 0;
   setMediaStatus('📤 Transfert… 0 %');
   try {
@@ -3013,6 +3136,37 @@ function stopMediaBroadcast(notify = true) {
 // ══════════════════════════ MÉDIA — ÉCRAN (récepteur) ══════════════════════════
 let _imgBuf = null, _screenPc = null, _screenPendingIce = [];
 let _vidParts = [], _vidMeta = null, _screenVidUrl = null, _screenProgTimer = 0;
+// Cache des médias reçus : mediaId → {kind:'img',data} | {kind:'vid',url}.
+// Permet d'afficher un média déjà transféré sans nouveau transfert.
+const _mediaCache = new Map();
+let _mediaOrder = [];       // ordre du pool (ids), envoyé par la télécommande
+let _screenActiveId = null; // media affiché actuellement (si connu)
+
+function _urlIsCached(u) {
+  let found = false;
+  _mediaCache.forEach(c => { if (c.url === u) found = true; });
+  return found;
+}
+
+// Affiche un média depuis le cache (instantané). Si absent : demande le
+// transfert complet à la télécommande (repli).
+function screenShowCached(id) {
+  const c = _mediaCache.get(id);
+  if (!c) { sendMsg({ type: 'media:need', id }); return; }
+  _screenActiveId = id;
+  if (c.kind === 'img') {
+    const im = document.getElementById('screen-media-img');
+    if (im) { im.src = c.data; showScreenMedia('img'); }
+  } else {
+    screenPlayVideoUrl(c.url);
+  }
+}
+
+function screenEvictCached(id) {
+  const c = _mediaCache.get(id);
+  if (c && c.url && c.url !== _screenVidUrl) { try { URL.revokeObjectURL(c.url); } catch (_) {} }
+  _mediaCache.delete(id);
+}
 
 function showScreenMedia(kind) {
   const img = document.getElementById('screen-media-img');
@@ -3034,22 +3188,35 @@ function hideScreenMedia() {
     if (vid.srcObject) vid.srcObject = null;
     vid.removeAttribute('src'); vid.load && vid.load();
   }
-  if (_screenVidUrl) { try { URL.revokeObjectURL(_screenVidUrl); } catch (_) {} _screenVidUrl = null; }
+  // Ne révoque l'URL que si elle n'est pas conservée dans le cache média
+  if (_screenVidUrl) {
+    if (!_urlIsCached(_screenVidUrl)) { try { URL.revokeObjectURL(_screenVidUrl); } catch (_) {} }
+    _screenVidUrl = null;
+  }
   _imgBuf = null; _vidParts = []; _vidMeta = null;
   cleanupScreenRtc();
 }
 
 function mediaImgStart(msg) {
-  _imgBuf = { id: msg.id, total: msg.total, parts: new Array(msg.total), got: 0 };
+  _imgBuf = { id: msg.id, total: msg.total, parts: new Array(msg.total), got: 0,
+              mediaId: msg.mediaId || null, show: msg.show !== false };
 }
 function mediaImgChunk(msg) {
   if (!_imgBuf || _imgBuf.id !== msg.id) return;
   if (_imgBuf.parts[msg.i] === undefined) { _imgBuf.parts[msg.i] = msg.data; _imgBuf.got++; }
   if (_imgBuf.got === _imgBuf.total) {
     const dataUrl = _imgBuf.parts.join('');
-    const im = document.getElementById('screen-media-img');
-    if (im) { im.src = dataUrl; showScreenMedia('img'); }
-    cleanupScreenRtc(); // une image remplace la vidéo : libère la connexion de transfert
+    // Mise en cache pour affichage instantané ultérieur + accusé de réception
+    if (_imgBuf.mediaId) {
+      _mediaCache.set(_imgBuf.mediaId, { kind: 'img', data: dataUrl });
+      sendMsg({ type: 'media:cached', id: _imgBuf.mediaId });
+    }
+    if (_imgBuf.show) {
+      const im = document.getElementById('screen-media-img');
+      if (im) { im.src = dataUrl; showScreenMedia('img'); }
+      _screenActiveId = _imgBuf.mediaId || null;
+      cleanupScreenRtc(); // une image remplace la vidéo : libère la connexion de transfert
+    }
     _imgBuf = null;
   }
 }
@@ -3106,13 +3273,32 @@ function setupScreenFileChannel(ch) {
 }
 
 function screenAssembleVideo() {
-  const vid = document.getElementById('screen-media-video');
-  if (!vid || !_vidParts.length) return;
+  if (!_vidParts.length) return;
   const blob = new Blob(_vidParts, { type: (_vidMeta && _vidMeta.mime) || 'video/mp4' });
   _vidParts = [];
-  if (_screenVidUrl) { try { URL.revokeObjectURL(_screenVidUrl); } catch (_) {} }
-  _screenVidUrl = URL.createObjectURL(blob);
+  const mediaId = _vidMeta && _vidMeta.mediaId;
+  const url = URL.createObjectURL(blob);
   setScreenStatus('🎬 Vidéo reçue (' + Math.round(blob.size / 1048576) + ' Mo)');
+  // Mise en cache : les prochains affichages de cette vidéo seront instantanés
+  if (mediaId) {
+    const old = _mediaCache.get(mediaId);
+    if (old && old.url && old.url !== url) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
+    _mediaCache.set(mediaId, { kind: 'vid', url });
+    sendMsg({ type: 'media:cached', id: mediaId });
+    _screenActiveId = mediaId;
+  }
+  screenPlayVideoUrl(url);
+}
+
+// Branche l'élément <video> sur une URL (transfert frais ou cache) et joue.
+function screenPlayVideoUrl(url) {
+  const vid = document.getElementById('screen-media-video');
+  if (!vid) return;
+  // Libère l'ancienne URL seulement si elle n'appartient pas au cache
+  if (_screenVidUrl && _screenVidUrl !== url && !_urlIsCached(_screenVidUrl)) {
+    try { URL.revokeObjectURL(_screenVidUrl); } catch (_) {}
+  }
+  _screenVidUrl = url;
   vid.srcObject = null;
   vid.loop = false; vid.playsInline = true; vid.muted = false; vid.preload = 'auto';
   vid.onloadedmetadata = () => { sendMsg({ type: 'media-meta', dur: vid.duration }); sendScreenState(vid); };
@@ -3132,7 +3318,7 @@ function screenAssembleVideo() {
     setScreenStatus('⚠ Format vidéo non supporté');
     sendMsg({ type: 'media-error', reason });
   };
-  vid.src = _screenVidUrl;
+  vid.src = url;
   showScreenMedia('video');
   playScreenVid(vid); // démarre la lecture (muet si l'autoplay bloque le son)
 }
