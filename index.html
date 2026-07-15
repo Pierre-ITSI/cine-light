@@ -466,16 +466,46 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
     </div>
 
     <div class="panel">
-      <div class="panel-label">Roue chromatique</div>
-      <div class="wheel-wrap" style="position:relative;width:fit-content">
-        <canvas id="colorWheel" width="240" height="240"></canvas>
-        <svg id="colorWheelThumb" width="240" height="240" style="position:absolute;top:0;left:0;pointer-events:none">
-          <circle id="colorWheelMarker" cx="120" cy="60" r="6" fill="none" stroke="#F5F2EC" stroke-width="2" opacity="0.8"></circle>
-        </svg>
+      <div class="panel-label">Mode sélection couleur</div>
+      <div class="chips-wrap" style="margin-bottom:16px">
+        <button class="chip active" onclick="setColorPickMode('wheel')" id="chip-wheel">Roue</button>
+        <button class="chip" onclick="setColorPickMode('hue')" id="chip-hue">HUE</button>
+        <button class="chip" onclick="setColorPickMode('rgb')" id="chip-rgb">RGB</button>
       </div>
-      <div class="slider-block" style="margin:14px 0 0">
-        <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="crossfadeVal">0<span>%</span></div></div>
-        <input type="range" id="crossfadeSlider" min="0" max="100" value="0" oninput="onCrossfadeChange()">
+
+      <div id="colorPickWheel" style="display:block">
+        <div class="wheel-wrap" style="position:relative;width:fit-content">
+          <canvas id="colorWheel" width="240" height="240"></canvas>
+          <svg id="colorWheelThumb" width="240" height="240" style="position:absolute;top:0;left:0;pointer-events:none">
+            <circle id="colorWheelMarker" cx="120" cy="60" r="10" fill="none" stroke="#F5F2EC" stroke-width="3" opacity="0.9"></circle>
+          </svg>
+        </div>
+        <div class="slider-block" style="margin:14px 0 0">
+          <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="crossfadeVal">0<span>%</span></div></div>
+          <input type="range" id="crossfadeSlider" min="0" max="100" value="0" oninput="onCrossfadeChange()">
+        </div>
+      </div>
+
+      <div id="colorPickHue" style="display:none">
+        <div class="slider-block">
+          <div class="slider-header"><label>Teinte (HUE)</label><div class="slider-val" id="hueVal">0<span>°</span></div></div>
+          <input type="range" id="hueSlider" min="0" max="360" value="0" oninput="onHueChange()">
+        </div>
+      </div>
+
+      <div id="colorPickRgb" style="display:none">
+        <div class="slider-block">
+          <div class="slider-header"><label>Rouge</label><div class="slider-val" id="rgbRedVal">255</div></div>
+          <input type="range" id="rgbRedSlider" min="0" max="255" value="255" oninput="onRgbChange()">
+        </div>
+        <div class="slider-block">
+          <div class="slider-header"><label>Vert</label><div class="slider-val" id="rgbGreenVal">255</div></div>
+          <input type="range" id="rgbGreenSlider" min="0" max="255" value="255" oninput="onRgbChange()">
+        </div>
+        <div class="slider-block">
+          <div class="slider-header"><label>Bleu</label><div class="slider-val" id="rgbBlueVal">255</div></div>
+          <input type="range" id="rgbBlueSlider" min="0" max="255" value="255" oninput="onRgbChange()">
+        </div>
       </div>
     </div>
 
@@ -1249,6 +1279,47 @@ function onTintChange() {
   recomputeColor();
 }
 function setTint(v){document.getElementById('tintSlider').value=v;onTintChange();}
+
+function setColorPickMode(mode) {
+  document.getElementById('chip-wheel').classList.toggle('active',mode==='wheel');
+  document.getElementById('chip-hue').classList.toggle('active',mode==='hue');
+  document.getElementById('chip-rgb').classList.toggle('active',mode==='rgb');
+  document.getElementById('colorPickWheel').style.display=mode==='wheel'?'block':'none';
+  document.getElementById('colorPickHue').style.display=mode==='hue'?'block':'none';
+  document.getElementById('colorPickRgb').style.display=mode==='rgb'?'block':'none';
+}
+
+function onHueChange() {
+  const h=parseInt(document.getElementById('hueSlider').value);
+  document.getElementById('hueVal').innerHTML=h+'<span>°</span>';
+  const rgb=hslToRgb(h, 100, 50);
+  colorWheelHex='#'+[rgb.r,rgb.g,rgb.b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  recomputeColor();
+}
+
+function onRgbChange() {
+  const r=parseInt(document.getElementById('rgbRedSlider').value);
+  const g=parseInt(document.getElementById('rgbGreenSlider').value);
+  const b=parseInt(document.getElementById('rgbBlueSlider').value);
+  document.getElementById('rgbRedVal').textContent=r;
+  document.getElementById('rgbGreenVal').textContent=g;
+  document.getElementById('rgbBlueVal').textContent=b;
+  colorWheelHex='#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  recomputeColor();
+}
+
+function hslToRgb(h, s, l) {
+  s /= 100;
+  l /= 100;
+  const k = n => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return {
+    r: Math.round(255 * f(0)),
+    g: Math.round(255 * f(8)),
+    b: Math.round(255 * f(4))
+  };
+}
 
 // ══════════════════════════ STROBE ══════════════════════════
 function setStrobeMode(m) {

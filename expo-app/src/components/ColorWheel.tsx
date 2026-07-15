@@ -92,9 +92,9 @@ export function ColorWheel({ size, onPick, selectedHex, onInteract }: Props) {
         {/* Marqueur de la couleur sélectionnée */}
         {markerPos && (
           <>
-            <Circle cx={mx} cy={my} r={11} fill="none" stroke="#000000" strokeOpacity={0.5} strokeWidth={4} />
-            <Circle cx={mx} cy={my} r={11} fill="none" stroke="#ffffff" strokeWidth={2.5} />
-            <Circle cx={mx} cy={my} r={6} fill={selectedHex} />
+            <Circle cx={mx} cy={my} r={16} fill="none" stroke="#000000" strokeOpacity={0.5} strokeWidth={5} />
+            <Circle cx={mx} cy={my} r={16} fill="none" stroke="#ffffff" strokeWidth={3} />
+            <Circle cx={mx} cy={my} r={9} fill={selectedHex} />
           </>
         )}
 

@@ -93,6 +93,13 @@ export default function RemoteScreen() {
     transport.send({ type: 'screen:brightness', value: v / 100 });
   }, [transport]);
 
+  // Mode de sélection de couleur : wheel, hue, ou rgb
+  const [colorPickMode, setColorPickMode] = useState<'wheel' | 'hue' | 'rgb'>('wheel');
+  const [hueValue, setHueValue] = useState(0);
+  const [rgbRed, setRgbRed] = useState(255);
+  const [rgbGreen, setRgbGreen] = useState(255);
+  const [rgbBlue, setRgbBlue] = useState(255);
+
   // Mémoires de couleur (presets) : état complet enregistré et rappelable.
   const [presets, setPresets] = useState<ColorPreset[]>(() => loadPresets());
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
@@ -314,29 +321,92 @@ export default function RemoteScreen() {
               </View>
             </View>
 
-            {/* Roue chromatique + encart de la couleur sélectionnée + crossfade */}
+            {/* Mode sélection couleur */}
             <View style={styles.panel}>
-              <Text style={styles.panelLabel}>Roue chromatique</Text>
-              <View style={styles.wheelWrap}>
-                <ColorWheel
-                  size={240}
-                  selectedHex={spec.wheelHex}
-                  onPick={hex => updateSpec({ wheelHex: hex })}
-                  onInteract={active => setScrollEnabled(!active)}
-                />
-              </View>
-              <View style={styles.swatchRow}>
-                <View style={[styles.swatch, { backgroundColor: color }]} />
-                <View style={styles.swatchInfo}>
-                  <Text style={styles.swatchHex}>{color.toUpperCase()}</Text>
-                  <Text style={styles.swatchMeta}>{colorMeta}</Text>
-                </View>
-              </View>
-              <View style={styles.sliderRow}>
-                <Text style={styles.sliderLabel}>Color crossfade · Blanc ↔ Couleur {spec.crossfade}%</Text>
-                <SliderRN min={0} max={100} value={spec.crossfade} onChange={v => updateSpec({ crossfade: v })} />
+              <Text style={styles.panelLabel}>Mode sélection couleur</Text>
+              <View style={styles.chipsWrap}>
+                {(['wheel', 'hue', 'rgb'] as const).map(m => (
+                  <Pressable
+                    key={m}
+                    style={[styles.chip, colorPickMode === m && styles.chipActive]}
+                    onPress={() => setColorPickMode(m)}
+                  >
+                    <Text style={[styles.chipText, colorPickMode === m && styles.chipTextActive]}>
+                      {m === 'wheel' ? 'Roue' : m === 'hue' ? 'HUE' : 'RGB'}
+                    </Text>
+                  </Pressable>
+                ))}
               </View>
             </View>
+
+            {/* Roue chromatique */}
+            {colorPickMode === 'wheel' && (
+              <View style={styles.panel}>
+                <Text style={styles.panelLabel}>Roue chromatique</Text>
+                <View style={styles.wheelWrap}>
+                  <ColorWheel
+                    size={240}
+                    selectedHex={spec.wheelHex}
+                    onPick={hex => updateSpec({ wheelHex: hex })}
+                    onInteract={active => setScrollEnabled(!active)}
+                  />
+                </View>
+                <View style={styles.swatchRow}>
+                  <View style={[styles.swatch, { backgroundColor: color }]} />
+                  <View style={styles.swatchInfo}>
+                    <Text style={styles.swatchHex}>{color.toUpperCase()}</Text>
+                    <Text style={styles.swatchMeta}>{colorMeta}</Text>
+                  </View>
+                </View>
+                <View style={styles.sliderRow}>
+                  <Text style={styles.sliderLabel}>Color crossfade · Blanc ↔ Couleur {spec.crossfade}%</Text>
+                  <SliderRN min={0} max={100} value={spec.crossfade} onChange={v => updateSpec({ crossfade: v })} />
+                </View>
+              </View>
+            )}
+
+            {/* Mode HUE */}
+            {colorPickMode === 'hue' && (
+              <View style={styles.panel}>
+                <Text style={styles.panelLabel}>Teinte (HUE)</Text>
+                <View style={styles.sliderRow}>
+                  <Text style={styles.sliderLabel}>Teinte {hueValue}°</Text>
+                  <SliderRN min={0} max={360} value={hueValue} onChange={v => {
+                    setHueValue(v);
+                    const rgb = hslToRgb(v, 100, 50);
+                    updateSpec({ wheelHex: `#${rgb.r.toString(16).padStart(2, '0')}${rgb.g.toString(16).padStart(2, '0')}${rgb.b.toString(16).padStart(2, '0')}` });
+                  }} />
+                </View>
+              </View>
+            )}
+
+            {/* Mode RGB */}
+            {colorPickMode === 'rgb' && (
+              <View style={styles.panel}>
+                <Text style={styles.panelLabel}>RGB</Text>
+                <View style={styles.sliderRow}>
+                  <Text style={styles.sliderLabel}>Rouge {rgbRed}</Text>
+                  <SliderRN min={0} max={255} value={rgbRed} onChange={v => {
+                    setRgbRed(v);
+                    updateSpec({ wheelHex: `#${v.toString(16).padStart(2, '0')}${rgbGreen.toString(16).padStart(2, '0')}${rgbBlue.toString(16).padStart(2, '0')}` });
+                  }} />
+                </View>
+                <View style={styles.sliderRow}>
+                  <Text style={styles.sliderLabel}>Vert {rgbGreen}</Text>
+                  <SliderRN min={0} max={255} value={rgbGreen} onChange={v => {
+                    setRgbGreen(v);
+                    updateSpec({ wheelHex: `#${rgbRed.toString(16).padStart(2, '0')}${v.toString(16).padStart(2, '0')}${rgbBlue.toString(16).padStart(2, '0')}` });
+                  }} />
+                </View>
+                <View style={styles.sliderRow}>
+                  <Text style={styles.sliderLabel}>Bleu {rgbBlue}</Text>
+                  <SliderRN min={0} max={255} value={rgbBlue} onChange={v => {
+                    setRgbBlue(v);
+                    updateSpec({ wheelHex: `#${rgbRed.toString(16).padStart(2, '0')}${rgbGreen.toString(16).padStart(2, '0')}${v.toString(16).padStart(2, '0')}` });
+                  }} />
+                </View>
+              </View>
+            )}
 
             {/* Température de couleur */}
             <View style={styles.panel}>
@@ -751,6 +821,19 @@ export default function RemoteScreen() {
       </ScrollView>
     </View>
   );
+}
+
+function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: number } {
+  s /= 100;
+  l /= 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return {
+    r: Math.round(255 * f(0)),
+    g: Math.round(255 * f(8)),
+    b: Math.round(255 * f(4)),
+  };
 }
 
 interface SliderProps {
