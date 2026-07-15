@@ -425,7 +425,7 @@ export default function RemoteScreen() {
               <Switch
                 value={strobeActive}
                 onValueChange={setStrobeActive}
-                trackColor={{ true: '#e8c97a' }}
+                trackColor={{ true: '#FF6B2C' }}
               />
             </View>
             <View style={styles.sliderRow}>
@@ -441,7 +441,7 @@ export default function RemoteScreen() {
               <Switch
                 value={strobeRandom}
                 onValueChange={setStrobeRandom}
-                trackColor={{ true: '#e8c97a' }}
+                trackColor={{ true: '#FF6B2C' }}
               />
             </View>
             {strobeRandom && (
@@ -462,7 +462,7 @@ export default function RemoteScreen() {
                 value={strobeVibrate}
                 onValueChange={setStrobeVibrate}
                 disabled={!caps.vibrate}
-                trackColor={{ true: '#e8c97a' }}
+                trackColor={{ true: '#FF6B2C' }}
               />
             </View>
             {!caps.vibrate && (
@@ -597,7 +597,7 @@ export default function RemoteScreen() {
                 value={media.autoAdvance}
                 onValueChange={media.setAutoAdvance}
                 disabled={!connected}
-                trackColor={{ true: '#e8c97a' }}
+                trackColor={{ true: '#FF6B2C' }}
               />
             </View>
 
@@ -690,7 +690,7 @@ export default function RemoteScreen() {
                 </View>
                 {connected && (
                   <View style={styles.qrWrap}>
-                    <QRCode value={channel} size={180} color="#f0ede8" backgroundColor="#000000" />
+                    <QRCode value={channel} size={180} color="#F5F2EC" backgroundColor="#000000" />
                     <Text style={styles.qrLabel}>Montrez ce QR à l'écran projecteur</Text>
                   </View>
                 )}
@@ -721,7 +721,7 @@ export default function RemoteScreen() {
                 </Pressable>
                 {connected && descriptor && (
                   <View style={styles.qrWrap}>
-                    <QRCode value={descriptor} size={180} color="#f0ede8" backgroundColor="#000000" />
+                    <QRCode value={descriptor} size={180} color="#F5F2EC" backgroundColor="#000000" />
                     <Text style={styles.qrLabel}>{descriptor}</Text>
                     <Text style={styles.qrLabel}>L'écran scanne ce QR ou saisit cette adresse</Text>
                   </View>
@@ -833,19 +833,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4,
   },
   backBtnText: { color: '#777', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' },
-  title: { color: '#e8c97a', fontSize: 18, fontWeight: '500' },
+  title: { color: '#FF6B2C', fontSize: 18, fontWeight: '500' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   powerBtn: {
-    borderWidth: 1, borderColor: 'rgba(95,223,138,0.4)',
-    backgroundColor: 'rgba(95,223,138,0.1)',
+    borderWidth: 1, borderColor: 'rgba(255,107,44,0.4)',
+    backgroundColor: 'rgba(255,107,44,0.1)',
     paddingHorizontal: 10, paddingVertical: 6, borderRadius: 4,
   },
   powerBtnDisabled: { opacity: 0.35, borderColor: 'rgba(255,255,255,0.15)', backgroundColor: 'transparent' },
   powerBtnOff: { borderColor: 'rgba(255,120,120,0.5)', backgroundColor: 'rgba(255,120,120,0.12)' },
-  powerBtnText: { color: '#5fdf8a', fontSize: 11, letterSpacing: 1, fontWeight: '600' },
+  powerBtnText: { color: '#FF6B2C', fontSize: 11, letterSpacing: 1, fontWeight: '600' },
   powerBtnTextOff: { color: '#ff8080' },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
-  dotGreen: { backgroundColor: '#5fdf8a' },
+  dotGreen: { backgroundColor: '#FF6B2C' },
   dotGray: { backgroundColor: '#444' },
   colorPreview: {
     flexDirection: 'row',
@@ -855,7 +855,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   previewSwatch: { width: 40, height: 40, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  colorHex: { color: '#f0ede8', fontSize: 14, letterSpacing: 1, flex: 1 },
+  colorHex: { color: '#F5F2EC', fontSize: 14, letterSpacing: 1, flex: 1 },
   statusText: { color: '#777', fontSize: 11 },
   tabs: {
     flexDirection: 'row',
@@ -868,7 +868,7 @@ const styles = StyleSheet.create({
   tabBtn: { flex: 1, paddingVertical: 8, borderRadius: 5, alignItems: 'center' },
   tabBtnActive: { backgroundColor: '#252528' },
   tabBtnText: { color: '#777', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' },
-  tabBtnTextActive: { color: '#e8c97a' },
+  tabBtnTextActive: { color: '#FF6B2C' },
   content: { flex: 1 },
   contentInner: { padding: 16, paddingBottom: 80 },
   panel: {
@@ -882,7 +882,7 @@ const styles = StyleSheet.create({
   },
   panelLabel: { color: '#777', fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', alignSelf: 'flex-start' },
   sliderRow: { width: '100%', gap: 8 },
-  sliderLabel: { color: '#f0ede8', fontSize: 12, letterSpacing: 0.5 },
+  sliderLabel: { color: '#F5F2EC', fontSize: 12, letterSpacing: 0.5 },
   colorTab: { gap: 16 },
   wheelWrap: { alignItems: 'center', alignSelf: 'center' },
   swatchRow: {
@@ -895,16 +895,16 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
   },
   swatchInfo: { flex: 1, gap: 4 },
-  swatchHex: { color: '#f0ede8', fontSize: 18, fontWeight: '700', letterSpacing: 1, fontVariant: ['tabular-nums'] },
+  swatchHex: { color: '#F5F2EC', fontSize: 18, fontWeight: '700', letterSpacing: 1, fontVariant: ['tabular-nums'] },
   swatchMeta: { color: '#999', fontSize: 12 },
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, width: '100%' },
   chip: {
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
     paddingVertical: 7, paddingHorizontal: 12, borderRadius: 16,
   },
-  chipActive: { borderColor: '#e8c97a', backgroundColor: 'rgba(232,201,122,0.15)' },
+  chipActive: { borderColor: '#FF6B2C', backgroundColor: 'rgba(255,107,44,0.15)' },
   chipText: { color: '#bbb', fontSize: 12 },
-  chipTextActive: { color: '#e8c97a', fontWeight: '700' },
+  chipTextActive: { color: '#FF6B2C', fontWeight: '700' },
   tintLabels: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
   tintLabel: { color: '#777', fontSize: 10 },
   sliderTrack: {
@@ -917,7 +917,7 @@ const styles = StyleSheet.create({
   sliderFill: {
     position: 'absolute',
     left: 0, top: 0, bottom: 0,
-    backgroundColor: '#e8c97a',
+    backgroundColor: '#FF6B2C',
     borderRadius: 10,
   },
   sliderThumb: {
@@ -939,7 +939,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-    color: '#f0ede8',
+    color: '#F5F2EC',
     fontSize: 16,
     padding: 14,
     borderRadius: 6,
@@ -947,7 +947,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   connectBtn: {
-    backgroundColor: '#e8c97a',
+    backgroundColor: '#FF6B2C',
     paddingHorizontal: 16,
     borderRadius: 6,
     justifyContent: 'center',
@@ -961,10 +961,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#252528',
     paddingVertical: 10, borderRadius: 8, alignItems: 'center', gap: 3,
   },
-  modeBtnActive: { borderColor: '#e8c97a', backgroundColor: 'rgba(232,201,122,0.12)' },
-  modeBtnText: { color: '#f0ede8', fontSize: 11 },
-  modeBtnTextActive: { color: '#e8c97a' },
-  modeBadge: { color: '#5fdf8a', fontSize: 8, letterSpacing: 0.5, textTransform: 'uppercase' },
+  modeBtnActive: { borderColor: '#FF6B2C', backgroundColor: 'rgba(255,107,44,0.12)' },
+  modeBtnText: { color: '#F5F2EC', fontSize: 11 },
+  modeBtnTextActive: { color: '#FF6B2C' },
+  modeBadge: { color: '#FF6B2C', fontSize: 8, letterSpacing: 0.5, textTransform: 'uppercase' },
   generateBtn: {
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
     paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20,
@@ -975,33 +975,33 @@ const styles = StyleSheet.create({
 
   ipBox: {
     alignSelf: 'stretch',
-    borderWidth: 1, borderColor: 'rgba(232,201,122,0.25)',
-    backgroundColor: 'rgba(232,201,122,0.06)',
+    borderWidth: 1, borderColor: 'rgba(255,107,44,0.25)',
+    backgroundColor: 'rgba(255,107,44,0.06)',
     borderRadius: 8, padding: 12, gap: 4,
   },
   ipLabel: { color: '#777', fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
-  ipValue: { color: '#e8c97a', fontSize: 18, letterSpacing: 1, fontVariant: ['tabular-nums'] },
+  ipValue: { color: '#FF6B2C', fontSize: 18, letterSpacing: 1, fontVariant: ['tabular-nums'] },
   ipHint: { color: '#777', fontSize: 10, lineHeight: 15 },
 
   mediaHint: { color: '#777', fontSize: 11, lineHeight: 17, alignSelf: 'stretch' },
-  mediaWarn: { color: '#e0a070', fontSize: 11, alignSelf: 'stretch' },
+  mediaWarn: { color: '#FF6B2C', fontSize: 11, alignSelf: 'stretch' },
 
   // Mémoires de couleur
   presetActions: { flexDirection: 'row', gap: 10, alignSelf: 'stretch', marginBottom: 4 },
   presetSaveBtn: {
     flex: 1,
-    borderWidth: 1, borderColor: 'rgba(95,223,138,0.4)',
-    backgroundColor: 'rgba(95,223,138,0.1)',
+    borderWidth: 1, borderColor: 'rgba(255,107,44,0.4)',
+    backgroundColor: 'rgba(255,107,44,0.1)',
     paddingVertical: 12, borderRadius: 8, alignItems: 'center',
   },
-  presetSaveText: { color: '#5fdf8a', fontSize: 12, fontWeight: '600' },
+  presetSaveText: { color: '#FF6B2C', fontSize: 12, fontWeight: '600' },
   presetUpdateBtn: {
     flex: 1,
-    borderWidth: 1, borderColor: 'rgba(232,201,122,0.4)',
-    backgroundColor: 'rgba(232,201,122,0.08)',
+    borderWidth: 1, borderColor: 'rgba(255,107,44,0.4)',
+    backgroundColor: 'rgba(255,107,44,0.08)',
     paddingVertical: 12, borderRadius: 8, alignItems: 'center',
   },
-  presetUpdateText: { color: '#e8c97a', fontSize: 12, fontWeight: '600' },
+  presetUpdateText: { color: '#FF6B2C', fontSize: 12, fontWeight: '600' },
   presetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignSelf: 'stretch' },
   presetItem: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -1010,10 +1010,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8,
     minWidth: '47%', flexGrow: 1,
   },
-  presetItemActive: { borderColor: '#e8c97a', backgroundColor: 'rgba(232,201,122,0.15)' },
+  presetItemActive: { borderColor: '#FF6B2C', backgroundColor: 'rgba(255,107,44,0.15)' },
   presetSwatch: { width: 22, height: 22, borderRadius: 5, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
   presetName: { color: '#cfcfcf', fontSize: 12, flexShrink: 1 },
-  presetNameActive: { color: '#e8c97a', fontWeight: '600' },
+  presetNameActive: { color: '#FF6B2C', fontWeight: '600' },
   presetHint: { color: '#777', fontSize: 10, alignSelf: 'stretch' },
   mediaActions: { flexDirection: 'row', gap: 10, alignSelf: 'stretch' },
   mediaBtn: {
@@ -1023,24 +1023,24 @@ const styles = StyleSheet.create({
     paddingVertical: 14, borderRadius: 8, alignItems: 'center',
   },
   mediaBtnDisabled: { opacity: 0.4 },
-  mediaBtnText: { color: '#f0ede8', fontSize: 12 },
+  mediaBtnText: { color: '#F5F2EC', fontSize: 12 },
   mediaEmpty: { color: '#555', fontSize: 12, alignSelf: 'stretch', textAlign: 'center', paddingVertical: 8 },
   mediaReorderHint: { color: '#777', fontSize: 10, alignSelf: 'stretch' },
   mediaNavRow: { flexDirection: 'row', gap: 10, alignSelf: 'stretch' },
   mediaNavBtn: {
     flex: 1,
-    borderWidth: 1, borderColor: 'rgba(232,201,122,0.4)',
-    backgroundColor: 'rgba(232,201,122,0.08)',
+    borderWidth: 1, borderColor: 'rgba(255,107,44,0.4)',
+    backgroundColor: 'rgba(255,107,44,0.08)',
     paddingVertical: 12, borderRadius: 8, alignItems: 'center',
   },
-  mediaNavText: { color: '#e8c97a', fontSize: 13, fontWeight: '600' },
+  mediaNavText: { color: '#FF6B2C', fontSize: 13, fontWeight: '600' },
   mediaReorder: { flexDirection: 'row', gap: 4 },
   mediaReorderBtn: {
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
     width: 26, height: 26, borderRadius: 5,
     alignItems: 'center', justifyContent: 'center',
   },
-  mediaReorderText: { color: '#f0ede8', fontSize: 11 },
+  mediaReorderText: { color: '#F5F2EC', fontSize: 11 },
   mediaItem: {
     alignSelf: 'stretch',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
@@ -1048,21 +1048,21 @@ const styles = StyleSheet.create({
     borderRadius: 8, padding: 12, gap: 10,
   },
   mediaItemHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  mediaItemName: { color: '#f0ede8', fontSize: 12, flex: 1 },
+  mediaItemName: { color: '#F5F2EC', fontSize: 12, flex: 1 },
   mediaItemStatus: { color: '#777', fontSize: 10 },
   mediaProgressTrack: { height: 4, backgroundColor: '#252528', borderRadius: 2, overflow: 'hidden' },
-  mediaProgressFill: { height: 4, backgroundColor: '#e8c97a' },
+  mediaProgressFill: { height: 4, backgroundColor: '#FF6B2C' },
   mediaItemActions: { flexDirection: 'row', gap: 8 },
   mediaSmallBtn: {
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
     paddingVertical: 8, paddingHorizontal: 14, borderRadius: 6,
   },
   mediaPlayBtn: { flex: 1, alignItems: 'center' },
-  mediaPlayBtnActive: { borderColor: '#5fdf8a', backgroundColor: 'rgba(95,223,138,0.12)' },
-  mediaSmallBtnText: { color: '#f0ede8', fontSize: 12 },
+  mediaPlayBtnActive: { borderColor: '#FF6B2C', backgroundColor: 'rgba(255,107,44,0.12)' },
+  mediaSmallBtnText: { color: '#F5F2EC', fontSize: 12 },
   mediaDanger: { color: '#ff8080' },
 
-  flashUnavailable: { color: '#e0a070', fontSize: 11, alignSelf: 'stretch' },
+  flashUnavailable: { color: '#FF6B2C', fontSize: 11, alignSelf: 'stretch' },
   flashGrid: { flexDirection: 'row', gap: 10, alignSelf: 'stretch' },
   flashBtn: {
     flex: 1,
@@ -1070,8 +1070,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#252528',
     paddingVertical: 16, borderRadius: 8, alignItems: 'center', gap: 6,
   },
-  flashBtnActive: { borderColor: '#e8c97a', backgroundColor: 'rgba(232,201,122,0.12)' },
+  flashBtnActive: { borderColor: '#FF6B2C', backgroundColor: 'rgba(255,107,44,0.12)' },
   flashBtnIcon: { fontSize: 22 },
-  flashBtnText: { color: '#f0ede8', fontSize: 11, textAlign: 'center' },
+  flashBtnText: { color: '#F5F2EC', fontSize: 11, textAlign: 'center' },
   flashDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.08)', alignSelf: 'stretch' },
 });

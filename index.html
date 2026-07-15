@@ -38,11 +38,11 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--accent:#e8c97a;--dark:#000000;--mid:#1c1c1f;--mid2:#252528;--border:rgba(255,255,255,0.08);--text:#f0ede8;--muted:#777;--green:#5fdf8a}
+:root{--accent:#FF6B2C;--dark:#000000;--mid:#1c1c1f;--mid2:#252528;--border:rgba(255,255,255,0.08);--text:#F5F2EC;--muted:#777;--green:#FF6B2C}
 html,body{width:100%;height:100%;background:var(--dark);color:var(--text);font-family:'DM Mono',monospace;overflow:hidden;touch-action:manipulation}
 
 #splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:40px;z-index:100;animation:fadeIn .6s ease;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
-#splash h1{font-family:'Playfair Display',serif;font-size:clamp(2.5rem,8vw,4rem);letter-spacing:-.02em;background:linear-gradient(135deg,#e8c97a,#f0ede8 60%,#b08d4a);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#splash h1{font-family:'Playfair Display',serif;font-size:clamp(2.5rem,8vw,4rem);letter-spacing:-.02em;background:linear-gradient(135deg,#FF6B2C,#F5F2EC 60%,#FF8B5C);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 #splash p{color:var(--muted);font-size:.8rem;letter-spacing:.15em;text-transform:uppercase}
 .splash-head{display:flex;flex-direction:column;align-items:center;gap:12px}
 .splash-tagline{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:10px;text-align:center}
@@ -59,7 +59,7 @@ html,body{width:100%;height:100%;background:var(--dark);color:var(--text);font-f
 .install-hint{margin-top:4px;max-width:320px;text-align:center;font-size:.62rem;line-height:1.6;color:var(--muted);letter-spacing:.04em}
 .install-hint strong{color:var(--text)}
 .flash-unavail-notice{background:rgba(220,120,80,.1);border:1px solid rgba(220,120,80,.35);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:.66rem;line-height:1.6;color:var(--muted);letter-spacing:.03em}
-.flash-unavail-notice strong{display:block;color:#e0a070;font-size:.72rem;margin-bottom:5px;letter-spacing:.06em}
+.flash-unavail-notice strong{display:block;color:#FF6B2C;font-size:.72rem;margin-bottom:5px;letter-spacing:.06em}
 #content-flash.torch-unavailable .torch-onoff-btn,
 #content-flash.torch-unavailable #torchDimSection,
 #content-flash.torch-unavailable .effect-grid{opacity:.4;pointer-events:none;filter:grayscale(.55)}
@@ -242,7 +242,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 #screen-menu-hotspot{position:absolute;top:0;left:0;width:45vw;height:45vh;z-index:300;background:transparent}
 #screen-menu{display:none;position:absolute;inset:0;z-index:400;background:rgba(0,0,0,.92);flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px}
 .screen-menu-info{color:rgba(255,255,255,.5);font-size:.82rem;letter-spacing:.06em;margin-bottom:8px}
-.screen-menu-btn{width:100%;max-width:300px;padding:16px;border:1px solid rgba(255,255,255,.15);border-radius:8px;background:transparent;color:#f0ede8;font-size:.95rem;font-family:inherit;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.screen-menu-btn{width:100%;max-width:300px;padding:16px;border:1px solid rgba(255,255,255,.15);border-radius:8px;background:transparent;color:#F5F2EC;font-size:.95rem;font-family:inherit;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .screen-menu-btn:active{background:rgba(255,255,255,.06)}
 .screen-menu-btn.danger{border-color:rgba(255,100,100,.3);color:#ff8080}
 
@@ -456,7 +456,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       </div>
       <div class="slider-block" style="margin:14px 0 0">
         <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="crossfadeVal">0<span>%</span></div></div>
-        <input type="range" id="crossfadeSlider" min="0" max="100" value="0" style="background:linear-gradient(to right,#f0ede8,#e8c97a,#ff2d78)" oninput="onCrossfadeChange()">
+        <input type="range" id="crossfadeSlider" min="0" max="100" value="0" style="background:linear-gradient(to right,#F5F2EC,#FF6B2C,#ff2d78)" oninput="onCrossfadeChange()">
       </div>
     </div>
 
@@ -507,7 +507,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       </div>
       <div class="slider-block">
         <div class="slider-header"><label id="freqLabel">Fréquence</label><div class="slider-val" id="freqVal">2.0<span> Hz</span></div></div>
-        <input type="range" id="freqSlider" min="0.5" max="30" step="0.5" value="2" style="background:linear-gradient(to right,#1a73e8,#e8c97a)" oninput="onStrobeParamChange()">
+        <input type="range" id="freqSlider" min="0.5" max="30" step="0.5" value="2" style="background:linear-gradient(to right,#FF6B2C,#FF6B2C)" oninput="onStrobeParamChange()">
       </div>
       <div class="slider-block">
         <div class="slider-header"><label id="durLabel">Durée du flash</label><div class="slider-val" id="flashDurVal">50<span> ms</span></div></div>
@@ -518,7 +518,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
         <div class="panel-label" style="margin-bottom:10px">Plage aléatoire (max)</div>
         <div class="slider-block">
           <div class="slider-header"><label>Fréquence max</label><div class="slider-val" id="freqMaxVal">8.0<span> Hz</span></div></div>
-          <input type="range" id="freqMaxSlider" min="0.5" max="30" step="0.5" value="8" style="background:linear-gradient(to right,#1a73e8,#e8c97a)" oninput="onStrobeParamChange()">
+          <input type="range" id="freqMaxSlider" min="0.5" max="30" step="0.5" value="8" style="background:linear-gradient(to right,#FF6B2C,#FF6B2C)" oninput="onStrobeParamChange()">
         </div>
         <div class="slider-block">
           <div class="slider-header"><label>Durée flash max</label><div class="slider-val" id="flashDurMaxVal">200<span> ms</span></div></div>
@@ -638,7 +638,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           <div class="slider-val" id="effectSpeedVal">1.0</div>
         </div>
         <input type="range" id="effectSpeedSlider" min="0.2" max="10" step="0.1" value="1"
-               style="background:linear-gradient(to right,#1a73e8,#e8c97a)"
+               style="background:linear-gradient(to right,#FF6B2C,#FF6B2C)"
                oninput="onEffectParamChange()">
       </div>
       <div class="slider-block">
@@ -675,7 +675,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           <div class="slider-val" id="effectRandVal">70<span>%</span></div>
         </div>
         <input type="range" id="effectRandSlider" min="0" max="100" step="5" value="70"
-               style="background:linear-gradient(to right,#1a73e8,#e8c97a)"
+               style="background:linear-gradient(to right,#FF6B2C,#FF6B2C)"
                oninput="onEffectParamChange()">
       </div>
       <div class="slider-block" id="effectFadeBlock" style="display:none;margin-bottom:0">
@@ -703,7 +703,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           </div>
           <div class="slider-block">
             <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="tvCrossfadeVal">0<span>%</span></div></div>
-            <input type="range" id="tvCrossfadeSlider" min="0" max="100" value="0" style="background:linear-gradient(to right,#f0ede8,#e8c97a,#ff2d78)" oninput="onTvBlockParam()">
+            <input type="range" id="tvCrossfadeSlider" min="0" max="100" value="0" style="background:linear-gradient(to right,#F5F2EC,#FF6B2C,#ff2d78)" oninput="onTvBlockParam()">
           </div>
           <div class="slider-block">
             <div class="slider-header"><label>Température</label><div class="slider-val" id="tvKelvinVal">6500<span> K</span></div></div>

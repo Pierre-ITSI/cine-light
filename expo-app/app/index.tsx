@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: Platform.select({ ios: 'Georgia', android: 'serif', web: "'Playfair Display', serif" }),
     fontSize: 48,
-    color: '#e8c97a',
+    color: '#FF6B2C',
     letterSpacing: -0.5,
   },
   tagline: {
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     fontFamily: Platform.select({ ios: 'Georgia', android: 'serif', web: "'Playfair Display', serif" }),
     fontStyle: 'italic',
     fontSize: 22,
-    color: '#e8c97a',
+    color: '#FF6B2C',
     lineHeight: 30,
     minHeight: 30,
   },
@@ -118,11 +118,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   btnPrimary: {
-    backgroundColor: '#e8c97a',
-    borderColor: '#e8c97a',
+    backgroundColor: '#FF6B2C',
+    borderColor: '#FF6B2C',
   },
   btnText: {
-    color: '#f0ede8',
+    color: '#F5F2EC',
     fontSize: 13,
     letterSpacing: 1.5,
     textTransform: 'uppercase',

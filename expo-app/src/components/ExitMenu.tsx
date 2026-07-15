@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   btnText: {
-    color: '#f0ede8',
+    color: '#F5F2EC',
     fontSize: 15,
     letterSpacing: 0.5,
   },
