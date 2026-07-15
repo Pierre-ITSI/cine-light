@@ -3184,10 +3184,12 @@ document.querySelectorAll('input[type="range"]').forEach(slider => {
     slider.dispatchEvent(new Event('input', { bubbles: true }));
   };
 
+  // Insérer le wrapper à la place du slider AVANT d'y déplacer le slider
+  // (sinon insertBefore échoue : le slider n'est plus un enfant du parent)
+  parent.insertBefore(wrapper, slider);
   wrapper.appendChild(btnMinus);
   wrapper.appendChild(slider);
   wrapper.appendChild(btnPlus);
-  parent.insertBefore(wrapper, slider);
 
   // Rendre la valeur cliquable pour entrée numérique
   const valLabel = parent.querySelector('[id*="Val"]');
