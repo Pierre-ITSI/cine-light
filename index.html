@@ -461,7 +461,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       <div class="panel-label">Intensité (Dimmer)</div>
       <div class="slider-block" style="margin-bottom:0">
         <div class="slider-header"><label>Luminosité maître</label><div class="slider-val" id="dimmerVal">100<span>%</span></div></div>
-        <input type="range" id="dimmerSlider" min="0" max="100" value="100" style="background:linear-gradient(to right,#000,#fff)" oninput="onDimmerChange()">
+        <input type="range" id="dimmerSlider" min="0" max="100" value="100" oninput="onDimmerChange()">
       </div>
     </div>
 
@@ -487,7 +487,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       </div>
       <div class="slider-block">
         <div class="slider-header"><label>Température</label><div class="slider-val" id="kelvinVal">5600<span> K</span></div></div>
-        <input type="range" id="kelvinSlider" min="1700" max="20000" value="5600" style="background:linear-gradient(to right,#ff9b4a,#ffd2a0,#fff,#c9dfff,#a0c8ff)" oninput="onKelvinChange()">
+        <input type="range" id="kelvinSlider" min="1700" max="20000" value="5600" oninput="onKelvinChange()">
       </div>
       <div class="chips-wrap">
         <button class="chip" onclick="setKelvin(1700)">1700K</button>
@@ -506,7 +506,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       <div class="green-labels"><span>−100 Magenta</span><span>0 Neutre</span><span>+100 Vert</span></div>
       <div class="slider-block" style="margin-bottom:0">
         <div class="slider-header"><label>Green / Magenta</label><div class="slider-val" id="tintVal">0<span> GM</span></div></div>
-        <input type="range" id="tintSlider" min="-100" max="100" value="0" style="background:linear-gradient(to right,#c020c0,#1a1a1a 50%,#20c060)" oninput="onTintChange()">
+        <input type="range" id="tintSlider" min="-100" max="100" value="0" oninput="onTintChange()">
       </div>
     </div>
 
@@ -526,22 +526,22 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       </div>
       <div class="slider-block">
         <div class="slider-header"><label id="freqLabel">Fréquence</label><div class="slider-val" id="freqVal">2.0<span> Hz</span></div></div>
-        <input type="range" id="freqSlider" min="0.5" max="30" step="0.5" value="2" style="background:linear-gradient(to right,#FF6B2C,#FF6B2C)" oninput="onStrobeParamChange()">
+        <input type="range" id="freqSlider" min="0.5" max="30" step="0.5" value="2" oninput="onStrobeParamChange()">
       </div>
       <div class="slider-block">
         <div class="slider-header"><label id="durLabel">Durée du flash</label><div class="slider-val" id="flashDurVal">50<span> ms</span></div></div>
-        <input type="range" id="flashDurSlider" min="5" max="500" step="5" value="50" style="background:linear-gradient(to right,#111,var(--accent))" oninput="onStrobeParamChange()">
+        <input type="range" id="flashDurSlider" min="5" max="500" step="5" value="50" oninput="onStrobeParamChange()">
       </div>
       <div id="randomOptions" style="display:none">
         <div style="height:1px;background:var(--border);margin:4px 0 14px"></div>
         <div class="panel-label" style="margin-bottom:10px">Plage aléatoire (max)</div>
         <div class="slider-block">
           <div class="slider-header"><label>Fréquence max</label><div class="slider-val" id="freqMaxVal">8.0<span> Hz</span></div></div>
-          <input type="range" id="freqMaxSlider" min="0.5" max="30" step="0.5" value="8" style="background:linear-gradient(to right,#FF6B2C,#FF6B2C)" oninput="onStrobeParamChange()">
+          <input type="range" id="freqMaxSlider" min="0.5" max="30" step="0.5" value="8" oninput="onStrobeParamChange()">
         </div>
         <div class="slider-block">
           <div class="slider-header"><label>Durée flash max</label><div class="slider-val" id="flashDurMaxVal">200<span> ms</span></div></div>
-          <input type="range" id="flashDurMaxSlider" min="5" max="500" step="5" value="200" style="background:linear-gradient(to right,#111,var(--accent))" oninput="onStrobeParamChange()">
+          <input type="range" id="flashDurMaxSlider" min="5" max="500" step="5" value="200" oninput="onStrobeParamChange()">
         </div>
       </div>
       <div class="strobe-preview">Aperçu local<div class="strobe-flash" id="strobeFlashPreview"></div></div>
@@ -591,7 +591,6 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
         <div class="slider-block">
           <div class="slider-header"><label>Intensité</label><div class="slider-val" id="torchDimVal">100<span>%</span></div></div>
           <input type="range" id="torchDimSlider" min="5" max="100" value="100"
-                 style="background:linear-gradient(to right,#333,#ffe664)"
                  oninput="onTorchDimChange()">
         </div>
       </div>
@@ -665,7 +664,6 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           <div class="slider-val" id="effectIntensityVal">80<span>%</span></div>
         </div>
         <input type="range" id="effectIntensitySlider" min="10" max="100" step="5" value="80"
-               style="background:linear-gradient(to right,#333,#fff)"
                oninput="onEffectParamChange()">
       </div>
       <div class="slider-block" id="effectBurstBlock" style="display:none">
@@ -674,7 +672,6 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           <div class="slider-val" id="effectBurstVal">3</div>
         </div>
         <input type="range" id="effectBurstSlider" min="1" max="10" step="1" value="3"
-               style="background:linear-gradient(to right,#333,#ffe664)"
                oninput="document.getElementById('effectBurstVal').textContent=this.value;onEffectParamChange()">
       </div>
       <div class="effect-colors-row">
@@ -701,7 +698,6 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           <div class="slider-val" id="effectFadeVal">0<span> ms</span></div>
         </div>
         <input type="range" id="effectFadeSlider" min="0" max="600" step="10" value="0"
-               style="background:linear-gradient(to right,#333,#888)"
                oninput="onEffectParamChange()">
       </div>
       <div id="effectTvBlocksPanel" style="display:none">
@@ -716,7 +712,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           </div>
           <div class="slider-block">
             <div class="slider-header"><label>Luminosité</label><div class="slider-val" id="tvDimmerVal">100<span>%</span></div></div>
-            <input type="range" id="tvDimmerSlider" min="0" max="100" value="100" style="background:linear-gradient(to right,#000,#fff)" oninput="onTvBlockParam()">
+            <input type="range" id="tvDimmerSlider" min="0" max="100" value="100" oninput="onTvBlockParam()">
           </div>
           <div class="slider-block">
             <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="tvCrossfadeVal">0<span>%</span></div></div>
@@ -724,11 +720,11 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           </div>
           <div class="slider-block">
             <div class="slider-header"><label>Température</label><div class="slider-val" id="tvKelvinVal">6500<span> K</span></div></div>
-            <input type="range" id="tvKelvinSlider" min="1700" max="20000" value="6500" style="background:linear-gradient(to right,#ff9b4a,#ffd2a0,#fff,#c9dfff,#a0c8ff)" oninput="onTvBlockParam()">
+            <input type="range" id="tvKelvinSlider" min="1700" max="20000" value="6500" oninput="onTvBlockParam()">
           </div>
           <div class="slider-block" style="margin-bottom:0">
             <div class="slider-header"><label>Tint · Magenta ↔ Vert</label><div class="slider-val" id="tvTintVal">0<span> GM</span></div></div>
-            <input type="range" id="tvTintSlider" min="-100" max="100" value="0" style="background:linear-gradient(to right,#c020c0,#1a1a1a 50%,#20c060)" oninput="onTvBlockParam()">
+            <input type="range" id="tvTintSlider" min="-100" max="100" value="0" oninput="onTvBlockParam()">
           </div>
         </div>
       </div>
@@ -744,7 +740,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       <div class="panel-label">Luminosité de l'écran de jeu</div>
       <div class="slider-block" style="margin-bottom:0">
         <div class="slider-header"><label>Luminosité écran</label><div class="slider-val" id="screenBrightnessVal">100<span>%</span></div></div>
-        <input type="range" id="screenBrightnessSlider" min="0" max="100" value="100" style="background:linear-gradient(to right,#000,#fff)" oninput="onScreenBrightnessChange()">
+        <input type="range" id="screenBrightnessSlider" min="0" max="100" value="100" oninput="onScreenBrightnessChange()">
       </div>
     </div>
     <div class="panel">
