@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Adaptive icon foreground : le contenu doit tenir dans le cercle central de 66% -->
+  <g transform="translate(512 532) scale(5.2) translate(-50 -50)">
+    <rect x="14" y="44" width="72" height="46" rx="8" fill="none" stroke="#F5F2EC" stroke-width="6.5"/>
+    <circle cx="18" cy="46" r="5.5" fill="#FF6B2C"/>
+    <g transform="rotate(14 18 46)">
+      <path d="M 36 34 A 22 22 0 0 0 18 26" fill="none" stroke="#FF6B2C" stroke-width="6.5" stroke-linecap="round"/>
+      <path d="M 52 28 A 38 38 0 0 0 20 12" fill="none" stroke="#FF6B2C" stroke-width="6.5" stroke-linecap="round" opacity="0.7"/>
+      <path d="M 68 24 A 54 54 0 0 0 24 1" fill="none" stroke="#FF6B2C" stroke-width="6.5" stroke-linecap="round" opacity="0.4"/>
+    </g>
+  </g>
+</svg>

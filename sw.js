@@ -1,5 +1,5 @@
 /* Service Worker — Ciné Light PWA */
-const CACHE = 'cinelight-v8';
+const CACHE = 'setremote-v1';
 const SHELL = [
   './',
   './index.html',

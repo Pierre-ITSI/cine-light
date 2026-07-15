@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Ciné Light</title>
+<title>SetRemote</title>
 <!-- PWA -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#000000">
@@ -12,7 +12,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Ciné Light">
+<meta name="apple-mobile-web-app-title" content="SetRemote">
 <!-- Écrans de lancement iOS (apple-touch-startup-image) -->
 <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-640x1136.png">
 <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="splash-1136x640.png">
@@ -308,7 +308,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 
 <div id="splash">
   <div class="splash-head">
-    <h1>Ciné Light</h1>
+    <h1>SetRemote</h1>
     <div class="splash-tagline">
       <span class="tagline-prefix">Une app conçue pour</span>
       <span class="rotating-role" id="rotatingRole" aria-live="polite">les accessoiristes</span>
@@ -373,7 +373,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
   <h2>🟡 Écran projecteur</h2>
   <p>Entrez le code affiché sur la télécommande</p>
   <div class="screen-input-row">
-    <input type="text" id="screenChannelInput" placeholder="ex : cine4271"
+    <input type="text" id="screenChannelInput" placeholder="ex : set4271"
            maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false"
            onkeydown="if(event.key==='Enter') screenConnect()">
     <button class="screen-go-btn" onclick="screenConnect()">OK →</button>
@@ -406,13 +406,13 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 
 <div id="remote-mode">
   <div class="remote-header">
-    <h2>Ciné Light</h2>
+    <h2>SetRemote</h2>
     <button class="back-btn" onclick="goBack()">← Retour</button>
   </div>
   <div class="panel">
     <div class="panel-label">Canal de synchronisation</div>
     <div class="channel-row">
-      <input type="text" id="channelInput" placeholder="ex: cinelive42" maxlength="20"/>
+      <input type="text" id="channelInput" placeholder="ex: setlive42" maxlength="20"/>
       <button class="connect-btn" onclick="connectChannel()">Connecter</button>
     </div>
     <div class="status-indicator">
@@ -805,7 +805,7 @@ let strobePreviewTimer = null, autoSendTimer = null;
 // ══════════════════════════ MQTT ══════════════════════════
 const BROKER = 'wss://broker.hivemq.com:8884/mqtt';
 
-function mqttTopic(ch) { return 'cinelight/v1/' + ch + '/cmd'; }
+function mqttTopic(ch) { return 'setremote/v1/' + ch + '/cmd'; }
 
 function connectMQTT(ch, onConnected) {
   if (mqttClient) { mqttClient.end(true); mqttClient = null; }
@@ -881,7 +881,7 @@ function sendMsg(obj) {
 
 // BroadcastChannel fallback (même navigateur, même device)
 function initBCFallback(ch) {
-  const bc = new BroadcastChannel('cinelight_' + ch);
+  const bc = new BroadcastChannel('setremote_' + ch);
   window._bc = bc;
   if (mode === 'screen') {
     bc.onmessage = e => {
@@ -912,7 +912,7 @@ function startMode(m) {
     buildPresets(); initWheel();
     loadColorMemories(); renderColorMemories();
     recomputeColor();
-    document.getElementById('channelInput').value = 'cine' + Math.floor(Math.random()*9000+1000);
+    document.getElementById('channelInput').value = 'set' + Math.floor(Math.random()*9000+1000);
   } else {
     const hash = location.hash.replace('#','');
     if (hash) { enterScreenMode(hash); }
@@ -1885,13 +1885,13 @@ let selectedMemoryId = null;
 
 function loadColorMemories(){
   try {
-    const raw = localStorage.getItem('cinelight-color-memories');
+    const raw = localStorage.getItem('setremote-color-memories');
     colorMemories = raw ? JSON.parse(raw) : [];
     if (!Array.isArray(colorMemories)) colorMemories = [];
   } catch(_) { colorMemories = []; }
 }
 function persistColorMemories(){
-  try { localStorage.setItem('cinelight-color-memories', JSON.stringify(colorMemories)); } catch(_) {}
+  try { localStorage.setItem('setremote-color-memories', JSON.stringify(colorMemories)); } catch(_) {}
 }
 function currentColorSpec(){
   return { kelvin:kelvinK, tint:colorTint, dimmer:colorDimmer, wheelHex:colorWheelHex, crossfade:colorCrossfade };

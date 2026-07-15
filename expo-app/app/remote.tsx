@@ -256,7 +256,7 @@ export default function RemoteScreen() {
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Text style={styles.backBtnText}>← Retour</Text>
         </Pressable>
-        <Text style={styles.title}>Ciné Light</Text>
+        <Text style={styles.title}>SetRemote</Text>
         <View style={styles.headerRight}>
           <Pressable
             style={[
@@ -674,7 +674,7 @@ export default function RemoteScreen() {
                     style={styles.channelInput}
                     value={channel}
                     onChangeText={setChannel}
-                    placeholder="ex : cine4271"
+                    placeholder="ex : set4271"
                     placeholderTextColor="#555"
                     autoCapitalize="none"
                     autoCorrect={false}

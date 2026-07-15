@@ -29,9 +29,9 @@ export interface ColorPreset {
   strobe?: StrobeState;
 }
 
-const DIRNAME = 'cinelight';
+const DIRNAME = 'setremote';
 const FILENAME = 'color-presets.json';
-const WEB_KEY = 'cinelight-color-presets';
+const WEB_KEY = 'setremote-color-presets';
 const isNative = Platform.OS !== 'web';
 
 // Import paresseux : expo-file-system n'est pas chargé sur web.

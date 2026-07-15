@@ -4,7 +4,7 @@ import type { RemoteTransport, MessageHandler, StatusHandler, TransportStatus, T
 const BROKER = 'wss://broker.hivemq.com:8884/mqtt';
 
 function topic(channel: string) {
-  return 'cinelight/v1/' + channel + '/cmd';
+  return 'setremote/v1/' + channel + '/cmd';
 }
 
 export class MqttTransport implements RemoteTransport {

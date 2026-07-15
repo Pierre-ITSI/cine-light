@@ -22,7 +22,7 @@ export interface CachedMedia {
   date: number;
 }
 
-const MEDIA_DIRNAME = 'cinelight-media';
+const MEDIA_DIRNAME = 'setremote-media';
 const MANIFEST_NAME = 'manifest.json';
 
 // Import paresseux : expo-file-system n'est pas chargé sur web.

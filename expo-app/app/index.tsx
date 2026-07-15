@@ -36,7 +36,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.head}>
-        <Text style={styles.title}>Ciné Light</Text>
+        <Text style={styles.title}>SetRemote</Text>
         <View style={styles.tagline}>
           <Text style={styles.taglinePrefix}>Une app conçue pour</Text>
           <Animated.Text style={[styles.role, { opacity, transform: [{ translateY }] }]}>

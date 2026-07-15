@@ -166,6 +166,6 @@ eas submit --platform ios   # envoie vers App Store Connect / TestFlight
 
 - `ITSAppUsesNonExemptEncryption: false` est déjà déclaré → pas de question de
   conformité export à chaque envoi TestFlight.
-- Le `bundleIdentifier` est `com.pikoo.cinelight`. Garde-le stable.
+- Le `bundleIdentifier` est `com.pikoo.setremote`. Garde-le stable.
 - La PWA (`/index.html`, racine du repo) reste indépendante : elle continue de
   fonctionner pour les tests rapides sans rien installer.

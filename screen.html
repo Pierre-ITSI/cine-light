@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Ciné Light</title>
+  <title>SetRemote</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
@@ -109,7 +109,7 @@
 <!-- ══ LANDING PAGE (GitHub Pages / HTTPS) ══════════════════════════ -->
 <div id="landing">
   <div class="landing-logo">
-    <h1>CINÉ <span>LIGHT</span></h1>
+    <h1>SET<span>REMOTE</span></h1>
     <p>Bridge sACN E1.31 → WebSocket — Éclairage cinéma pilotable à distance</p>
   </div>
 
@@ -125,7 +125,7 @@
   <div class="card">
     <p class="card-title">📱 Connecter un écran</p>
     <div class="steps">
-      <div class="step"><div class="step-num">1</div><p>Lance <strong>Ciné Light Bridge</strong> sur l'ordinateur du technicien et démarre le bridge</p></div>
+      <div class="step"><div class="step-num">1</div><p>Lance <strong>SetRemote Bridge</strong> sur l'ordinateur du technicien et démarre le bridge</p></div>
       <div class="step"><div class="step-num">2</div><p>Sur l'écran projecteur, ouvre <code>http://&lt;IP du Mac&gt;:8080</code> dans le navigateur</p></div>
       <div class="step"><div class="step-num">3</div><p>Saisis le <strong>code écran</strong> affiché dans l'app et connecte-toi</p></div>
       <div class="step"><div class="step-num">4</div><p>L'écran passe en plein écran et reflète les données DMX en temps réel</p></div>
@@ -159,11 +159,11 @@
 
 <!-- ══ SCREEN MODE (HTTP — bridge local) ════════════════════════════ -->
 <div id="connect-screen">
-  <div class="logo">CINÉ <span>LIGHT</span></div>
+  <div class="logo">SET<span>REMOTE</span></div>
   <div class="connect-card">
     <div class="field-group">
       <label>Code écran</label>
-      <input id="code-input" class="code-input" type="text" placeholder="CINE-4271" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="9" />
+      <input id="code-input" class="code-input" type="text" placeholder="SET-4271" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="9" />
     </div>
     <div class="error-msg" id="error-msg"></div>
     <button id="connect-btn" class="connect-btn">SE CONNECTER</button>

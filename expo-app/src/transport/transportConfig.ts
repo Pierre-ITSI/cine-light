@@ -20,7 +20,7 @@ export const BLE_SERVICE_UUID = 'c1e10000-7a11-4b0d-9c3e-6c1e1ed70000';
 export const BLE_CMD_CHARACTERISTIC_UUID = 'c1e10001-7a11-4b0d-9c3e-6c1e1ed70000';
 
 /** Préfixe d'annonce BLE, sert au filtrage lors du scan côté central. */
-export const BLE_ADVERTISED_NAME = 'CineLight';
+export const BLE_ADVERTISED_NAME = 'SetRemote';
 
 /**
  * Taille de découpage des trames BLE. Le MTU négocié varie (20 à ~250 o) ;

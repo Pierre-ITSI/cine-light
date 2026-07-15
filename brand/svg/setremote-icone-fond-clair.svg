@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <!-- SetRemote — icône principale (variante B : le bras du clap devient onde) -->
+  <!-- Usage : fond clair. Traits noir plateau #15181D, accent orange gaffer #FF6B2C -->
+  <rect x="14" y="44" width="72" height="46" rx="8" fill="none" stroke="#15181D" stroke-width="6"/>
+  <circle cx="18" cy="46" r="5.5" fill="#FF6B2C"/>
+  <g transform="rotate(14 18 46)">
+    <path d="M 36 34 A 22 22 0 0 0 18 26" fill="none" stroke="#FF6B2C" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 52 28 A 38 38 0 0 0 20 12" fill="none" stroke="#FF6B2C" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+    <path d="M 68 24 A 54 54 0 0 0 24 1" fill="none" stroke="#FF6B2C" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+  </g>
+</svg>

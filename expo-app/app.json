@@ -1,21 +1,21 @@
 {
   "expo": {
-    "name": "Ciné Light",
-    "slug": "cine-light",
+    "name": "SetRemote",
+    "slug": "setremote",
     "version": "1.0.0",
     "orientation": "any",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#000000",
-    "scheme": "cinelight",
+    "scheme": "setremote",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.pikoo.cinelight",
+      "bundleIdentifier": "com.pikoo.setremote",
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [],
-        "NSLocalNetworkUsageDescription": "Ciné Light relie la télécommande et l'écran projecteur sur le réseau Wi-Fi local, sans Internet."
+        "NSLocalNetworkUsageDescription": "SetRemote relie la télécommande et l'écran projecteur sur le réseau Wi-Fi local, sans Internet."
       }
     },
     "android": {
@@ -24,7 +24,7 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png"
       },
-      "package": "com.pikoo.cinelight"
+      "package": "com.pikoo.setremote"
     },
     "web": {
       "bundler": "metro",
@@ -36,7 +36,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Ciné Light utilise la caméra pour scanner les codes QR et accéder au flash. Aucune photo n'est capturée."
+          "cameraPermission": "SetRemote utilise la caméra pour scanner les codes QR et accéder au flash. Aucune photo n'est capturée."
         }
       ],
       [
@@ -48,7 +48,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Ciné Light accède à vos photos et vidéos pour les diffuser sur l'écran projecteur."
+          "photosPermission": "SetRemote accède à vos photos et vidéos pour les diffuser sur l'écran projecteur."
         }
       ],
       "expo-video",
@@ -56,7 +56,7 @@
         "react-native-ble-plx",
         {
           "isBackgroundEnabled": false,
-          "bluetoothAlwaysPermission": "Ciné Light utilise le Bluetooth pour relier la télécommande et l'écran sans Wi-Fi ni Internet."
+          "bluetoothAlwaysPermission": "SetRemote utilise le Bluetooth pour relier la télécommande et l'écran sans Wi-Fi ni Internet."
         }
       ]
     ]
