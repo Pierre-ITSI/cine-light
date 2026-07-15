@@ -909,7 +909,7 @@ const styles = StyleSheet.create({
   tintLabel: { color: '#777', fontSize: 10 },
   sliderTrack: {
     height: 20,
-    backgroundColor: '#252528',
+    backgroundColor: 'rgba(245,242,236,0.12)',
     borderRadius: 10,
     justifyContent: 'center',
     position: 'relative',
@@ -917,16 +917,16 @@ const styles = StyleSheet.create({
   sliderFill: {
     position: 'absolute',
     left: 0, top: 0, bottom: 0,
-    backgroundColor: '#FF6B2C',
+    backgroundColor: 'rgba(255,107,44,0.15)',
     borderRadius: 10,
   },
   sliderThumb: {
     position: 'absolute',
-    width: 20, height: 20,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    marginLeft: -10,
-    top: 0,
+    width: 28, height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(245,242,236,0.9)',
+    marginLeft: -14,
+    top: -4,
   },
   toggleRow: {
     flexDirection: 'row',
