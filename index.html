@@ -1296,6 +1296,22 @@ function onTintChange() {
 }
 function setTint(v){document.getElementById('tintSlider').value=v;onTintChange();}
 
+function updateWheelMarker() {
+  const hex=colorWheelHex;
+  const r=parseInt(hex.substr(1,2),16);
+  const g=parseInt(hex.substr(3,2),16);
+  const b=parseInt(hex.substr(5,2),16);
+  const hsl=rgbToHsl(r,g,b);
+  const h=hsl.h*Math.PI/180;
+  const s=Math.min(100,Math.sqrt(r*r+g*g+b*b)/Math.sqrt(255*255*3))*100;
+  const R=120, cx=120, cy=120;
+  const radius=(s/100)*R;
+  const x=cx+radius*Math.cos(h-Math.PI/2);
+  const y=cy+radius*Math.sin(h-Math.PI/2);
+  const marker=document.getElementById('colorWheelMarker');
+  if(marker) { marker.setAttribute('cx',x); marker.setAttribute('cy',y); }
+}
+
 function setColorPickMode(mode) {
   document.getElementById('chip-wheel').classList.toggle('active',mode==='wheel');
   document.getElementById('chip-hue').classList.toggle('active',mode==='hue');
@@ -1314,7 +1330,9 @@ function onHueChange() {
   const rgb=hslToRgb(h, 100, 50);
   colorWheelHex='#'+[rgb.r,rgb.g,rgb.b].map(x=>x.toString(16).padStart(2,'0')).join('');
   syncRgbValues();
+  updateWheelMarker();
   updateHueGradient();
+  updateCrossfadeGradient();
   recomputeColor();
 }
 
@@ -1342,7 +1360,9 @@ function onRgbChange() {
   document.getElementById('rgbBlueVal').textContent=b;
   colorWheelHex='#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
   syncHueValue();
+  updateWheelMarker();
   updateRgbGradients();
+  updateCrossfadeGradient();
   recomputeColor();
 }
 
