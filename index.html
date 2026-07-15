@@ -41,7 +41,7 @@
 :root{--accent:#FF6B2C;--dark:#000000;--mid:#1c1c1f;--mid2:#252528;--border:rgba(255,255,255,0.08);--text:#F5F2EC;--muted:#777;--green:#FF6B2C}
 html,body{width:100%;height:100%;background:radial-gradient(ellipse at center,#141920 0%,#0E0E10 70%,var(--dark) 100%);color:var(--text);font-family:'DM Mono',monospace;overflow:hidden;touch-action:manipulation}
 
-#splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:40px;z-index:100;animation:fadeIn .6s ease;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);gap:40px;z-index:100;animation:fadeIn .6s ease;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 #splash h1{font-family:'Lato',sans-serif;font-weight:700;font-size:clamp(2.5rem,8vw,4rem);letter-spacing:-.02em;color:#F5F2EC}
 #splash p{color:var(--muted);font-size:.8rem;letter-spacing:.15em;text-transform:uppercase}
 .splash-head{display:flex;flex-direction:column;align-items:center;gap:12px}
@@ -467,8 +467,11 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 
     <div class="panel">
       <div class="panel-label">Roue chromatique</div>
-      <div class="wheel-wrap">
+      <div class="wheel-wrap" style="position:relative;width:fit-content">
         <canvas id="colorWheel" width="240" height="240"></canvas>
+        <svg id="colorWheelThumb" width="240" height="240" style="position:absolute;top:0;left:0;pointer-events:none">
+          <circle id="colorWheelMarker" cx="120" cy="60" r="6" fill="none" stroke="#F5F2EC" stroke-width="2" opacity="0.8"></circle>
+        </svg>
       </div>
       <div class="slider-block" style="margin:14px 0 0">
         <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="crossfadeVal">0<span>%</span></div></div>
@@ -1156,10 +1159,15 @@ function _bindColorWheel(canvasId, onPick) {
     ctx.fillStyle=grad; ctx.fill();
   }
   let drag=false;
+  function updateMarker(x,y) {
+    const marker=document.getElementById('colorWheelMarker');
+    if(marker) { marker.setAttribute('cx',x); marker.setAttribute('cy',y); }
+  }
   function pick(ex,ey) {
     const rect=canvas.getBoundingClientRect();
     const x=(ex-rect.left)*(W/rect.width), y=(ey-rect.top)*(W/rect.height);
     if (Math.sqrt((x-cx)**2+(y-cy)**2)>R) return;
+    updateMarker(x,y);
     const d=ctx.getImageData(Math.round(Math.min(Math.max(x,0),W-1)),Math.round(Math.min(Math.max(y,0),W-1)),1,1).data;
     onPick(rgbToHex(d[0],d[1],d[2]));
   }
@@ -1209,7 +1217,16 @@ function onDimmerChange() {
 function onCrossfadeChange() {
   colorCrossfade=parseInt(document.getElementById('crossfadeSlider').value);
   document.getElementById('crossfadeVal').innerHTML=colorCrossfade+'<span>%</span>';
+  updateCrossfadeGradient();
   recomputeColor();
+}
+function updateCrossfadeGradient() {
+  const cctRgb=tintWhite(kelvinToRgb(kelvinK),colorTint);
+  const cctHex='#'+[cctRgb.r,cctRgb.g,cctRgb.b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  const wheelHex=colorWheelHex;
+  const gradient=`linear-gradient(to right,${cctHex},${wheelHex})`;
+  const slider=document.getElementById('crossfadeSlider');
+  if(slider) slider.style.background=gradient;
 }
 function setCrossfade(v) {
   colorCrossfade=v;
@@ -1218,11 +1235,13 @@ function setCrossfade(v) {
 }
 function onWheelPick(hex) {
   colorWheelHex=hex;
+  updateCrossfadeGradient();
   recomputeColor();
 }
 function onKelvinChange() {
   kelvinK=parseInt(document.getElementById('kelvinSlider').value);
   document.getElementById('kelvinVal').innerHTML=kelvinK.toLocaleString('fr')+'<span> K</span>';
+  updateCrossfadeGradient();
   recomputeColor();
 }
 function setKelvin(k){document.getElementById('kelvinSlider').value=k;onKelvinChange();}
@@ -1230,6 +1249,7 @@ function onTintChange() {
   colorTint=parseInt(document.getElementById('tintSlider').value);
   const sign=colorTint>=0?'+':'';
   document.getElementById('tintVal').innerHTML=sign+colorTint+'<span> GM</span>';
+  updateCrossfadeGradient();
   recomputeColor();
 }
 function setTint(v){document.getElementById('tintSlider').value=v;onTintChange();}
