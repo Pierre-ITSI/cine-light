@@ -335,7 +335,26 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 #screen-call.notif .sc-notif{pointer-events:auto}
 .sc-call{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;color:#fff;padding:calc(70px + env(safe-area-inset-top)) 30px calc(70px + env(safe-area-inset-bottom))}
 .sc-call.generic{background:linear-gradient(160deg,#1d2733,#0a0d12)}
-.sc-call.ios{background:rgba(18,18,22,.97);backdrop-filter:blur(30px)}
+/* iOS 26 — « verre liquide » : fond photo flouté + éléments translucides */
+.sc-call.ios{background:linear-gradient(180deg,#272c38,#0b0d13);overflow:hidden}
+.sc-ios-bg{position:absolute;inset:-50px;background-size:cover;background-position:center;filter:blur(50px) brightness(.5) saturate(1.35);z-index:0}
+.sc-call.ios>*{position:relative;z-index:1}
+.sc-ios-head{display:flex;flex-direction:column;align-items:center;gap:4px}
+.sc-ios-name{font-size:2.3rem;font-weight:600;letter-spacing:.2px;text-align:center;line-height:1.15}
+.sc-ios-sub{font-size:1rem;color:rgba(255,255,255,.65)}
+.sc-ios-timer{font-size:1rem;color:rgba(255,255,255,.7);margin-top:2px;font-variant-numeric:tabular-nums}
+.sc-ios-actions{margin-top:auto;width:100%;max-width:430px;display:flex;flex-direction:column;gap:26px}
+.sc-ios-minor{display:flex;justify-content:space-between;padding:0 16px}
+.sc-ios-minor .col,.sc-ios-main .col{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:.8rem;color:rgba(255,255,255,.88)}
+.sc-mini{width:52px;height:52px;border-radius:50%;border:none;background:rgba(255,255,255,.16);backdrop-filter:blur(22px) saturate(1.5);color:#fff;font-size:1.2rem;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.25);-webkit-tap-highlight-color:transparent}
+.sc-ios-main{display:flex;justify-content:space-between;padding:0 8px}
+.sc-ios-btn{width:76px;height:76px;border-radius:50%;border:none;color:#fff;font-size:2rem;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.4),inset 0 0 0 .5px rgba(255,255,255,.3);-webkit-tap-highlight-color:transparent}
+.sc-ios-btn.answer{background:linear-gradient(180deg,#4cd964,#2db84d)}
+.sc-ios-btn.decline{background:linear-gradient(180deg,#ff5146,#e5342a)}
+.sc-ios-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 16px;width:100%;max-width:340px;margin-top:44px}
+.sc-ios-grid .col{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:.72rem;color:rgba(255,255,255,.8)}
+.sc-ios-gbtn{width:68px;height:68px;border-radius:50%;border:none;background:rgba(255,255,255,.14);backdrop-filter:blur(22px) saturate(1.5);color:#fff;font-size:1.45rem;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.22);-webkit-tap-highlight-color:transparent}
+.sc-call.ios .sc-avatar{width:96px;height:96px;font-size:2.5rem;margin:0 0 14px;box-shadow:0 12px 44px rgba(0,0,0,.45)}
 .sc-call.android{background:#0d1117}
 .sc-avatar{width:110px;height:110px;border-radius:50%;background-color:#3a4756;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:600;margin-bottom:26px}
 .sc-name{font-size:2rem;font-weight:500;text-align:center;line-height:1.2}
@@ -347,12 +366,9 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .sc-btn.decline{background:#ff3b30}
 .sc-btn-col{display:flex;flex-direction:column;align-items:center;gap:10px}
 .sc-btn-hint{font-size:.82rem;opacity:.72}
-.sc-call.ios .sc-name{order:-2;font-weight:300;font-size:2.3rem}
-.sc-call.ios .sc-label{order:-1}
-.sc-call.ios .sc-avatar{margin:34px 0 0}
 .sc-call.android .sc-btn{border-radius:40px;width:auto;min-width:120px;padding:0 30px;height:62px;font-size:1.5rem}
 /* Bannière de notification (SMS / WhatsApp) */
-.sc-notif{position:absolute;top:calc(14px + env(safe-area-inset-top));left:12px;right:12px;background:rgba(30,30,34,.94);backdrop-filter:blur(20px);border-radius:18px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;color:#fff;box-shadow:0 10px 34px rgba(0,0,0,.5);animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1);cursor:pointer}
+.sc-notif{position:absolute;top:calc(14px + env(safe-area-inset-top));left:12px;right:12px;background:rgba(40,40,46,.72);backdrop-filter:blur(28px) saturate(1.6);border-radius:22px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;color:#fff;box-shadow:0 10px 34px rgba(0,0,0,.5),inset 0 0 0 .5px rgba(255,255,255,.14);animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1);cursor:pointer}
 @keyframes notifIn{from{transform:translateY(-130%)}to{transform:translateY(0)}}
 .sc-notif-icon{width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.35rem;color:#fff}
 .sc-notif-body{flex:1;min-width:0}
@@ -4416,9 +4432,33 @@ function screenCallStart(m) {
     if (navigator.vibrate) navigator.vibrate([200, 120, 200]);
   }
 }
+function _scIosBg(m) {
+  return m.photo ? '<div class="sc-ios-bg" style="background-image:url(' + m.photo + ')"></div>' : '';
+}
+const _SC_DECLINE_GLYPH = '<span style="display:inline-block;transform:rotate(135deg)">✆</span>';
 function _scRenderIncoming() {
   const m = _callCfg, el = document.getElementById('screen-call');
   const style = (m.style === 'ios' || m.style === 'android') ? m.style : 'generic';
+  if (style === 'ios') {
+    // iOS 26 : fond photo flouté, avatar, actions vitrées (Rappel / Message)
+    el.innerHTML = '<div class="sc-call ios">'
+      + _scIosBg(m)
+      + '<div class="sc-ios-head">'
+      + _scAvatarHtml(m)
+      + '<div class="sc-ios-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
+      + '<div class="sc-ios-sub">' + escapeHtml(m.label || 'mobile') + '</div>'
+      + '</div>'
+      + '<div class="sc-ios-actions">'
+      + '<div class="sc-ios-minor">'
+      + '<div class="col"><button class="sc-mini">⏰</button><span>Rappel</span></div>'
+      + '<div class="col"><button class="sc-mini">💬</button><span>Message</span></div>'
+      + '</div>'
+      + '<div class="sc-ios-main">'
+      + '<div class="col"><button class="sc-ios-btn decline" onclick="event.stopPropagation();screenCallDecline()">' + _SC_DECLINE_GLYPH + '</button><span>Refuser</span></div>'
+      + '<div class="col"><button class="sc-ios-btn answer" onclick="event.stopPropagation();screenCallAnswer()">✆</button><span>Accepter</span></div>'
+      + '</div></div></div>';
+    return;
+  }
   el.innerHTML = '<div class="sc-call ' + style + '">'
     + _scAvatarHtml(m)
     + '<div class="sc-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
@@ -4431,6 +4471,25 @@ function _scRenderIncoming() {
 function _scRenderInCall() {
   const m = _callCfg, el = document.getElementById('screen-call');
   const style = (m.style === 'ios' || m.style === 'android') ? m.style : 'generic';
+  if (style === 'ios') {
+    // iOS 26 en appel : nom + chrono en tête, grille de contrôles vitrés
+    const g = (icon, lbl) => '<div class="col"><button class="sc-ios-gbtn">' + icon + '</button><span>' + lbl + '</span></div>';
+    el.innerHTML = '<div class="sc-call ios">'
+      + _scIosBg(m)
+      + '<div class="sc-ios-head">'
+      + '<div class="sc-ios-name" style="font-size:1.7rem">' + escapeHtml(m.name || 'Inconnu') + '</div>'
+      + '<div class="sc-ios-timer" id="scCallTimer">00:00</div>'
+      + '</div>'
+      + '<div class="sc-ios-grid">'
+      + g('🔇', 'silence') + g('⌗', 'clavier') + g('🔊', 'audio')
+      + g('＋', 'ajouter') + g('📹', 'FaceTime') + g('👤', 'contacts')
+      + '</div>'
+      + '<div class="sc-ios-actions" style="align-items:center">'
+      + '<div class="col" style="display:flex;flex-direction:column;align-items:center;gap:9px">'
+      + '<button class="sc-ios-btn decline" onclick="event.stopPropagation();screenCallEnd()">' + _SC_DECLINE_GLYPH + '</button>'
+      + '</div></div></div>';
+    return;
+  }
   el.innerHTML = '<div class="sc-call ' + style + '">'
     + _scAvatarHtml(m)
     + '<div class="sc-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
