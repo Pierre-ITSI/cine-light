@@ -81,7 +81,7 @@ html,body{width:100%;min-height:100vh;background:radial-gradient(ellipse at cent
 
 
 
-#remote-mode{display:none;position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;padding:calc(14px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));background:radial-gradient(ellipse at center,#141920 0%,#0E0E10 70%,var(--dark) 100%);min-height:100vh}
+#remote-mode{display:none;position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;padding:calc(14px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);min-height:100vh}
 .remote-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
 .remote-header h2{font-family:'Lato',sans-serif;font-weight:600;font-size:1.3rem;color:var(--accent)}
 .back-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;padding:6px 12px;border-radius:4px;cursor:pointer;text-transform:uppercase;transition:all .2s}
@@ -250,6 +250,8 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 /* Écran de jeu épuré : aucune information visible. Seul un double-clic dans le
    coin haut-gauche (zone = 1/5 de l'écran) ouvre le menu (comme l'app native). */
 #screen-bar,#screen-status{display:none!important}
+/* Confirmation temporaire de connexion (affichée ~5 s puis fondu) */
+#screen-notice{display:none;position:absolute;top:calc(28px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.25);border-radius:24px;padding:12px 24px;font-size:.85rem;letter-spacing:.08em;color:#F5F2EC;z-index:350;opacity:0;transition:opacity .5s ease;pointer-events:none;white-space:nowrap}
 #screen-menu-hotspot{position:absolute;top:0;left:0;width:45vw;height:45vh;z-index:300;background:transparent}
 #screen-menu{display:none;position:absolute;inset:0;z-index:400;background:rgba(0,0,0,.92);flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px}
 .screen-menu-info{color:rgba(255,255,255,.5);font-size:.82rem;letter-spacing:.06em;margin-bottom:8px}
@@ -335,9 +337,9 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
     </div>
   </div>
   <div class="splash-btns">
-    <button class="splash-btn primary" onclick="startMode('remote')">📱→🎬 Télécommande</button>
-    <button class="splash-btn" onclick="startMode('screen')">🟡 Écran projecteur</button>
-    <button class="splash-btn" onclick="window.location.href='screen.html'">🎛 Mode DMX</button>
+    <button class="splash-btn primary" onclick="startMode('remote')">Télécommande</button>
+    <button class="splash-btn" onclick="startMode('screen')">Écran projecteur</button>
+    <button class="splash-btn" onclick="window.location.href='screen.html'">Mode DMX</button>
   </div>
   <button id="installBtn" class="install-btn" style="display:none" onclick="installPWA()">⬇ Installer l'application</button>
   <div id="iosInstallHint" class="install-hint" style="display:none">
@@ -390,7 +392,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 </div>
 
 <div id="screen-connect">
-  <h2>🟡 Écran projecteur</h2>
+  <h2>Écran projecteur</h2>
   <p>Entrez le code affiché sur la télécommande</p>
   <div class="screen-input-row">
     <input type="text" id="screenChannelInput" placeholder="ex : set4271"
@@ -407,6 +409,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
   <div id="screen-dim"></div>
   <div id="screen-blackout"></div>
   <div class="status-pill" id="screen-status">Connexion…</div>
+  <div id="screen-notice"></div>
   <div id="screen-bar">
     <button class="screen-bar-btn" onclick="event.stopPropagation();goBackToSplash()">← Retour</button>
     <button class="screen-bar-btn" onclick="event.stopPropagation();suspendScreen()">⏸ Suspendre</button>
@@ -1018,7 +1021,11 @@ function enterScreenMode(ch) {
   setupScreenAutohide();
   if (!navigator.vibrate) { const b=document.getElementById('vibrateBtn'); if(b){b.classList.add('unavail');b.textContent='📳 Indispo (iPhone)';b.classList.remove('on');} vibrateEnabled=false; }
   initBCFallback(ch);
-  connectMQTT(ch, () => { setScreenStatus('✓ En écoute — canal : ' + ch); sendCaps(); });
+  connectMQTT(ch, () => {
+    setScreenStatus('✓ En écoute — canal : ' + ch);
+    flashScreenNotice('En écoute du canal « ' + ch + ' »');
+    sendCaps();
+  });
 }
 
 function connectChannel() {
@@ -1162,6 +1169,21 @@ function setConnStatus(s) {
 function setScreenStatus(msg) {
   const el = document.getElementById('screen-status');
   if (el) el.textContent = msg;
+}
+
+// Affiche une confirmation temporaire sur l'écran de jeu (fondu après ~5 s)
+let _screenNoticeTimer = null;
+function flashScreenNotice(msg, ms) {
+  const el = document.getElementById('screen-notice');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  requestAnimationFrame(() => { el.style.opacity = '1'; });
+  if (_screenNoticeTimer) clearTimeout(_screenNoticeTimer);
+  _screenNoticeTimer = setTimeout(() => {
+    el.style.opacity = '0';
+    setTimeout(() => { el.style.display = 'none'; }, 500);
+  }, ms || 5000);
 }
 
 // ══════════════════════════ AUTO-SEND ══════════════════════════
