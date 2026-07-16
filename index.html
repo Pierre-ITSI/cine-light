@@ -824,6 +824,14 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
         <input type="range" id="effectDriftSlider" min="0" max="100" step="5" value="0"
                oninput="onEffectParamChange()">
       </div>
+      <div class="slider-block" id="effectLeadBlock" style="display:none">
+        <div class="slider-header">
+          <label>Traîne avant</label>
+          <div class="slider-val" id="effectLeadVal">0<span> ms</span></div>
+        </div>
+        <input type="range" id="effectLeadSlider" min="0" max="600" step="10" value="0"
+               oninput="onEffectParamChange()">
+      </div>
       <div class="slider-block" id="effectFadeBlock" style="display:none;margin-bottom:0">
         <div class="slider-header">
           <label id="effectFadeLabel">Traîne / fondu</label>
@@ -1694,7 +1702,7 @@ const EFFECT_CONFIG = {
   chaser:    { icon:'💫', name:'Chaser', family:'spatial', speedLabel:'Vitesse', min:0.1, max:6, step:0.1, def:1, intDef:100,
                color1:'#ffffff', color2:'#05050a', c1Label:'Bande', c2Label:'Fond',
                count:{ label:'Nombre de bandes', min:1, max:12, def:3 }, dir:true, mode:true,
-               width:8, wing:1, rot:0, fade:250, fadeLabel:'Traîne lumineuse' },
+               width:8, wing:1, rot:0, lead:0, fade:250, fadeLabel:'Traîne arrière' },
   noise:     { icon:'📶', name:'Noise', family:'spatial', speedLabel:'Vitesse (img/s)', min:1, max:30, step:1, def:12, intDef:90,
                color1:'#ffffff', c1Label:'Teinte',
                count:{ label:'Taille de grain', min:2, max:32, def:8 } },
@@ -1805,6 +1813,7 @@ function randomizeEffect() {
   if (cfg.width != null) document.getElementById('effectWidthSlider').value = Math.round(rnd(2, 40));
   if (cfg.wing != null) document.getElementById('effectWingSlider').value = Math.round(rnd(1, 4));
   if (cfg.rot != null) document.getElementById('effectRotSlider').value = Math.round(rnd(0, 359));
+  if (cfg.lead != null) document.getElementById('effectLeadSlider').value = Math.round(rnd(0, 400) / 10) * 10;
   if (cfg.color1) {
     const c = hslToRgb(Math.random() * 360, 90, 55 + Math.random() * 15);
     document.getElementById('effectColor1').value = rgbToHex(c.r, c.g, c.b);
@@ -1869,6 +1878,10 @@ function selectEffect(name) {
       document.getElementById('effectRotSlider').value = cfg.rot;
       document.getElementById('effectRotVal').innerHTML = cfg.rot + '<span>°</span>';
     }
+    if (_setupEffectOpt('effectLeadBlock', cfg.lead != null)) {
+      document.getElementById('effectLeadSlider').value = cfg.lead;
+      document.getElementById('effectLeadVal').innerHTML = cfg.lead + '<span> ms</span>';
+    }
     // Couleurs
     if (_setupEffectOpt('effectColor1Block', cfg.color1)) {
       document.getElementById('effectColor1Label').textContent = cfg.c1Label || 'Couleur 1';
@@ -1911,6 +1924,7 @@ function onEffectParamChange() {
   document.getElementById('effectWidthVal').innerHTML = document.getElementById('effectWidthSlider').value + '<span>%</span>';
   document.getElementById('effectWingVal').textContent = document.getElementById('effectWingSlider').value;
   document.getElementById('effectRotVal').innerHTML = document.getElementById('effectRotSlider').value + '<span>°</span>';
+  document.getElementById('effectLeadVal').innerHTML = document.getElementById('effectLeadSlider').value + '<span> ms</span>';
   const fadeEl = document.getElementById('effectFadeSlider');
   if (fadeEl) document.getElementById('effectFadeVal').innerHTML = fadeEl.value + '<span> ms</span>';
   scheduleEffectSend();
@@ -1931,6 +1945,7 @@ function buildEffectParams() {
   if (cfg.width != null) params.width = parseInt(document.getElementById('effectWidthSlider').value);
   if (cfg.wing != null) params.wing = parseInt(document.getElementById('effectWingSlider').value);
   if (cfg.rot != null) params.rot = parseInt(document.getElementById('effectRotSlider').value);
+  if (cfg.lead != null) params.lead = parseInt(document.getElementById('effectLeadSlider').value);
   if (cfg.color1) params.color1 = document.getElementById('effectColor1').value;
   if (cfg.color2) params.color2 = document.getElementById('effectColor2').value;
   if (cfg.fade != null) params.fade = parseInt(document.getElementById('effectFadeSlider').value);
@@ -1972,6 +1987,10 @@ function loadEffectParamsToUI(name, p, dir) {
   if (cfg.rot != null && p.rot != null) {
     document.getElementById('effectRotSlider').value = p.rot;
     document.getElementById('effectRotVal').innerHTML = p.rot + '<span>°</span>';
+  }
+  if (cfg.lead != null && p.lead != null) {
+    document.getElementById('effectLeadSlider').value = p.lead;
+    document.getElementById('effectLeadVal').innerHTML = p.lead + '<span> ms</span>';
   }
   if (cfg.color1 && p.color1) document.getElementById('effectColor1').value = p.color1;
   if (cfg.color2 && p.color2) document.getElementById('effectColor2').value = p.color2;
@@ -2406,8 +2425,8 @@ const FX_LIB = {
     const k = p.intensity / 100;
     const w = Math.max(0.01, (p.width != null ? p.width : 8) / 100); // largeur de bande
     const hw = w / 2;
-    const ramp = Math.max(0.02, ((p.fade != null ? p.fade : 250) / 600) * 0.8); // traîne
-    const EDGE = 0.02; // petite rampe d'attaque à l'avant
+    const ramp = Math.max(0.02, ((p.fade != null ? p.fade : 250) / 600) * 0.8); // traîne arrière
+    const EDGE = Math.max(0.005, ((p.lead || 0) / 600) * 0.8); // traîne avant (fader)
     const wing = Math.max(1, Math.min(4, p.wing || 1));
     const bounce = p.mode === 'bounce';
     // Angle = base de la direction (H/V/diag) + fader de rotation
@@ -2425,7 +2444,9 @@ const FX_LIB = {
     ctx.rotate(rot);
     ctx.translate(-D / 2, -D / 2);
     // Course loop étendue : la bande entre puis sort ENTIÈREMENT de l'écran
-    const cStart = -(hw + ramp + EDGE), cEnd = 1 + hw + ramp + EDGE, span = cEnd - cStart;
+    // (marge = la plus longue des deux traînes, valable dans les deux sens)
+    const M = hw + Math.max(EDGE, ramp) + 0.01;
+    const cStart = -M, cEnd = 1 + M, span = cEnd - cStart;
     const L = EDGE + w + ramp; // longueur totale du profil lumineux
     for (let s = 0; s < wing; s++) {
       ctx.save();
