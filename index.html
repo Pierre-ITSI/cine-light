@@ -330,7 +330,9 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .beta-badge{display:inline-block;font-size:.42rem;font-weight:500;letter-spacing:.1em;padding:1px 4px;margin-left:3px;border-radius:6px;background:rgba(232,201,122,.18);color:var(--accent);vertical-align:middle;text-transform:uppercase}
 
 /* ── SIMULATEUR D'APPEL (écran de jeu) ── */
-#screen-call{display:none;position:absolute;inset:0;z-index:85;font-family:-apple-system,'SF Pro Text',Roboto,'Segoe UI',sans-serif}
+/* z-index 95 : au-dessus du blackout (90) — comme un vrai téléphone éteint
+   dont l'écran se réveille à l'arrivée d'un appel ou d'une notification */
+#screen-call{display:none;position:absolute;inset:0;z-index:95;font-family:-apple-system,'SF Pro Text',Roboto,'Segoe UI',sans-serif}
 #screen-call.notif{pointer-events:none}
 #screen-call.notif .sc-notif{pointer-events:auto}
 .sc-call{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;color:#fff;padding:calc(70px + env(safe-area-inset-top)) 30px calc(70px + env(safe-area-inset-bottom))}
@@ -4493,6 +4495,8 @@ function screenCallStart(m) {
       // Notification sur faux écran verrouillé (plein écran)
       el.classList.remove('notif');
       _scRenderLock();
+      // Comme un vrai téléphone : l'écran se rendort tout seul après ~10 s
+      _callAutoTimer = setTimeout(() => { if (_callState === 'notif') screenCallEnd(); }, 10000);
     } else {
       el.classList.add('notif');
       _scRenderNotif();
