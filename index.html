@@ -51,7 +51,7 @@ html,body{width:100%;min-height:100vh;background:radial-gradient(ellipse at cent
 .rotating-role{font-family:'Lato',sans-serif;font-weight:600;font-size:clamp(1.05rem,4.5vw,1.4rem);color:var(--accent);line-height:1.3;min-height:1.4em;transition:opacity .42s ease,transform .42s ease;will-change:opacity,transform}
 .rotating-role.swap{opacity:0;transform:translateY(-9px)}
 .splash-credit{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));text-align:center;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:#3a3a3a;pointer-events:none}
-.splash-btns{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.splash-btns{display:flex;flex-direction:column;gap:14px;align-items:stretch;width:min(300px,80vw)}
 .splash-btn{padding:16px 36px;border:1px solid var(--border);background:var(--mid);color:var(--text);font-family:'DM Mono',monospace;font-size:.85rem;letter-spacing:.1em;cursor:pointer;border-radius:4px;transition:all .2s;text-transform:uppercase}
 .splash-btn:hover{border-color:var(--accent);color:var(--accent)}
 .splash-btn.primary{background:#F5F2EC;color:var(--dark);border-color:#F5F2EC;font-weight:500}
