@@ -4447,6 +4447,7 @@ const _SCI = {
   contacts: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#fff"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5v.5H3V19z"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.6 14.3c2.8.3 5.4 2.1 5.4 4.7v.5h-4.2c0-2-.4-3.8-1.2-5.2z"/></svg>',
   clock: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg>',
   bubble: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 3C6.5 3 2 6.9 2 11.7c0 2.8 1.5 5.3 3.9 6.9-.1 1-.5 2.3-1.6 3.4 1.9-.2 3.4-1 4.4-1.7 1 .2 2.1.4 3.3.4 5.5 0 10-3.9 10-8.7S17.5 3 12 3z"/></svg>',
+  whatsapp: '<svg viewBox="0 0 24 24" width="26" height="26"><path fill="#fff" d="M12 2.3a9.7 9.7 0 0 0-8.3 14.7L2.3 21.7l4.9-1.3A9.7 9.7 0 1 0 12 2.3z"/><g transform="translate(5.6 5.6) scale(0.54)" fill="#25D366"><path d="M6.62 10.79c1.44 2.83 3.76 5.15 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></g></svg>',
 };
 function _scRenderIncoming() {
   const m = _callCfg, el = document.getElementById('screen-call');
@@ -4514,7 +4515,8 @@ function _scRenderNotif() {
   const m = _callCfg, el = document.getElementById('screen-call');
   const wa = m.kind === 'whatsapp';
   el.innerHTML = '<div class="sc-notif" onclick="event.stopPropagation();screenCallEnd()">'
-    + '<div class="sc-notif-icon" style="background:' + (wa ? '#25D366' : '#34c759') + '">' + (wa ? '✆' : '💬') + '</div>'
+    + '<div class="sc-notif-icon" style="background:' + (wa ? '#25D366' : 'linear-gradient(180deg,#5ef77a,#0dbf3f)') + '">'
+    + (wa ? _SCI.whatsapp : _SCI.bubble) + '</div>'
     + '<div class="sc-notif-body">'
     + '<div class="sc-notif-app">' + (wa ? 'WhatsApp' : 'Messages') + ' · maintenant</div>'
     + '<div class="sc-notif-name">' + escapeHtml(m.name || '') + '</div>'
