@@ -766,6 +766,14 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           <button class="chip" id="fxdir-d" onclick="setFxDir('d')">⤢ Diagonale</button>
         </div>
       </div>
+      <div id="effectChaserModeBlock" style="display:none;margin-bottom:14px">
+        <div class="slider-header"><label>Course</label></div>
+        <div class="chips-wrap">
+          <button class="chip active" id="fxmode-loop" onclick="setFxChaserMode('loop')">↻ Loop</button>
+          <button class="chip" id="fxmode-bounce" onclick="setFxChaserMode('bounce')">⇄ Bounce</button>
+          <button class="chip" id="fxmode-invert" onclick="setFxInvert(!fxInvert)">⮌ Invert</button>
+        </div>
+      </div>
       <div class="effect-colors-row">
         <div class="slider-block" id="effectColor1Block" style="display:none">
           <div class="slider-header"><label id="effectColor1Label">Couleur 1</label></div>
@@ -1650,7 +1658,7 @@ const EFFECT_CONFIG = {
   // — Spatiaux —
   chaser:    { icon:'💫', name:'Chaser', family:'spatial', speedLabel:'Vitesse', min:0.1, max:6, step:0.1, def:1, intDef:100,
                color1:'#ffffff', color2:'#05050a', c1Label:'Bandes', c2Label:'Fond',
-               count:{ label:'Nombre de bandes', min:1, max:12, def:3 }, dir:true, fade:250, fadeLabel:'Traîne' },
+               count:{ label:'Nombre de bandes', min:1, max:12, def:3 }, dir:true, mode:true, fade:250, fadeLabel:'Traîne' },
   noise:     { icon:'📶', name:'Noise', family:'spatial', speedLabel:'Vitesse (img/s)', min:1, max:30, step:1, def:12, intDef:90,
                color1:'#ffffff', c1Label:'Teinte',
                count:{ label:'Taille de grain', min:2, max:32, def:8 } },
@@ -1709,6 +1717,23 @@ function setFxDir(d, silent) {
   if (!silent) scheduleEffectSend();
 }
 
+// Course du chaser : loop (boucle) ou bounce (aller-retour) + inversion du sens
+let fxChaserMode = 'loop', fxInvert = false;
+function setFxChaserMode(m, silent) {
+  fxChaserMode = m;
+  ['loop','bounce'].forEach(k => {
+    const b = document.getElementById('fxmode-' + k);
+    if (b) b.classList.toggle('active', k === m);
+  });
+  if (!silent) scheduleEffectSend();
+}
+function setFxInvert(v, silent) {
+  fxInvert = !!v;
+  const b = document.getElementById('fxmode-invert');
+  if (b) b.classList.toggle('active', fxInvert);
+  if (!silent) scheduleEffectSend();
+}
+
 // TAP tempo → règle le BPM du pulse sur la moyenne des taps
 let _tapTimes = [];
 function fxTapTempo() {
@@ -1740,6 +1765,7 @@ function randomizeEffect() {
     document.getElementById('effectBurstVal').textContent = bs.value;
   }
   if (cfg.dir) setFxDir(['h','v','d'][Math.floor(Math.random() * 3)], true);
+  if (cfg.mode) { setFxChaserMode(Math.random() < 0.5 ? 'loop' : 'bounce', true); setFxInvert(Math.random() < 0.5, true); }
   if (cfg.color1) {
     const c = hslToRgb(Math.random() * 360, 90, 55 + Math.random() * 15);
     document.getElementById('effectColor1').value = rgbToHex(c.r, c.g, c.b);
@@ -1785,9 +1811,11 @@ function selectEffect(name) {
       bs.min = cfg.count.min; bs.max = cfg.count.max; bs.step = 1; bs.value = cfg.count.def;
       document.getElementById('effectBurstVal').textContent = cfg.count.def;
     } else bBlock.style.display = 'none';
-    // Direction (chaser) et TAP tempo (pulse)
+    // Direction + course (chaser) et TAP tempo (pulse)
     document.getElementById('effectDirBlock').style.display = cfg.dir ? 'block' : 'none';
     if (cfg.dir) setFxDir(fxDir, true);
+    document.getElementById('effectChaserModeBlock').style.display = cfg.mode ? 'block' : 'none';
+    if (cfg.mode) { setFxChaserMode(fxChaserMode, true); setFxInvert(fxInvert, true); }
     document.getElementById('fxTapBtn').style.display = cfg.tap ? 'inline-block' : 'none';
     // Couleurs
     if (_setupEffectOpt('effectColor1Block', cfg.color1)) {
@@ -1844,6 +1872,7 @@ function buildEffectParams() {
   };
   if (cfg.count) params.count = parseInt(document.getElementById('effectBurstSlider').value);
   if (cfg.dir) params.dir = fxDir;
+  if (cfg.mode) { params.mode = fxChaserMode; params.invert = fxInvert; }
   if (cfg.color1) params.color1 = document.getElementById('effectColor1').value;
   if (cfg.color2) params.color2 = document.getElementById('effectColor2').value;
   if (cfg.fade != null) params.fade = parseInt(document.getElementById('effectFadeSlider').value);
@@ -1873,6 +1902,7 @@ function loadEffectParamsToUI(name, p, dir) {
     document.getElementById('effectBurstVal').textContent = p.count;
   }
   if (cfg.dir && (dir || p.dir)) setFxDir(dir || p.dir, true);
+  if (cfg.mode) { if (p.mode) setFxChaserMode(p.mode, true); setFxInvert(!!p.invert, true); }
   if (cfg.color1 && p.color1) document.getElementById('effectColor1').value = p.color1;
   if (cfg.color2 && p.color2) document.getElementById('effectColor2').value = p.color2;
   if (cfg.fade != null && p.fade != null) document.getElementById('effectFadeSlider').value = p.fade;
@@ -2303,13 +2333,27 @@ const FX_LIB = {
     ctx.fillStyle = `rgb(${bg.r},${bg.g},${bg.b})`; ctx.fillRect(0, 0, W, H);
     ctx.globalCompositeOperation = 'lighter';
     const dir = p.dir || 'h';
-    const span = 1 + tail * 2;
+    const bounce = p.mode === 'bounce';
     for (let i = 0; i < n; i++) {
-      const u = (((t * (p.speed || 1) * 0.35) + i / n) % 1) * span - tail;
+      // Position brute : les bandes se répartissent sur le cycle complet
+      const raw = t * (p.speed || 1) * 0.35 + (i / n) * (bounce ? 2 : 1);
+      let u, fwd; // position [0..1] + sens de déplacement courant
+      if (bounce) {
+        const ph = raw % 2;          // aller-retour : 0→1 puis 1→0
+        fwd = ph < 1;
+        u = fwd ? ph : 2 - ph;
+      } else {
+        fwd = true;
+        u = raw % 1;
+        u = u * (1 + tail * 2) - tail; // la traîne sort proprement de l'écran
+      }
+      if (p.invert) { u = 1 - u; fwd = !fwd; }
+      const a = fwd ? u - tail : u + tail; // queue de la traîne
+      const b = fwd ? u + 0.03 : u - 0.03; // tête de la bande
       let g;
-      if (dir === 'h') g = ctx.createLinearGradient((u - tail) * W, 0, (u + 0.03) * W, 0);
-      else if (dir === 'v') g = ctx.createLinearGradient(0, (u - tail) * H, 0, (u + 0.03) * H);
-      else g = ctx.createLinearGradient((u - tail) * W, (u - tail) * H, (u + 0.03) * W, (u + 0.03) * H);
+      if (dir === 'h') g = ctx.createLinearGradient(a * W, 0, b * W, 0);
+      else if (dir === 'v') g = ctx.createLinearGradient(0, a * H, 0, b * H);
+      else g = ctx.createLinearGradient(a * W, a * H, b * W, b * H);
       g.addColorStop(0, 'rgba(0,0,0,0)');
       g.addColorStop(0.85, `rgba(${col.r},${col.g},${col.b},${0.55 * k})`);
       g.addColorStop(1, `rgba(${col.r},${col.g},${col.b},${0.95 * k})`);
