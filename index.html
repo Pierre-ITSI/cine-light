@@ -202,7 +202,17 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .torch-level-fill{height:100%;background:#ffe664;border-radius:4px;transition:width .1s;box-shadow:0 0 8px rgba(255,230,100,.5)}
 
 /* EFFECTS TAB */
+.fx-family{font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
+.fx-family:first-of-type{margin-top:0}
 .effects-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+/* Canvas du moteur d'effets : plein écran de jeu + mini aperçus */
+#screen-fx-canvas{display:none;position:absolute;inset:0;width:100%;height:100%;z-index:10;pointer-events:none}
+.swatch,.sticky-swatch{position:relative;overflow:hidden}
+.pv-fx-canvas{display:none;position:absolute;inset:0;width:100%;height:100%;border-radius:inherit;pointer-events:none}
+.fx-tap-btn{background:var(--mid2);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;padding:5px 12px;border-radius:14px;cursor:pointer}
+.fx-tap-btn:active{border-color:var(--accent);color:var(--accent)}
+.fx-dice-btn{background:rgba(208,92,255,.1);border:1px solid rgba(208,92,255,.4);color:#d05cff;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;padding:6px 14px;border-radius:14px;cursor:pointer}
+.fx-dice-btn:active{background:rgba(208,92,255,.25)}
 .effect-card{border:1px solid var(--border);border-radius:8px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;background:var(--mid2);transition:all .2s;touch-action:manipulation;font-family:'DM Mono',monospace;width:100%}
 .effect-card:hover,.effect-card:active{border-color:rgba(255,255,255,.2);transform:scale(.97)}
 .effect-card.active{border-color:var(--accent);background:rgba(232,201,122,.1);box-shadow:0 0 14px rgba(232,201,122,.1)}
@@ -421,6 +431,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 </div>
 
 <div id="screen-mode" onclick="requestFS()">
+  <canvas id="screen-fx-canvas" width="240" height="136"></canvas>
   <img id="screen-media-img" alt="">
   <video id="screen-media-video" playsinline autoplay></video>
   <div id="screen-dim"></div>
@@ -447,7 +458,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 <div id="remote-mode">
   <!-- Mini-carte sticky : apparaît quand la preview principale sort de l'écran -->
   <div id="stickyPreview">
-    <div class="sticky-swatch" id="stickySwatch"></div>
+    <div class="sticky-swatch" id="stickySwatch"><canvas class="pv-fx-canvas" id="stickyFxCanvas" width="160" height="34"></canvas></div>
     <button class="sticky-blackout" id="stickyBlackoutBtn" onclick="toggleBlackout()">Écran ON</button>
   </div>
   <div class="remote-header">
@@ -466,7 +477,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
     </div>
   </div>
   <div class="swatch-row" id="previewRow">
-    <div class="swatch" id="previewSwatch" style="background:#fff"></div>
+    <div class="swatch" id="previewSwatch" style="background:#fff"><canvas class="pv-fx-canvas" id="previewFxCanvas" width="96" height="96"></canvas></div>
     <div class="swatch-info">
       <div class="swatch-hex" id="previewHex">#FFFFFF</div>
       <div class="swatch-label" id="previewMeta">—</div>
@@ -707,34 +718,26 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       <button class="chip" style="border-color:rgba(220,80,80,.5);color:rgba(220,80,80,.8)" onclick="stopAllEffects()">⏹ Stop</button>
     </div>
     <div class="panel">
-      <div class="panel-label">Effets dynamiques</div>
-      <div class="effects-grid">
-        <button class="effect-card" id="efxcard-tv" onclick="selectEffect('tv')">
-          <span class="effect-card-icon">📺</span><span class="effect-card-name">TV</span>
-        </button>
-        <button class="effect-card" id="efxcard-candle" onclick="selectEffect('candle')">
-          <span class="effect-card-icon">🕯</span><span class="effect-card-name">Bougie</span>
-        </button>
-        <button class="effect-card" id="efxcard-fire" onclick="selectEffect('fire')">
-          <span class="effect-card-icon">🔥</span><span class="effect-card-name">Feu</span>
-        </button>
-        <button class="effect-card" id="efxcard-police" onclick="selectEffect('police')">
-          <span class="effect-card-icon">🚨</span><span class="effect-card-name">Police</span>
-        </button>
-        <button class="effect-card" id="efxcard-lightning" onclick="selectEffect('lightning')">
-          <span class="effect-card-icon">⚡</span><span class="effect-card-name">Éclair</span>
-        </button>
-        <button class="effect-card" id="efxcard-paparazzi" onclick="selectEffect('paparazzi')">
-          <span class="effect-card-icon">📸</span><span class="effect-card-name">Paparazzi</span>
-        </button>
-      </div>
+      <div class="panel-label">Laboratoire d'effets</div>
+      <div class="fx-family">Spatiaux</div>
+      <div class="effects-grid" id="fxGridSpatial"></div>
+      <div class="fx-family">Rythmiques</div>
+      <div class="effects-grid" id="fxGridRythm"></div>
+      <div class="fx-family">Ambiances</div>
+      <div class="effects-grid" id="fxGridAmbiance"></div>
     </div>
     <div class="panel" id="effectSettingsPanel" style="display:none">
-      <div class="panel-label" id="effectSettingsTitle">Réglages</div>
+      <div class="slider-header" style="margin-bottom:12px">
+        <div class="panel-label" id="effectSettingsTitle" style="margin-bottom:0">Réglages</div>
+        <button class="fx-dice-btn" onclick="randomizeEffect()">🎲 Randomiser</button>
+      </div>
       <div class="slider-block">
         <div class="slider-header">
           <label id="effectSpeedLabel">Vitesse</label>
-          <div class="slider-val" id="effectSpeedVal">1.0</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="fx-tap-btn" id="fxTapBtn" style="display:none" onclick="fxTapTempo()">TAP</button>
+            <div class="slider-val" id="effectSpeedVal">1.0</div>
+          </div>
         </div>
         <input type="range" id="effectSpeedSlider" min="0.2" max="10" step="0.1" value="1"
                              oninput="onEffectParamChange()">
@@ -749,11 +752,19 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       </div>
       <div class="slider-block" id="effectBurstBlock" style="display:none">
         <div class="slider-header">
-          <label>Flashes / rafale</label>
+          <label id="effectBurstLabel">Quantité</label>
           <div class="slider-val" id="effectBurstVal">3</div>
         </div>
         <input type="range" id="effectBurstSlider" min="1" max="10" step="1" value="3"
                oninput="document.getElementById('effectBurstVal').textContent=this.value;onEffectParamChange()">
+      </div>
+      <div id="effectDirBlock" style="display:none;margin-bottom:14px">
+        <div class="slider-header"><label>Direction</label></div>
+        <div class="chips-wrap">
+          <button class="chip active" id="fxdir-h" onclick="setFxDir('h')">↔ Horizontal</button>
+          <button class="chip" id="fxdir-v" onclick="setFxDir('v')">↕ Vertical</button>
+          <button class="chip" id="fxdir-d" onclick="setFxDir('d')">⤢ Diagonale</button>
+        </div>
       </div>
       <div class="effect-colors-row">
         <div class="slider-block" id="effectColor1Block" style="display:none">
@@ -765,17 +776,25 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           <input type="color" id="effectColor2" value="#0040ff" oninput="onEffectParamChange()">
         </div>
       </div>
-      <div class="slider-block" id="effectRandBlock" style="display:none">
+      <div class="slider-block">
         <div class="slider-header">
-          <label>Facteur aléatoire</label>
-          <div class="slider-val" id="effectRandVal">70<span>%</span></div>
+          <label>Chaos · aléa</label>
+          <div class="slider-val" id="effectChaosVal">30<span>%</span></div>
         </div>
-        <input type="range" id="effectRandSlider" min="0" max="100" step="5" value="70"
-                             oninput="onEffectParamChange()">
+        <input type="range" id="effectChaosSlider" min="0" max="100" step="5" value="30"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block">
+        <div class="slider-header">
+          <label>Dérive · évolution lente</label>
+          <div class="slider-val" id="effectDriftVal">0<span>%</span></div>
+        </div>
+        <input type="range" id="effectDriftSlider" min="0" max="100" step="5" value="0"
+               oninput="onEffectParamChange()">
       </div>
       <div class="slider-block" id="effectFadeBlock" style="display:none;margin-bottom:0">
         <div class="slider-header">
-          <label>Fondu d'extinction</label>
+          <label id="effectFadeLabel">Traîne / fondu</label>
           <div class="slider-val" id="effectFadeVal">0<span> ms</span></div>
         </div>
         <input type="range" id="effectFadeSlider" min="0" max="600" step="10" value="0"
@@ -811,8 +830,13 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       </div>
     </div>
     <div class="panel">
-      <div class="panel-label">Couleurs rapides</div>
-      <div class="presets-grid" id="presetsGrid"></div>
+      <div class="panel-label">Mémoires d'effets</div>
+      <div class="memory-actions">
+        <button class="memory-save-btn" onclick="saveFxMemory()">＋ Enregistrer</button>
+        <button class="memory-update-btn" id="fxMemUpdateBtn" onclick="updateFxMemory()" disabled>⟳ Mettre à jour</button>
+      </div>
+      <div id="fxMemGrid" class="memory-grid"></div>
+      <div id="fxMemEmpty" class="media-pool-empty">Lancez un effet, réglez-le, puis « Enregistrer ».</div>
     </div>
   </div>
 
@@ -1012,7 +1036,7 @@ function startMode(m) {
   if (m === 'remote') {
     mode = 'remote';
     document.getElementById('remote-mode').style.display = 'block';
-    buildPresets(); initWheel();
+    initWheel();
     loadColorMemories(); renderColorMemories();
     recomputeColor();
     document.getElementById('channelInput').value = 'set' + Math.floor(Math.random()*9000+1000);
@@ -1077,6 +1101,7 @@ function suspendScreen() {
   exitFS();
   cancelScreenAutohide();
   hideScreenMedia();
+  stopScreenEffect();
   setBlackout(false);
   // Déconnecter MQTT mais garder le canal en mémoire
   if (mqttClient) { mqttClient.end(true); mqttClient = null; }
@@ -1155,6 +1180,7 @@ function goBackToSplash() {
   cancelScreenAutohide();
   closeScreenMenu();
   hideScreenMedia();
+  stopScreenEffect();
   setBlackout(false);
   const cfgDiv = document.getElementById('screen-sacn-config');
   if (cfgDiv) cfgDiv.style.display = 'none';
@@ -1233,6 +1259,7 @@ function receiveColor(color) {
 }
 function receiveStrobe(msg) {
   if (screenStrobeTimer) { clearTimeout(screenStrobeTimer); screenStrobeTimer = null; }
+  suspendScreenFx(!!msg.active); // le strobe prime sur le canvas d'effet
   const sc = document.getElementById('screen-mode');
   if (!msg.active) { sc.style.transition = 'background-color 0.3s'; sc.style.backgroundColor = screenBaseColor; setTorch(false); return; }
   sc.style.transition = 'none';
@@ -1581,7 +1608,7 @@ function stopStrobe() {
 }
 function runLocalStrobePreview() {
   stopLocalStrobePreview();
-  _previewFx.stop(); // le strobe prime sur l'effet dans l'aperçu
+  _pvFxStop(); // le strobe prime sur l'effet dans l'aperçu
   const flashEl=document.getElementById('strobeFlashPreview');
   if(!flashEl||!strobeActive)return;
   function cycle(){
@@ -1610,20 +1637,116 @@ function stopLocalStrobePreview(){
 
 // ══════════════════════════ EFFECTS TAB — TÉLÉCOMMANDE ══════════════════════════
 let activeScreenEffect = null, effectSendTimer = null;
+let fxDir = 'h'; // direction du chaser
+
+// Laboratoire d'effets : 3 familles, rendu par moteur canvas partagé
+const EFFECT_FAMILIES = [
+  { key: 'spatial',  grid: 'fxGridSpatial' },
+  { key: 'rythm',    grid: 'fxGridRythm' },
+  { key: 'ambiance', grid: 'fxGridAmbiance' },
+];
 
 const EFFECT_CONFIG = {
-  tv:        { label:'📺 TV',          speedLabel:'Vitesse (img/s)',    min:0.5, max:15,  step:0.5, def:4,   intDef:80,  burst:false, blocks:true },
-  candle:    { label:'🕯 Bougie',       speedLabel:'Vacillement',        min:0.2, max:5,   step:0.1, def:1.2, intDef:85,  burst:false,
-              color1:'#ff7814', c1Label:'Flamme' },
-  fire:      { label:'🔥 Feu',          speedLabel:'Intensité rapide',   min:0.5, max:10,  step:0.5, def:3,   intDef:90,  burst:false,
-              color1:'#ff7314', color2:'#3c0a00', c1Label:'Flamme', c2Label:'Braise' },
-  police:    { label:'🚨 Police',       speedLabel:'Vitesse alternance', min:0.5, max:8,   step:0.5, def:3,   intDef:100, burst:false,
-              color1:'#ff2020', color2:'#2040ff', c1Label:'Couleur A', c2Label:'Couleur B' },
-  lightning: { label:'⚡ Éclair',       speedLabel:'Fréquence',          min:0.1, max:3,   step:0.1, def:0.8, intDef:100, burst:false,
-              color1:'#f4f0ff', color2:'#03030a', c1Label:'Couleur éclair', c2Label:'Couleur ambiante', rand:70, fade:0 },
-  paparazzi: { label:'📸 Paparazzi',   speedLabel:'Rafales / sec',      min:0.2, max:4,   step:0.1, def:1,   intDef:100, burst:true,
-              color1:'#fffce6', color2:'#080808', c1Label:'Couleur flash', c2Label:'Couleur ambiante', rand:70, fade:0 },
+  // — Spatiaux —
+  chaser:    { icon:'💫', name:'Chaser', family:'spatial', speedLabel:'Vitesse', min:0.1, max:6, step:0.1, def:1, intDef:100,
+               color1:'#ffffff', color2:'#05050a', c1Label:'Bandes', c2Label:'Fond',
+               count:{ label:'Nombre de bandes', min:1, max:12, def:3 }, dir:true, fade:250, fadeLabel:'Traîne' },
+  noise:     { icon:'📶', name:'Noise', family:'spatial', speedLabel:'Vitesse (img/s)', min:1, max:30, step:1, def:12, intDef:90,
+               color1:'#ffffff', c1Label:'Teinte',
+               count:{ label:'Taille de grain', min:2, max:32, def:8 } },
+  aurora:    { icon:'🌌', name:'Aurora', family:'spatial', speedLabel:'Dérive des nappes', min:0.05, max:2, step:0.05, def:0.3, intDef:80,
+               color1:'#20e0a0', color2:'#3040ff', c1Label:'Nappe 1', c2Label:'Nappe 2' },
+  water:     { icon:'🌊', name:'Caustiques', family:'spatial', speedLabel:'Vitesse', min:0.1, max:3, step:0.1, def:0.8, intDef:85,
+               color1:'#25c8e8', color2:'#021620', c1Label:'Eau', c2Label:'Fond' },
+  // — Rythmiques —
+  pulse:     { icon:'💓', name:'Pulse BPM', family:'rythm', speedLabel:'BPM', min:20, max:240, step:1, def:60, intDef:100,
+               color1:'#ffffff', color2:'#000000', c1Label:'Crête', c2Label:'Creux', tap:true },
+  traffic:   { icon:'🚗', name:'Phares', family:'rythm', speedLabel:'Passages / s', min:0.05, max:2, step:0.05, def:0.3, intDef:90,
+               color1:'#ffb054', color2:'#050508', c1Label:'Phares', c2Label:'Nuit' },
+  weld:      { icon:'🔩', name:'Soudure', family:'rythm', speedLabel:'Cadence', min:0.2, max:6, step:0.1, def:1.5, intDef:100,
+               color1:'#cfe4ff', color2:'#05060a', c1Label:'Arc', c2Label:'Fond' },
+  neon:      { icon:'🏮', name:'Néon HS', family:'rythm', speedLabel:'Nervosité', min:0.2, max:6, step:0.1, def:1.5, intDef:90,
+               color1:'#ff2e88', c1Label:'Néon' },
+  police:    { icon:'🚨', name:'Police', family:'rythm', speedLabel:'Vitesse alternance', min:0.5, max:8, step:0.5, def:3, intDef:100,
+               color1:'#ff2020', color2:'#2040ff', c1Label:'Couleur A', c2Label:'Couleur B' },
+  lightning: { icon:'⚡', name:'Éclair', family:'rythm', speedLabel:'Fréquence', min:0.1, max:3, step:0.1, def:0.8, intDef:100,
+               color1:'#f4f0ff', color2:'#03030a', c1Label:'Éclair', c2Label:'Ambiance' },
+  paparazzi: { icon:'📸', name:'Paparazzi', family:'rythm', speedLabel:'Rafales / s', min:0.2, max:4, step:0.1, def:1, intDef:100,
+               color1:'#fffce6', color2:'#080808', c1Label:'Flash', c2Label:'Ambiance',
+               count:{ label:'Flashes / rafale', min:1, max:10, def:3 } },
+  // — Ambiances —
+  tv:        { icon:'📺', name:'TV', family:'ambiance', speedLabel:'Vitesse (img/s)', min:0.5, max:15, step:0.5, def:4, intDef:80, blocks:true },
+  candle:    { icon:'🕯', name:'Bougie', family:'ambiance', speedLabel:'Vacillement', min:0.2, max:5, step:0.1, def:1.2, intDef:85,
+               color1:'#ff7814', c1Label:'Flamme' },
+  fire:      { icon:'🔥', name:'Feu', family:'ambiance', speedLabel:'Intensité rapide', min:0.5, max:10, step:0.5, def:3, intDef:90,
+               color1:'#ff7314', color2:'#3c0a00', c1Label:'Flamme', c2Label:'Braise' },
 };
+
+// Construit les cartes d'effets dans leurs grilles de famille
+function buildEffectCards() {
+  for (const fam of EFFECT_FAMILIES) {
+    const grid = document.getElementById(fam.grid);
+    if (!grid) continue;
+    grid.innerHTML = '';
+    for (const [key, cfg] of Object.entries(EFFECT_CONFIG)) {
+      if (cfg.family !== fam.key) continue;
+      const b = document.createElement('button');
+      b.className = 'effect-card';
+      b.id = 'efxcard-' + key;
+      b.onclick = () => selectEffect(key);
+      b.innerHTML = `<span class="effect-card-icon">${cfg.icon}</span><span class="effect-card-name">${cfg.name}</span>`;
+      grid.appendChild(b);
+    }
+  }
+}
+
+function setFxDir(d, silent) {
+  fxDir = d;
+  ['h','v','d'].forEach(k => {
+    const b = document.getElementById('fxdir-' + k);
+    if (b) b.classList.toggle('active', k === d);
+  });
+  if (!silent) scheduleEffectSend();
+}
+
+// TAP tempo → règle le BPM du pulse sur la moyenne des taps
+let _tapTimes = [];
+function fxTapTempo() {
+  const now = performance.now();
+  _tapTimes = _tapTimes.filter(x => now - x < 3000);
+  _tapTimes.push(now);
+  if (_tapTimes.length < 2) return;
+  let sum = 0;
+  for (let i = 1; i < _tapTimes.length; i++) sum += _tapTimes[i] - _tapTimes[i - 1];
+  const bpm = Math.round(Math.min(240, Math.max(20, 60000 / (sum / (_tapTimes.length - 1)))));
+  document.getElementById('effectSpeedSlider').value = bpm;
+  document.getElementById('effectSpeedVal').textContent = bpm;
+  scheduleEffectSend();
+}
+
+// 🎲 tire un réglage complet au hasard pour l'effet courant
+function randomizeEffect() {
+  if (!activeScreenEffect) return;
+  const cfg = EFFECT_CONFIG[activeScreenEffect]; if (!cfg) return;
+  const rnd = (min, max) => min + Math.random() * (max - min);
+  const sl = document.getElementById('effectSpeedSlider');
+  sl.value = Math.round(rnd(+cfg.min, +cfg.max) / cfg.step) * cfg.step;
+  document.getElementById('effectIntensitySlider').value = Math.round(rnd(40, 100) / 5) * 5;
+  document.getElementById('effectChaosSlider').value = Math.round(rnd(0, 80) / 5) * 5;
+  document.getElementById('effectDriftSlider').value = Math.round(rnd(0, 60) / 5) * 5;
+  if (cfg.count) {
+    const bs = document.getElementById('effectBurstSlider');
+    bs.value = Math.round(rnd(cfg.count.min, cfg.count.max));
+    document.getElementById('effectBurstVal').textContent = bs.value;
+  }
+  if (cfg.dir) setFxDir(['h','v','d'][Math.floor(Math.random() * 3)], true);
+  if (cfg.color1) {
+    const c = hslToRgb(Math.random() * 360, 90, 55 + Math.random() * 15);
+    document.getElementById('effectColor1').value = rgbToHex(c.r, c.g, c.b);
+  }
+  if (cfg.fade != null) document.getElementById('effectFadeSlider').value = Math.round(rnd(0, 600) / 10) * 10;
+  onEffectParamChange();
+}
 
 // Affiche/masque + initialise un bloc optionnel de réglage d'effet
 function _setupEffectOpt(blockId, show) {
@@ -1642,19 +1765,30 @@ function selectEffect(name) {
   if (badge) badge.style.display = 'flex';
   const cfg = EFFECT_CONFIG[name];
   const badgeText = document.getElementById('effectBadgeText');
-  if (badgeText && cfg) badgeText.textContent = cfg.label + ' actif';
-  // Populate settings
+  if (badgeText && cfg) badgeText.textContent = cfg.icon + ' ' + cfg.name + ' actif';
   const panel = document.getElementById('effectSettingsPanel');
   if (panel && cfg) {
     panel.style.display = 'block';
-    document.getElementById('effectSettingsTitle').textContent = 'Réglages — ' + cfg.label;
+    document.getElementById('effectSettingsTitle').textContent = 'Réglages — ' + cfg.name;
     document.getElementById('effectSpeedLabel').textContent = cfg.speedLabel;
     const sl = document.getElementById('effectSpeedSlider');
     sl.min = cfg.min; sl.max = cfg.max; sl.step = cfg.step; sl.value = cfg.def;
-    document.getElementById('effectSpeedVal').textContent = cfg.def.toFixed(1);
+    document.getElementById('effectSpeedVal').textContent = cfg.step >= 1 ? String(cfg.def) : (+cfg.def).toFixed(1);
     document.getElementById('effectIntensitySlider').value = cfg.intDef;
     document.getElementById('effectIntensityVal').innerHTML = cfg.intDef + '<span>%</span>';
-    document.getElementById('effectBurstBlock').style.display = cfg.burst ? 'block' : 'none';
+    // Quantité (bandes / grain / flashes) : le slider s'adapte à l'effet
+    const bBlock = document.getElementById('effectBurstBlock');
+    if (cfg.count) {
+      bBlock.style.display = 'block';
+      document.getElementById('effectBurstLabel').textContent = cfg.count.label;
+      const bs = document.getElementById('effectBurstSlider');
+      bs.min = cfg.count.min; bs.max = cfg.count.max; bs.step = 1; bs.value = cfg.count.def;
+      document.getElementById('effectBurstVal').textContent = cfg.count.def;
+    } else bBlock.style.display = 'none';
+    // Direction (chaser) et TAP tempo (pulse)
+    document.getElementById('effectDirBlock').style.display = cfg.dir ? 'block' : 'none';
+    if (cfg.dir) setFxDir(fxDir, true);
+    document.getElementById('fxTapBtn').style.display = cfg.tap ? 'inline-block' : 'none';
     // Couleurs
     if (_setupEffectOpt('effectColor1Block', cfg.color1)) {
       document.getElementById('effectColor1Label').textContent = cfg.c1Label || 'Couleur 1';
@@ -1664,13 +1798,14 @@ function selectEffect(name) {
       document.getElementById('effectColor2Label').textContent = cfg.c2Label || 'Couleur 2';
       document.getElementById('effectColor2').value = cfg.color2;
     }
-    // Facteur aléatoire
-    if (_setupEffectOpt('effectRandBlock', cfg.rand != null)) {
-      document.getElementById('effectRandSlider').value = cfg.rand;
-      document.getElementById('effectRandVal').innerHTML = cfg.rand + '<span>%</span>';
-    }
-    // Fondu d'extinction
+    // Chaos / dérive : repartent des valeurs par défaut
+    document.getElementById('effectChaosSlider').value = 30;
+    document.getElementById('effectChaosVal').innerHTML = '30<span>%</span>';
+    document.getElementById('effectDriftSlider').value = 0;
+    document.getElementById('effectDriftVal').innerHTML = '0<span>%</span>';
+    // Traîne / fondu
     if (_setupEffectOpt('effectFadeBlock', cfg.fade != null)) {
+      document.getElementById('effectFadeLabel').textContent = cfg.fadeLabel || "Fondu d'extinction";
       document.getElementById('effectFadeSlider').value = cfg.fade;
       document.getElementById('effectFadeVal').innerHTML = cfg.fade + '<span> ms</span>';
     }
@@ -1686,36 +1821,62 @@ function selectEffect(name) {
 }
 
 function onEffectParamChange() {
+  const cfg = EFFECT_CONFIG[activeScreenEffect] || {};
   const speed = parseFloat(document.getElementById('effectSpeedSlider').value);
-  document.getElementById('effectSpeedVal').textContent = speed.toFixed(1);
+  document.getElementById('effectSpeedVal').textContent = (cfg.step >= 1) ? String(Math.round(speed)) : speed.toFixed(1);
   const intensity = parseInt(document.getElementById('effectIntensitySlider').value);
   document.getElementById('effectIntensityVal').innerHTML = intensity + '<span>%</span>';
-  const randEl = document.getElementById('effectRandSlider');
-  if (randEl) document.getElementById('effectRandVal').innerHTML = randEl.value + '<span>%</span>';
+  document.getElementById('effectChaosVal').innerHTML = document.getElementById('effectChaosSlider').value + '<span>%</span>';
+  document.getElementById('effectDriftVal').innerHTML = document.getElementById('effectDriftSlider').value + '<span>%</span>';
   const fadeEl = document.getElementById('effectFadeSlider');
   if (fadeEl) document.getElementById('effectFadeVal').innerHTML = fadeEl.value + '<span> ms</span>';
   scheduleEffectSend();
+}
+
+// Rassemble les paramètres de l'effet courant depuis l'interface
+function buildEffectParams() {
+  const cfg = EFFECT_CONFIG[activeScreenEffect] || {};
+  const params = {
+    speed: parseFloat(document.getElementById('effectSpeedSlider').value),
+    intensity: parseInt(document.getElementById('effectIntensitySlider').value),
+    chaos: parseInt(document.getElementById('effectChaosSlider').value),
+    drift: parseInt(document.getElementById('effectDriftSlider').value),
+  };
+  if (cfg.count) params.count = parseInt(document.getElementById('effectBurstSlider').value);
+  if (cfg.dir) params.dir = fxDir;
+  if (cfg.color1) params.color1 = document.getElementById('effectColor1').value;
+  if (cfg.color2) params.color2 = document.getElementById('effectColor2').value;
+  if (cfg.fade != null) params.fade = parseInt(document.getElementById('effectFadeSlider').value);
+  if (cfg.blocks) params.blocks = tvBlocks.map(resolveColorSpec);
+  return params;
 }
 
 function scheduleEffectSend() {
   if (effectSendTimer) clearTimeout(effectSendTimer);
   effectSendTimer = setTimeout(() => {
     if (!activeScreenEffect) return;
-    const burstEl = document.getElementById('effectBurstSlider');
-    const cfg = EFFECT_CONFIG[activeScreenEffect] || {};
-    const params = {
-      speed: parseFloat(document.getElementById('effectSpeedSlider').value),
-      intensity: parseInt(document.getElementById('effectIntensitySlider').value),
-      burst: burstEl ? parseInt(burstEl.value) : 3,
-    };
-    if (cfg.color1) params.color1 = document.getElementById('effectColor1').value;
-    if (cfg.color2) params.color2 = document.getElementById('effectColor2').value;
-    if (cfg.rand != null) params.rand = parseInt(document.getElementById('effectRandSlider').value);
-    if (cfg.fade != null) params.fade = parseInt(document.getElementById('effectFadeSlider').value);
-    if (cfg.blocks) params.blocks = tvBlocks.map(resolveColorSpec);
+    const params = buildEffectParams();
     sendMsg({ type:'effect', name:activeScreenEffect, active:true, params });
     refreshPreviewFx(params); // l'aperçu rejoue l'effet en local
   }, 80);
+}
+
+// Recharge des paramètres (mémoire d'effet) dans l'interface
+function loadEffectParamsToUI(name, p, dir) {
+  const cfg = EFFECT_CONFIG[name] || {};
+  if (p.speed != null) document.getElementById('effectSpeedSlider').value = p.speed;
+  if (p.intensity != null) document.getElementById('effectIntensitySlider').value = p.intensity;
+  if (p.chaos != null) document.getElementById('effectChaosSlider').value = p.chaos;
+  if (p.drift != null) document.getElementById('effectDriftSlider').value = p.drift;
+  if (cfg.count && p.count != null) {
+    document.getElementById('effectBurstSlider').value = p.count;
+    document.getElementById('effectBurstVal').textContent = p.count;
+  }
+  if (cfg.dir && (dir || p.dir)) setFxDir(dir || p.dir, true);
+  if (cfg.color1 && p.color1) document.getElementById('effectColor1').value = p.color1;
+  if (cfg.color2 && p.color2) document.getElementById('effectColor2').value = p.color2;
+  if (cfg.fade != null && p.fade != null) document.getElementById('effectFadeSlider').value = p.fade;
+  onEffectParamChange();
 }
 
 // ── Aperçu live : les swatches (preview + carte sticky) rejouent en local
@@ -1730,16 +1891,28 @@ function _pvApplyBg(r, g, b, transMs) {
     el.style.backgroundColor = css;
   }
 }
-const _previewFx = makeEffectEngine(_pvApplyBg, name => activeScreenEffect === name && !strobeActive);
 let _lastEffectParams = null;
+let _pvFxMain = null, _pvFxSticky = null; // instanciés après la définition du moteur
+
+function _pvFxStop() {
+  if (_pvFxMain) _pvFxMain.stop();
+  if (_pvFxSticky) _pvFxSticky.stop();
+}
 
 // (Re)démarre la bonne simulation dans l'aperçu selon l'état courant.
 function refreshPreviewFx(params) {
   if (params) _lastEffectParams = params;
-  _previewFx.stop();
-  if (strobeActive) return; // le strobe pilote déjà l'aperçu
-  if (activeScreenEffect && _lastEffectParams) _previewFx.run(activeScreenEffect, { ..._lastEffectParams });
-  else _pvRestoreBase();
+  if (!_pvFxMain) { _pvFxMain = makeFxRenderer('previewFxCanvas'); _pvFxSticky = makeFxRenderer('stickyFxCanvas'); }
+  if (strobeActive) { _pvFxStop(); return; } // le strobe pilote déjà l'aperçu
+  if (activeScreenEffect && _lastEffectParams) {
+    if (_pvFxMain.current() === activeScreenEffect) {
+      _pvFxMain.update({ ..._lastEffectParams });
+      _pvFxSticky.update({ ..._lastEffectParams });
+    } else {
+      _pvFxMain.start(activeScreenEffect, { ..._lastEffectParams });
+      _pvFxSticky.start(activeScreenEffect, { ..._lastEffectParams });
+    }
+  } else { _pvFxStop(); _pvRestoreBase(); }
 }
 
 // Remet l'aperçu sur la couleur de base (fin d'effet / de strobe)
@@ -1900,135 +2073,329 @@ function stopAllEffects() {
 }
 
 // ══════════════════════════ EFFECTS TAB — RÉCEPTEUR (screen) ══════════════════════════
-let _screenEffect = null;
+let _screenEffect = null, _screenFxParams = null, _screenFxSuspended = false;
 
-// ── Moteur d'effets générique ──
-// Le même moteur anime l'écran de jeu ET l'aperçu live de la télécommande :
-// applyBg(r,g,b,transMs) peint la cible, isActive(name) dit si l'effet continue.
-function makeEffectEngine(applyBg, isActive) {
-  let timer = null;
-  function stop() { if (timer) { clearTimeout(timer); timer = null; } }
-  function run(name, p) {
-    if (!isActive(name)) return;
-    const speed = Math.max(0.1, p.speed || 1);
-    const intf = Math.max(0.05, Math.min(1, (p.intensity || 80) / 100));
-    const burst = Math.max(1, p.burst || 3);
-    const col1 = p.color1 ? hexToRgb(p.color1) : null;
-    const col2 = p.color2 ? hexToRgb(p.color2) : null;
-    const R = (p.rand != null) ? Math.max(0, Math.min(1, p.rand / 100)) : 0.7;
-    const fade = Math.max(0, p.fade || 0);
-    // Aléa modulé : ~0.5 (régulier) quand R=0, uniforme [0,1] quand R=1
-    function jit() { return 0.5 + (Math.random() - 0.5) * R; }
-    const setBg = applyBg;
-    function next(ms) { timer = setTimeout(() => run(name, p), Math.max(16, ms)); }
+// ── MOTEUR D'EFFETS CANVAS ──
+// Chaque effet dessine ses frames dans un canvas basse résolution étiré
+// (240×136 plein écran, mini-canvas pour les aperçus). Le même code anime
+// l'écran de jeu et les aperçus de la télécommande.
 
-    switch (name) {
-      case 'tv': {
-        const palette = (p.blocks && p.blocks.length) ? p.blocks
-          : ['#000000','#101040','#2040b0','#ffffff','#c0c8d0','#800010'];
-        const c = palette[Math.floor(Math.random() * palette.length)];
-        const rgb = hexToRgb(c);
-        setBg(rgb.r * intf, rgb.g * intf, rgb.b * intf, 0);
-        next(Math.max(30, 400 / speed));
-        break;
-      }
-      case 'candle': {
-        const flame = col1 || { r: 255, g: 110, b: 15 };
-        const flk = 0.55 + Math.random() * 0.45;       // vacillement de luminosité
-        const b2 = flk * intf;
-        const gj = 0.82 + Math.random() * 0.36;         // léger frémissement chaud
-        setBg(flame.r * b2, flame.g * b2 * gj, flame.b * b2, Math.round(500 / speed * (0.5 + Math.random() * 0.7)));
-        next(Math.max(60, (700 / speed) * (0.6 + Math.random() * 0.8)));
-        break;
-      }
-      case 'fire': {
-        const hot = col1 || { r: 255, g: 115, b: 20 };
-        const cool = col2 || { r: 60, g: 10, b: 0 };
-        const t = Math.random();                        // chaleur instantanée 0..1
-        const bright = (0.45 + t * 0.55) * intf;
-        setBg((cool.r + (hot.r - cool.r) * t) * bright,
-              (cool.g + (hot.g - cool.g) * t) * bright,
-              (cool.b + (hot.b - cool.b) * t) * bright,
-              Math.round(150 / speed * 0.4));
-        next(Math.max(30, (200 / speed) * (0.5 + Math.random())));
-        break;
-      }
-      case 'police': {
-        if (!p._tick) p._tick = 0;
-        const a = col1 || { r: 255, g: 32, b: 32 };
-        const b = col2 || { r: 32, g: 64, b: 255 };
-        const c = (p._tick % 2 === 0) ? a : b;
-        setBg(c.r * intf, c.g * intf, c.b * intf, 0);
-        p._tick++;
-        next(Math.max(80, 500 / speed));
-        break;
-      }
-      case 'lightning': {
-        const rest = col2 || { r: 3, g: 3, b: 10 };
-        const flash = col1 || { r: 255, g: 255, b: 245 };
-        setBg(rest.r, rest.g, rest.b, 0);
-        const baseWait = Math.max(300, 5000 / speed);
-        timer = setTimeout(() => {
-          const flashes = 1 + Math.floor(jit() * 3);
-          let f = 0;
-          function doFlash() {
-            if (f >= flashes || !isActive(name)) { setBg(rest.r, rest.g, rest.b, fade); next(baseWait * (0.5 + jit())); return; }
-            setBg(flash.r * intf, flash.g * intf, flash.b * intf, 0);
-            const dur = 25 + jit() * 90;
-            f++;
-            timer = setTimeout(() => { setBg(rest.r, rest.g, rest.b, fade); timer = setTimeout(doFlash, 40 + jit() * 80); }, dur);
-          }
-          doFlash();
-        }, baseWait * (0.5 + jit() * 1.5));
-        break;
-      }
-      case 'paparazzi': {
-        const rest = col2 || { r: 8, g: 8, b: 8 };
-        const flash = col1 || { r: 255, g: 252, b: 230 };
-        setBg(rest.r, rest.g, rest.b, 0);
-        const burstWait = Math.max(400, 3500 / speed);
-        let f = 0;
-        function doFlash() {
-          if (!isActive(name)) return;
-          if (f >= burst) { f = 0; timer = setTimeout(() => run(name, p), burstWait * (0.7 + jit() * 0.6)); return; }
-          setBg(flash.r * intf, flash.g * intf, flash.b * intf, 0);
-          f++;
-          const dur = 25 + jit() * 55;
-          timer = setTimeout(() => { setBg(rest.r, rest.g, rest.b, fade); timer = setTimeout(doFlash, 55 + jit() * 90); }, dur);
-        }
-        timer = setTimeout(doFlash, 80);
-        break;
-      }
-    }
-  }
-  return { run, stop };
+function _fxHexRgb(h) {
+  const c = /^#[0-9a-fA-F]{6}$/.test(h || '') ? hexToRgb(h) : null;
+  return c || { r: 255, g: 255, b: 255 };
 }
 
-// Moteur branché sur l'écran de jeu
-const _screenFx = makeEffectEngine(
-  (r, g, b, transMs) => {
-    const sc = document.getElementById('screen-mode');
-    if (!sc) return;
-    sc.style.transition = transMs > 0 ? `background-color ${transMs}ms ease` : 'none';
-    sc.style.backgroundColor = `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+// Modulation « Chaos » (jitter lisse) + « Dérive » (marche aléatoire lente)
+// appliquée à vitesse et intensité à chaque frame.
+function _fxModulate(p, st, t) {
+  const chaos = Math.max(0, Math.min(1, (p.chaos != null ? p.chaos : 30) / 100));
+  const drift = Math.max(0, Math.min(1, (p.drift || 0) / 100));
+  if (!st._m) st._m = { ph: Math.random() * 100, walk: 0, lastT: t };
+  const dt = Math.max(0, Math.min(0.1, t - st._m.lastT)); st._m.lastT = t;
+  st._m.walk += (Math.random() - 0.5) * drift * dt * 1.6;
+  st._m.walk = Math.max(-0.7, Math.min(0.7, st._m.walk * (1 - 0.05 * dt)));
+  const jit = Math.sin(t * 4.7 + st._m.ph) * Math.sin(t * 1.3 + st._m.ph * 1.7); // bruit lisse [-1..1]
+  const m = Object.assign({}, p);
+  m.speed = (p.speed || 1) * (1 + jit * chaos * 0.55) * (1 + st._m.walk);
+  m.intensity = Math.max(5, Math.min(100, (p.intensity || 80) * (1 + jit * chaos * 0.35)));
+  return m;
+}
+
+function makeFxRenderer(canvasId) {
+  let raf = null, name = null, p = null, st = null, t0 = 0;
+  const el = () => document.getElementById(canvasId);
+  function start(n, params) {
+    stop();
+    const c = el(); if (!c || !FX_LIB[n]) return;
+    name = n; p = params || {}; st = {}; t0 = performance.now();
+    c.style.display = 'block';
+    loop();
+  }
+  function stop() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = null; name = null;
+    const c = el(); if (c) c.style.display = 'none';
+  }
+  function update(params) { if (name && params) p = params; }
+  function loop() {
+    if (!name) return;
+    raf = requestAnimationFrame(loop);
+    const c = el(); const fx = FX_LIB[name];
+    if (!c || !fx) return;
+    const t = (performance.now() - t0) / 1000;
+    try { fx(c.getContext('2d'), c.width, c.height, t, _fxModulate(p, st, t), st); } catch (_) {}
+  }
+  return { start, stop, update, current: () => name };
+}
+
+// ── Bibliothèque d'effets : fx(ctx, W, H, t, p, st) dessine une frame ──
+const FX_LIB = {
+  // — Ambiances —
+  tv(ctx, W, H, t, p, st) {
+    const iv = Math.max(0.03, 0.4 / (p.speed || 1));
+    if (st.tN == null || t >= st.tN) {
+      st.tN = t + iv * (0.5 + Math.random());
+      const pal = (p.blocks && p.blocks.length) ? p.blocks : ['#000000','#101040','#2040b0','#ffffff','#c0c8d0','#800010'];
+      st.col = _fxHexRgb(pal[Math.floor(Math.random() * pal.length)]);
+    }
+    const k = p.intensity / 100, c = st.col || { r: 0, g: 0, b: 0 };
+    ctx.fillStyle = `rgb(${c.r * k | 0},${c.g * k | 0},${c.b * k | 0})`;
+    ctx.fillRect(0, 0, W, H);
   },
-  name => _screenEffect === name
-);
+  candle(ctx, W, H, t, p, st) {
+    const flame = _fxHexRgb(p.color1 || '#ff7814');
+    if (st.fN == null || t >= st.fN) { st.fN = t + (0.12 / (p.speed || 1)) * (0.5 + Math.random()); st.tgt = 0.55 + Math.random() * 0.45; }
+    if (st.fl == null) st.fl = 1;
+    st.fl += ((st.tgt || 1) - st.fl) * 0.15;
+    const k = st.fl * p.intensity / 100;
+    const g = ctx.createLinearGradient(0, H, 0, 0);
+    g.addColorStop(0, `rgb(${flame.r * k | 0},${flame.g * k | 0},${flame.b * k | 0})`);
+    g.addColorStop(1, `rgb(${flame.r * k * 0.25 | 0},${flame.g * k * 0.16 | 0},${flame.b * k * 0.1 | 0})`);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  },
+  fire(ctx, W, H, t, p, st) {
+    const hot = _fxHexRgb(p.color1 || '#ff7314');
+    const cool = _fxHexRgb(p.color2 || '#3c0a00');
+    const k = p.intensity / 100;
+    const heat = 0.55 + 0.45 * Math.abs(Math.sin(t * (p.speed || 3) * 1.7) * Math.sin(t * 2.3 + 1));
+    const mx = (a, b, u) => a + (b - a) * u;
+    const g = ctx.createLinearGradient(0, H, 0, 0);
+    g.addColorStop(0, `rgb(${mx(cool.r, hot.r, heat) * k | 0},${mx(cool.g, hot.g, heat) * k | 0},${mx(cool.b, hot.b, heat) * k | 0})`);
+    g.addColorStop(1, `rgb(${cool.r * k * 0.5 | 0},${cool.g * k * 0.5 | 0},${cool.b * k * 0.5 | 0})`);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // Langues de feu aléatoires à la base
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 6; i++) {
+      const x = Math.random() * W, w = W * (0.05 + Math.random() * 0.1);
+      const h = H * (0.15 + Math.random() * 0.35);
+      const gg = ctx.createLinearGradient(0, H, 0, H - h);
+      gg.addColorStop(0, `rgba(${hot.r},${hot.g},${hot.b},${0.14 * k})`);
+      gg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = gg; ctx.fillRect(x - w / 2, H - h, w, h);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  },
+  // — Rythmiques —
+  police(ctx, W, H, t, p, st) {
+    const a = _fxHexRgb(p.color1 || '#ff2020');
+    const b = _fxHexRgb(p.color2 || '#2040ff');
+    const k = p.intensity / 100;
+    const phase = Math.floor(t * (p.speed || 3) * 2) % 2;
+    const L = phase ? a : b, R = phase ? b : a;
+    ctx.fillStyle = `rgb(${L.r * k | 0},${L.g * k | 0},${L.b * k | 0})`; ctx.fillRect(0, 0, W / 2, H);
+    ctx.fillStyle = `rgb(${R.r * k | 0},${R.g * k | 0},${R.b * k | 0})`; ctx.fillRect(W / 2, 0, W - W / 2, H);
+  },
+  lightning(ctx, W, H, t, p, st) {
+    const rest = _fxHexRgb(p.color2 || '#03030a');
+    const flash = _fxHexRgb(p.color1 || '#f4f0ff');
+    if (st.next == null) st.next = t + 0.8;
+    let on = false;
+    if (st.until != null && t < st.until) {
+      on = (Math.sin(t * 60 + (st.seed || 0)) > -0.2) && Math.random() > 0.25;
+    } else if (t >= st.next) {
+      st.until = t + 0.15 + Math.random() * 0.5;
+      st.seed = Math.random() * 100;
+      st.next = st.until + (0.6 + Math.random() * 2.4) / Math.max(0.05, p.speed || 0.8);
+    }
+    const k = p.intensity / 100;
+    ctx.fillStyle = on
+      ? `rgb(${flash.r * k | 0},${flash.g * k | 0},${flash.b * k | 0})`
+      : `rgb(${rest.r},${rest.g},${rest.b})`;
+    ctx.fillRect(0, 0, W, H);
+  },
+  paparazzi(ctx, W, H, t, p, st) {
+    const rest = _fxHexRgb(p.color2 || '#080808');
+    const flash = _fxHexRgb(p.color1 || '#fffce6');
+    const burst = Math.max(1, p.count || 3);
+    if (st.plan == null || t >= st.planEnd) {
+      // planifie la prochaine rafale : intervalles [début, fin] de chaque flash
+      let tt = t + (0.3 + Math.random() * 0.8) / Math.max(0.2, p.speed || 1);
+      st.plan = [];
+      for (let i = 0; i < burst; i++) { st.plan.push([tt, tt + 0.03 + Math.random() * 0.05]); tt += 0.09 + Math.random() * 0.13; }
+      st.planEnd = tt + 0.2;
+    }
+    const on = st.plan.some(w => t >= w[0] && t < w[1]);
+    const k = p.intensity / 100;
+    ctx.fillStyle = on
+      ? `rgb(${flash.r * k | 0},${flash.g * k | 0},${flash.b * k | 0})`
+      : `rgb(${rest.r},${rest.g},${rest.b})`;
+    ctx.fillRect(0, 0, W, H);
+  },
+  pulse(ctx, W, H, t, p, st) {
+    const hi = _fxHexRgb(p.color1 || '#ffffff');
+    const lo = _fxHexRgb(p.color2 || '#000000');
+    const bpm = Math.max(10, p.speed || 60);
+    const u = (Math.sin(t * bpm / 60 * 2 * Math.PI - Math.PI / 2) + 1) / 2;
+    const e = Math.pow(u, 1.6) * p.intensity / 100;
+    ctx.fillStyle = `rgb(${lo.r + (hi.r - lo.r) * e | 0},${lo.g + (hi.g - lo.g) * e | 0},${lo.b + (hi.b - lo.b) * e | 0})`;
+    ctx.fillRect(0, 0, W, H);
+  },
+  traffic(ctx, W, H, t, p, st) {
+    const night = _fxHexRgb(p.color2 || '#050508');
+    const beam = _fxHexRgb(p.color1 || '#ffb054');
+    ctx.fillStyle = `rgb(${night.r},${night.g},${night.b})`; ctx.fillRect(0, 0, W, H);
+    if (st.cars == null) st.cars = [];
+    if (st.next == null) st.next = t + 0.8;
+    if (t >= st.next) {
+      st.cars.push({ t0: t, dirR: Math.random() < 0.5, dur: 1.1 + Math.random() * 0.9 });
+      st.next = t + (0.4 + Math.random() * 1.6) / Math.max(0.05, p.speed || 0.3);
+    }
+    st.cars = st.cars.filter(c => t - c.t0 < c.dur);
+    ctx.globalCompositeOperation = 'lighter';
+    const k = p.intensity / 100;
+    for (const c of st.cars) {
+      const u = (t - c.t0) / c.dur;
+      const x = (c.dirR ? u : 1 - u) * (W * 1.6) - W * 0.3;
+      const w = W * 0.35;
+      const g = ctx.createLinearGradient(x - w, 0, x + w, 0);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(0.5, `rgba(${beam.r},${beam.g},${beam.b},${0.75 * k * Math.sin(u * Math.PI)})`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  },
+  weld(ctx, W, H, t, p, st) {
+    const rest = _fxHexRgb(p.color2 || '#05060a');
+    const arc = _fxHexRgb(p.color1 || '#cfe4ff');
+    if (st.next == null) st.next = t + 0.5;
+    let on = false;
+    if (st.until != null && t < st.until) on = Math.random() > 0.35; // crépitement de l'arc
+    else if (t >= st.next) {
+      st.until = t + 0.3 + Math.random() * 1.2;
+      st.next = st.until + (0.3 + Math.random() * 1.5) / Math.max(0.2, p.speed || 1.5);
+    }
+    const k = p.intensity / 100;
+    if (on) {
+      const v = 0.6 + Math.random() * 0.4;
+      ctx.fillStyle = `rgb(${arc.r * k * v | 0},${arc.g * k * v | 0},${arc.b * k * v | 0})`;
+    } else ctx.fillStyle = `rgb(${rest.r},${rest.g},${rest.b})`;
+    ctx.fillRect(0, 0, W, H);
+  },
+  neon(ctx, W, H, t, p, st) {
+    const c = _fxHexRgb(p.color1 || '#ff2e88');
+    if (st.mode == null) { st.mode = 'on'; st.next = t + 2; }
+    if (t >= st.next) {
+      if (st.mode === 'on') {
+        st.mode = Math.random() < 0.6 ? 'drop' : 'stutter';
+        st.next = t + (st.mode === 'drop' ? 0.05 + Math.random() * 0.35 : 0.4 + Math.random() * 0.5);
+        st.seed = Math.random() * 10;
+      } else {
+        st.mode = 'on';
+        st.next = t + (0.5 + Math.random() * 3.5) / Math.max(0.2, p.speed || 1.5);
+      }
+    }
+    let v;
+    if (st.mode === 'drop') v = 0.02;
+    else if (st.mode === 'stutter') v = (Math.sin(t * 55 + st.seed) > 0 && Math.random() > 0.3) ? 1 : 0.05;
+    else v = 0.92 + Math.random() * 0.08; // grésillement permanent léger
+    const k = v * p.intensity / 100;
+    ctx.fillStyle = `rgb(${c.r * k | 0},${c.g * k | 0},${c.b * k | 0})`;
+    ctx.fillRect(0, 0, W, H);
+  },
+  // — Spatiaux —
+  chaser(ctx, W, H, t, p, st) {
+    const bg = _fxHexRgb(p.color2 || '#05050a');
+    const col = _fxHexRgb(p.color1 || '#ffffff');
+    const n = Math.max(1, p.count || 3);
+    const k = p.intensity / 100;
+    const tail = 0.06 + ((p.fade || 250) / 600) * 0.5; // longueur de traîne
+    ctx.fillStyle = `rgb(${bg.r},${bg.g},${bg.b})`; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+    const dir = p.dir || 'h';
+    const span = 1 + tail * 2;
+    for (let i = 0; i < n; i++) {
+      const u = (((t * (p.speed || 1) * 0.35) + i / n) % 1) * span - tail;
+      let g;
+      if (dir === 'h') g = ctx.createLinearGradient((u - tail) * W, 0, (u + 0.03) * W, 0);
+      else if (dir === 'v') g = ctx.createLinearGradient(0, (u - tail) * H, 0, (u + 0.03) * H);
+      else g = ctx.createLinearGradient((u - tail) * W, (u - tail) * H, (u + 0.03) * W, (u + 0.03) * H);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(0.85, `rgba(${col.r},${col.g},${col.b},${0.55 * k})`);
+      g.addColorStop(1, `rgba(${col.r},${col.g},${col.b},${0.95 * k})`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  },
+  noise(ctx, W, H, t, p, st) {
+    const fps = Math.max(1, p.speed || 12);
+    if (st.next != null && t < st.next) return; // conserve la frame précédente
+    st.next = t + 1 / fps;
+    const tint = _fxHexRgb(p.color1 || '#ffffff');
+    const g = Math.max(2, p.count || 8);
+    const k = p.intensity / 100;
+    for (let y = 0; y < H; y += g) {
+      for (let x = 0; x < W; x += g) {
+        const v = Math.random() * k;
+        ctx.fillStyle = `rgb(${tint.r * v | 0},${tint.g * v | 0},${tint.b * v | 0})`;
+        ctx.fillRect(x, y, g, g);
+      }
+    }
+  },
+  aurora(ctx, W, H, t, p, st) {
+    const c1 = _fxHexRgb(p.color1 || '#20e0a0');
+    const c2 = _fxHexRgb(p.color2 || '#3040ff');
+    const k = p.intensity / 100, s = p.speed || 0.3;
+    ctx.fillStyle = '#020208'; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+    const blobs = [
+      { c: c1, x: 0.5 + 0.4 * Math.sin(t * s),            y: 0.4 + 0.3 * Math.sin(t * s * 0.7 + 2), r: 0.75 },
+      { c: c2, x: 0.5 + 0.4 * Math.sin(t * s * 0.6 + 4),  y: 0.6 + 0.3 * Math.sin(t * s * 0.9 + 1), r: 0.85 },
+      { c: c1, x: 0.5 + 0.45 * Math.sin(t * s * 0.45 + 7),y: 0.5 + 0.35 * Math.sin(t * s * 1.2 + 5), r: 0.6 },
+    ];
+    for (const b of blobs) {
+      const g = ctx.createRadialGradient(b.x * W, b.y * H, 0, b.x * W, b.y * H, b.r * W);
+      g.addColorStop(0, `rgba(${b.c.r},${b.c.g},${b.c.b},${0.5 * k})`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  },
+  water(ctx, W, H, t, p, st) {
+    const wat = _fxHexRgb(p.color1 || '#25c8e8');
+    const deep = _fxHexRgb(p.color2 || '#021620');
+    const s = (p.speed || 0.8) * 2, k = p.intensity / 100;
+    const cell = 6;
+    for (let y = 0; y < H; y += cell) {
+      for (let x = 0; x < W; x += cell) {
+        const v = Math.sin(x * 0.11 + t * s) * Math.sin(y * 0.13 - t * s * 0.8)
+                + Math.sin((x + y) * 0.07 + t * s * 1.3);
+        const u = Math.max(0, Math.min(1, 0.5 + v * 0.35)) * k;
+        ctx.fillStyle = `rgb(${deep.r + (wat.r - deep.r) * u | 0},${deep.g + (wat.g - deep.g) * u | 0},${deep.b + (wat.b - deep.b) * u | 0})`;
+        ctx.fillRect(x, y, cell, cell);
+      }
+    }
+  },
+};
+
+// Moteur branché sur le canvas plein écran de l'écran de jeu
+const _screenFxR = makeFxRenderer('screen-fx-canvas');
 
 function receiveEffect(msg) {
-  stopScreenEffect();
-  const sc = document.getElementById('screen-mode');
   if (!msg.active) {
+    stopScreenEffect();
+    const sc = document.getElementById('screen-mode');
     if (sc) { sc.style.transition = 'background-color 0.4s'; sc.style.backgroundColor = screenBaseColor; }
     return;
   }
   _screenEffect = msg.name;
-  _screenFx.run(msg.name, msg.params || {});
+  _screenFxParams = msg.params || {};
+  if (_screenFxSuspended) return; // strobe en cours : reprendra à la fin
+  if (_screenFxR.current() === msg.name) _screenFxR.update(_screenFxParams);
+  else _screenFxR.start(msg.name, _screenFxParams);
 }
 
 function stopScreenEffect() {
-  _screenFx.stop();
+  _screenFxR.stop();
   _screenEffect = null;
+  _screenFxParams = null;
+}
+
+// Le strobe masque le canvas d'effet pendant qu'il flashe, puis le relance
+function suspendScreenFx(on) {
+  _screenFxSuspended = !!on;
+  if (on) _screenFxR.stop();
+  else if (_screenEffect) _screenFxR.start(_screenEffect, _screenFxParams || {});
 }
 
 // ══════════════════════════ SCREEN sACN MODE ══════════════════════════
@@ -2284,23 +2651,72 @@ function sacnSendColor(color, meta) {
   if (el) { el.classList.add('visible'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('visible'), 300); }
 }
 
-// ══════════════════════════ PRESETS ══════════════════════════
-const PRESETS=[
-  {name:'Bougie',color:'#ff9b4a'},{name:'Tungstène',color:'#ffb347'},
-  {name:'Jour froid',color:'#a8d8f0'},{name:'Coucher',color:'#ff6b35'},
-  {name:'Nuit bleue',color:'#1a3a6b'},{name:'Néon rose',color:'#ff2d78'},
-  {name:'Forêt',color:'#2d6b3a'},{name:'Amber',color:'#ff8c00'},
-  {name:'Morgue',color:'#00ffe7'},{name:'Crimson',color:'#b80000'},
-  {name:'Lavande',color:'#7b5ea7'},{name:'Blanc pur',color:'#ffffff'},
-];
-function buildPresets(){
-  const grid=document.getElementById('presetsGrid');
-  PRESETS.forEach(p=>{
-    const btn=document.createElement('button');btn.className='preset-btn';
-    btn.innerHTML=`<div class="preset-swatch" style="background:${p.color}"></div><div class="preset-name">${p.name}</div>`;
-    btn.onclick=()=>{colorWheelHex=p.color;colorDimmer=100;const ds=document.getElementById('dimmerSlider');if(ds)ds.value=100;const dv=document.getElementById('dimmerVal');if(dv)dv.innerHTML='100<span>%</span>';setCrossfade(100);recomputeColor();};
-    grid.appendChild(btn);
-  });
+// ══════════════════════════ MÉMOIRES D'EFFETS ══════════════════════════
+// Enregistre un effet complet (type + tous ses réglages), persisté en
+// localStorage, rappelable d'un tap et modifiable.
+let fxMemories = [], selectedFxMemId = null;
+
+function loadFxMemories() {
+  try {
+    const raw = localStorage.getItem('setremote-fx-memories');
+    fxMemories = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(fxMemories)) fxMemories = [];
+  } catch (_) { fxMemories = []; }
+}
+function persistFxMemories() {
+  try { localStorage.setItem('setremote-fx-memories', JSON.stringify(fxMemories)); } catch (_) {}
+}
+function saveFxMemory() {
+  if (!activeScreenEffect) return;
+  const cfg = EFFECT_CONFIG[activeScreenEffect] || {};
+  const m = { id: 'f' + Date.now(), name: (cfg.name || activeScreenEffect) + ' ' + (fxMemories.length + 1),
+              effect: activeScreenEffect, dir: fxDir, params: buildEffectParams() };
+  fxMemories.push(m);
+  selectedFxMemId = m.id;
+  persistFxMemories();
+  renderFxMemories();
+}
+function updateFxMemory() {
+  const m = fxMemories.find(x => x.id === selectedFxMemId);
+  if (!m || !activeScreenEffect) return;
+  m.effect = activeScreenEffect; m.dir = fxDir; m.params = buildEffectParams();
+  persistFxMemories();
+  renderFxMemories();
+}
+function applyFxMemory(id) {
+  const m = fxMemories.find(x => x.id === id);
+  if (!m || !EFFECT_CONFIG[m.effect]) return;
+  selectedFxMemId = id;
+  if (activeScreenEffect !== m.effect) { activeScreenEffect = null; selectEffect(m.effect); }
+  loadEffectParamsToUI(m.effect, m.params || {}, m.dir);
+  renderFxMemories();
+}
+function deleteFxMemory(id) {
+  fxMemories = fxMemories.filter(x => x.id !== id);
+  if (selectedFxMemId === id) selectedFxMemId = null;
+  persistFxMemories();
+  renderFxMemories();
+}
+function renderFxMemories() {
+  const grid = document.getElementById('fxMemGrid');
+  if (!grid) return;
+  const empty = document.getElementById('fxMemEmpty');
+  const upBtn = document.getElementById('fxMemUpdateBtn');
+  if (empty) empty.style.display = fxMemories.length ? 'none' : 'block';
+  if (upBtn) upBtn.disabled = !selectedFxMemId;
+  grid.innerHTML = '';
+  for (const m of fxMemories) {
+    const cfg = EFFECT_CONFIG[m.effect] || {};
+    const d = document.createElement('div');
+    d.className = 'memory-item' + (m.id === selectedFxMemId ? ' active' : '');
+    d.onclick = () => applyFxMemory(m.id);
+    d.innerHTML = `<span style="font-size:1rem">${cfg.icon || '✨'}</span><span class="memory-name">${escapeHtml(m.name)}</span>`;
+    const del = document.createElement('button');
+    del.className = 'memory-del'; del.textContent = '✕';
+    del.onclick = (e) => { e.stopPropagation(); deleteFxMemory(m.id); };
+    d.appendChild(del);
+    grid.appendChild(d);
+  }
 }
 
 // ══════════════════════════ MÉMOIRES DE COULEUR ══════════════════════════
@@ -3593,6 +4009,11 @@ async function installPWA() {
     }, 420);                                  // = durée de la transition CSS
   }, 2400);
 })();
+
+// ── Initialisation du laboratoire d'effets ──
+buildEffectCards();
+loadFxMemories();
+renderFxMemories();
 
 // ── Mini-carte sticky : apparaît dès que la preview commence à être masquée ──
 (function initStickyPreview() {
