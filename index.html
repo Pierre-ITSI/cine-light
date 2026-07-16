@@ -1039,6 +1039,8 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'media-error')    remoteOnError(msg.reason);
         if (msg.type === 'media:advance')  advancePool(typeof msg.dir === 'number' ? msg.dir : 1);
         if (msg.type === 'media:cached')   { _screenCached.add(msg.id); _preloadInflight.delete(msg.id); }
+        if (msg.type === 'media:chunkack') { if (_b64Ack.id === msg.mediaId) _b64Ack.got = Math.max(_b64Ack.got, msg.got || 0); }
+        if (msg.type === 'media:need-chunks') resendMissingChunks(msg);
         if (msg.type === 'media:advanced') remoteOnScreenAdvanced(msg.id);
         if (msg.type === 'media:need')     remoteOnScreenNeeds(msg.id);
         if (msg.type === 'caps')           applyReceiverCaps(msg);
@@ -3379,6 +3381,8 @@ function paintSeek(pct) {
 }
 // Reçoit la durée depuis l'écran (métadonnées de la vidéo lue localement par l'écran)
 function remoteOnMeta(dur) {
+  // L'écran confirme la lecture : le transfert est bien arrivé
+  if (_b64VerifyTimer) { clearTimeout(_b64VerifyTimer); _b64VerifyTimer = null; }
   _remoteDur = dur || 0;
   const s = document.getElementById('mediaSeek');
   if (s && isFinite(_remoteDur)) s.max = _remoteDur;
@@ -3810,6 +3814,15 @@ function fileToBase64(file) {
 
 // Diffusion vidéo en base64 chunké via MQTT : écrans natifs (pas de WebRTC)
 // et repli universel quand le pair-à-pair est bloqué par le réseau.
+// Transfert FIABILISÉ : fenêtre d'envoi régulée par les accusés de réception
+// de l'écran (media:chunkack) + renvoi des fragments manquants
+// (media:need-chunks). Le statut « en diffusion » n'est affiché que quand
+// l'écran confirme réellement la lecture (media-meta).
+const _sleepMs = ms => new Promise(r => setTimeout(r, ms));
+let _b64Send = null;               // { id, chunks, poolId, rounds }
+let _b64Ack = { id: null, got: 0, noAck: false };
+let _b64VerifyTimer = null;
+
 async function broadcastVideoBase64(file, poolId) {
   setMediaStatus('🎬 Préparation de l\'envoi…');
   let b64;
@@ -3819,19 +3832,61 @@ async function broadcastVideoBase64(file, poolId) {
   const mime = file.type || 'video/mp4';
   const CHUNK = 12000;
   const total = Math.ceil(b64.length / CHUNK);
+  const chunks = [];
+  for (let i = 0; i < total; i++) chunks.push(b64.slice(i * CHUNK, (i + 1) * CHUNK));
+  _b64Send = { id, chunks, poolId: poolId || null, rounds: 0 };
+  _b64Ack = { id, got: 0, noAck: false };
   sendMsg({ type: 'media:upload', mediaId: id, kind: 'video', mime, totalChunks: total, poolId: poolId || null });
   setMediaStatus('📤 Transfert… 0 %');
+  const WINDOW = 48; // fragments en vol au maximum (si l'écran accuse réception)
   for (let i = 0; i < total; i++) {
-    sendMsg({ type: 'media:chunk', mediaId: id, index: i, data: b64.slice(i * CHUNK, (i + 1) * CHUNK) });
-    // Laisser respirer le broker + rafraîchir la progression.
-    if (i % 16 === 15) {
-      await new Promise(r => setTimeout(r, 8));
+    if (!_b64Send || _b64Send.id !== id) return; // remplacé par un autre envoi
+    let waited = 0;
+    while (!_b64Ack.noAck && i - _b64Ack.got > WINDOW) {
+      await _sleepMs(120); waited += 120;
+      // Récepteur sans accusés (ancien écran / natif) : on n'attend plus
+      if (waited >= 4000 && _b64Ack.got === 0) { _b64Ack.noAck = true; break; }
+      if (waited >= 20000) break; // sécurité anti-blocage
+    }
+    sendMsg({ type: 'media:chunk', mediaId: id, index: i, data: chunks[i] });
+    if (i % 12 === 11) {
+      await _sleepMs(10);
       setMediaStatus('📤 Transfert… ' + Math.round(((i + 1) / total) * 100) + ' %');
     }
   }
   sendMsg({ type: 'media:play', mediaId: id });
-  setMediaStatus('🎬 Lecture sur l\'écran', true);
-  showMediaPlay(true); setPlayBtn(true); showMediaTimeline(true);
+  setMediaStatus('⏳ Vérification de la réception…');
+  _armB64VerifyTimer();
+}
+
+// Sans confirmation de lecture (media-meta) ni demande de renvoi : alerter
+function _armB64VerifyTimer() {
+  if (_b64VerifyTimer) clearTimeout(_b64VerifyTimer);
+  _b64VerifyTimer = setTimeout(() => {
+    setMediaStatus('⚠ Pas de confirmation de l\'écran — vérifiez sa connexion');
+  }, 12000);
+}
+
+// L'écran signale des fragments perdus : on ne renvoie que ceux-là
+async function resendMissingChunks(msg) {
+  if (!_b64Send || _b64Send.id !== msg.mediaId) return;
+  if (_b64VerifyTimer) { clearTimeout(_b64VerifyTimer); _b64VerifyTimer = null; }
+  const miss = Array.isArray(msg.missing) ? msg.missing : [];
+  if (!miss.length || _b64Send.rounds >= 3) {
+    setMediaStatus('⚠ Transfert incomplet — réessayez');
+    return;
+  }
+  _b64Send.rounds++;
+  setMediaStatus('📤 Renvoi de ' + miss.length + ' fragments… (' + _b64Send.rounds + '/3)');
+  for (let j = 0; j < miss.length; j++) {
+    const i = miss[j];
+    if (_b64Send.chunks[i] == null) continue;
+    sendMsg({ type: 'media:chunk', mediaId: _b64Send.id, index: i, data: _b64Send.chunks[i] });
+    if (j % 12 === 11) await _sleepMs(12);
+  }
+  sendMsg({ type: 'media:play', mediaId: _b64Send.id });
+  setMediaStatus('⏳ Vérification de la réception…');
+  _armB64VerifyTimer();
 }
 
 let _rtcTransferDone = false, _rtcAttempts = 0;
@@ -4043,6 +4098,10 @@ function screenVidUploadStart(msg) {
 function screenVidUploadChunk(msg) {
   if (!_vidUp || _vidUp.id !== msg.mediaId) return;
   if (_vidUp.parts[msg.index] === undefined) { _vidUp.parts[msg.index] = msg.data; _vidUp.got++; }
+  // Accusé de réception cumulatif : la télécommande régule son débit dessus
+  if (_vidUp.got % 16 === 0 || _vidUp.got === _vidUp.total) {
+    sendMsg({ type: 'media:chunkack', mediaId: _vidUp.id, got: _vidUp.got });
+  }
   if (_vidUp.got % 40 === 0) setScreenStatus('📥 Réception vidéo… ' + Math.round(_vidUp.got / _vidUp.total * 100) + ' %');
 }
 function screenVidUploadPlay(msg) {
@@ -4053,8 +4112,18 @@ function screenVidUploadPlay(msg) {
     setTimeout(() => screenVidUploadPlay(msg), 2000);
     return;
   }
+  if (_vidUp.got !== _vidUp.total) {
+    // Fragments perdus : on les redemande à la télécommande au lieu d'abandonner
+    _vidUp.retried = false; // nouvelle période de grâce au prochain media:play
+    const missing = [];
+    for (let i = 0; i < _vidUp.total && missing.length < 400; i++) {
+      if (_vidUp.parts[i] === undefined) missing.push(i);
+    }
+    setScreenStatus('📥 Fragments manquants : ' + (_vidUp.total - _vidUp.got));
+    sendMsg({ type: 'media:need-chunks', mediaId: _vidUp.id, missing });
+    return;
+  }
   const up = _vidUp; _vidUp = null;
-  if (up.got !== up.total) { setScreenStatus('⚠ Vidéo incomplète (' + up.got + '/' + up.total + ')'); return; }
   try {
     const bin = atob(up.parts.join(''));
     const arr = new Uint8Array(bin.length);
