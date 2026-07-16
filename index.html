@@ -329,6 +329,37 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .screen-toggle-btn.on{background:#000;border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 22px rgba(0,0,0,.85)}
 .beta-badge{display:inline-block;font-size:.42rem;font-weight:500;letter-spacing:.1em;padding:1px 4px;margin-left:3px;border-radius:6px;background:rgba(232,201,122,.18);color:var(--accent);vertical-align:middle;text-transform:uppercase}
 
+/* ── SIMULATEUR D'APPEL (écran de jeu) ── */
+#screen-call{display:none;position:absolute;inset:0;z-index:85;font-family:-apple-system,'SF Pro Text',Roboto,'Segoe UI',sans-serif}
+#screen-call.notif{pointer-events:none}
+#screen-call.notif .sc-notif{pointer-events:auto}
+.sc-call{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;color:#fff;padding:calc(70px + env(safe-area-inset-top)) 30px calc(70px + env(safe-area-inset-bottom))}
+.sc-call.generic{background:linear-gradient(160deg,#1d2733,#0a0d12)}
+.sc-call.ios{background:rgba(18,18,22,.97);backdrop-filter:blur(30px)}
+.sc-call.android{background:#0d1117}
+.sc-avatar{width:110px;height:110px;border-radius:50%;background-color:#3a4756;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:600;margin-bottom:26px}
+.sc-name{font-size:2rem;font-weight:500;text-align:center;line-height:1.2}
+.sc-label{font-size:1rem;opacity:.65;margin-top:6px}
+.sc-timer{font-size:1.15rem;opacity:.85;margin-top:10px;font-variant-numeric:tabular-nums}
+.sc-actions{margin-top:auto;display:flex;width:100%;max-width:420px;justify-content:space-between}
+.sc-btn{width:76px;height:76px;border-radius:50%;border:none;font-size:2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;-webkit-tap-highlight-color:transparent}
+.sc-btn.answer{background:#34c759}
+.sc-btn.decline{background:#ff3b30}
+.sc-btn-col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.sc-btn-hint{font-size:.82rem;opacity:.72}
+.sc-call.ios .sc-name{order:-2;font-weight:300;font-size:2.3rem}
+.sc-call.ios .sc-label{order:-1}
+.sc-call.ios .sc-avatar{margin:34px 0 0}
+.sc-call.android .sc-btn{border-radius:40px;width:auto;min-width:120px;padding:0 30px;height:62px;font-size:1.5rem}
+/* Bannière de notification (SMS / WhatsApp) */
+.sc-notif{position:absolute;top:calc(14px + env(safe-area-inset-top));left:12px;right:12px;background:rgba(30,30,34,.94);backdrop-filter:blur(20px);border-radius:18px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;color:#fff;box-shadow:0 10px 34px rgba(0,0,0,.5);animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1);cursor:pointer}
+@keyframes notifIn{from{transform:translateY(-130%)}to{transform:translateY(0)}}
+.sc-notif-icon{width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.35rem;color:#fff}
+.sc-notif-body{flex:1;min-width:0}
+.sc-notif-app{font-size:.66rem;opacity:.55;text-transform:uppercase;letter-spacing:.04em}
+.sc-notif-name{font-size:.95rem;font-weight:600;margin-top:2px}
+.sc-notif-msg{font-size:.9rem;opacity:.92;margin-top:2px;line-height:1.35;word-break:break-word}
+
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
@@ -435,6 +466,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
   <img id="screen-media-img" alt="">
   <video id="screen-media-video" playsinline autoplay></video>
   <div id="screen-dim"></div>
+  <div id="screen-call"></div>
   <div id="screen-blackout"></div>
   <div class="status-pill" id="screen-status">Connexion…</div>
   <div id="screen-notice"></div>
@@ -493,6 +525,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
     <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects">✨ Effets</button>
     <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash">🔦 Flash<span class="beta-badge">Bêta</span></button>
     <button class="tab-btn" onclick="switchTab('media')" id="tab-media">🎞 Média</button>
+    <button class="tab-btn" onclick="switchTab('call')" id="tab-call">📞 Appel</button>
     <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr">📡 QR</button>
   </div>
 
@@ -939,6 +972,60 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
     </div>
   </div>
 
+  <div class="tab-content" id="content-call">
+    <div class="panel">
+      <div class="panel-label">Type</div>
+      <div class="chips-wrap">
+        <button class="chip active" id="callkind-call" onclick="setCallKind('call')">📞 Appel</button>
+        <button class="chip" id="callkind-sms" onclick="setCallKind('sms')">💬 SMS</button>
+        <button class="chip" id="callkind-whatsapp" onclick="setCallKind('whatsapp')">✆ WhatsApp</button>
+      </div>
+      <div id="callStyleRow" style="margin-top:14px">
+        <div class="panel-label">Style</div>
+        <div class="chips-wrap">
+          <button class="chip active" id="callstyle-generic" onclick="setCallStyle('generic')">Générique</button>
+          <button class="chip" id="callstyle-ios" onclick="setCallStyle('ios')">iOS</button>
+          <button class="chip" id="callstyle-android" onclick="setCallStyle('android')">Android</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">Appelant</div>
+      <input type="text" id="callName" class="sacn-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%;margin-bottom:10px">
+      <input type="text" id="callLabel" class="sacn-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px">
+      <div style="display:flex;gap:10px;align-items:center">
+        <div id="callPhotoPreview" style="width:46px;height:46px;border-radius:50%;background:var(--mid2);border:1px solid var(--border);background-size:cover;background-position:center;flex-shrink:0"></div>
+        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()">🖼 Photo (option)</button>
+        <input type="file" id="callPhotoInput" accept="image/*" style="display:none" onchange="onCallPhoto(this.files);this.value=''">
+      </div>
+    </div>
+    <div class="panel" id="callMsgPanel" style="display:none">
+      <div class="panel-label">Message</div>
+      <input type="text" id="callMsgText" class="sacn-input" placeholder="Texte du message" value="Tu es où ??" style="width:100%">
+    </div>
+    <div class="panel" id="callRingPanel">
+      <div class="panel-label">Sonnerie</div>
+      <div class="chips-wrap" style="margin-bottom:14px">
+        <button class="chip active" id="callring-classic" onclick="setCallRing('classic')">Classique</button>
+        <button class="chip" id="callring-digital" onclick="setCallRing('digital')">Digitale</button>
+        <button class="chip" id="callring-soft" onclick="setCallRing('soft')">Douce</button>
+        <button class="chip" id="callring-silent" onclick="setCallRing('silent')">Silencieux</button>
+      </div>
+      <div class="slider-block" style="margin-bottom:0">
+        <div class="slider-header"><label>Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
+        <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
+      </div>
+    </div>
+    <div class="panel">
+      <button class="media-btn" id="callTriggerBtn" onclick="triggerCall()"><span class="media-icon">📞</span> Faire sonner</button>
+      <div style="display:flex;gap:10px">
+        <button class="media-btn" style="flex:1" onclick="sendMsg({type:'call:answer'})">✅ Décrocher</button>
+        <button class="media-btn" style="flex:1;border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)" onclick="sendMsg({type:'call:end'})">⏹ Terminer</button>
+      </div>
+      <div class="media-status" id="callStatus">—</div>
+    </div>
+  </div>
+
   <div class="tab-content" id="content-qr">
     <div class="panel">
       <div class="panel-label">Ouvrir l'écran sur un autre appareil</div>
@@ -1027,6 +1114,9 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'media:upload') screenVidUploadStart(msg);
         if (msg.type === 'media:chunk')  screenVidUploadChunk(msg);
         if (msg.type === 'media:play')   screenVidUploadPlay(msg);
+        if (msg.type === 'call:start')   screenCallStart(msg);
+        if (msg.type === 'call:answer')  screenCallAnswer();
+        if (msg.type === 'call:end')     screenCallEnd();
         if (msg.type === 'rtc-offer')    screenHandleOffer(msg.sdp);
         if (msg.type === 'rtc-ice' && msg.from === 'remote') screenAddIce(msg.candidate);
       }
@@ -1041,6 +1131,7 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'media:cached')   { _screenCached.add(msg.id); _preloadInflight.delete(msg.id); }
         if (msg.type === 'media:chunkack') { if (_b64Ack.id === msg.mediaId) _b64Ack.got = Math.max(_b64Ack.got, msg.got || 0); }
         if (msg.type === 'media:need-chunks') resendMissingChunks(msg);
+        if (msg.type === 'call:state')     remoteOnCallState(msg);
         if (msg.type === 'media:advanced') remoteOnScreenAdvanced(msg.id);
         if (msg.type === 'media:need')     remoteOnScreenNeeds(msg.id);
         if (msg.type === 'caps')           applyReceiverCaps(msg);
@@ -1158,6 +1249,7 @@ function suspendScreen() {
   cancelScreenAutohide();
   hideScreenMedia();
   stopScreenEffect();
+  screenCallHide();
   setBlackout(false);
   // Déconnecter MQTT mais garder le canal en mémoire
   if (mqttClient) { mqttClient.end(true); mqttClient = null; }
@@ -1237,6 +1329,7 @@ function goBackToSplash() {
   closeScreenMenu();
   hideScreenMedia();
   stopScreenEffect();
+  screenCallHide();
   setBlackout(false);
   const cfgDiv = document.getElementById('screen-sacn-config');
   if (cfgDiv) cfgDiv.style.display = 'none';
@@ -4132,6 +4225,240 @@ function screenVidUploadPlay(msg) {
   } catch (_) { setScreenStatus('⚠ Vidéo illisible'); }
 }
 
+// ══════════════════════════ SIMULATEUR D'APPEL ══════════════════════════
+// Télécommande : configure et déclenche. Écran : affiche l'overlay (appel
+// générique/iOS/Android, SMS, WhatsApp), sonne (WebAudio, sans fichiers),
+// vibre (Android) et renvoie son état (ringing/incall/declined/ended).
+
+// — Télécommande —
+let callKind = 'call', callStyle = 'generic', callRing = 'classic', _callPhoto = null;
+let _callUiTimer = null, _callUiT0 = 0;
+
+function setCallKind(k) {
+  callKind = k;
+  ['call','sms','whatsapp'].forEach(x => {
+    const b = document.getElementById('callkind-' + x);
+    if (b) b.classList.toggle('active', x === k);
+  });
+  document.getElementById('callStyleRow').style.display = k === 'call' ? 'block' : 'none';
+  document.getElementById('callMsgPanel').style.display = k === 'call' ? 'none' : 'block';
+  document.getElementById('callRingPanel').style.display = k === 'call' ? 'block' : 'none';
+  const btn = document.getElementById('callTriggerBtn');
+  if (btn) btn.innerHTML = k === 'call'
+    ? '<span class="media-icon">📞</span> Faire sonner'
+    : '<span class="media-icon">💬</span> Envoyer la notification';
+}
+function setCallStyle(s) {
+  callStyle = s;
+  ['generic','ios','android'].forEach(x => {
+    const b = document.getElementById('callstyle-' + x);
+    if (b) b.classList.toggle('active', x === s);
+  });
+}
+function setCallRing(r) {
+  callRing = r;
+  ['classic','digital','soft','silent'].forEach(x => {
+    const b = document.getElementById('callring-' + x);
+    if (b) b.classList.toggle('active', x === r);
+  });
+}
+function onCallAutoChange() {
+  const v = parseInt(document.getElementById('callAutoSlider').value) || 0;
+  document.getElementById('callAutoVal').textContent = v > 0 ? v + ' s' : 'Off';
+}
+function onCallPhoto(files) {
+  if (!files || !files[0]) return;
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    const s = Math.min(img.width, img.height);
+    c.width = 128; c.height = 128;
+    c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 128, 128);
+    _callPhoto = c.toDataURL('image/jpeg', 0.72);
+    URL.revokeObjectURL(img.src);
+    const pv = document.getElementById('callPhotoPreview');
+    if (pv) pv.style.backgroundImage = 'url(' + _callPhoto + ')';
+  };
+  img.onerror = () => URL.revokeObjectURL(img.src);
+  img.src = URL.createObjectURL(files[0]);
+}
+function triggerCall() {
+  sendMsg({
+    type: 'call:start',
+    kind: callKind,
+    style: callStyle,
+    name: (document.getElementById('callName').value || 'Inconnu').slice(0, 40),
+    label: (document.getElementById('callLabel').value || '').slice(0, 40),
+    msg: (document.getElementById('callMsgText').value || '').slice(0, 200),
+    photo: _callPhoto,
+    ring: callRing,
+    autoAnswer: parseInt(document.getElementById('callAutoSlider').value) || 0,
+  });
+  _setCallStatusUI(callKind === 'call' ? '📞 Sonnerie envoyée…' : '💬 Notification envoyée');
+}
+function _setCallStatusUI(t) {
+  const el = document.getElementById('callStatus');
+  if (el) el.textContent = t;
+}
+function remoteOnCallState(m) {
+  if (_callUiTimer) { clearInterval(_callUiTimer); _callUiTimer = null; }
+  if (m.state === 'ringing') _setCallStatusUI("📞 Ça sonne sur l'écran…");
+  else if (m.state === 'incall') {
+    _callUiT0 = Date.now();
+    _callUiTimer = setInterval(() => {
+      const s = Math.floor((Date.now() - _callUiT0) / 1000);
+      _setCallStatusUI('🟢 En ligne · ' + fmtTime(s));
+    }, 500);
+    _setCallStatusUI('🟢 En ligne');
+  }
+  else if (m.state === 'declined') _setCallStatusUI('🔴 Refusé sur l\'écran');
+  else if (m.state === 'ended') _setCallStatusUI('⏹ Terminé');
+}
+
+// — Écran : sons synthétisés (WebAudio, aucun fichier) —
+let _audioCtx = null, _callRingTimer = null, _callVibTimer = null;
+let _callClockTimer = null, _callAutoTimer = null, _callT0Scr = 0;
+let _callState = 'idle', _callCfg = null;
+
+function _ac() {
+  try {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_audioCtx.state === 'suspended') _audioCtx.resume().catch(() => {});
+    return _audioCtx;
+  } catch (_) { return null; }
+}
+function _tone(freq, t0, dur, vol, type) {
+  const ctx = _ac(); if (!ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type || 'sine'; o.frequency.value = freq;
+  g.gain.setValueAtTime(0, ctx.currentTime + t0);
+  g.gain.linearRampToValueAtTime(vol, ctx.currentTime + t0 + 0.02);
+  g.gain.setTargetAtTime(0, ctx.currentTime + t0 + dur, 0.05);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(ctx.currentTime + t0);
+  o.stop(ctx.currentTime + t0 + dur + 0.3);
+}
+function _ringBurst(kind) {
+  if (kind === 'digital') { for (let i = 0; i < 4; i++) _tone(950, i * 0.18, 0.12, 0.14, 'square'); }
+  else if (kind === 'soft') { [523, 659, 784, 1047].forEach((f, i) => _tone(f, i * 0.16, 0.3, 0.14, 'sine')); }
+  else { _tone(440, 0, 1.2, 0.12, 'sine'); _tone(480, 0, 1.2, 0.12, 'sine'); } // classique
+}
+function _startRinging(kind) {
+  if (kind === 'silent') return;
+  _ringBurst(kind);
+  _callRingTimer = setInterval(() => _ringBurst(kind), kind === 'digital' ? 1600 : kind === 'soft' ? 2300 : 3000);
+}
+function _playNotifSound(kind) {
+  if (kind === 'whatsapp') { _tone(880, 0, 0.09, 0.16, 'sine'); _tone(1174, 0.12, 0.12, 0.16, 'sine'); }
+  else { [1318, 1046, 784].forEach((f, i) => _tone(f, i * 0.13, 0.18, 0.15, 'sine')); }
+}
+
+// — Écran : overlay —
+function _scAvatarHtml(m) {
+  const init = escapeHtml(String(m.name || '?').trim().charAt(0).toUpperCase() || '?');
+  return m.photo
+    ? '<div class="sc-avatar" style="background-image:url(' + m.photo + ')"></div>'
+    : '<div class="sc-avatar">' + init + '</div>';
+}
+function screenCallStart(m) {
+  screenCallStopTimers();
+  _callCfg = m || {};
+  const el = document.getElementById('screen-call'); if (!el) return;
+  el.style.display = 'block';
+  if (_callCfg.kind === 'call') {
+    el.classList.remove('notif');
+    _callState = 'ringing';
+    _scRenderIncoming();
+    _startRinging(_callCfg.ring || 'classic');
+    if (navigator.vibrate) {
+      navigator.vibrate([700, 300, 700]);
+      _callVibTimer = setInterval(() => navigator.vibrate([700, 300, 700]), 2200);
+    }
+    if (_callCfg.autoAnswer > 0) _callAutoTimer = setTimeout(screenCallAnswer, _callCfg.autoAnswer * 1000);
+    sendMsg({ type: 'call:state', state: 'ringing' });
+  } else {
+    el.classList.add('notif');
+    _callState = 'notif';
+    _scRenderNotif();
+    _playNotifSound(_callCfg.kind);
+    if (navigator.vibrate) navigator.vibrate([200, 120, 200]);
+  }
+}
+function _scRenderIncoming() {
+  const m = _callCfg, el = document.getElementById('screen-call');
+  const style = (m.style === 'ios' || m.style === 'android') ? m.style : 'generic';
+  el.innerHTML = '<div class="sc-call ' + style + '">'
+    + _scAvatarHtml(m)
+    + '<div class="sc-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
+    + '<div class="sc-label">' + escapeHtml(m.label || 'Appel entrant') + '</div>'
+    + '<div class="sc-actions">'
+    + '<div class="sc-btn-col"><button class="sc-btn decline" onclick="event.stopPropagation();screenCallDecline()">✕</button><span class="sc-btn-hint">Refuser</span></div>'
+    + '<div class="sc-btn-col"><button class="sc-btn answer" onclick="event.stopPropagation();screenCallAnswer()">✆</button><span class="sc-btn-hint">Répondre</span></div>'
+    + '</div></div>';
+}
+function _scRenderInCall() {
+  const m = _callCfg, el = document.getElementById('screen-call');
+  const style = (m.style === 'ios' || m.style === 'android') ? m.style : 'generic';
+  el.innerHTML = '<div class="sc-call ' + style + '">'
+    + _scAvatarHtml(m)
+    + '<div class="sc-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
+    + '<div class="sc-timer" id="scCallTimer">00:00</div>'
+    + '<div class="sc-actions" style="justify-content:center">'
+    + '<div class="sc-btn-col"><button class="sc-btn decline" onclick="event.stopPropagation();screenCallEnd()">✕</button><span class="sc-btn-hint">Raccrocher</span></div>'
+    + '</div></div>';
+}
+function _scRenderNotif() {
+  const m = _callCfg, el = document.getElementById('screen-call');
+  const wa = m.kind === 'whatsapp';
+  el.innerHTML = '<div class="sc-notif" onclick="event.stopPropagation();screenCallEnd()">'
+    + '<div class="sc-notif-icon" style="background:' + (wa ? '#25D366' : '#34c759') + '">' + (wa ? '✆' : '💬') + '</div>'
+    + '<div class="sc-notif-body">'
+    + '<div class="sc-notif-app">' + (wa ? 'WhatsApp' : 'Messages') + ' · maintenant</div>'
+    + '<div class="sc-notif-name">' + escapeHtml(m.name || '') + '</div>'
+    + '<div class="sc-notif-msg">' + escapeHtml(m.msg || '') + '</div>'
+    + '</div></div>';
+}
+function _scTickInCall() {
+  const el = document.getElementById('scCallTimer'); if (!el) return;
+  const s = Math.floor((Date.now() - _callT0Scr) / 1000);
+  el.textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+}
+function screenCallAnswer() {
+  if (_callState !== 'ringing') return;
+  _callState = 'incall';
+  _scStopRing();
+  _callT0Scr = Date.now();
+  _scRenderInCall();
+  _callClockTimer = setInterval(_scTickInCall, 1000);
+  sendMsg({ type: 'call:state', state: 'incall' });
+}
+function screenCallDecline() {
+  if (_callState !== 'ringing') return;
+  screenCallHide();
+  sendMsg({ type: 'call:state', state: 'declined' });
+}
+function screenCallEnd() {
+  if (_callState === 'idle') return;
+  screenCallHide();
+  sendMsg({ type: 'call:state', state: 'ended' });
+}
+function screenCallHide() {
+  screenCallStopTimers();
+  _callState = 'idle';
+  const el = document.getElementById('screen-call');
+  if (el) { el.style.display = 'none'; el.innerHTML = ''; el.classList.remove('notif'); }
+}
+function _scStopRing() {
+  if (_callRingTimer) { clearInterval(_callRingTimer); _callRingTimer = null; }
+  if (_callVibTimer) { clearInterval(_callVibTimer); _callVibTimer = null; }
+  if (_callAutoTimer) { clearTimeout(_callAutoTimer); _callAutoTimer = null; }
+  if (navigator.vibrate) navigator.vibrate(0);
+}
+function screenCallStopTimers() {
+  _scStopRing();
+  if (_callClockTimer) { clearInterval(_callClockTimer); _callClockTimer = null; }
+}
+
 // — Comportement de fin de lecture (reçu de la télécommande) —
 let _screenVidEndMode = 'loop';
 function screenSetEndMode(m) {
@@ -4257,6 +4584,7 @@ function requestFS() {
   const el = document.documentElement;
   const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
   if (req) req.call(el).catch(() => {});
+  _ac(); // déverrouille l'audio (sonneries du simulateur d'appel) au premier geste
   // Relance la lecture vidéo si l'autoplay a été bloqué (geste utilisateur)
   const vid = document.getElementById('screen-media-video');
   if (vid && (vid.src || vid.srcObject)) vid.play().catch(() => {});
