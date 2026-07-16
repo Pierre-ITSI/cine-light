@@ -1024,6 +1024,9 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'media:autoadvance') _screenAutoAdvance = !!msg.on;
         if (msg.type === 'media-ctrl')   screenMediaCtrl(msg);
         if (msg.type === 'media:endmode') screenSetEndMode(msg.mode);
+        if (msg.type === 'media:upload') screenVidUploadStart(msg);
+        if (msg.type === 'media:chunk')  screenVidUploadChunk(msg);
+        if (msg.type === 'media:play')   screenVidUploadPlay(msg);
         if (msg.type === 'rtc-offer')    screenHandleOffer(msg.sdp);
         if (msg.type === 'rtc-ice' && msg.from === 'remote') screenAddIce(msg.candidate);
       }
@@ -3788,9 +3791,9 @@ function broadcastVideo(file, mediaId) {
   _rtcAttempts = 0;
   showMediaStop(true);
   sendMsg({ type: 'media:endmode', mode: _videoEndMode }); // synchronise la fin de lecture
-  // Écran natif : il ne parle pas WebRTC → on diffuse la vidéo en base64
-  // chunké (protocole media:upload/chunk/play), qu'il reconstitue en fichier.
-  if (_recvCaps && _recvCaps.videoMode === 'b64') { broadcastVideoBase64(file); return; }
+  // Envoi via MQTT si : écran natif (pas de WebRTC), ou pair-à-pair déjà
+  // constaté bloqué sur ce réseau (repli mémorisé pour la session).
+  if (_rtcBroken || (_recvCaps && _recvCaps.videoMode === 'b64')) { broadcastVideoBase64(file, mediaId); return; }
   setMediaStatus('🎬 Préparation du transfert…');
   startFileTransfer(file, mediaId);
 }
@@ -3805,9 +3808,10 @@ function fileToBase64(file) {
   });
 }
 
-// Diffusion vidéo vers un écran natif : base64 chunké via le transport (MQTT).
-async function broadcastVideoBase64(file) {
-  setMediaStatus('🎬 Préparation… (écran natif)');
+// Diffusion vidéo en base64 chunké via MQTT : écrans natifs (pas de WebRTC)
+// et repli universel quand le pair-à-pair est bloqué par le réseau.
+async function broadcastVideoBase64(file, poolId) {
+  setMediaStatus('🎬 Préparation de l\'envoi…');
   let b64;
   try { b64 = await fileToBase64(file); }
   catch (_) { setMediaStatus('⚠ Lecture du fichier impossible'); return; }
@@ -3815,7 +3819,7 @@ async function broadcastVideoBase64(file) {
   const mime = file.type || 'video/mp4';
   const CHUNK = 12000;
   const total = Math.ceil(b64.length / CHUNK);
-  sendMsg({ type: 'media:upload', mediaId: id, kind: 'video', mime, totalChunks: total });
+  sendMsg({ type: 'media:upload', mediaId: id, kind: 'video', mime, totalChunks: total, poolId: poolId || null });
   setMediaStatus('📤 Transfert… 0 %');
   for (let i = 0; i < total; i++) {
     sendMsg({ type: 'media:chunk', mediaId: id, index: i, data: b64.slice(i * CHUNK, (i + 1) * CHUNK) });
@@ -3826,10 +3830,12 @@ async function broadcastVideoBase64(file) {
     }
   }
   sendMsg({ type: 'media:play', mediaId: id });
-  setMediaStatus('🎬 Lecture sur l\'écran natif', true);
+  setMediaStatus('🎬 Lecture sur l\'écran', true);
+  showMediaPlay(true); setPlayBtn(true); showMediaTimeline(true);
 }
 
 let _rtcTransferDone = false, _rtcAttempts = 0;
+let _rtcBroken = false; // pair-à-pair constaté bloqué sur ce réseau (session)
 async function startFileTransfer(file, mediaId) {
   _remotePendingIce = [];
   _rtcTransferDone = false;
@@ -3841,14 +3847,20 @@ async function startFileTransfer(file, mediaId) {
     if (_rtcTransferDone) return;        // transfert terminé : les aléas sont sans effet
     const st = pc.connectionState;
     if (st === 'failed') {
-      // Relance automatique (jusqu'à 2 tentatives) avant d'abandonner
+      // Relance automatique (jusqu'à 2 tentatives) avant le repli MQTT
       if (_rtcAttempts < 2) {
         _rtcAttempts++;
         setMediaStatus('🔁 Connexion perdue — nouvelle tentative (' + _rtcAttempts + '/2)…');
         try { pc.close(); } catch (_) {}
         setTimeout(() => { if (pc === _rtcPc) startFileTransfer(file, mediaId); }, 600);
       } else {
-        setMediaStatus('⚠ Connexion à l\'écran impossible — réessayez');
+        // Réseau qui bloque le pair-à-pair (isolation Wi-Fi, etc.) :
+        // repli automatique sur l'envoi via le canal MQTT.
+        _rtcBroken = true;
+        setMediaStatus('🌐 Connexion directe impossible — envoi via le canal…');
+        try { pc.close(); } catch (_) {}
+        if (pc === _rtcPc) _rtcPc = null;
+        broadcastVideoBase64(file, mediaId);
       }
     }
     // 'disconnected' est souvent transitoire en WebRTC : on laisse la
@@ -4021,6 +4033,46 @@ function playScreenVid(vid) {
 function sendScreenState(vid) {
   sendMsg({ type: 'media-progress', cur: vid.currentTime || 0, dur: vid.duration || 0, playing: !vid.paused });
 }
+// — Réception vidéo via MQTT (repli quand WebRTC est bloqué par le réseau) —
+let _vidUp = null; // { id, mime, total, parts, got, poolId, retried }
+function screenVidUploadStart(msg) {
+  _vidUp = { id: msg.mediaId, mime: msg.mime || 'video/mp4', total: msg.totalChunks,
+             parts: new Array(msg.totalChunks), got: 0, poolId: msg.poolId || null, retried: false };
+  setScreenStatus('📥 Réception vidéo… 0 %');
+}
+function screenVidUploadChunk(msg) {
+  if (!_vidUp || _vidUp.id !== msg.mediaId) return;
+  if (_vidUp.parts[msg.index] === undefined) { _vidUp.parts[msg.index] = msg.data; _vidUp.got++; }
+  if (_vidUp.got % 40 === 0) setScreenStatus('📥 Réception vidéo… ' + Math.round(_vidUp.got / _vidUp.total * 100) + ' %');
+}
+function screenVidUploadPlay(msg) {
+  if (!_vidUp || _vidUp.id !== msg.mediaId) return;
+  // Des chunks peuvent encore être en transit : on laisse une seconde chance
+  if (_vidUp.got !== _vidUp.total && !_vidUp.retried) {
+    _vidUp.retried = true;
+    setTimeout(() => screenVidUploadPlay(msg), 2000);
+    return;
+  }
+  const up = _vidUp; _vidUp = null;
+  if (up.got !== up.total) { setScreenStatus('⚠ Vidéo incomplète (' + up.got + '/' + up.total + ')'); return; }
+  try {
+    const bin = atob(up.parts.join(''));
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const blob = new Blob([arr], { type: up.mime });
+    const url = URL.createObjectURL(blob);
+    setScreenStatus('🎬 Vidéo reçue (' + Math.round(blob.size / 1048576) + ' Mo)');
+    if (up.poolId) {
+      const old = _mediaCache.get(up.poolId);
+      if (old && old.url && old.url !== url) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
+      _mediaCache.set(up.poolId, { kind: 'vid', url });
+      sendMsg({ type: 'media:cached', id: up.poolId });
+      _screenActiveId = up.poolId;
+    }
+    screenPlayVideoUrl(url);
+  } catch (_) { setScreenStatus('⚠ Vidéo illisible'); }
+}
+
 // — Comportement de fin de lecture (reçu de la télécommande) —
 let _screenVidEndMode = 'loop';
 function screenSetEndMode(m) {
