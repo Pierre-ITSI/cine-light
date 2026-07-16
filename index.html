@@ -4435,7 +4435,19 @@ function screenCallStart(m) {
 function _scIosBg(m) {
   return m.photo ? '<div class="sc-ios-bg" style="background-image:url(' + m.photo + ')"></div>' : '';
 }
-const _SC_DECLINE_GLYPH = '<span style="display:inline-block;transform:rotate(135deg)">✆</span>';
+// Icônes SVG style iOS (traits/aplats blancs, pas d'emoji)
+const _SCI = {
+  handset: '<svg viewBox="0 0 24 24" width="30" height="30" fill="#fff"><path d="M6.62 10.79c1.44 2.83 3.76 5.15 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>',
+  handsetDown: '<svg viewBox="0 0 24 24" width="30" height="30" fill="#fff"><g transform="rotate(135 12 12)"><path d="M6.62 10.79c1.44 2.83 3.76 5.15 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></g></svg>',
+  micSlash: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="4.5" y1="3.5" x2="19.5" y2="20.5"/></svg>',
+  keypad: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#fff">' + [4.5, 9, 13.5, 18].map(y => [7, 12, 17].map(x => '<circle cx="' + x + '" cy="' + y + '" r="1.7"/>').join('')).join('') + '</svg>',
+  speaker: '<svg viewBox="0 0 24 24" width="26" height="26"><path fill="#fff" d="M3 9v6h4l5 4.5v-15L7 9H3z"/><path fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" d="M15.5 8.5a5 5 0 0 1 0 7M18 6a9 9 0 0 1 0 12"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="4.5" x2="12" y2="19.5"/><line x1="4.5" y1="12" x2="19.5" y2="12"/></svg>',
+  facetime: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#fff"><rect x="2" y="6.5" width="13.5" height="11" rx="3.2"/><path d="M17 10.6l4.3-2.8c.3-.2.7 0 .7.4v7.6c0 .4-.4.6-.7.4L17 13.4v-2.8z"/></svg>',
+  contacts: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#fff"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5v.5H3V19z"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.6 14.3c2.8.3 5.4 2.1 5.4 4.7v.5h-4.2c0-2-.4-3.8-1.2-5.2z"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg>',
+  bubble: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 3C6.5 3 2 6.9 2 11.7c0 2.8 1.5 5.3 3.9 6.9-.1 1-.5 2.3-1.6 3.4 1.9-.2 3.4-1 4.4-1.7 1 .2 2.1.4 3.3.4 5.5 0 10-3.9 10-8.7S17.5 3 12 3z"/></svg>',
+};
 function _scRenderIncoming() {
   const m = _callCfg, el = document.getElementById('screen-call');
   const style = (m.style === 'ios' || m.style === 'android') ? m.style : 'generic';
@@ -4450,12 +4462,12 @@ function _scRenderIncoming() {
       + '</div>'
       + '<div class="sc-ios-actions">'
       + '<div class="sc-ios-minor">'
-      + '<div class="col"><button class="sc-mini">⏰</button><span>Rappel</span></div>'
-      + '<div class="col"><button class="sc-mini">💬</button><span>Message</span></div>'
+      + '<div class="col"><button class="sc-mini">' + _SCI.clock + '</button><span>Rappel</span></div>'
+      + '<div class="col"><button class="sc-mini">' + _SCI.bubble + '</button><span>Message</span></div>'
       + '</div>'
       + '<div class="sc-ios-main">'
-      + '<div class="col"><button class="sc-ios-btn decline" onclick="event.stopPropagation();screenCallDecline()">' + _SC_DECLINE_GLYPH + '</button><span>Refuser</span></div>'
-      + '<div class="col"><button class="sc-ios-btn answer" onclick="event.stopPropagation();screenCallAnswer()">✆</button><span>Accepter</span></div>'
+      + '<div class="col"><button class="sc-ios-btn decline" onclick="event.stopPropagation();screenCallDecline()">' + _SCI.handsetDown + '</button><span>Refuser</span></div>'
+      + '<div class="col"><button class="sc-ios-btn answer" onclick="event.stopPropagation();screenCallAnswer()">' + _SCI.handset + '</button><span>Accepter</span></div>'
       + '</div></div></div>';
     return;
   }
@@ -4464,8 +4476,8 @@ function _scRenderIncoming() {
     + '<div class="sc-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
     + '<div class="sc-label">' + escapeHtml(m.label || 'Appel entrant') + '</div>'
     + '<div class="sc-actions">'
-    + '<div class="sc-btn-col"><button class="sc-btn decline" onclick="event.stopPropagation();screenCallDecline()">✕</button><span class="sc-btn-hint">Refuser</span></div>'
-    + '<div class="sc-btn-col"><button class="sc-btn answer" onclick="event.stopPropagation();screenCallAnswer()">✆</button><span class="sc-btn-hint">Répondre</span></div>'
+    + '<div class="sc-btn-col"><button class="sc-btn decline" onclick="event.stopPropagation();screenCallDecline()">' + _SCI.handsetDown + '</button><span class="sc-btn-hint">Refuser</span></div>'
+    + '<div class="sc-btn-col"><button class="sc-btn answer" onclick="event.stopPropagation();screenCallAnswer()">' + _SCI.handset + '</button><span class="sc-btn-hint">Répondre</span></div>'
     + '</div></div>';
 }
 function _scRenderInCall() {
@@ -4481,12 +4493,12 @@ function _scRenderInCall() {
       + '<div class="sc-ios-timer" id="scCallTimer">00:00</div>'
       + '</div>'
       + '<div class="sc-ios-grid">'
-      + g('🔇', 'silence') + g('⌗', 'clavier') + g('🔊', 'audio')
-      + g('＋', 'ajouter') + g('📹', 'FaceTime') + g('👤', 'contacts')
+      + g(_SCI.micSlash, 'silence') + g(_SCI.keypad, 'clavier') + g(_SCI.speaker, 'audio')
+      + g(_SCI.plus, 'ajouter') + g(_SCI.facetime, 'FaceTime') + g(_SCI.contacts, 'contacts')
       + '</div>'
       + '<div class="sc-ios-actions" style="align-items:center">'
       + '<div class="col" style="display:flex;flex-direction:column;align-items:center;gap:9px">'
-      + '<button class="sc-ios-btn decline" onclick="event.stopPropagation();screenCallEnd()">' + _SC_DECLINE_GLYPH + '</button>'
+      + '<button class="sc-ios-btn decline" onclick="event.stopPropagation();screenCallEnd()">' + _SCI.handsetDown + '</button>'
       + '</div></div></div>';
     return;
   }
@@ -4495,7 +4507,7 @@ function _scRenderInCall() {
     + '<div class="sc-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
     + '<div class="sc-timer" id="scCallTimer">00:00</div>'
     + '<div class="sc-actions" style="justify-content:center">'
-    + '<div class="sc-btn-col"><button class="sc-btn decline" onclick="event.stopPropagation();screenCallEnd()">✕</button><span class="sc-btn-hint">Raccrocher</span></div>'
+    + '<div class="sc-btn-col"><button class="sc-btn decline" onclick="event.stopPropagation();screenCallEnd()">' + _SCI.handsetDown + '</button><span class="sc-btn-hint">Raccrocher</span></div>'
     + '</div></div>';
 }
 function _scRenderNotif() {
