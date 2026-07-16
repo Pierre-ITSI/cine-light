@@ -3559,16 +3559,20 @@ async function installPWA() {
   }, 2400);
 })();
 
-// ── Mini-carte sticky : visible quand la preview principale est hors écran ──
+// ── Mini-carte sticky : apparaît dès que la preview commence à être masquée ──
 (function initStickyPreview() {
   const row = document.getElementById('previewRow');
   const bar = document.getElementById('stickyPreview');
   const scroller = document.getElementById('remote-mode');
-  if (!row || !bar || !scroller || !('IntersectionObserver' in window)) return;
-  const io = new IntersectionObserver(entries => {
-    bar.classList.toggle('visible', !entries[0].isIntersecting);
-  }, { root: scroller, threshold: 0 });
-  io.observe(row);
+  if (!row || !bar || !scroller) return;
+  function update() {
+    // Dès que le haut de la preview passe sous le bord supérieur de l'écran
+    // (début de coupure), la carte s'affiche.
+    bar.classList.toggle('visible', row.getBoundingClientRect().top < 8);
+  }
+  scroller.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
 })();
 
 // Initialiser tous les sliders avec boutons +/- et valeurs cliquables
