@@ -820,12 +820,27 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
         <input type="range" id="effectBurstSlider" min="1" max="10" step="1" value="3"
                oninput="document.getElementById('effectBurstVal').textContent=this.value;onEffectParamChange()">
       </div>
+      <div id="effectShapeBlock" style="display:none;margin-bottom:14px">
+        <div class="slider-header"><label>Forme</label></div>
+        <div class="chips-wrap">
+          <button class="chip active" id="fxshape-band" onclick="setFxShape('band')">▬ Bande</button>
+          <button class="chip" id="fxshape-circle" onclick="setFxShape('circle')">◯ Rond</button>
+          <button class="chip" id="fxshape-diamond" onclick="setFxShape('diamond')">◇ Losange</button>
+        </div>
+      </div>
       <div id="effectDirBlock" style="display:none;margin-bottom:14px">
         <div class="slider-header"><label>Direction</label></div>
         <div class="chips-wrap">
           <button class="chip active" id="fxdir-h" onclick="setFxDir('h')">↔ Horizontal</button>
           <button class="chip" id="fxdir-v" onclick="setFxDir('v')">↕ Vertical</button>
           <button class="chip" id="fxdir-d" onclick="setFxDir('d')">⤢ Diagonale</button>
+        </div>
+      </div>
+      <div id="effectRadialDirBlock" style="display:none;margin-bottom:14px">
+        <div class="slider-header"><label>Sens</label></div>
+        <div class="chips-wrap">
+          <button class="chip active" id="fxrdir-out" onclick="setFxRadialDir('out')">⟴ Du centre</button>
+          <button class="chip" id="fxrdir-in" onclick="setFxRadialDir('in')">⟲ Des extérieurs</button>
         </div>
       </div>
       <div id="effectChaserModeBlock" style="display:none;margin-bottom:14px">
@@ -842,6 +857,14 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           <div class="slider-val" id="effectWidthVal">8<span>%</span></div>
         </div>
         <input type="range" id="effectWidthSlider" min="1" max="60" step="1" value="8"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block" id="effectSmoothBlock" style="display:none">
+        <div class="slider-header">
+          <label>Lissage des sautes</label>
+          <div class="slider-val" id="effectSmoothVal">30<span>%</span></div>
+        </div>
+        <input type="range" id="effectSmoothSlider" min="0" max="100" step="5" value="30"
                oninput="onEffectParamChange()">
       </div>
       <div class="slider-block" id="effectWingBlock" style="display:none">
@@ -1851,23 +1874,23 @@ const EFFECT_CONFIG = {
   // — Spatiaux —
   chaser:    { icon:'💫', name:'Chaser', family:'spatial', speedLabel:'Vitesse', min:0.1, max:6, step:0.1, def:1, intDef:100,
                color1:'#ffffff', color2:'#05050a', c1Label:'Bande', c2Label:'Fond',
-               count:{ label:'Nombre de bandes', min:1, max:12, def:3 }, dir:true, mode:true,
-               width:8, wing:1, rot:0, lead:0, fade:250, fadeLabel:'Traîne arrière' },
-  noise:     { icon:'📶', name:'Noise', family:'spatial', speedLabel:'Vitesse (img/s)', min:1, max:30, step:1, def:12, intDef:90,
+               count:{ label:'Nombre de bandes', min:1, max:12, def:1 }, dir:true, mode:true, shape:true,
+               width:20, wing:1, rot:0, lead:120, fade:120, fadeLabel:'Traîne arrière', chaosDef:0 },
+  noise:     { icon:'📶', name:'Noise', family:'spatial', speedLabel:'Vitesse (img/s)', min:1, max:30, step:1, def:12, intDef:100,
                color1:'#ffffff', c1Label:'Teinte',
                count:{ label:'Taille de grain', min:2, max:32, def:8 } },
-  aurora:    { icon:'🌌', name:'Aurora', family:'spatial', speedLabel:'Dérive des nappes', min:0.05, max:2, step:0.05, def:0.3, intDef:80,
+  aurora:    { icon:'🌌', name:'Aurora', family:'spatial', speedLabel:'Dérive des nappes', min:0.05, max:2, step:0.05, def:0.3, intDef:100,
                color1:'#20e0a0', color2:'#3040ff', c1Label:'Nappe 1', c2Label:'Nappe 2' },
-  water:     { icon:'🌊', name:'Caustiques', family:'spatial', speedLabel:'Vitesse', min:0.1, max:3, step:0.1, def:0.8, intDef:85,
+  water:     { icon:'🌊', name:'Caustiques', family:'spatial', speedLabel:'Vitesse', min:0.1, max:3, step:0.1, def:0.8, intDef:100,
                color1:'#25c8e8', color2:'#021620', c1Label:'Eau', c2Label:'Fond' },
   // — Rythmiques —
   pulse:     { icon:'💓', name:'Pulse BPM', family:'rythm', speedLabel:'BPM', min:20, max:240, step:1, def:60, intDef:100,
                color1:'#ffffff', color2:'#000000', c1Label:'Crête', c2Label:'Creux', tap:true },
-  traffic:   { icon:'🚗', name:'Phares', family:'rythm', speedLabel:'Passages / s', min:0.05, max:2, step:0.05, def:0.3, intDef:90,
+  traffic:   { icon:'🚗', name:'Phares', family:'rythm', speedLabel:'Passages / s', min:0.05, max:2, step:0.05, def:0.3, intDef:100,
                color1:'#ffb054', color2:'#050508', c1Label:'Phares', c2Label:'Nuit' },
   weld:      { icon:'🔩', name:'Soudure', family:'rythm', speedLabel:'Cadence', min:0.2, max:6, step:0.1, def:1.5, intDef:100,
                color1:'#cfe4ff', color2:'#05060a', c1Label:'Arc', c2Label:'Fond' },
-  neon:      { icon:'🏮', name:'Néon HS', family:'rythm', speedLabel:'Nervosité', min:0.2, max:6, step:0.1, def:1.5, intDef:90,
+  neon:      { icon:'🏮', name:'Néon HS', family:'rythm', speedLabel:'Nervosité', min:0.2, max:6, step:0.1, def:1.5, intDef:100,
                color1:'#ff2e88', c1Label:'Néon' },
   police:    { icon:'🚨', name:'Police', family:'rythm', speedLabel:'Vitesse alternance', min:0.5, max:8, step:0.5, def:3, intDef:100,
                color1:'#ff2020', color2:'#2040ff', c1Label:'Couleur A', c2Label:'Couleur B' },
@@ -1877,10 +1900,10 @@ const EFFECT_CONFIG = {
                color1:'#fffce6', color2:'#080808', c1Label:'Flash', c2Label:'Ambiance',
                count:{ label:'Flashes / rafale', min:1, max:10, def:3 } },
   // — Ambiances —
-  tv:        { icon:'📺', name:'TV', family:'ambiance', speedLabel:'Vitesse (img/s)', min:0.5, max:15, step:0.5, def:4, intDef:80, blocks:true },
-  candle:    { icon:'🕯', name:'Bougie', family:'ambiance', speedLabel:'Vacillement', min:0.2, max:5, step:0.1, def:1.2, intDef:85,
+  tv:        { icon:'📺', name:'TV', family:'ambiance', speedLabel:'Vitesse (img/s)', min:0.5, max:15, step:0.5, def:4, intDef:100, blocks:true, smooth:30 },
+  candle:    { icon:'🕯', name:'Bougie', family:'ambiance', speedLabel:'Vacillement', min:0.2, max:5, step:0.1, def:1.2, intDef:100,
                color1:'#ff7814', c1Label:'Flamme' },
-  fire:      { icon:'🔥', name:'Feu', family:'ambiance', speedLabel:'Intensité rapide', min:0.5, max:10, step:0.5, def:3, intDef:90,
+  fire:      { icon:'🔥', name:'Feu', family:'ambiance', speedLabel:'Intensité rapide', min:0.5, max:10, step:0.5, def:3, intDef:100,
                color1:'#ff7314', color2:'#3c0a00', c1Label:'Flamme', c2Label:'Braise' },
 };
 
@@ -1909,6 +1932,37 @@ function setFxDir(d, silent) {
     if (b) b.classList.toggle('active', k === d);
   });
   if (!silent) scheduleEffectSend();
+}
+
+// Forme du chaser : bande (linéaire), rond ou losange (radial, du centre
+// vers les bords ou l'inverse)
+let fxShape = 'band', fxRadialDir = 'out';
+function setFxShape(s, silent) {
+  fxShape = s;
+  ['band','circle','diamond'].forEach(k => {
+    const b = document.getElementById('fxshape-' + k);
+    if (b) b.classList.toggle('active', k === s);
+  });
+  _syncChaserBlocks();
+  if (!silent) scheduleEffectSend();
+}
+function setFxRadialDir(d, silent) {
+  fxRadialDir = d;
+  ['out','in'].forEach(k => {
+    const b = document.getElementById('fxrdir-' + k);
+    if (b) b.classList.toggle('active', k === d);
+  });
+  if (!silent) scheduleEffectSend();
+}
+// Affiche les bons blocs selon la forme (direction/wing pour la bande,
+// sens radial pour rond et losange)
+function _syncChaserBlocks() {
+  const cfg = EFFECT_CONFIG[activeScreenEffect] || {};
+  if (!cfg.shape) return;
+  const radial = fxShape !== 'band';
+  document.getElementById('effectDirBlock').style.display = radial ? 'none' : 'block';
+  document.getElementById('effectRadialDirBlock').style.display = radial ? 'block' : 'none';
+  if (cfg.wing != null) document.getElementById('effectWingBlock').style.display = radial ? 'none' : 'block';
 }
 
 // Course du chaser : loop (boucle) ou bounce (aller-retour) + inversion du sens
@@ -1959,7 +2013,9 @@ function randomizeEffect() {
     document.getElementById('effectBurstVal').textContent = bs.value;
   }
   if (cfg.dir) setFxDir(['h','v','d'][Math.floor(Math.random() * 3)], true);
+  if (cfg.shape) { setFxShape(['band','circle','diamond'][Math.floor(Math.random() * 3)], true); setFxRadialDir(Math.random() < 0.5 ? 'out' : 'in', true); }
   if (cfg.mode) { setFxChaserMode(Math.random() < 0.5 ? 'loop' : 'bounce', true); setFxInvert(Math.random() < 0.5, true); }
+  if (cfg.smooth != null) document.getElementById('effectSmoothSlider').value = Math.round(rnd(0, 80) / 5) * 5;
   if (cfg.width != null) document.getElementById('effectWidthSlider').value = Math.round(rnd(2, 40));
   if (cfg.wing != null) document.getElementById('effectWingSlider').value = Math.round(rnd(1, 4));
   if (cfg.rot != null) document.getElementById('effectRotSlider').value = Math.round(rnd(0, 359));
@@ -2009,9 +2065,12 @@ function selectEffect(name) {
       bs.min = cfg.count.min; bs.max = cfg.count.max; bs.step = 1; bs.value = cfg.count.def;
       document.getElementById('effectBurstVal').textContent = cfg.count.def;
     } else bBlock.style.display = 'none';
-    // Direction + course (chaser) et TAP tempo (pulse)
+    // Forme + direction + course (chaser) et TAP tempo (pulse)
+    document.getElementById('effectShapeBlock').style.display = cfg.shape ? 'block' : 'none';
     document.getElementById('effectDirBlock').style.display = cfg.dir ? 'block' : 'none';
+    document.getElementById('effectRadialDirBlock').style.display = 'none';
     if (cfg.dir) setFxDir(fxDir, true);
+    if (cfg.shape) { setFxShape(fxShape, true); setFxRadialDir(fxRadialDir, true); }
     document.getElementById('effectChaserModeBlock').style.display = cfg.mode ? 'block' : 'none';
     if (cfg.mode) { setFxChaserMode(fxChaserMode, true); setFxInvert(fxInvert, true); }
     document.getElementById('fxTapBtn').style.display = cfg.tap ? 'inline-block' : 'none';
@@ -2041,11 +2100,17 @@ function selectEffect(name) {
       document.getElementById('effectColor2Label').textContent = cfg.c2Label || 'Couleur 2';
       document.getElementById('effectColor2').value = cfg.color2;
     }
-    // Chaos / dérive : repartent des valeurs par défaut
-    document.getElementById('effectChaosSlider').value = 30;
-    document.getElementById('effectChaosVal').innerHTML = '30<span>%</span>';
+    // Chaos / dérive : valeurs par défaut (personnalisables par effet)
+    const chaosDef = cfg.chaosDef != null ? cfg.chaosDef : 30;
+    document.getElementById('effectChaosSlider').value = chaosDef;
+    document.getElementById('effectChaosVal').innerHTML = chaosDef + '<span>%</span>';
     document.getElementById('effectDriftSlider').value = 0;
     document.getElementById('effectDriftVal').innerHTML = '0<span>%</span>';
+    // Lissage (TV)
+    if (_setupEffectOpt('effectSmoothBlock', cfg.smooth != null)) {
+      document.getElementById('effectSmoothSlider').value = cfg.smooth;
+      document.getElementById('effectSmoothVal').innerHTML = cfg.smooth + '<span>%</span>';
+    }
     // Traîne / fondu
     if (_setupEffectOpt('effectFadeBlock', cfg.fade != null)) {
       document.getElementById('effectFadeLabel').textContent = cfg.fadeLabel || "Fondu d'extinction";
@@ -2075,6 +2140,7 @@ function onEffectParamChange() {
   document.getElementById('effectWingVal').textContent = document.getElementById('effectWingSlider').value;
   document.getElementById('effectRotVal').innerHTML = document.getElementById('effectRotSlider').value + '<span>°</span>';
   document.getElementById('effectLeadVal').innerHTML = document.getElementById('effectLeadSlider').value + '<span> ms</span>';
+  document.getElementById('effectSmoothVal').innerHTML = document.getElementById('effectSmoothSlider').value + '<span>%</span>';
   const fadeEl = document.getElementById('effectFadeSlider');
   if (fadeEl) document.getElementById('effectFadeVal').innerHTML = fadeEl.value + '<span> ms</span>';
   scheduleEffectSend();
@@ -2091,11 +2157,13 @@ function buildEffectParams() {
   };
   if (cfg.count) params.count = parseInt(document.getElementById('effectBurstSlider').value);
   if (cfg.dir) params.dir = fxDir;
+  if (cfg.shape) { params.shape = fxShape; if (fxShape !== 'band') params.dir = fxRadialDir; }
   if (cfg.mode) { params.mode = fxChaserMode; params.invert = fxInvert; }
   if (cfg.width != null) params.width = parseInt(document.getElementById('effectWidthSlider').value);
   if (cfg.wing != null) params.wing = parseInt(document.getElementById('effectWingSlider').value);
   if (cfg.rot != null) params.rot = parseInt(document.getElementById('effectRotSlider').value);
   if (cfg.lead != null) params.lead = parseInt(document.getElementById('effectLeadSlider').value);
+  if (cfg.smooth != null) params.smooth = parseInt(document.getElementById('effectSmoothSlider').value);
   if (cfg.color1) params.color1 = document.getElementById('effectColor1').value;
   if (cfg.color2) params.color2 = document.getElementById('effectColor2').value;
   if (cfg.fade != null) params.fade = parseInt(document.getElementById('effectFadeSlider').value);
@@ -2124,7 +2192,11 @@ function loadEffectParamsToUI(name, p, dir) {
     document.getElementById('effectBurstSlider').value = p.count;
     document.getElementById('effectBurstVal').textContent = p.count;
   }
-  if (cfg.dir && (dir || p.dir)) setFxDir(dir || p.dir, true);
+  if (cfg.shape && p.shape) {
+    setFxShape(p.shape, true);
+    if (p.shape !== 'band' && p.dir) setFxRadialDir(p.dir, true);
+  }
+  if (cfg.dir && (dir || p.dir) && (!p.shape || p.shape === 'band')) setFxDir(dir || p.dir, true);
   if (cfg.mode) { if (p.mode) setFxChaserMode(p.mode, true); setFxInvert(!!p.invert, true); }
   if (cfg.width != null && p.width != null) {
     document.getElementById('effectWidthSlider').value = p.width;
@@ -2141,6 +2213,10 @@ function loadEffectParamsToUI(name, p, dir) {
   if (cfg.lead != null && p.lead != null) {
     document.getElementById('effectLeadSlider').value = p.lead;
     document.getElementById('effectLeadVal').innerHTML = p.lead + '<span> ms</span>';
+  }
+  if (cfg.smooth != null && p.smooth != null) {
+    document.getElementById('effectSmoothSlider').value = p.smooth;
+    document.getElementById('effectSmoothVal').innerHTML = p.smooth + '<span>%</span>';
   }
   if (cfg.color1 && p.color1) document.getElementById('effectColor1').value = p.color1;
   if (cfg.color2 && p.color2) document.getElementById('effectColor2').value = p.color2;
@@ -2404,10 +2480,24 @@ const FX_LIB = {
     const iv = Math.max(0.03, 0.4 / (p.speed || 1));
     if (st.tN == null || t >= st.tN) {
       st.tN = t + iv * (0.5 + Math.random());
+      st.prev = st.col || { r: 0, g: 0, b: 0 };
+      st.t0 = t;
       const pal = (p.blocks && p.blocks.length) ? p.blocks : ['#000000','#101040','#2040b0','#ffffff','#c0c8d0','#800010'];
       st.col = _fxHexRgb(pal[Math.floor(Math.random() * pal.length)]);
     }
-    const k = p.intensity / 100, c = st.col || { r: 0, g: 0, b: 0 };
+    const k = p.intensity / 100;
+    let c = st.col || { r: 0, g: 0, b: 0 };
+    // Lissage : fondu progressif entre deux couleurs au lieu d'une saute
+    const sm = Math.max(0, Math.min(1, (p.smooth || 0) / 100));
+    if (sm > 0 && st.prev) {
+      const dur = Math.max(0.016, iv * sm);
+      const u = Math.min(1, (t - (st.t0 || 0)) / dur);
+      c = {
+        r: st.prev.r + (c.r - st.prev.r) * u,
+        g: st.prev.g + (c.g - st.prev.g) * u,
+        b: st.prev.b + (c.b - st.prev.b) * u,
+      };
+    }
     ctx.fillStyle = `rgb(${c.r * k | 0},${c.g * k | 0},${c.b * k | 0})`;
     ctx.fillRect(0, 0, W, H);
   },
@@ -2586,50 +2676,106 @@ const FX_LIB = {
     // Espace tourné autour du centre : on dessine dans un carré D×D
     // (D = diagonale) pour couvrir les coins quel que soit l'angle.
     const D = Math.sqrt(W * W + H * H);
+    const shape = p.shape || 'band';
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = `rgb(${bg.r},${bg.g},${bg.b})`;
     ctx.fillRect(0, 0, W, H);
     ctx.globalCompositeOperation = 'lighter';
-    ctx.translate(W / 2, H / 2);
-    ctx.rotate(rot);
-    ctx.translate(-D / 2, -D / 2);
-    // Course loop étendue : la bande entre puis sort ENTIÈREMENT de l'écran
+    // Course loop étendue : la forme entre puis sort ENTIÈREMENT de l'écran
     // (marge = la plus longue des deux traînes, valable dans les deux sens)
     const M = hw + Math.max(EDGE, ramp) + 0.01;
     const cStart = -M, cEnd = 1 + M, span = cEnd - cStart;
     const L = EDGE + w + ramp; // longueur totale du profil lumineux
-    for (let s = 0; s < wing; s++) {
-      ctx.save();
-      // Wing : l'axe est découpé en sections miroir alternées
-      const mirror = s % 2 === 1;
-      const Ds = D / wing;
-      ctx.translate(s * Ds + (mirror ? Ds : 0), 0);
-      ctx.scale((mirror ? -1 : 1) * Ds / D, 1);
-      for (let i = 0; i < n; i++) {
-        const raw = t * (p.speed || 1) * 0.35 + (i / n) * (bounce ? 2 : 1);
-        let c, fwd; // centre de bande + sens de déplacement
-        if (bounce) {
-          const ph = raw % 2;      // aller-retour : le centre touche les deux bords
-          fwd = ph < 1;
-          c = fwd ? ph : 2 - ph;
-        } else {
-          fwd = true;
-          c = cStart + (raw % 1) * span;
+    // Position + sens de déplacement d'un élément (bande ou anneau)
+    const travel = (i) => {
+      const raw = t * (p.speed || 1) * 0.35 + (i / n) * (bounce ? 2 : 1);
+      let c, fwd;
+      if (bounce) { const ph = raw % 2; fwd = ph < 1; c = fwd ? ph : 2 - ph; }
+      else { fwd = true; c = cStart + (raw % 1) * span; }
+      if (p.invert) { c = 1 - c; fwd = !fwd; }
+      return { c, sgn: fwd ? 1 : -1 };
+    };
+    if (shape === 'band') {
+      ctx.translate(W / 2, H / 2);
+      ctx.rotate(rot);
+      ctx.translate(-D / 2, -D / 2);
+      for (let s = 0; s < wing; s++) {
+        ctx.save();
+        // Wing : l'axe est découpé en sections miroir alternées
+        const mirror = s % 2 === 1;
+        const Ds = D / wing;
+        ctx.translate(s * Ds + (mirror ? Ds : 0), 0);
+        ctx.scale((mirror ? -1 : 1) * Ds / D, 1);
+        for (let i = 0; i < n; i++) {
+          const { c, sgn } = travel(i);
+          // Profil : 0 devant (traîne avant) → plein sur la bande →
+          // décroissance sur la traîne arrière → 0 (borné des deux côtés)
+          const a = c + sgn * (hw + EDGE);
+          const b = c - sgn * (hw + ramp);
+          const g = ctx.createLinearGradient(a * D, 0, b * D, 0);
+          g.addColorStop(0, 'rgba(0,0,0,0)');
+          g.addColorStop(Math.min(1, EDGE / L), `rgba(${col.r},${col.g},${col.b},${k})`);
+          g.addColorStop(Math.min(1, (EDGE + w) / L), `rgba(${col.r},${col.g},${col.b},${k})`);
+          g.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = g; ctx.fillRect(0, 0, D, D);
         }
-        if (p.invert) { c = 1 - c; fwd = !fwd; }
-        const sgn = fwd ? 1 : -1;
-        // Profil : 0 juste devant → plein sur la bande → décroissance
-        // progressive sur la traîne derrière → 0 (borné des deux côtés)
-        const a = c + sgn * (hw + EDGE);  // juste devant la bande (alpha 0)
-        const b = c - sgn * (hw + ramp);  // bout de la traîne (alpha 0)
-        const g = ctx.createLinearGradient(a * D, 0, b * D, 0);
-        g.addColorStop(0, 'rgba(0,0,0,0)');
-        g.addColorStop(Math.min(1, EDGE / L), `rgba(${col.r},${col.g},${col.b},${k})`);
-        g.addColorStop(Math.min(1, (EDGE + w) / L), `rgba(${col.r},${col.g},${col.b},${k})`);
-        g.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = g; ctx.fillRect(0, 0, D, D);
+        ctx.restore();
       }
-      ctx.restore();
+    } else {
+      // Formes radiales : rond ou losange, du centre (out) ou des bords (in)
+      const cx = W / 2, cy = H / 2;
+      const Rmax = Math.sqrt(W * W + H * H) / 2;
+      const outward = p.dir !== 'in';
+      // Luminosité du profil à un rayon donné (rc = centre de l'anneau)
+      const alphaAt = (r, rc, sgnR) => {
+        const d = (r - rc) * sgnR;
+        if (d >= hw + EDGE || d <= -(hw + ramp)) return 0;
+        if (d >= hw) return k * (1 - (d - hw) / Math.max(EDGE, 0.001));
+        if (d <= -hw) return k * (1 + (d + hw) / Math.max(ramp, 0.001));
+        return k;
+      };
+      for (let i = 0; i < n; i++) {
+        const tr = travel(i);
+        const rc = outward ? tr.c : 1 - tr.c;          // rayon du centre de l'anneau
+        const sgnR = outward ? tr.sgn : -tr.sgn;        // sens de déplacement radial
+        let rIn = Math.max(0, rc - (hw + Math.max(EDGE, ramp)));
+        let rOut = Math.min(1.35, rc + hw + Math.max(EDGE, ramp));
+        if (rOut <= 0.002 || rOut - rIn < 0.002) continue;
+        if (shape === 'circle') {
+          const g = ctx.createRadialGradient(cx, cy, rIn * Rmax, cx, cy, rOut * Rmax);
+          const pts = [rIn, rc - hw, rc - hw / 2, rc, rc + hw / 2, rc + hw, rOut];
+          let last = -1;
+          for (const r of pts) {
+            if (r < rIn || r > rOut) continue;
+            let sp = (r - rIn) / (rOut - rIn);
+            if (sp <= last) sp = last + 0.0001;
+            if (sp > 1) break;
+            last = sp;
+            g.addColorStop(sp, `rgba(${col.r},${col.g},${col.b},${Math.max(0, Math.min(1, alphaAt(r, rc, sgnR)))})`);
+          }
+          ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+        } else {
+          // Losange : anneaux concentriques tracés par couches successives
+          const steps = 18;
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(rot);
+          const lw = (rOut - rIn) * Rmax / steps * 1.25;
+          for (let s2 = 0; s2 < steps; s2++) {
+            const r = rIn + (rOut - rIn) * (s2 + 0.5) / steps;
+            const a = alphaAt(r, rc, sgnR);
+            if (a <= 0.004) continue;
+            const R = Math.max(0.5, r * Rmax);
+            ctx.strokeStyle = `rgba(${col.r},${col.g},${col.b},${Math.min(1, a)})`;
+            ctx.lineWidth = lw;
+            ctx.beginPath();
+            ctx.moveTo(0, -R); ctx.lineTo(R, 0); ctx.lineTo(0, R); ctx.lineTo(-R, 0);
+            ctx.closePath();
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+      }
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalCompositeOperation = 'source-over';
