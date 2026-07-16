@@ -3792,7 +3792,6 @@ let _fileChannel = null;
 function broadcastVideo(file, mediaId) {
   _mediaIsVideo = true;
   _remotePlaying = false; _remoteDur = 0; _remoteCur = 0;
-  _rtcAttempts = 0;
   showMediaStop(true);
   sendMsg({ type: 'media:endmode', mode: _videoEndMode }); // synchronise la fin de lecture
   // Envoi via MQTT si : écran natif (pas de WebRTC), ou pair-à-pair déjà
@@ -3889,7 +3888,7 @@ async function resendMissingChunks(msg) {
   _armB64VerifyTimer();
 }
 
-let _rtcTransferDone = false, _rtcAttempts = 0;
+let _rtcTransferDone = false;
 let _rtcBroken = false; // pair-à-pair constaté bloqué sur ce réseau (session)
 async function startFileTransfer(file, mediaId) {
   _remotePendingIce = [];
@@ -3902,21 +3901,13 @@ async function startFileTransfer(file, mediaId) {
     if (_rtcTransferDone) return;        // transfert terminé : les aléas sont sans effet
     const st = pc.connectionState;
     if (st === 'failed') {
-      // Relance automatique (jusqu'à 2 tentatives) avant le repli MQTT
-      if (_rtcAttempts < 2) {
-        _rtcAttempts++;
-        setMediaStatus('🔁 Connexion perdue — nouvelle tentative (' + _rtcAttempts + '/2)…');
-        try { pc.close(); } catch (_) {}
-        setTimeout(() => { if (pc === _rtcPc) startFileTransfer(file, mediaId); }, 600);
-      } else {
-        // Réseau qui bloque le pair-à-pair (isolation Wi-Fi, etc.) :
-        // repli automatique sur l'envoi via le canal MQTT.
-        _rtcBroken = true;
-        setMediaStatus('🌐 Connexion directe impossible — envoi via le canal…');
-        try { pc.close(); } catch (_) {}
-        if (pc === _rtcPc) _rtcPc = null;
-        broadcastVideoBase64(file, mediaId);
-      }
+      // Pair-à-pair bloqué (isolation Wi-Fi, réseaux différents…) :
+      // bascule IMMÉDIATE sur l'envoi via le canal MQTT, sans re-tentative.
+      _rtcBroken = true;
+      setMediaStatus('🌐 Connexion directe impossible — envoi via le canal…');
+      try { pc.close(); } catch (_) {}
+      if (pc === _rtcPc) _rtcPc = null;
+      broadcastVideoBase64(file, mediaId);
     }
     // 'disconnected' est souvent transitoire en WebRTC : on laisse la
     // connexion se rétablir d'elle-même au lieu d'afficher une erreur.
@@ -3951,7 +3942,6 @@ async function sendFileOverChannel(ch, file, mediaId) {
     }
     ch.send(JSON.stringify({ done: true }));
     _rtcTransferDone = true; // les changements d'état RTC ultérieurs sont ignorés
-    _rtcAttempts = 0;
     setMediaStatus('🎬 Lecture sur l\'écran', true);
     showMediaPlay(true); setPlayBtn(false); showMediaTimeline(true);
   } catch (e) { setMediaStatus('⚠ Échec du transfert'); }
