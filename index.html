@@ -321,6 +321,17 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Anneaux de statut (contour pulsé en fade) ──
+   violet = effet en diffusion · orange = média en diffusion · rouge = écran OFF */
+.st-effect{--stc:#d05cff}
+.st-media{--stc:#FF6B2C}
+.st-off{--stc:#ff3b30}
+.st-effect,.st-media,.st-off{animation:stPulse 1.5s ease-in-out infinite}
+@keyframes stPulse{
+  0%,100%{box-shadow:0 0 0 2px var(--stc),0 0 14px var(--stc)}
+  50%{box-shadow:0 0 0 2px rgba(0,0,0,0),0 0 14px rgba(0,0,0,0)}
+}
 </style>
 </head>
 <body>
@@ -1670,6 +1681,7 @@ function selectEffect(name) {
       loadTvBlockEditor();
     }
   }
+  updateStatusRings();
   scheduleEffectSend();
 }
 
@@ -1736,6 +1748,26 @@ function _pvRestoreBase() {
     const el = document.getElementById(id);
     if (el) { el.style.transition = ''; el.style.backgroundColor = currentColor; }
   }
+}
+
+// ── Anneaux de statut : contour pulsé sur la preview et les onglets ──
+// Priorité preview : rouge (écran OFF) > orange (média) > violet (effet).
+function updateStatusRings() {
+  const fxOn = !!activeScreenEffect;
+  const mediaOn = typeof _activeMediaId !== 'undefined' && !!_activeMediaId;
+  const offOn = typeof remoteBlackout !== 'undefined' && remoteBlackout;
+  const cls = offOn ? 'st-off' : (mediaOn ? 'st-media' : (fxOn ? 'st-effect' : null));
+  for (const id of ['previewSwatch', 'stickySwatch']) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.classList.remove('st-off', 'st-media', 'st-effect');
+    if (cls) el.classList.add(cls);
+  }
+  // Chaque onglet signale ce qu'il est en train de diffuser
+  const tabFx = document.getElementById('tab-effects');
+  if (tabFx) tabFx.classList.toggle('st-effect', fxOn);
+  const tabMedia = document.getElementById('tab-media');
+  if (tabMedia) tabMedia.classList.toggle('st-media', mediaOn);
 }
 
 // Vignette du média en cours de diffusion, par-dessus la couleur (comme
@@ -1864,6 +1896,7 @@ function stopAllEffects() {
   if (panel) panel.style.display = 'none';
   sendMsg({ type:'effect', name:null, active:false });
   refreshPreviewFx(); // aperçu : retour à la couleur de base
+  updateStatusRings();
 }
 
 // ══════════════════════════ EFFECTS TAB — RÉCEPTEUR (screen) ══════════════════════════
@@ -2599,6 +2632,7 @@ function toggleBlackout() {
   // Bouton compact de la mini-carte sticky
   const sb = document.getElementById('stickyBlackoutBtn');
   if (sb) { sb.classList.toggle('on', remoteBlackout); sb.textContent = remoteBlackout ? 'Écran OFF' : 'Écran ON'; }
+  updateStatusRings();
   sendMsg({ type: 'blackout', on: remoteBlackout });
 }
 
@@ -2893,6 +2927,7 @@ function renderPool() {
       + `<span class="pool-name">${escapeHtml(it.name)}</span></div>`;
   }).join('');
   _pvUpdateMedia(); // l'aperçu affiche la vignette du média diffusé
+  updateStatusRings();
 }
 
 // ── Réordonnancement du pool par glisser-déposer (tactile + souris) ──
