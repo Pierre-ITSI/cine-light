@@ -1692,9 +1692,9 @@ const EFFECT_FAMILIES = [
 const EFFECT_CONFIG = {
   // — Spatiaux —
   chaser:    { icon:'💫', name:'Chaser', family:'spatial', speedLabel:'Vitesse', min:0.1, max:6, step:0.1, def:1, intDef:100,
-               color1:'#ffffff', color2:'#05050a', c1Label:'Bandes', c2Label:'Fond',
+               color1:'#ffffff', color2:'#05050a', c1Label:'Écran (allumé)', c2Label:'Bande',
                count:{ label:'Nombre de bandes', min:1, max:12, def:3 }, dir:true, mode:true,
-               width:8, wing:1, rot:0, fade:250, fadeLabel:'Traîne' },
+               width:8, wing:1, rot:0, fade:250, fadeLabel:'Rallumage progressif' },
   noise:     { icon:'📶', name:'Noise', family:'spatial', speedLabel:'Vitesse (img/s)', min:1, max:30, step:1, def:12, intDef:90,
                color1:'#ffffff', c1Label:'Teinte',
                count:{ label:'Taille de grain', min:2, max:32, def:8 } },
@@ -2395,31 +2395,39 @@ const FX_LIB = {
   },
   // — Spatiaux —
   chaser(ctx, W, H, t, p, st) {
-    const bg = _fxHexRgb(p.color2 || '#05050a');
-    const col = _fxHexRgb(p.color1 || '#ffffff');
+    // Écran allumé (color1) parcouru par une bande (color2). La bande éteint
+    // l'écran à son passage : extinction nette à l'avant, puis RALLUMAGE
+    // PROGRESSIF derrière sa fin (longueur = fader « Rallumage »).
+    const lit = _fxHexRgb(p.color1 || '#ffffff');
+    const band = _fxHexRgb(p.color2 || '#05050a');
     const n = Math.max(1, p.count || 3);
     const k = p.intensity / 100;
     const w = Math.max(0.01, (p.width != null ? p.width : 8) / 100); // largeur de bande
     const hw = w / 2;
-    const tail = ((p.fade || 250) / 600) * 0.5;                       // longueur de traîne
+    const ramp = Math.max(0.02, ((p.fade != null ? p.fade : 250) / 600) * 0.8); // rampe de rallumage
+    const EDGE = 0.02; // petite rampe d'extinction à l'avant
     const wing = Math.max(1, Math.min(4, p.wing || 1));
     const bounce = p.mode === 'bounce';
     // Angle = base de la direction (H/V/diag) + fader de rotation
     const dir = p.dir || 'h';
     const rot = ((p.rot || 0) * Math.PI / 180)
               + (dir === 'v' ? Math.PI / 2 : dir === 'd' ? Math.PI / 4 : 0);
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = `rgb(${bg.r},${bg.g},${bg.b})`; ctx.fillRect(0, 0, W, H);
-    ctx.globalCompositeOperation = 'lighter';
     // Espace tourné autour du centre : on dessine dans un carré D×D
     // (D = diagonale) pour couvrir les coins quel que soit l'angle.
     const D = Math.sqrt(W * W + H * H);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, W, H);
     ctx.translate(W / 2, H / 2);
     ctx.rotate(rot);
     ctx.translate(-D / 2, -D / 2);
+    // 1) Écran allumé (l'intensité laisse transparaître la couleur de bande)
+    ctx.fillStyle = `rgba(${lit.r},${lit.g},${lit.b},${k})`;
+    ctx.fillRect(0, 0, D, D);
+    // 2) Encoches d'extinction : chaque bande efface la lumière (destination-out)
+    ctx.globalCompositeOperation = 'destination-out';
     // Course loop étendue : la bande entre puis sort ENTIÈREMENT de l'écran
-    const cStart = -(hw + tail + 0.02), cEnd = 1 + hw + tail + 0.02, span = cEnd - cStart;
-    const coreStop = Math.min(1, tail / (tail + w) || 0);
+    const cStart = -(hw + ramp + EDGE), cEnd = 1 + hw + ramp + EDGE, span = cEnd - cStart;
+    const L = EDGE + w + ramp; // longueur totale du profil d'encoche
     for (let s = 0; s < wing; s++) {
       ctx.save();
       // Wing : l'axe est découpé en sections miroir alternées
@@ -2440,18 +2448,24 @@ const FX_LIB = {
         }
         if (p.invert) { c = 1 - c; fwd = !fwd; }
         const sgn = fwd ? 1 : -1;
-        const a = c - sgn * (hw + tail); // bout de la traîne
-        const b = c + sgn * hw;          // bord avant de la bande
+        // Profil : alpha 0 juste devant → 1 sur la bande → retour progressif à 0
+        const a = c + sgn * (hw + EDGE);  // juste devant la bande
+        const b = c - sgn * (hw + ramp);  // fin du rallumage derrière
         const g = ctx.createLinearGradient(a * D, 0, b * D, 0);
         g.addColorStop(0, 'rgba(0,0,0,0)');
-        g.addColorStop(coreStop, `rgba(${col.r},${col.g},${col.b},${0.85 * k})`);
-        g.addColorStop(1, `rgba(${col.r},${col.g},${col.b},${k})`);
+        g.addColorStop(Math.min(1, EDGE / L), 'rgba(0,0,0,1)');
+        g.addColorStop(Math.min(1, (EDGE + w) / L), 'rgba(0,0,0,1)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = g; ctx.fillRect(0, 0, D, D);
       }
       ctx.restore();
     }
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    // 3) La couleur de bande apparaît dans les zones éteintes
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = `rgb(${band.r},${band.g},${band.b})`;
+    ctx.fillRect(0, 0, D, D);
     ctx.globalCompositeOperation = 'source-over';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
   },
   noise(ctx, W, H, t, p, st) {
     const fps = Math.max(1, p.speed || 12);
