@@ -1,5 +1,5 @@
 /* Service Worker — Ciné Light PWA */
-const CACHE = 'setremote-v29';
+const CACHE = 'setremote-v30';
 const SHELL = [
   './',
   './index.html',

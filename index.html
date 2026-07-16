@@ -774,6 +774,30 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           <button class="chip" id="fxmode-invert" onclick="setFxInvert(!fxInvert)">⮌ Invert</button>
         </div>
       </div>
+      <div class="slider-block" id="effectWidthBlock" style="display:none">
+        <div class="slider-header">
+          <label>Largeur de bande</label>
+          <div class="slider-val" id="effectWidthVal">8<span>%</span></div>
+        </div>
+        <input type="range" id="effectWidthSlider" min="1" max="60" step="1" value="8"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block" id="effectWingBlock" style="display:none">
+        <div class="slider-header">
+          <label>Wing · symétrie</label>
+          <div class="slider-val" id="effectWingVal">1</div>
+        </div>
+        <input type="range" id="effectWingSlider" min="1" max="4" step="1" value="1"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block" id="effectRotBlock" style="display:none">
+        <div class="slider-header">
+          <label>Rotation</label>
+          <div class="slider-val" id="effectRotVal">0<span>°</span></div>
+        </div>
+        <input type="range" id="effectRotSlider" min="0" max="359" step="1" value="0"
+               oninput="onEffectParamChange()">
+      </div>
       <div class="effect-colors-row">
         <div class="slider-block" id="effectColor1Block" style="display:none">
           <div class="slider-header"><label id="effectColor1Label">Couleur 1</label></div>
@@ -885,6 +909,14 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       <button class="media-btn" id="mediaPlayBtn" onclick="toggleVideoPlayback()" style="display:none">
         <span class="media-icon" id="mediaPlayIcon">⏸</span><span id="mediaPlayLabel">Pause</span>
       </button>
+      <div id="videoModeRow" style="display:none;margin:4px 0 10px">
+        <div class="panel-label" style="margin-bottom:8px">Fin de lecture</div>
+        <div class="chips-wrap">
+          <button class="chip active" id="vmode-loop" onclick="setVideoEndMode('loop')">🔁 Boucle</button>
+          <button class="chip" id="vmode-pause" onclick="setVideoEndMode('pause')">⏯ 1× puis pause</button>
+          <button class="chip" id="vmode-off" onclick="setVideoEndMode('off')">⏹ 1× puis off</button>
+        </div>
+      </div>
       <div id="mediaTimeline" style="display:none;margin:4px 0 12px">
         <input type="range" id="mediaSeek" min="0" max="100" step="0.1" value="0"
                style="background:linear-gradient(to right,var(--accent),var(--accent) 0%,#333 0%)"
@@ -983,6 +1015,7 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'media:evict')  screenEvictCached(msg.id);
         if (msg.type === 'media:autoadvance') _screenAutoAdvance = !!msg.on;
         if (msg.type === 'media-ctrl')   screenMediaCtrl(msg);
+        if (msg.type === 'media:endmode') screenSetEndMode(msg.mode);
         if (msg.type === 'rtc-offer')    screenHandleOffer(msg.sdp);
         if (msg.type === 'rtc-ice' && msg.from === 'remote') screenAddIce(msg.candidate);
       }
@@ -991,7 +1024,7 @@ function connectMQTT(ch, onConnected) {
         if (msg.type === 'rtc-ice' && msg.from === 'screen') remoteAddIce(msg.candidate);
         if (msg.type === 'media-meta')     remoteOnMeta(msg.dur);
         if (msg.type === 'media-progress') remoteOnProgress(msg.cur, msg.dur, msg.playing);
-        if (msg.type === 'media-ended')    remoteOnEnded();
+        if (msg.type === 'media-ended')    remoteOnEnded(!!msg.off);
         if (msg.type === 'media-error')    remoteOnError(msg.reason);
         if (msg.type === 'media:advance')  advancePool(typeof msg.dir === 'number' ? msg.dir : 1);
         if (msg.type === 'media:cached')   { _screenCached.add(msg.id); _preloadInflight.delete(msg.id); }
@@ -1098,6 +1131,8 @@ function connectChannel() {
     sendMsg({ type: 'media:autoadvance', on: _autoAdvance });
     // Resynchroniser la luminosité de l'écran de jeu
     sendMsg({ type: 'screen:brightness', value: screenBrightnessPct / 100 });
+    // Resynchroniser le comportement de fin de lecture vidéo
+    sendMsg({ type: 'media:endmode', mode: _videoEndMode });
     // Synchroniser l'ordre du pool et précharger les médias sur l'écran
     sendPoolOrder();
     schedulePreload();
@@ -1658,7 +1693,8 @@ const EFFECT_CONFIG = {
   // — Spatiaux —
   chaser:    { icon:'💫', name:'Chaser', family:'spatial', speedLabel:'Vitesse', min:0.1, max:6, step:0.1, def:1, intDef:100,
                color1:'#ffffff', color2:'#05050a', c1Label:'Bandes', c2Label:'Fond',
-               count:{ label:'Nombre de bandes', min:1, max:12, def:3 }, dir:true, mode:true, fade:250, fadeLabel:'Traîne' },
+               count:{ label:'Nombre de bandes', min:1, max:12, def:3 }, dir:true, mode:true,
+               width:8, wing:1, rot:0, fade:250, fadeLabel:'Traîne' },
   noise:     { icon:'📶', name:'Noise', family:'spatial', speedLabel:'Vitesse (img/s)', min:1, max:30, step:1, def:12, intDef:90,
                color1:'#ffffff', c1Label:'Teinte',
                count:{ label:'Taille de grain', min:2, max:32, def:8 } },
@@ -1766,6 +1802,9 @@ function randomizeEffect() {
   }
   if (cfg.dir) setFxDir(['h','v','d'][Math.floor(Math.random() * 3)], true);
   if (cfg.mode) { setFxChaserMode(Math.random() < 0.5 ? 'loop' : 'bounce', true); setFxInvert(Math.random() < 0.5, true); }
+  if (cfg.width != null) document.getElementById('effectWidthSlider').value = Math.round(rnd(2, 40));
+  if (cfg.wing != null) document.getElementById('effectWingSlider').value = Math.round(rnd(1, 4));
+  if (cfg.rot != null) document.getElementById('effectRotSlider').value = Math.round(rnd(0, 359));
   if (cfg.color1) {
     const c = hslToRgb(Math.random() * 360, 90, 55 + Math.random() * 15);
     document.getElementById('effectColor1').value = rgbToHex(c.r, c.g, c.b);
@@ -1817,6 +1856,19 @@ function selectEffect(name) {
     document.getElementById('effectChaserModeBlock').style.display = cfg.mode ? 'block' : 'none';
     if (cfg.mode) { setFxChaserMode(fxChaserMode, true); setFxInvert(fxInvert, true); }
     document.getElementById('fxTapBtn').style.display = cfg.tap ? 'inline-block' : 'none';
+    // Largeur de bande + Wing (chaser)
+    if (_setupEffectOpt('effectWidthBlock', cfg.width != null)) {
+      document.getElementById('effectWidthSlider').value = cfg.width;
+      document.getElementById('effectWidthVal').innerHTML = cfg.width + '<span>%</span>';
+    }
+    if (_setupEffectOpt('effectWingBlock', cfg.wing != null)) {
+      document.getElementById('effectWingSlider').value = cfg.wing;
+      document.getElementById('effectWingVal').textContent = cfg.wing;
+    }
+    if (_setupEffectOpt('effectRotBlock', cfg.rot != null)) {
+      document.getElementById('effectRotSlider').value = cfg.rot;
+      document.getElementById('effectRotVal').innerHTML = cfg.rot + '<span>°</span>';
+    }
     // Couleurs
     if (_setupEffectOpt('effectColor1Block', cfg.color1)) {
       document.getElementById('effectColor1Label').textContent = cfg.c1Label || 'Couleur 1';
@@ -1856,6 +1908,9 @@ function onEffectParamChange() {
   document.getElementById('effectIntensityVal').innerHTML = intensity + '<span>%</span>';
   document.getElementById('effectChaosVal').innerHTML = document.getElementById('effectChaosSlider').value + '<span>%</span>';
   document.getElementById('effectDriftVal').innerHTML = document.getElementById('effectDriftSlider').value + '<span>%</span>';
+  document.getElementById('effectWidthVal').innerHTML = document.getElementById('effectWidthSlider').value + '<span>%</span>';
+  document.getElementById('effectWingVal').textContent = document.getElementById('effectWingSlider').value;
+  document.getElementById('effectRotVal').innerHTML = document.getElementById('effectRotSlider').value + '<span>°</span>';
   const fadeEl = document.getElementById('effectFadeSlider');
   if (fadeEl) document.getElementById('effectFadeVal').innerHTML = fadeEl.value + '<span> ms</span>';
   scheduleEffectSend();
@@ -1873,6 +1928,9 @@ function buildEffectParams() {
   if (cfg.count) params.count = parseInt(document.getElementById('effectBurstSlider').value);
   if (cfg.dir) params.dir = fxDir;
   if (cfg.mode) { params.mode = fxChaserMode; params.invert = fxInvert; }
+  if (cfg.width != null) params.width = parseInt(document.getElementById('effectWidthSlider').value);
+  if (cfg.wing != null) params.wing = parseInt(document.getElementById('effectWingSlider').value);
+  if (cfg.rot != null) params.rot = parseInt(document.getElementById('effectRotSlider').value);
   if (cfg.color1) params.color1 = document.getElementById('effectColor1').value;
   if (cfg.color2) params.color2 = document.getElementById('effectColor2').value;
   if (cfg.fade != null) params.fade = parseInt(document.getElementById('effectFadeSlider').value);
@@ -1903,6 +1961,18 @@ function loadEffectParamsToUI(name, p, dir) {
   }
   if (cfg.dir && (dir || p.dir)) setFxDir(dir || p.dir, true);
   if (cfg.mode) { if (p.mode) setFxChaserMode(p.mode, true); setFxInvert(!!p.invert, true); }
+  if (cfg.width != null && p.width != null) {
+    document.getElementById('effectWidthSlider').value = p.width;
+    document.getElementById('effectWidthVal').innerHTML = p.width + '<span>%</span>';
+  }
+  if (cfg.wing != null && p.wing != null) {
+    document.getElementById('effectWingSlider').value = p.wing;
+    document.getElementById('effectWingVal').textContent = p.wing;
+  }
+  if (cfg.rot != null && p.rot != null) {
+    document.getElementById('effectRotSlider').value = p.rot;
+    document.getElementById('effectRotVal').innerHTML = p.rot + '<span>°</span>';
+  }
   if (cfg.color1 && p.color1) document.getElementById('effectColor1').value = p.color1;
   if (cfg.color2 && p.color2) document.getElementById('effectColor2').value = p.color2;
   if (cfg.fade != null && p.fade != null) document.getElementById('effectFadeSlider').value = p.fade;
@@ -2329,36 +2399,58 @@ const FX_LIB = {
     const col = _fxHexRgb(p.color1 || '#ffffff');
     const n = Math.max(1, p.count || 3);
     const k = p.intensity / 100;
-    const tail = 0.06 + ((p.fade || 250) / 600) * 0.5; // longueur de traîne
+    const w = Math.max(0.01, (p.width != null ? p.width : 8) / 100); // largeur de bande
+    const hw = w / 2;
+    const tail = ((p.fade || 250) / 600) * 0.5;                       // longueur de traîne
+    const wing = Math.max(1, Math.min(4, p.wing || 1));
+    const bounce = p.mode === 'bounce';
+    // Angle = base de la direction (H/V/diag) + fader de rotation
+    const dir = p.dir || 'h';
+    const rot = ((p.rot || 0) * Math.PI / 180)
+              + (dir === 'v' ? Math.PI / 2 : dir === 'd' ? Math.PI / 4 : 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = `rgb(${bg.r},${bg.g},${bg.b})`; ctx.fillRect(0, 0, W, H);
     ctx.globalCompositeOperation = 'lighter';
-    const dir = p.dir || 'h';
-    const bounce = p.mode === 'bounce';
-    for (let i = 0; i < n; i++) {
-      // Position brute : les bandes se répartissent sur le cycle complet
-      const raw = t * (p.speed || 1) * 0.35 + (i / n) * (bounce ? 2 : 1);
-      let u, fwd; // position [0..1] + sens de déplacement courant
-      if (bounce) {
-        const ph = raw % 2;          // aller-retour : 0→1 puis 1→0
-        fwd = ph < 1;
-        u = fwd ? ph : 2 - ph;
-      } else {
-        fwd = true;
-        u = raw % 1;
-        u = u * (1 + tail * 2) - tail; // la traîne sort proprement de l'écran
+    // Espace tourné autour du centre : on dessine dans un carré D×D
+    // (D = diagonale) pour couvrir les coins quel que soit l'angle.
+    const D = Math.sqrt(W * W + H * H);
+    ctx.translate(W / 2, H / 2);
+    ctx.rotate(rot);
+    ctx.translate(-D / 2, -D / 2);
+    // Course loop étendue : la bande entre puis sort ENTIÈREMENT de l'écran
+    const cStart = -(hw + tail + 0.02), cEnd = 1 + hw + tail + 0.02, span = cEnd - cStart;
+    const coreStop = Math.min(1, tail / (tail + w) || 0);
+    for (let s = 0; s < wing; s++) {
+      ctx.save();
+      // Wing : l'axe est découpé en sections miroir alternées
+      const mirror = s % 2 === 1;
+      const Ds = D / wing;
+      ctx.translate(s * Ds + (mirror ? Ds : 0), 0);
+      ctx.scale((mirror ? -1 : 1) * Ds / D, 1);
+      for (let i = 0; i < n; i++) {
+        const raw = t * (p.speed || 1) * 0.35 + (i / n) * (bounce ? 2 : 1);
+        let c, fwd; // centre de bande + sens de déplacement
+        if (bounce) {
+          const ph = raw % 2;      // aller-retour : le centre touche les deux bords
+          fwd = ph < 1;
+          c = fwd ? ph : 2 - ph;
+        } else {
+          fwd = true;
+          c = cStart + (raw % 1) * span;
+        }
+        if (p.invert) { c = 1 - c; fwd = !fwd; }
+        const sgn = fwd ? 1 : -1;
+        const a = c - sgn * (hw + tail); // bout de la traîne
+        const b = c + sgn * hw;          // bord avant de la bande
+        const g = ctx.createLinearGradient(a * D, 0, b * D, 0);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(coreStop, `rgba(${col.r},${col.g},${col.b},${0.85 * k})`);
+        g.addColorStop(1, `rgba(${col.r},${col.g},${col.b},${k})`);
+        ctx.fillStyle = g; ctx.fillRect(0, 0, D, D);
       }
-      if (p.invert) { u = 1 - u; fwd = !fwd; }
-      const a = fwd ? u - tail : u + tail; // queue de la traîne
-      const b = fwd ? u + 0.03 : u - 0.03; // tête de la bande
-      let g;
-      if (dir === 'h') g = ctx.createLinearGradient(a * W, 0, b * W, 0);
-      else if (dir === 'v') g = ctx.createLinearGradient(0, a * H, 0, b * H);
-      else g = ctx.createLinearGradient(a * W, a * H, b * W, b * H);
-      g.addColorStop(0, 'rgba(0,0,0,0)');
-      g.addColorStop(0.85, `rgba(${col.r},${col.g},${col.b},${0.55 * k})`);
-      g.addColorStop(1, `rgba(${col.r},${col.g},${col.b},${0.95 * k})`);
-      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      ctx.restore();
     }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalCompositeOperation = 'source-over';
   },
   noise(ctx, W, H, t, p, st) {
@@ -3204,6 +3296,19 @@ function showMediaStop(show) {
 function showMediaPlay(show) {
   const b = document.getElementById('mediaPlayBtn');
   if (b) b.style.display = show ? 'flex' : 'none';
+  const r = document.getElementById('videoModeRow');
+  if (r) r.style.display = show ? 'block' : 'none';
+}
+
+// ── Fin de lecture vidéo : boucle / 1× puis pause / 1× puis off ──
+let _videoEndMode = 'loop';
+function setVideoEndMode(m) {
+  _videoEndMode = (m === 'pause' || m === 'off') ? m : 'loop';
+  ['loop','pause','off'].forEach(k => {
+    const b = document.getElementById('vmode-' + k);
+    if (b) b.classList.toggle('active', k === _videoEndMode);
+  });
+  sendMsg({ type: 'media:endmode', mode: _videoEndMode });
 }
 function setPlayBtn(playing) {
   const ic = document.getElementById('mediaPlayIcon');
@@ -3261,8 +3366,16 @@ function remoteOnProgress(cur, dur, playing) {
   if (c) c.textContent = fmtTime(_remoteCur);
   paintSeek(_remoteDur ? (_remoteCur / _remoteDur) * 100 : 0);
 }
-function remoteOnEnded() {
+function remoteOnEnded(off) {
   _remotePlaying = false; setPlayBtn(false);
+  if (off) {
+    // Mode « 1× puis off » : l'écran a coupé le média à la fin de la lecture
+    teardownBroadcast();
+    _activeMediaId = null;
+    renderPool();
+    showMediaStop(false);
+    setMediaStatus('Lecture terminée — écran libéré');
+  }
 }
 // L'écran n'a pas pu lire la vidéo (codec non supporté, etc.)
 function remoteOnError(reason) {
@@ -3497,6 +3610,7 @@ function selectMedia(id) {
     if (it.kind === 'vid') {
       _mediaIsVideo = true; _remotePlaying = true;
       showMediaPlay(true); setPlayBtn(true); showMediaTimeline(true);
+      sendMsg({ type: 'media:endmode', mode: _videoEndMode });
       setMediaStatus('🎬 Lecture instantanée (cache écran)', true);
     } else {
       setMediaStatus('🖼 Affichage instantané (cache écran)', true);
@@ -3635,6 +3749,7 @@ function broadcastVideo(file, mediaId) {
   _mediaIsVideo = true;
   _remotePlaying = false; _remoteDur = 0; _remoteCur = 0;
   showMediaStop(true);
+  sendMsg({ type: 'media:endmode', mode: _videoEndMode }); // synchronise la fin de lecture
   // Écran natif : il ne parle pas WebRTC → on diffuse la vidéo en base64
   // chunké (protocole media:upload/chunk/play), qu'il reconstitue en fichier.
   if (_recvCaps && _recvCaps.videoMode === 'b64') { broadcastVideoBase64(file); return; }
@@ -3849,6 +3964,14 @@ function playScreenVid(vid) {
 function sendScreenState(vid) {
   sendMsg({ type: 'media-progress', cur: vid.currentTime || 0, dur: vid.duration || 0, playing: !vid.paused });
 }
+// — Comportement de fin de lecture (reçu de la télécommande) —
+let _screenVidEndMode = 'loop';
+function screenSetEndMode(m) {
+  _screenVidEndMode = (m === 'pause' || m === 'off') ? m : 'loop';
+  const vid = document.getElementById('screen-media-video');
+  if (vid) vid.loop = _screenVidEndMode === 'loop'; // s'applique aussi à la vidéo en cours
+}
+
 // — Contrôle de lecture envoyé par la télécommande —
 function screenMediaCtrl(msg) {
   const vid = document.getElementById('screen-media-video');
@@ -3919,7 +4042,8 @@ function screenPlayVideoUrl(url) {
   }
   _screenVidUrl = url;
   vid.srcObject = null;
-  vid.loop = false; vid.playsInline = true; vid.muted = false; vid.preload = 'auto';
+  vid.loop = _screenVidEndMode === 'loop';
+  vid.playsInline = true; vid.muted = false; vid.preload = 'auto';
   vid.onloadedmetadata = () => { sendMsg({ type: 'media-meta', dur: vid.duration }); sendScreenState(vid); };
   vid.onloadeddata = () => { showScreenMedia('video'); }; // première image visible dès que prête
   vid.ontimeupdate = () => {
@@ -3930,7 +4054,16 @@ function screenPlayVideoUrl(url) {
   };
   vid.onplay  = () => sendScreenState(vid);
   vid.onpause = () => sendScreenState(vid);
-  vid.onended = () => sendMsg({ type: 'media-ended' });
+  vid.onended = () => {
+    if (_screenVidEndMode === 'off') {
+      // « 1× puis off » : coupe le média, l'écran revient au fond couleur
+      hideScreenMedia();
+      sendMsg({ type: 'media-ended', off: true });
+    } else {
+      // « 1× puis pause » : reste figé sur la dernière image
+      sendMsg({ type: 'media-ended' });
+    }
+  };
   vid.onerror = () => {
     const code = vid.error && vid.error.code;
     const reason = (code === 4) ? 'src' : (code === 3) ? 'decode' : 'load';
