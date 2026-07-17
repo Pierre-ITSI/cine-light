@@ -344,6 +344,9 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .sc-call.ios{background:linear-gradient(180deg,#272c38,#0b0d13);overflow:hidden}
 .sc-ios-bg{position:absolute;inset:-50px;background-size:cover;background-position:center;filter:blur(50px) brightness(.5) saturate(1.35);z-index:0}
 .sc-call.ios>*{position:relative;z-index:1}
+/* Les couches de fond doivent rester absolues sous le contenu (la règle
+   >* ci-dessus les repasserait en relative → fond invisible) */
+.sc-call.ios>.sc-ios-bg,.sc-call.ios>.sc-ios-fullshade{position:absolute;z-index:0}
 .sc-ios-head{display:flex;flex-direction:column;align-items:center;gap:4px}
 .sc-ios-name{font-size:2.3rem;font-weight:600;letter-spacing:.2px;text-align:center;line-height:1.15}
 .sc-ios-sub{font-size:1rem;color:rgba(255,255,255,.65)}
@@ -4569,11 +4572,16 @@ function onCallPhoto(files) {
   if (!files || !files[0]) return;
   const img = new Image();
   img.onload = () => {
-    const c = document.createElement('canvas');
-    const s = Math.min(img.width, img.height);
-    c.width = 128; c.height = 128;
-    c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 128, 128);
-    _callPhoto = c.toDataURL('image/jpeg', 0.72);
+    // On conserve le ratio (cap 640 px sur le grand côté) : bon rendu à la
+    // fois en avatar rond (cover) et en photo plein écran. Compressé pour
+    // rester sous la limite de taille d'un message MQTT.
+    const maxD = 640;
+    let w = img.width, h = img.height;
+    const s = Math.min(1, maxD / Math.max(w, h));
+    w = Math.max(1, Math.round(w * s)); h = Math.max(1, Math.round(h * s));
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    _callPhoto = c.toDataURL('image/jpeg', 0.7);
     URL.revokeObjectURL(img.src);
     const pv = document.getElementById('callPhotoPreview');
     if (pv) pv.style.backgroundImage = 'url(' + _callPhoto + ')';
