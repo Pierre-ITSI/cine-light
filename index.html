@@ -1081,8 +1081,6 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       <div class="panel-label">Sonnerie</div>
       <div class="chips-wrap" style="margin-bottom:14px">
         <button class="chip active" id="callring-classic" onclick="setCallRing('classic')">Classique</button>
-        <button class="chip" id="callring-iphone" onclick="setCallRing('iphone')">Style iPhone</button>
-        <button class="chip" id="callring-samsung" onclick="setCallRing('samsung')">Style Samsung</button>
         <button class="chip" id="callring-digital" onclick="setCallRing('digital')">Digitale</button>
         <button class="chip" id="callring-soft" onclick="setCallRing('soft')">Douce</button>
         <button class="chip" id="callring-silent" onclick="setCallRing('silent')">Silencieux</button>
@@ -4459,7 +4457,7 @@ function setCallStyle(s) {
 }
 function setCallRing(r) {
   callRing = r;
-  ['classic','iphone','samsung','digital','soft','silent'].forEach(x => {
+  ['classic','digital','soft','silent'].forEach(x => {
     const b = document.getElementById('callring-' + x);
     if (b) b.classList.toggle('active', x === r);
   });
@@ -4570,44 +4568,15 @@ function _tone(freq, t0, dur, vol, type) {
   o.start(ctx.currentTime + t0);
   o.stop(ctx.currentTime + t0 + dur + 0.3);
 }
-// Note percussive type marimba (attaque brève + partiel brillant)
-function _pluck(freq, t0, vol) {
-  const ctx = _ac(); if (!ctx) return;
-  const mk = (f, v) => {
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = 'sine'; o.frequency.value = f;
-    g.gain.setValueAtTime(0, ctx.currentTime + t0);
-    g.gain.linearRampToValueAtTime(v, ctx.currentTime + t0 + 0.008);
-    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t0 + 0.5);
-    o.connect(g); g.connect(ctx.destination);
-    o.start(ctx.currentTime + t0); o.stop(ctx.currentTime + t0 + 0.6);
-  };
-  mk(freq, vol);
-  mk(freq * 4, vol * 0.15);
-}
 function _ringBurst(kind) {
   if (kind === 'digital') { for (let i = 0; i < 4; i++) _tone(950, i * 0.18, 0.12, 0.14, 'square'); }
   else if (kind === 'soft') { [523, 659, 784, 1047].forEach((f, i) => _tone(f, i * 0.16, 0.3, 0.14, 'sine')); }
-  else if (kind === 'iphone') {
-    // Riff marimba « dans l'esprit iPhone » (approximation originale)
-    const E5 = 659.3, C5 = 523.3, G5 = 784, A5 = 880;
-    [[E5, 0], [C5, .15], [E5, .3], [C5, .45], [G5, .6],
-     [E5, .9], [C5, 1.05], [E5, 1.2], [C5, 1.35], [A5, 1.5]]
-      .forEach(n => _pluck(n[0], n[1], 0.2));
-  }
-  else if (kind === 'samsung') {
-    // Motif mélodique ascendant « dans l'esprit Samsung » (approximation)
-    [[523.3, 0, .2], [587.3, .22, .2], [659.3, .44, .2], [784, .66, .28],
-     [659.3, 1.0, .2], [880, 1.24, .5]]
-      .forEach(n => _tone(n[0], n[1], n[2], 0.14, 'triangle'));
-    _tone(1046.5, 1.8, 0.4, 0.08, 'sine');
-  }
   else { _tone(440, 0, 1.2, 0.12, 'sine'); _tone(480, 0, 1.2, 0.12, 'sine'); } // classique
 }
 function _startRinging(kind) {
   if (kind === 'silent') return;
   _ringBurst(kind);
-  const IV = { digital: 1600, soft: 2300, iphone: 2600, samsung: 3400 };
+  const IV = { digital: 1600, soft: 2300 };
   _callRingTimer = setInterval(() => _ringBurst(kind), IV[kind] || 3000);
 }
 function _playNotifSound(kind) {
