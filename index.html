@@ -377,6 +377,28 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 @keyframes notifIn{from{transform:translateY(-130%)}to{transform:translateY(0)}}
 .sc-notif-icon{width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.35rem;color:#fff}
 .sc-notif-body{flex:1;min-width:0}
+/* Apparitions / disparitions */
+@keyframes scFadeIn{from{opacity:0}to{opacity:1}}
+.sc-call{animation:scFadeIn .45s ease}
+.sc-lock{animation:scFadeIn .5s ease}
+@keyframes notifOut{to{transform:translateY(-140%);opacity:.4}}
+.sc-notif.sc-out,.sc-callbar.sc-out{animation:notifOut .35s ease-in forwards}
+@keyframes scFadeOut{to{opacity:0}}
+.sc-lock.sc-lockout{animation:scFadeOut .4s ease forwards}
+/* Photo plein écran (style iOS) */
+.sc-ios-bg.full{filter:none;inset:0}
+.sc-ios-fullshade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,0) 32%,rgba(0,0,0,0) 55%,rgba(0,0,0,.6));pointer-events:none;z-index:0}
+/* Bandeau d'appel entrant (écran déverrouillé, iOS 26) */
+.sc-callbar{position:absolute;top:calc(14px + env(safe-area-inset-top));left:12px;right:12px;background:rgba(40,40,46,.78);backdrop-filter:blur(28px) saturate(1.6);border-radius:28px;padding:10px 12px;display:flex;align-items:center;gap:11px;color:#fff;box-shadow:0 10px 34px rgba(0,0,0,.5),inset 0 0 0 .5px rgba(255,255,255,.15);animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
+#screen-call.notif .sc-callbar{pointer-events:auto}
+.cb-avatar{width:42px;height:42px;border-radius:50%;background-color:#3a4756;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:1.1rem;flex-shrink:0}
+.cb-info{flex:1;min-width:0}
+.cb-name{font-size:.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb-sub{font-size:.72rem;opacity:.6}
+.cb-btn{width:44px;height:44px;border-radius:50%;border:none;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.cb-btn.answer{background:#34c759}
+.cb-btn.decline{background:#ff3b30}
+.cb-btn svg{width:22px;height:22px}
 /* Écran verrouillé simulé (iOS 26) */
 .sc-lock{position:absolute;inset:0;background:linear-gradient(180deg,#2a3140,#0c0f16);background-size:cover;background-position:center;display:flex;flex-direction:column;align-items:center;color:#fff;padding:calc(46px + env(safe-area-inset-top)) 18px calc(14px + env(safe-area-inset-bottom));overflow:hidden;cursor:pointer}
 .sc-lock-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,0) 32%,rgba(0,0,0,0) 62%,rgba(0,0,0,.32));pointer-events:none}
@@ -1043,6 +1065,20 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
           <button class="chip" id="callstyle-android" onclick="setCallStyle('android')">Android</button>
         </div>
       </div>
+      <div id="callPresentRow" style="margin-top:14px">
+        <div class="panel-label">Présentation</div>
+        <div class="chips-wrap">
+          <button class="chip active" id="callpres-full" onclick="setCallPresent('full')">Plein écran</button>
+          <button class="chip" id="callpres-banner" onclick="setCallPresent('banner')">Bandeau haut</button>
+        </div>
+      </div>
+      <div id="callPhotoModeRow" style="margin-top:14px">
+        <div class="panel-label">Photo (style iOS)</div>
+        <div class="chips-wrap">
+          <button class="chip active" id="callphoto-avatar" onclick="setCallPhotoMode('avatar')">Avatar</button>
+          <button class="chip" id="callphoto-full" onclick="setCallPhotoMode('full')">Plein écran</button>
+        </div>
+      </div>
     </div>
     <div class="panel">
       <div class="panel-label">Appelant</div>
@@ -1085,6 +1121,12 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
         <button class="chip" id="callring-soft" onclick="setCallRing('soft')">Douce</button>
         <button class="chip" id="callring-silent" onclick="setCallRing('silent')">Silencieux</button>
       </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callAudioInput').click()">🎙 Bande son au décroché</button>
+        <button class="chip" id="callAudioClear" style="display:none" onclick="clearCallAudio()">✕</button>
+        <input type="file" id="callAudioInput" accept="audio/*" style="display:none" onchange="onCallAudio(this.files);this.value=''">
+      </div>
+      <div class="media-status" id="callAudioStatus" style="margin-bottom:12px;text-align:left">Aucune bande son — le décroché reste silencieux.</div>
       <div class="slider-block" style="margin-bottom:0">
         <div class="slider-header"><label>Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
         <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
@@ -1311,8 +1353,9 @@ function connectChannel() {
     sendMsg({ type: 'screen:brightness', value: screenBrightnessPct / 100 });
     // Resynchroniser le comportement de fin de lecture vidéo
     sendMsg({ type: 'media:endmode', mode: _videoEndMode });
-    // Renvoyer le fond d'écran verrouillé (le cache écran se vide au rechargement)
+    // Renvoyer le fond d'écran verrouillé + la bande son (le cache écran se vide au rechargement)
     if (_lockWallData) sendImageChunks(_lockWallData, { mediaId: '__lockwall', show: false });
+    if (_callAudioData) sendImageChunks(_callAudioData, { mediaId: '__callaudio', show: false });
     // Synchroniser l'ordre du pool et précharger les médias sur l'écran
     sendPoolOrder();
     schedulePreload();
@@ -4440,9 +4483,11 @@ function setCallKind(k) {
     if (b) b.classList.toggle('active', x === k);
   });
   document.getElementById('callStyleRow').style.display = k === 'call' ? 'block' : 'none';
+  document.getElementById('callPresentRow').style.display = k === 'call' ? 'block' : 'none';
   document.getElementById('callMsgPanel').style.display = k === 'call' ? 'none' : 'block';
   document.getElementById('callLockPanel').style.display = k === 'call' ? 'none' : 'block';
   document.getElementById('callRingPanel').style.display = k === 'call' ? 'block' : 'none';
+  _syncCallPhotoRow();
   const btn = document.getElementById('callTriggerBtn');
   if (btn) btn.innerHTML = k === 'call'
     ? '<span class="media-icon">📞</span> Faire sonner'
@@ -4454,6 +4499,60 @@ function setCallStyle(s) {
     const b = document.getElementById('callstyle-' + x);
     if (b) b.classList.toggle('active', x === s);
   });
+  _syncCallPhotoRow();
+}
+
+// Présentation de l'appel entrant : plein écran ou bandeau haut (iOS 26)
+let callPresent = 'full', callPhotoMode = 'avatar';
+function setCallPresent(v) {
+  callPresent = v;
+  ['full','banner'].forEach(x => {
+    const b = document.getElementById('callpres-' + x);
+    if (b) b.classList.toggle('active', x === v);
+  });
+}
+function setCallPhotoMode(v) {
+  callPhotoMode = v;
+  ['avatar','full'].forEach(x => {
+    const b = document.getElementById('callphoto-' + x);
+    if (b) b.classList.toggle('active', x === v);
+  });
+}
+function _syncCallPhotoRow() {
+  const r = document.getElementById('callPhotoModeRow');
+  if (r) r.style.display = (callKind === 'call' && callStyle === 'ios') ? 'block' : 'none';
+}
+
+// Bande son jouée par l'écran quand le comédien décroche (voix du correspondant).
+// Envoyée en fragments fiables et mise en cache sur l'écran sous '__callaudio'.
+let _callAudioData = null;
+function onCallAudio(files) {
+  if (!files || !files[0]) return;
+  const f = files[0];
+  const st = document.getElementById('callAudioStatus');
+  if (f.size > 8 * 1024 * 1024) {
+    if (st) st.textContent = '⚠ Fichier trop lourd (max ~8 Mo) — coupez un extrait plus court.';
+    return;
+  }
+  const r = new FileReader();
+  r.onload = async () => {
+    _callAudioData = String(r.result);
+    if (st) st.textContent = '📤 Envoi de la bande son…';
+    await sendImageChunks(_callAudioData, { mediaId: '__callaudio', show: false });
+    if (st) st.textContent = '✓ « ' + (f.name || 'audio') + ' » prête — jouée au décroché.';
+    const c = document.getElementById('callAudioClear');
+    if (c) c.style.display = 'inline-block';
+  };
+  r.onerror = () => { if (st) st.textContent = '⚠ Lecture du fichier impossible'; };
+  r.readAsDataURL(f);
+}
+function clearCallAudio() {
+  _callAudioData = null;
+  const st = document.getElementById('callAudioStatus');
+  if (st) st.textContent = 'Aucune bande son — le décroché reste silencieux.';
+  const c = document.getElementById('callAudioClear');
+  if (c) c.style.display = 'none';
+  sendMsg({ type: 'media:evict', id: '__callaudio' });
 }
 function setCallRing(r) {
   callRing = r;
@@ -4518,6 +4617,9 @@ function triggerCall() {
     msg: (document.getElementById('callMsgText').value || '').slice(0, 200),
     photo: _callPhoto,
     ring: callRing,
+    present: callPresent,
+    photoMode: (callStyle === 'ios') ? callPhotoMode : 'avatar',
+    hasAudio: !!_callAudioData,
     autoAnswer: parseInt(document.getElementById('callAutoSlider').value) || 0,
     lock: lockOn ? {
       time: (document.getElementById('lockTime').value || '').slice(0, 8),
@@ -4597,9 +4699,10 @@ function screenCallStart(m) {
   const el = document.getElementById('screen-call'); if (!el) return;
   el.style.display = 'block';
   if (_callCfg.kind === 'call') {
-    el.classList.remove('notif');
     _callState = 'ringing';
-    _scRenderIncoming();
+    // Présentation « bandeau haut » (écran déverrouillé, iOS 26) vs plein écran
+    if (_callCfg.present === 'banner') { el.classList.add('notif'); _scRenderCallBar(); }
+    else { el.classList.remove('notif'); _scRenderIncoming(); }
     _startRinging(_callCfg.ring || 'classic');
     if (navigator.vibrate) {
       navigator.vibrate([700, 300, 700]);
@@ -4658,8 +4761,18 @@ function _scRenderLock() {
     + '<div class="sc-lock-home"></div>'
     + '</div>';
 }
+// Fond iOS : photo floutée (avatar) ou photo plein écran nette + voile
 function _scIosBg(m) {
-  return m.photo ? '<div class="sc-ios-bg" style="background-image:url(' + m.photo + ')"></div>' : '';
+  if (!m.photo) return '';
+  if (m.photoMode === 'full') {
+    return '<div class="sc-ios-bg full" style="background-image:url(' + m.photo + ')"></div>'
+      + '<div class="sc-ios-fullshade"></div>';
+  }
+  return '<div class="sc-ios-bg" style="background-image:url(' + m.photo + ')"></div>';
+}
+// Avatar masqué quand la photo occupe déjà tout l'écran
+function _scHeadAvatar(m) {
+  return (m.style === 'ios' && m.photoMode === 'full' && m.photo) ? '' : _scAvatarHtml(m);
 }
 // Icônes SVG style iOS (traits/aplats blancs, pas d'emoji)
 const _SCI = {
@@ -4681,11 +4794,11 @@ function _scRenderIncoming() {
   const m = _callCfg, el = document.getElementById('screen-call');
   const style = (m.style === 'ios' || m.style === 'android') ? m.style : 'generic';
   if (style === 'ios') {
-    // iOS 26 : fond photo flouté, avatar, actions vitrées (Rappel / Message)
+    // iOS 26 : fond photo (flouté ou plein écran), avatar, actions vitrées
     el.innerHTML = '<div class="sc-call ios">'
       + _scIosBg(m)
       + '<div class="sc-ios-head">'
-      + _scAvatarHtml(m)
+      + _scHeadAvatar(m)
       + '<div class="sc-ios-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
       + '<div class="sc-ios-sub">' + escapeHtml(m.label || 'mobile') + '</div>'
       + '</div>'
@@ -4751,18 +4864,52 @@ function _scRenderNotif() {
     + '<div class="sc-notif-msg">' + escapeHtml(m.msg || '') + '</div>'
     + '</div></div>';
 }
+// Bandeau d'appel entrant en haut (écran déverrouillé, iOS 26)
+function _scRenderCallBar() {
+  const m = _callCfg, el = document.getElementById('screen-call');
+  const init = escapeHtml(String(m.name || '?').trim().charAt(0).toUpperCase() || '?');
+  const av = m.photo
+    ? '<div class="cb-avatar" style="background-image:url(' + m.photo + ')"></div>'
+    : '<div class="cb-avatar">' + init + '</div>';
+  el.innerHTML = '<div class="sc-callbar">'
+    + av
+    + '<div class="cb-info"><div class="cb-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
+    + '<div class="cb-sub">' + escapeHtml(m.label || 'Appel…') + '</div></div>'
+    + '<button class="cb-btn decline" onclick="event.stopPropagation();screenCallDecline()">' + _SCI.handsetDown + '</button>'
+    + '<button class="cb-btn answer" onclick="event.stopPropagation();screenCallAnswer()">' + _SCI.handset + '</button>'
+    + '</div>';
+}
 function _scTickInCall() {
   const el = document.getElementById('scCallTimer'); if (!el) return;
   const s = Math.floor((Date.now() - _callT0Scr) / 1000);
   el.textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+}
+// Bande son du décroché : jouée sur l'écran (voix du correspondant)
+let _callAudioEl = null;
+function _playCallAudio() {
+  _stopCallAudio();
+  const c = _mediaCache.get('__callaudio');
+  if (!c || !c.data) return;
+  try {
+    const a = new Audio(c.data);
+    a.play().catch(() => {}); // le geste sur l'écran a déjà débloqué l'audio
+    _callAudioEl = a;
+  } catch (_) {}
+}
+function _stopCallAudio() {
+  if (_callAudioEl) { try { _callAudioEl.pause(); } catch (_) {} _callAudioEl = null; }
 }
 function screenCallAnswer() {
   if (_callState !== 'ringing') return;
   _callState = 'incall';
   _scStopRing();
   _callT0Scr = Date.now();
+  // Décroché depuis un bandeau : bascule en plein écran d'appel en cours
+  const el = document.getElementById('screen-call');
+  if (el) el.classList.remove('notif');
   _scRenderInCall();
   _callClockTimer = setInterval(_scTickInCall, 1000);
+  if (_callCfg && _callCfg.hasAudio) _playCallAudio();
   sendMsg({ type: 'call:state', state: 'incall' });
 }
 function screenCallDecline() {
@@ -4777,9 +4924,18 @@ function screenCallEnd() {
 }
 function screenCallHide() {
   screenCallStopTimers();
+  _stopCallAudio();
   _callState = 'idle';
   const el = document.getElementById('screen-call');
-  if (el) { el.style.display = 'none'; el.innerHTML = ''; el.classList.remove('notif'); }
+  if (!el) return;
+  // Sortie animée : bannières/bandeaux remontent vers le haut, écran verrouillé
+  // en fondu ; sinon disparition immédiate.
+  const notif = el.querySelector('.sc-notif, .sc-callbar');
+  const lock = el.querySelector('.sc-lock');
+  const done = () => { el.style.display = 'none'; el.innerHTML = ''; el.classList.remove('notif'); };
+  if (notif) { notif.classList.add('sc-out'); setTimeout(done, 340); }
+  else if (lock) { lock.classList.add('sc-lockout'); setTimeout(done, 400); }
+  else done();
 }
 function _scStopRing() {
   if (_callRingTimer) { clearInterval(_callRingTimer); _callRingTimer = null; }
@@ -5020,6 +5176,9 @@ async function installPWA() {
 buildEffectCards();
 loadFxMemories();
 renderFxMemories();
+
+// ── Onglet Appel : état initial des options ──
+_syncCallPhotoRow();
 
 // ── Mini-carte sticky : apparaît dès que la preview commence à être masquée ──
 (function initStickyPreview() {
