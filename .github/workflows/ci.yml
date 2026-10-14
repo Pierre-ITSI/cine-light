@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Historique complet : les tests visuels et d'invariance d'interface
+          # relisent index.html du commit de référence (git show).
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Test (build à jour + suite Playwright)
+        # PW_CHROMIUM non défini : le Chromium installé par Playwright est utilisé.
+        # Pour un binaire spécifique : définir PW_CHROMIUM=/chemin/vers/chrome.
+        run: npm test
+
+      - name: Upload visual diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diffs
+          path: tests/.artifacts/
+          if-no-files-found: ignore
