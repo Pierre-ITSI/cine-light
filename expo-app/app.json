@@ -3,7 +3,7 @@
     "name": "SetRemote",
     "slug": "setremote",
     "version": "1.0.0",
-    "orientation": "any",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#000000",
@@ -14,8 +14,9 @@
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": [],
-        "NSLocalNetworkUsageDescription": "SetRemote relie la télécommande et l'écran projecteur sur le réseau Wi-Fi local, sans Internet."
+        "NSLocalNetworkUsageDescription": "SetRemote relie la télécommande et l'écran projecteur sur le réseau Wi-Fi local, sans Internet.",
+        "UIStatusBarHidden": true,
+        "UIViewControllerBasedStatusBarAppearance": false
       }
     },
     "android": {
@@ -36,7 +37,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "SetRemote utilise la caméra pour scanner les codes QR et accéder au flash. Aucune photo n'est capturée."
+          "cameraPermission": "SetRemote utilise l'appareil photo pour prendre une photo ou une vidéo à diffuser sur l'écran de jeu, et pour piloter le flash.",
+          "microphonePermission": "SetRemote utilise le micro uniquement lorsque vous filmez une vidéo à diffuser sur l'écran de jeu.",
+          "barcodeScannerEnabled": false
         }
       ],
       [
@@ -48,7 +51,9 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "SetRemote accède à vos photos et vidéos pour les diffuser sur l'écran projecteur."
+          "photosPermission": "SetRemote accède à vos photos et vidéos pour les diffuser sur l'écran de jeu.",
+          "cameraPermission": "SetRemote utilise l'appareil photo pour prendre une photo ou une vidéo à diffuser sur l'écran de jeu, et pour piloter le flash.",
+          "microphonePermission": "SetRemote utilise le micro uniquement lorsque vous filmez une vidéo à diffuser sur l'écran de jeu."
         }
       ],
       "expo-video",
@@ -59,6 +64,11 @@
           "bluetoothAlwaysPermission": "SetRemote utilise le Bluetooth pour relier la télécommande et l'écran sans Wi-Fi ni Internet."
         }
       ]
-    ]
+    ],
+    "androidStatusBar": {
+      "hidden": true,
+      "translucent": true,
+      "backgroundColor": "#00000000"
+    }
   }
 }

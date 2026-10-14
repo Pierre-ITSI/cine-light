@@ -9,7 +9,7 @@
     "expo-brightness": "~56.0.0",
     "expo-camera": "^56.0.8",
     "expo-constants": "~56.0.0",
-    "expo-dev-client": "~6.0.0",
+    "expo-dev-client": "~56.0.20",
     "expo-file-system": "^56.0.8",
     "expo-image": "^56.0.11",
     "expo-image-picker": "^56.0.18",
@@ -26,13 +26,14 @@
     "react-dom": "^19.2.3",
     "react-native": "0.85.3",
     "react-native-ble-plx": "^3.5.1",
-    "react-native-gesture-handler": "^3.0.2",
+    "react-native-gesture-handler": "~2.31.1",
     "react-native-qrcode-svg": "^6.3.21",
-    "react-native-safe-area-context": "^5.8.0",
+    "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "^4.25.2",
-    "react-native-svg": "^15.15.5",
+    "react-native-svg": "15.15.4",
     "react-native-tcp-socket": "^6.4.1",
-    "react-native-web": "^0.21.2"
+    "react-native-web": "^0.21.2",
+    "react-native-webview": "13.16.1"
   },
   "devDependencies": {
     "@expo/ngrok": "^4.1.0",

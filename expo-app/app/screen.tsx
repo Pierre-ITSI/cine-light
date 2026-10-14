@@ -317,7 +317,7 @@ export default function ScreenMode() {
   const handleHome = useCallback(() => {
     transportRef.current?.disconnect();
     stopStrobe();
-    router.replace('/');
+    router.replace('/native');
   }, [stopStrobe, router]);
 
   // Tap sur l'écran : si la télécommande a activé l'option, demande le média
