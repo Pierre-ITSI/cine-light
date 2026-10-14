@@ -1,5 +1,5 @@
-/* Service Worker — Ciné Light PWA */
-const CACHE = 'setremote-v50';
+/* Service Worker — SetRemote PWA */
+const CACHE = 'setremote-v51';
 const SHELL = [
   './',
   './index.html',
@@ -7,14 +7,17 @@ const SHELL = [
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',
-  'https://unpkg.com/mqtt/dist/mqtt.min.js',
+  './vendor/mqtt-5.16.1.min.js', // version figée, servie depuis notre origine
 ];
+// Seules ces origines tierces sont mises en cache (polices). Le reste
+// (ex. images QR générées à la volée) n'encombre pas le cache.
+const CACHEABLE_ORIGINS = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'];
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE).then((c) =>
-      // addAll échoue si une seule requête échoue → on tolère les manques (CDN/offline)
+      // addAll échoue si une seule requête échoue → on tolère les manques (offline)
       Promise.allSettled(SHELL.map((u) => c.add(u)))
     )
   );
@@ -35,13 +38,19 @@ self.addEventListener('fetch', (e) => {
   // Ne pas intercepter les WebSockets / autres schémas
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
-  // Navigations (index.html) : réseau d'abord, repli cache → permet les mises à jour
+  // Navigations : réseau d'abord, repli cache → permet les mises à jour.
+  // Seule la page d'accueil réussie remplace la copie hors-ligne (pas une 404,
+  // ni screen.html).
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put('./index.html', copy));
+          const isApp = url.origin === self.location.origin &&
+            /\/(index\.html)?$/.test(url.pathname);
+          if (res.ok && isApp) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put('./index.html', copy));
+          }
           return res;
         })
         .catch(() => caches.match(req).then((r) => r || caches.match('./index.html')))
@@ -49,13 +58,15 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
+  const cacheable = url.origin === self.location.origin || CACHEABLE_ORIGINS.includes(url.origin);
+
   // Autres ressources : cache d'abord, repli réseau (+ mise en cache opportuniste)
   e.respondWith(
     caches.match(req).then((cached) =>
       cached ||
       fetch(req)
         .then((res) => {
-          if (res && res.status === 200 && (res.type === 'basic' || res.type === 'cors')) {
+          if (cacheable && res && res.ok && (res.type === 'basic' || res.type === 'cors')) {
             const copy = res.clone();
             caches.open(CACHE).then((c) => c.put(req, copy));
           }

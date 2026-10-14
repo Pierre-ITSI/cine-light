@@ -34,7 +34,8 @@
 <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash-2778x1284.png">
 <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png">
 <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash-2796x1290.png">
-<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<!-- mqtt.js embarqué et figé (5.16.1) : plus de dépendance à unpkg ni de mise à jour surprise -->
+<script src="vendor/mqtt-5.16.1.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Lato:wght@400;600;700&display=swap');
 /* -webkit-tap-highlight-color : supprime le voile bleu d'Android/Chrome au
@@ -332,90 +333,132 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .screen-toggle-btn.on{background:#000;border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 22px rgba(0,0,0,.85)}
 .beta-badge{display:inline-block;font-size:.42rem;font-weight:500;letter-spacing:.1em;padding:1px 4px;margin-left:3px;border-radius:6px;background:rgba(232,201,122,.18);color:var(--accent);vertical-align:middle;text-transform:uppercase}
 
-/* ── SIMULATEUR D'APPEL (écran de jeu) ── */
-/* z-index 95 : au-dessus du blackout (90) — comme un vrai téléphone éteint
+/* ── SIMULATEUR D'APPEL (écran de jeu) ──
+   Trois styles neutres (aucune marque ni logo tiers) :
+   .glass « Verre » · .tonal « Tonal » · .minimal « Épuré ».
+   z-index 95 : au-dessus du blackout (90) — comme un vrai téléphone éteint
    dont l'écran se réveille à l'arrivée d'un appel ou d'une notification */
-#screen-call{display:none;position:absolute;inset:0;z-index:95;font-family:-apple-system,'SF Pro Text',Roboto,'Segoe UI',sans-serif}
+#screen-call{display:none;position:absolute;inset:0;z-index:95;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif}
 #screen-call.notif{pointer-events:none}
-#screen-call.notif .sc-notif{pointer-events:auto}
-.sc-call{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;color:#fff;padding:calc(70px + env(safe-area-inset-top)) 30px calc(70px + env(safe-area-inset-bottom))}
-.sc-call.generic{background:linear-gradient(160deg,#1d2733,#0a0d12)}
-/* iOS 26 — « verre liquide » : fond photo flouté + éléments translucides */
-.sc-call.ios{background:linear-gradient(180deg,#272c38,#0b0d13);overflow:hidden}
-.sc-ios-bg{position:absolute;inset:-50px;background-size:cover;background-position:center;filter:blur(50px) brightness(.5) saturate(1.35);z-index:0}
-.sc-call.ios>*{position:relative;z-index:1}
-/* Les couches de fond doivent rester absolues sous le contenu (la règle
-   >* ci-dessus les repasserait en relative → fond invisible) */
-.sc-call.ios>.sc-ios-bg,.sc-call.ios>.sc-ios-fullshade{position:absolute;z-index:0}
-.sc-ios-head{display:flex;flex-direction:column;align-items:center;gap:4px}
-.sc-ios-name{font-size:2.3rem;font-weight:600;letter-spacing:.2px;text-align:center;line-height:1.15}
-.sc-ios-sub{font-size:1rem;color:rgba(255,255,255,.65)}
-.sc-ios-timer{font-size:1rem;color:rgba(255,255,255,.7);margin-top:2px;font-variant-numeric:tabular-nums}
-.sc-ios-actions{margin-top:auto;width:100%;max-width:430px;display:flex;flex-direction:column;gap:26px}
-.sc-ios-minor{display:flex;justify-content:space-between;padding:0 16px}
-.sc-ios-minor .col,.sc-ios-main .col{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:.8rem;color:rgba(255,255,255,.88)}
-.sc-mini{width:52px;height:52px;border-radius:50%;border:none;background:rgba(255,255,255,.16);backdrop-filter:blur(22px) saturate(1.5);color:#fff;font-size:1.2rem;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.25);-webkit-tap-highlight-color:transparent}
-.sc-ios-main{display:flex;justify-content:space-between;padding:0 8px}
-.sc-ios-btn{width:76px;height:76px;border-radius:50%;border:none;color:#fff;font-size:2rem;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.4),inset 0 0 0 .5px rgba(255,255,255,.3);-webkit-tap-highlight-color:transparent}
-.sc-ios-btn.answer{background:linear-gradient(180deg,#4cd964,#2db84d)}
-.sc-ios-btn.decline{background:linear-gradient(180deg,#ff5146,#e5342a)}
-.sc-ios-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 16px;width:100%;max-width:340px;margin-top:44px}
-.sc-ios-grid .col{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:.72rem;color:rgba(255,255,255,.8)}
-.sc-ios-gbtn{width:68px;height:68px;border-radius:50%;border:none;background:rgba(255,255,255,.14);backdrop-filter:blur(22px) saturate(1.5);color:#fff;font-size:1.45rem;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.22);-webkit-tap-highlight-color:transparent}
-.sc-call.ios .sc-avatar{width:96px;height:96px;font-size:2.5rem;margin:0 0 14px;box-shadow:0 12px 44px rgba(0,0,0,.45)}
-.sc-call.android{background:#0d1117}
-.sc-avatar{width:110px;height:110px;border-radius:50%;background-color:#3a4756;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:600;margin-bottom:26px}
-.sc-name{font-size:2rem;font-weight:500;text-align:center;line-height:1.2}
-.sc-label{font-size:1rem;opacity:.65;margin-top:6px}
-.sc-timer{font-size:1.15rem;opacity:.85;margin-top:10px;font-variant-numeric:tabular-nums}
-.sc-actions{margin-top:auto;display:flex;width:100%;max-width:420px;justify-content:space-between}
-.sc-btn{width:76px;height:76px;border-radius:50%;border:none;font-size:2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;-webkit-tap-highlight-color:transparent}
-.sc-btn.answer{background:#34c759}
-.sc-btn.decline{background:#ff3b30}
-.sc-btn-col{display:flex;flex-direction:column;align-items:center;gap:10px}
-.sc-btn-hint{font-size:.82rem;opacity:.72}
-.sc-call.android .sc-btn{border-radius:40px;width:auto;min-width:120px;padding:0 30px;height:62px;font-size:1.5rem}
-/* Bannière de notification (SMS / WhatsApp) */
-.sc-notif{position:absolute;top:calc(14px + env(safe-area-inset-top));left:12px;right:12px;background:rgba(40,40,46,.72);backdrop-filter:blur(28px) saturate(1.6);border-radius:22px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;color:#fff;box-shadow:0 10px 34px rgba(0,0,0,.5),inset 0 0 0 .5px rgba(255,255,255,.14);animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1);cursor:pointer}
-@keyframes notifIn{from{transform:translateY(-130%)}to{transform:translateY(0)}}
-.sc-notif-icon{width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.35rem;color:#fff}
-.sc-notif-body{flex:1;min-width:0}
-/* Apparitions / disparitions */
-@keyframes scFadeIn{from{opacity:0}to{opacity:1}}
-.sc-call{animation:scFadeIn .45s ease}
-.sc-lock{animation:scFadeIn .5s ease}
-@keyframes notifOut{to{transform:translateY(-140%);opacity:.4}}
-.sc-notif.sc-out,.sc-callbar.sc-out{animation:notifOut .35s ease-in forwards}
-@keyframes scFadeOut{to{opacity:0}}
-.sc-lock.sc-lockout{animation:scFadeOut .4s ease forwards}
-/* Photo plein écran (style iOS) */
-.sc-ios-bg.full{filter:none;inset:0}
-.sc-ios-fullshade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,0) 32%,rgba(0,0,0,0) 55%,rgba(0,0,0,.6));pointer-events:none;z-index:0}
-/* Bandeau d'appel entrant (écran déverrouillé, iOS 26) */
-.sc-callbar{position:absolute;top:calc(14px + env(safe-area-inset-top));left:12px;right:12px;background:rgba(40,40,46,.78);backdrop-filter:blur(28px) saturate(1.6);border-radius:28px;padding:10px 12px;display:flex;align-items:center;gap:11px;color:#fff;box-shadow:0 10px 34px rgba(0,0,0,.5),inset 0 0 0 .5px rgba(255,255,255,.15);animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
-#screen-call.notif .sc-callbar{pointer-events:auto}
+#screen-call.notif .sc-notif,#screen-call.notif .sc-callbar{pointer-events:auto}
+.sc-call{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;color:#fff;overflow:hidden;padding:calc(70px + env(safe-area-inset-top)) 30px calc(64px + env(safe-area-inset-bottom));animation:scFadeIn .45s ease}
+.sc-call>*{position:relative;z-index:1}
+/* Couches de fond : restent absolues SOUS le contenu */
+.sc-call>.sc-bg,.sc-call>.sc-fullshade{position:absolute;z-index:0}
+.sc-bg{inset:-50px;background-size:cover;background-position:center;filter:blur(50px) brightness(.5) saturate(1.35)}
+.sc-bg.full{inset:0;filter:none}
+.sc-fullshade{inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,0) 34%,rgba(0,0,0,0) 52%,rgba(0,0,0,.65));pointer-events:none}
+.sc-head{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.sc-kicker{font-size:.9rem;opacity:.72;letter-spacing:.02em}
+.sc-avatar{width:104px;height:104px;border-radius:50%;background-color:#3a4756;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:2.7rem;font-weight:600;margin-bottom:16px;flex-shrink:0}
+.sc-name{font-size:2.2rem;font-weight:600;line-height:1.15;text-align:center}
+.sc-sub{font-size:1rem;opacity:.65}
+.sc-timer{font-size:1.05rem;opacity:.8;margin-top:4px;font-variant-numeric:tabular-nums}
+.sc-bottom{margin-top:auto;width:100%;max-width:430px;display:flex;flex-direction:column;gap:26px}
+.sc-row{display:flex;justify-content:space-between;align-items:flex-start}
+.sc-col{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:.8rem;color:rgba(255,255,255,.88)}
+.sc-btn{border:none;color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}
+.sc-round{width:76px;height:76px;border-radius:50%}
+.sc-ok{background:#2fb553}
+.sc-no{background:#e5483e}
+.sc-mini{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.16)}
+.sc-mini svg{width:24px;height:24px}
+.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 16px;width:100%;max-width:340px;margin-top:44px}
+.sc-grid .sc-col{font-size:.74rem;color:rgba(255,255,255,.8)}
+.sc-gbtn{width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,.14)}
+
+/* Verre : translucidité, flou, boutons ronds en dégradé */
+.sc-call.glass{background:linear-gradient(180deg,#272c38,#0b0d13)}
+.sc-call.glass .sc-mini,.sc-call.glass .sc-gbtn{backdrop-filter:blur(22px) saturate(1.5);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.25)}
+.sc-call.glass .sc-round{box-shadow:0 10px 28px rgba(0,0,0,.4),inset 0 0 0 .5px rgba(255,255,255,.3)}
+.sc-call.glass .sc-ok{background:linear-gradient(180deg,#4cd964,#2db84d)}
+.sc-call.glass .sc-no{background:linear-gradient(180deg,#ff5146,#e5342a)}
+.sc-call.glass .sc-avatar{width:96px;height:96px;box-shadow:0 12px 44px rgba(0,0,0,.45)}
+
+/* Tonal : surfaces tonales, gros avatar, boutons pilule libellés */
+.sc-call.tonal{background:radial-gradient(130% 75% at 50% 0%,#2c3a4f 0%,#151a21 58%,#0d1014 100%)}
+.sc-call.tonal .sc-kicker{margin-bottom:26px}
+.sc-call.tonal .sc-avatar{width:136px;height:136px;font-size:3.3rem;margin-bottom:22px}
+.sc-call.tonal .sc-name{font-weight:400;font-size:2.1rem}
+.sc-pill{height:64px;border-radius:32px;padding:0 24px;font-size:1.02rem;font-weight:500;flex:1;max-width:190px}
+.sc-pill svg{width:22px;height:22px}
+.sc-call.tonal .sc-no,.sc-callbar.tonal .sc-no{background:#8c1d18;color:#ffdad6}
+.sc-call.tonal .sc-ok,.sc-callbar.tonal .sc-ok{background:#1d6b3a;color:#c8f5d2}
+.sc-call.tonal .sc-gbtn{border-radius:22px;width:76px;height:64px;background:rgba(255,255,255,.1)}
+.sc-call.tonal .sc-grid{margin-top:36px}
+.sc-call.tonal .sc-head .sc-avatar{width:88px;height:88px;font-size:2.2rem;margin-bottom:12px}
+.sc-hangup{width:min(240px,70vw);height:64px;border-radius:32px}
+
+/* Épuré : sobre et contrasté */
+.sc-call.minimal{background:linear-gradient(160deg,#1d2733,#0a0d12)}
+.sc-call.minimal .sc-name{font-weight:500;font-size:2rem}
+.sc-call.minimal .sc-avatar{margin-bottom:26px}
+
+/* Bandeau d'appel entrant (téléphone en cours d'utilisation) */
+.sc-callbar{position:absolute;top:calc(14px + env(safe-area-inset-top));left:12px;right:12px;color:#fff;display:flex;flex-wrap:wrap;align-items:center;gap:11px;padding:10px 12px;animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
+.sc-callbar.glass{background:rgba(40,40,46,.78);backdrop-filter:blur(28px) saturate(1.6);border-radius:28px;box-shadow:0 10px 34px rgba(0,0,0,.5),inset 0 0 0 .5px rgba(255,255,255,.15)}
+.sc-callbar.tonal{background:#2b2e34;border-radius:26px;padding:14px;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+.sc-callbar.minimal{background:#16191f;border:1px solid rgba(255,255,255,.12);border-radius:16px}
 .cb-avatar{width:42px;height:42px;border-radius:50%;background-color:#3a4756;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:1.1rem;flex-shrink:0}
 .cb-info{flex:1;min-width:0}
 .cb-name{font-size:.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cb-sub{font-size:.72rem;opacity:.6}
-.cb-btn{width:44px;height:44px;border-radius:50%;border:none;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.cb-btn.answer{background:#34c759}
-.cb-btn.decline{background:#ff3b30}
+.cb-btn{width:44px;height:44px;border-radius:50%;flex-shrink:0}
 .cb-btn svg{width:22px;height:22px}
-/* Écran verrouillé simulé (iOS 26) */
-.sc-lock{position:absolute;inset:0;background:linear-gradient(180deg,#2a3140,#0c0f16);background-size:cover;background-position:center;display:flex;flex-direction:column;align-items:center;color:#fff;padding:calc(46px + env(safe-area-inset-top)) 18px calc(14px + env(safe-area-inset-bottom));overflow:hidden;cursor:pointer}
+.cb-actions{display:flex;gap:10px;width:100%}
+.cb-actions .sc-pill{height:44px;max-width:none;font-size:.92rem}
+
+/* Notifications (bannière et écran verrouillé) */
+.sc-notif{position:absolute;top:calc(14px + env(safe-area-inset-top));left:12px;right:12px;color:#fff;display:flex;gap:12px;align-items:flex-start;padding:12px 14px;text-align:left;cursor:pointer;animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
+.sc-notif.glass{background:rgba(40,40,46,.72);backdrop-filter:blur(28px) saturate(1.6);border-radius:22px;box-shadow:0 10px 34px rgba(0,0,0,.5),inset 0 0 0 .5px rgba(255,255,255,.14)}
+.sc-notif.tonal{background:#2b2e34;border-radius:26px;padding:14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+.sc-notif.minimal{background:#16191f;border:1px solid rgba(255,255,255,.12);border-radius:14px}
+@keyframes notifIn{from{transform:translateY(-130%)}to{transform:translateY(0)}}
+.sc-notif-icon{width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.sc-notif.minimal .sc-notif-icon{width:34px;height:34px;border-radius:8px}
+.sc-notif-body{flex:1;min-width:0}
+.n-title{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.n-time{font-size:.72rem;opacity:.55;flex-shrink:0}
+.n-app{font-size:.68rem;opacity:.5;margin-top:4px}
+.n-head{display:flex;align-items:center;gap:7px;font-size:.74rem;opacity:.8;margin-bottom:4px}
+.n-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.n-dot svg{width:12px;height:12px}
+.n-avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;background-color:#3a4756;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:600;align-self:center}
+.sc-notif-name{font-size:.95rem;font-weight:600}
+.sc-notif.tonal .sc-notif-name{font-size:1rem}
+.sc-notif-msg{font-size:.9rem;opacity:.92;margin-top:2px;line-height:1.35;word-break:break-word}
+
+/* Apparitions / disparitions */
+@keyframes scFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes notifOut{to{transform:translateY(-140%);opacity:.4}}
+.sc-notif.sc-out,.sc-callbar.sc-out{animation:notifOut .35s ease-in forwards}
+@keyframes scFadeOut{to{opacity:0}}
+.sc-lock.sc-lockout{animation:scFadeOut .4s ease forwards}
+
+/* Écran verrouillé simulé */
+.sc-lock{position:absolute;inset:0;background:linear-gradient(180deg,#2a3140,#0c0f16);background-size:cover;background-position:center;display:flex;flex-direction:column;align-items:center;color:#fff;padding:calc(46px + env(safe-area-inset-top)) 18px calc(14px + env(safe-area-inset-bottom));overflow:hidden;cursor:pointer;animation:scFadeIn .5s ease}
 .sc-lock-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,0) 32%,rgba(0,0,0,0) 62%,rgba(0,0,0,.32));pointer-events:none}
 .sc-lock>*{position:relative}
-.sc-lock-date{font-family:-apple-system,'SF Pro Text',Roboto,sans-serif;font-size:1.15rem;font-weight:600;text-shadow:0 1px 12px rgba(0,0,0,.4)}
-.sc-lock-time{font-family:Georgia,'Times New Roman',serif;font-size:5.6rem;font-weight:600;line-height:1.04;letter-spacing:-2px;text-shadow:0 2px 26px rgba(0,0,0,.4);font-variant-numeric:tabular-nums}
-.sc-lock-notif{position:absolute;left:12px;right:12px;bottom:calc(128px + env(safe-area-inset-bottom));background:rgba(84,84,94,.4);backdrop-filter:blur(28px) saturate(1.6);border-radius:22px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.17);text-align:left;animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
-.sc-lock-titlerow{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sc-lock>.sc-lock-shade{position:absolute}
+.sc-lock-date{font-size:1.15rem;font-weight:600;text-shadow:0 1px 12px rgba(0,0,0,.4)}
+.sc-lock-time{font-size:5.6rem;font-weight:600;line-height:1.04;letter-spacing:-2px;text-shadow:0 2px 26px rgba(0,0,0,.4);font-variant-numeric:tabular-nums}
+.sc-lock.glass .sc-lock-time{font-family:Georgia,'Times New Roman',serif}
+.sc-lock.tonal{align-items:flex-start;padding-left:28px;padding-right:28px}
+.sc-lock.tonal .sc-lock-date{order:2;font-weight:500;font-size:1.05rem;margin-top:6px}
+.sc-lock.tonal .sc-lock-time{order:1;font-weight:300;font-size:6.6rem;line-height:.95;letter-spacing:0;margin-top:24px}
+.sc-lock.minimal .sc-lock-time{font-weight:200;font-size:5rem;letter-spacing:0;margin-top:30px}
+.sc-lock.minimal .sc-lock-date{order:2;font-weight:400;opacity:.85}
+.sc-lock.minimal .sc-lock-time{order:1}
+.sc-notif.in-lock{position:absolute;top:auto;left:12px;right:12px;bottom:calc(128px + env(safe-area-inset-bottom));cursor:inherit}
+.sc-notif.glass.in-lock{background:rgba(84,84,94,.4);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.17)}
+.sc-notif.tonal.in-lock{bottom:auto;top:46%;background:rgba(43,46,52,.92)}
+.sc-notif.minimal.in-lock{bottom:calc(64px + env(safe-area-inset-bottom))}
 .sc-lock-bottom{position:absolute;left:0;right:0;bottom:calc(48px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;padding:0 46px}
 .sc-lock-circle{width:52px;height:52px;border-radius:50%;border:none;background:rgba(72,72,82,.46);backdrop-filter:blur(24px) saturate(1.5);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.18);color:#fff}
+.sc-lock.tonal .sc-lock-circle{border-radius:18px;background:rgba(43,46,52,.75);backdrop-filter:none}
 .sc-lock-home{position:absolute;bottom:calc(9px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:132px;height:5px;border-radius:3px;background:rgba(255,255,255,.92)}
-.sc-notif-app{font-size:.66rem;opacity:.55;text-transform:uppercase;letter-spacing:.04em}
-.sc-notif-name{font-size:.95rem;font-weight:600;margin-top:2px}
-.sc-notif-msg{font-size:.9rem;opacity:.92;margin-top:2px;line-height:1.35;word-break:break-word}
+.sc-lock.tonal .sc-lock-home{width:110px;height:4px}
+.sc-lock.minimal .sc-lock-home{display:none}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
@@ -1057,16 +1100,17 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       <div class="panel-label">Type</div>
       <div class="chips-wrap">
         <button class="chip active" id="callkind-call" onclick="setCallKind('call')">📞 Appel</button>
-        <button class="chip" id="callkind-sms" onclick="setCallKind('sms')">💬 SMS</button>
-        <button class="chip" id="callkind-whatsapp" onclick="setCallKind('whatsapp')">✆ WhatsApp</button>
+        <button class="chip" id="callkind-sms" onclick="setCallKind('sms')">✉️ SMS</button>
+        <button class="chip" id="callkind-chat" onclick="setCallKind('chat')">💬 Messagerie</button>
       </div>
       <div id="callStyleRow" style="margin-top:14px">
         <div class="panel-label">Style</div>
         <div class="chips-wrap">
-          <button class="chip active" id="callstyle-generic" onclick="setCallStyle('generic')">Générique</button>
-          <button class="chip" id="callstyle-ios" onclick="setCallStyle('ios')">iOS</button>
-          <button class="chip" id="callstyle-android" onclick="setCallStyle('android')">Android</button>
+          <button class="chip active" id="callstyle-glass" onclick="setCallStyle('glass')">Verre</button>
+          <button class="chip" id="callstyle-tonal" onclick="setCallStyle('tonal')">Tonal</button>
+          <button class="chip" id="callstyle-minimal" onclick="setCallStyle('minimal')">Épuré</button>
         </div>
+        <div class="media-status" id="callStyleHint" style="text-align:left;margin-top:8px">Translucide et flouté, boutons ronds.</div>
       </div>
       <div id="callPresentRow" style="margin-top:14px">
         <div class="panel-label">Présentation</div>
@@ -1076,7 +1120,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
         </div>
       </div>
       <div id="callPhotoModeRow" style="margin-top:14px">
-        <div class="panel-label">Photo (style iOS)</div>
+        <div class="panel-label">Photo de l'appelant</div>
         <div class="chips-wrap">
           <button class="chip active" id="callphoto-avatar" onclick="setCallPhotoMode('avatar')">Avatar</button>
           <button class="chip" id="callphoto-full" onclick="setCallPhotoMode('full')">Plein écran</button>
@@ -1095,7 +1139,13 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
     </div>
     <div class="panel" id="callMsgPanel" style="display:none">
       <div class="panel-label">Message</div>
-      <input type="text" id="callMsgText" class="sacn-input" placeholder="Texte du message" value="Tu es où ??" style="width:100%">
+      <input type="text" id="callMsgText" class="sacn-input" placeholder="Texte du message" value="Tu es où ??" style="width:100%;margin-bottom:14px">
+      <div class="panel-label">Application (fictive)</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input type="text" id="callAppName" class="sacn-input" placeholder="Nom affiché" value="SMS" maxlength="24" style="flex:1" oninput="this.dataset.touched='1'">
+        <input type="color" id="callAppColor" value="#2f8cf0" style="width:52px;flex-shrink:0" oninput="this.dataset.touched='1'">
+      </div>
+      <div class="media-status" style="text-align:left;margin-top:6px">Pas de marque réelle : inventez un nom (ex. « Chatly ») et une couleur.</div>
     </div>
     <div class="panel" id="callLockPanel" style="display:none">
       <div class="toggle-row" style="margin-bottom:12px">
@@ -1272,6 +1322,10 @@ function sendMsg(obj) {
 
 // BroadcastChannel fallback (même navigateur, même device)
 function initBCFallback(ch) {
+  // BroadcastChannel absent sur iOS < 15.4 : sans garde, l'exception
+  // interrompait l'entrée en mode écran avant même la connexion MQTT.
+  if (typeof BroadcastChannel === 'undefined') return;
+  if (window._bc) { try { window._bc.close(); } catch (_) {} }
   const bc = new BroadcastChannel('setremote_' + ch);
   window._bc = bc;
   if (mode === 'screen') {
@@ -1299,7 +1353,10 @@ function startMode(m) {
   }
   if (m === 'remote') {
     mode = 'remote';
-    document.getElementById('remote-mode').style.display = 'block';
+    const rm = document.getElementById('remote-mode');
+    rm.style.display = 'block';
+    // Recalcule la mini-carte sticky maintenant que la télécommande est visible
+    requestAnimationFrame(() => rm.dispatchEvent(new Event('scroll')));
     initWheel();
     loadColorMemories(); renderColorMemories();
     recomputeColor();
@@ -1315,31 +1372,46 @@ function startMode(m) {
 }
 
 function screenConnect() {
-  const ch = document.getElementById('screenChannelInput').value.trim().toLowerCase().replace(/\W/g,'');
+  const ch = cleanChannel(document.getElementById('screenChannelInput').value);
   if (!ch) return;
   document.getElementById('screen-connect').style.display = 'none';
   enterScreenMode(ch);
 }
 
+// Code canal : lettres/chiffres uniquement (un « + » ou « # » deviendrait un
+// joker MQTT et abonnerait l'écran à tous les canaux)
+function cleanChannel(s) {
+  return String(s || '').trim().toLowerCase().replace(/\W/g, '').slice(0, 40);
+}
+
 function enterScreenMode(ch) {
+  ch = cleanChannel(ch);
+  if (!ch) return;
+  if (mode === 'screen' && channel === ch && mqttClient) return; // déjà connecté
+  document.getElementById('splash').style.display = 'none';
   mode = 'screen'; channel = ch;
   const el = document.getElementById('screen-mode');
   el.style.display = 'flex';
   el.style.backgroundColor = '#1a1a1a';
   setScreenStatus('Connexion à ' + ch + '…');
   requestFS();
+  acquireWakeLock();
   setupScreenAutohide();
   if (!navigator.vibrate) { const b=document.getElementById('vibrateBtn'); if(b){b.classList.add('unavail');b.textContent='📳 Indispo (iPhone)';b.classList.remove('on');} vibrateEnabled=false; }
   initBCFallback(ch);
+  let firstConnect = true;
   connectMQTT(ch, () => {
     setScreenStatus('✓ En écoute — canal : ' + ch);
-    flashScreenNotice('En écoute du canal « ' + ch + ' »');
+    // Confirmation visible uniquement à la 1re connexion : les reconnexions
+    // automatiques ne doivent rien afficher (l'écran est peut-être dans le champ)
+    if (firstConnect && !screenBlackoutOn) flashScreenNotice('En écoute du canal « ' + ch + ' »');
+    firstConnect = false;
     sendCaps();
   });
 }
 
 function connectChannel() {
-  const ch = document.getElementById('channelInput').value.trim().toLowerCase().replace(/\W/g,'');
+  const ch = cleanChannel(document.getElementById('channelInput').value);
   if (!ch) return;
   channel = ch;
   setConnStatus('connecting');
@@ -1453,11 +1525,25 @@ function goBackToSplash() {
   stopScreenEffect();
   screenCallHide();
   setBlackout(false);
+  // Fermer réellement la session écran : sinon le téléphone continue de
+  // recevoir (et de sonner sur un appel simulé) derrière l'écran d'accueil.
+  if (mode === 'screen') {
+    if (screenStrobeTimer) { clearTimeout(screenStrobeTimer); screenStrobeTimer = null; }
+    stopTorchDimLoop(); stopTorchEffectLoop(); releaseTorch();
+    if (mqttClient) { try { mqttClient.end(true); } catch (_) {} mqttClient = null; }
+    if (window._bc) { try { window._bc.close(); } catch (_) {} window._bc = null; }
+    mode = null;
+  }
+  releaseWakeLock();
+  const sm = document.getElementById('screen-mode');
+  if (sm) sm.style.display = 'none';
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
   const cfgDiv = document.getElementById('screen-sacn-config');
   if (cfgDiv) cfgDiv.style.display = 'none';
   stopScreenSACN();
   document.getElementById('screen-connect').style.display = 'none';
   document.getElementById('splash').style.display = 'flex';
+  applyPendingUpdate();
 }
 
 function goBack() {
@@ -1466,6 +1552,8 @@ function goBack() {
   if (mqttClient) { mqttClient.end(true); mqttClient = null; }
   document.getElementById('remote-mode').style.display = 'none';
   document.getElementById('splash').style.display = 'flex';
+  mode = null;
+  applyPendingUpdate(); // une mise à jour en attente peut s'appliquer maintenant
 }
 
 function switchTab(t) {
@@ -1524,10 +1612,27 @@ function receiveColor(color) {
     sc.style.transition = 'background-color 0.15s ease';
     sc.style.backgroundColor = color;
   }
-  document.getElementById('current-hex').textContent = color.toUpperCase();
-  doVibrate([40]);
-  if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(() => {});
 }
+
+// ── Maintien de l'écran allumé (Screen Wake Lock) ──
+// Demandé une fois à l'entrée en mode écran, puis renouvelé à chaque retour
+// au premier plan (le navigateur le libère quand la page est masquée).
+let _wakeLock = null, _wakeWanted = false;
+async function acquireWakeLock() {
+  _wakeWanted = true;
+  if (!('wakeLock' in navigator) || _wakeLock) return;
+  try {
+    _wakeLock = await navigator.wakeLock.request('screen');
+    _wakeLock.addEventListener('release', () => { _wakeLock = null; });
+  } catch (_) { _wakeLock = null; }
+}
+function releaseWakeLock() {
+  _wakeWanted = false;
+  if (_wakeLock) { try { _wakeLock.release(); } catch (_) {} _wakeLock = null; }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && _wakeWanted) acquireWakeLock();
+});
 function receiveStrobe(msg) {
   if (screenStrobeTimer) { clearTimeout(screenStrobeTimer); screenStrobeTimer = null; }
   suspendScreenFx(!!msg.active); // le strobe prime sur le canvas d'effet
@@ -3397,9 +3502,39 @@ async function toggleScreenTorch() {
   } catch(e) { btn.classList.add('unavail'); btn.textContent = '🔦 Refusé'; }
 }
 
+// Ouvre (une seule fois) la caméra arrière pour piloter sa LED. Avant ce
+// correctif, torchTrack n'était jamais renseigné : la torche ne s'allumait pas.
+let _torchAcquire = null;
+function _acquireTorchTrack() {
+  if (torchTrack) return Promise.resolve(torchTrack);
+  if (_torchAcquire) return _torchAcquire;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return Promise.resolve(null);
+  _torchAcquire = navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      const track = stream.getVideoTracks()[0];
+      const caps = track && track.getCapabilities ? track.getCapabilities() : {};
+      if (!caps.torch) { stream.getTracks().forEach(t => t.stop()); return null; }
+      torchTrack = track; torchEnabled = true;
+      return track;
+    })
+    .catch(() => null)
+    .finally(() => { _torchAcquire = null; });
+  return _torchAcquire;
+}
+
 async function setTorch(on) {
-  if (!torchTrack) return;
+  if (!torchTrack) {
+    if (!on) return;                 // inutile d'ouvrir la caméra pour éteindre
+    await _acquireTorchTrack();
+    if (!torchTrack) return;
+  }
   try { await torchTrack.applyConstraints({ advanced:[{torch:on}] }); } catch(_){}
+}
+
+// Libère la caméra (fin de session écran)
+function releaseTorch() {
+  if (torchTrack) { try { torchTrack.stop(); } catch (_) {} torchTrack = null; }
+  torchEnabled = false;
 }
 
 function toggleScreenVibrate() {
@@ -3802,6 +3937,16 @@ function onScreenBrightnessChange() {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
+
+// ── Validation des données reçues du réseau ──
+// Une chaîne reçue n'est utilisée comme image/son que si c'est une vraie
+// data-URL base64 (aucun guillemet ni parenthèse possible → pas d'injection
+// dans style="url(...)", et pas de chargement d'URL externe/traçante).
+const _RE_IMG_DATA = /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/;
+const _RE_AUDIO_DATA = /^data:audio\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$/;
+function safeImageData(s) { return (typeof s === 'string' && _RE_IMG_DATA.test(s)) ? s : null; }
+function safeAudioData(s) { return (typeof s === 'string' && _RE_AUDIO_DATA.test(s)) ? s : null; }
+function safeHexColor(s, fallback) { return (typeof s === 'string' && /^#[0-9a-fA-F]{6}$/.test(s)) ? s : fallback; }
 
 function onAddImages(files) {
   if (!files || !files.length) return;
@@ -4320,7 +4465,7 @@ function stopMediaBroadcast(notify = true) {
 }
 
 // ══════════════════════════ MÉDIA — ÉCRAN (récepteur) ══════════════════════════
-let _imgBuf = null, _screenPc = null, _screenPendingIce = [];
+let _screenPc = null, _screenPendingIce = [];
 let _vidParts = [], _vidMeta = null, _screenVidUrl = null, _screenProgTimer = 0;
 // Cache des médias reçus : mediaId → {kind:'img',data} | {kind:'vid',url}.
 // Permet d'afficher un média déjà transféré sans nouveau transfert.
@@ -4343,7 +4488,7 @@ function screenShowCached(id) {
   if (c.kind === 'img') {
     const im = document.getElementById('screen-media-img');
     if (im) { im.src = c.data; showScreenMedia('img'); }
-  } else {
+  } else if (c.kind === 'vid' && c.url) {
     screenPlayVideoUrl(c.url);
   }
 }
@@ -4360,7 +4505,7 @@ function showScreenMedia(kind) {
   if (img) img.style.display = kind === 'img' ? 'block' : 'none';
   if (vid) {
     vid.style.display = kind === 'video' ? 'block' : 'none';
-    if (kind !== 'video') { try { vid.pause(); } catch (_) {} } // coupe le son si une image prend le relais
+    if (kind !== 'video') { vid._wantPlay = false; try { vid.pause(); } catch (_) {} } // coupe le son si une image prend le relais
   }
 }
 
@@ -4370,6 +4515,7 @@ function hideScreenMedia() {
   if (img) { img.style.display = 'none'; img.removeAttribute('src'); }
   if (vid) {
     vid.style.display = 'none';
+    vid._wantPlay = false;
     try { vid.pause(); } catch (_) {}
     if (vid.srcObject) vid.srcObject = null;
     vid.removeAttribute('src'); vid.load && vid.load();
@@ -4379,38 +4525,62 @@ function hideScreenMedia() {
     if (!_urlIsCached(_screenVidUrl)) { try { URL.revokeObjectURL(_screenVidUrl); } catch (_) {} }
     _screenVidUrl = null;
   }
-  _imgBuf = null; _vidParts = []; _vidMeta = null;
+  // Les transferts en cours continuent (préchargement) mais ne s'afficheront pas
+  _imgBufs.forEach(b => { b.show = false; });
+  _vidParts = []; _vidMeta = null;
   cleanupScreenRtc();
 }
 
+// Réception d'images/sons en fragments : UN tampon PAR transfert (avant, un
+// seul tampon global → un préchargement écrasait l'image demandée), avec des
+// plafonds pour qu'un message forgé ne puisse pas saturer la mémoire.
+const _imgBufs = new Map();
+const IMG_MAX_CHUNKS = 2000, IMG_MAX_PARALLEL = 4, IMG_CHUNK_MAX = 20000;
+const _RE_MEDIA_ID = /^[A-Za-z0-9_-]{1,40}$/;
 function mediaImgStart(msg) {
-  _imgBuf = { id: msg.id, total: msg.total, parts: new Array(msg.total), got: 0,
-              mediaId: msg.mediaId || null, show: msg.show !== false };
+  const total = Number(msg.total);
+  if (typeof msg.id !== 'string' || !Number.isInteger(total) || total < 1 || total > IMG_MAX_CHUNKS) return;
+  const mediaId = (typeof msg.mediaId === 'string' && _RE_MEDIA_ID.test(msg.mediaId)) ? msg.mediaId : null;
+  if (_imgBufs.size >= IMG_MAX_PARALLEL) _imgBufs.delete(_imgBufs.keys().next().value); // le plus ancien
+  _imgBufs.set(msg.id, { total, parts: new Array(total), got: 0, mediaId, show: msg.show !== false });
 }
 function mediaImgChunk(msg) {
-  if (!_imgBuf || _imgBuf.id !== msg.id) return;
-  if (_imgBuf.parts[msg.i] === undefined) { _imgBuf.parts[msg.i] = msg.data; _imgBuf.got++; }
-  if (_imgBuf.got === _imgBuf.total) {
-    const dataUrl = _imgBuf.parts.join('');
-    // Mise en cache pour affichage instantané ultérieur + accusé de réception
-    if (_imgBuf.mediaId) {
-      _mediaCache.set(_imgBuf.mediaId, { kind: 'img', data: dataUrl });
-      sendMsg({ type: 'media:cached', id: _imgBuf.mediaId });
-    }
-    if (_imgBuf.show) {
-      const im = document.getElementById('screen-media-img');
-      if (im) { im.src = dataUrl; showScreenMedia('img'); }
-      _screenActiveId = _imgBuf.mediaId || null;
-      cleanupScreenRtc(); // une image remplace la vidéo : libère la connexion de transfert
-    }
-    _imgBuf = null;
+  const b = _imgBufs.get(msg.id);
+  if (!b) return;
+  const i = Number(msg.i);
+  if (!Number.isInteger(i) || i < 0 || i >= b.total) return;
+  if (typeof msg.data !== 'string' || msg.data.length > IMG_CHUNK_MAX) return;
+  if (b.parts[i] === undefined) { b.parts[i] = msg.data; b.got++; }
+  if (b.got !== b.total) return;
+  _imgBufs.delete(msg.id);
+  const raw = b.parts.join('');
+  // La bande son du décroché passe par ce même canal : on valide selon le type attendu
+  const isAudio = b.mediaId === '__callaudio';
+  const dataUrl = isAudio ? safeAudioData(raw) : safeImageData(raw);
+  if (!dataUrl) return; // contenu non conforme : ignoré
+  // Mise en cache pour affichage instantané ultérieur + accusé de réception
+  if (b.mediaId) {
+    _mediaCache.set(b.mediaId, { kind: isAudio ? 'audio' : 'img', data: dataUrl });
+    sendMsg({ type: 'media:cached', id: b.mediaId });
+  }
+  if (b.show && !isAudio) {
+    const im = document.getElementById('screen-media-img');
+    if (im) { im.src = dataUrl; showScreenMedia('img'); }
+    _screenActiveId = b.mediaId || null;
+    cleanupScreenRtc(); // une image remplace la vidéo : libère la connexion de transfert
   }
 }
 
 // — Lecture robuste : tente avec son, repli en muet si l'autoplay est bloqué —
+// _wantPlay : la vidéo DOIT jouer (sert à reprendre après un autoplay bloqué,
+// sans relancer une vidéo masquée ou mise en pause depuis la télécommande).
 function playScreenVid(vid) {
+  vid._wantPlay = true;
   const p = vid.play();
-  if (p && p.catch) p.catch(() => { vid.muted = true; const p2 = vid.play(); if (p2 && p2.catch) p2.catch(() => {}); });
+  if (p && p.catch) p.catch(() => {
+    vid.muted = true; vid._autoMuted = true;
+    const p2 = vid.play(); if (p2 && p2.catch) p2.catch(() => {});
+  });
 }
 // — État courant renvoyé à la télécommande (source de vérité) —
 function sendScreenState(vid) {
@@ -4476,16 +4646,29 @@ function screenVidUploadPlay(msg) {
 // vibre (Android) et renvoie son état (ringing/incall/declined/ended).
 
 // — Télécommande —
-let callKind = 'call', callStyle = 'generic', callRing = 'classic', _callPhoto = null;
+let callKind = 'call', callStyle = 'glass', callRing = 'classic', _callPhoto = null;
 let _callUiTimer = null, _callUiT0 = 0;
+
+// Application fictive par défaut selon le type de message (modifiable)
+const _CALL_APP_DEFAULTS = { sms: { name: 'SMS', color: '#2f8cf0' }, chat: { name: 'Messagerie', color: '#7a5af8' } };
+const _CALL_STYLE_HINTS = {
+  glass: 'Translucide et flouté, boutons ronds.',
+  tonal: 'Surfaces tonales, gros avatar, boutons pilule.',
+  minimal: 'Sobre et contrasté, sans effet.',
+};
 
 function setCallKind(k) {
   callKind = k;
-  ['call','sms','whatsapp'].forEach(x => {
+  ['call','sms','chat'].forEach(x => {
     const b = document.getElementById('callkind-' + x);
     if (b) b.classList.toggle('active', x === k);
   });
-  document.getElementById('callStyleRow').style.display = k === 'call' ? 'block' : 'none';
+  // Nom/couleur d'app : on applique le défaut du type tant que l'utilisateur
+  // ne les a pas personnalisés
+  const def = _CALL_APP_DEFAULTS[k];
+  const an = document.getElementById('callAppName'), ac = document.getElementById('callAppColor');
+  if (def && an && !an.dataset.touched) an.value = def.name;
+  if (def && ac && !ac.dataset.touched) ac.value = def.color;
   document.getElementById('callPresentRow').style.display = k === 'call' ? 'block' : 'none';
   document.getElementById('callMsgPanel').style.display = k === 'call' ? 'none' : 'block';
   document.getElementById('callLockPanel').style.display = k === 'call' ? 'none' : 'block';
@@ -4498,14 +4681,16 @@ function setCallKind(k) {
 }
 function setCallStyle(s) {
   callStyle = s;
-  ['generic','ios','android'].forEach(x => {
+  ['glass','tonal','minimal'].forEach(x => {
     const b = document.getElementById('callstyle-' + x);
     if (b) b.classList.toggle('active', x === s);
   });
+  const h = document.getElementById('callStyleHint');
+  if (h) h.textContent = _CALL_STYLE_HINTS[s] || '';
   _syncCallPhotoRow();
 }
 
-// Présentation de l'appel entrant : plein écran ou bandeau haut (iOS 26)
+// Présentation de l'appel entrant : plein écran ou bandeau haut
 let callPresent = 'full', callPhotoMode = 'avatar';
 function setCallPresent(v) {
   callPresent = v;
@@ -4523,7 +4708,8 @@ function setCallPhotoMode(v) {
 }
 function _syncCallPhotoRow() {
   const r = document.getElementById('callPhotoModeRow');
-  if (r) r.style.display = (callKind === 'call' && callStyle === 'ios') ? 'block' : 'none';
+  // Photo plein écran disponible pour Verre et Tonal (Épuré reste sobre)
+  if (r) r.style.display = (callKind === 'call' && callStyle !== 'minimal') ? 'block' : 'none';
 }
 
 // Bande son jouée par l'écran quand le comédien décroche (voix du correspondant).
@@ -4623,10 +4809,12 @@ function triggerCall() {
     name: (document.getElementById('callName').value || 'Inconnu').slice(0, 40),
     label: (document.getElementById('callLabel').value || '').slice(0, 40),
     msg: (document.getElementById('callMsgText').value || '').slice(0, 200),
+    appName: (document.getElementById('callAppName').value || '').slice(0, 24),
+    appColor: document.getElementById('callAppColor').value,
     photo: _callPhoto,
     ring: callRing,
     present: callPresent,
-    photoMode: (callStyle === 'ios') ? callPhotoMode : 'avatar',
+    photoMode: (callStyle !== 'minimal') ? callPhotoMode : 'avatar',
     hasAudio: !!_callAudioData,
     autoAnswer: parseInt(document.getElementById('callAutoSlider').value) || 0,
     lock: lockOn ? {
@@ -4690,25 +4878,72 @@ function _startRinging(kind) {
   _callRingTimer = setInterval(() => _ringBurst(kind), IV[kind] || 3000);
 }
 function _playNotifSound(kind) {
-  if (kind === 'whatsapp') { _tone(880, 0, 0.09, 0.16, 'sine'); _tone(1174, 0.12, 0.12, 0.16, 'sine'); }
+  if (kind === 'chat') { _tone(880, 0, 0.09, 0.16, 'sine'); _tone(1174, 0.12, 0.12, 0.16, 'sine'); }
   else { [1318, 1046, 784].forEach((f, i) => _tone(f, i * 0.13, 0.18, 0.15, 'sine')); }
 }
 
 // — Écran : overlay —
-function _scAvatarHtml(m) {
-  const init = escapeHtml(String(m.name || '?').trim().charAt(0).toUpperCase() || '?');
-  return m.photo
-    ? '<div class="sc-avatar" style="background-image:url(' + m.photo + ')"></div>'
-    : '<div class="sc-avatar">' + init + '</div>';
+// Trois styles neutres, inspirés des usages mobiles mais sans aucune marque,
+// logo ou libellé d'application tierce (exigence App Store / Google Play) :
+//   glass   « Verre »  : translucidité, flou, boutons ronds
+//   tonal   « Tonal »  : surfaces tonales, boutons pilule avec libellé
+//   minimal « Épuré »  : sobre, contrasté
+const _SC_STYLES = ['glass', 'tonal', 'minimal'];
+// Compatibilité avec les anciennes valeurs envoyées par une télécommande non à jour
+function _scStyle(s) {
+  const legacy = { ios: 'glass', android: 'tonal', generic: 'minimal' };
+  s = legacy[s] || s;
+  return _SC_STYLES.includes(s) ? s : 'glass';
 }
+function _scInitial(m) {
+  return escapeHtml(String(m.name || '?').trim().charAt(0).toUpperCase() || '?');
+}
+function _scAvatarHtml(m, cls) {
+  return m.photo
+    ? '<div class="' + (cls || 'sc-avatar') + '" style="background-image:url(' + m.photo + ')"></div>'
+    : '<div class="' + (cls || 'sc-avatar') + '">' + _scInitial(m) + '</div>';
+}
+// Fond : photo floutée (mode avatar) ou photo plein écran nette + voile
+function _scBg(m) {
+  if (!m.photo || m.style === 'minimal') return '';
+  if (m.photoMode === 'full') {
+    return '<div class="sc-bg full" style="background-image:url(' + m.photo + ')"></div>'
+      + '<div class="sc-fullshade"></div>';
+  }
+  return m.style === 'glass' ? '<div class="sc-bg" style="background-image:url(' + m.photo + ')"></div>' : '';
+}
+// Avatar masqué quand la photo occupe déjà tout l'écran
+function _scHeadAvatar(m) {
+  return (m.photoMode === 'full' && m.photo && m.style !== 'minimal') ? '' : _scAvatarHtml(m);
+}
+
 function screenCallStart(m) {
   screenCallStopTimers();
-  _callCfg = m || {};
+  _stopCallAudio();
+  _callHideSeq++; // annule une éventuelle fermeture animée encore en attente
+  // Tout ce qui vient du réseau est normalisé/validé avant d'être affiché
+  m = m || {};
+  _callCfg = {
+    kind: m.kind === 'call' ? 'call' : (m.kind === 'sms' ? 'sms' : 'chat'), // 'whatsapp' (ancien) → 'chat'
+    style: _scStyle(m.style),
+    name: String(m.name || '').slice(0, 40),
+    label: String(m.label || '').slice(0, 40),
+    msg: String(m.msg || '').slice(0, 200),
+    appName: String(m.appName || '').slice(0, 24),
+    appColor: safeHexColor(m.appColor, null),
+    photo: safeImageData(m.photo),
+    photoMode: m.photoMode === 'full' ? 'full' : 'avatar',
+    present: m.present === 'banner' ? 'banner' : 'full',
+    ring: m.ring,
+    hasAudio: !!m.hasAudio,
+    autoAnswer: Math.max(0, Math.min(60, Number(m.autoAnswer) || 0)),
+    lock: m.lock ? { time: String(m.lock.time || '').slice(0, 8), date: String(m.lock.date || '').slice(0, 30) } : null,
+  };
   const el = document.getElementById('screen-call'); if (!el) return;
   el.style.display = 'block';
   if (_callCfg.kind === 'call') {
     _callState = 'ringing';
-    // Présentation « bandeau haut » (écran déverrouillé, iOS 26) vs plein écran
+    // Présentation « bandeau haut » (téléphone en cours d'utilisation) ou plein écran
     if (_callCfg.present === 'banner') { el.classList.add('notif'); _scRenderCallBar(); }
     else { el.classList.remove('notif'); _scRenderIncoming(); }
     _startRinging(_callCfg.ring || 'classic');
@@ -4728,15 +4963,51 @@ function screenCallStart(m) {
       _callAutoTimer = setTimeout(() => { if (_callState === 'notif') screenCallEnd(); }, 10000);
     } else {
       el.classList.add('notif');
-      _scRenderNotif();
+      el.innerHTML = _scNotifCard(_callCfg, '');
     }
     _playNotifSound(_callCfg.kind);
     if (navigator.vibrate) navigator.vibrate([200, 120, 200]);
   }
 }
 
-// — Faux écran verrouillé iOS 26 : fond choisi, date + grande horloge,
-// notification vitrée en bas, lampe/appareil photo, barre home. —
+// Application fictive affichée sur les notifications (nom + couleur réglables)
+function _scApp(m) {
+  const sms = m.kind === 'sms';
+  return {
+    name: m.appName || (sms ? 'SMS' : 'Messagerie'),
+    color: m.appColor || (sms ? '#2f8cf0' : '#7a5af8'),
+    icon: sms ? _SCI.bubble : _SCI.chat,
+  };
+}
+// Carte de notification (bannière ou écran verrouillé), selon le style
+function _scNotifCard(m, extraCls) {
+  const app = _scApp(m);
+  const cls = 'sc-notif ' + m.style + (extraCls ? ' ' + extraCls : '');
+  const click = extraCls ? '' : ' onclick="event.stopPropagation();screenCallEnd()"';
+  const name = escapeHtml(m.name || ''), msg = escapeHtml(m.msg || ''), appName = escapeHtml(app.name);
+  if (m.style === 'tonal') {
+    // En-tête discret (pastille + nom d'app), avatar de l'expéditeur à droite
+    return '<div class="' + cls + '"' + click + '>'
+      + '<div class="sc-notif-body">'
+      + '<div class="n-head"><span class="n-dot" style="background:' + app.color + '">' + app.icon + '</span>'
+      + appName + ' · maintenant</div>'
+      + '<div class="sc-notif-name">' + name + '</div>'
+      + '<div class="sc-notif-msg">' + msg + '</div>'
+      + '</div>'
+      + _scAvatarHtml(m, 'n-avatar')
+      + '</div>';
+  }
+  return '<div class="' + cls + '"' + click + '>'
+    + '<div class="sc-notif-icon" style="background:' + app.color + '">' + app.icon + '</div>'
+    + '<div class="sc-notif-body">'
+    + '<div class="n-title"><span class="sc-notif-name">' + name + '</span><span class="n-time">maintenant</span></div>'
+    + '<div class="sc-notif-msg">' + msg + '</div>'
+    + (m.style === 'minimal' ? '<div class="n-app">' + appName + '</div>' : '')
+    + '</div></div>';
+}
+
+// — Faux écran verrouillé : fond choisi, date + horloge, notification,
+// raccourcis et barre de navigation, déclinés selon le style. —
 function _scLockDate(d) {
   const j = ['Dim.', 'Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.'];
   const mo = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
@@ -4744,148 +5015,146 @@ function _scLockDate(d) {
 }
 function _scRenderLock() {
   const m = _callCfg, el = document.getElementById('screen-call');
-  const wa = m.kind === 'whatsapp';
   const wall = _mediaCache.get('__lockwall');
+  const wallUrl = wall && wall.kind === 'img' ? wall.data : null;
   const now = new Date();
-  const time = (m.lock && m.lock.time) || (String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'));
-  const date = (m.lock && m.lock.date) || _scLockDate(now);
-  el.innerHTML = '<div class="sc-lock"' + (wall ? ' style="background-image:url(' + wall.data + ')"' : '')
+  const time = m.lock.time || (String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'));
+  const date = m.lock.date || _scLockDate(now);
+  // Tonal : heures et minutes empilées
+  const clock = m.style === 'tonal'
+    ? escapeHtml(time).replace(':', '<br>')
+    : escapeHtml(time);
+  const shortcuts = m.style === 'minimal' ? '' :
+    '<div class="sc-lock-bottom">'
+    + '<button class="sc-lock-circle" onclick="event.stopPropagation()">' + (m.style === 'tonal' ? _SCI.handset : _SCI.flash) + '</button>'
+    + '<button class="sc-lock-circle" onclick="event.stopPropagation()">' + _SCI.camera + '</button>'
+    + '</div>';
+  el.innerHTML = '<div class="sc-lock ' + m.style + '"' + (wallUrl ? ' style="background-image:url(' + wallUrl + ')"' : '')
     + ' onclick="event.stopPropagation();screenCallEnd()">'
     + '<div class="sc-lock-shade"></div>'
     + '<div class="sc-lock-date">' + escapeHtml(date) + '</div>'
-    + '<div class="sc-lock-time">' + escapeHtml(time) + '</div>'
-    + '<div class="sc-lock-notif">'
-    + '<div class="sc-notif-icon" style="background:' + (wa ? '#25D366' : 'linear-gradient(180deg,#5ef77a,#0dbf3f)') + '">'
-    + (wa ? _SCI.whatsapp : _SCI.bubble) + '</div>'
-    + '<div class="sc-notif-body">'
-    + '<div class="sc-lock-titlerow"><span class="sc-notif-name">' + escapeHtml(m.name || '') + '</span>'
-    + '<span class="sc-notif-time">maintenant</span></div>'
-    + '<div class="sc-notif-msg">' + escapeHtml(m.msg || '') + '</div>'
-    + '</div></div>'
-    + '<div class="sc-lock-bottom">'
-    + '<button class="sc-lock-circle" onclick="event.stopPropagation()">' + _SCI.flash + '</button>'
-    + '<button class="sc-lock-circle" onclick="event.stopPropagation()">' + _SCI.camera + '</button>'
-    + '</div>'
+    + '<div class="sc-lock-time">' + clock + '</div>'
+    + _scNotifCard(m, 'in-lock')
+    + shortcuts
     + '<div class="sc-lock-home"></div>'
     + '</div>';
 }
-// Fond iOS : photo floutée (avatar) ou photo plein écran nette + voile
-function _scIosBg(m) {
-  if (!m.photo) return '';
-  if (m.photoMode === 'full') {
-    return '<div class="sc-ios-bg full" style="background-image:url(' + m.photo + ')"></div>'
-      + '<div class="sc-ios-fullshade"></div>';
-  }
-  return '<div class="sc-ios-bg" style="background-image:url(' + m.photo + ')"></div>';
-}
-// Avatar masqué quand la photo occupe déjà tout l'écran
-function _scHeadAvatar(m) {
-  return (m.style === 'ios' && m.photoMode === 'full' && m.photo) ? '' : _scAvatarHtml(m);
-}
-// Icônes SVG style iOS (traits/aplats blancs, pas d'emoji)
+
+// Icônes SVG génériques (aucun logo d'application tierce)
+const _HANDSET_PATH = 'M6.62 10.79c1.44 2.83 3.76 5.15 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z';
 const _SCI = {
-  handset: '<svg viewBox="0 0 24 24" width="30" height="30" fill="#fff"><path d="M6.62 10.79c1.44 2.83 3.76 5.15 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>',
-  handsetDown: '<svg viewBox="0 0 24 24" width="30" height="30" fill="#fff"><g transform="rotate(135 12 12)"><path d="M6.62 10.79c1.44 2.83 3.76 5.15 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></g></svg>',
-  micSlash: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="4.5" y1="3.5" x2="19.5" y2="20.5"/></svg>',
-  keypad: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#fff">' + [4.5, 9, 13.5, 18].map(y => [7, 12, 17].map(x => '<circle cx="' + x + '" cy="' + y + '" r="1.7"/>').join('')).join('') + '</svg>',
-  speaker: '<svg viewBox="0 0 24 24" width="26" height="26"><path fill="#fff" d="M3 9v6h4l5 4.5v-15L7 9H3z"/><path fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" d="M15.5 8.5a5 5 0 0 1 0 7M18 6a9 9 0 0 1 0 12"/></svg>',
-  plus: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="4.5" x2="12" y2="19.5"/><line x1="4.5" y1="12" x2="19.5" y2="12"/></svg>',
-  facetime: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#fff"><rect x="2" y="6.5" width="13.5" height="11" rx="3.2"/><path d="M17 10.6l4.3-2.8c.3-.2.7 0 .7.4v7.6c0 .4-.4.6-.7.4L17 13.4v-2.8z"/></svg>',
-  contacts: '<svg viewBox="0 0 24 24" width="26" height="26" fill="#fff"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5v.5H3V19z"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.6 14.3c2.8.3 5.4 2.1 5.4 4.7v.5h-4.2c0-2-.4-3.8-1.2-5.2z"/></svg>',
-  clock: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg>',
+  handset: '<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor"><path d="' + _HANDSET_PATH + '"/></svg>',
+  handsetDown: '<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor"><g transform="rotate(135 12 12)"><path d="' + _HANDSET_PATH + '"/></g></svg>',
+  micSlash: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="4.5" y1="3.5" x2="19.5" y2="20.5"/></svg>',
+  keypad: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">' + [4.5, 9, 13.5, 18].map(y => [7, 12, 17].map(x => '<circle cx="' + x + '" cy="' + y + '" r="1.7"/>').join('')).join('') + '</svg>',
+  speaker: '<svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M3 9v6h4l5 4.5v-15L7 9H3z"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M15.5 8.5a5 5 0 0 1 0 7M18 6a9 9 0 0 1 0 12"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="4.5" x2="12" y2="19.5"/><line x1="4.5" y1="12" x2="19.5" y2="12"/></svg>',
+  video: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><rect x="2" y="6.5" width="13.5" height="11" rx="3.2"/><path d="M17 10.6l4.3-2.8c.3-.2.7 0 .7.4v7.6c0 .4-.4.6-.7.4L17 13.4v-2.8z"/></svg>',
+  contacts: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5v.5H3V19z"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.6 14.3c2.8.3 5.4 2.1 5.4 4.7v.5h-4.2c0-2-.4-3.8-1.2-5.2z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg>',
   bubble: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 3C6.5 3 2 6.9 2 11.7c0 2.8 1.5 5.3 3.9 6.9-.1 1-.5 2.3-1.6 3.4 1.9-.2 3.4-1 4.4-1.7 1 .2 2.1.4 3.3.4 5.5 0 10-3.9 10-8.7S17.5 3 12 3z"/></svg>',
-  whatsapp: '<svg viewBox="0 0 24 24" width="26" height="26"><path fill="#fff" d="M12 2.3a9.7 9.7 0 0 0-8.3 14.7L2.3 21.7l4.9-1.3A9.7 9.7 0 1 0 12 2.3z"/><g transform="translate(5.6 5.6) scale(0.54)" fill="#25D366"><path d="M6.62 10.79c1.44 2.83 3.76 5.15 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></g></svg>',
+  chat: '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#fff" d="M5 3.5h14a2.5 2.5 0 0 1 2.5 2.5v9a2.5 2.5 0 0 1-2.5 2.5H10l-4.6 3.6c-.4.3-.9 0-.9-.5v-3.1A2.5 2.5 0 0 1 2.5 15V6A2.5 2.5 0 0 1 5 3.5z"/><g fill="rgba(0,0,0,.35)"><circle cx="8" cy="10.5" r="1.3"/><circle cx="12" cy="10.5" r="1.3"/><circle cx="16" cy="10.5" r="1.3"/></g></svg>',
   flash: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M8.5 2h7v3.2L13.6 8.6v10.9a1.6 1.6 0 0 1-3.2 0V8.6L8.5 5.2V2z"/><rect x="8.5" y="3.4" width="7" height="1.3" fill="#000" fill-opacity=".25"/></svg>',
   camera: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M4.5 7h2.6l1.5-2h6.8l1.5 2h2.6A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-9A1.5 1.5 0 0 1 4.5 7z"/><circle cx="12" cy="12.8" r="3.6" fill="#3a3a42"/><circle cx="12" cy="12.8" r="2.2" fill="#fff"/></svg>',
 };
+
+// Boutons d'action (même handler pour les 3 styles)
+const _SC_DECLINE = 'event.stopPropagation();screenCallDecline()';
+const _SC_ANSWER = 'event.stopPropagation();screenCallAnswer()';
+const _SC_HANGUP = 'event.stopPropagation();screenCallEnd()';
+
 function _scRenderIncoming() {
   const m = _callCfg, el = document.getElementById('screen-call');
-  const style = (m.style === 'ios' || m.style === 'android') ? m.style : 'generic';
-  if (style === 'ios') {
-    // iOS 26 : fond photo (flouté ou plein écran), avatar, actions vitrées
-    el.innerHTML = '<div class="sc-call ios">'
-      + _scIosBg(m)
-      + '<div class="sc-ios-head">'
-      + _scHeadAvatar(m)
-      + '<div class="sc-ios-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
-      + '<div class="sc-ios-sub">' + escapeHtml(m.label || 'mobile') + '</div>'
+  const name = escapeHtml(m.name || 'Inconnu');
+  let html;
+  if (m.style === 'glass') {
+    html = _scBg(m)
+      + '<div class="sc-head">' + _scHeadAvatar(m)
+      + '<div class="sc-name">' + name + '</div>'
+      + '<div class="sc-sub">' + escapeHtml(m.label || 'mobile') + '</div></div>'
+      + '<div class="sc-bottom">'
+      + '<div class="sc-row" style="padding:0 16px">'
+      + '<div class="sc-col"><button class="sc-btn sc-mini">' + _SCI.clock + '</button><span>Me le rappeler</span></div>'
+      + '<div class="sc-col"><button class="sc-btn sc-mini">' + _SCI.bubble + '</button><span>Message</span></div>'
       + '</div>'
-      + '<div class="sc-ios-actions">'
-      + '<div class="sc-ios-minor">'
-      + '<div class="col"><button class="sc-mini">' + _SCI.clock + '</button><span>Rappel</span></div>'
-      + '<div class="col"><button class="sc-mini">' + _SCI.bubble + '</button><span>Message</span></div>'
-      + '</div>'
-      + '<div class="sc-ios-main">'
-      + '<div class="col"><button class="sc-ios-btn decline" onclick="event.stopPropagation();screenCallDecline()">' + _SCI.handsetDown + '</button><span>Refuser</span></div>'
-      + '<div class="col"><button class="sc-ios-btn answer" onclick="event.stopPropagation();screenCallAnswer()">' + _SCI.handset + '</button><span>Accepter</span></div>'
-      + '</div></div></div>';
-    return;
+      + '<div class="sc-row" style="padding:0 8px">'
+      + '<div class="sc-col"><button class="sc-btn sc-round sc-no" onclick="' + _SC_DECLINE + '">' + _SCI.handsetDown + '</button><span>Refuser</span></div>'
+      + '<div class="sc-col"><button class="sc-btn sc-round sc-ok" onclick="' + _SC_ANSWER + '">' + _SCI.handset + '</button><span>Accepter</span></div>'
+      + '</div></div>';
+  } else if (m.style === 'tonal') {
+    html = _scBg(m)
+      + '<div class="sc-kicker">Appel entrant</div>'
+      + '<div class="sc-head">' + _scHeadAvatar(m)
+      + '<div class="sc-name">' + name + '</div>'
+      + '<div class="sc-sub">' + escapeHtml(m.label || 'Mobile') + '</div></div>'
+      + '<div class="sc-bottom"><div class="sc-row" style="gap:16px;justify-content:center">'
+      + '<button class="sc-btn sc-pill sc-no" onclick="' + _SC_DECLINE + '">' + _SCI.handsetDown + 'Refuser</button>'
+      + '<button class="sc-btn sc-pill sc-ok" onclick="' + _SC_ANSWER + '">' + _SCI.handset + 'Répondre</button>'
+      + '</div></div>';
+  } else {
+    html = _scAvatarHtml(m)
+      + '<div class="sc-name">' + name + '</div>'
+      + '<div class="sc-sub" style="margin-top:6px">' + escapeHtml(m.label || 'Appel entrant') + '</div>'
+      + '<div class="sc-bottom"><div class="sc-row">'
+      + '<div class="sc-col"><button class="sc-btn sc-round sc-no" onclick="' + _SC_DECLINE + '">' + _SCI.handsetDown + '</button><span>Refuser</span></div>'
+      + '<div class="sc-col"><button class="sc-btn sc-round sc-ok" onclick="' + _SC_ANSWER + '">' + _SCI.handset + '</button><span>Répondre</span></div>'
+      + '</div></div>';
   }
-  el.innerHTML = '<div class="sc-call ' + style + '">'
-    + _scAvatarHtml(m)
-    + '<div class="sc-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
-    + '<div class="sc-label">' + escapeHtml(m.label || 'Appel entrant') + '</div>'
-    + '<div class="sc-actions">'
-    + '<div class="sc-btn-col"><button class="sc-btn decline" onclick="event.stopPropagation();screenCallDecline()">' + _SCI.handsetDown + '</button><span class="sc-btn-hint">Refuser</span></div>'
-    + '<div class="sc-btn-col"><button class="sc-btn answer" onclick="event.stopPropagation();screenCallAnswer()">' + _SCI.handset + '</button><span class="sc-btn-hint">Répondre</span></div>'
-    + '</div></div>';
+  el.innerHTML = '<div class="sc-call ' + m.style + '">' + html + '</div>';
 }
+
 function _scRenderInCall() {
   const m = _callCfg, el = document.getElementById('screen-call');
-  const style = (m.style === 'ios' || m.style === 'android') ? m.style : 'generic';
-  if (style === 'ios') {
-    // iOS 26 en appel : nom + chrono en tête, grille de contrôles vitrés
-    const g = (icon, lbl) => '<div class="col"><button class="sc-ios-gbtn">' + icon + '</button><span>' + lbl + '</span></div>';
-    el.innerHTML = '<div class="sc-call ios">'
-      + _scIosBg(m)
-      + '<div class="sc-ios-head">'
-      + '<div class="sc-ios-name" style="font-size:1.7rem">' + escapeHtml(m.name || 'Inconnu') + '</div>'
-      + '<div class="sc-ios-timer" id="scCallTimer">00:00</div>'
+  const name = escapeHtml(m.name || 'Inconnu');
+  const g = (icon, lbl) => '<div class="sc-col"><button class="sc-btn sc-gbtn">' + icon + '</button><span>' + lbl + '</span></div>';
+  let html;
+  if (m.style === 'minimal') {
+    html = _scAvatarHtml(m)
+      + '<div class="sc-name">' + name + '</div>'
+      + '<div class="sc-timer" id="scCallTimer">00:00</div>'
+      + '<div class="sc-bottom" style="align-items:center">'
+      + '<div class="sc-col"><button class="sc-btn sc-round sc-no" onclick="' + _SC_HANGUP + '">' + _SCI.handsetDown + '</button><span>Raccrocher</span></div>'
+      + '</div>';
+  } else {
+    const tonal = m.style === 'tonal';
+    html = _scBg(m)
+      + '<div class="sc-head">'
+      + (tonal ? _scHeadAvatar(m) : '')
+      + '<div class="sc-name" style="font-size:1.7rem">' + name + '</div>'
+      + '<div class="sc-timer" id="scCallTimer">00:00</div></div>'
+      + '<div class="sc-grid">'
+      + g(_SCI.micSlash, tonal ? 'Muet' : 'muet') + g(_SCI.keypad, tonal ? 'Clavier' : 'clavier') + g(_SCI.speaker, tonal ? 'Haut-parleur' : 'haut-parleur')
+      + g(_SCI.plus, tonal ? 'Ajouter' : 'ajouter') + g(_SCI.video, tonal ? 'Vidéo' : 'vidéo') + (tonal ? g(_SCI.pause, 'Attente') : g(_SCI.contacts, 'contacts'))
       + '</div>'
-      + '<div class="sc-ios-grid">'
-      + g(_SCI.micSlash, 'silence') + g(_SCI.keypad, 'clavier') + g(_SCI.speaker, 'audio')
-      + g(_SCI.plus, 'ajouter') + g(_SCI.facetime, 'FaceTime') + g(_SCI.contacts, 'contacts')
-      + '</div>'
-      + '<div class="sc-ios-actions" style="align-items:center">'
-      + '<div class="col" style="display:flex;flex-direction:column;align-items:center;gap:9px">'
-      + '<button class="sc-ios-btn decline" onclick="event.stopPropagation();screenCallEnd()">' + _SCI.handsetDown + '</button>'
-      + '</div></div></div>';
-    return;
+      + '<div class="sc-bottom" style="align-items:center">'
+      + (tonal
+        ? '<button class="sc-btn sc-hangup sc-no" onclick="' + _SC_HANGUP + '">' + _SCI.handsetDown + '</button>'
+        : '<button class="sc-btn sc-round sc-no" onclick="' + _SC_HANGUP + '">' + _SCI.handsetDown + '</button>')
+      + '</div>';
   }
-  el.innerHTML = '<div class="sc-call ' + style + '">'
-    + _scAvatarHtml(m)
-    + '<div class="sc-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
-    + '<div class="sc-timer" id="scCallTimer">00:00</div>'
-    + '<div class="sc-actions" style="justify-content:center">'
-    + '<div class="sc-btn-col"><button class="sc-btn decline" onclick="event.stopPropagation();screenCallEnd()">' + _SCI.handsetDown + '</button><span class="sc-btn-hint">Raccrocher</span></div>'
-    + '</div></div>';
+  el.innerHTML = '<div class="sc-call ' + m.style + '">' + html + '</div>';
 }
-function _scRenderNotif() {
-  const m = _callCfg, el = document.getElementById('screen-call');
-  const wa = m.kind === 'whatsapp';
-  el.innerHTML = '<div class="sc-notif" onclick="event.stopPropagation();screenCallEnd()">'
-    + '<div class="sc-notif-icon" style="background:' + (wa ? '#25D366' : 'linear-gradient(180deg,#5ef77a,#0dbf3f)') + '">'
-    + (wa ? _SCI.whatsapp : _SCI.bubble) + '</div>'
-    + '<div class="sc-notif-body">'
-    + '<div class="sc-notif-app">' + (wa ? 'WhatsApp' : 'Messages') + ' · maintenant</div>'
-    + '<div class="sc-notif-name">' + escapeHtml(m.name || '') + '</div>'
-    + '<div class="sc-notif-msg">' + escapeHtml(m.msg || '') + '</div>'
-    + '</div></div>';
-}
-// Bandeau d'appel entrant en haut (écran déverrouillé, iOS 26)
+
+// Bandeau d'appel entrant en haut (téléphone en cours d'utilisation)
 function _scRenderCallBar() {
   const m = _callCfg, el = document.getElementById('screen-call');
-  const init = escapeHtml(String(m.name || '?').trim().charAt(0).toUpperCase() || '?');
-  const av = m.photo
-    ? '<div class="cb-avatar" style="background-image:url(' + m.photo + ')"></div>'
-    : '<div class="cb-avatar">' + init + '</div>';
-  el.innerHTML = '<div class="sc-callbar">'
-    + av
-    + '<div class="cb-info"><div class="cb-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
-    + '<div class="cb-sub">' + escapeHtml(m.label || 'Appel…') + '</div></div>'
-    + '<button class="cb-btn decline" onclick="event.stopPropagation();screenCallDecline()">' + _SCI.handsetDown + '</button>'
-    + '<button class="cb-btn answer" onclick="event.stopPropagation();screenCallAnswer()">' + _SCI.handset + '</button>'
-    + '</div>';
+  const info = '<div class="cb-info"><div class="cb-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
+    + '<div class="cb-sub">' + escapeHtml(m.label || 'Appel entrant') + '</div></div>';
+  let html;
+  if (m.style === 'tonal') {
+    // Tonal : boutons pilule libellés sous l'identité de l'appelant
+    html = _scAvatarHtml(m, 'cb-avatar') + info
+      + '<div class="cb-actions">'
+      + '<button class="sc-btn sc-pill sc-no" onclick="' + _SC_DECLINE + '">Refuser</button>'
+      + '<button class="sc-btn sc-pill sc-ok" onclick="' + _SC_ANSWER + '">Répondre</button>'
+      + '</div>';
+  } else {
+    html = _scAvatarHtml(m, 'cb-avatar') + info
+      + '<button class="sc-btn cb-btn sc-no" onclick="' + _SC_DECLINE + '">' + _SCI.handsetDown + '</button>'
+      + '<button class="sc-btn cb-btn sc-ok" onclick="' + _SC_ANSWER + '">' + _SCI.handset + '</button>';
+  }
+  el.innerHTML = '<div class="sc-callbar ' + m.style + '">' + html + '</div>';
 }
 function _scTickInCall() {
   const el = document.getElementById('scCallTimer'); if (!el) return;
@@ -4894,17 +5163,41 @@ function _scTickInCall() {
 }
 // Bande son du décroché : jouée sur l'écran (voix du correspondant)
 let _callAudioEl = null;
-function _playCallAudio() {
+// Lecture via le contexte WebAudio déjà déverrouillé au premier toucher de
+// l'écran : un élément <audio> serait bloqué par iOS quand le décroché vient
+// de la télécommande ou du décroché automatique (aucun geste en cours).
+let _callAudioSrc = null;
+async function _playCallAudio() {
   _stopCallAudio();
   const c = _mediaCache.get('__callaudio');
   if (!c || !c.data) return;
+  const ctx = _ac();
+  try {
+    if (ctx) {
+      if (!c._buf) {
+        const b64 = c.data.slice(c.data.indexOf(',') + 1);
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        c._buf = await ctx.decodeAudioData(bytes.buffer);
+      }
+      if (_callState !== 'incall') return; // raccroché pendant le décodage
+      const src = ctx.createBufferSource();
+      src.buffer = c._buf;
+      src.connect(ctx.destination);
+      src.start();
+      _callAudioSrc = src;
+      return;
+    }
+  } catch (_) { /* format non décodable : repli sur <audio> */ }
   try {
     const a = new Audio(c.data);
-    a.play().catch(() => {}); // le geste sur l'écran a déjà débloqué l'audio
+    a.play().catch(() => {});
     _callAudioEl = a;
   } catch (_) {}
 }
 function _stopCallAudio() {
+  if (_callAudioSrc) { try { _callAudioSrc.stop(); } catch (_) {} _callAudioSrc = null; }
   if (_callAudioEl) { try { _callAudioEl.pause(); } catch (_) {} _callAudioEl = null; }
 }
 function screenCallAnswer() {
@@ -4938,13 +5231,20 @@ function screenCallHide() {
   if (!el) return;
   // Sortie animée : bannières/bandeaux remontent vers le haut, écran verrouillé
   // en fondu ; sinon disparition immédiate.
-  const notif = el.querySelector('.sc-notif, .sc-callbar');
+  // (l'écran verrouillé contient lui-même une carte .sc-notif : on le teste en premier)
   const lock = el.querySelector('.sc-lock');
-  const done = () => { el.style.display = 'none'; el.innerHTML = ''; el.classList.remove('notif'); };
-  if (notif) { notif.classList.add('sc-out'); setTimeout(done, 340); }
-  else if (lock) { lock.classList.add('sc-lockout'); setTimeout(done, 400); }
+  const notif = lock ? null : el.querySelector('.sc-notif, .sc-callbar');
+  // Jeton : un nouvel appel déclenché pendant l'animation ne doit pas être effacé
+  const tok = ++_callHideSeq;
+  const done = () => {
+    if (tok !== _callHideSeq) return;
+    el.style.display = 'none'; el.innerHTML = ''; el.classList.remove('notif');
+  };
+  if (lock) { lock.classList.add('sc-lockout'); setTimeout(done, 400); }
+  else if (notif) { notif.classList.add('sc-out'); setTimeout(done, 340); }
   else done();
 }
+let _callHideSeq = 0;
 function _scStopRing() {
   if (_callRingTimer) { clearInterval(_callRingTimer); _callRingTimer = null; }
   if (_callVibTimer) { clearInterval(_callVibTimer); _callVibTimer = null; }
@@ -4969,7 +5269,7 @@ function screenMediaCtrl(msg) {
   const vid = document.getElementById('screen-media-video');
   if (!vid || !vid.src) return;
   if (msg.action === 'play')  { playScreenVid(vid); }
-  else if (msg.action === 'pause') { try { vid.pause(); } catch (_) {} }
+  else if (msg.action === 'pause') { vid._wantPlay = false; try { vid.pause(); } catch (_) {} }
   else if (msg.action === 'seek' && isFinite(msg.time)) { try { vid.currentTime = msg.time; } catch (_) {} sendScreenState(vid); }
 }
 
@@ -5047,6 +5347,7 @@ function screenPlayVideoUrl(url) {
   vid.onplay  = () => sendScreenState(vid);
   vid.onpause = () => sendScreenState(vid);
   vid.onended = () => {
+    vid._wantPlay = false;
     if (_screenVidEndMode === 'off') {
       // « 1× puis off » : coupe le média, l'écran revient au fond couleur
       hideScreenMedia();
@@ -5082,9 +5383,13 @@ function requestFS() {
   const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
   if (req) req.call(el).catch(() => {});
   _ac(); // déverrouille l'audio (sonneries du simulateur d'appel) au premier geste
-  // Relance la lecture vidéo si l'autoplay a été bloqué (geste utilisateur)
+  // Geste utilisateur : ne débloque QUE la vidéo affichée et censée jouer
+  // (autoplay bloqué ou repli muet) — jamais une vidéo masquée ou en pause.
   const vid = document.getElementById('screen-media-video');
-  if (vid && (vid.src || vid.srcObject)) vid.play().catch(() => {});
+  if (vid && vid.style.display === 'block' && vid._wantPlay) {
+    if (vid._autoMuted) { vid.muted = false; vid._autoMuted = false; }
+    if (vid.paused) vid.play().catch(() => {});
+  }
 }
 // Quitter le plein écran si on quitte le mode écran
 function exitFS() {
@@ -5092,10 +5397,18 @@ function exitFS() {
   if (ex && document.fullscreenElement) ex.call(document).catch(() => {});
 }
 
-if(location.hash) enterScreenMode(location.hash.replace('#',''));
+if (location.hash && cleanChannel(location.hash)) enterScreenMode(location.hash);
 
 // ══════════════════════════ PWA — installation & hors-ligne ══════════════════════════
 let _deferredInstall = null;
+let _swUpdatePending = false, _swReloaded = false;
+// Recharge pour appliquer une nouvelle version, uniquement hors session
+function applyPendingUpdate() {
+  if (!_swUpdatePending || _swReloaded) return;
+  if (mode === 'screen' || mode === 'remote') return;
+  _swReloaded = true;
+  window.location.reload();
+}
 
 // Enregistrement du service worker + rechargement auto sur mise à jour.
 // Quand une nouvelle version du SW prend le contrôle (skipWaiting + clients.claim),
@@ -5105,11 +5418,12 @@ if ('serviceWorker' in navigator) {
   // Vrai seulement s'il existait déjà un SW au chargement (donc : mise à jour, pas
   // première installation) → évite un rechargement inutile au tout premier lancement.
   const _hadController = !!navigator.serviceWorker.controller;
-  let _swReloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!_hadController || _swReloaded) return;
-    _swReloaded = true;
-    window.location.reload();
+    if (!_hadController) return;
+    // Jamais de rechargement pendant une session (écran de jeu ou télécommande
+    // en tournage) : la mise à jour s'applique au prochain retour à l'accueil.
+    _swUpdatePending = true;
+    applyPendingUpdate();
   });
   window.addEventListener('load', () => {
     updateCrossfadeGradient();
@@ -5208,9 +5522,21 @@ _syncCallPhotoRow();
 document.querySelectorAll('input[type="range"]').forEach(slider => {
   if (slider.parentElement.classList.contains('slider-row')) return; // déjà transformé
   const parent = slider.parentElement;
-  const step = parseFloat(slider.step) || 1;
-  const min = parseFloat(slider.min) || 0;
-  const max = parseFloat(slider.max) || 100;
+  // Bornes lues à chaque usage : certains sliders changent de plage en cours
+  // de route (ex. vitesse d'effet : 0,2–10 puis 20–240 BPM pour Pulse).
+  const rng = () => ({
+    step: parseFloat(slider.step) || 1,
+    min: isNaN(parseFloat(slider.min)) ? 0 : parseFloat(slider.min),
+    max: isNaN(parseFloat(slider.max)) ? 100 : parseFloat(slider.max),
+  });
+  // input + change : comme un vrai geste (la timeline vidéo écoute « change »)
+  const nudge = (dir) => {
+    const r = rng();
+    const v = parseFloat(slider.value) + dir * r.step;
+    slider.value = Math.min(r.max, Math.max(r.min, v));
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+    slider.dispatchEvent(new Event('change', { bubbles: true }));
+  };
 
   // Wrapper avec boutons +/-
   const wrapper = document.createElement('div');
@@ -5221,11 +5547,7 @@ document.querySelectorAll('input[type="range"]').forEach(slider => {
   btnMinus.className = 'slider-btn';
   btnMinus.textContent = '−';
   btnMinus.type = 'button';
-  btnMinus.onclick = (e) => {
-    e.preventDefault();
-    slider.value = Math.max(min, parseFloat(slider.value) - step);
-    slider.dispatchEvent(new Event('input', { bubbles: true }));
-  };
+  btnMinus.onclick = (e) => { e.preventDefault(); nudge(-1); };
 
   // Slider
   slider.classList.add('slider-input');
@@ -5235,11 +5557,7 @@ document.querySelectorAll('input[type="range"]').forEach(slider => {
   btnPlus.className = 'slider-btn';
   btnPlus.textContent = '+';
   btnPlus.type = 'button';
-  btnPlus.onclick = (e) => {
-    e.preventDefault();
-    slider.value = Math.min(max, parseFloat(slider.value) + step);
-    slider.dispatchEvent(new Event('input', { bubbles: true }));
-  };
+  btnPlus.onclick = (e) => { e.preventDefault(); nudge(1); };
 
   // Insérer le wrapper à la place du slider AVANT d'y déplacer le slider
   // (sinon insertBefore échoue : le slider n'est plus un enfant du parent)
@@ -5256,6 +5574,7 @@ document.querySelectorAll('input[type="range"]').forEach(slider => {
       e.stopPropagation();
       if (valLabel._editing) return; // un seul champ de saisie à la fois
       valLabel._editing = true;
+      const { min, max, step } = rng();
       const input = document.createElement('input');
       input.type = 'number';
       input.min = min;
@@ -5271,6 +5590,7 @@ document.querySelectorAll('input[type="range"]').forEach(slider => {
         if (!isNaN(v)) {
           slider.value = Math.min(max, Math.max(min, v));
           slider.dispatchEvent(new Event('input', { bubbles: true }));
+          slider.dispatchEvent(new Event('change', { bubbles: true }));
         }
         input.remove();              // supprime le champ du DOM
         valLabel.style.display = '';
