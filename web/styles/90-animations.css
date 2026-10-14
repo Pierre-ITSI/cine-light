@@ -1,0 +1,13 @@
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Anneaux de statut (contour pulsé en fade) ──
+   violet = effet en diffusion · orange = média en diffusion · rouge = écran OFF */
+.st-effect{--stc:#d05cff}
+.st-media{--stc:#FF6B2C}
+.st-off{--stc:#ff3b30}
+.st-effect,.st-media,.st-off{animation:stPulse 1.5s ease-in-out infinite}
+@keyframes stPulse{
+  0%,100%{box-shadow:0 0 0 2px var(--stc),0 0 14px var(--stc)}
+  50%{box-shadow:0 0 0 2px rgba(0,0,0,0),0 0 14px rgba(0,0,0,0)}
+}

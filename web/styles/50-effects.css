@@ -1,0 +1,20 @@
+/* EFFECTS TAB */
+.fx-family{font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
+.fx-family:first-of-type{margin-top:0}
+.effects-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+/* Canvas du moteur d'effets : plein écran de jeu + mini aperçus */
+#screen-fx-canvas{display:none;position:absolute;inset:0;width:100%;height:100%;z-index:10;pointer-events:none}
+.swatch,.sticky-swatch{position:relative;overflow:hidden}
+.pv-fx-canvas{display:none;position:absolute;inset:0;width:100%;height:100%;border-radius:inherit;pointer-events:none}
+.fx-tap-btn{background:var(--mid2);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;padding:5px 12px;border-radius:14px;cursor:pointer}
+.fx-tap-btn:active{border-color:var(--accent);color:var(--accent)}
+.fx-dice-btn{background:rgba(208,92,255,.1);border:1px solid rgba(208,92,255,.4);color:#d05cff;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;padding:6px 14px;border-radius:14px;cursor:pointer}
+.fx-dice-btn:active{background:rgba(208,92,255,.25)}
+.effect-card{border:1px solid var(--border);border-radius:8px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;background:var(--mid2);transition:all .2s;touch-action:manipulation;font-family:'DM Mono',monospace;width:100%}
+.effect-card:hover,.effect-card:active{border-color:rgba(255,255,255,.2);transform:scale(.97)}
+.effect-card.active{border-color:var(--accent);background:rgba(232,201,122,.1);box-shadow:0 0 14px rgba(232,201,122,.1)}
+.effect-card-icon{font-size:1.8rem}
+.effect-card-name{font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.3}
+.effect-card.active .effect-card-name{color:var(--accent)}
+.effect-active-row{display:flex;flex-direction:row;align-items:center;gap:10px;margin-bottom:12px}
+

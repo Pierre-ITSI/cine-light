@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>SetRemote</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SetRemote">
+<!-- Écrans de lancement iOS (apple-touch-startup-image) -->
+<link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-640x1136.png">
+<link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="splash-1136x640.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="splash-1334x750.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1242x2208.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash-2208x1242.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash-2436x1125.png">
+<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png">
+<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash-2532x1170.png">
+<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png">
+<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash-2556x1179.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="splash-1792x828.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1242x2688.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash-2688x1242.png">
+<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1284x2778.png">
+<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash-2778x1284.png">
+<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png">
+<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash-2796x1290.png">
+<!-- mqtt.js embarqué et figé (5.16.1) : plus de dépendance à unpkg ni de mise à jour surprise -->
+<script src="vendor/mqtt-5.16.1.min.js"></script>
+<style>
+/* @@STYLES@@ */
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="splash-head">
+    <svg class="splash-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+      <rect x="14" y="44" width="72" height="46" rx="8" fill="none" stroke="#F5F2EC" stroke-width="6"/>
+      <circle cx="18" cy="46" r="5.5" fill="#FF6B2C"/>
+      <g transform="rotate(14 18 46)">
+        <path d="M 36 34 A 22 22 0 0 0 18 26" fill="none" stroke="#FF6B2C" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 52 28 A 38 38 0 0 0 20 12" fill="none" stroke="#FF6B2C" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+        <path d="M 68 24 A 54 54 0 0 0 24 1" fill="none" stroke="#FF6B2C" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+      </g>
+    </svg>
+    <h1>Set<span style="color:#FF6B2C">Remote</span></h1>
+    <div class="splash-tagline">
+      <span class="tagline-prefix">Une app conçue pour</span>
+      <span class="rotating-role" id="rotatingRole" aria-live="polite">les accessoiristes</span>
+    </div>
+  </div>
+  <div class="splash-btns">
+    <button class="splash-btn primary" onclick="startMode('remote')">Télécommande</button>
+    <button class="splash-btn" onclick="startMode('screen')">Écran projecteur</button>
+    <button class="splash-btn" onclick="window.location.href='screen.html'">Mode DMX</button>
+  </div>
+  <button id="installBtn" class="install-btn" style="display:none" onclick="installPWA()">⬇ Installer l'application</button>
+  <div id="iosInstallHint" class="install-hint" style="display:none">
+    Pour installer : appuyez sur <strong>Partager</strong> <span style="font-size:1.1em">⎙</span> puis <strong>« Sur l'écran d'accueil »</strong>
+  </div>
+  <div class="splash-credit">by Pikoo</div>
+</div>
+
+<div id="screen-sacn-config">
+  <h2>🎛 Mode DMX</h2>
+  <p>Réception directe de données DMX</p>
+
+  <div id="screenSacnNativeBadge" class="sacn-native-badge" style="display:none">
+    📡 Réception UDP native — aucun bridge requis
+  </div>
+
+  <div id="screenSacnBridgeSection" class="sacn-bridge-row">
+    <label>Bridge WebSocket</label>
+    <div class="sacn-bridge-ip-row">
+      <span style="font-size:.6rem;color:var(--muted)">ws://</span>
+      <input type="text" id="screenSacnBridgeIP" class="sacn-input" placeholder="192.168.1.100"
+             value="localhost" style="flex:1"
+             onkeydown="if(event.key==='Enter')enterScreenSACN()">
+      <span style="font-size:.6rem;color:var(--muted)">:</span>
+      <input type="text" id="screenSacnBridgePort" class="sacn-input" value="3001"
+             style="width:58px;text-align:center">
+    </div>
+  </div>
+
+  <div class="sacn-config-grid">
+    <div class="sacn-config-field">
+      <label>Univers sACN</label>
+      <input type="number" id="screenSacnUniverse" class="sacn-input" value="1" min="1" max="63999"
+             style="width:100%;text-align:center">
+    </div>
+    <div class="sacn-config-field">
+      <label>Adresse de départ</label>
+      <input type="number" id="screenSacnBaseAddr" class="sacn-input" value="1" min="1" max="512"
+             style="width:100%;text-align:center">
+    </div>
+  </div>
+
+  <div class="chips-wrap" style="max-width:380px;width:100%">
+    <button class="chip active" id="screenSacnMode-3ch" onclick="selectScreenSacnMode('3ch')">3CH • DIM CCT TINT</button>
+    <button class="chip" id="screenSacnMode-9ch" onclick="selectScreenSacnMode('9ch')">9CH • DIM CCT TINT XC RGB STROB STROB+</button>
+  </div>
+
+  <button class="sacn-screen-go" onclick="enterScreenSACN()">▶ Démarrer</button>
+  <button class="screen-sacn-back" onclick="goBackToSplash()">← Fermer mode DMX</button>
+</div>
+
+<div id="screen-connect">
+  <h2>Écran projecteur</h2>
+  <p>Entrez le code affiché sur la télécommande</p>
+  <div class="screen-input-row">
+    <input type="text" id="screenChannelInput" placeholder="ex : set4271"
+           maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false"
+           onkeydown="if(event.key==='Enter') screenConnect()">
+    <button class="screen-go-btn" onclick="screenConnect()">OK →</button>
+  </div>
+  <button class="screen-back" onclick="goBackToSplash()">← Retour</button>
+</div>
+
+<div id="screen-mode" onclick="requestFS()">
+  <canvas id="screen-fx-canvas" width="240" height="136"></canvas>
+  <img id="screen-media-img" alt="">
+  <video id="screen-media-video" playsinline autoplay></video>
+  <div id="screen-dim"></div>
+  <div id="screen-call"></div>
+  <div id="screen-blackout"></div>
+  <div class="status-pill" id="screen-status">Connexion…</div>
+  <div id="screen-notice"></div>
+  <div id="screen-bar">
+    <button class="screen-bar-btn" onclick="event.stopPropagation();goBackToSplash()">← Retour</button>
+    <button class="screen-bar-btn" onclick="event.stopPropagation();suspendScreen()">⏸ Suspendre</button>
+    <button class="screen-bar-btn" id="screenBlackoutBtn" onclick="event.stopPropagation();toggleScreenBlackout()">⚫ Off</button>
+  </div>
+  <!-- Zone tactile (haut-gauche, 1/5 de l'écran) : double-clic OU appui long = menu -->
+  <div id="screen-menu-hotspot" onclick="event.stopPropagation()" ondblclick="event.stopPropagation();openScreenMenu()"></div>
+  <!-- Menu plein écran identique à l'app native -->
+  <div id="screen-menu" onclick="event.stopPropagation()">
+    <div class="screen-menu-info" id="screenMenuChannel">Canal : —</div>
+    <button class="screen-menu-btn" onclick="closeScreenMenu()">Reprendre l'affichage</button>
+    <button class="screen-menu-btn" onclick="closeScreenMenu();suspendScreen()">Changer de code canal</button>
+    <button class="screen-menu-btn" onclick="closeScreenMenu();goBackToSplash()">Retour à l'accueil</button>
+    <button class="screen-menu-btn danger" onclick="screenDisconnect()">Se déconnecter</button>
+  </div>
+</div>
+
+<div id="remote-mode">
+  <!-- Mini-carte sticky : apparaît quand la preview principale sort de l'écran -->
+  <div id="stickyPreview">
+    <div class="sticky-swatch" id="stickySwatch"><canvas class="pv-fx-canvas" id="stickyFxCanvas" width="160" height="34"></canvas></div>
+    <button class="sticky-blackout" id="stickyBlackoutBtn" onclick="toggleBlackout()">Écran ON</button>
+  </div>
+  <div class="remote-header">
+    <h2>SetRemote</h2>
+    <button class="back-btn" onclick="goBack()">← Retour</button>
+  </div>
+  <div class="panel">
+    <div class="panel-label">Canal de synchronisation</div>
+    <div class="channel-row">
+      <input type="text" id="channelInput" placeholder="ex: setlive42" maxlength="20"/>
+      <button class="connect-btn" onclick="connectChannel()">Connecter</button>
+    </div>
+    <div class="status-indicator">
+      <div class="dot" id="connDot"></div>
+      <span id="connLabel">Non connecté</span>
+    </div>
+  </div>
+  <div class="swatch-row" id="previewRow">
+    <div class="swatch" id="previewSwatch" style="background:#fff"><canvas class="pv-fx-canvas" id="previewFxCanvas" width="96" height="96"></canvas></div>
+    <div class="swatch-info">
+      <div class="swatch-hex" id="previewHex">#FFFFFF</div>
+      <div class="swatch-label" id="previewMeta">—</div>
+      <div class="autosend-badge" id="autosendBadge">↗ envoyé</div>
+    </div>
+  </div>
+  <button class="screen-toggle-btn" id="blackoutBtn" onclick="toggleBlackout()">
+    <span id="blackoutIcon">⚫</span><span id="blackoutLabel">Écran ON — appuyer pour éteindre</span>
+  </button>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('color')" id="tab-color">🎨 Couleur</button>
+    <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects">✨ Effets</button>
+    <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash">🔦 Flash<span class="beta-badge">Bêta</span></button>
+    <button class="tab-btn" onclick="switchTab('media')" id="tab-media">🎞 Média</button>
+    <button class="tab-btn" onclick="switchTab('call')" id="tab-call">📞 Appel</button>
+    <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr">📡 QR</button>
+  </div>
+
+  <div class="tab-content active" id="content-color">
+    <div class="panel">
+      <div class="panel-label">Intensité (Dimmer)</div>
+      <div class="slider-block">
+        <div class="slider-header"><label>Luminosité maître</label><div class="slider-val" id="dimmerVal">100<span>%</span></div></div>
+        <input type="range" id="dimmerSlider" min="0" max="100" value="100" oninput="onDimmerChange()">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">Mode sélection couleur</div>
+      <div class="chips-wrap" style="margin-bottom:16px">
+        <button class="chip active" onclick="setColorPickMode('wheel')" id="chip-wheel">Roue</button>
+        <button class="chip" onclick="setColorPickMode('hue')" id="chip-hue">HUE</button>
+        <button class="chip" onclick="setColorPickMode('rgb')" id="chip-rgb">RGB</button>
+      </div>
+
+      <div id="colorPickWheel" style="display:block">
+        <div class="wheel-wrap" style="position:relative;width:fit-content">
+          <canvas id="colorWheel" width="240" height="240"></canvas>
+          <svg id="colorWheelThumb" viewBox="0 0 240 240" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:5">
+            <!-- Marqueur : double anneau (noir + blanc) lisible sur toute couleur -->
+            <g id="colorWheelMarker" transform="translate(120,120)">
+              <circle r="13" fill="none" stroke="#000000" stroke-opacity="0.55" stroke-width="5"></circle>
+              <circle r="13" fill="none" stroke="#ffffff" stroke-width="2.5"></circle>
+              <circle id="colorWheelMarkerFill" r="8" fill="#ffffff"></circle>
+            </g>
+            <!-- Loupe pendant le glisser : bulle agrandie de la couleur sous le doigt -->
+            <g id="colorWheelLoupe" style="display:none">
+              <circle r="40" fill="#000000" fill-opacity="0.35"></circle>
+              <circle id="colorWheelLoupeFill" r="36" fill="#ffffff" stroke="#ffffff" stroke-width="3"></circle>
+            </g>
+          </svg>
+        </div>
+        <div class="slider-block" style="margin:14px 0 0">
+          <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="crossfadeVal">0<span>%</span></div></div>
+          <input type="range" id="crossfadeSlider" min="0" max="100" value="0" oninput="onCrossfadeChange()">
+        </div>
+      </div>
+
+      <div id="colorPickHue" style="display:none">
+        <div class="slider-block">
+          <div class="slider-header"><label>Teinte (HUE)</label><div class="slider-val" id="hueVal">0<span>°</span></div></div>
+          <input type="range" id="hueSlider" min="0" max="360" value="0" oninput="onHueChange()">
+        </div>
+        <div class="slider-block" style="margin:14px 0 0">
+          <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="hueCrossfadeVal">0<span>%</span></div></div>
+          <input type="range" id="hueCrossfadeSlider" min="0" max="100" value="0" oninput="onHueCrossfadeChange()">
+        </div>
+      </div>
+
+      <div id="colorPickRgb" style="display:none">
+        <div class="slider-block">
+          <div class="slider-header"><label>Rouge</label><div class="slider-val" id="rgbRedVal">255</div></div>
+          <input type="range" id="rgbRedSlider" min="0" max="255" value="255" oninput="onRgbChange()">
+        </div>
+        <div class="slider-block">
+          <div class="slider-header"><label>Vert</label><div class="slider-val" id="rgbGreenVal">255</div></div>
+          <input type="range" id="rgbGreenSlider" min="0" max="255" value="255" oninput="onRgbChange()">
+        </div>
+        <div class="slider-block">
+          <div class="slider-header"><label>Bleu</label><div class="slider-val" id="rgbBlueVal">255</div></div>
+          <input type="range" id="rgbBlueSlider" min="0" max="255" value="255" oninput="onRgbChange()">
+        </div>
+        <div class="slider-block" style="margin:14px 0 0">
+          <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="rgbCrossfadeVal">0<span>%</span></div></div>
+          <input type="range" id="rgbCrossfadeSlider" min="0" max="100" value="0" oninput="onRgbCrossfadeChange()">
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">Température de couleur</div>
+      <div class="slider-block">
+        <div class="slider-header"><label>Température</label><div class="slider-val" id="kelvinVal">5600<span> K</span></div></div>
+        <input type="range" id="kelvinSlider" min="1700" max="20000" value="5600" oninput="onKelvinChange()">
+      </div>
+      <div class="chips-wrap">
+        <button class="chip" onclick="setKelvin(1700)">1700K</button>
+        <button class="chip" onclick="setKelvin(2700)">2700K</button>
+        <button class="chip" onclick="setKelvin(3200)">3200K</button>
+        <button class="chip" onclick="setKelvin(4300)">4300K</button>
+        <button class="chip" onclick="setKelvin(5600)">5600K</button>
+        <button class="chip" onclick="setKelvin(6500)">6500K</button>
+        <button class="chip" onclick="setKelvin(9000)">9000K</button>
+        <button class="chip" onclick="setKelvin(20000)">20000K</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">Tint · Magenta ↔ Vert</div>
+      <div class="slider-block">
+        <div class="slider-header"><label>Green / Magenta</label><div class="slider-val" id="tintVal">0<span> GM</span></div></div>
+        <input type="range" id="tintSlider" min="-100" max="100" value="0" oninput="onTintChange()">
+      </div>
+      <div class="chips-wrap">
+        <button class="chip" onclick="setTint(-100)">−100 Magenta</button>
+        <button class="chip" onclick="setTint(-50)">−50</button>
+        <button class="chip" onclick="setTint(-25)">−25</button>
+        <button class="chip" onclick="setTint(0)">0 Neutre</button>
+        <button class="chip" onclick="setTint(25)">+25</button>
+        <button class="chip" onclick="setTint(50)">+50</button>
+        <button class="chip" onclick="setTint(100)">+100 Vert</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="toggle-row">
+        <div><div class="toggle-label">Stroboscope</div><div class="toggle-sub">Flash sur l'écran distant</div></div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="strobeToggle" onchange="onStrobeToggle()">
+          <div class="toggle-track"></div><div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div id="strobeActiveBadge" style="display:none"><span class="strobe-active-badge">⚡ Strobe actif</span></div>
+      <div class="panel-label" style="margin:14px 0 8px">Mode</div>
+      <div class="chips-wrap" style="margin-bottom:16px">
+        <button class="chip active" onclick="setStrobeMode('regular')" id="chip-regular">Régulier</button>
+        <button class="chip" onclick="setStrobeMode('random')" id="chip-random">Aléatoire</button>
+      </div>
+      <div class="slider-block">
+        <div class="slider-header"><label id="freqLabel">Fréquence</label><div class="slider-val" id="freqVal">2.0<span> Hz</span></div></div>
+        <input type="range" id="freqSlider" min="0.5" max="30" step="0.5" value="2" oninput="onStrobeParamChange()">
+      </div>
+      <div class="slider-block">
+        <div class="slider-header"><label id="durLabel">Durée du flash</label><div class="slider-val" id="flashDurVal">50<span> ms</span></div></div>
+        <input type="range" id="flashDurSlider" min="5" max="500" step="5" value="50" oninput="onStrobeParamChange()">
+      </div>
+      <div id="randomOptions" style="display:none">
+        <div style="height:1px;background:var(--border);margin:4px 0 14px"></div>
+        <div class="panel-label" style="margin-bottom:10px">Plage aléatoire (max)</div>
+        <div class="slider-block">
+          <div class="slider-header"><label>Fréquence max</label><div class="slider-val" id="freqMaxVal">8.0<span> Hz</span></div></div>
+          <input type="range" id="freqMaxSlider" min="0.5" max="30" step="0.5" value="8" oninput="onStrobeParamChange()">
+        </div>
+        <div class="slider-block">
+          <div class="slider-header"><label>Durée flash max</label><div class="slider-val" id="flashDurMaxVal">200<span> ms</span></div></div>
+          <input type="range" id="flashDurMaxSlider" min="5" max="500" step="5" value="200" oninput="onStrobeParamChange()">
+        </div>
+      </div>
+      <div class="strobe-preview">Aperçu local<div class="strobe-flash" id="strobeFlashPreview"></div></div>
+      <div style="height:1px;background:var(--border);margin:14px 0"></div>
+      <div class="panel-label">Effets sur le récepteur</div>
+      <div class="toggle-row" style="margin-bottom:10px">
+        <div><div class="toggle-label" style="font-size:.75rem">🔦 Torche synchronisée</div><div class="toggle-sub">Flash la torche du récepteur avec le strobe</div></div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="torchSyncToggle" onchange="onStrobeParamChange()">
+          <div class="toggle-track"></div><div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="panel-label" style="margin-top:4px">📳 Vibration rapide</div>
+      <div class="chips-wrap">
+        <button class="chip" onclick="sendVibrate([80])">Court</button>
+        <button class="chip" onclick="sendVibrate([300])">Long</button>
+        <button class="chip" onclick="sendVibrate([80,80,80])">Double</button>
+        <button class="chip" onclick="sendVibrate([80,60,80,60,300])">Alerte</button>
+        <button class="chip" onclick="sendVibrate([50,30,50,30,50,30,300,50,300,50,300,50,50,30,50,30,50])">SOS</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">Mémoires de couleur</div>
+      <div class="memory-actions">
+        <button class="memory-save-btn" onclick="saveColorMemory()">＋ Enregistrer</button>
+        <button class="memory-update-btn" id="memoryUpdateBtn" onclick="updateColorMemory()" disabled>⟳ Mettre à jour</button>
+      </div>
+      <div id="memoryGrid" class="memory-grid"></div>
+      <div id="memoryEmpty" class="media-pool-empty">Réglez une couleur puis « Enregistrer » pour créer une mémoire.</div>
+      <div id="memoryHint" class="memory-hint" style="display:none">Touchez pour rappeler · appui long (ou ✕) pour supprimer.</div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="content-flash">
+    <div class="flash-unavail-notice" id="flashUnavailNotice" style="display:none">
+      <strong>🔦 Non disponible sur iPhone</strong>
+      Le récepteur est un iPhone : iOS ne permet pas de piloter la torche LED ni le vibreur depuis le web. Utilisez le strobe par l'écran (onglet Effets) ou un récepteur Android.
+    </div>
+    <div class="panel">
+      <div class="panel-label">Torche récepteur</div>
+      <button class="torch-onoff-btn" id="remoteTorchBtn" onclick="onRemoteTorchToggle()">
+        <span id="remoteTorchIcon">🔦</span><span id="remoteTorchLabel">Allumer la torche</span>
+      </button>
+      <div id="torchDimSection">
+        <div class="torch-level-bar"><div class="torch-level-fill" id="torchLevelFill" style="width:100%"></div></div>
+        <div class="slider-block">
+          <div class="slider-header"><label>Intensité</label><div class="slider-val" id="torchDimVal">100<span>%</span></div></div>
+          <input type="range" id="torchDimSlider" min="5" max="100" value="100"
+                 oninput="onTorchDimChange()">
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">Effets</div>
+      <div class="effect-grid">
+        <button class="effect-btn" id="efx-sos" onclick="sendTorchEffect('sos')">
+          <span class="effect-icon">🆘</span>SOS
+        </button>
+        <button class="effect-btn" id="efx-blink-slow" onclick="sendTorchEffect('blink-slow')">
+          <span class="effect-icon">🔁</span>Clignotement lent
+        </button>
+        <button class="effect-btn" id="efx-blink-fast" onclick="sendTorchEffect('blink-fast')">
+          <span class="effect-icon">⚡</span>Clignotement rapide
+        </button>
+        <button class="effect-btn" id="efx-police" onclick="sendTorchEffect('police')">
+          <span class="effect-icon">🚨</span>Police
+        </button>
+        <button class="effect-btn" id="efx-heartbeat" onclick="sendTorchEffect('heartbeat')">
+          <span class="effect-icon">💓</span>Battement
+        </button>
+        <button class="effect-btn" id="efx-stop" onclick="sendTorchEffect('stop')" style="border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.7)">
+          <span class="effect-icon">⏹</span>Stop effet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="content-effects">
+    <div id="effectActiveBadge" class="effect-active-row" style="display:none">
+      <span class="strobe-active-badge" id="effectBadgeText">✨ Actif</span>
+      <button class="chip" style="border-color:rgba(220,80,80,.5);color:rgba(220,80,80,.8)" onclick="stopAllEffects()">⏹ Stop</button>
+    </div>
+    <div class="panel">
+      <div class="panel-label">Laboratoire d'effets</div>
+      <div class="fx-family">Spatiaux</div>
+      <div class="effects-grid" id="fxGridSpatial"></div>
+      <div class="fx-family">Rythmiques</div>
+      <div class="effects-grid" id="fxGridRythm"></div>
+      <div class="fx-family">Ambiances</div>
+      <div class="effects-grid" id="fxGridAmbiance"></div>
+    </div>
+    <div class="panel" id="effectSettingsPanel" style="display:none">
+      <div class="slider-header" style="margin-bottom:12px">
+        <div class="panel-label" id="effectSettingsTitle" style="margin-bottom:0">Réglages</div>
+        <button class="fx-dice-btn" onclick="randomizeEffect()">🎲 Randomiser</button>
+      </div>
+      <div class="slider-block">
+        <div class="slider-header">
+          <label id="effectSpeedLabel">Vitesse</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="fx-tap-btn" id="fxTapBtn" style="display:none" onclick="fxTapTempo()">TAP</button>
+            <div class="slider-val" id="effectSpeedVal">1.0</div>
+          </div>
+        </div>
+        <input type="range" id="effectSpeedSlider" min="0.2" max="10" step="0.1" value="1"
+                             oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block">
+        <div class="slider-header">
+          <label>Intensité</label>
+          <div class="slider-val" id="effectIntensityVal">80<span>%</span></div>
+        </div>
+        <input type="range" id="effectIntensitySlider" min="10" max="100" step="5" value="80"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block" id="effectBurstBlock" style="display:none">
+        <div class="slider-header">
+          <label id="effectBurstLabel">Quantité</label>
+          <div class="slider-val" id="effectBurstVal">3</div>
+        </div>
+        <input type="range" id="effectBurstSlider" min="1" max="10" step="1" value="3"
+               oninput="document.getElementById('effectBurstVal').textContent=this.value;onEffectParamChange()">
+      </div>
+      <div id="effectShapeBlock" style="display:none;margin-bottom:14px">
+        <div class="slider-header"><label>Forme</label></div>
+        <div class="chips-wrap">
+          <button class="chip active" id="fxshape-band" onclick="setFxShape('band')">▬ Bande</button>
+          <button class="chip" id="fxshape-circle" onclick="setFxShape('circle')">◯ Rond</button>
+          <button class="chip" id="fxshape-diamond" onclick="setFxShape('diamond')">◇ Losange</button>
+        </div>
+      </div>
+      <div id="effectDirBlock" style="display:none;margin-bottom:14px">
+        <div class="slider-header"><label>Direction</label></div>
+        <div class="chips-wrap">
+          <button class="chip active" id="fxdir-h" onclick="setFxDir('h')">↔ Horizontal</button>
+          <button class="chip" id="fxdir-v" onclick="setFxDir('v')">↕ Vertical</button>
+          <button class="chip" id="fxdir-d" onclick="setFxDir('d')">⤢ Diagonale</button>
+        </div>
+      </div>
+      <div id="effectRadialDirBlock" style="display:none;margin-bottom:14px">
+        <div class="slider-header"><label>Sens</label></div>
+        <div class="chips-wrap">
+          <button class="chip active" id="fxrdir-out" onclick="setFxRadialDir('out')">⟴ Du centre</button>
+          <button class="chip" id="fxrdir-in" onclick="setFxRadialDir('in')">⟲ Des extérieurs</button>
+        </div>
+      </div>
+      <div id="effectChaserModeBlock" style="display:none;margin-bottom:14px">
+        <div class="slider-header"><label>Course</label></div>
+        <div class="chips-wrap">
+          <button class="chip active" id="fxmode-loop" onclick="setFxChaserMode('loop')">↻ Loop</button>
+          <button class="chip" id="fxmode-bounce" onclick="setFxChaserMode('bounce')">⇄ Bounce</button>
+          <button class="chip" id="fxmode-invert" onclick="setFxInvert(!fxInvert)">⮌ Invert</button>
+        </div>
+      </div>
+      <div class="slider-block" id="effectWidthBlock" style="display:none">
+        <div class="slider-header">
+          <label>Largeur de bande</label>
+          <div class="slider-val" id="effectWidthVal">8<span>%</span></div>
+        </div>
+        <input type="range" id="effectWidthSlider" min="1" max="60" step="1" value="8"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block" id="effectSmoothBlock" style="display:none">
+        <div class="slider-header">
+          <label>Lissage des sautes</label>
+          <div class="slider-val" id="effectSmoothVal">30<span>%</span></div>
+        </div>
+        <input type="range" id="effectSmoothSlider" min="0" max="100" step="5" value="30"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block" id="effectWingBlock" style="display:none">
+        <div class="slider-header">
+          <label>Wing · symétrie</label>
+          <div class="slider-val" id="effectWingVal">1</div>
+        </div>
+        <input type="range" id="effectWingSlider" min="1" max="4" step="1" value="1"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block" id="effectRotBlock" style="display:none">
+        <div class="slider-header">
+          <label>Rotation</label>
+          <div class="slider-val" id="effectRotVal">0<span>°</span></div>
+        </div>
+        <input type="range" id="effectRotSlider" min="0" max="359" step="1" value="0"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="effect-colors-row">
+        <div class="slider-block" id="effectColor1Block" style="display:none">
+          <div class="slider-header"><label id="effectColor1Label">Couleur 1</label></div>
+          <input type="color" id="effectColor1" value="#ffffff" oninput="onEffectParamChange()">
+        </div>
+        <div class="slider-block" id="effectColor2Block" style="display:none">
+          <div class="slider-header"><label id="effectColor2Label">Couleur 2</label></div>
+          <input type="color" id="effectColor2" value="#0040ff" oninput="onEffectParamChange()">
+        </div>
+      </div>
+      <div class="slider-block">
+        <div class="slider-header">
+          <label>Chaos · aléa</label>
+          <div class="slider-val" id="effectChaosVal">30<span>%</span></div>
+        </div>
+        <input type="range" id="effectChaosSlider" min="0" max="100" step="5" value="30"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block">
+        <div class="slider-header">
+          <label>Dérive · évolution lente</label>
+          <div class="slider-val" id="effectDriftVal">0<span>%</span></div>
+        </div>
+        <input type="range" id="effectDriftSlider" min="0" max="100" step="5" value="0"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block" id="effectLeadBlock" style="display:none">
+        <div class="slider-header">
+          <label>Traîne avant</label>
+          <div class="slider-val" id="effectLeadVal">0<span> ms</span></div>
+        </div>
+        <input type="range" id="effectLeadSlider" min="0" max="600" step="10" value="0"
+               oninput="onEffectParamChange()">
+      </div>
+      <div class="slider-block" id="effectFadeBlock" style="display:none;margin-bottom:0">
+        <div class="slider-header">
+          <label id="effectFadeLabel">Traîne / fondu</label>
+          <div class="slider-val" id="effectFadeVal">0<span> ms</span></div>
+        </div>
+        <input type="range" id="effectFadeSlider" min="0" max="600" step="10" value="0"
+               oninput="onEffectParamChange()">
+      </div>
+      <div id="effectTvBlocksPanel" style="display:none">
+        <div class="slider-header" style="margin-bottom:10px">
+          <label>Blocs couleurs</label>
+          <button class="chip" id="tvAddBlockBtn" onclick="tvAddBlock()" style="padding:3px 12px">+ Bloc</button>
+        </div>
+        <div class="tv-blocks-strip" id="tvBlocksStrip"></div>
+        <div class="tv-block-editor">
+          <div class="wheel-wrap" style="gap:8px;margin-bottom:14px">
+            <canvas id="tvWheel" width="200" height="200"></canvas>
+          </div>
+          <div class="slider-block">
+            <div class="slider-header"><label>Luminosité</label><div class="slider-val" id="tvDimmerVal">100<span>%</span></div></div>
+            <input type="range" id="tvDimmerSlider" min="0" max="100" value="100" oninput="onTvBlockParam()">
+          </div>
+          <div class="slider-block">
+            <div class="slider-header"><label>Color crossfade · Blanc ↔ Couleur</label><div class="slider-val" id="tvCrossfadeVal">0<span>%</span></div></div>
+            <input type="range" id="tvCrossfadeSlider" min="0" max="100" value="0" oninput="onTvBlockParam()">
+          </div>
+          <div class="slider-block">
+            <div class="slider-header"><label>Température</label><div class="slider-val" id="tvKelvinVal">6500<span> K</span></div></div>
+            <input type="range" id="tvKelvinSlider" min="1700" max="20000" value="6500" oninput="onTvBlockParam()">
+          </div>
+          <div class="slider-block" style="margin-bottom:0">
+            <div class="slider-header"><label>Tint · Magenta ↔ Vert</label><div class="slider-val" id="tvTintVal">0<span> GM</span></div></div>
+            <input type="range" id="tvTintSlider" min="-100" max="100" value="0" oninput="onTvBlockParam()">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">Mémoires d'effets</div>
+      <div class="memory-actions">
+        <button class="memory-save-btn" onclick="saveFxMemory()">＋ Enregistrer</button>
+        <button class="memory-update-btn" id="fxMemUpdateBtn" onclick="updateFxMemory()" disabled>⟳ Mettre à jour</button>
+      </div>
+      <div id="fxMemGrid" class="memory-grid"></div>
+      <div id="fxMemEmpty" class="media-pool-empty">Lancez un effet, réglez-le, puis « Enregistrer ».</div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="content-media">
+    <div class="panel">
+      <div class="panel-label">Luminosité de l'écran de jeu</div>
+      <div class="slider-block" style="margin-bottom:0">
+        <div class="slider-header"><label>Luminosité écran</label><div class="slider-val" id="screenBrightnessVal">100<span>%</span></div></div>
+        <input type="range" id="screenBrightnessSlider" min="0" max="100" value="100" oninput="onScreenBrightnessChange()">
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">Pool média</div>
+      <div class="media-add-row">
+        <button class="media-btn" id="mediaImgBtn" onclick="document.getElementById('mediaImgInput').click()">
+          <span class="media-icon">🖼</span> Images
+        </button>
+        <button class="media-btn" id="mediaVidBtn" onclick="document.getElementById('mediaVidInput').click()">
+          <span class="media-icon">🎬</span> Vidéos
+        </button>
+      </div>
+      <input type="file" id="mediaImgInput" accept="image/*" multiple style="display:none" onchange="onAddImages(this.files);this.value=''">
+      <input type="file" id="mediaVidInput" accept="video/*" multiple style="display:none" onchange="onAddVideos(this.files);this.value=''">
+      <div id="mediaPool" class="media-pool"></div>
+      <div id="mediaPoolEmpty" class="media-pool-empty">Ajoutez des images ou vidéos, puis touchez-les pour les diffuser.</div>
+      <div id="mediaNav" style="display:none;gap:8px;margin:8px 0">
+        <button class="media-btn" onclick="advancePool(-1)" style="flex:1">◀ Précédent</button>
+        <button class="media-btn" onclick="advancePool(1)" style="flex:1">Suivant ▶</button>
+      </div>
+      <label id="mediaAutoAdvRow" style="display:none;align-items:center;justify-content:space-between;gap:12px;font-size:.72rem;color:var(--text);margin:6px 2px 10px;cursor:pointer">
+        <span>Avancer au clic sur l'écran de jeu</span>
+        <span class="toggle-switch" style="flex-shrink:0">
+          <input type="checkbox" id="mediaAutoAdvToggle" onchange="setAutoAdvance(this.checked)">
+          <span class="toggle-track"></span><span class="toggle-thumb"></span>
+        </span>
+      </label>
+      <div class="media-status" id="mediaStatus">Aucun média diffusé</div>
+      <button class="media-btn" id="mediaPlayBtn" onclick="toggleVideoPlayback()" style="display:none">
+        <span class="media-icon" id="mediaPlayIcon">⏸</span><span id="mediaPlayLabel">Pause</span>
+      </button>
+      <div id="videoModeRow" style="display:none;margin:4px 0 10px">
+        <div class="panel-label" style="margin-bottom:8px">Fin de lecture</div>
+        <div class="chips-wrap">
+          <button class="chip active" id="vmode-loop" onclick="setVideoEndMode('loop')">🔁 Boucle</button>
+          <button class="chip" id="vmode-pause" onclick="setVideoEndMode('pause')">⏯ 1× puis pause</button>
+          <button class="chip" id="vmode-off" onclick="setVideoEndMode('off')">⏹ 1× puis off</button>
+        </div>
+      </div>
+      <div id="mediaTimeline" style="display:none;margin:4px 0 12px">
+        <input type="range" id="mediaSeek" min="0" max="100" step="0.1" value="0"
+               style="background:linear-gradient(to right,var(--accent),var(--accent) 0%,#333 0%)"
+               oninput="onSeekInput()" onchange="onSeekEnd()">
+        <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums">
+          <span id="mediaCurTime">0:00</span><span id="mediaDurTime">0:00</span>
+        </div>
+      </div>
+      <button class="media-btn" id="mediaStopBtn" onclick="stopMediaBroadcast()" style="display:none;border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)">
+        <span class="media-icon">⏹</span> Arrêter la diffusion
+      </button>
+    </div>
+  </div>
+
+  <div class="tab-content" id="content-call">
+    <div class="panel">
+      <div class="panel-label">Type</div>
+      <div class="chips-wrap">
+        <button class="chip active" id="callkind-call" onclick="setCallKind('call')">📞 Appel</button>
+        <button class="chip" id="callkind-sms" onclick="setCallKind('sms')">✉️ SMS</button>
+        <button class="chip" id="callkind-chat" onclick="setCallKind('chat')">💬 Messagerie</button>
+      </div>
+      <div id="callStyleRow" style="margin-top:14px">
+        <div class="panel-label">Style</div>
+        <div class="chips-wrap">
+          <button class="chip active" id="callstyle-glass" onclick="setCallStyle('glass')">Verre</button>
+          <button class="chip" id="callstyle-tonal" onclick="setCallStyle('tonal')">Tonal</button>
+          <button class="chip" id="callstyle-minimal" onclick="setCallStyle('minimal')">Épuré</button>
+        </div>
+        <div class="media-status" id="callStyleHint" style="text-align:left;margin-top:8px">Translucide et flouté, boutons ronds.</div>
+      </div>
+      <div id="callPresentRow" style="margin-top:14px">
+        <div class="panel-label">Présentation</div>
+        <div class="chips-wrap">
+          <button class="chip active" id="callpres-full" onclick="setCallPresent('full')">Plein écran</button>
+          <button class="chip" id="callpres-banner" onclick="setCallPresent('banner')">Bandeau haut</button>
+        </div>
+      </div>
+      <div id="callPhotoModeRow" style="margin-top:14px">
+        <div class="panel-label">Photo de l'appelant</div>
+        <div class="chips-wrap">
+          <button class="chip active" id="callphoto-avatar" onclick="setCallPhotoMode('avatar')">Avatar</button>
+          <button class="chip" id="callphoto-full" onclick="setCallPhotoMode('full')">Plein écran</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">Appelant</div>
+      <input type="text" id="callName" class="sacn-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%;margin-bottom:10px">
+      <input type="text" id="callLabel" class="sacn-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px">
+      <div style="display:flex;gap:10px;align-items:center">
+        <div id="callPhotoPreview" style="width:46px;height:46px;border-radius:50%;background:var(--mid2);border:1px solid var(--border);background-size:cover;background-position:center;flex-shrink:0"></div>
+        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()">🖼 Photo (option)</button>
+        <input type="file" id="callPhotoInput" accept="image/*" style="display:none" onchange="onCallPhoto(this.files);this.value=''">
+      </div>
+    </div>
+    <div class="panel" id="callMsgPanel" style="display:none">
+      <div class="panel-label">Message</div>
+      <input type="text" id="callMsgText" class="sacn-input" placeholder="Texte du message" value="Tu es où ??" style="width:100%;margin-bottom:14px">
+      <div class="panel-label">Application (fictive)</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input type="text" id="callAppName" class="sacn-input" placeholder="Nom affiché" value="SMS" maxlength="24" style="flex:1" oninput="this.dataset.touched='1'">
+        <input type="color" id="callAppColor" value="#2f8cf0" style="width:52px;flex-shrink:0" oninput="this.dataset.touched='1'">
+      </div>
+      <div class="media-status" style="text-align:left;margin-top:6px">Pas de marque réelle : inventez un nom (ex. « Chatly ») et une couleur.</div>
+    </div>
+    <div class="panel" id="callLockPanel" style="display:none">
+      <div class="toggle-row" style="margin-bottom:12px">
+        <div><div class="toggle-label" style="font-size:.8rem">Écran verrouillé</div><div class="toggle-sub">La notification arrive sur un faux écran verrouillé</div></div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="lockToggle">
+          <div class="toggle-track"></div><div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:10px">
+        <input type="text" id="lockTime" class="sacn-input" placeholder="Heure (ex : 00:10)" style="flex:1">
+        <input type="text" id="lockDate" class="sacn-input" placeholder="Ven. 17 juil." style="flex:1">
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div id="lockWallPreview" style="width:36px;height:62px;border-radius:8px;background:var(--mid2);background-size:cover;background-position:center;border:1px solid var(--border);flex-shrink:0"></div>
+        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('lockWallInput').click()">🖼 Fond d'écran</button>
+        <input type="file" id="lockWallInput" accept="image/*" style="display:none" onchange="onLockWall(this.files);this.value=''">
+      </div>
+      <div class="media-status" id="lockWallStatus">Sans fond : dégradé sombre. Heure/date vides : celles de l'écran.</div>
+    </div>
+    <div class="panel" id="callRingPanel">
+      <div class="panel-label">Sonnerie</div>
+      <div class="chips-wrap" style="margin-bottom:14px">
+        <button class="chip active" id="callring-classic" onclick="setCallRing('classic')">Classique</button>
+        <button class="chip" id="callring-digital" onclick="setCallRing('digital')">Digitale</button>
+        <button class="chip" id="callring-soft" onclick="setCallRing('soft')">Douce</button>
+        <button class="chip" id="callring-silent" onclick="setCallRing('silent')">Silencieux</button>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callAudioInput').click()">🎙 Bande son au décroché</button>
+        <button class="chip" id="callAudioClear" style="display:none" onclick="clearCallAudio()">✕</button>
+        <input type="file" id="callAudioInput" accept="audio/*" style="display:none" onchange="onCallAudio(this.files);this.value=''">
+      </div>
+      <div class="media-status" id="callAudioStatus" style="margin-bottom:12px;text-align:left">Aucune bande son — le décroché reste silencieux.</div>
+      <div class="slider-block" style="margin-bottom:0">
+        <div class="slider-header"><label>Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
+        <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
+      </div>
+    </div>
+    <div class="panel">
+      <button class="media-btn" id="callTriggerBtn" onclick="triggerCall()"><span class="media-icon">📞</span> Faire sonner</button>
+      <div style="display:flex;gap:10px">
+        <button class="media-btn" style="flex:1" onclick="sendMsg({type:'call:answer'})">✅ Décrocher</button>
+        <button class="media-btn" style="flex:1;border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)" onclick="sendMsg({type:'call:end'})">⏹ Terminer</button>
+      </div>
+      <div class="media-status" id="callStatus">—</div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="content-qr">
+    <div class="panel">
+      <div class="panel-label">Ouvrir l'écran sur un autre appareil</div>
+      <div class="qr-wrap">
+        <canvas id="qrCanvas" width="200" height="200"></canvas>
+        <div class="qr-url" id="qrUrl">Connectez-vous d'abord à un canal</div>
+      </div>
+    </div>
+    <div class="panel" style="font-size:.65rem;color:var(--muted);line-height:1.8">
+      <div class="panel-label">Comment utiliser</div>
+      1. Sur l'écran : <strong style="color:var(--text)">Écran projecteur</strong> → taper le même code<br>
+      2. Ou scanner ce QR pour ouvrir directement<br>
+      3. Les couleurs s'envoient en temps réel ⚡
+    </div>
+  </div>
+</div>
+
+<script>
+/* @@SCRIPTS@@ */
+</script>
+</body>
+</html>

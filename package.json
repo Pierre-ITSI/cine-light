@@ -1,0 +1,15 @@
+{
+  "name": "setremote",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SetRemote — PWA film-set. Sources dans web/, index.html (racine) généré par web/build.mjs et servi tel quel par GitHub Pages.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node web/build.mjs",
+    "check:build": "node web/build.mjs --check",
+    "check:equivalence": "node web/check-equivalence.mjs --ref 28ccb1d",
+    "test": "node web/build.mjs --check"
+  }
+}

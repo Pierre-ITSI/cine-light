@@ -1,0 +1,29 @@
+/* SCREEN BOTTOM BAR */
+#screen-bar{position:absolute;bottom:calc(32px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:12px;z-index:100}
+.screen-bar-btn{background:rgba(0,0,0,.75);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.35);border-radius:24px;padding:10px 22px;font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;color:rgba(255,255,255,.9);cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.screen-bar-btn:active{transform:scale(.95);background:rgba(0,0,0,.9)}
+.screen-bar-btn.on{border-color:var(--accent);color:var(--accent);background:rgba(232,201,122,.15)}
+.screen-bar-btn.unavail{opacity:.3;cursor:default}
+
+/* AUTO-HIDE des contrôles écran (barre + statut) après inactivité */
+#screen-bar,#screen-status{transition:opacity .6s ease}
+#screen-bar.ui-hidden,#screen-status.ui-hidden{opacity:0;pointer-events:none}
+#screen-mode.cursor-hidden{cursor:none}
+
+/* Écran de jeu épuré : aucune information visible. Seul un double-clic dans le
+   coin haut-gauche (zone = 1/5 de l'écran) ouvre le menu (comme l'app native). */
+#screen-bar,#screen-status{display:none!important}
+/* Confirmation temporaire de connexion (affichée ~5 s puis fondu) */
+#screen-notice{display:none;position:absolute;top:calc(28px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.25);border-radius:24px;padding:12px 24px;font-size:.85rem;letter-spacing:.08em;color:#F5F2EC;z-index:350;opacity:0;transition:opacity .5s ease;pointer-events:none;white-space:nowrap}
+#screen-menu-hotspot{position:absolute;top:0;left:0;width:45vw;height:45vh;z-index:300;background:transparent}
+#screen-menu{display:none;position:absolute;inset:0;z-index:400;background:rgba(0,0,0,.92);flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px}
+.screen-menu-info{color:rgba(255,255,255,.5);font-size:.82rem;letter-spacing:.06em;margin-bottom:8px}
+.screen-menu-btn{width:100%;max-width:300px;padding:16px;border:1px solid rgba(255,255,255,.15);border-radius:8px;background:transparent;color:#F5F2EC;font-size:.95rem;font-family:inherit;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.screen-menu-btn:active{background:rgba(255,255,255,.06)}
+.screen-menu-btn.danger{border-color:rgba(255,100,100,.3);color:#ff8080}
+
+/* SCREEN MEDIA (image / vidéo diffusée) */
+#screen-media-img,#screen-media-video{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:50}
+#screen-blackout{display:none;position:absolute;inset:0;background:#000;z-index:90}
+#screen-dim{display:none;position:absolute;inset:0;background:#000;z-index:80;pointer-events:none;opacity:0;transition:opacity .15s linear}
+
