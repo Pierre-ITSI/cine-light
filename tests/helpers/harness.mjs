@@ -25,7 +25,12 @@ let _pw = null;
 export function playwright() { return (_pw ||= require('playwright')); }
 
 export async function launchBrowser() {
-  const opts = { args: ['--no-sandbox'] };
+  // --disable-partial-raster : sans lui, une page re-rastérisée en partie
+  // (invalidation tardive) gardait parfois des coins arrondis anticrénelés
+  // autrement (±4 sur ~30 pixels) : captures instables d'un rendu à l'autre
+  // (remote-qr ≈ 1 fois sur 10, déjà sur main). Rastérisation complète = rendu
+  // reproductible, identique aux captures stockées.
+  const opts = { args: ['--no-sandbox', '--disable-partial-raster'] };
   if (process.env.PW_CHROMIUM) opts.executablePath = process.env.PW_CHROMIUM;
   return playwright().chromium.launch(opts);
 }
