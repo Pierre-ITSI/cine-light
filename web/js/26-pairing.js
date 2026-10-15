@@ -235,7 +235,7 @@ function showPairVerify(role, sas, onAnswer) {
   document.getElementById('pvText').innerHTML = (role === 'remote'
     ? 'L\'écran de jeu affiche maintenant un nombre.'
     : 'La télécommande affiche maintenant un nombre.')
-    + ' Il doit être <b>identique</b> à celui-ci :';
+    + ' Il doit être <b>identique</b> à celui-ci&nbsp;:';
   document.getElementById('pvSas').textContent = SRP.formatSas(sas);
   const ok = document.getElementById('pvOk');
   ok.disabled = false; ok.textContent = 'Identique';

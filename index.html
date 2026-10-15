@@ -1314,7 +1314,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
   <div class="pv-dialog" role="dialog" aria-modal="true" aria-labelledby="pvTitle">
     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF6B2C" stroke-width="1.8" aria-hidden="true"><path d="M12 3l7 3v5c0 4.4-3 8.4-7 10-4-1.6-7-5.6-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
     <h2 id="pvTitle">Vérifiez le nombre</h2>
-    <p class="pv-text" id="pvText">L'écran de jeu affiche maintenant un nombre. Il doit être <b>identique</b> à celui-ci :</p>
+    <p class="pv-text" id="pvText">L'écran de jeu affiche maintenant un nombre. Il doit être <b>identique</b> à celui-ci&nbsp;:</p>
     <div class="pv-sas" id="pvSas">000 000</div>
     <p class="pv-warn">S'il est différent, annulez : un autre appareil tente de s'interposer.</p>
     <div class="pv-actions">
@@ -3869,7 +3869,7 @@ function showPairVerify(role, sas, onAnswer) {
   document.getElementById('pvText').innerHTML = (role === 'remote'
     ? 'L\'écran de jeu affiche maintenant un nombre.'
     : 'La télécommande affiche maintenant un nombre.')
-    + ' Il doit être <b>identique</b> à celui-ci :';
+    + ' Il doit être <b>identique</b> à celui-ci&nbsp;:';
   document.getElementById('pvSas').textContent = SRP.formatSas(sas);
   const ok = document.getElementById('pvOk');
   ok.disabled = false; ok.textContent = 'Identique';
