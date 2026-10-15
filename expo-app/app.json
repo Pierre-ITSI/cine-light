@@ -63,7 +63,8 @@
           "isBackgroundEnabled": false,
           "bluetoothAlwaysPermission": "SetRemote utilise le Bluetooth pour relier la télécommande et l'écran sans Wi-Fi ni Internet."
         }
-      ]
+      ],
+      "./plugins/with-embedded-web"
     ],
     "androidStatusBar": {
       "hidden": true,

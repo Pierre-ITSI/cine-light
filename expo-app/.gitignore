@@ -9,3 +9,6 @@ dist/
 /android
 *.orig.*
 web-build/
+
+# Interface web embarquée, générée par scripts/embed-web.mjs (prebuild / EAS)
+/web-embed/

@@ -215,7 +215,10 @@
 <script>
 'use strict'
 
-const isHttps = location.protocol === 'https:'
+// Page d'accueil aussi dans l'app native : elle y est embarquée en file://,
+// mais doit rester celle que l'app affichait depuis GitHub Pages (https).
+// Le pont ReactNativeWebView est présent dès le début de la page.
+const isHttps = location.protocol === 'https:' || !!window.ReactNativeWebView
 
 // ── Mode switch ───────────────────────────────────────────────────────
 if (isHttps) {
