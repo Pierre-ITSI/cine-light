@@ -15,7 +15,7 @@
  *   +4     seq                uint32 big-endian
  *   +6     ts                 uint48 big-endian (ms depuis l'époque Unix)
  *   kind=1 : typeLen (1) + type ASCII [a-z0-9:_-] (≤ 32)
- *   kind=2 : idLen (1) + mediaId ASCII (≤ 40) + index uint16 + total uint16
+ *   kind=2 : idLen (1) + mediaId ASCII (≤ 64) + index uint16 + total uint16
  *   ── fin de l'en-tête : tout ce qui précède est l'AAD AES-GCM ──
  *   +12    IV                 96 bits aléatoires
  *   …      ciphertext ‖ tag   AES-256-GCM, tag 128 bits
@@ -37,8 +37,12 @@ export const FRAME_VERSION = 1;
 export const FRAME_KIND = Object.freeze({ MESSAGE: 1, CHUNK: 2 });
 export const IV_BYTES = 12;
 export const TAG_BYTES = 16;
-/** Plafond du JSON clair d'un message (octets UTF-8). */
-export const MAX_MESSAGE_BYTES = 256 * 1024;
+/**
+ * Plafond du JSON clair d'un message (octets UTF-8). 640 Kio : la photo d'un
+ * faux appel peut atteindre 600 000 caractères (PROTO.PHOTO_MAX de l'app).
+ * Trame chiffrée maximale ≈ 874 000 caractères : le relais doit accepter 1 Mio.
+ */
+export const MAX_MESSAGE_BYTES = 640 * 1024;
 /** Plafond du clair d'un fragment de média. */
 export const MAX_CHUNK_BYTES = 16 * 1024;
 /** Nombre maximal de fragments par média (16 Ko × 4000 ≈ 64 Mo). */
@@ -52,7 +56,7 @@ export const DEFAULT_MAX_SENDERS = 256;
 export const SENDER_RE = /^[A-Za-z0-9_-]{1,16}$/;
 export const TYPE_RE = /^[a-z][a-z0-9:_-]{0,31}$/;
 
-const MAX_HEADER_BYTES = 3 + 16 + 4 + 6 + 1 + 40 + 4;
+const MAX_HEADER_BYTES = 3 + 16 + 4 + 6 + 1 + 64 + 4;
 /** Longueur maximale (caractères) d'une trame acceptée par open/openChunk. */
 export const MAX_FRAME_CHARS = Math.ceil(((MAX_HEADER_BYTES + IV_BYTES + MAX_MESSAGE_BYTES + TAG_BYTES) * 4) / 3);
 
@@ -211,7 +215,7 @@ function readHeader(b) {
     h.type = type;
     o += len;
   } else {
-    if (len < 1 || len > 40) throw bad('longueur de mediaId invalide');
+    if (len < 1 || len > 64) throw bad('longueur de mediaId invalide');
     need(len + 4);
     const mediaId = asciiString(b.subarray(o, o + len));
     if (!MEDIA_ID_RE.test(mediaId)) throw bad('mediaId invalide');
@@ -241,7 +245,7 @@ function readHeader(b) {
 export function peekFrame(str) {
   if (typeof str !== 'string') throw new ProtocolError('malformed', 'chaîne attendue');
   if (str.length > MAX_FRAME_CHARS) throw new ProtocolError('too-large', 'trame trop longue');
-  // Décoder seulement le début suffit pour l'en-tête (≤ 74 octets).
+  // Décoder seulement le début suffit pour l'en-tête (≤ 98 octets).
   const prefix = str.slice(0, Math.min(str.length, 4 * Math.ceil((MAX_HEADER_BYTES + IV_BYTES + TAG_BYTES) / 3)));
   const usable = prefix.length === str.length ? prefix : prefix.slice(0, prefix.length - (prefix.length % 4));
   const h = readHeader(b64uToBytes(usable));

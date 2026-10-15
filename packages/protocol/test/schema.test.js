@@ -38,14 +38,18 @@ test('rejette le mauvais sens', () => {
   assert.equal(validate({ type: 'color', color: '#ffffff' }, { direction: /** @type {any} */ ('x') }), false);
 });
 
-test('plafonds strobe : ≤ 30 Hz et flash ≥ 15 ms', () => {
-  assert.deepEqual(LIMITS.strobeFreqHz, [0.5, 30]);
-  assert.deepEqual(LIMITS.strobeFlashMs, [15, 1000]);
+test('plafonds strobe : ≤ 30 Hz et flash ≥ 15 ms (alignés sur PROTO de l’app)', () => {
+  assert.deepEqual(LIMITS.strobeFreqHz, [0.1, 30]);
+  assert.deepEqual(LIMITS.strobeFlashMs, [15, 2000]);
   const s = (/** @type {object} */ o) => validate({ type: 'strobe', active: true, freq: 10, dur: 50, ...o });
   assert.equal(s({ freq: 30 }), true);
   assert.equal(s({ freq: 30.01 }), false);
   assert.equal(s({ dur: 15 }), true);
   assert.equal(s({ dur: 14.9 }), false);
+  assert.equal(s({ dur: 2000 }), true);
+  assert.equal(s({ dur: 2001 }), false);
+  assert.equal(s({ freq: 0.1 }), true);
+  assert.equal(s({ freq: 0.09 }), false);
   assert.equal(s({ random: true, freqMin: 1, freqMax: 31, durMin: 15, durMax: 20 }), false);
 });
 
@@ -118,14 +122,41 @@ function walk(dir) {
   });
 }
 
-test('dérive : index.html n’utilise que des types connus', { skip: !existsSync(join(repoRoot, 'index.html')) }, () => {
-  const html = readFileSync(join(repoRoot, 'index.html'), 'utf8');
-  // Seuls les blocs JS comptent ; on ignore les attributs type="range" etc. grâce aux motifs JS ci-dessus.
-  const types = [...extractTypes(html)].filter(t => !NON_RELAY.has(t));
+/** Sources de la PWA : web/js/*.js (+ gabarit) si présents, sinon index.html (généré). */
+function webSources() {
+  const jsDir = join(repoRoot, 'web', 'js');
+  if (existsSync(jsDir)) {
+    const files = readdirSync(jsDir).filter(n => n.endsWith('.js')).map(n => join(jsDir, n));
+    const tpl = join(repoRoot, 'web', 'index.template.html');
+    if (existsSync(tpl)) files.push(tpl);
+    return files.map(f => readFileSync(f, 'utf8')).join('\n');
+  }
+  const html = join(repoRoot, 'index.html');
+  return existsSync(html) ? readFileSync(html, 'utf8') : null;
+}
+const WEB = webSources();
+const HTML_INPUT_TYPES = /^(text|range|number|checkbox|color|file|button|submit|module|date|time|radio|hidden)$/;
+
+test('dérive : la PWA n’utilise que des types connus', { skip: WEB === null }, () => {
+  const types = [...extractTypes(/** @type {string} */ (WEB))].filter(t => !NON_RELAY.has(t) && !HTML_INPUT_TYPES.test(t));
   assert.ok(types.length > 30, `extraction suspecte (${types.length} types)`);
-  const unknown = types.filter(t => !(t in MESSAGE_TYPES) && !/^(text|range|number|checkbox|color|file|button|submit|module)$/.test(t));
+  const unknown = types.filter(t => !(t in MESSAGE_TYPES));
   assert.deepEqual(unknown, [], `types absents du schéma : ${unknown.join(', ')}`);
 });
+
+test('dérive : chaque route de MSG_ROUTES (web/js/22-protocol.js) est au schéma, dans le bon sens',
+  { skip: !existsSync(join(repoRoot, 'web', 'js', '22-protocol.js')) }, () => {
+    const src = readFileSync(join(repoRoot, 'web', 'js', '22-protocol.js'), 'utf8');
+    const block = src.slice(src.indexOf('const MSG_ROUTES'), src.indexOf('function dispatchMessage'));
+    const routes = [...block.matchAll(/^\s{2}'([a-z][a-z0-9:_-]*)':\s*\{\s*roles:\s*\[([^\]]*)\]/gm)];
+    assert.ok(routes.length > 30, `extraction suspecte (${routes.length} routes)`);
+    for (const [, type, rolesSrc] of routes) {
+      assert.ok(type in MESSAGE_TYPES, `route ${type} absente du schéma`);
+      const roles = [...rolesSrc.matchAll(/'(screen|remote)'/g)].map(m => m[1]).sort().join(',');
+      const expected = { r2s: 'screen', s2r: 'remote', both: 'remote,screen' }[MESSAGE_TYPES[type].direction];
+      assert.equal(roles, expected, `sens de ${type}`);
+    }
+  });
 
 test('dérive : expo-app n’utilise que des types connus', { skip: !existsSync(join(repoRoot, 'expo-app', 'app')) }, () => {
   const files = [...walk(join(repoRoot, 'expo-app', 'app')), ...walk(join(repoRoot, 'expo-app', 'src'))];

@@ -1,9 +1,15 @@
 /**
  * Schéma EXHAUSTIF des messages SetRemote (protocole applicatif).
  *
- * Construit en lisant le gestionnaire MQTT de index.html (connectMQTT →
- * mqttClient.on('message')), tous les appels sendMsg({ type: … }), ainsi que
+ * Construit en lisant le gestionnaire de messages de la PWA (aujourd'hui
+ * MSG_ROUTES / dispatchMessage dans web/js/22-protocol.js, index.html étant
+ * généré), tous les appels sendMsg({ type: … }) de web/js/, ainsi que
  * expo-app/app/{remote,screen}.tsx et expo-app/src/lib/useMediaPool.ts.
+ *
+ * Différence assumée avec MSG_ROUTES : l'app BORNE les valeurs hors plage
+ * (ex. flash de 5 ms ramené à 15 ms) ; ce schéma les REJETTE. Les bornes sont
+ * alignées sur PROTO (22-protocol.js) ; l'émetteur doit donc borner avant
+ * d'envoyer (curseurs flashDur*Slider : min 5 → 15).
  *
  * Règles générales :
  *  - liste blanche STRICTE : type inconnu, champ inconnu, mauvais type,
@@ -91,40 +97,39 @@ const line = max => v => typeof v === 'string' && v.length <= max && !CTRL_ALL.t
 const text = max => v => typeof v === 'string' && v.length <= max && !CTRL_TEXT.test(v);
 
 export const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
-export const MEDIA_ID_RE = /^[A-Za-z0-9_-]{1,40}$/;
+export const MEDIA_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 export const SCREEN_ID_RE = /^[A-Za-z0-9_-]{8,32}$/;
 export const GROUP_ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
 /** Fragment de data-URL (images/sons) : aucun guillemet, parenthèse ni chevron possible. */
 const DATAURL_SLICE_RE = /^[A-Za-z0-9+/=:;,.-]*$/;
 const BASE64_RE = /^[A-Za-z0-9+/]*={0,2}$/;
 const IMG_DATAURL_RE = /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/]+={0,2}$/;
-const MIME_RE = /^(video|image)\/[A-Za-z0-9.+-]{1,60}$/;
+const MIME_RE = /^[a-z]+\/[a-z0-9.+-]{1,40}$/i;
 const PRINTABLE_RE = /^[\x20-\x7E\r\n]*$/;
 
 const HEX = str(7, HEX_COLOR_RE);
-const MEDIA_ID = str(40, MEDIA_ID_RE);
+const MEDIA_ID = str(64, MEDIA_ID_RE);
 const SCREEN_ID = str(32, SCREEN_ID_RE);
 const GROUP_ID = str(32, GROUP_ID_RE);
 const LEGACY_ID = str(64, /^[A-Za-z0-9_-]{1,64}$/);
 
 /** Plafonds exportés (documentation + tests). */
 export const LIMITS = Object.freeze({
-  strobeFreqHz: [0.5, 30],
-  strobeFlashMs: [15, 1000],
-  vibratePatternLength: 64,
-  vibrateStepMs: 10_000,
-  vibrateTotalMs: 60_000,
+  strobeFreqHz: [0.1, 30],
+  strobeFlashMs: [15, 2000],
+  vibratePatternLength: 20,
+  vibrateStepMs: 2000,
   effectCount: [1, 32],
   effectBlocks: 8,
   imgChunks: 2000,
   imgChunkChars: 20_000,
-  uploadChunks: 4000,
-  uploadChunkChars: 16_384,
+  uploadChunks: 50_000,
+  uploadChunkChars: 20_000,
   poolSize: 500,
   missingChunks: 400,
-  callPhotoChars: 200_000,
-  sdpChars: 32_768,
-  iceCandidateChars: 2048,
+  callPhotoChars: 600_000,
+  sdpChars: 200_000,
+  iceCandidateChars: 4096,
   targetScreens: 64,
   screenGroups: 16,
   screenNameChars: 40,
@@ -194,7 +199,8 @@ const SPECS = {
   },
   'strobe': {
     dir: 'r2s', src: ['web', 'native'],
-    doc: 'Stroboscope. active:false l’arrête (seul champ alors envoyé). Plafonds : 0,5–30 Hz, flash ≥ 15 ms.',
+    doc: 'Stroboscope. active:false l’arrête (seul champ alors envoyé). Plafonds : 0,1–30 Hz, flash 15–2000 ms '
+      + '(mêmes bornes que PROTO dans web/js/22-protocol.js ; le schéma REJETTE au lieu de borner).',
     fields: {
       active: req(bool, 'marche/arrêt'),
       torch: opt(bool, 'flash LED synchronisé (web)'),
@@ -236,12 +242,11 @@ const SPECS = {
   },
   'vibrate': {
     dir: 'r2s', src: ['web', 'native'],
-    doc: 'Motif de vibration (ms alternés vibre/pause).',
+    doc: 'Motif de vibration (ms alternés vibre/pause) : ≤ 20 valeurs de 0 à 2000 ms.',
     fields: {
-      pattern: req(arrayOf(int(0, LIMITS.vibrateStepMs), LIMITS.vibratePatternLength, 1), 'durées ms'),
+      pattern: req(arrayOf(num(0, LIMITS.vibrateStepMs), LIMITS.vibratePatternLength, 1), 'durées ms'),
       repeat: opt(bool, 'répétition (natif, toujours false aujourd’hui)'),
     },
-    refine: m => (m.pattern.reduce((a, b) => a + b, 0) > LIMITS.vibrateTotalMs ? 'motif trop long' : null),
   },
   'torch-onoff': {
     dir: 'r2s', src: ['web'],
@@ -251,7 +256,7 @@ const SPECS = {
   'torch-dim': {
     dir: 'r2s', src: ['web'],
     doc: 'Gradation de la torche (PWM logiciel côté web, binaire en natif).',
-    fields: { level: req(int(0, 100), 'niveau %') },
+    fields: { level: req(num(0, 100), 'niveau %') },
   },
   'torch-effect': {
     dir: 'r2s', src: ['web'],
@@ -350,7 +355,7 @@ const SPECS = {
     doc: 'Lecture / pause / recherche de la vidéo affichée.',
     fields: {
       action: req(oneOf('play', 'pause', 'seek'), 'action'),
-      time: opt(num(0, 86_400), 'position s (seek)'),
+      time: opt(num(0, 1e7), 'position s (seek)'),
     },
     refine: m => (m.action === 'seek' && m.time === undefined ? 'seek sans time' : null),
   },
@@ -450,6 +455,9 @@ const SPECS = {
       vibrate: req(bool, 'vibreur disponible'),
       videoMode: opt(oneOf('rtc', 'b64', 'none'), 'transport vidéo accepté'),
       media: opt(bool, 'cache média natif disponible'),
+      cached: opt(arrayOf(MEDIA_ID, LIMITS.poolSize), 'ids présents dans le cache de l’écran (resynchronisation)'),
+      active: opt(nullable(MEDIA_ID), 'média affiché (null = aucun ; absent = inconnu)'),
+      blackout: opt(bool, 'écran actuellement en noir'),
       screenId: opt(SCREEN_ID, 'nouveau : identifiant stable de l’écran (tiré au 1er lancement)'),
       name: opt(line(LIMITS.screenNameChars), 'nouveau : nom affiché de l’écran'),
       groups: opt(arrayOf(GROUP_ID, LIMITS.screenGroups), 'nouveau : groupes de l’écran'),

@@ -10,7 +10,8 @@ Appairage, chiffrement de bout en bout et schéma des messages entre la
 > L'intégration est décrite plus bas.
 
 ```sh
-cd packages/protocol && npm test     # 53 tests node --test, aucune installation
+cd packages/protocol && npm test     # 54 tests node --test, aucune installation
+# (également exécutés par le `npm test` racine via tests/protocol-package.test.mjs)
 ```
 
 ---
@@ -109,9 +110,12 @@ kind 2 : idLen + mediaId (≤ 40) + index u16 + total u16
 ```
 
 - Message : le clair est le JSON de l'objet **sans** `type` (le type est dans
-  l'en-tête authentifié). Plafond : **256 Kio** de clair.
+  l'en-tête authentifié). Plafond : **640 Kio** de clair (la photo d'un faux
+  appel peut atteindre 600 000 caractères) ; trame max. ≈ 874 000 caractères,
+  donc un relais réglé à **1 Mio** par message.
 - Fragment : clair binaire **≤ 16 Kio**, **≤ 4000** fragments par média
-  (≈ 64 Mo). `mediaId`, `index` et `total` sont dans l'AAD : un fragment ne peut
+  (≈ 64 Mo), `mediaId` ≤ 64 caractères. `mediaId`, `index` et `total` sont dans
+  l'AAD : un fragment ne peut
   être ni renuméroté ni déplacé vers un autre média.
 - **Anti-rejeu** (`ReplayState`) : fenêtre glissante de 1024 séquences **par
   émetteur** (télécommande et chaque écran ont leur propre étiquette aléatoire
@@ -131,11 +135,22 @@ kind 2 : idLen + mediaId (≤ 40) + index u16 + total u16
 30 `r2s`, 14 `s2r`, 1 `both` ; sources et champs décrits).
 `validate(msg, { direction })` est une **liste blanche stricte** : type ou
 champ inconnu, mauvais type, nombre non fini, chaîne/tableau trop long,
-data-URL non conforme ⇒ rejet. Quelques plafonds : strobe **0,5–30 Hz** et
-flash **≥ 15 ms**, effet `count ≤ 32`, `media-img-start.total ≤ 2000`,
-`media:upload.totalChunks ≤ 4000`, photo d'appel = `data:image/(jpeg|png|webp|gif);base64,…`
-≤ 200 000 caractères. Un test de **dérive** relit `index.html` et `expo-app`
-et échoue si un type y apparaît sans être au schéma.
+data-URL non conforme ⇒ rejet. Les bornes sont **alignées sur `PROTO`**
+(`web/js/22-protocol.js`) : strobe **0,1–30 Hz** et flash **15–2000 ms**,
+vibreur ≤ 20 valeurs de 0 à 2000 ms, effet `count ≤ 32`,
+`media-img-start.total ≤ 2000`, `media:upload.totalChunks ≤ 50 000` (chemin
+base64 historique), identifiants ≤ 64 caractères, SDP ≤ 200 000, photo
+d'appel = `data:image/(jpeg|png|webp|gif);base64,…` ≤ 600 000 caractères.
+
+**Différence voulue avec `MSG_ROUTES`** : l'app *borne* une valeur hors plage
+(flash de 5 ms ramené à 15 ms) ; le schéma la *rejette*, à l'envoi comme à la
+réception. L'émetteur doit donc borner lui-même (voir §6, curseurs de flash).
+
+Des tests de **dérive** relisent `web/js/*.js` (ou `index.html` à défaut) et
+`expo-app`. Ils échouent dans trois cas :
+- un type est utilisé sans être au schéma ;
+- une route de `MSG_ROUTES` est absente du schéma ;
+- une route est déclarée dans un sens différent.
 
 **Multi-écran** :
 
@@ -228,42 +243,89 @@ clair validés par `validateRendezvousMessage`) :
 Publier chaque message toutes les ~1,5 s jusqu'à réponse (QoS 0), ignorer les
 doublons, abandonner à l'expiration du code ou sur `pair:abort`.
 
-## 6. Intégration dans la PWA (`index.html`)
+## 6. Intégration dans la PWA (`web/`, `index.html` généré)
 
-1. Charger le module : `<script type="module">import * as P from './packages/protocol/index.js'; window.SRP = P;</script>`
-   (servi depuis GitHub Pages ; WebCrypto exige HTTPS ou `localhost`).
-2. **Télécommande** : `pairing = createPairing()` (persisté en `localStorage`
-   pour survivre au rechargement), QR = `pairingUrl(location.href, pairing)`.
-3. **Écran** : au démarrage, `parsePairingUrl(location.href)` ; si trouvé →
-   `history.replaceState(null, '', location.pathname + location.search)` puis
-   persister ; sinon, si le fragment est un ancien code → **mode historique**
-   (bandeau « connexion non sécurisée »). `screenId` : `createScreenId()` au
-   premier lancement, conservé en `localStorage`.
-4. Remplacer `connectMQTT`/`sendMsg`/le gestionnaire de messages :
+`index.html` est **généré** par `npm run build` à partir de `web/js/*.js`
+(scripts classiques concaténés) et de `web/styles/*.css`. On ne le modifie
+jamais à la main. Points d'accroche :
+
+| Où | Quoi |
+|---|---|
+| `web/index.template.html` | charger le paquet (module ES) avant l'initialisation |
+| `web/js/20-mqtt.js`, `client.on('message')` | **déchiffrer** (`ch.receive`) **en amont** de `dispatchMessage(msg)` |
+| `web/js/20-mqtt.js`, `sendMsg(obj)` | **chiffrer** (`ch.seal`) ; topic `ch.mqttTopic` au lieu de `setremote/v1/<canal>/cmd` |
+| `web/js/22-protocol.js`, `dispatchMessage` | inchangé : `MSG_ROUTES` reste la 2e barrière (rôle + bornage) |
+| `web/js/66-torch-flash.js`, `sendCaps()` | ajouter `screenId`, `name`, `groups` |
+| `web/js/24-resync.js` | multi-écran : la resynchronisation peut cibler `target: { screens: [caps.screenId] }` |
+| `sw.js` | ajouter `./packages/protocol/*.js` au `SHELL` et incrémenter `CACHE` (aujourd'hui `setremote-v52`) |
+
+1. **Chargement.** Les scripts de `web/js` sont classiques et ne peuvent pas
+   faire `import`. Il faut donc un module qui publie l'API, et
+   l'initialisation (`99-init.js`) doit attendre `srp-ready`. Rappel :
+   WebCrypto n'est disponible qu'en HTTPS ou sur `localhost`.
+
+   ```html
+   <script type="module">
+     import * as P from './packages/protocol/index.js';
+     window.SRP = P; window.dispatchEvent(new Event('srp-ready'));
+   </script>
+   ```
+
+2. **Télécommande.**
+   - `pairing = SRP.createPairing()`, persisté en `localStorage` pour survivre
+     au rechargement.
+   - QR = `SRP.pairingUrl(location.href, pairing)`.
+3. **Écran.**
+   - Au démarrage, appeler `SRP.parsePairingUrl(location.href)`.
+   - Si un appairage est trouvé, effacer le fragment avec
+     `history.replaceState(null, '', location.pathname + location.search)`,
+     puis persister l'appairage.
+   - Sinon, si le fragment est un ancien code, passer en **mode historique**.
+   - `screenId` : tiré par `SRP.createScreenId()` au premier lancement, puis
+     conservé en `localStorage`.
+4. **Réception et envoi** (`20-mqtt.js`) :
 
 ```js
-const ch = await SRP.createSecureChannel({ pairing, role: mode, screenId, groups });
-client.subscribe(ch.mqttTopic);
+// ch = await SRP.createSecureChannel({ pairing, role: mode, screenId, groups })
+client.subscribe(ch.mqttTopic, { qos: 0 }, ...);
 client.on('message', async (_t, payload) => {
   let r;
   try { r = await ch.receive(payload.toString()); }
-  catch (e) { if (e.code === 'stale') showClockWarning(); return; } // trame ignorée
-  if (!r) return;
-  if (r.kind === 'message') dispatch(r.message, r.sender);  // l'ancien gros if/else
-  else onChunk(r.chunk);                                     // assembleur
+  catch (e) { if (e.code === 'stale') signalerHorloge(); return; }   // trame ignorée
+  if (!r) return;                                   // écho, autre écran, pas pour nous
+  if (r.kind === 'message') dispatchMessage(r.message);   // MSG_ROUTES inchangé
+  else onChunk(r.chunk);                                    // assembleur de fragments
 });
-async function sendMsg(obj) { client.publish(ch.mqttTopic, await ch.seal(obj), { qos: 0 }); }
+async function sendMsg(obj) {
+  if (!mqttClient || !mqttClient.connected) return;
+  mqttClient.publish(ch.mqttTopic, await ch.seal(obj), { qos: 0 });
+}
 ```
 
-5. Médias : lire le fichier en `ArrayBuffer`, `splitIntoChunks()`, annoncer par
-   `media:upload` (avec `target` si besoin), envoyer `ch.sealChunk(...)` pour
-   chaque fragment, puis `media:play`. Côté écran : `asm.expect(mediaId,
-   totalChunks)` à réception du `media:upload`, `asm.add(chunk)`,
-   `asm.missing()` pour `media:need-chunks`. Le JSON base64 `media:chunk`
-   (≈ 36 Mo max à 4000 × 12 000 caractères) reste accepté pour compatibilité.
-6. Le repli `BroadcastChannel` peut transporter les mêmes trames chiffrées.
-7. **À adapter dans l'UI** (nouveaux plafonds) : `flashDurSlider` /
-   `flashDurMaxSlider` ont `min="5"` → passer à **15** ms.
+   `ch.seal` lève `invalid-message` si l'objet sort du schéma. Il faut
+   journaliser cette erreur, pas l'avaler : elle signale un émetteur qui
+   devrait borner ses valeurs.
+
+5. **Médias.**
+   - Télécommande : lire le fichier en `ArrayBuffer`, le découper avec
+     `splitIntoChunks()`, annoncer par `media:upload` (avec `target` si
+     besoin), envoyer `ch.sealChunk(...)` pour chaque fragment, puis
+     `media:play`.
+   - Écran : appeler `asm.expect(mediaId, totalChunks)` à réception du
+     `media:upload`, puis `asm.add(chunk)` pour chaque fragment ;
+     `asm.missing()` alimente `media:need-chunks`.
+   - Le JSON base64 `media:chunk` (jusqu'à 50 000 fragments, comme
+     aujourd'hui) reste accepté pour compatibilité.
+6. **Repli `BroadcastChannel`** (même appareil). Aujourd'hui il transporte
+   `color` et `strobe` en clair ; il peut transporter les mêmes trames
+   chiffrées.
+7. **À adapter avant d'activer la validation stricte à l'envoi.**
+   - `flashDurSlider` et `flashDurMaxSlider` ont `min="5"` dans
+     `web/index.template.html` : passer à **15**, ou borner dans
+     `buildStrobePayload()`.
+   - Les écrans d'appairage (QR « nouvelle session », saisie du code,
+     comparaison de la SAS) sont une **interface nouvelle** : il faut une
+     maquette validée avant de les implémenter.
 
 ## 7. Intégration React Native (`expo-app`, Expo SDK 56, Hermes)
 
@@ -330,7 +392,7 @@ Alternative : `import { install } from 'react-native-quick-crypto'; install();`
 
 ## 9. Limites connues / suites
 
-- `call:start.photo` (≤ 200 000 caractères) voyage dans un seul message :
+- `call:start.photo` (≤ 600 000 caractères) voyage dans un seul message :
   à terme, la passer par fragments (`mediaId: '__callphoto'`).
 - Pas de rotation automatique de clé ni de révocation d'un écran isolé
   (révocation = nouvelle session pour tous).

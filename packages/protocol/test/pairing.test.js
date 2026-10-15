@@ -128,7 +128,9 @@ test('engagement : vérifie la clé révélée, refuse une clé substituée', as
   assert.match(commit, /^[A-Za-z0-9_-]{43}$/);
   assert.equal(await verifyCommitment(screen.publicJwk, commit), true);
   assert.equal(await verifyCommitment(mallory.publicJwk, commit), false);
-  assert.equal(await verifyCommitment(screen.publicJwk, commit.slice(0, 42) + 'A'), false);
+  // Dernier caractère remplacé par un AUTRE caractère canonique (bits de bourrage nuls)
+  const altered = commit.slice(0, 42) + (commit[42] === 'A' ? 'E' : 'A');
+  assert.equal(await verifyCommitment(screen.publicJwk, altered), false);
   assert.equal(await verifyCommitment(/** @type {any} */ ({}), commit), false);
   assert.equal(await verifyCommitment(screen.publicJwk, /** @type {any} */ (null)), false);
 });

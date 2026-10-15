@@ -21,9 +21,11 @@ trois rôles :
    topics, voit les métadonnées et peut inonder une session.
 2. **Limitation de débit** par connexion et par session.
 3. **Plafond de taille de paquet.** La plus grosse trame légitime vient d'un
-   `call:start` avec photo : 256 Kio de JSON chiffré, soit environ 350 Ko en
-   base64url. Un fragment de média fait environ 22 Ko. Un plafond de
-   **512 Kio** suffit.
+   `call:start` avec photo. La photo peut atteindre 600 000 caractères
+   (plafond actuel de l'app), ce qui donne au plus 640 Kio de JSON chiffré,
+   soit environ 875 Ko en base64url. Un fragment de média fait environ 22 Ko.
+   Un plafond de **1 Mio** suffit. Si l'on veut descendre à 64 Kio, par
+   exemple pour Ably, il faut d'abord faire passer la photo par fragments.
 
 À cela s'ajoutent la disponibilité et le support des WebSockets depuis un
 navigateur (PWA) et depuis React Native.
@@ -138,7 +140,7 @@ par JWT n'est pas confirmée.
   (`ctx.acceptWebSocket`, `webSocketMessage`) :
   - rediffuse chaque trame texte aux autres sockets de la session ;
   - trames binaires et caractères hors `[A-Za-z0-9_-]` refusés ;
-  - **512 Kio max.** par trame (fermeture 1009 au-delà) ;
+  - **1 Mio max.** par trame (fermeture 1009 au-delà) ;
   - **seau à jetons** par socket : environ 100 trames/s en rafale, 2 Mo/s ;
   - **32 sockets max.** par session.
   - Rendez-vous : 4 sockets, trames de 4 Kio, durée de vie de 5 min.
@@ -181,7 +183,7 @@ par JWT n'est pas confirmée.
 
 | Phase | Contenu | Compatibilité |
 |---|---|---|
-| **0** (immédiat) | Intégrer `packages/protocol`. Dans le code actuel, appliquer **`validate()` à la réception** des messages en clair | Aucun changement de protocole ; les charges de la revue sont déjà bloquées |
+| **0** (immédiat) | Intégrer `packages/protocol`. La validation à la réception existe déjà dans la PWA (`MSG_ROUTES`, `web/js/22-protocol.js`, qui borne les valeurs). On peut y ajouter `validate()` du paquet comme contrôle strict | Aucun changement de protocole ; les charges de la revue sont déjà bloquées |
 | **1** (S+1 à S+2) | Nouvelles sessions **v2 chiffrées** (QR `#p=v1.…` ou code + SAS), **toujours sur `broker.hivemq.com`**, topic `setremote/v2/s/<topic>` | Un ancien QR ou code (`#set4271`) ouvre le **mode historique** avec un bandeau « non sécurisé ». Une télécommande à jour peut piloter un ancien écran via « Mode compatibilité », désactivé par défaut |
 | **2** (S+2 à S+4) | Déploiement du relais Cloudflare. Les apps v2 publient **sur les deux** (relais + broker public) et s'abonnent aux deux | Les copies en double sont **éliminées gratuitement par l'anti-rejeu** (même émetteur et même `seq` : la 2e est rejetée). Des versions v2 mixtes se retrouvent donc toujours |
 | **3** (quand > 95 % des sessions viennent de versions capables du relais) | Arrêt de la publication sur le broker public ; mode historique masqué derrière un réglage avancé | La PWA se met à jour via le service worker en quelques jours. Le natif dépend de la validation des stores : attendre au moins un cycle de version |
@@ -193,7 +195,7 @@ utiliser le relais. Le chiffrement reste actif.
 
 **Côté code** :
 
-- PWA : remplacer `connectMQTT` et `sendMsg` par un transport abstrait, avec
+- PWA : remplacer `connectMQTT` et `sendMsg` (`web/js/20-mqtt.js`) par un transport abstrait, avec
   une implémentation MQTT (phases 1-2) et une implémentation WebSocket relais
   (phases 2-4).
 - `expo-app` : ajouter un `RelayTransport` qui implémente l'interface
