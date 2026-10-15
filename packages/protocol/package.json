@@ -1,0 +1,25 @@
+{
+  "name": "@setremote/protocol",
+  "version": "0.1.0",
+  "description": "SetRemote : appairage (QR / code + SAS), chiffrement de bout en bout AES-256-GCM et schéma des messages. Zéro dépendance.",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./pairing": "./pairing.js",
+    "./crypto": "./crypto.js",
+    "./schema": "./schema.js",
+    "./channel": "./channel.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["index.js", "pairing.js", "crypto.js", "schema.js", "channel.js", "lib/", "README.md"],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
