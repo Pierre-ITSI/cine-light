@@ -1,0 +1,2692 @@
+{
+  "app.name": {
+    "original": "SetRemote",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:6 <title>; web/index.template.html:15 meta apple-mobile-web-app-title; web/index.template.html:162 .remote-header h2; splash h1 at line 491 is split into “Set”+“Remote” spans",
+    "type": "markup",
+    "note": "Product name — do not translate."
+  },
+  "splash.tagline.prefix": {
+    "original": "Une app conçue pour",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:58 .tagline-prefix",
+    "type": "markup",
+    "note": "Followed by a rotating role (splash.role.*): prefix + role."
+  },
+  "splash.role.props": {
+    "original": "les accessoiristes",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:59 #rotatingRole (initial text); web/js/95-splash.js:3 splash IIFE roles[0]",
+    "type": "markup"
+  },
+  "splash.role.electrics": {
+    "original": "les électros",
+    "file": "web/js/95-splash.js",
+    "location": "web/js/95-splash.js:3 splash IIFE roles[1]",
+    "type": "js",
+    "note": "“sparks” = set lighting electricians; alternative: “electricians”."
+  },
+  "splash.role.boardOps": {
+    "original": "les pupitreurs",
+    "file": "web/js/95-splash.js",
+    "location": "web/js/95-splash.js:3 splash IIFE roles[2]",
+    "type": "js",
+    "note": "Lighting console operators; alternative: “desk operators”."
+  },
+  "splash.role.directing": {
+    "original": "la mise en scène",
+    "file": "web/js/95-splash.js",
+    "location": "web/js/95-splash.js:3 splash IIFE roles[3]",
+    "type": "js"
+  },
+  "splash.role.dop": {
+    "original": "les DOP",
+    "file": "web/js/95-splash.js",
+    "location": "web/js/95-splash.js:3 splash IIFE roles[4]",
+    "type": "js",
+    "note": "Directors of photography; UK crews may prefer “DoPs”."
+  },
+  "splash.button.remote": {
+    "original": "Télécommande",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:63 .splash-btn.primary startMode('remote')",
+    "type": "markup"
+  },
+  "splash.button.screen": {
+    "original": "Écran projecteur",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:64 .splash-btn startMode('screen')",
+    "type": "markup",
+    "note": "Current UI wording. Product docs call this device “écran de jeu” — consider aligning the French source."
+  },
+  "splash.button.dmx": {
+    "original": "Mode DMX",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:65 .splash-btn (opens screen.html)",
+    "type": "markup"
+  },
+  "splash.install.button": {
+    "original": "⬇ Installer l'application",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:67 #installBtn",
+    "type": "markup",
+    "icon": "⬇",
+    "iconPosition": "before",
+    "note": "Hidden inside the native app shell."
+  },
+  "splash.install.iosHint": {
+    "original": "Pour installer : appuyez sur <strong>Partager</strong> <span style=\"font-size:1.1em\">⎙</span> puis <strong>« Sur l'écran d'accueil »</strong>",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:69 #iosInstallHint",
+    "type": "markup",
+    "note": "{share} and {addToHome} are wrapped in <strong>; {shareIcon} is the ⎙ glyph. Web (PWA) only."
+  },
+  "splash.install.iosShare": {
+    "original": "Partager",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:69 #iosInstallHint <strong>",
+    "type": "markup",
+    "note": "Must match the Safari “Share” button label in each language."
+  },
+  "splash.install.iosAddToHome": {
+    "original": "« Sur l'écran d'accueil »",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:69 #iosInstallHint <strong>",
+    "type": "markup",
+    "note": "Must match the Safari share-sheet action label in each language (quotes included)."
+  },
+  "splash.credit": {
+    "original": "by Pikoo",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:71 .splash-credit",
+    "type": "markup",
+    "note": "Publisher credit — confirm against the legal publisher name."
+  },
+  "dmx.config.title": {
+    "original": "🎛 Mode DMX",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:75 #screen-sacn-config h2",
+    "type": "markup",
+    "icon": "🎛",
+    "iconPosition": "before"
+  },
+  "dmx.config.subtitle": {
+    "original": "Réception directe de données DMX",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:76 #screen-sacn-config p",
+    "type": "markup"
+  },
+  "dmx.config.nativeBadge": {
+    "original": "📡 Réception UDP native — aucun bridge requis",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:79 #screenSacnNativeBadge",
+    "type": "markup",
+    "icon": "📡",
+    "iconPosition": "before"
+  },
+  "dmx.config.bridge": {
+    "original": "Bridge WebSocket",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:83 #screenSacnBridgeSection label",
+    "type": "markup"
+  },
+  "dmx.config.universe": {
+    "original": "Univers sACN",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:97 .sacn-config-field label",
+    "type": "markup"
+  },
+  "dmx.config.startAddress": {
+    "original": "Adresse de départ",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:102 .sacn-config-field label",
+    "type": "markup"
+  },
+  "dmx.config.mode3ch": {
+    "original": "3CH • DIM CCT TINT",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:109 #screenSacnMode-3ch",
+    "type": "markup",
+    "note": "Technical channel map — keep as is."
+  },
+  "dmx.config.mode9ch": {
+    "original": "9CH • DIM CCT TINT XC RGB STROB STROB+",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:110 #screenSacnMode-9ch",
+    "type": "markup",
+    "note": "Technical channel map — keep as is (XC = color crossfade)."
+  },
+  "dmx.config.start": {
+    "original": "▶ Démarrer",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:113 .sacn-screen-go",
+    "type": "markup",
+    "icon": "▶",
+    "iconPosition": "before"
+  },
+  "dmx.config.close": {
+    "original": "← Fermer mode DMX",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:114 .screen-sacn-back",
+    "type": "markup",
+    "icon": "←",
+    "iconPosition": "before"
+  },
+  "dmx.status.connecting": {
+    "original": "sACN · Connexion…",
+    "file": "web/js/60-sacn.js",
+    "location": "web/js/60-sacn.js:24 enterScreenSACN → setScreenStatus",
+    "type": "js"
+  },
+  "dmx.status.error": {
+    "original": "⚠ sACN erreur",
+    "file": "web/js/60-sacn.js",
+    "location": "web/js/60-sacn.js:37 enterScreenSACN → setScreenStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "dmx.status.bridgeIpMissing": {
+    "original": "⚠ Bridge IP manquant",
+    "file": "web/js/60-sacn.js",
+    "location": "web/js/60-sacn.js:41 enterScreenSACN → setScreenStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "dmx.status.bridgeError": {
+    "original": "⚠ Bridge erreur",
+    "file": "web/js/60-sacn.js",
+    "location": "web/js/60-sacn.js:44 enterScreenSACN → setScreenStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "dmx.status.bridgeDisconnected": {
+    "original": "⚠ Bridge déconnecté",
+    "file": "web/js/60-sacn.js",
+    "location": "web/js/60-sacn.js:52 _screenSacnWs.onerror → setScreenStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "dmx.status.bridgeClosed": {
+    "original": "⚠ Bridge fermé",
+    "file": "web/js/60-sacn.js",
+    "location": "web/js/60-sacn.js:53 _screenSacnWs.onclose → setScreenStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "common.back": {
+    "original": "← Retour",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:126 .screen-back; web/index.template.html:139 #screen-bar button; web/index.template.html:163 .back-btn",
+    "type": "markup",
+    "icon": "←",
+    "iconPosition": "before"
+  },
+  "common.connecting": {
+    "original": "Connexion…",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:136 #screen-status (initial); web/js/32-status.js:6 setConnStatus (also triggered on reconnect from web/js/20-mqtt.js:43); web/js/60-sacn.js:181 setSacnStatus (legacy)",
+    "type": "markup"
+  },
+  "common.notConnected": {
+    "original": "Non connecté",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:173 #connLabel; web/js/32-status.js:8 setConnStatus; web/js/60-sacn.js:183 setSacnStatus (legacy)",
+    "type": "markup"
+  },
+  "common.connect": {
+    "original": "Connecter",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:169 .connect-btn; web/js/60-sacn.js:183 setSacnStatus (legacy)",
+    "type": "markup"
+  },
+  "common.intensity": {
+    "original": "Intensité",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:382 torch intensity label; web/index.template.html:445 effect intensity label",
+    "type": "markup"
+  },
+  "common.fileReadError": {
+    "original": "⚠ Lecture du fichier impossible",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:523 broadcastVideoBase64 → setMediaStatus; web/js/80-call-simulator.js:93 onCallAudio → #callAudioStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "common.delete": {
+    "original": "Supprimer",
+    "file": "web/js/62-memories.js",
+    "location": "web/js/62-memories.js:176 renderColorMemories → .memory-del title attribute",
+    "type": "attr"
+  },
+  "screen.connect.title": {
+    "original": "Écran projecteur",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:118 #screen-connect h2",
+    "type": "markup"
+  },
+  "screen.connect.prompt": {
+    "original": "Entrez le code affiché sur la télécommande",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:119 #screen-connect p",
+    "type": "markup"
+  },
+  "screen.connect.placeholder": {
+    "original": "ex : set4271",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:121 #screenChannelInput placeholder",
+    "type": "placeholder"
+  },
+  "screen.connect.ok": {
+    "original": "OK →",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:124 .screen-go-btn",
+    "type": "markup",
+    "icon": "→",
+    "iconPosition": "after"
+  },
+  "screen.bar.suspend": {
+    "original": "⏸ Suspendre",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:140 #screen-bar button (suspendScreen)",
+    "type": "markup",
+    "icon": "⏸",
+    "iconPosition": "before"
+  },
+  "screen.bar.blackoutOff": {
+    "original": "⚫ Off",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:141 #screenBlackoutBtn (initial); web/js/68-blackout.js:63 setBlackout",
+    "type": "markup",
+    "icon": "⚫",
+    "iconPosition": "before",
+    "note": "Shown while the screen is lit (tap to black out)."
+  },
+  "screen.bar.blackoutOn": {
+    "original": "◻ On",
+    "file": "web/js/68-blackout.js",
+    "location": "web/js/68-blackout.js:63 setBlackout → #screenBlackoutBtn",
+    "type": "js",
+    "icon": "◻",
+    "iconPosition": "before",
+    "note": "Shown while blacked out (tap to restore)."
+  },
+  "screen.menu.channel": {
+    "original": "'Canal : ' + (channel || '—')",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:147 #screenMenuChannel (initial “Canal : —”); web/js/30-navigation.js:127 openScreenMenu",
+    "type": "markup"
+  },
+  "screen.menu.resume": {
+    "original": "Reprendre l'affichage",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:148 #screen-menu",
+    "type": "markup"
+  },
+  "screen.menu.changeCode": {
+    "original": "Changer de code canal",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:149 #screen-menu",
+    "type": "markup"
+  },
+  "screen.menu.home": {
+    "original": "Retour à l'accueil",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:150 #screen-menu",
+    "type": "markup"
+  },
+  "screen.menu.disconnect": {
+    "original": "Se déconnecter",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:151 #screen-menu .danger",
+    "type": "markup"
+  },
+  "screen.status.brokerError": {
+    "original": "Erreur broker — rechargez",
+    "file": "web/js/20-mqtt.js",
+    "location": "web/js/20-mqtt.js:36 connectMQTT on(\"error\") → setScreenStatus",
+    "type": "js",
+    "note": "“broker” = the MQTT server; after the migration this is the relay."
+  },
+  "screen.status.connectingTo": {
+    "original": "'Connexion à ' + ch + '…'",
+    "file": "web/js/30-navigation.js",
+    "location": "web/js/30-navigation.js:58 enterScreenMode → setScreenStatus; web/js/20-mqtt.js:44 connectMQTT onLost (reconnecting, added in 5e0323d)",
+    "type": "js"
+  },
+  "screen.status.listening": {
+    "original": "'✓ En écoute — canal : ' + ch",
+    "file": "web/js/30-navigation.js",
+    "location": "web/js/30-navigation.js:66 enterScreenMode → setScreenStatus",
+    "type": "js",
+    "icon": "✓",
+    "iconPosition": "before"
+  },
+  "screen.notice.listening": {
+    "original": "'En écoute du canal « ' + ch + ' »'",
+    "file": "web/js/30-navigation.js",
+    "location": "web/js/30-navigation.js:69 enterScreenMode → flashScreenNotice",
+    "type": "js"
+  },
+  "screen.status.videoReceiving": {
+    "original": "'📥 Réception vidéo… ' + Math.round(…) + ' %'",
+    "file": "web/js/75-media-screen.js",
+    "location": "web/js/75-media-screen.js:128 screenVidUploadStart; web/js/75-media-screen.js:137 screenVidUploadChunk → setScreenStatus",
+    "type": "js",
+    "icon": "📥",
+    "iconPosition": "before"
+  },
+  "screen.status.missingChunks": {
+    "original": "📥 Fragments manquants : {count}",
+    "file": "web/js/75-media-screen.js",
+    "location": "web/js/75-media-screen.js:154 screenVidUploadPlay → setScreenStatus",
+    "type": "js",
+    "icon": "📥",
+    "iconPosition": "before"
+  },
+  "screen.status.videoReceived": {
+    "original": "'🎬 Vidéo reçue (' + Math.round(blob.size / 1048576) + ' Mo)'",
+    "file": "web/js/75-media-screen.js",
+    "location": "web/js/75-media-screen.js:165 screenVidUploadPlay; web/js/85-media-screen-playback.js:57 screenAssembleVideo → setScreenStatus",
+    "type": "js",
+    "icon": "🎬",
+    "iconPosition": "before"
+  },
+  "screen.status.videoUnreadable": {
+    "original": "⚠ Vidéo illisible",
+    "file": "web/js/75-media-screen.js",
+    "location": "web/js/75-media-screen.js:174 screenVidUploadPlay → setScreenStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "screen.status.videoFormatUnsupported": {
+    "original": "⚠ Format vidéo non supporté",
+    "file": "web/js/85-media-screen-playback.js",
+    "location": "web/js/85-media-screen-playback.js:105 screenPlayVideoUrl vid.onerror → setScreenStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "remote.sticky.screenOn": {
+    "original": "Écran ON",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:159 #stickyBlackoutBtn (initial); web/js/68-blackout.js:18 toggleBlackout",
+    "type": "markup"
+  },
+  "remote.sticky.screenOff": {
+    "original": "Écran OFF",
+    "file": "web/js/68-blackout.js",
+    "location": "web/js/68-blackout.js:18 toggleBlackout → #stickyBlackoutBtn",
+    "type": "js"
+  },
+  "remote.sync.title": {
+    "original": "Canal de synchronisation",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:166 .panel-label",
+    "type": "markup"
+  },
+  "remote.sync.placeholder": {
+    "original": "ex: setlive42",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:168 #channelInput placeholder",
+    "type": "placeholder"
+  },
+  "remote.status.connected": {
+    "original": "'✓ Connecté — canal : ' + channel",
+    "file": "web/js/32-status.js",
+    "location": "web/js/32-status.js:5 setConnStatus → #connLabel",
+    "type": "js",
+    "icon": "✓",
+    "iconPosition": "before"
+  },
+  "remote.status.error": {
+    "original": "Erreur — réessayez",
+    "file": "web/js/32-status.js",
+    "location": "web/js/32-status.js:7 setConnStatus → #connLabel",
+    "type": "js"
+  },
+  "remote.preview.sent": {
+    "original": "↗ envoyé",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:181 #autosendBadge",
+    "type": "markup",
+    "icon": "↗",
+    "iconPosition": "before"
+  },
+  "remote.preview.metaWheel": {
+    "original": "'Roue · '+colorDimmer+'%'",
+    "file": "web/js/40-color.js",
+    "location": "web/js/40-color.js:85 recomputeColor → #previewMeta",
+    "type": "js"
+  },
+  "remote.preview.metaMix": {
+    "original": "'Mix '+colorCrossfade+'% · '+colorDimmer+'%'",
+    "file": "web/js/40-color.js",
+    "location": "web/js/40-color.js:86 recomputeColor → #previewMeta",
+    "type": "js"
+  },
+  "remote.blackout.on": {
+    "original": "Écran ON — appuyer pour éteindre",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:185 #blackoutLabel (initial); web/js/68-blackout.js:13 toggleBlackout",
+    "type": "markup"
+  },
+  "remote.blackout.off": {
+    "original": "Écran OFF — appuyer pour rallumer",
+    "file": "web/js/68-blackout.js",
+    "location": "web/js/68-blackout.js:13 toggleBlackout → #blackoutLabel",
+    "type": "js"
+  },
+  "remote.tabs.color": {
+    "original": "🎨 Couleur",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:189 #tab-color",
+    "type": "markup",
+    "icon": "🎨",
+    "iconPosition": "before"
+  },
+  "remote.tabs.effects": {
+    "original": "✨ Effets",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:190 #tab-effects",
+    "type": "markup",
+    "icon": "✨",
+    "iconPosition": "before"
+  },
+  "remote.tabs.flash": {
+    "original": "🔦 Flash",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:191 #tab-flash",
+    "type": "markup",
+    "icon": "🔦",
+    "iconPosition": "before",
+    "note": "Tab that drives the playback phone’s LED torch."
+  },
+  "remote.tabs.beta": {
+    "original": "Bêta",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:191 #tab-flash .beta-badge",
+    "type": "markup"
+  },
+  "remote.tabs.media": {
+    "original": "🎞 Média",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:192 #tab-media",
+    "type": "markup",
+    "icon": "🎞",
+    "iconPosition": "before"
+  },
+  "remote.tabs.call": {
+    "original": "📞 Appel",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:193 #tab-call",
+    "type": "markup",
+    "icon": "📞",
+    "iconPosition": "before"
+  },
+  "remote.tabs.qr": {
+    "original": "📡 QR",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:194 #tab-qr",
+    "type": "markup",
+    "icon": "📡",
+    "iconPosition": "before"
+  },
+  "color.dimmer.title": {
+    "original": "Intensité (Dimmer)",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:199 #content-color .panel-label",
+    "type": "markup"
+  },
+  "color.dimmer.label": {
+    "original": "Luminosité maître",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:201 label (dimmerSlider)",
+    "type": "markup"
+  },
+  "color.picker.title": {
+    "original": "Mode sélection couleur",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:207 .panel-label",
+    "type": "markup"
+  },
+  "color.picker.wheel": {
+    "original": "Roue",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:209 #chip-wheel",
+    "type": "markup"
+  },
+  "color.picker.hue": {
+    "original": "HUE",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:210 #chip-hue",
+    "type": "markup"
+  },
+  "color.picker.rgb": {
+    "original": "RGB",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:211 #chip-rgb",
+    "type": "markup"
+  },
+  "color.crossfade.label": {
+    "original": "Color crossfade · Blanc ↔ Couleur",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:232 wheel; web/index.template.html:243 hue; web/index.template.html:262 RGB; web/index.template.html:579 TV block editor (labels)",
+    "type": "markup"
+  },
+  "color.hue.label": {
+    "original": "Teinte (HUE)",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:239 label (hueSlider)",
+    "type": "markup"
+  },
+  "color.rgb.red": {
+    "original": "Rouge",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:250 label",
+    "type": "markup"
+  },
+  "color.rgb.green": {
+    "original": "Vert",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:254 label",
+    "type": "markup"
+  },
+  "color.rgb.blue": {
+    "original": "Bleu",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:258 label",
+    "type": "markup"
+  },
+  "color.cct.title": {
+    "original": "Température de couleur",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:269 .panel-label",
+    "type": "markup"
+  },
+  "color.cct.label": {
+    "original": "Température",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:271 label (kelvinSlider); web/index.template.html:583 TV block editor",
+    "type": "markup"
+  },
+  "color.tint.title": {
+    "original": "Tint · Magenta ↔ Vert",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:287 .panel-label; web/index.template.html:587 TV block editor label",
+    "type": "markup"
+  },
+  "color.tint.label": {
+    "original": "Green / Magenta",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:289 label (tintSlider)",
+    "type": "markup",
+    "note": "French source is already English."
+  },
+  "color.tint.presetMagenta": {
+    "original": "−100 Magenta",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:293 chip",
+    "type": "markup"
+  },
+  "color.tint.presetNeutral": {
+    "original": "0 Neutre",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:296 chip",
+    "type": "markup"
+  },
+  "color.tint.presetGreen": {
+    "original": "+100 Vert",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:299 chip",
+    "type": "markup"
+  },
+  "strobe.title": {
+    "original": "Stroboscope",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:305 .toggle-label",
+    "type": "markup"
+  },
+  "strobe.subtitle": {
+    "original": "Flash sur l'écran distant",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:305 .toggle-sub",
+    "type": "markup"
+  },
+  "strobe.activeBadge": {
+    "original": "⚡ Strobe actif",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:311 #strobeActiveBadge",
+    "type": "markup",
+    "icon": "⚡",
+    "iconPosition": "before"
+  },
+  "strobe.mode.title": {
+    "original": "Mode",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:312 .panel-label",
+    "type": "markup"
+  },
+  "strobe.mode.regular": {
+    "original": "Régulier",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:314 #chip-regular",
+    "type": "markup"
+  },
+  "strobe.mode.random": {
+    "original": "Aléatoire",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:315 #chip-random",
+    "type": "markup"
+  },
+  "strobe.frequency": {
+    "original": "Fréquence",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:318 #freqLabel (initial); web/js/45-strobe.js:7 setStrobeMode",
+    "type": "markup"
+  },
+  "strobe.frequencyMin": {
+    "original": "Fréquence min",
+    "file": "web/js/45-strobe.js",
+    "location": "web/js/45-strobe.js:7 setStrobeMode → #freqLabel",
+    "type": "js"
+  },
+  "strobe.duration": {
+    "original": "Durée du flash",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:322 #durLabel (initial); web/js/45-strobe.js:8 setStrobeMode",
+    "type": "markup"
+  },
+  "strobe.durationMin": {
+    "original": "Durée flash min",
+    "file": "web/js/45-strobe.js",
+    "location": "web/js/45-strobe.js:8 setStrobeMode → #durLabel",
+    "type": "js"
+  },
+  "strobe.randomRange": {
+    "original": "Plage aléatoire (max)",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:327 .panel-label",
+    "type": "markup"
+  },
+  "strobe.frequencyMax": {
+    "original": "Fréquence max",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:329 label",
+    "type": "markup"
+  },
+  "strobe.durationMax": {
+    "original": "Durée flash max",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:333 label",
+    "type": "markup"
+  },
+  "strobe.preview": {
+    "original": "Aperçu local",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:337 .strobe-preview",
+    "type": "markup"
+  },
+  "strobe.receiverFx.title": {
+    "original": "Effets sur le récepteur",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:339 .panel-label",
+    "type": "markup",
+    "note": "“récepteur” = the device running the playback screen."
+  },
+  "strobe.torchSync.title": {
+    "original": "🔦 Torche synchronisée",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:341 .toggle-label",
+    "type": "markup",
+    "icon": "🔦",
+    "iconPosition": "before"
+  },
+  "strobe.torchSync.subtitle": {
+    "original": "Flash la torche du récepteur avec le strobe",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:341 .toggle-sub",
+    "type": "markup"
+  },
+  "vibrate.title": {
+    "original": "📳 Vibration rapide",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:347 .panel-label",
+    "type": "markup",
+    "icon": "📳",
+    "iconPosition": "before"
+  },
+  "vibrate.short": {
+    "original": "Court",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:349 chip",
+    "type": "markup"
+  },
+  "vibrate.long": {
+    "original": "Long",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:350 chip",
+    "type": "markup"
+  },
+  "vibrate.double": {
+    "original": "Double",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:351 chip",
+    "type": "markup"
+  },
+  "vibrate.alert": {
+    "original": "Alerte",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:352 chip",
+    "type": "markup"
+  },
+  "vibrate.sos": {
+    "original": "SOS",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:353 chip",
+    "type": "markup"
+  },
+  "memory.color.title": {
+    "original": "Mémoires de couleur",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:358 .panel-label",
+    "type": "markup"
+  },
+  "memory.record": {
+    "original": "＋ Enregistrer",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:360 .memory-save-btn (color); web/index.template.html:596 .memory-save-btn (effects)",
+    "type": "markup",
+    "icon": "＋",
+    "iconPosition": "before",
+    "note": "Lighting-console vocabulary: “Record” a cue."
+  },
+  "memory.update": {
+    "original": "⟳ Mettre à jour",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:361 #memoryUpdateBtn; web/index.template.html:597 #fxMemUpdateBtn",
+    "type": "markup",
+    "icon": "⟳",
+    "iconPosition": "before"
+  },
+  "memory.color.empty": {
+    "original": "Réglez une couleur puis « Enregistrer » pour créer une mémoire.",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:364 #memoryEmpty",
+    "type": "markup"
+  },
+  "memory.color.hint": {
+    "original": "Touchez pour rappeler · appui long (ou ✕) pour supprimer.",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:365 #memoryHint",
+    "type": "markup"
+  },
+  "memory.color.defaultName": {
+    "original": "'Mémoire '+(colorMemories.length+1)",
+    "file": "web/js/62-memories.js",
+    "location": "web/js/62-memories.js:143 saveColorMemory (default cue name)",
+    "type": "js"
+  },
+  "memory.fx.title": {
+    "original": "Mémoires d'effets",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:594 .panel-label",
+    "type": "markup"
+  },
+  "memory.fx.empty": {
+    "original": "Lancez un effet, réglez-le, puis « Enregistrer ».",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:600 #fxMemEmpty",
+    "type": "markup"
+  },
+  "flash.unavailable.title": {
+    "original": "🔦 Non disponible sur iPhone",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:371 #flashUnavailNotice strong",
+    "type": "markup",
+    "icon": "🔦",
+    "iconPosition": "before",
+    "note": "Names a device brand — reword before App Store submission (guideline 2.3.10). See README."
+  },
+  "flash.unavailable.body": {
+    "original": "Le récepteur est un iPhone : iOS ne permet pas de piloter la torche LED ni le vibreur depuis le web. Utilisez le strobe par l'écran (onglet Effets) ou un récepteur Android.",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:372 #flashUnavailNotice",
+    "type": "markup",
+    "note": "Names iPhone/iOS/Android — App Store guideline 2.3.10 forbids naming other mobile platforms in the app. Neutral proposal in README."
+  },
+  "flash.torch.title": {
+    "original": "Torche récepteur",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:375 .panel-label",
+    "type": "markup"
+  },
+  "flash.torch.turnOn": {
+    "original": "Allumer la torche",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:377 #remoteTorchLabel (initial); web/js/66-torch-flash.js:114 onRemoteTorchToggle",
+    "type": "markup"
+  },
+  "flash.torch.isOn": {
+    "original": "Torche allumée",
+    "file": "web/js/66-torch-flash.js",
+    "location": "web/js/66-torch-flash.js:114 onRemoteTorchToggle; web/js/66-torch-flash.js:138 sendTorchEffect → #remoteTorchLabel",
+    "type": "js"
+  },
+  "flash.effects.title": {
+    "original": "Effets",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:389 .panel-label",
+    "type": "markup"
+  },
+  "flash.effect.sos": {
+    "original": "🆘 SOS",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:392 #efx-sos",
+    "type": "markup",
+    "icon": "🆘",
+    "iconPosition": "before"
+  },
+  "flash.effect.blinkSlow": {
+    "original": "🔁 Clignotement lent",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:395 #efx-blink-slow",
+    "type": "markup",
+    "icon": "🔁",
+    "iconPosition": "before"
+  },
+  "flash.effect.blinkFast": {
+    "original": "⚡ Clignotement rapide",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:398 #efx-blink-fast",
+    "type": "markup",
+    "icon": "⚡",
+    "iconPosition": "before"
+  },
+  "flash.effect.police": {
+    "original": "🚨 Police",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:401 #efx-police",
+    "type": "markup",
+    "icon": "🚨",
+    "iconPosition": "before"
+  },
+  "flash.effect.heartbeat": {
+    "original": "💓 Battement",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:404 #efx-heartbeat",
+    "type": "markup",
+    "icon": "💓",
+    "iconPosition": "before"
+  },
+  "flash.effect.stop": {
+    "original": "⏹ Stop effet",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:407 #efx-stop",
+    "type": "markup",
+    "icon": "⏹",
+    "iconPosition": "before"
+  },
+  "effects.active": {
+    "original": "✨ Actif",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:415 #effectBadgeText (initial)",
+    "type": "markup",
+    "icon": "✨",
+    "iconPosition": "before"
+  },
+  "effects.activeNamed": {
+    "original": "cfg.icon + ' ' + cfg.name + ' actif'",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:187 selectEffect → #effectBadgeText",
+    "type": "js",
+    "note": "The effect’s own icon is prepended."
+  },
+  "effects.stopAll": {
+    "original": "⏹ Stop",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:416 #effectActiveBadge button",
+    "type": "markup",
+    "icon": "⏹",
+    "iconPosition": "before"
+  },
+  "effects.lab.title": {
+    "original": "Laboratoire d'effets",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:419 .panel-label",
+    "type": "markup"
+  },
+  "effects.family.spatial": {
+    "original": "Spatiaux",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:420 .fx-family",
+    "type": "markup"
+  },
+  "effects.family.rhythm": {
+    "original": "Rythmiques",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:422 .fx-family",
+    "type": "markup"
+  },
+  "effects.family.ambiance": {
+    "original": "Ambiances",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:424 .fx-family",
+    "type": "markup"
+  },
+  "effects.settings.title": {
+    "original": "Réglages",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:429 #effectSettingsTitle (initial)",
+    "type": "markup"
+  },
+  "effects.settings.titleNamed": {
+    "original": "'Réglages — ' + cfg.name",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:191 selectEffect → #effectSettingsTitle",
+    "type": "js"
+  },
+  "effects.randomize": {
+    "original": "🎲 Randomiser",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:430 .fx-dice-btn",
+    "type": "markup",
+    "icon": "🎲",
+    "iconPosition": "before"
+  },
+  "effects.speed": {
+    "original": "Vitesse",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:434 #effectSpeedLabel (initial); web/js/50-effects-remote.js:14 EFFECT_CONFIG.chaser.speedLabel; web/js/50-effects-remote.js:23 EFFECT_CONFIG.water.speedLabel",
+    "type": "markup"
+  },
+  "effects.tap": {
+    "original": "TAP",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:436 #fxTapBtn",
+    "type": "markup",
+    "note": "Tap-tempo button — keep very short."
+  },
+  "effects.amount": {
+    "original": "Quantité",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:453 #effectBurstLabel (initial)",
+    "type": "markup"
+  },
+  "effects.shape.title": {
+    "original": "Forme",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:460 label",
+    "type": "markup"
+  },
+  "effects.shape.band": {
+    "original": "▬ Bande",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:462 #fxshape-band",
+    "type": "markup",
+    "icon": "▬",
+    "iconPosition": "before"
+  },
+  "effects.shape.circle": {
+    "original": "◯ Rond",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:463 #fxshape-circle",
+    "type": "markup",
+    "icon": "◯",
+    "iconPosition": "before"
+  },
+  "effects.shape.diamond": {
+    "original": "◇ Losange",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:464 #fxshape-diamond",
+    "type": "markup",
+    "icon": "◇",
+    "iconPosition": "before"
+  },
+  "effects.direction.title": {
+    "original": "Direction",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:468 label",
+    "type": "markup"
+  },
+  "effects.direction.horizontal": {
+    "original": "↔ Horizontal",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:470 #fxdir-h",
+    "type": "markup",
+    "icon": "↔",
+    "iconPosition": "before"
+  },
+  "effects.direction.vertical": {
+    "original": "↕ Vertical",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:471 #fxdir-v",
+    "type": "markup",
+    "icon": "↕",
+    "iconPosition": "before"
+  },
+  "effects.direction.diagonal": {
+    "original": "⤢ Diagonale",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:472 #fxdir-d",
+    "type": "markup",
+    "icon": "⤢",
+    "iconPosition": "before"
+  },
+  "effects.radial.title": {
+    "original": "Sens",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:476 label",
+    "type": "markup",
+    "note": "Radial direction for the circle/diamond chaser shapes."
+  },
+  "effects.radial.out": {
+    "original": "⟴ Du centre",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:478 #fxrdir-out",
+    "type": "markup",
+    "icon": "⟴",
+    "iconPosition": "before"
+  },
+  "effects.radial.in": {
+    "original": "⟲ Des extérieurs",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:479 #fxrdir-in",
+    "type": "markup",
+    "icon": "⟲",
+    "iconPosition": "before"
+  },
+  "effects.travel.title": {
+    "original": "Course",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:483 label",
+    "type": "markup",
+    "note": "Chaser travel mode."
+  },
+  "effects.travel.loop": {
+    "original": "↻ Loop",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:485 #fxmode-loop",
+    "type": "markup",
+    "icon": "↻",
+    "iconPosition": "before"
+  },
+  "effects.travel.bounce": {
+    "original": "⇄ Bounce",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:486 #fxmode-bounce",
+    "type": "markup",
+    "icon": "⇄",
+    "iconPosition": "before"
+  },
+  "effects.travel.invert": {
+    "original": "⮌ Invert",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:487 #fxmode-invert",
+    "type": "markup",
+    "icon": "⮌",
+    "iconPosition": "before"
+  },
+  "effects.width": {
+    "original": "Largeur de bande",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:492 label",
+    "type": "markup"
+  },
+  "effects.smoothing": {
+    "original": "Lissage des sautes",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:500 label",
+    "type": "markup",
+    "note": "Smooths the jumps between TV-flicker colors."
+  },
+  "effects.wing": {
+    "original": "Wing · symétrie",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:508 label",
+    "type": "markup"
+  },
+  "effects.rotation": {
+    "original": "Rotation",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:516 label",
+    "type": "markup"
+  },
+  "effects.color1": {
+    "original": "Couleur 1",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:524 #effectColor1Label (initial); web/js/50-effects-remote.js:235 selectEffect fallback",
+    "type": "markup"
+  },
+  "effects.color2": {
+    "original": "Couleur 2",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:528 #effectColor2Label (initial); web/js/50-effects-remote.js:239 selectEffect fallback",
+    "type": "markup"
+  },
+  "effects.chaos": {
+    "original": "Chaos · aléa",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:534 label",
+    "type": "markup"
+  },
+  "effects.drift": {
+    "original": "Dérive · évolution lente",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:542 label",
+    "type": "markup"
+  },
+  "effects.leadFade": {
+    "original": "Traîne avant",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:550 label",
+    "type": "markup"
+  },
+  "effects.trail": {
+    "original": "Traîne / fondu",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:558 #effectFadeLabel (initial)",
+    "type": "markup"
+  },
+  "effects.fadeOut": {
+    "original": "Fondu d'extinction",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:255 selectEffect → #effectFadeLabel fallback",
+    "type": "js"
+  },
+  "effects.tvBlocks.title": {
+    "original": "Blocs couleurs",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:566 label",
+    "type": "markup"
+  },
+  "effects.tvBlocks.add": {
+    "original": "+ Bloc",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:567 #tvAddBlockBtn",
+    "type": "markup",
+    "icon": "+",
+    "iconPosition": "before"
+  },
+  "effects.tvBlocks.brightness": {
+    "original": "Luminosité",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:575 TV block editor label",
+    "type": "markup"
+  },
+  "fx.common.background": {
+    "original": "Fond",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:15 chaser.c2Label; web/js/50-effects-remote.js:24 water.c2Label; web/js/50-effects-remote.js:31 weld.c2Label",
+    "type": "js"
+  },
+  "fx.common.ambient": {
+    "original": "Ambiance",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:37 lightning.c2Label; web/js/50-effects-remote.js:39 paparazzi.c2Label",
+    "type": "js"
+  },
+  "fx.common.flame": {
+    "original": "Flamme",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:44 candle.c1Label; web/js/50-effects-remote.js:46 fire.c1Label",
+    "type": "js"
+  },
+  "fx.common.speedFps": {
+    "original": "Vitesse (img/s)",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:18 noise.speedLabel; web/js/50-effects-remote.js:42 tv.speedLabel",
+    "type": "js"
+  },
+  "fx.chaser.name": {
+    "original": "Chaser",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:14 EFFECT_CONFIG.chaser.name",
+    "type": "js"
+  },
+  "fx.chaser.color1": {
+    "original": "Bande",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:15 chaser.c1Label",
+    "type": "js"
+  },
+  "fx.chaser.count": {
+    "original": "Nombre de bandes",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:16 chaser.count.label",
+    "type": "js"
+  },
+  "fx.chaser.trailingFade": {
+    "original": "Traîne arrière",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:17 chaser.fadeLabel",
+    "type": "js"
+  },
+  "fx.noise.name": {
+    "original": "Noise",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:18 noise.name",
+    "type": "js"
+  },
+  "fx.noise.color1": {
+    "original": "Teinte",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:19 noise.c1Label",
+    "type": "js",
+    "note": "Hue of the noise — not the green/magenta tint."
+  },
+  "fx.noise.count": {
+    "original": "Taille de grain",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:20 noise.count.label",
+    "type": "js"
+  },
+  "fx.aurora.name": {
+    "original": "Aurora",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:21 aurora.name",
+    "type": "js"
+  },
+  "fx.aurora.speed": {
+    "original": "Dérive des nappes",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:21 aurora.speedLabel",
+    "type": "js"
+  },
+  "fx.aurora.color1": {
+    "original": "Nappe 1",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:22 aurora.c1Label",
+    "type": "js"
+  },
+  "fx.aurora.color2": {
+    "original": "Nappe 2",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:22 aurora.c2Label",
+    "type": "js"
+  },
+  "fx.water.name": {
+    "original": "Caustiques",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:23 water.name",
+    "type": "js"
+  },
+  "fx.water.color1": {
+    "original": "Eau",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:24 water.c1Label",
+    "type": "js"
+  },
+  "fx.pulse.name": {
+    "original": "Pulse BPM",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:26 pulse.name",
+    "type": "js"
+  },
+  "fx.pulse.speed": {
+    "original": "BPM",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:26 pulse.speedLabel",
+    "type": "js"
+  },
+  "fx.pulse.color1": {
+    "original": "Crête",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:27 pulse.c1Label",
+    "type": "js"
+  },
+  "fx.pulse.color2": {
+    "original": "Creux",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:27 pulse.c2Label",
+    "type": "js"
+  },
+  "fx.traffic.name": {
+    "original": "Phares",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:28 traffic.name",
+    "type": "js",
+    "note": "Passing-car headlights effect."
+  },
+  "fx.traffic.speed": {
+    "original": "Passages / s",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:28 traffic.speedLabel",
+    "type": "js"
+  },
+  "fx.traffic.color1": {
+    "original": "Phares",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:29 traffic.c1Label",
+    "type": "js"
+  },
+  "fx.traffic.color2": {
+    "original": "Nuit",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:29 traffic.c2Label",
+    "type": "js"
+  },
+  "fx.weld.name": {
+    "original": "Soudure",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:30 weld.name",
+    "type": "js"
+  },
+  "fx.weld.speed": {
+    "original": "Cadence",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:30 weld.speedLabel",
+    "type": "js"
+  },
+  "fx.weld.color1": {
+    "original": "Arc",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:31 weld.c1Label",
+    "type": "js"
+  },
+  "fx.neon.name": {
+    "original": "Néon HS",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:32 neon.name",
+    "type": "js",
+    "note": "HS = “hors service” (broken)."
+  },
+  "fx.neon.speed": {
+    "original": "Nervosité",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:32 neon.speedLabel",
+    "type": "js"
+  },
+  "fx.neon.color1": {
+    "original": "Néon",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:33 neon.c1Label",
+    "type": "js"
+  },
+  "fx.police.name": {
+    "original": "Police",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:34 police.name",
+    "type": "js"
+  },
+  "fx.police.speed": {
+    "original": "Vitesse alternance",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:34 police.speedLabel",
+    "type": "js"
+  },
+  "fx.police.color1": {
+    "original": "Couleur A",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:35 police.c1Label",
+    "type": "js"
+  },
+  "fx.police.color2": {
+    "original": "Couleur B",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:35 police.c2Label",
+    "type": "js"
+  },
+  "fx.lightning.name": {
+    "original": "Éclair",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:36 lightning.name",
+    "type": "js"
+  },
+  "fx.lightning.speed": {
+    "original": "Fréquence",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:36 lightning.speedLabel",
+    "type": "js"
+  },
+  "fx.lightning.color1": {
+    "original": "Éclair",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:37 lightning.c1Label",
+    "type": "js"
+  },
+  "fx.paparazzi.name": {
+    "original": "Paparazzi",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:38 paparazzi.name",
+    "type": "js"
+  },
+  "fx.paparazzi.speed": {
+    "original": "Rafales / s",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:38 paparazzi.speedLabel",
+    "type": "js"
+  },
+  "fx.paparazzi.color1": {
+    "original": "Flash",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:39 paparazzi.c1Label",
+    "type": "js"
+  },
+  "fx.paparazzi.count": {
+    "original": "Flashes / rafale",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:40 paparazzi.count.label",
+    "type": "js"
+  },
+  "fx.tv.name": {
+    "original": "TV",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:42 tv.name",
+    "type": "js"
+  },
+  "fx.candle.name": {
+    "original": "Bougie",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:43 candle.name",
+    "type": "js"
+  },
+  "fx.candle.speed": {
+    "original": "Vacillement",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:43 candle.speedLabel",
+    "type": "js"
+  },
+  "fx.fire.name": {
+    "original": "Feu",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:45 fire.name",
+    "type": "js"
+  },
+  "fx.fire.speed": {
+    "original": "Intensité rapide",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:45 fire.speedLabel",
+    "type": "js",
+    "note": "Unsure: literal “fast intensity”; the slider sets how fast the fire flickers."
+  },
+  "fx.fire.color2": {
+    "original": "Braise",
+    "file": "web/js/50-effects-remote.js",
+    "location": "web/js/50-effects-remote.js:46 fire.c2Label",
+    "type": "js"
+  },
+  "media.brightness.title": {
+    "original": "Luminosité de l'écran de jeu",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:606 .panel-label",
+    "type": "markup"
+  },
+  "media.brightness.label": {
+    "original": "Luminosité écran",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:608 label",
+    "type": "markup"
+  },
+  "media.pool.title": {
+    "original": "Pool média",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:613 .panel-label",
+    "type": "markup"
+  },
+  "media.add.images": {
+    "original": "🖼 Images",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:616 #mediaImgBtn",
+    "type": "markup",
+    "icon": "🖼",
+    "iconPosition": "before"
+  },
+  "media.add.videos": {
+    "original": "🎬 Vidéos",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:619 #mediaVidBtn",
+    "type": "markup",
+    "icon": "🎬",
+    "iconPosition": "before"
+  },
+  "media.pool.empty": {
+    "original": "Ajoutez des images ou vidéos, puis touchez-les pour les diffuser.",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:625 #mediaPoolEmpty",
+    "type": "markup"
+  },
+  "media.nav.previous": {
+    "original": "◀ Précédent",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:627 #mediaNav button",
+    "type": "markup",
+    "icon": "◀",
+    "iconPosition": "before"
+  },
+  "media.nav.next": {
+    "original": "Suivant ▶",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:628 #mediaNav button",
+    "type": "markup",
+    "icon": "▶",
+    "iconPosition": "after"
+  },
+  "media.autoAdvance": {
+    "original": "Avancer au clic sur l'écran de jeu",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:631 #mediaAutoAdvRow span",
+    "type": "markup"
+  },
+  "media.status.idle": {
+    "original": "Aucun média diffusé",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:637 #mediaStatus (initial); web/js/70-media-remote.js:674 stopMediaBroadcast → setMediaStatus",
+    "type": "markup"
+  },
+  "media.playback.pause": {
+    "original": "Pause",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:639 #mediaPlayLabel (initial); web/js/70-media-remote.js:37 setPlayBtn",
+    "type": "markup"
+  },
+  "media.playback.play": {
+    "original": "Lecture",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:37 setPlayBtn → #mediaPlayLabel",
+    "type": "js"
+  },
+  "media.endMode.title": {
+    "original": "Fin de lecture",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:642 .panel-label",
+    "type": "markup"
+  },
+  "media.endMode.loop": {
+    "original": "🔁 Boucle",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:644 #vmode-loop",
+    "type": "markup",
+    "icon": "🔁",
+    "iconPosition": "before"
+  },
+  "media.endMode.pause": {
+    "original": "⏯ 1× puis pause",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:645 #vmode-pause",
+    "type": "markup",
+    "icon": "⏯",
+    "iconPosition": "before"
+  },
+  "media.endMode.off": {
+    "original": "⏹ 1× puis off",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:646 #vmode-off",
+    "type": "markup",
+    "icon": "⏹",
+    "iconPosition": "before"
+  },
+  "media.stop": {
+    "original": "⏹ Arrêter la diffusion",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:658 #mediaStopBtn",
+    "type": "markup",
+    "icon": "⏹",
+    "iconPosition": "before"
+  },
+  "media.defaultName.image": {
+    "original": "image",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:167 onAddImages (fallback file name)",
+    "type": "js"
+  },
+  "media.defaultName.video": {
+    "original": "vidéo",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:180 onAddVideos (fallback file name)",
+    "type": "js"
+  },
+  "media.status.videoLive": {
+    "original": "🎬 Vidéo en diffusion",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:76 remoteOnMeta; web/js/70-media-remote.js:82 remoteOnProgress → setMediaStatus",
+    "type": "js",
+    "icon": "🎬",
+    "iconPosition": "before"
+  },
+  "media.status.ended": {
+    "original": "Lecture terminée — écran libéré",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:99 remoteOnEnded → setMediaStatus",
+    "type": "js"
+  },
+  "media.status.formatUnsupported": {
+    "original": "⚠ Format non lisible sur l'écran (essayez un MP4/H.264)",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:106 remoteOnError → setMediaStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "media.status.playbackFailed": {
+    "original": "⚠ Lecture impossible sur l'écran",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:108 remoteOnError → setMediaStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "media.status.instantVideo": {
+    "original": "🎬 Lecture instantanée (cache écran)",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:346 selectMedia → setMediaStatus",
+    "type": "js",
+    "icon": "🎬",
+    "iconPosition": "before"
+  },
+  "media.status.instantImage": {
+    "original": "🖼 Affichage instantané (cache écran)",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:348 selectMedia → setMediaStatus",
+    "type": "js",
+    "icon": "🖼",
+    "iconPosition": "before"
+  },
+  "media.status.screenAdvanced": {
+    "original": "(it.kind === 'vid' ? '🎬 ' : '🖼 ') + it.name + ' (avance écran)'",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:368 remoteOnScreenAdvanced → setMediaStatus",
+    "type": "js",
+    "icon": "🎬|🖼",
+    "iconPosition": "before",
+    "note": "Icon depends on media kind (video/image)."
+  },
+  "media.status.imageUnreadable": {
+    "original": "⚠ Image illisible",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:466 broadcastImage → setMediaStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "media.status.imageSent": {
+    "original": "'🖼 Image diffusée (' + Math.round(dataUrl.length / 1024) + ' Ko)'",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:469 broadcastImage → setMediaStatus",
+    "type": "js",
+    "icon": "🖼",
+    "iconPosition": "before"
+  },
+  "media.status.preparingTransfer": {
+    "original": "🎬 Préparation du transfert…",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:494 broadcastVideo → setMediaStatus",
+    "type": "js",
+    "icon": "🎬",
+    "iconPosition": "before"
+  },
+  "media.status.preparingSend": {
+    "original": "🎬 Préparation de l'envoi…",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:520 broadcastVideoBase64 → setMediaStatus",
+    "type": "js",
+    "icon": "🎬",
+    "iconPosition": "before"
+  },
+  "media.status.transferProgress": {
+    "original": "'📤 Transfert… ' + pct + ' %'",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:533, web/js/70-media-remote.js:547 broadcastVideoBase64; web/js/70-media-remote.js:624, web/js/70-media-remote.js:635 sendFileOverChannel → setMediaStatus",
+    "type": "js",
+    "icon": "📤",
+    "iconPosition": "before"
+  },
+  "media.status.verifying": {
+    "original": "⏳ Vérification de la réception…",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:551 broadcastVideoBase64; web/js/70-media-remote.js:581 resendMissingChunks → setMediaStatus",
+    "type": "js",
+    "icon": "⏳",
+    "iconPosition": "before"
+  },
+  "media.status.noConfirmation": {
+    "original": "⚠ Pas de confirmation de l'écran — vérifiez sa connexion",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:559 _armB64VerifyTimer → setMediaStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "media.status.transferIncomplete": {
+    "original": "⚠ Transfert incomplet — réessayez",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:569 resendMissingChunks → setMediaStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "media.status.resending": {
+    "original": "'📤 Renvoi de ' + miss.length + ' fragments… (' + _b64Send.rounds + '/3)'",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:573 resendMissingChunks → setMediaStatus",
+    "type": "js",
+    "icon": "📤",
+    "iconPosition": "before"
+  },
+  "media.status.directFailed": {
+    "original": "🌐 Connexion directe impossible — envoi via le canal…",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:601 startFileTransfer → setMediaStatus",
+    "type": "js",
+    "icon": "🌐",
+    "iconPosition": "before"
+  },
+  "media.status.connectingScreen": {
+    "original": "🎬 Connexion à l'écran…",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:615 startFileTransfer → setMediaStatus",
+    "type": "js",
+    "icon": "🎬",
+    "iconPosition": "before"
+  },
+  "media.status.playingOnScreen": {
+    "original": "🎬 Lecture sur l'écran",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:639 sendFileOverChannel → setMediaStatus",
+    "type": "js",
+    "icon": "🎬",
+    "iconPosition": "before"
+  },
+  "media.status.transferFailed": {
+    "original": "⚠ Échec du transfert",
+    "file": "web/js/70-media-remote.js",
+    "location": "web/js/70-media-remote.js:641 sendFileOverChannel → setMediaStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "call.type.title": {
+    "original": "Type",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:665 .panel-label",
+    "type": "markup"
+  },
+  "call.kind.call": {
+    "original": "📞 Appel",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:667 #callkind-call",
+    "type": "markup",
+    "icon": "📞",
+    "iconPosition": "before"
+  },
+  "call.kind.sms": {
+    "original": "✉️ SMS",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:668 #callkind-sms",
+    "type": "markup",
+    "icon": "✉️",
+    "iconPosition": "before"
+  },
+  "call.kind.chat": {
+    "original": "💬 Messagerie",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:669 #callkind-chat",
+    "type": "markup",
+    "icon": "💬",
+    "iconPosition": "before"
+  },
+  "call.style.title": {
+    "original": "Style",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:672 .panel-label",
+    "type": "markup"
+  },
+  "call.style.glass": {
+    "original": "Verre",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:674 #callstyle-glass",
+    "type": "markup"
+  },
+  "call.style.tonal": {
+    "original": "Tonal",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:675 #callstyle-tonal",
+    "type": "markup"
+  },
+  "call.style.minimal": {
+    "original": "Épuré",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:676 #callstyle-minimal",
+    "type": "markup"
+  },
+  "call.style.hint.glass": {
+    "original": "Translucide et flouté, boutons ronds.",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:678 #callStyleHint (initial); web/js/80-call-simulator.js:13 _CALL_STYLE_HINTS.glass",
+    "type": "markup"
+  },
+  "call.style.hint.tonal": {
+    "original": "Surfaces tonales, gros avatar, boutons pilule.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:14 _CALL_STYLE_HINTS.tonal",
+    "type": "js"
+  },
+  "call.style.hint.minimal": {
+    "original": "Sobre et contrasté, sans effet.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:15 _CALL_STYLE_HINTS.minimal",
+    "type": "js"
+  },
+  "call.presentation.title": {
+    "original": "Présentation",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:681 .panel-label",
+    "type": "markup"
+  },
+  "call.presentation.full": {
+    "original": "Plein écran",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:683 #callpres-full",
+    "type": "markup"
+  },
+  "call.presentation.banner": {
+    "original": "Bandeau haut",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:684 #callpres-banner",
+    "type": "markup"
+  },
+  "call.photoMode.title": {
+    "original": "Photo de l'appelant",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:688 .panel-label",
+    "type": "markup"
+  },
+  "call.photoMode.avatar": {
+    "original": "Avatar",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:690 #callphoto-avatar",
+    "type": "markup"
+  },
+  "call.photoMode.full": {
+    "original": "Plein écran",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:691 #callphoto-full",
+    "type": "markup"
+  },
+  "call.caller.title": {
+    "original": "Appelant",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:696 .panel-label",
+    "type": "markup"
+  },
+  "call.caller.namePlaceholder": {
+    "original": "Nom affiché (ex : Maman)",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:697 #callName placeholder",
+    "type": "placeholder"
+  },
+  "call.caller.nameDefault": {
+    "original": "Maman",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:697 #callName value",
+    "type": "value",
+    "note": "Default (editable) field value."
+  },
+  "call.caller.labelPlaceholder": {
+    "original": "Sous-titre (ex : mobile)",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:698 #callLabel placeholder",
+    "type": "placeholder"
+  },
+  "call.caller.labelDefault": {
+    "original": "mobile",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:698 #callLabel value",
+    "type": "value",
+    "note": "Default (editable) field value."
+  },
+  "call.caller.photo": {
+    "original": "🖼 Photo (option)",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:701 button",
+    "type": "markup",
+    "icon": "🖼",
+    "iconPosition": "before"
+  },
+  "call.message.title": {
+    "original": "Message",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:706 .panel-label",
+    "type": "markup"
+  },
+  "call.message.placeholder": {
+    "original": "Texte du message",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:707 #callMsgText placeholder",
+    "type": "placeholder"
+  },
+  "call.message.default": {
+    "original": "Tu es où ??",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:707 #callMsgText value",
+    "type": "value",
+    "note": "Default (editable) field value."
+  },
+  "call.app.title": {
+    "original": "Application (fictive)",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:708 .panel-label",
+    "type": "markup"
+  },
+  "call.app.namePlaceholder": {
+    "original": "Nom affiché",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:710 #callAppName placeholder",
+    "type": "placeholder"
+  },
+  "call.app.defaultSms": {
+    "original": "SMS",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:710 #callAppName value; web/js/80-call-simulator.js:11 _CALL_APP_DEFAULTS.sms; web/js/80-call-simulator.js:335 _scApp fallback",
+    "type": "value"
+  },
+  "call.app.defaultChat": {
+    "original": "Messagerie",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:11 _CALL_APP_DEFAULTS.chat; web/js/80-call-simulator.js:335 _scApp fallback",
+    "type": "js",
+    "note": "Never translate to a real app name (e.g. avoid “Messages”, a system app)."
+  },
+  "call.app.hint": {
+    "original": "Pas de marque réelle : inventez un nom (ex. « Chatly ») et une couleur.",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:713 .media-status",
+    "type": "markup"
+  },
+  "call.lock.title": {
+    "original": "Écran verrouillé",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:717 .toggle-label",
+    "type": "markup"
+  },
+  "call.lock.subtitle": {
+    "original": "La notification arrive sur un faux écran verrouillé",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:717 .toggle-sub",
+    "type": "markup"
+  },
+  "call.lock.timePlaceholder": {
+    "original": "Heure (ex : 00:10)",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:724 #lockTime placeholder",
+    "type": "placeholder"
+  },
+  "call.lock.datePlaceholder": {
+    "original": "Ven. 17 juil.",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:725 #lockDate placeholder",
+    "type": "placeholder"
+  },
+  "call.lock.wallpaper": {
+    "original": "🖼 Fond d'écran",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:729 button",
+    "type": "markup",
+    "icon": "🖼",
+    "iconPosition": "before"
+  },
+  "call.lock.wallpaperHint": {
+    "original": "Sans fond : dégradé sombre. Heure/date vides : celles de l'écran.",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:732 #lockWallStatus (initial)",
+    "type": "markup"
+  },
+  "call.lock.wallpaperSending": {
+    "original": "📤 Envoi du fond d'écran…",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:154 onLockWall → #lockWallStatus",
+    "type": "js",
+    "icon": "📤",
+    "iconPosition": "before"
+  },
+  "call.lock.wallpaperReady": {
+    "original": "✓ Fond d'écran prêt sur l'écran",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:156 onLockWall → #lockWallStatus",
+    "type": "js",
+    "icon": "✓",
+    "iconPosition": "before"
+  },
+  "call.ring.title": {
+    "original": "Sonnerie",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:735 .panel-label",
+    "type": "markup"
+  },
+  "call.ring.classic": {
+    "original": "Classique",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:737 #callring-classic",
+    "type": "markup"
+  },
+  "call.ring.digital": {
+    "original": "Digitale",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:738 #callring-digital",
+    "type": "markup"
+  },
+  "call.ring.soft": {
+    "original": "Douce",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:739 #callring-soft",
+    "type": "markup"
+  },
+  "call.ring.silent": {
+    "original": "Silencieux",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:740 #callring-silent",
+    "type": "markup"
+  },
+  "call.audio.button": {
+    "original": "🎙 Bande son au décroché",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:743 button",
+    "type": "markup",
+    "icon": "🎙",
+    "iconPosition": "before",
+    "note": "Audio clip played on the playback screen when the call is answered (the other party’s voice)."
+  },
+  "call.audio.none": {
+    "original": "Aucune bande son — le décroché reste silencieux.",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:747 #callAudioStatus (initial); web/js/80-call-simulator.js:99 clearCallAudio",
+    "type": "markup"
+  },
+  "call.audio.tooLarge": {
+    "original": "⚠ Fichier trop lourd (max ~8 Mo) — coupez un extrait plus court.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:81 onCallAudio → #callAudioStatus",
+    "type": "js",
+    "icon": "⚠",
+    "iconPosition": "before"
+  },
+  "call.audio.sending": {
+    "original": "📤 Envoi de la bande son…",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:87 onCallAudio → #callAudioStatus",
+    "type": "js",
+    "icon": "📤",
+    "iconPosition": "before"
+  },
+  "call.audio.ready": {
+    "original": "'✓ « ' + (f.name || 'audio') + ' » prête — jouée au décroché.'",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:89 onCallAudio → #callAudioStatus",
+    "type": "js",
+    "icon": "✓",
+    "iconPosition": "before"
+  },
+  "call.audio.defaultName": {
+    "original": "audio",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:89 onCallAudio (fallback file name)",
+    "type": "js"
+  },
+  "call.autoAnswer.label": {
+    "original": "Décroché automatique",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:749 label",
+    "type": "markup"
+  },
+  "call.autoAnswer.off": {
+    "original": "Off",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:749 #callAutoVal (initial); web/js/80-call-simulator.js:113 onCallAutoChange",
+    "type": "markup"
+  },
+  "call.trigger.ring": {
+    "original": "📞 Faire sonner",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:754 #callTriggerBtn (initial); web/js/80-call-simulator.js:37 setCallKind",
+    "type": "markup",
+    "icon": "📞",
+    "iconPosition": "before"
+  },
+  "call.trigger.notify": {
+    "original": "💬 Envoyer la notification",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:38 setCallKind → #callTriggerBtn",
+    "type": "js",
+    "icon": "💬",
+    "iconPosition": "before"
+  },
+  "call.answer": {
+    "original": "✅ Décrocher",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:756 button",
+    "type": "markup",
+    "icon": "✅",
+    "iconPosition": "before"
+  },
+  "call.end": {
+    "original": "⏹ Terminer",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:757 button",
+    "type": "markup",
+    "icon": "⏹",
+    "iconPosition": "before"
+  },
+  "call.status.ringSent": {
+    "original": "📞 Sonnerie envoyée…",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:183 triggerCall → #callStatus",
+    "type": "js",
+    "icon": "📞",
+    "iconPosition": "before"
+  },
+  "call.status.notificationSent": {
+    "original": "💬 Notification envoyée",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:183 triggerCall → #callStatus",
+    "type": "js",
+    "icon": "💬",
+    "iconPosition": "before"
+  },
+  "call.status.ringing": {
+    "original": "📞 Ça sonne sur l'écran…",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:191 remoteOnCallState → #callStatus",
+    "type": "js",
+    "icon": "📞",
+    "iconPosition": "before"
+  },
+  "call.status.inCall": {
+    "original": "🟢 En ligne",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:198 remoteOnCallState → #callStatus",
+    "type": "js",
+    "icon": "🟢",
+    "iconPosition": "before"
+  },
+  "call.status.inCallTimer": {
+    "original": "'🟢 En ligne · ' + fmtTime(s)",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:196 remoteOnCallState → #callStatus",
+    "type": "js",
+    "icon": "🟢",
+    "iconPosition": "before"
+  },
+  "call.status.declined": {
+    "original": "🔴 Refusé sur l'écran",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:200 remoteOnCallState → #callStatus",
+    "type": "js",
+    "icon": "🔴",
+    "iconPosition": "before"
+  },
+  "call.status.ended": {
+    "original": "⏹ Terminé",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:201 remoteOnCallState → #callStatus",
+    "type": "js",
+    "icon": "⏹",
+    "iconPosition": "before"
+  },
+  "call.defaultCallerName": {
+    "original": "Inconnu",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:167 triggerCall; web/js/80-call-simulator.js:427 _scRenderIncoming; web/js/80-call-simulator.js:467 _scRenderInCall; web/js/80-call-simulator.js:500 _scRenderCallBar (fallback name)",
+    "type": "js"
+  },
+  "callScreen.notif.now": {
+    "original": "maintenant",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:351, web/js/80-call-simulator.js:361 _scNotifCard (notification timestamp)",
+    "type": "js"
+  },
+  "callScreen.lock.dateFormat": {
+    "original": "j[d.getDay()] + ' ' + d.getDate() + ' ' + mo[d.getMonth()]",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:372 _scLockDate",
+    "type": "js",
+    "note": "Prefer Intl.DateTimeFormat(locale, {weekday:\"short\", day:\"numeric\", month:\"short\"}) when refactoring."
+  },
+  "callScreen.lock.weekday.0": {
+    "original": "Dim.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:370 _scLockDate j[]",
+    "type": "js"
+  },
+  "callScreen.lock.weekday.1": {
+    "original": "Lun.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:370 _scLockDate j[]",
+    "type": "js"
+  },
+  "callScreen.lock.weekday.2": {
+    "original": "Mar.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:370 _scLockDate j[]",
+    "type": "js"
+  },
+  "callScreen.lock.weekday.3": {
+    "original": "Mer.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:370 _scLockDate j[]",
+    "type": "js"
+  },
+  "callScreen.lock.weekday.4": {
+    "original": "Jeu.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:370 _scLockDate j[]",
+    "type": "js"
+  },
+  "callScreen.lock.weekday.5": {
+    "original": "Ven.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:370 _scLockDate j[]",
+    "type": "js"
+  },
+  "callScreen.lock.weekday.6": {
+    "original": "Sam.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:370 _scLockDate j[]",
+    "type": "js"
+  },
+  "callScreen.lock.month.0": {
+    "original": "janv.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:371 _scLockDate mo[]",
+    "type": "js"
+  },
+  "callScreen.lock.month.1": {
+    "original": "févr.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:371 _scLockDate mo[]",
+    "type": "js"
+  },
+  "callScreen.lock.month.2": {
+    "original": "mars",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:371 _scLockDate mo[]",
+    "type": "js"
+  },
+  "callScreen.lock.month.3": {
+    "original": "avr.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:371 _scLockDate mo[]",
+    "type": "js"
+  },
+  "callScreen.lock.month.4": {
+    "original": "mai",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:371 _scLockDate mo[]",
+    "type": "js"
+  },
+  "callScreen.lock.month.5": {
+    "original": "juin",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:371 _scLockDate mo[]",
+    "type": "js"
+  },
+  "callScreen.lock.month.6": {
+    "original": "juil.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:371 _scLockDate mo[]",
+    "type": "js"
+  },
+  "callScreen.lock.month.7": {
+    "original": "août",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:371 _scLockDate mo[]",
+    "type": "js"
+  },
+  "callScreen.lock.month.8": {
+    "original": "sept.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:371 _scLockDate mo[]",
+    "type": "js"
+  },
+  "callScreen.lock.month.9": {
+    "original": "oct.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:371 _scLockDate mo[]",
+    "type": "js"
+  },
+  "callScreen.lock.month.10": {
+    "original": "nov.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:371 _scLockDate mo[]",
+    "type": "js"
+  },
+  "callScreen.lock.month.11": {
+    "original": "déc.",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:371 _scLockDate mo[]",
+    "type": "js"
+  },
+  "callScreen.incoming.remindMe": {
+    "original": "Me le rappeler",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:436 _scRenderIncoming (Glass style)",
+    "type": "js"
+  },
+  "callScreen.incoming.message": {
+    "original": "Message",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:437 _scRenderIncoming (Glass style)",
+    "type": "js"
+  },
+  "callScreen.incoming.decline": {
+    "original": "Refuser",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:440, web/js/80-call-simulator.js:450, web/js/80-call-simulator.js:458 _scRenderIncoming; web/js/80-call-simulator.js:507 _scRenderCallBar",
+    "type": "js"
+  },
+  "callScreen.incoming.accept": {
+    "original": "Accepter",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:441 _scRenderIncoming (Glass style)",
+    "type": "js"
+  },
+  "callScreen.incoming.answer": {
+    "original": "Répondre",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:451, web/js/80-call-simulator.js:459 _scRenderIncoming (Tonal, Minimal); web/js/80-call-simulator.js:508 _scRenderCallBar",
+    "type": "js"
+  },
+  "callScreen.incoming.kicker": {
+    "original": "Appel entrant",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:445 Tonal kicker; web/js/80-call-simulator.js:456 Minimal fallback label; web/js/80-call-simulator.js:501 banner fallback label",
+    "type": "js"
+  },
+  "callScreen.incoming.labelDefault": {
+    "original": "mobile",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:433 _scRenderIncoming (Glass fallback label)",
+    "type": "js"
+  },
+  "callScreen.incoming.labelDefaultCapitalized": {
+    "original": "Mobile",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:448 _scRenderIncoming (Tonal fallback label)",
+    "type": "js"
+  },
+  "callScreen.inCall.hangUp": {
+    "original": "Raccrocher",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:475 _scRenderInCall (Minimal style)",
+    "type": "js"
+  },
+  "callScreen.inCall.mute": {
+    "original": "Muet",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:485 _scRenderInCall (Tonal style)",
+    "type": "js"
+  },
+  "callScreen.inCall.muteLower": {
+    "original": "muet",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:485 _scRenderInCall (Glass style)",
+    "type": "js",
+    "note": "Lower-case variant used by the Glass style."
+  },
+  "callScreen.inCall.keypad": {
+    "original": "Clavier",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:485 _scRenderInCall (Tonal style)",
+    "type": "js"
+  },
+  "callScreen.inCall.keypadLower": {
+    "original": "clavier",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:485 _scRenderInCall (Glass style)",
+    "type": "js"
+  },
+  "callScreen.inCall.speaker": {
+    "original": "Haut-parleur",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:485 _scRenderInCall (Tonal style)",
+    "type": "js"
+  },
+  "callScreen.inCall.speakerLower": {
+    "original": "haut-parleur",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:485 _scRenderInCall (Glass style)",
+    "type": "js"
+  },
+  "callScreen.inCall.add": {
+    "original": "Ajouter",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:486 _scRenderInCall (Tonal style)",
+    "type": "js"
+  },
+  "callScreen.inCall.addLower": {
+    "original": "ajouter",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:486 _scRenderInCall (Glass style)",
+    "type": "js"
+  },
+  "callScreen.inCall.video": {
+    "original": "Vidéo",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:486 _scRenderInCall (Tonal style)",
+    "type": "js"
+  },
+  "callScreen.inCall.videoLower": {
+    "original": "vidéo",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:486 _scRenderInCall (Glass style)",
+    "type": "js"
+  },
+  "callScreen.inCall.hold": {
+    "original": "Attente",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:486 _scRenderInCall (Tonal style)",
+    "type": "js"
+  },
+  "callScreen.inCall.contactsLower": {
+    "original": "contacts",
+    "file": "web/js/80-call-simulator.js",
+    "location": "web/js/80-call-simulator.js:486 _scRenderInCall (Glass style)",
+    "type": "js"
+  },
+  "qr.title": {
+    "original": "Ouvrir l'écran sur un autre appareil",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:765 .panel-label",
+    "type": "markup"
+  },
+  "qr.connectFirst": {
+    "original": "Connectez-vous d'abord à un canal",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:768 #qrUrl (initial); web/js/64-qr-utils.js:4 renderQR",
+    "type": "markup"
+  },
+  "qr.howTo.title": {
+    "original": "Comment utiliser",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:772 .panel-label",
+    "type": "markup"
+  },
+  "qr.howTo.step1": {
+    "original": "1. Sur l'écran : <strong style=\"color:var(--text)\">Écran projecteur</strong> → taper le même code",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:773",
+    "type": "markup",
+    "note": "{screenMode} = splash.button.screen, rendered in <strong>."
+  },
+  "qr.howTo.step2": {
+    "original": "2. Ou scanner ce QR pour ouvrir directement",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:774",
+    "type": "markup"
+  },
+  "qr.howTo.step3": {
+    "original": "3. Les couleurs s'envoient en temps réel ⚡",
+    "file": "web/index.template.html",
+    "location": "web/index.template.html:775",
+    "type": "markup",
+    "icon": "⚡",
+    "iconPosition": "after"
+  },
+  "legacy.dmx.status.connected": {
+    "original": "'✓ Connecté — univers ' + sacnUniverse",
+    "file": "web/js/60-sacn.js",
+    "location": "web/js/60-sacn.js:180 setSacnStatus (#sacnLabel absent)",
+    "type": "js",
+    "icon": "✓",
+    "iconPosition": "before",
+    "note": "Dead code today: the target element is not present in web/index.template.html, so the string is never shown. Kept for completeness."
+  },
+  "legacy.dmx.disconnect": {
+    "original": "Déconnecter",
+    "file": "web/js/60-sacn.js",
+    "location": "web/js/60-sacn.js:180 setSacnStatus (#sacnConnectBtn absent)",
+    "type": "js",
+    "note": "Dead code today: the target element is not present in web/index.template.html, so the string is never shown. Kept for completeness."
+  },
+  "legacy.dmx.cancel": {
+    "original": "Annuler",
+    "file": "web/js/60-sacn.js",
+    "location": "web/js/60-sacn.js:181 setSacnStatus (#sacnConnectBtn absent)",
+    "type": "js",
+    "note": "Dead code today: the target element is not present in web/index.template.html, so the string is never shown. Kept for completeness."
+  },
+  "legacy.dmx.bridgeError": {
+    "original": "Erreur bridge",
+    "file": "web/js/60-sacn.js",
+    "location": "web/js/60-sacn.js:182 setSacnStatus (#sacnLabel absent)",
+    "type": "js",
+    "note": "Dead code today: the target element is not present in web/index.template.html, so the string is never shown. Kept for completeness."
+  },
+  "legacy.dmx.retry": {
+    "original": "Réessayer",
+    "file": "web/js/60-sacn.js",
+    "location": "web/js/60-sacn.js:182 setSacnStatus (#sacnConnectBtn absent)",
+    "type": "js",
+    "note": "Dead code today: the target element is not present in web/index.template.html, so the string is never shown. Kept for completeness."
+  },
+  "legacy.torch.label": {
+    "original": "🔦 Torche",
+    "file": "web/js/66-torch-flash.js",
+    "location": "web/js/66-torch-flash.js:9 toggleScreenTorch (#torchBtn absent)",
+    "type": "js",
+    "icon": "🔦",
+    "iconPosition": "before",
+    "note": "Dead code today: the target element is not present in web/index.template.html, so the string is never shown. Kept for completeness."
+  },
+  "legacy.torch.unavailable": {
+    "original": "Indispo (iPhone)",
+    "file": "web/js/66-torch-flash.js",
+    "location": "web/js/66-torch-flash.js:16 toggleScreenTorch (🔦); web/js/30-navigation.js:62 enterScreenMode (📳, #vibrateBtn absent)",
+    "type": "js",
+    "icon": "🔦|📳",
+    "iconPosition": "before",
+    "note": "Dead code today: the target element is not present in web/index.template.html, so the string is never shown. Kept for completeness. Also names a device brand."
+  },
+  "legacy.torch.on": {
+    "original": "🔦 Torche ON",
+    "file": "web/js/66-torch-flash.js",
+    "location": "web/js/66-torch-flash.js:18 toggleScreenTorch (#torchBtn absent)",
+    "type": "js",
+    "icon": "🔦",
+    "iconPosition": "before",
+    "note": "Dead code today: the target element is not present in web/index.template.html, so the string is never shown. Kept for completeness."
+  },
+  "legacy.torch.denied": {
+    "original": "🔦 Refusé",
+    "file": "web/js/66-torch-flash.js",
+    "location": "web/js/66-torch-flash.js:19 toggleScreenTorch (#torchBtn absent)",
+    "type": "js",
+    "icon": "🔦",
+    "iconPosition": "before",
+    "note": "Dead code today: the target element is not present in web/index.template.html, so the string is never shown. Kept for completeness."
+  },
+  "legacy.vibrate.on": {
+    "original": "📳 Vibreur",
+    "file": "web/js/66-torch-flash.js",
+    "location": "web/js/66-torch-flash.js:61 toggleScreenVibrate (#vibrateBtn absent)",
+    "type": "js",
+    "icon": "📳",
+    "iconPosition": "before",
+    "note": "Dead code today: the target element is not present in web/index.template.html, so the string is never shown. Kept for completeness."
+  },
+  "legacy.vibrate.muted": {
+    "original": "📳 Muet",
+    "file": "web/js/66-torch-flash.js",
+    "location": "web/js/66-torch-flash.js:61 toggleScreenVibrate (#vibrateBtn absent)",
+    "type": "js",
+    "icon": "📳",
+    "iconPosition": "before",
+    "note": "Dead code today: the target element is not present in web/index.template.html, so the string is never shown. Kept for completeness."
+  },
+  "legacy.vibrate.na": {
+    "original": "📳 N/A",
+    "file": "web/js/66-torch-flash.js",
+    "location": "web/js/66-torch-flash.js:62 toggleScreenVibrate (#vibrateBtn absent)",
+    "type": "js",
+    "icon": "📳",
+    "iconPosition": "before",
+    "note": "Dead code today: the target element is not present in web/index.template.html, so the string is never shown. Kept for completeness."
+  },
+  "native.shell.offlineTitle": {
+    "original": "Connexion impossible",
+    "file": "expo-app/app/index.tsx",
+    "location": "expo-app/app/index.tsx L80 (AppShell error view)",
+    "type": "native"
+  },
+  "native.shell.offlineBody": {
+    "original": "SetRemote a besoin d'une connexion Internet pour démarrer.{'\\n'}Vérifiez le Wi-Fi ou les données mobiles.",
+    "file": "expo-app/app/index.tsx",
+    "location": "expo-app/app/index.tsx L82 (AppShell error view)",
+    "type": "native",
+    "note": "Becomes obsolete if the web UI is bundled in the binary (see docs/compliance)."
+  },
+  "native.shell.retry": {
+    "original": "Réessayer",
+    "file": "expo-app/app/index.tsx",
+    "location": "expo-app/app/index.tsx L85 (AppShell error view)",
+    "type": "native"
+  },
+  "native.permission.localNetwork": {
+    "original": "SetRemote relie la télécommande et l'écran projecteur sur le réseau Wi-Fi local, sans Internet.",
+    "file": "expo-app/app.json",
+    "location": "expo-app/app.json ios.infoPlist.NSLocalNetworkUsageDescription",
+    "type": "permission",
+    "note": "iOS purpose string — must be localized (InfoPlist.strings / expo “locales”)."
+  },
+  "native.permission.camera": {
+    "original": "SetRemote utilise l'appareil photo pour prendre une photo ou une vidéo à diffuser sur l'écran de jeu, et pour piloter le flash.",
+    "file": "expo-app/app.json",
+    "location": "expo-app/app.json plugins expo-camera.cameraPermission and expo-image-picker.cameraPermission (NSCameraUsageDescription)",
+    "type": "permission"
+  },
+  "native.permission.microphone": {
+    "original": "SetRemote utilise le micro uniquement lorsque vous filmez une vidéo à diffuser sur l'écran de jeu.",
+    "file": "expo-app/app.json",
+    "location": "expo-app/app.json plugins expo-camera.microphonePermission and expo-image-picker.microphonePermission (NSMicrophoneUsageDescription)",
+    "type": "permission"
+  },
+  "native.permission.photos": {
+    "original": "SetRemote accède à vos photos et vidéos pour les diffuser sur l'écran de jeu.",
+    "file": "expo-app/app.json",
+    "location": "expo-app/app.json plugins expo-image-picker.photosPermission (NSPhotoLibraryUsageDescription)",
+    "type": "permission"
+  },
+  "native.permission.bluetooth": {
+    "original": "SetRemote utilise le Bluetooth pour relier la télécommande et l'écran sans Wi-Fi ni Internet.",
+    "file": "expo-app/app.json",
+    "location": "expo-app/app.json plugins react-native-ble-plx.bluetoothAlwaysPermission (NSBluetoothAlwaysUsageDescription)",
+    "type": "permission"
+  },
+  "pwa.manifest.name": {
+    "original": "SetRemote — Panneau lumineux cinéma",
+    "file": "manifest.webmanifest",
+    "location": "manifest.webmanifest \"name\"",
+    "type": "manifest"
+  },
+  "pwa.manifest.description": {
+    "original": "Transformez vos téléphones et écrans en panneaux lumineux cinéma, pilotés à distance.",
+    "file": "manifest.webmanifest",
+    "location": "manifest.webmanifest \"description\"",
+    "type": "manifest"
+  }
+}
