@@ -10,6 +10,7 @@ let _sec = null;      // canal chiffré de la session (MQTT)
 let _secBc = null;    // 2e étiquette d'émetteur pour le repli BroadcastChannel
 let _connectSeq = 0;  // connexion la plus récente (les plus anciennes s'abandonnent)
 let _rxChain = Promise.resolve(), _txChain = Promise.resolve();
+let _secRecvKey = null; // clé du sens de réception : authentifie les trames « périmées »
 // Compteurs (diagnostic et tests) : trames envoyées, reçues, rejetées
 const secStats = { sent: 0, received: 0, dropped: 0, refused: 0, lastError: null };
 
@@ -22,20 +23,23 @@ async function connectSession(pairing, onConnected) {
   if (mqttClient) { mqttClient.end(true); mqttClient = null; }
   _sec = null;
   const seq = ++_connectSeq;
-  let ch, bc = null;
+  let ch, bc = null, recvKey = null;
   try {
     const opts = { pairing, role: mode };
     if (mode === 'screen') opts.screenId = screenId();
     ch = await SRP.createSecureChannel(opts);
     if (mode === 'remote') bc = await SRP.createSecureChannel(opts);
+    const { keys } = await SRP.deriveSession(pairing);
+    recvKey = mode === 'remote' ? keys.s2r : keys.r2s;
   } catch (e) {
     console.warn('SetRemote : session chiffrée indisponible', e);
     if (mode === 'remote') setConnStatus('error');
     return;
   }
   if (seq !== _connectSeq || !mode) return; // remplacée entre-temps (retour, nouvelle session)
-  _sec = ch; _secBc = bc;
+  _sec = ch; _secBc = bc; _secRecvKey = recvKey;
   _rxChain = Promise.resolve(); _txChain = Promise.resolve();
+  resetClockSkew();
   initBCFallback(ch);
 
   const client = mqtt.connect(BROKER, {
@@ -90,7 +94,12 @@ function receiveFrame(ch, str, via) {
     if (ch !== _sec) return;
     let r;
     try { r = await ch.receive(str); }
-    catch (e) { secStats.dropped++; secStats.lastError = (e && e.code) || 'error'; return; }
+    catch (e) {
+      secStats.dropped++; secStats.lastError = (e && e.code) || 'error';
+      if (secStats.lastError === 'stale') await noteStaleFrame(ch, str);
+      return;
+    }
+    if (r) noteFreshFrame(r.sender);
     if (!r || r.kind !== 'message' || ch !== _sec) return; // écho, autre écran, fragment binaire
     if (via === 'bc' && !_BC_TYPES.includes(r.message.type)) return;
     secStats.received++;
@@ -98,6 +107,41 @@ function receiveFrame(ch, str, via) {
     try { dispatchMessage(r.message); } catch (e) { console.warn('SetRemote : message', r.message.type, e); }
   });
   return _rxChain;
+}
+
+// ── Horloge décalée ──
+// Un appareil dont l'horloge dérive de plus de 5 min (tolérance anti-rejeu)
+// ignore toutes les trames de ses pairs. Plusieurs trames AUTHENTIQUES
+// d'affilée refusées comme périmées pour un même émetteur révèlent ce
+// décalage (une trame forgée avec une vieille date ne compte pas : elle doit
+// d'abord s'authentifier). Signalé dans la pastille de liaison.
+const STALE_RUN_ALERT = 3;
+const _staleRuns = new Map(); // émetteur → trames authentiques périmées d'affilée
+let clockSkewed = false;
+async function noteStaleFrame(ch, str) {
+  if (!_secRecvKey || ch !== _sec) return;
+  let h;
+  try {
+    h = SRP.peekFrame(str);
+    if (h.kind === SRP.FRAME_KIND.CHUNK) await SRP.openChunk(str, _secRecvKey, null);
+    else await SRP.open(str, _secRecvKey, null);
+  } catch (_) { return; } // non authentique : ignorée
+  if (ch !== _sec) return;
+  if (!_staleRuns.has(h.sender) && _staleRuns.size >= 64) _staleRuns.delete(_staleRuns.keys().next().value);
+  const n = (_staleRuns.get(h.sender) || 0) + 1;
+  _staleRuns.set(h.sender, n);
+  if (n >= STALE_RUN_ALERT) setClockSkewed(true);
+}
+function noteFreshFrame(sender) {
+  if (!_staleRuns.delete(sender) || !clockSkewed) return;
+  for (const n of _staleRuns.values()) if (n >= STALE_RUN_ALERT) return;
+  setClockSkewed(false);
+}
+function resetClockSkew() { _staleRuns.clear(); setClockSkewed(false); }
+function setClockSkewed(on) {
+  if (clockSkewed === on) return;
+  clockSkewed = on;
+  if (mode === 'remote') renderLinkStatus();
 }
 
 // Envoi : forme « fil » (JSON), valeurs bornées aux plages du schéma, puis
@@ -150,5 +194,6 @@ function closeSession() {
   _connectSeq++;
   if (mqttClient) { try { mqttClient.end(true); } catch (_) {} mqttClient = null; }
   if (window._bc) { try { window._bc.close(); } catch (_) {} window._bc = null; }
-  _sec = null; _secBc = null;
+  _sec = null; _secBc = null; _secRecvKey = null;
+  resetClockSkew();
 }

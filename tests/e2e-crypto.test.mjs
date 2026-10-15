@@ -197,3 +197,43 @@ test('émission : valeurs bornées aux plages du schéma, curseurs inchangés, a
   assert.ok((await publishedBy(page, 'effect')).filter((m) => m.active).length >= 14);
   assert.deepEqual(await page.evaluate(() => [secStats.refused, secStats.lastError]), [0, null], 'aucun message refusé par le schéma à l\'envoi');
 });
+
+test('horloge décalée : trames authentiques périmées d\'affilée → « Horloge décalée » (forgées : aucun effet)', async () => {
+  const { page, close } = await openPage(browser, { autoConnect: true });
+  await page.evaluate(() => startMode('remote'));
+  await connected(page);
+  const pairing = await page.evaluate(() => _session);
+  const screenPeer = await fakePeer(pairing, 'screen');
+  const pill = () => page.evaluate(() => [document.getElementById('linkPill').className, document.getElementById('linkPillLabel').textContent]);
+  const ONLINE = ['link-pill online', 'Internet · chiffré'];
+  const old = () => Date.now() - 10 * 60_000;
+  assert.deepEqual(await pill(), ONLINE);
+  // Trames périmées NON authentiques (autre session, ou falsifiées) : jamais d'alerte
+  const stranger = await fakePeer(SRP.createPairing(), 'screen');
+  for (let i = 0; i < 5; i++) await deliverFrame(page, await stranger.forge({ type: 'screen:alive' }, { ts: old() }));
+  for (let i = 0; i < 4; i++) {
+    const b = SRP.b64uToBytes(await screenPeer.forge({ type: 'screen:alive' }, { ts: old() }));
+    b[b.length - 1] ^= 1; // étiquette d'authentification invalide
+    await deliverFrame(page, SRP.bytesToB64u(b));
+  }
+  assert.equal(await page.evaluate(() => secStats.lastError), 'stale');
+  assert.deepEqual(await pill(), ONLINE, 'aucune alerte sur des trames forgées');
+  // Deux trames authentiques périmées : pas encore d'alerte ; la troisième la déclenche
+  await deliverFrame(page, await screenPeer.forge({ type: 'screen:alive' }, { ts: old() }));
+  await deliverFrame(page, await screenPeer.forge({ type: 'caps', torch: true, vibrate: true }, { ts: Date.now() + 10 * 60_000 }));
+  assert.deepEqual(await pill(), ONLINE);
+  await deliverFrame(page, await screenPeer.forge({ type: 'screen:alive' }, { ts: old() }));
+  assert.deepEqual(await pill(), ['link-pill skew', 'Horloge décalée']);
+  await sleep(400); // fin de la transition de couleur de la pastille
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#linkPill .link-dot')).backgroundColor), 'rgb(255, 122, 112)', 'point rouge');
+  // Une trame à l'heure du même émetteur lève l'alerte
+  await deliverFrame(page, await screenPeer.forge({ type: 'screen:alive' }));
+  assert.deepEqual(await pill(), ONLINE);
+  // Nouvelle alerte, puis nouvelle session : remise à zéro
+  for (let i = 0; i < 3; i++) await deliverFrame(page, await screenPeer.forge({ type: 'screen:alive' }, { ts: old() }));
+  assert.equal((await pill())[1], 'Horloge décalée');
+  await page.evaluate(() => newRemoteSession());
+  await connected(page);
+  await waitFor(page, () => document.getElementById('linkPillLabel').textContent === 'Internet · chiffré');
+  await close();
+});

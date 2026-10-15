@@ -11,7 +11,7 @@
 .link-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
 .link-pill.online{color:var(--green);background:rgba(95,223,138,.12)}
 .link-pill.reconnecting{color:#FF8a55;background:rgba(255,107,44,.14)}
-.link-pill.offline{color:#ff7a70;background:rgba(255,90,79,.14)}
+.link-pill.offline,.link-pill.skew{color:#ff7a70;background:rgba(255,90,79,.14)}
 
 /* — Télécommande : appairer un écran (onglet QR) — */
 .pair-panel{display:flex;flex-direction:column;align-items:center;gap:12px}

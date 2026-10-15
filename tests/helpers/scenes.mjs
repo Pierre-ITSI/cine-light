@@ -68,6 +68,8 @@ export const SCENES = {
     });
     await scrollTo('pairScreens')(page);
   }),
+  // Trames authentiques refusées comme périmées : horloge d'un appareil décalée
+  'remote-clock-skew': remote(null, (page) => page.evaluate(() => { setConnStatus('connected'); setClockSkewed(true); })),
   'remote-pair-verify': remote('qr', (page) => page.evaluate(() => showPairVerify('remote', '482917', () => {}))),
   'screen-pair-verify': async (page) => {
     await page.evaluate(() => startMode('screen'));

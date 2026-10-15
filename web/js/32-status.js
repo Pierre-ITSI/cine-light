@@ -30,6 +30,8 @@ function renderLinkStatus() {
     let cls, text;
     if (_linkState !== 'connected') {
       cls = 'reconnecting'; text = _linkEverConnected ? 'Reconnexion…' : 'Connexion…';
+    } else if (clockSkewed) {
+      cls = 'skew'; text = 'Horloge décalée'; // trames authentiques mais hors des 5 min de tolérance
     } else {
       const off = _offlineScreens(now).length;
       if (off) { cls = 'offline'; text = 'Hors ligne · ' + off + (off > 1 ? ' écrans' : ' écran'); }

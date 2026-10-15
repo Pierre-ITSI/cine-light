@@ -59,7 +59,10 @@ broker **public** `wss://broker.hivemq.com:8884/mqtt`, topic
 - **Rejeu dans la tolérance d'horloge** : un récepteur qui vient de redémarrer
   (fenêtre vide) accepte une trame enregistrée il y a moins de **5 min**
   (`maxSkewMs`, réglable). Réciproquement, un appareil dont l'horloge dérive
-  de plus de 5 min ignore toutes les trames (erreur `stale`).
+  de plus de 5 min ignore toutes les trames (erreur `stale`) : la PWA le
+  signale (« Horloge décalée » dans la pastille de la télécommande) après
+  3 trames **authentiques** d'affilée d'un même émetteur refusées comme
+  périmées (une trame forgée avec une vieille date ne compte pas).
 - **Déni de service** : un relais public ne peut pas être protégé ; le relais
   privé doit plafonner la taille des paquets et le débit (voir
   [`docs/BROKER.md`](../../docs/BROKER.md)).
@@ -280,7 +283,7 @@ expose l'API dans la globale **`SRP`**, en tête du `<script>` unique.
 | `web/js/20-mqtt.js` | `connectSession()` : `createSecureChannel`, topic `ch.mqttTopic` ; **réception** une trame à la fois (`ch.receive` ; tout échec = trame ignorée, comptée dans `secStats`) puis `dispatchMessage` ; **envoi** `sendMsg` → forme JSON, bornage (`clampOutgoing`), `ch.seal`, publication dans l'ordre des appels |
 | `web/js/22-protocol.js` | `MSG_ROUTES` reste la 2e barrière ; `clampOutgoing()` borne à l'émission (flash ≥ 15 ms, strobe ≤ 30 Hz, vibreur, effets…) sans toucher aux curseurs |
 | `web/js/26-pairing.js` | rendez-vous par code (commit / key / reveal / session, répétés toutes les 1,5 s), dialogue de vérification du nombre, scan du QR dans l'app (BarcodeDetector, sinon jsQR chargé à la demande) |
-| `web/js/32-status.js` | pastille de liaison et liste des écrans appairés |
+| `web/js/32-status.js` | pastille de liaison (dont « Horloge décalée ») et liste des écrans appairés |
 | `web/js/64-qr-utils.js` | QR en SVG (correction M) |
 
 - **Tout** passe par `seal`/`open` : commandes, fragments d'images / sons /
