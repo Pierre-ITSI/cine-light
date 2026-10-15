@@ -1,7 +1,7 @@
 // Chargement, navigation, onglets, sortie de session écran.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { launchBrowser, openPage, waitFor, sleep, SRP } from './helpers/harness.mjs';
+import { launchBrowser, openPage, waitFor, sleep, SRP, nativeShell } from './helpers/harness.mjs';
 
 let browser;
 before(async () => { browser = await launchBrowser(); });
@@ -32,7 +32,7 @@ test('chargement : aucune erreur de page, splash affiché', async () => {
 });
 
 test("télécommande : startMode('remote') puis chaque onglet", async () => {
-  const { page, errors, close } = await openPage(browser);
+  const { page, errors, close } = await openPage(browser, { init: nativeShell('https://setremote.test/') });
   await page.evaluate(() => startMode('remote'));
   // Session chiffrée créée et connexion lancée d'office (plus de code canal)
   await waitFor(page, () => !!mqttClient);

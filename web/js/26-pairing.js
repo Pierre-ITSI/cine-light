@@ -258,10 +258,57 @@ function pairVerifyAnswer(ok) {
   f(!!ok);
 }
 
-// ══════════ Écran : scan du QR dans l'app (BarcodeDetector) ══════════
-// Sans BarcodeDetector (iPhone, Firefox…) ou sans caméra : on invite à viser
-// le QR avec l'appareil photo du téléphone, qui ouvre le lien d'appairage.
-let _scan = null;
+// ══════════ Écran : scan du QR dans l'app ══════════
+// Caméra arrière (getUserMedia) + décodage : BarcodeDetector quand le
+// navigateur le propose (Android, macOS) ; sinon (iPhone, iPad, PWA iOS
+// installée, Firefox…) jsQR, décodeur JS figé dans vendor/ et chargé
+// seulement à l'ouverture de la caméra. Sans caméra ou sans autorisation : on
+// invite à viser le QR avec l'appareil photo du téléphone, qui ouvre le lien.
+const JSQR_SRC = 'vendor/jsqr-1.4.0.js';
+const SCAN_MAX_SIDE = 640;   // px analysés par image (jsQR)
+const SCAN_EVERY_MS = 250;
+let _scan = null, _jsqrLoad = null;
+
+function loadQrDecoder() {
+  if (typeof window.jsQR === 'function') return Promise.resolve(window.jsQR);
+  if (!_jsqrLoad) {
+    _jsqrLoad = new Promise((resolve, reject) => {
+      const el = document.createElement('script');
+      el.src = JSQR_SRC;
+      el.async = true;
+      el.onload = () => (typeof window.jsQR === 'function' ? resolve(window.jsQR) : reject(new Error('jsQR')));
+      el.onerror = () => { _jsqrLoad = null; reject(new Error('jsQR')); };
+      document.head.appendChild(el);
+    });
+  }
+  return _jsqrLoad;
+}
+
+// Détecteur : (vidéo) → textes des QR visibles
+async function _qrDetector() {
+  if ('BarcodeDetector' in window) {
+    try {
+      if ((await BarcodeDetector.getSupportedFormats()).includes('qr_code')) {
+        const d = new BarcodeDetector({ formats: ['qr_code'] });
+        return async (v) => (await d.detect(v)).map((c) => String((c && c.rawValue) || ''));
+      }
+    } catch (_) { /* repli jsQR */ }
+  }
+  const decode = await loadQrDecoder();
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  return async (v) => {
+    const w = v.videoWidth, h = v.videoHeight;
+    if (!w || !h) return [];
+    const k = Math.min(1, SCAN_MAX_SIDE / Math.max(w, h));
+    canvas.width = Math.round(w * k); canvas.height = Math.round(h * k);
+    ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const r = decode(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+    return r && r.data ? [r.data] : [];
+  };
+}
+
 async function startPairScan() {
   stopPairScan();
   const box = document.getElementById('pairScanBox'), label = document.getElementById('pairScanLabel');
@@ -274,31 +321,32 @@ async function startPairScan() {
     label.textContent = 'Visez le QR avec l\'appareil photo';
   };
   fallback();
-  if (!('BarcodeDetector' in window) || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
   try {
-    const formats = await BarcodeDetector.getSupportedFormats();
-    if (!formats.includes('qr_code') || s.stopped) return;
-    s.detector = new BarcodeDetector({ formats: ['qr_code'] });
     s.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
     if (s.stopped) { s.stream.getTracks().forEach((t) => t.stop()); return; }
     const v = document.getElementById('pairScanVideo');
     v.srcObject = s.stream;
-    await v.play();
+    // Décodeur chargé seulement maintenant que la caméra est ouverte
+    const [detect] = await Promise.all([_qrDetector(), v.play()]);
     if (s.stopped) return;
     box.classList.add('live');
     label.textContent = 'Caméra active — visez le QR';
     const tick = async () => {
       if (s.stopped) return;
       try {
-        for (const c of await s.detector.detect(v)) {
-          const p = SRP.parsePairingUrl(String((c && c.rawValue) || ''));
+        for (const text of await detect(v)) {
+          const p = SRP.parsePairingUrl(text);
           if (p) { stopPairScan(); screenJoinSession(p); return; }
         }
       } catch (_) {}
-      if (!s.stopped) s.timer = setTimeout(tick, 250);
+      if (!s.stopped) s.timer = setTimeout(tick, SCAN_EVERY_MS);
     };
     tick();
-  } catch (_) { fallback(); }
+  } catch (_) {
+    if (s.stream) s.stream.getTracks().forEach((t) => t.stop());
+    fallback();
+  }
 }
 function stopPairScan() {
   const s = _scan;

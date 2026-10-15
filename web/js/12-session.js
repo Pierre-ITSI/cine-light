@@ -50,9 +50,22 @@ function screenId() {
   return id;
 }
 
-// Adresse de l'app sans fragment (base du lien d'appairage)
-function pairingBaseUrl() { return location.href.split('#')[0]; }
-function pairingLink(p) { return SRP.pairingUrl(pairingBaseUrl(), p); }
+// Adresse PUBLIQUE de l'app, base du lien d'appairage ouvert par les AUTRES
+// appareils. Dans l'app native, la page tourne en file:// : l'adresse vient
+// de la coque (window.SETREMOTE_NATIVE.publicUrl), jamais de location. Hors de
+// l'app, location n'est utilisable qu'en http(s). Sinon : null (pas de QR ;
+// l'appairage par code reste possible).
+function pairingBaseUrl() {
+  const n = window.SETREMOTE_NATIVE;
+  const pub = n && typeof n.publicUrl === 'string' ? n.publicUrl.trim() : '';
+  if (/^https?:\/\/[^\s#]+$/i.test(pub)) return pub;
+  if (location.protocol === 'https:' || location.protocol === 'http:') return location.origin + location.pathname;
+  return null;
+}
+function pairingLink(p) {
+  const base = pairingBaseUrl();
+  return base ? SRP.pairingUrl(base, p) : null;
+}
 
 // Efface le fragment de la barre d'adresse (et de l'historique courant)
 function clearLocationHash() {

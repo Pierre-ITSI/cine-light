@@ -223,9 +223,11 @@ const r = await ch.receive(frame);  // null (ignoré) | { kind: 'message', messa
    (`localStorage`) ; la connexion est immédiate, sans code canal. L'onglet
    **📡 QR** affiche le QR d'appairage, généré **sur l'appareil**
    (`vendor/qrcode-generator-2.0.4.js`, plus aucun service en ligne).
-2. **Écran** : *Écran projecteur* → la caméra vise le QR (BarcodeDetector,
-   quand le navigateur le propose), ou l'appareil photo du téléphone ouvre le
-   lien. L'app lit le secret dans le fragment, l'efface de la barre d'adresse,
+2. **Écran** : *Écran projecteur* → la caméra arrière vise le QR, décodé par
+   BarcodeDetector quand le navigateur le propose (Android, macOS), sinon par
+   **jsQR** (`vendor/jsqr-1.4.0.js`, Apache-2.0, chargé seulement à
+   l'ouverture de la caméra : iPhone, iPad, PWA iOS installée, Firefox). Sans
+   caméra, l'appareil photo du téléphone ouvre le lien. L'app lit le secret dans le fragment, l'efface de la barre d'adresse,
    le retient pour la prochaine ouverture et rejoint la session. Tous les
    écrans scannent **le même** QR et reçoivent les mêmes commandes.
 3. La télécommande liste les **écrans appairés** (identifiés par le `screenId`
@@ -274,10 +276,10 @@ expose l'API dans la globale **`SRP`**, en tête du `<script>` unique.
 
 | Où | Quoi |
 |---|---|
-| `web/js/12-session.js` | secret de la télécommande (`setremote-session-v1`), dernière session de l'écran, `screenId` stable, lien d'appairage |
+| `web/js/12-session.js` | secret de la télécommande (`setremote-session-v1`), dernière session de l'écran, `screenId` stable, lien d'appairage : adresse publique fournie par la coque native (`window.SETREMOTE_NATIVE.publicUrl`, l'interface embarquée tournant en `file://`), sinon `location.origin + pathname` en http(s) uniquement, sinon pas de QR (le code reste possible) |
 | `web/js/20-mqtt.js` | `connectSession()` : `createSecureChannel`, topic `ch.mqttTopic` ; **réception** une trame à la fois (`ch.receive` ; tout échec = trame ignorée, comptée dans `secStats`) puis `dispatchMessage` ; **envoi** `sendMsg` → forme JSON, bornage (`clampOutgoing`), `ch.seal`, publication dans l'ordre des appels |
 | `web/js/22-protocol.js` | `MSG_ROUTES` reste la 2e barrière ; `clampOutgoing()` borne à l'émission (flash ≥ 15 ms, strobe ≤ 30 Hz, vibreur, effets…) sans toucher aux curseurs |
-| `web/js/26-pairing.js` | rendez-vous par code (commit / key / reveal / session, répétés toutes les 1,5 s), dialogue de vérification du nombre, scan du QR dans l'app |
+| `web/js/26-pairing.js` | rendez-vous par code (commit / key / reveal / session, répétés toutes les 1,5 s), dialogue de vérification du nombre, scan du QR dans l'app (BarcodeDetector, sinon jsQR chargé à la demande) |
 | `web/js/32-status.js` | pastille de liaison et liste des écrans appairés |
 | `web/js/64-qr-utils.js` | QR en SVG (correction M) |
 

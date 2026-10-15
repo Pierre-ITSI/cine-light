@@ -7,9 +7,9 @@ let _pairQrFor = null; // lien actuellement dessiné (en mémoire seulement)
 // Onglet d'appairage : QR de la session + code de rendez-vous actif
 function renderPairPanel() {
   if (mode !== 'remote' || !_session) return;
-  const link = pairingLink(_session);
+  const link = pairingLink(_session); // null : aucune adresse publique connue
   const box = document.getElementById('pairQr');
-  if (box && link !== _pairQrFor) { box.innerHTML = qrSvg(link); _pairQrFor = link; }
+  if (box && link !== _pairQrFor) { box.innerHTML = link ? qrSvg(link) : ''; _pairQrFor = link; }
   if (!_rdv || _rdv.role !== 'remote') remoteNewPairCode();
   renderLinkStatus();
 }

@@ -109,7 +109,7 @@ function initScript({ seed }) {
 export async function openPage(browser, opts = {}) {
   const {
     file = INDEX_PATH, hash = '', viewport = { width: 390, height: 844 },
-    clock = false, seed = 42, broker = null, waitLoad = true, autoConnect = false,
+    clock = false, seed = 42, broker = null, waitLoad = true, autoConnect = false, init = null,
   } = opts;
   const context = await browser.newContext({
     viewport, deviceScaleFactor: 1, locale: 'fr-FR', timezoneId: 'Europe/Paris',
@@ -121,6 +121,7 @@ export async function openPage(browser, opts = {}) {
   });
   await context.addInitScript(initScript, { seed });
   if (autoConnect) await context.addInitScript(() => { window.__fakeAutoConnect = true; });
+  if (init) await context.addInitScript(init.fn || init, init.arg);
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message || String(e)));
@@ -225,8 +226,18 @@ export async function deliverFrame(page, frame, topic) {
   }, [frame, topic || null]);
 }
 
-// Lien d'appairage (fragment « p=v1.… ») de la télécommande d'une page
-export const pairingHash = (page) => page.evaluate(() => pairingLink(_session).split('#')[1]);
+// Fragment d'appairage (« p=v1.… ») de la session de la télécommande d'une
+// page (indépendant de l'adresse publique : en file://, pas d'adresse)
+export const pairingHash = (page) => page.evaluate(() => SRP.pairingUrl('https://setremote.test/', _session).split('#')[1]);
+
+// Coque native simulée : adresse publique fournie par l'app (et pont natif si bridge)
+export const nativeShell = (publicUrl, bridge = false) => ({
+  fn: ([url, withBridge]) => {
+    window.SETREMOTE_NATIVE = { platform: 'ios', bridge: 1, publicUrl: url };
+    if (withBridge) window.ReactNativeWebView = { postMessage: () => {} };
+  },
+  arg: [publicUrl, bridge],
+});
 
 // Connecte tous les faux clients non connectés d'une page (simule le broker)
 export async function connectFakeClients(page) {

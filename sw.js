@@ -10,6 +10,8 @@ const SHELL = [
   './vendor/mqtt-5.16.1.min.js', // version figée, servie depuis notre origine
   // QR d'appairage généré sur l'appareil (qrcode-generator, MIT, figé)
   './vendor/qrcode-generator-2.0.4.js',
+  // Décodeur de QR (jsQR, Apache-2.0, figé) : scan sans BarcodeDetector (iPhone…)
+  './vendor/jsqr-1.4.0.js',
   // Polices auto-hébergées (plus de Google Fonts) : disponibles hors ligne
   './vendor/fonts/dm-mono-latin-300-normal.woff2',
   './vendor/fonts/dm-mono-latin-ext-300-normal.woff2',

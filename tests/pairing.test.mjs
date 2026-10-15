@@ -3,7 +3,9 @@
 // plusieurs écrans sur la même session, « Nouvelle session », liaison.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { launchBrowser, openPage, waitFor, sleep, FakeBroker, SRP, pairingHash } from './helpers/harness.mjs';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { launchBrowser, openPage, waitFor, sleep, FakeBroker, SRP, pairingHash, nativeShell, ROOT } from './helpers/harness.mjs';
 
 let browser;
 before(async () => { browser = await launchBrowser(); });
@@ -11,8 +13,9 @@ after(async () => { await browser?.close(); });
 
 const connected = (page) => waitFor(page, () => !!mqttClient && mqttClient.connected && !!_sec, null, { timeout: 8000 });
 
-async function startRemote(broker, seed) {
-  const r = await openPage(browser, { broker, seed, autoConnect: true });
+const PUBLIC_URL = 'https://pierre-itsi.github.io/cine-light/';
+async function startRemote(broker, seed, init = null) {
+  const r = await openPage(browser, { broker, seed, autoConnect: true, init });
   await r.page.evaluate(() => startMode('remote'));
   await connected(r.page);
   return r;
@@ -33,16 +36,19 @@ const sasOf = (page) => page.evaluate(() => document.getElementById('pvSas').tex
 
 test('QR : deux écrans rejoignent la même session par le lien et reçoivent les mêmes commandes', async () => {
   const broker = new FakeBroker();
-  const remote = await startRemote(broker, 21);
+  // Télécommande dans l'app native (file://) : l'adresse publique vient de la coque
+  const remote = await startRemote(broker, 21, nativeShell(PUBLIC_URL, true));
   const rp = remote.page;
   const hash = await pairingHash(rp);
   assert.match(hash, /^p=v1\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}$/);
   // Le QR encode exactement le lien d'appairage (secret dans le fragment)
   const qr = await rp.evaluate(() => {
     switchTab('qr');
-    const q = qrcode(0, 'M'); q.addData(pairingLink(_session), 'Byte'); q.make();
-    return { drawn: document.querySelector('#pairQr path').getAttribute('d'), expected: qrSvg(pairingLink(_session)).match(/ d="([^"]+)"/)[1], n: q.getModuleCount() };
+    const link = pairingLink(_session);
+    const q = qrcode(0, 'M'); q.addData(link, 'Byte'); q.make();
+    return { link, drawn: document.querySelector('#pairQr path').getAttribute('d'), expected: qrSvg(link).match(/ d="([^"]+)"/)[1], n: q.getModuleCount() };
   });
+  assert.equal(qr.link, PUBLIC_URL + '#' + hash, 'adresse publique de la coque, jamais file://');
   assert.equal(qr.drawn, qr.expected);
   assert.ok(qr.n >= 21);
   const A = await screenFromLink(broker, rp, 22);
@@ -151,7 +157,7 @@ test('code manuel : annulation sur la télécommande, code incomplet', async () 
 
 test('« Nouvelle session » : les écrans appairés sont révoqués', async () => {
   const broker = new FakeBroker();
-  const remote = await startRemote(broker, 51);
+  const remote = await startRemote(broker, 51, nativeShell(PUBLIC_URL));
   const rp = remote.page;
   const screen = await screenFromLink(broker, rp, 52);
   await rp.evaluate(() => setKelvin(2700));
@@ -190,4 +196,143 @@ test('liaison : écran muet depuis 40 s → « Hors ligne · 1 écran », signe 
   assert.match(await rp.evaluate(() => document.getElementById('pairScreensList').textContent), /Écran 1Internet/);
   assert.deepEqual(remote.errors, []); assert.deepEqual(screen.errors, []);
   await screen.close(); await remote.close();
+});
+
+test('lien d\'appairage : adresse publique de la coque native, http(s) = origin + chemin, jamais file://', async () => {
+  const pairing = SRP.createPairing();
+  const linkOf = (page) => page.evaluate((p) => ({ base: pairingBaseUrl(), link: pairingLink(p), proto: location.protocol }), pairing);
+  // App native (interface embarquée en file://) : adresse fournie par la coque
+  const app = await openPage(browser, { init: nativeShell(PUBLIC_URL, true) });
+  const a = await linkOf(app.page);
+  assert.equal(a.proto, 'file:');
+  assert.equal(a.link, SRP.pairingUrl(PUBLIC_URL, pairing));
+  await app.close();
+  // Injection Android tardive : la coque est reconnue sans adresse publique →
+  // pas de lien (donc pas de QR), jamais une URL file://
+  const late = await openPage(browser, { init: nativeShell('', true) });
+  await late.page.evaluate(() => { delete window.SETREMOTE_NATIVE.publicUrl; startMode('remote'); switchTab('qr'); });
+  const l = await linkOf(late.page);
+  assert.deepEqual([l.base, l.link], [null, null]);
+  assert.equal(await late.page.evaluate(() => document.getElementById('pairQr').innerHTML), '', 'pas de QR');
+  assert.match(await late.page.evaluate(() => document.getElementById('pairCode').textContent), /·/, 'le code reste proposé');
+  await late.close();
+  // Adresse publique invalide (non http(s)) : ignorée
+  const bad = await openPage(browser, { init: nativeShell('file:///android_asset/web/index.html') });
+  assert.equal((await linkOf(bad.page)).link, null);
+  await bad.close();
+  // PWA servie en https : origin + chemin (sans requête ni fragment)
+  const context = await browser.newContext({ serviceWorkers: 'block' });
+  await context.route('**/*', (route) => {
+    const u = new URL(route.request().url());
+    if (u.origin !== 'https://setremote.test') return route.abort();
+    const rel = u.pathname.replace(/^\/app\//, '') || 'index.html';
+    try {
+      const body = readFileSync(path.join(ROOT, rel));
+      const type = rel.endsWith('.html') ? 'text/html' : rel.endsWith('.js') ? 'text/javascript' : rel.endsWith('.woff2') ? 'font/woff2' : 'application/octet-stream';
+      return route.fulfill({ body, contentType: type });
+    } catch (_) { return route.fulfill({ status: 404, body: '' }); }
+  });
+  const page = await context.newPage();
+  await page.goto('https://setremote.test/app/?source=pwa#p=old');
+  const h = await linkOf(page);
+  assert.equal(h.proto, 'https:');
+  assert.equal(h.base, 'https://setremote.test/app/');
+  assert.equal(h.link, SRP.pairingUrl('https://setremote.test/app/', pairing));
+  await context.close();
+});
+
+// Caméra simulée : flux vidéo d'un canvas où l'on dessine une image
+async function fakeCamera(page, link) {
+  await page.evaluate((link) => {
+    const c = document.createElement('canvas');
+    c.width = 480; c.height = 360;
+    const g = c.getContext('2d');
+    const draw = (text) => {
+      g.fillStyle = '#4a4f57'; g.fillRect(0, 0, c.width, c.height); // décor autour du QR
+      if (!text) return;
+      const q = qrcode(0, 'M'); q.addData(text, 'Byte'); q.make();
+      const n = q.getModuleCount(), cell = Math.floor(300 / (n + 8)), size = (n + 8) * cell;
+      const x0 = (c.width - size) / 2, y0 = (c.height - size) / 2;
+      g.fillStyle = '#ffffff'; g.fillRect(x0, y0, size, size);
+      g.fillStyle = '#000000';
+      for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (q.isDark(r, k)) g.fillRect(x0 + (k + 4) * cell, y0 + (r + 4) * cell, cell, cell);
+    };
+    window.__camText = link;
+    // Image rafraîchie en continu : le flux du canvas produit des images
+    setInterval(() => draw(window.__camText), 100);
+    draw(link);
+    const stream = c.captureStream(10);
+    window.__camRequests = 0;
+    const md = navigator.mediaDevices || {};
+    md.getUserMedia = async (constraints) => { window.__camRequests++; window.__camConstraints = constraints; return stream; };
+    if (!navigator.mediaDevices) Object.defineProperty(navigator, 'mediaDevices', { value: md, configurable: true });
+  }, link);
+}
+
+test('scan dans l\'app sans BarcodeDetector (iPhone) : caméra + jsQR chargé à la demande', async () => {
+  const broker = new FakeBroker();
+  const remote = await startRemote(broker, 101, nativeShell(PUBLIC_URL));
+  const link = await remote.page.evaluate(() => pairingLink(_session));
+  const screen = await openPage(browser, { broker, seed: 102, autoConnect: true });
+  const sp = screen.page;
+  const requests = [];
+  screen.context.on('request', (r) => requests.push(r.url()));
+  assert.equal(await sp.evaluate(() => 'BarcodeDetector' in window), false, 'navigateur sans BarcodeDetector');
+  // Un QR quelconque d'abord (pas un lien d'appairage) : ignoré
+  await fakeCamera(sp, 'https://exemple.test/autre-chose');
+  assert.equal(await sp.evaluate(() => typeof window.jsQR), 'undefined', 'décodeur non chargé avant la caméra');
+  await sp.evaluate(() => startMode('screen'));
+  await waitFor(sp, () => document.getElementById('pairScanBox').classList.contains('live'), null, { timeout: 8000 });
+  assert.equal(await sp.evaluate(() => typeof window.jsQR), 'function', 'jsQR chargé à l\'ouverture de la caméra');
+  assert.ok(requests.some((u) => u.endsWith('/vendor/jsqr-1.4.0.js')));
+  assert.deepEqual(await sp.evaluate(() => ({
+    label: document.getElementById('pairScanLabel').textContent,
+    line: getComputedStyle(document.querySelector('.pj-scanline')).display,
+    video: getComputedStyle(document.getElementById('pairScanVideo')).display,
+    facing: window.__camConstraints.video.facingMode,
+  })), { label: 'Caméra active — visez le QR', line: 'block', video: 'block', facing: 'environment' });
+  await sleep(600);
+  assert.equal(await sp.evaluate(() => mode), null, 'QR étranger ignoré');
+  // Le QR de la télécommande entre dans le champ : appairage
+  await sp.evaluate((l) => { window.__camText = l; }, link);
+  await connected(sp);
+  assert.deepEqual(await sp.evaluate(() => _session), await remote.page.evaluate(() => _session));
+  assert.equal(await sp.evaluate(() => _scan), null, 'caméra libérée');
+  assert.equal(await sp.evaluate(() => getComputedStyle(document.getElementById('screen-connect')).display), 'none');
+  await waitFor(remote.page, () => _pairedScreens.size === 1);
+  assert.deepEqual(remote.errors, []); assert.deepEqual(screen.errors, []);
+  await screen.close(); await remote.close();
+});
+
+test('scan : BarcodeDetector utilisé quand il existe ; caméra refusée → invitation à l\'appareil photo', async () => {
+  const pairing = SRP.createPairing();
+  const link = SRP.pairingUrl(PUBLIC_URL, pairing);
+  const screen = await openPage(browser, { autoConnect: true });
+  const sp = screen.page;
+  await fakeCamera(sp, null);
+  await sp.evaluate((link) => {
+    window.BarcodeDetector = class {
+      static async getSupportedFormats() { return ['qr_code', 'ean_13']; }
+      constructor(o) { window.__bdFormats = o.formats; }
+      async detect() { return [{ rawValue: link }]; }
+    };
+    startMode('screen');
+  }, link);
+  await connected(sp);
+  assert.deepEqual(await sp.evaluate(() => [_session, window.__bdFormats, typeof window.jsQR]), [pairing, ['qr_code'], 'undefined']);
+  await screen.close();
+  // Caméra refusée : repli sur l'appareil photo du téléphone, mise en page inchangée
+  const denied = await openPage(browser);
+  await denied.page.evaluate(() => {
+    const md = navigator.mediaDevices || {};
+    md.getUserMedia = async () => { throw new DOMException('refus', 'NotAllowedError'); };
+    if (!navigator.mediaDevices) Object.defineProperty(navigator, 'mediaDevices', { value: md, configurable: true });
+    startMode('screen');
+  });
+  await sleep(200);
+  assert.deepEqual(await denied.page.evaluate(() => [
+    document.getElementById('pairScanLabel').textContent, document.getElementById('pairScanBox').classList.contains('live'), mode,
+  ]), ['Visez le QR avec l\'appareil photo', false, null]);
+  assert.deepEqual(denied.errors, []);
+  await denied.close();
 });
