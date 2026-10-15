@@ -82,7 +82,13 @@ function _isIOSDevice() {
 function sendCaps() {
   const ios = _isIOSDevice();
   // L'écran PWA reçoit la vidéo via WebRTC (DataChannel).
-  sendMsg({ type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate, videoMode: 'rtc' });
+  // Champs optionnels (ignorés par les anciennes télécommandes) pour la
+  // resynchronisation : médias présents dans le cache de l'écran et média
+  // actuellement affiché — la télécommande ne renvoie que ce qui manque.
+  const cached = [];
+  _mediaCache.forEach((c, id) => { if (cached.length < 500 && /^[A-Za-z0-9_-]{1,64}$/.test(id)) cached.push(id); });
+  sendMsg({ type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate, videoMode: 'rtc',
+            cached, active: screenMediaVisible() ? (_screenActiveId || null) : null });
 }
 
 // Capacités du récepteur connecté (mémorisées pour choisir le transport vidéo).

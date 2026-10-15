@@ -1247,80 +1247,58 @@ function connectMQTT(ch, onConnected) {
   if (mqttClient) { mqttClient.end(true); mqttClient = null; }
 
   const clientId = 'cl-' + mode + '-' + Math.random().toString(36).slice(2, 8);
-  mqttClient = mqtt.connect(BROKER, {
+  const client = mqtt.connect(BROKER, {
     clientId,
     clean: true,
     connectTimeout: 8000,
     reconnectPeriod: 3000,
+    // mqtt.js réabonne seul les topics à la reconnexion (resubscribe, défaut) ;
+    // l'abonnement explicite ci-dessous à chaque « connect » le garantit aussi.
   });
+  mqttClient = client;
+  // Évènements d'un client remplacé ou fermé volontairement : ignorés
+  const isCurrent = () => client === mqttClient && !client.disconnecting;
 
-  mqttClient.on('connect', () => {
-    mqttClient.subscribe(mqttTopic(ch), { qos: 0 }, () => {
-      onConnected();
+  // Appelé à la 1re connexion ET à chaque reconnexion automatique : le rappel
+  // renvoie l'état utile (télécommande) ou les capacités (écran), ce qui
+  // déclenche la resynchronisation de l'autre côté.
+  client.on('connect', () => {
+    if (!isCurrent()) return;
+    client.subscribe(mqttTopic(ch), { qos: 0 }, () => {
+      if (isCurrent()) onConnected();
     });
   });
 
-  mqttClient.on('error', err => {
+  client.on('error', err => {
+    if (!isCurrent()) return;
     console.warn('MQTT error', err);
     if (mode === 'remote') setConnStatus('error');
     else setScreenStatus('Erreur broker — rechargez');
   });
 
-  mqttClient.on('message', (topic, payload) => {
+  // Coupure / hors-ligne / nouvelle tentative : mqtt.js se reconnecte seul
+  // (reconnectPeriod). On le reflète avec les états d'interface EXISTANTS.
+  const onLost = () => {
+    if (!isCurrent()) return;
+    if (mode === 'remote') setConnStatus('connecting');
+    else if (mode === 'screen') setScreenStatus('Connexion à ' + ch + '…');
+  };
+  client.on('close', onLost);
+  client.on('offline', onLost);
+  client.on('reconnect', onLost);
+
+  client.on('message', (topic, payload) => {
     try {
       const msg = JSON.parse(payload.toString());
       // Ignorer ses propres messages (même clientId dans le payload)
-      if (msg._id === clientId) return;
-      if (mode === 'screen') {
-        if (msg.type === 'color')        receiveColor(msg.color);
-        if (msg.type === 'strobe')       receiveStrobe(msg);
-        if (msg.type === 'vibrate')      doVibrate(msg.pattern);
-        if (msg.type === 'torch-onoff')  receiveTorchOnOff(msg.on);
-        if (msg.type === 'torch-dim')    receiveTorchDim(msg.level);
-        if (msg.type === 'torch-effect') receiveTorchEffect(msg.effect);
-        if (msg.type === 'hello')        sendCaps();
-        if (msg.type === 'effect')       receiveEffect(msg);
-        if (msg.type === 'blackout')     setBlackout(msg.on);
-        if (msg.type === 'screen:brightness') setScreenDim(msg.value);
-        if (msg.type === 'media-img-start') mediaImgStart(msg);
-        if (msg.type === 'media-img-chunk') mediaImgChunk(msg);
-        if (msg.type === 'media-stop')   hideScreenMedia();
-        if (msg.type === 'media:show')   screenShowCached(msg.id);
-        if (msg.type === 'media:order')  _mediaOrder = msg.ids || [];
-        if (msg.type === 'media:evict')  screenEvictCached(msg.id);
-        if (msg.type === 'media:autoadvance') _screenAutoAdvance = !!msg.on;
-        if (msg.type === 'media-ctrl')   screenMediaCtrl(msg);
-        if (msg.type === 'media:endmode') screenSetEndMode(msg.mode);
-        if (msg.type === 'media:upload') screenVidUploadStart(msg);
-        if (msg.type === 'media:chunk')  screenVidUploadChunk(msg);
-        if (msg.type === 'media:play')   screenVidUploadPlay(msg);
-        if (msg.type === 'call:start')   screenCallStart(msg);
-        if (msg.type === 'call:answer')  screenCallAnswer();
-        if (msg.type === 'call:end')     screenCallEnd();
-        if (msg.type === 'rtc-offer')    screenHandleOffer(msg.sdp);
-        if (msg.type === 'rtc-ice' && msg.from === 'remote') screenAddIce(msg.candidate);
-      }
-      if (mode === 'remote') {
-        if (msg.type === 'rtc-answer')   remoteHandleAnswer(msg.sdp);
-        if (msg.type === 'rtc-ice' && msg.from === 'screen') remoteAddIce(msg.candidate);
-        if (msg.type === 'media-meta')     remoteOnMeta(msg.dur);
-        if (msg.type === 'media-progress') remoteOnProgress(msg.cur, msg.dur, msg.playing);
-        if (msg.type === 'media-ended')    remoteOnEnded(!!msg.off);
-        if (msg.type === 'media-error')    remoteOnError(msg.reason);
-        if (msg.type === 'media:advance')  advancePool(typeof msg.dir === 'number' ? msg.dir : 1);
-        if (msg.type === 'media:cached')   { _screenCached.add(msg.id); _preloadInflight.delete(msg.id); }
-        if (msg.type === 'media:chunkack') { if (_b64Ack.id === msg.mediaId) _b64Ack.got = Math.max(_b64Ack.got, msg.got || 0); }
-        if (msg.type === 'media:need-chunks') resendMissingChunks(msg);
-        if (msg.type === 'call:state')     remoteOnCallState(msg);
-        if (msg.type === 'media:advanced') remoteOnScreenAdvanced(msg.id);
-        if (msg.type === 'media:need')     remoteOnScreenNeeds(msg.id);
-        if (msg.type === 'caps')           applyReceiverCaps(msg);
-      }
+      if (msg && msg._id === clientId) return;
+      // Table d'aiguillage : rôle, validation, puis traitement (22-protocol.js)
+      dispatchMessage(msg);
     } catch (_) {}
   });
 
   // Stocker l'ID pour filtrer l'echo
-  mqttClient._myId = clientId;
+  client._myId = clientId;
 }
 
 function sendMsg(obj) {
@@ -1340,13 +1318,306 @@ function initBCFallback(ch) {
   const bc = new BroadcastChannel('setremote_' + ch);
   window._bc = bc;
   if (mode === 'screen') {
+    // Seuls couleur et strobe transitent par ce repli, validés comme le réseau
     bc.onmessage = e => {
-      if (e.data.type === 'color')  receiveColor(e.data.color);
-      if (e.data.type === 'strobe') receiveStrobe(e.data);
+      const d = e.data;
+      if (d && (d.type === 'color' || d.type === 'strobe')) dispatchMessage(d);
     };
   }
 }
+// ══════════════════════════ PROTOCOLE — validation & aiguillage ══════════════════════════
+// Chaque type de message reçu est décrit par :
+//   roles    : modes qui le traitent ('screen' = écran de jeu, 'remote' = télécommande)
+//   validate : contrôle types et plafonds ; peut NORMALISER le message sur
+//              place (bornage des nombres, champs optionnels) ; false = rejet
+//   handle   : traitement (fonctions existantes de l'app)
+// Message inconnu, mal formé, hors rôle ou invalide : ignoré silencieusement.
+// Les formes de payload restent celles d'origine (rétrocompatibles avec les
+// télécommandes / écrans déjà déployés, PWA comme app native).
 
+const _P = {
+  isObj: (v) => v !== null && typeof v === 'object' && !Array.isArray(v),
+  // Nombre fini (type number uniquement), borné ; null si invalide
+  num(v, min, max) {
+    return (typeof v === 'number' && Number.isFinite(v)) ? Math.min(max, Math.max(min, v)) : null;
+  },
+  int(v, min, max) { return (Number.isInteger(v) && v >= min && v <= max) ? v : null; },
+  // Texte affichable : chaîne (ou nombre) tronquée ; '' sinon
+  text(v, max) {
+    if (typeof v === 'string') return v.slice(0, max);
+    if (typeof v === 'number' && Number.isFinite(v)) return String(v).slice(0, max);
+    return '';
+  },
+  str: (v, max) => typeof v === 'string' && v.length <= max,
+  oneOf: (v, list) => typeof v === 'string' && list.includes(v),
+  hex: (v) => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v),
+  // Identifiant de transfert / de média : [A-Za-z0-9_-], 1 à 64 caractères
+  id: (v) => typeof v === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(v),
+  bool: (v) => !!v,
+};
+
+// Plafonds réseau
+const PROTO = {
+  STROBE_FREQ_MIN: 0.1, STROBE_FREQ_MAX: 30,   // Hz (période ≥ durée + 5 ms : voir receiveStrobe)
+  STROBE_DUR_MIN: 15, STROBE_DUR_MAX: 2000,    // ms
+  VIB_MAX_ENTRIES: 20, VIB_MAX_MS: 2000,
+  NAME_MAX: 40, MSG_MAX: 200, APP_MAX: 24, LOCK_TIME_MAX: 8, LOCK_DATE_MAX: 30,
+  PHOTO_MAX: 600000,                           // data-URL photo (caractères)
+  SDP_MAX: 200000, ICE_MAX: 4096,
+  ORDER_MAX: 500, MISSING_MAX: 400,
+  VID_MAX_CHUNKS: 50000,                       // ≈ 600 Mo base64 en fragments de 12 000
+  CALL_RINGS: ['classic', 'digital', 'soft', 'silent'],
+  TORCH_EFFECTS: ['stop', 'sos', 'blink-slow', 'blink-fast', 'police', 'heartbeat'],
+};
+
+function _validStrobe(m) {
+  m.active = _P.bool(m.active);
+  if (!m.active) return true;
+  const f = (v) => _P.num(v, PROTO.STROBE_FREQ_MIN, PROTO.STROBE_FREQ_MAX);
+  const d = (v) => _P.num(v, PROTO.STROBE_DUR_MIN, PROTO.STROBE_DUR_MAX);
+  m.freq = f(m.freq); m.dur = d(m.dur);
+  if (m.freq === null || m.dur === null) return false;
+  m.torch = _P.bool(m.torch);
+  m.random = _P.bool(m.random);
+  // Plage aléatoire : bornée elle aussi (valeurs absentes → valeurs fixes)
+  m.freqMin = f(m.freqMin) ?? m.freq; m.freqMax = f(m.freqMax) ?? m.freq;
+  m.durMin = d(m.durMin) ?? m.dur;    m.durMax = d(m.durMax) ?? m.dur;
+  return true;
+}
+
+function _validVibrate(m) {
+  const p = m.pattern;
+  if (typeof p === 'number') { m.pattern = _P.num(p, 0, PROTO.VIB_MAX_MS); return m.pattern !== null; }
+  if (!Array.isArray(p) || !p.length || p.length > PROTO.VIB_MAX_ENTRIES) return false;
+  const out = p.map((v) => _P.num(v, 0, PROTO.VIB_MAX_MS));
+  if (out.includes(null)) return false;
+  m.pattern = out;
+  return true;
+}
+
+function _validCallStart(m) {
+  m.name = _P.text(m.name, PROTO.NAME_MAX);
+  m.label = _P.text(m.label, PROTO.NAME_MAX);
+  m.msg = _P.text(m.msg, PROTO.MSG_MAX);
+  m.appName = _P.text(m.appName, PROTO.APP_MAX);
+  if (!_P.hex(m.appColor)) m.appColor = null;
+  if (!(typeof m.photo === 'string' && m.photo.length <= PROTO.PHOTO_MAX)) m.photo = null; // contenu validé ensuite (safeImageData)
+  // Sonnerie inconnue → classique (une clé comme « __proto__ » ne doit pas
+  // fausser la cadence de répétition)
+  if (!_P.oneOf(m.ring, PROTO.CALL_RINGS)) m.ring = 'classic';
+  m.lock = _P.isObj(m.lock)
+    ? { time: _P.text(m.lock.time, PROTO.LOCK_TIME_MAX), date: _P.text(m.lock.date, PROTO.LOCK_DATE_MAX) }
+    : null;
+  m.autoAnswer = _P.num(m.autoAnswer, 0, 60) ?? 0;
+  m.hasAudio = _P.bool(m.hasAudio);
+  return true;
+}
+
+const _validSdp = (type) => (m) => _P.isObj(m.sdp) && m.sdp.type === type && _P.str(m.sdp.sdp, PROTO.SDP_MAX);
+const _validIce = (m) => _P.oneOf(m.from, ['remote', 'screen']) && _P.isObj(m.candidate)
+  && _P.str(m.candidate.candidate, PROTO.ICE_MAX);
+
+const MSG_ROUTES = {
+  // ─── Télécommande → écran ───
+  'color':             { roles: ['screen'], validate: (m) => _P.hex(m.color), handle: (m) => receiveColor(m.color) },
+  'strobe':            { roles: ['screen'], validate: _validStrobe, handle: (m) => receiveStrobe(m) },
+  'vibrate':           { roles: ['screen'], validate: _validVibrate, handle: (m) => doVibrate(m.pattern) },
+  'torch-onoff':       { roles: ['screen'], validate: (m) => { m.on = _P.bool(m.on); return true; }, handle: (m) => receiveTorchOnOff(m.on) },
+  'torch-dim':         { roles: ['screen'], validate: (m) => (m.level = _P.num(m.level, 0, 100)) !== null, handle: (m) => receiveTorchDim(m.level) },
+  'torch-effect':      { roles: ['screen'], validate: (m) => _P.oneOf(m.effect, PROTO.TORCH_EFFECTS), handle: (m) => receiveTorchEffect(m.effect) },
+  'hello':             { roles: ['screen'], validate: () => true, handle: () => sendCaps() },
+  'effect': {
+    roles: ['screen'],
+    validate(m) {
+      m.active = _P.bool(m.active);
+      if (!m.active) return true;
+      if (typeof m.name !== 'string' || !Object.prototype.hasOwnProperty.call(EFFECT_CONFIG, m.name)
+        || typeof FX_LIB[m.name] !== 'function') return false;
+      if (m.params != null && !_P.isObj(m.params)) return false;
+      return true; // paramètres bornés par receiveEffect (_fxSanitizeParams)
+    },
+    handle: (m) => receiveEffect(m),
+  },
+  'blackout':          { roles: ['screen'], validate: (m) => { m.on = _P.bool(m.on); return true; }, handle: (m) => setBlackout(m.on) },
+  'screen:brightness': { roles: ['screen'], validate: (m) => (m.value = _P.num(m.value, 0, 1)) !== null, handle: (m) => setScreenDim(m.value) },
+  'media-img-start': {
+    roles: ['screen'],
+    validate: (m) => _P.str(m.id, 64) && m.id.length > 0 && _P.int(m.total, 1, IMG_MAX_CHUNKS) !== null
+      && (m.mediaId == null || typeof m.mediaId === 'string'),
+    handle: (m) => mediaImgStart(m),
+  },
+  'media-img-chunk': {
+    roles: ['screen'],
+    validate: (m) => _P.str(m.id, 64) && _P.int(m.i, 0, IMG_MAX_CHUNKS - 1) !== null && _P.str(m.data, IMG_CHUNK_MAX),
+    handle: (m) => mediaImgChunk(m),
+  },
+  'media-stop':        { roles: ['screen'], validate: () => true, handle: () => hideScreenMedia() },
+  'media:show':        { roles: ['screen'], validate: (m) => _P.id(m.id), handle: (m) => screenShowCached(m.id) },
+  'media:order': {
+    roles: ['screen'],
+    validate(m) {
+      if (m.ids == null) { m.ids = []; return true; }
+      return Array.isArray(m.ids) && m.ids.length <= PROTO.ORDER_MAX && m.ids.every(_P.id);
+    },
+    handle: (m) => { _mediaOrder = m.ids; },
+  },
+  'media:evict':       { roles: ['screen'], validate: (m) => _P.id(m.id), handle: (m) => screenEvictCached(m.id) },
+  'media:autoadvance': { roles: ['screen'], validate: (m) => { m.on = _P.bool(m.on); return true; }, handle: (m) => { _screenAutoAdvance = m.on; } },
+  'media-ctrl': {
+    roles: ['screen'],
+    validate(m) {
+      if (!_P.oneOf(m.action, ['play', 'pause', 'seek'])) return false;
+      if (m.action === 'seek') return (m.time = _P.num(m.time, 0, 1e7)) !== null;
+      return true;
+    },
+    handle: (m) => screenMediaCtrl(m),
+  },
+  'media:endmode':     { roles: ['screen'], validate: (m) => _P.oneOf(m.mode, ['loop', 'pause', 'off']), handle: (m) => screenSetEndMode(m.mode) },
+  'media:upload': {
+    roles: ['screen'],
+    validate(m) {
+      if (!_P.id(m.mediaId) || _P.int(m.totalChunks, 1, PROTO.VID_MAX_CHUNKS) === null) return false;
+      if (!(typeof m.mime === 'string' && /^[a-z]+\/[a-z0-9.+-]{1,40}$/i.test(m.mime))) m.mime = undefined;
+      if (!_P.id(m.poolId)) m.poolId = null;
+      return true;
+    },
+    handle: (m) => screenVidUploadStart(m),
+  },
+  'media:chunk': {
+    roles: ['screen'],
+    validate: (m) => _P.id(m.mediaId) && _P.int(m.index, 0, PROTO.VID_MAX_CHUNKS - 1) !== null
+      && (!_vidUp || _vidUp.id !== m.mediaId || m.index < _vidUp.total) && _P.str(m.data, IMG_CHUNK_MAX),
+    handle: (m) => screenVidUploadChunk(m),
+  },
+  'media:play':        { roles: ['screen'], validate: (m) => _P.id(m.mediaId), handle: (m) => screenVidUploadPlay(m) },
+  'call:start':        { roles: ['screen'], validate: _validCallStart, handle: (m) => screenCallStart(m) },
+  'call:answer':       { roles: ['screen'], validate: () => true, handle: () => screenCallAnswer() },
+  'call:end':          { roles: ['screen'], validate: () => true, handle: () => screenCallEnd() },
+  'rtc-offer':         { roles: ['screen'], validate: _validSdp('offer'), handle: (m) => screenHandleOffer(m.sdp) },
+  // Candidats ICE dans les deux sens : chaque rôle n'accepte que ceux de l'autre
+  'rtc-ice': {
+    roles: ['screen', 'remote'],
+    validate: _validIce,
+    handle(m) {
+      if (mode === 'screen' && m.from === 'remote') screenAddIce(m.candidate);
+      else if (mode === 'remote' && m.from === 'screen') remoteAddIce(m.candidate);
+    },
+  },
+
+  // ─── Écran → télécommande ───
+  'rtc-answer':        { roles: ['remote'], validate: _validSdp('answer'), handle: (m) => remoteHandleAnswer(m.sdp) },
+  'media-meta':        { roles: ['remote'], validate: (m) => { m.dur = _P.num(m.dur, 0, 1e7) ?? 0; return true; }, handle: (m) => remoteOnMeta(m.dur) },
+  'media-progress': {
+    roles: ['remote'],
+    validate(m) {
+      m.cur = _P.num(m.cur, 0, 1e7) ?? 0; m.dur = _P.num(m.dur, 0, 1e7) ?? 0;
+      if (typeof m.playing !== 'boolean') m.playing = undefined;
+      return true;
+    },
+    handle: (m) => remoteOnProgress(m.cur, m.dur, m.playing),
+  },
+  'media-ended':       { roles: ['remote'], validate: (m) => { m.off = _P.bool(m.off); return true; }, handle: (m) => remoteOnEnded(m.off) },
+  'media-error':       { roles: ['remote'], validate: (m) => { if (!_P.str(m.reason, 16)) m.reason = 'load'; return true; }, handle: (m) => remoteOnError(m.reason) },
+  'media:advance': {
+    roles: ['remote'],
+    validate(m) {
+      const d = _P.num(m.dir, -1, 1);
+      m.dir = d === null ? 1 : Math.round(d);
+      return true;
+    },
+    handle: (m) => advancePool(m.dir),
+  },
+  'media:cached':      { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => { _screenCached.add(m.id); _preloadInflight.delete(m.id); } },
+  'media:chunkack': {
+    roles: ['remote'],
+    validate: (m) => _P.id(m.mediaId) && (m.got = _P.int(m.got, 0, PROTO.VID_MAX_CHUNKS) ?? 0, true),
+    handle: (m) => { if (_b64Ack.id === m.mediaId) _b64Ack.got = Math.max(_b64Ack.got, m.got); },
+  },
+  'media:need-chunks': {
+    roles: ['remote'],
+    validate: (m) => _P.id(m.mediaId) && Array.isArray(m.missing) && m.missing.length <= PROTO.MISSING_MAX
+      && m.missing.every((i) => _P.int(i, 0, PROTO.VID_MAX_CHUNKS - 1) !== null),
+    handle: (m) => resendMissingChunks(m),
+  },
+  'call:state':        { roles: ['remote'], validate: (m) => _P.oneOf(m.state, ['ringing', 'incall', 'declined', 'ended']), handle: (m) => remoteOnCallState(m) },
+  'media:advanced':    { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenAdvanced(m.id) },
+  'media:need':        { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenNeeds(m.id) },
+  'caps': {
+    roles: ['remote'],
+    validate(m) {
+      if (m.videoMode != null && !_P.str(m.videoMode, 16)) m.videoMode = undefined;
+      // Champs optionnels des écrans récents (absents chez les anciens / natifs)
+      if (m.cached !== undefined && !(Array.isArray(m.cached) && m.cached.length <= PROTO.ORDER_MAX && m.cached.every(_P.id))) delete m.cached;
+      if (m.active !== undefined && m.active !== null && !_P.id(m.active)) delete m.active;
+      return true;
+    },
+    handle: (m) => { applyReceiverCaps(m); remoteScheduleResync(m); },
+  },
+};
+
+// Point d'entrée unique des messages reçus (MQTT et repli BroadcastChannel)
+function dispatchMessage(msg) {
+  if (!_P.isObj(msg) || typeof msg.type !== 'string') return false;
+  if (!Object.prototype.hasOwnProperty.call(MSG_ROUTES, msg.type)) return false;
+  const route = MSG_ROUTES[msg.type];
+  if (!route.roles.includes(mode)) return false;
+  if (!route.validate(msg)) return false;
+  route.handle(msg);
+  return true;
+}
+// ══════════════════════════ RESYNCHRONISATION (télécommande) ══════════════════════════
+// Un écran annonce ses capacités (« caps ») à chaque (re)connexion et en
+// réponse au « hello » de la télécommande (envoyé à chaque (re)connexion de
+// celle-ci). La télécommande renvoie alors un instantané complet de l'état :
+// un écran rechargé ou revenu d'une coupure retrouve exactement ce que la
+// télécommande affiche. Les médias lourds (fond d'écran verrouillé, bande son,
+// média actif) ne sont renvoyés que si l'écran ne les a pas.
+// Plusieurs « caps » rapprochés (plusieurs écrans) → un seul envoi groupé.
+let _resyncTimer = null, _resyncNeed = null;
+const RESYNC_DELAY_MS = 250;
+const _RESYNC_ASSETS = ['__lockwall', '__callaudio'];
+
+function remoteScheduleResync(caps) {
+  if (mode !== 'remote') return;
+  const need = _resyncNeed || (_resyncNeed = { lacks: new Set(), mediaMissing: false });
+  if (Array.isArray(caps.cached)) {
+    // Écran récent : liste exacte de son cache. Ce qu'il a perdu (rechargement)
+    // n'est plus considéré « en cache écran » → préchargement / renvoi.
+    const has = new Set(caps.cached);
+    for (const id of [..._screenCached]) if (!has.has(id)) _screenCached.delete(id);
+    for (const id of _RESYNC_ASSETS) if (!has.has(id)) need.lacks.add(id);
+  } else {
+    // Ancien écran / écran natif : on s'en tient à ce qu'il a déjà accusé
+    for (const id of _RESYNC_ASSETS) if (!_screenCached.has(id)) need.lacks.add(id);
+  }
+  // « active » n'est envoyé que par les écrans récents (absent = inconnu)
+  if (Object.prototype.hasOwnProperty.call(caps, 'active') && caps.active !== _activeMediaId) need.mediaMissing = true;
+  if (_resyncTimer) clearTimeout(_resyncTimer);
+  _resyncTimer = setTimeout(remoteResync, RESYNC_DELAY_MS);
+}
+
+function remoteResync() {
+  _resyncTimer = null;
+  const need = _resyncNeed || { lacks: new Set(), mediaMissing: false };
+  _resyncNeed = null;
+  if (mode !== 'remote' || !mqttClient || !mqttClient.connected) return;
+  // Lumière
+  sendMsg({ type: 'color', color: currentColor });
+  sendMsg({ type: 'blackout', on: remoteBlackout });
+  sendMsg({ type: 'screen:brightness', value: screenBrightnessPct / 100 });
+  if (activeScreenEffect) sendMsg({ type: 'effect', name: activeScreenEffect, active: true, params: buildEffectParams() });
+  if (strobeActive) sendMsg(buildStrobePayload()); // après l'effet : le strobe prime
+  // Médias
+  sendMsg({ type: 'media:autoadvance', on: _autoAdvance });
+  sendMsg({ type: 'media:endmode', mode: _videoEndMode });
+  sendPoolOrder();
+  if (_lockWallData && need.lacks.has('__lockwall')) sendImageChunks(_lockWallData, { mediaId: '__lockwall', show: false });
+  if (_callAudioData && need.lacks.has('__callaudio')) sendImageChunks(_callAudioData, { mediaId: '__callaudio', show: false });
+  // Média diffusé absent de l'écran : media:show s'il est en cache écran,
+  // sinon re-diffusion complète (même chemin qu'une sélection dans le pool)
+  if (_activeMediaId && need.mediaMissing && _mediaPool.some((m) => m.id === _activeMediaId)) selectMedia(_activeMediaId);
+  schedulePreload();
+}
 // ══════════════════════════ NAVIGATION ══════════════════════════
 function startMode(m) {
   document.getElementById('splash').style.display = 'none';
@@ -1439,9 +1710,10 @@ function connectChannel() {
     sendMsg({ type: 'screen:brightness', value: screenBrightnessPct / 100 });
     // Resynchroniser le comportement de fin de lecture vidéo
     sendMsg({ type: 'media:endmode', mode: _videoEndMode });
-    // Renvoyer le fond d'écran verrouillé + la bande son (le cache écran se vide au rechargement)
-    if (_lockWallData) sendImageChunks(_lockWallData, { mediaId: '__lockwall', show: false });
-    if (_callAudioData) sendImageChunks(_callAudioData, { mediaId: '__callaudio', show: false });
+    // Fond d'écran verrouillé + bande son : plus de renvoi systématique à
+    // chaque (re)connexion — la réponse « caps » au hello déclenche une
+    // resynchronisation complète qui ne les renvoie que si l'écran ne les a
+    // pas (24-resync.js).
     // Synchroniser l'ordre du pool et précharger les médias sur l'écran
     sendPoolOrder();
     schedulePreload();
@@ -2998,6 +3270,34 @@ const FX_LIB = {
 // Moteur branché sur le canvas plein écran de l'écran de jeu
 const _screenFxR = makeFxRenderer('screen-fx-canvas');
 
+// Paramètres reçus du réseau, bornés selon les plages de EFFECT_CONFIG (et
+// des curseurs de la télécommande) AVANT tout rendu : un message forgé
+// (ex. Paparazzi à 1e9 flashes, 1e6 bandes de chaser) ne peut plus geler
+// l'écran. Valeur absente ou invalide → omise (défaut de l'effet).
+const _FX_ENUMS = { dir: ['h', 'v', 'd', 'in', 'out'], shape: ['band', 'circle', 'diamond'], mode: ['loop', 'bounce'] };
+const _FX_RANGES = { intensity: [0, 100], chaos: [0, 100], drift: [0, 100], width: [1, 60], wing: [1, 4],
+  rot: [0, 359], lead: [0, 600], fade: [0, 600], smooth: [0, 100] };
+const FX_MAX_COUNT = 32, FX_MAX_BLOCKS = 8;
+function _fxSanitizeParams(name, p) {
+  const cfg = EFFECT_CONFIG[name] || {};
+  const src = (p && typeof p === 'object' && !Array.isArray(p)) ? p : {};
+  const out = {};
+  const num = (v, min, max) => (typeof v === 'number' && Number.isFinite(v)) ? Math.min(max, Math.max(min, v)) : undefined;
+  const put = (k, v) => { if (v !== undefined) out[k] = v; };
+  if (cfg.min != null) put('speed', num(src.speed, cfg.min, cfg.max));
+  for (const k in _FX_RANGES) put(k, num(src[k], _FX_RANGES[k][0], _FX_RANGES[k][1]));
+  // Quantité (bandes ≤ 12, flashes ≤ 10, grain 2–32) : plage propre à l'effet
+  if (cfg.count) put('count', num(src.count, cfg.count.min, Math.min(cfg.count.max, FX_MAX_COUNT)));
+  for (const k in _FX_ENUMS) if (_FX_ENUMS[k].includes(src[k])) out[k] = src[k];
+  if (typeof src.invert === 'boolean') out.invert = src.invert;
+  for (const k of ['color1', 'color2']) if (typeof src[k] === 'string' && /^#[0-9a-f]{6}$/i.test(src[k])) out[k] = src[k];
+  if (Array.isArray(src.blocks)) {
+    const b = src.blocks.slice(0, FX_MAX_BLOCKS).filter((c) => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c));
+    if (b.length) out.blocks = b;
+  }
+  return out;
+}
+
 function receiveEffect(msg) {
   if (!msg.active) {
     stopScreenEffect();
@@ -3005,8 +3305,9 @@ function receiveEffect(msg) {
     if (sc) { sc.style.transition = 'background-color 0.4s'; sc.style.backgroundColor = screenBaseColor; }
     return;
   }
+  if (!Object.prototype.hasOwnProperty.call(EFFECT_CONFIG, msg.name) || !FX_LIB[msg.name]) return; // effet inconnu
   _screenEffect = msg.name;
-  _screenFxParams = msg.params || {};
+  _screenFxParams = _fxSanitizeParams(msg.name, msg.params);
   if (_screenFxSuspended) return; // strobe en cours : reprendra à la fin
   if (_screenFxR.current() === msg.name) _screenFxR.update(_screenFxParams);
   else _screenFxR.start(msg.name, _screenFxParams);
@@ -3577,7 +3878,13 @@ function _isIOSDevice() {
 function sendCaps() {
   const ios = _isIOSDevice();
   // L'écran PWA reçoit la vidéo via WebRTC (DataChannel).
-  sendMsg({ type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate, videoMode: 'rtc' });
+  // Champs optionnels (ignorés par les anciennes télécommandes) pour la
+  // resynchronisation : médias présents dans le cache de l'écran et média
+  // actuellement affiché — la télécommande ne renvoie que ce qui manque.
+  const cached = [];
+  _mediaCache.forEach((c, id) => { if (cached.length < 500 && /^[A-Za-z0-9_-]{1,64}$/.test(id)) cached.push(id); });
+  sendMsg({ type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate, videoMode: 'rtc',
+            cached, active: screenMediaVisible() ? (_screenActiveId || null) : null });
 }
 
 // Capacités du récepteur connecté (mémorisées pour choisir le transport vidéo).

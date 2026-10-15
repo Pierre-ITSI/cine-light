@@ -90,9 +90,10 @@ function connectChannel() {
     sendMsg({ type: 'screen:brightness', value: screenBrightnessPct / 100 });
     // Resynchroniser le comportement de fin de lecture vidéo
     sendMsg({ type: 'media:endmode', mode: _videoEndMode });
-    // Renvoyer le fond d'écran verrouillé + la bande son (le cache écran se vide au rechargement)
-    if (_lockWallData) sendImageChunks(_lockWallData, { mediaId: '__lockwall', show: false });
-    if (_callAudioData) sendImageChunks(_callAudioData, { mediaId: '__callaudio', show: false });
+    // Fond d'écran verrouillé + bande son : plus de renvoi systématique à
+    // chaque (re)connexion — la réponse « caps » au hello déclenche une
+    // resynchronisation complète qui ne les renvoie que si l'écran ne les a
+    // pas (24-resync.js).
     // Synchroniser l'ordre du pool et précharger les médias sur l'écran
     sendPoolOrder();
     schedulePreload();

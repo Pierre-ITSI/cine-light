@@ -415,6 +415,34 @@ const FX_LIB = {
 // Moteur branché sur le canvas plein écran de l'écran de jeu
 const _screenFxR = makeFxRenderer('screen-fx-canvas');
 
+// Paramètres reçus du réseau, bornés selon les plages de EFFECT_CONFIG (et
+// des curseurs de la télécommande) AVANT tout rendu : un message forgé
+// (ex. Paparazzi à 1e9 flashes, 1e6 bandes de chaser) ne peut plus geler
+// l'écran. Valeur absente ou invalide → omise (défaut de l'effet).
+const _FX_ENUMS = { dir: ['h', 'v', 'd', 'in', 'out'], shape: ['band', 'circle', 'diamond'], mode: ['loop', 'bounce'] };
+const _FX_RANGES = { intensity: [0, 100], chaos: [0, 100], drift: [0, 100], width: [1, 60], wing: [1, 4],
+  rot: [0, 359], lead: [0, 600], fade: [0, 600], smooth: [0, 100] };
+const FX_MAX_COUNT = 32, FX_MAX_BLOCKS = 8;
+function _fxSanitizeParams(name, p) {
+  const cfg = EFFECT_CONFIG[name] || {};
+  const src = (p && typeof p === 'object' && !Array.isArray(p)) ? p : {};
+  const out = {};
+  const num = (v, min, max) => (typeof v === 'number' && Number.isFinite(v)) ? Math.min(max, Math.max(min, v)) : undefined;
+  const put = (k, v) => { if (v !== undefined) out[k] = v; };
+  if (cfg.min != null) put('speed', num(src.speed, cfg.min, cfg.max));
+  for (const k in _FX_RANGES) put(k, num(src[k], _FX_RANGES[k][0], _FX_RANGES[k][1]));
+  // Quantité (bandes ≤ 12, flashes ≤ 10, grain 2–32) : plage propre à l'effet
+  if (cfg.count) put('count', num(src.count, cfg.count.min, Math.min(cfg.count.max, FX_MAX_COUNT)));
+  for (const k in _FX_ENUMS) if (_FX_ENUMS[k].includes(src[k])) out[k] = src[k];
+  if (typeof src.invert === 'boolean') out.invert = src.invert;
+  for (const k of ['color1', 'color2']) if (typeof src[k] === 'string' && /^#[0-9a-f]{6}$/i.test(src[k])) out[k] = src[k];
+  if (Array.isArray(src.blocks)) {
+    const b = src.blocks.slice(0, FX_MAX_BLOCKS).filter((c) => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c));
+    if (b.length) out.blocks = b;
+  }
+  return out;
+}
+
 function receiveEffect(msg) {
   if (!msg.active) {
     stopScreenEffect();
@@ -422,8 +450,9 @@ function receiveEffect(msg) {
     if (sc) { sc.style.transition = 'background-color 0.4s'; sc.style.backgroundColor = screenBaseColor; }
     return;
   }
+  if (!Object.prototype.hasOwnProperty.call(EFFECT_CONFIG, msg.name) || !FX_LIB[msg.name]) return; // effet inconnu
   _screenEffect = msg.name;
-  _screenFxParams = msg.params || {};
+  _screenFxParams = _fxSanitizeParams(msg.name, msg.params);
   if (_screenFxSuspended) return; // strobe en cours : reprendra à la fin
   if (_screenFxR.current() === msg.name) _screenFxR.update(_screenFxParams);
   else _screenFxR.start(msg.name, _screenFxParams);
