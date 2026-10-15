@@ -174,7 +174,7 @@ export const PERSONALITIES = Object.freeze({
     footprint: 16,
     channels: [
       { n: 1, key: 'dimmer', label: 'Dimmer', default: 0, ranges: full('0 → 100 % (octet fort du 16 bits) ; maître des effets aussi') },
-      { n: 2, key: 'dimmerFine', label: 'Dimmer fin', default: 0, ranges: full('Octet faible du 16 bits') },
+      { n: 2, key: 'dimmerFine', label: 'Dimmer Fine', default: 0, ranges: full('Octet faible du 16 bits') },
       { n: 3, ...red(255) },
       { n: 4, ...green(255) },
       { n: 5, ...blue(255) },

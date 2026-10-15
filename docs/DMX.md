@@ -91,7 +91,7 @@ Pas de dimmer : l'intensité est portée par les valeurs RGB (0,0,0 = noir).
 | Canal | Groupe | Fonction | Valeurs DMX | Défaut |
 |---:|---|---|---|---:|
 | 1 | Couleur | Dimmer | 0–255 : 0 → 100 % (octet fort du 16 bits) ; maître des effets aussi | 0 |
-| 2 | Couleur | Dimmer fin | octet faible du 16 bits (canaux 1–2 = dimmer 16 bits) | 0 |
+| 2 | Couleur | Dimmer Fine | octet faible du 16 bits (canaux 1–2 = dimmer 16 bits) | 0 |
 | 3 | Couleur | Rouge | 0–255 | 255 |
 | 4 | Couleur | Vert | 0–255 | 255 |
 | 5 | Couleur | Bleu | 0–255 | 255 |
