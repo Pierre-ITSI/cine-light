@@ -8,6 +8,10 @@
 //   web/js/NN-*.js            scripts CLASSIQUES (pas de modules ES : l'app
 //                             repose sur des globales et des onclick= inline),
 //                             concaténés dans l'ordre des noms → <script> unique
+//   packages/protocol/*.js    chiffrement de bout en bout + appairage (modules
+//                             ES), assemblés par web/bundle-protocol.mjs en une
+//                             IIFE qui expose la globale SRP, placée EN TÊTE du
+//                             <script> (avant web/js). Déterministe.
 //
 // Le fichier produit (index.html à la racine) reste l'artefact servi tel quel
 // par GitHub Pages : aucune étape de build côté hébergement.
@@ -19,6 +23,7 @@
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { bundleProtocol } from './bundle-protocol.mjs';
 
 export const WEB_DIR = dirname(fileURLToPath(import.meta.url));
 export const ROOT_DIR = resolve(WEB_DIR, '..');
@@ -63,21 +68,22 @@ export function build() {
   for (const f of jsFrags) {
     if (/<\/script/i.test(f.text)) throw new Error(`build: « </script » interdit dans ${f.name}`);
   }
+  const protocol = bundleProtocol();
   let html = replaceOnce(tpl, STYLES_MARK, concat(cssFrags), 'STYLES');
-  html = replaceOnce(html, SCRIPTS_MARK, concat(jsFrags), 'SCRIPTS');
+  html = replaceOnce(html, SCRIPTS_MARK, protocol.code + concat(jsFrags), 'SCRIPTS');
   // En-tête juste après le doctype (le doctype reste la 1re ligne : aucun
   // risque de mode quirks).
   const nl = html.indexOf('\n');
   if (!/^<!DOCTYPE html>$/i.test(html.slice(0, nl))) throw new Error('build: le gabarit doit commencer par <!DOCTYPE html>');
   html = html.slice(0, nl + 1) + HEADER + '\n' + html.slice(nl + 1);
-  return { html, cssFrags, jsFrags };
+  return { html, cssFrags, jsFrags, protocol };
 }
 
 function main(argv) {
   const check = argv.includes('--check');
   const outIdx = argv.indexOf('--out');
   const out = outIdx >= 0 ? resolve(argv[outIdx + 1]) : OUTPUT;
-  const { html, cssFrags, jsFrags } = build();
+  const { html, cssFrags, jsFrags, protocol } = build();
   if (check) {
     let current = '';
     try { current = readFileSync(out, 'utf8'); } catch (_) {}
@@ -85,12 +91,14 @@ function main(argv) {
       console.error('✗ index.html n\'est pas à jour : lancez « npm run build » puis committez.');
       process.exit(1);
     }
-    console.log('✓ index.html à jour (' + cssFrags.length + ' CSS, ' + jsFrags.length + ' JS)');
+    console.log('✓ index.html à jour (' + cssFrags.length + ' CSS, ' + jsFrags.length + ' JS, paquet protocole '
+      + protocol.modules.length + ' modules)');
     return;
   }
   writeFileSync(out, html);
   console.log('✓ ' + out + ' — ' + cssFrags.length + ' fragments CSS, ' + jsFrags.length
-    + ' fragments JS, ' + Buffer.byteLength(html) + ' octets');
+    + ' fragments JS, paquet protocole (' + protocol.modules.length + ' modules → SRP), '
+    + Buffer.byteLength(html) + ' octets');
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) main(process.argv.slice(2));

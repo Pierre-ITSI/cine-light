@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { build, listFragments, OUTPUT, ROOT_DIR, HEADER } from '../web/build.mjs';
+import { bundleProtocol } from '../web/bundle-protocol.mjs';
 
 test('index.html correspond exactement à web/ (npm run build)', () => {
   const { html, cssFrags, jsFrags } = build();
@@ -28,6 +29,28 @@ test('fragments : préfixes NN- uniques, script classique (pas de module ES)', (
   for (const f of listFragments('js', '.js')) {
     assert.doesNotMatch(f.text, /^\s*(import|export)\s[^(]/m, f.name + ' : pas d\'import/export');
   }
+});
+
+test('paquet protocole : IIFE classique en tête du <script>, même API que les modules ES', async () => {
+  const { html, protocol } = build();
+  assert.deepEqual(bundleProtocol(), protocol, 'assemblage déterministe');
+  const script = html.slice(html.indexOf('<script>') + 8);
+  assert.ok(script.startsWith('\n' + protocol.code) || script.startsWith(protocol.code), 'le paquet précède web/js');
+  assert.match(protocol.code, /^var SRP = \(function \(\) \{$/m);
+  assert.doesNotMatch(protocol.code, /^\s*(import|export)\s/m, 'plus aucun import/export');
+  assert.deepEqual(protocol.modules.slice(-1), ['index.js']);
+  // Évalué comme un script classique : mêmes exports que le point d'entrée ES
+  const SRP = new Function(protocol.code + '\nreturn SRP;')();
+  const esm = await import('../packages/protocol/index.js');
+  assert.deepEqual(Object.keys(SRP).sort(), Object.keys(esm).sort());
+  assert.ok(Object.isFrozen(SRP));
+  // Interopérabilité : une trame scellée par l'IIFE s'ouvre avec les modules ES et inversement
+  const pairing = SRP.createPairing();
+  const remote = await SRP.createSecureChannel({ pairing, role: 'remote' });
+  const screen = await esm.createSecureChannel({ pairing, role: 'screen', screenId: esm.createScreenId() });
+  assert.deepEqual((await screen.receive(await remote.seal({ type: 'color', color: '#ff0000' }))).message, { type: 'color', color: '#ff0000' });
+  assert.deepEqual((await remote.receive(await screen.seal({ type: 'screen:alive' }))).message, { type: 'screen:alive' });
+  await assert.rejects(remote.receive('pas-une-trame'), (e) => e instanceof SRP.ProtocolError || e.name === 'ProtocolError');
 });
 
 test('interface inchangée : <style> et balisage identiques à la référence visuelle', (t) => {

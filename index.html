@@ -1230,6 +1230,1653 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 </div>
 
 <script>
+// ══════ @setremote/protocol — assemblé par web/bundle-protocol.mjs depuis packages/protocol (ne pas éditer) ══════
+var SRP = (function () {
+'use strict';
+const __m = Object.create(null);
+const __star = (o) => { const r = {}; for (const k of Object.keys(o)) if (k !== 'default') r[k] = o[k]; return r; };
+// ── lib/errors.js ──
+__m["lib/errors.js"] = (function () {
+class ProtocolError extends Error {
+  constructor(code, message) {
+    super(message ? `${code}: ${message}` : code);
+    this.name = 'ProtocolError';
+    this.code = code;
+  }
+}
+  return { ProtocolError };
+})();
+// ── lib/env.js ──
+__m["lib/env.js"] = (function () {
+  const { ProtocolError } = __m["lib/errors.js"];
+let injected = null;
+
+function setCrypto(impl) {
+  if (impl !== null) {
+    if (!impl || typeof impl !== 'object' || !impl.subtle || typeof impl.getRandomValues !== 'function') {
+      throw new ProtocolError('no-crypto', 'setCrypto() attend un objet { subtle, getRandomValues }');
+    }
+  }
+  injected = impl;
+}
+
+function getCrypto() {
+  const c = injected || /** @type {any} */ (globalThis).crypto;
+  if (!c || !c.subtle || typeof c.getRandomValues !== 'function') {
+    throw new ProtocolError(
+      'no-crypto',
+      'WebCrypto indisponible : contexte non sécurisé (http://) ou polyfill non injecté (voir setCrypto)',
+    );
+  }
+  return c;
+}
+
+function subtle() {
+  return getCrypto().subtle;
+}
+
+function randomBytes(n) {
+  const out = new Uint8Array(n);
+  getCrypto().getRandomValues(out);
+  return out;
+}
+  return { setCrypto, getCrypto, subtle, randomBytes };
+})();
+// ── lib/encoding.js ──
+__m["lib/encoding.js"] = (function () {
+  const { ProtocolError } = __m["lib/errors.js"];
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+const ENC = new Uint8Array(64);
+const DEC = new Int8Array(128).fill(-1);
+for (let i = 0; i < 64; i++) {
+  ENC[i] = ALPHABET.charCodeAt(i);
+  DEC[ALPHABET.charCodeAt(i)] = i;
+}
+
+const FROM_CHAR_CODE_SLICE = 8192;
+
+function stringFromCodes(codes) {
+  let s = '';
+  for (let i = 0; i < codes.length; i += FROM_CHAR_CODE_SLICE) {
+    const part = /** @type {any} */ (codes).subarray(i, i + FROM_CHAR_CODE_SLICE);
+    s += String.fromCharCode.apply(null, /** @type {any} */ (part));
+  }
+  return s;
+}
+
+function bytesToB64u(bytes) {
+  const n = bytes.length;
+  const rem = n % 3;
+  const out = new Uint8Array(Math.floor(n / 3) * 4 + (rem === 0 ? 0 : rem + 1));
+  let o = 0;
+  let i = 0;
+  for (; i + 2 < n; i += 3) {
+    const v = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
+    out[o++] = ENC[(v >> 18) & 63];
+    out[o++] = ENC[(v >> 12) & 63];
+    out[o++] = ENC[(v >> 6) & 63];
+    out[o++] = ENC[v & 63];
+  }
+  if (rem === 1) {
+    const v = bytes[i] << 16;
+    out[o++] = ENC[(v >> 18) & 63];
+    out[o++] = ENC[(v >> 12) & 63];
+  } else if (rem === 2) {
+    const v = (bytes[i] << 16) | (bytes[i + 1] << 8);
+    out[o++] = ENC[(v >> 18) & 63];
+    out[o++] = ENC[(v >> 12) & 63];
+    out[o++] = ENC[(v >> 6) & 63];
+  }
+  return stringFromCodes(out);
+}
+
+function b64uToBytes(str) {
+  if (typeof str !== 'string') throw new ProtocolError('malformed', 'base64url attendu');
+  const n = str.length;
+  const rem = n % 4;
+  if (rem === 1) throw new ProtocolError('malformed', 'longueur base64url invalide');
+  const out = new Uint8Array(Math.floor(n / 4) * 3 + (rem === 0 ? 0 : rem - 1));
+  const at = (/** @type {number} */ k) => {
+    const c = str.charCodeAt(k);
+    const v = c < 128 ? DEC[c] : -1;
+    if (v < 0) throw new ProtocolError('malformed', 'caractère base64url invalide');
+    return v;
+  };
+  let o = 0;
+  let i = 0;
+  for (; i + 3 < n; i += 4) {
+    const v = (at(i) << 18) | (at(i + 1) << 12) | (at(i + 2) << 6) | at(i + 3);
+    out[o++] = (v >> 16) & 255;
+    out[o++] = (v >> 8) & 255;
+    out[o++] = v & 255;
+  }
+  if (rem === 2) {
+    const c1 = at(i + 1);
+    if (c1 & 15) throw new ProtocolError('malformed', 'base64url non canonique');
+    out[o++] = ((at(i) << 18) | (c1 << 12)) >> 16;
+  } else if (rem === 3) {
+    const c2 = at(i + 2);
+    if (c2 & 3) throw new ProtocolError('malformed', 'base64url non canonique');
+    const v = (at(i) << 18) | (at(i + 1) << 12) | (c2 << 6);
+    out[o++] = (v >> 16) & 255;
+    out[o++] = (v >> 8) & 255;
+  }
+  return out;
+}
+
+function utf8EncodeJs(str) {
+  const out = new Uint8Array(str.length * 3);
+  let o = 0;
+  for (let i = 0; i < str.length; i++) {
+    let c = str.charCodeAt(i);
+    if (c >= 0xd800 && c <= 0xdbff && i + 1 < str.length) {
+      const d = str.charCodeAt(i + 1);
+      if (d >= 0xdc00 && d <= 0xdfff) {
+        c = 0x10000 + ((c - 0xd800) << 10) + (d - 0xdc00);
+        i++;
+      } else {
+        c = 0xfffd;
+      }
+    } else if (c >= 0xd800 && c <= 0xdfff) {
+      c = 0xfffd;
+    }
+    if (c < 0x80) {
+      out[o++] = c;
+    } else if (c < 0x800) {
+      out[o++] = 0xc0 | (c >> 6);
+      out[o++] = 0x80 | (c & 63);
+    } else if (c < 0x10000) {
+      out[o++] = 0xe0 | (c >> 12);
+      out[o++] = 0x80 | ((c >> 6) & 63);
+      out[o++] = 0x80 | (c & 63);
+    } else {
+      out[o++] = 0xf0 | (c >> 18);
+      out[o++] = 0x80 | ((c >> 12) & 63);
+      out[o++] = 0x80 | ((c >> 6) & 63);
+      out[o++] = 0x80 | (c & 63);
+    }
+  }
+  return out.slice(0, o);
+}
+
+function utf8DecodeJs(bytes) {
+  const n = bytes.length;
+  const units = new Uint16Array(n);
+  let u = 0;
+  for (let i = 0; i < n; ) {
+    const b0 = bytes[i];
+    if (b0 < 0x80) {
+      units[u++] = b0;
+      i++;
+      continue;
+    }
+    let need;
+    let cp;
+    let min;
+    if (b0 >= 0xc2 && b0 <= 0xdf) { need = 1; cp = b0 & 0x1f; min = 0x80; }
+    else if (b0 >= 0xe0 && b0 <= 0xef) { need = 2; cp = b0 & 0x0f; min = 0x800; }
+    else if (b0 >= 0xf0 && b0 <= 0xf4) { need = 3; cp = b0 & 0x07; min = 0x10000; }
+    else throw new ProtocolError('malformed', 'UTF-8 invalide');
+    if (i + need > n - 1) throw new ProtocolError('malformed', 'UTF-8 tronqué');
+    for (let k = 1; k <= need; k++) {
+      const b = bytes[i + k];
+      if ((b & 0xc0) !== 0x80) throw new ProtocolError('malformed', 'UTF-8 invalide');
+      cp = (cp << 6) | (b & 0x3f);
+    }
+    if (cp < min || cp > 0x10ffff || (cp >= 0xd800 && cp <= 0xdfff)) {
+      throw new ProtocolError('malformed', 'UTF-8 invalide');
+    }
+    i += need + 1;
+    if (cp >= 0x10000) {
+      cp -= 0x10000;
+      units[u++] = 0xd800 + (cp >> 10);
+      units[u++] = 0xdc00 + (cp & 0x3ff);
+    } else {
+      units[u++] = cp;
+    }
+  }
+  return stringFromCodes(units.subarray(0, u));
+}
+
+let nativeEncoder = null;
+let nativeDecoder = null;
+try {
+  if (typeof TextEncoder === 'function') nativeEncoder = new TextEncoder();
+} catch (_) { nativeEncoder = null; }
+try {
+  if (typeof TextDecoder === 'function') nativeDecoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
+} catch (_) { nativeDecoder = null; }
+
+function utf8Encode(str) {
+  return nativeEncoder ? nativeEncoder.encode(str) : utf8EncodeJs(str);
+}
+
+function utf8Decode(bytes) {
+  if (nativeDecoder) {
+    try {
+      return nativeDecoder.decode(bytes);
+    } catch (_) {
+      throw new ProtocolError('malformed', 'UTF-8 invalide');
+    }
+  }
+  return utf8DecodeJs(bytes);
+}
+
+function concatBytes(...parts) {
+  let len = 0;
+  for (const p of parts) len += p.length;
+  const out = new Uint8Array(len);
+  let o = 0;
+  for (const p of parts) {
+    out.set(p, o);
+    o += p.length;
+  }
+  return out;
+}
+
+function timingSafeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+  return diff === 0;
+}
+
+function exactBytes(u8) {
+  return u8.byteOffset === 0 && u8.byteLength === u8.buffer.byteLength ? u8 : u8.slice();
+}
+
+function asciiBytes(s) {
+  const out = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+  return out;
+}
+
+function asciiString(bytes) {
+  return stringFromCodes(bytes);
+}
+  return { bytesToB64u, b64uToBytes, utf8EncodeJs, utf8DecodeJs, utf8Encode, utf8Decode, concatBytes, timingSafeEqual, exactBytes, asciiBytes, asciiString };
+})();
+// ── lib/kdf.js ──
+__m["lib/kdf.js"] = (function () {
+  const { subtle } = __m["lib/env.js"];
+  const { exactBytes, utf8Encode } = __m["lib/encoding.js"];
+async function hkdfBits(ikm, salt, info, bits) {
+  const s = subtle();
+  const base = await s.importKey('raw', exactBytes(ikm), 'HKDF', false, ['deriveBits']);
+  const out = await s.deriveBits(
+    { name: 'HKDF', hash: 'SHA-256', salt: exactBytes(salt), info: utf8Encode(info) },
+    base,
+    bits,
+  );
+  return new Uint8Array(out);
+}
+
+async function sha256(bytes) {
+  return new Uint8Array(await subtle().digest('SHA-256', exactBytes(bytes)));
+}
+
+function lengthPrefixed(bytes) {
+  const out = new Uint8Array(4 + bytes.length);
+  const n = bytes.length;
+  out[0] = (n >>> 24) & 255;
+  out[1] = (n >>> 16) & 255;
+  out[2] = (n >>> 8) & 255;
+  out[3] = n & 255;
+  out.set(bytes, 4);
+  return out;
+}
+  return { hkdfBits, sha256, lengthPrefixed };
+})();
+// ── lib/pairingFormat.js ──
+__m["lib/pairingFormat.js"] = (function () {
+  const { ProtocolError } = __m["lib/errors.js"];
+  const { b64uToBytes } = __m["lib/encoding.js"];
+const CHANNEL_ID_BYTES = 16;
+const PAIRING_KEY_BYTES = 32;
+const CHANNEL_ID_CHARS = 22;
+const PAIRING_KEY_CHARS = 43;
+
+function isValidPairing(p) {
+  if (!p || typeof p !== 'object') return false;
+  const { channelId, key } = /** @type {any} */ (p);
+  if (typeof channelId !== 'string' || typeof key !== 'string') return false;
+  if (channelId.length !== CHANNEL_ID_CHARS || key.length !== PAIRING_KEY_CHARS) return false;
+  try {
+    return b64uToBytes(channelId).length === CHANNEL_ID_BYTES && b64uToBytes(key).length === PAIRING_KEY_BYTES;
+  } catch (_) {
+    return false;
+  }
+}
+
+function assertPairing(p) {
+  if (!isValidPairing(p)) throw new ProtocolError('bad-pairing', 'appairage { channelId, key } invalide');
+}
+  return { CHANNEL_ID_BYTES, PAIRING_KEY_BYTES, CHANNEL_ID_CHARS, PAIRING_KEY_CHARS, isValidPairing, assertPairing };
+})();
+// ── schema.js ──
+__m["schema.js"] = (function () {
+const hasOwn = (/** @type {object} */ o, /** @type {string} */ k) => Object.prototype.hasOwnProperty.call(o, k);
+
+function isPlainObject(v) {
+  if (v === null || typeof v !== 'object' || Array.isArray(v)) return false;
+  const p = Object.getPrototypeOf(v);
+  return p === Object.prototype || p === null;
+}
+
+const req = (check, doc) => ({ check, doc, optional: false });
+const opt = (check, doc) => ({ check, doc, optional: true });
+
+const bool = (/** @type {unknown} */ v) => typeof v === 'boolean';
+const num = (min, max) => v => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
+const int = (min, max) => v => Number.isInteger(v) && /** @type {number} */ (v) >= min && /** @type {number} */ (v) <= max;
+const oneOf = (...values) => v => values.includes(v);
+const nullable = c => v => v === null || c(v);
+const str = (max, re) => v => typeof v === 'string' && v.length <= max && (!re || re.test(v));
+const arrayOf = (item, maxLen, minLen = 0) => v => Array.isArray(v) && v.length >= minLen && v.length <= maxLen && v.every(x => item(x));
+const object = fields => v => {
+  if (!isPlainObject(v)) return false;
+  const o = /** @type {Record<string, unknown>} */ (v);
+  for (const k of Object.keys(o)) {
+    if (o[k] === undefined) continue;
+    if (!hasOwn(fields, k) || !fields[k].check(o[k])) return false;
+  }
+  for (const [k, f] of Object.entries(fields)) if (!f.optional && o[k] === undefined) return false;
+  return true;
+};
+
+const CTRL_ALL = /[\u0000-\u001F\u007F]/;
+const CTRL_TEXT = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
+const line = max => v => typeof v === 'string' && v.length <= max && !CTRL_ALL.test(v);
+const text = max => v => typeof v === 'string' && v.length <= max && !CTRL_TEXT.test(v);
+
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+const MEDIA_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+const SCREEN_ID_RE = /^[A-Za-z0-9_-]{8,32}$/;
+const GROUP_ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
+const DATAURL_SLICE_RE = /^[A-Za-z0-9+/=:;,.-]*$/;
+const BASE64_RE = /^[A-Za-z0-9+/]*={0,2}$/;
+const MIME_RE = /^[a-z]+\/[a-z0-9.+-]{1,40}$/i;
+const PRINTABLE_RE = /^[\x20-\x7E\r\n]*$/;
+
+const HEX = str(7, HEX_COLOR_RE);
+const MEDIA_ID = str(64, MEDIA_ID_RE);
+const SCREEN_ID = str(32, SCREEN_ID_RE);
+const GROUP_ID = str(32, GROUP_ID_RE);
+const LEGACY_ID = str(64, /^[A-Za-z0-9_-]{1,64}$/);
+
+const LIMITS = Object.freeze({
+  strobeFreqHz: [0.1, 30],
+  strobeFlashMs: [15, 2000],
+  vibratePatternLength: 20,
+  vibrateStepMs: 2000,
+  effectCount: [1, 32],
+  effectBlocks: 8,
+  imgChunks: 2000,
+  imgChunkChars: 20_000,
+  uploadChunks: 50_000,
+  uploadChunkChars: 20_000,
+  poolSize: 500,
+  missingChunks: 400,
+  sdpChars: 16_000,
+  iceCandidateChars: 4096,
+  targetScreens: 64,
+  screenGroups: 16,
+  screenNameChars: 40,
+  dmxMediaSlots: 25,
+});
+
+const TARGET = (/** @type {unknown} */ v) => {
+  if (!isPlainObject(v)) return false;
+  const t = /** @type {Record<string, unknown>} */ (v);
+  const keys = Object.keys(t);
+  if (keys.length !== 1) return false;
+  if (keys[0] === 'screens') return arrayOf(SCREEN_ID, LIMITS.targetScreens, 1)(t.screens);
+  if (keys[0] === 'group') return GROUP_ID(t.group);
+  return false;
+};
+
+const EFFECT_NAMES = [
+  'chaser', 'noise', 'aurora', 'water',
+  'pulse', 'traffic', 'weld', 'neon', 'police', 'lightning', 'paparazzi',
+  'tv', 'candle', 'fire',
+];
+
+const EFFECT_PARAMS = object({
+  speed: opt(num(0.01, 240), 'vitesse / BPM selon l’effet'),
+  intensity: opt(int(0, 100), 'intensité %'),
+  chaos: opt(int(0, 100), 'chaos %'),
+  drift: opt(int(0, 100), 'dérive %'),
+  count: opt(int(...LIMITS.effectCount), 'bandes / grain / flashes par rafale'),
+  dir: opt(oneOf('h', 'v', 'd', 'out', 'in'), 'direction (bande) ou sens radial'),
+  shape: opt(oneOf('band', 'circle', 'diamond'), 'forme du chaser'),
+  mode: opt(oneOf('loop', 'bounce'), 'course du chaser'),
+  invert: opt(bool, 'inversion du sens'),
+  width: opt(int(1, 100), 'largeur de bande %'),
+  wing: opt(int(1, 4), 'wing'),
+  rot: opt(int(0, 360), 'rotation °'),
+  lead: opt(int(0, 1000), 'fondu avant ms'),
+  smooth: opt(int(0, 100), 'lissage %'),
+  fade: opt(int(0, 1000), 'traîne / fondu ms'),
+  color1: opt(HEX, 'couleur 1'),
+  color2: opt(HEX, 'couleur 2'),
+  blocks: opt(arrayOf(HEX, LIMITS.effectBlocks, 1), 'blocs couleur (TV)'),
+});
+
+const SDP = (/** @type {'offer'|'answer'} */ kind) => object({
+  type: req(oneOf(kind), kind),
+  sdp: req(str(LIMITS.sdpChars, PRINTABLE_RE), 'SDP'),
+});
+
+const ICE = object({
+  candidate: req(str(LIMITS.iceCandidateChars, PRINTABLE_RE), 'ligne candidate'),
+  sdpMid: opt(nullable(line(64)), 'sdpMid'),
+  sdpMLineIndex: opt(nullable(int(0, 255)), 'sdpMLineIndex'),
+  usernameFragment: opt(nullable(line(256)), 'ufrag'),
+});
+
+const STROBE_FREQ = num(...LIMITS.strobeFreqHz);
+const STROBE_DUR = num(...LIMITS.strobeFlashMs);
+
+const DMX_LOOK = object({
+  color: req(HEX, 'couleur #rrggbb, dimmer et mélange couleur/blanc déjà appliqués'),
+  strobe: opt(object({
+    freq: req(STROBE_FREQ, 'fréquence Hz (la passerelle émet 0,5–30)'),
+    dur: req(STROBE_DUR, 'durée du flash ms'),
+  }), 'stroboscope actif (absent = pas de strobe)'),
+  effect: opt(object({
+    name: req(oneOf(...EFFECT_NAMES), 'effet'),
+    speed: req(num(0.01, 240), 'vitesse dans l’unité de l’effet'),
+    intensity: req(int(0, 100), 'intensité % (= dimmer de la console)'),
+  }), 'effet en cours (absent = aucun)'),
+  media: opt(object({
+    index: req(int(1, LIMITS.dmxMediaSlots), 'n° du média dans le pool (1–25)'),
+    playback: req(oneOf('play', 'pause', 'loop', 'rewind'), 'lecture, pause, boucle, retour au début et pause'),
+  }), 'média affiché (absent = média masqué)'),
+  blackout: opt(oneOf(true), 'noir total (absent = écran allumé)'),
+});
+
+const SPECS = {
+  'color': {
+    dir: 'r2s', src: ['web', 'native'],
+    doc: 'Couleur de fond de l’écran (envoi continu pendant le réglage, ~25 Hz max).',
+    fields: { color: req(HEX, 'couleur #rrggbb') },
+  },
+  'strobe': {
+    dir: 'r2s', src: ['web', 'native'],
+    doc: 'Stroboscope. active:false l’arrête (seul champ alors envoyé). Plafonds : 0,1–30 Hz, flash 15–2000 ms '
+      + '(mêmes bornes que PROTO dans web/js/22-protocol.js ; le schéma REJETTE au lieu de borner).',
+    fields: {
+      active: req(bool, 'marche/arrêt'),
+      torch: opt(bool, 'flash LED synchronisé (web)'),
+      vibrate: opt(bool, 'vibration synchronisée (natif)'),
+      random: opt(bool, 'mode aléatoire entre min et max'),
+      freq: opt(STROBE_FREQ, 'fréquence Hz'),
+      dur: opt(STROBE_DUR, 'durée du flash ms'),
+      freqMin: opt(STROBE_FREQ, 'fréquence min Hz (aléatoire)'),
+      freqMax: opt(STROBE_FREQ, 'fréquence max Hz (aléatoire)'),
+      durMin: opt(STROBE_DUR, 'flash min ms (aléatoire)'),
+      durMax: opt(STROBE_DUR, 'flash max ms (aléatoire)'),
+    },
+    refine: m => {
+      if (!m.active) return null;
+      if (m.freq === undefined || m.dur === undefined) return 'strobe actif sans freq/dur';
+      if (m.random && [m.freqMin, m.freqMax, m.durMin, m.durMax].some(x => x === undefined)) return 'strobe aléatoire incomplet';
+      return null;
+    },
+  },
+  'effect': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Effet animé plein écran (moteur canvas). active:false arrête l’effet.',
+    fields: {
+      name: req(nullable(oneOf(...EFFECT_NAMES)), 'nom de l’effet (null à l’arrêt)'),
+      active: req(bool, 'marche/arrêt'),
+      params: opt(EFFECT_PARAMS, 'paramètres (liste fermée, bornés)'),
+    },
+    refine: m => (m.active && m.name === null ? 'effet actif sans nom' : null),
+  },
+  'blackout': {
+    dir: 'r2s', src: ['web', 'native'],
+    doc: 'Voile noir total (écran « OFF »).',
+    fields: { on: req(bool, 'noir actif') },
+  },
+  'screen:brightness': {
+    dir: 'r2s', src: ['web', 'native'],
+    doc: 'Luminosité de l’écran de jeu (voile ou rétroéclairage natif).',
+    fields: { value: req(num(0, 1), '0..1') },
+  },
+  'vibrate': {
+    dir: 'r2s', src: ['web', 'native'],
+    doc: 'Motif de vibration (ms alternés vibre/pause) : ≤ 20 valeurs de 0 à 2000 ms.',
+    fields: {
+      pattern: req(arrayOf(num(0, LIMITS.vibrateStepMs), LIMITS.vibratePatternLength, 1), 'durées ms'),
+      repeat: opt(bool, 'répétition (natif, toujours false aujourd’hui)'),
+    },
+  },
+  'torch-onoff': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Torche LED allumée/éteinte.',
+    fields: { on: req(bool, 'allumée') },
+  },
+  'torch-dim': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Gradation de la torche (PWM logiciel côté web, binaire en natif).',
+    fields: { level: req(num(0, 100), 'niveau %') },
+  },
+  'torch-effect': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Motif prédéfini de la torche.',
+    fields: { effect: req(oneOf('sos', 'blink-slow', 'blink-fast', 'police', 'heartbeat', 'stop'), 'motif') },
+  },
+  'torch': {
+    dir: 'r2s', src: ['native'],
+    doc: 'Commande torche de la télécommande native.',
+    fields: {
+      mode: req(oneOf('off', 'on', 'flash'), 'mode'),
+      onMs: opt(int(10, 10_000), 'durée allumée ms'),
+      offMs: opt(int(10, 10_000), 'durée éteinte ms'),
+      repeats: opt(int(1, 1000), 'répétitions'),
+      loop: opt(bool, 'en boucle'),
+    },
+  },
+
+  'hello': {
+    dir: 'r2s', src: ['web', 'native'],
+    doc: 'Demande aux écrans d’annoncer leurs capacités (réponse : caps).',
+    fields: {},
+  },
+  'screen:config': {
+    dir: 'r2s', src: [],
+    doc: 'Nouveau (multi-écran) : renomme un écran et/ou fixe ses groupes. Doit cibler target.screens.',
+    fields: {
+      name: opt(line(LIMITS.screenNameChars), 'nom affiché de l’écran'),
+      groups: opt(arrayOf(GROUP_ID, LIMITS.screenGroups), 'groupes dont l’écran est membre (remplace la liste)'),
+    },
+    refine: m => {
+      if (!m.target || !m.target.screens) return 'screen:config doit cibler target.screens';
+      if (m.name === undefined && m.groups === undefined) return 'screen:config vide';
+      return null;
+    },
+  },
+
+  'media-img-start': {
+    dir: 'r2s', src: ['web', 'native'],
+    doc: 'Début de transfert d’une image/son en data-URL fragmentée (fragments media-img-chunk).',
+    fields: {
+      id: req(MEDIA_ID, 'identifiant du transfert'),
+      total: req(int(1, LIMITS.imgChunks), 'nombre de fragments'),
+      mediaId: opt(nullable(MEDIA_ID), 'id du média en cache (__lockwall, __callaudio, __callphoto, m12…)'),
+      show: opt(bool, 'afficher à réception (false = préchargement)'),
+    },
+  },
+  'media-img-chunk': {
+    dir: 'r2s', src: ['web', 'native'],
+    doc: 'Fragment de data-URL (12 000 caractères en pratique).',
+    fields: {
+      id: req(MEDIA_ID, 'identifiant du transfert'),
+      i: req(int(0, LIMITS.imgChunks - 1), 'index'),
+      data: req(str(LIMITS.imgChunkChars, DATAURL_SLICE_RE), 'tranche de data-URL'),
+    },
+  },
+  'media-stop': {
+    dir: 'r2s', src: ['web', 'native'],
+    doc: 'Masque le média affiché (retour à la couleur).',
+    fields: {},
+  },
+  'media:stop': {
+    dir: 'r2s', src: ['native'],
+    doc: 'Équivalent natif de media-stop.',
+    fields: {},
+  },
+  'media:show': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Affiche un média déjà en cache sur l’écran (sinon l’écran répond media:need).',
+    fields: { id: req(MEDIA_ID, 'id du média') },
+  },
+  'media:order': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Ordre du pool, pour l’avance locale au tap.',
+    fields: { ids: req(arrayOf(MEDIA_ID, LIMITS.poolSize), 'ids dans l’ordre') },
+  },
+  'media:evict': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Retire un média du cache écran.',
+    fields: { id: req(MEDIA_ID, 'id du média') },
+  },
+  'media:clear': {
+    dir: 'r2s', src: ['native'],
+    doc: 'Équivalent natif de media:evict (mediaId « all » = tout vider).',
+    fields: { mediaId: req(MEDIA_ID, 'id du média ou « all »') },
+  },
+  'media:autoadvance': {
+    dir: 'r2s', src: ['web', 'native'],
+    doc: 'Option « tap sur l’écran = média suivant ».',
+    fields: { on: req(bool, 'activée') },
+  },
+  'media-ctrl': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Lecture / pause / recherche de la vidéo affichée.',
+    fields: {
+      action: req(oneOf('play', 'pause', 'seek'), 'action'),
+      time: opt(num(0, 1e7), 'position s (seek)'),
+    },
+    refine: m => (m.action === 'seek' && m.time === undefined ? 'seek sans time' : null),
+  },
+  'media:endmode': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Fin de vidéo : boucle, pause sur la dernière image, ou extinction.',
+    fields: { mode: req(oneOf('loop', 'pause', 'off'), 'mode') },
+  },
+  'media:upload': {
+    dir: 'r2s', src: ['web', 'native'],
+    doc: 'Début d’envoi d’un fichier en base64 fragmenté (repli sans WebRTC / écran natif).',
+    fields: {
+      mediaId: req(MEDIA_ID, 'id du transfert'),
+      kind: req(oneOf('video', 'image'), 'type'),
+      mime: req(str(80, MIME_RE), 'type MIME'),
+      totalChunks: req(int(1, LIMITS.uploadChunks), 'nombre de fragments'),
+      poolId: opt(nullable(MEDIA_ID), 'id du média dans le pool (cache)'),
+    },
+  },
+  'media:chunk': {
+    dir: 'r2s', src: ['web', 'native'],
+    doc: 'Fragment base64 (12 000 caractères en pratique).',
+    fields: {
+      mediaId: req(MEDIA_ID, 'id du transfert'),
+      index: req(int(0, LIMITS.uploadChunks - 1), 'index'),
+      data: req(str(LIMITS.uploadChunkChars, BASE64_RE), 'base64'),
+    },
+  },
+  'media:play': {
+    dir: 'r2s', src: ['web', 'native'],
+    doc: 'Fin d’envoi : assembler et lire (web) ; lire depuis le cache (natif).',
+    fields: { mediaId: req(MEDIA_ID, 'id du transfert') },
+  },
+
+  'call:start': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Faux appel entrant ou notification (SMS / messagerie) affiché par l’écran. La photo n’y voyage plus : '
+      + 'elle est envoyée avant, en fragments media-img-* sous l’id __callphoto (comme __lockwall).',
+    fields: {
+      kind: req(oneOf('call', 'sms', 'chat', 'whatsapp'), 'appel / sms / messagerie (whatsapp = ancien nom)'),
+      style: opt(oneOf('glass', 'tonal', 'minimal', 'ios', 'android', 'generic'), 'style visuel (ios/android/generic = anciens noms)'),
+      name: opt(line(40), 'nom de l’appelant'),
+      label: opt(line(40), 'sous-titre'),
+      msg: opt(text(200), 'texte du message'),
+      appName: opt(line(24), 'nom de l’application fictive'),
+      appColor: opt(HEX, 'couleur de l’application fictive'),
+      hasPhoto: opt(bool, 'photo de l’appelant préchargée en fragments (media-img-*, mediaId __callphoto) ; plus jamais en ligne'),
+      ring: opt(oneOf('classic', 'digital', 'soft', 'silent'), 'sonnerie'),
+      present: opt(oneOf('full', 'banner'), 'plein écran ou bandeau'),
+      photoMode: opt(oneOf('avatar', 'full'), 'photo en avatar ou plein écran'),
+      hasAudio: opt(bool, 'bande son préchargée (__callaudio) à jouer au décroché'),
+      autoAnswer: opt(int(0, 60), 'décroché automatique après n s (0 = non)'),
+      lock: opt(nullable(object({
+        time: req(line(8), 'heure affichée'),
+        date: req(line(30), 'date affichée'),
+      })), 'faux écran verrouillé'),
+    },
+  },
+  'call:answer': { dir: 'r2s', src: ['web'], doc: 'Décroche le faux appel.', fields: {} },
+  'call:end': { dir: 'r2s', src: ['web'], doc: 'Termine le faux appel / la notification.', fields: {} },
+
+  'dmx:look': {
+    dir: 'r2s', src: [],
+    doc: 'Nouveau (passerelle DMX, packages/dmx, voir docs/DMX.md) : état de l’écran calculé depuis la console '
+      + '(sACN / Art-Net). live:true = signal console présent, la console a la priorité et l’écran ignore les '
+      + 'commandes de look de la télécommande ; live:false (envoyé une fois à la perte du signal) = l’écran garde '
+      + 'ce look et la télécommande peut reprendre la main. Envoyé au changement (≤ 30/s par écran) et toutes les '
+      + 'secondes tant que live. Les déclenchements Appel/SMS passent par call:start / call:end.',
+    fields: {
+      seq: req(int(0, 0xffff), 'compteur 16 bits de la passerelle (rebouclage 65535 → 0)'),
+      live: req(bool, 'signal console présent (priorité console)'),
+      look: req(DMX_LOOK, 'look à afficher'),
+    },
+  },
+
+  'rtc-offer': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Offre WebRTC (canal de données « file »). En multi-écran : cibler UN écran (target.screens).',
+    fields: {
+      sdp: req(SDP('offer'), 'RTCSessionDescription'),
+      kind: opt(oneOf('file'), 'usage'),
+    },
+  },
+  'rtc-answer': {
+    dir: 's2r', src: ['web'],
+    doc: 'Réponse WebRTC de l’écran.',
+    fields: { sdp: req(SDP('answer'), 'RTCSessionDescription') },
+  },
+  'rtc-ice': {
+    dir: 'both', src: ['web'],
+    doc: 'Candidat ICE ; `from` doit correspondre au sens réel.',
+    fields: {
+      from: req(oneOf('remote', 'screen'), 'émetteur'),
+      candidate: req(ICE, 'RTCIceCandidate.toJSON()'),
+    },
+    refine: (m, o) => {
+      if (o.direction === 'r2s' && m.from !== 'remote') return 'rtc-ice r2s doit avoir from=remote';
+      if (o.direction === 's2r' && m.from !== 'screen') return 'rtc-ice s2r doit avoir from=screen';
+      if (m.from === 'screen' && m.target !== undefined) return 'target interdit depuis un écran';
+      return null;
+    },
+  },
+
+  'caps': {
+    dir: 's2r', src: ['web', 'native'],
+    doc: 'Capacités et identité de l’écran (au démarrage et en réponse à hello).',
+    fields: {
+      torch: req(bool, 'torche disponible'),
+      vibrate: req(bool, 'vibreur disponible'),
+      videoMode: opt(oneOf('rtc', 'b64', 'none'), 'transport vidéo accepté'),
+      media: opt(bool, 'cache média natif disponible'),
+      cached: opt(arrayOf(MEDIA_ID, LIMITS.poolSize), 'ids présents dans le cache de l’écran (resynchronisation)'),
+      active: opt(nullable(MEDIA_ID), 'média affiché (null = aucun ; absent = inconnu)'),
+      blackout: opt(bool, 'écran actuellement en noir'),
+      screenId: opt(SCREEN_ID, 'nouveau : identifiant stable de l’écran (tiré au 1er lancement)'),
+      name: opt(line(LIMITS.screenNameChars), 'nouveau : nom affiché de l’écran'),
+      groups: opt(arrayOf(GROUP_ID, LIMITS.screenGroups), 'nouveau : groupes de l’écran'),
+    },
+  },
+  'media-meta': {
+    dir: 's2r', src: ['web'],
+    doc: 'Durée de la vidéo chargée (null si infinie/inconnue).',
+    fields: { dur: req(nullable(num(0, 1e9)), 'durée s') },
+  },
+  'media-progress': {
+    dir: 's2r', src: ['web'],
+    doc: 'Position de lecture (≈ 4 Hz).',
+    fields: {
+      cur: req(nullable(num(0, 1e9)), 'position s'),
+      dur: req(nullable(num(0, 1e9)), 'durée s'),
+      playing: req(bool, 'en lecture'),
+    },
+  },
+  'media-ended': {
+    dir: 's2r', src: ['web'],
+    doc: 'Fin de lecture ; off:true si l’écran a coupé le média (mode « off »).',
+    fields: { off: opt(bool, 'média coupé') },
+  },
+  'media-error': {
+    dir: 's2r', src: ['web'],
+    doc: 'Vidéo illisible sur l’écran.',
+    fields: { reason: req(oneOf('src', 'decode', 'load'), 'cause') },
+  },
+  'media:advance': {
+    dir: 's2r', src: ['web', 'native'],
+    doc: 'Tap sur l’écran : demande le média suivant/précédent à la télécommande.',
+    fields: { dir: req(oneOf(-1, 1), '+1 / -1') },
+  },
+  'media:advanced': {
+    dir: 's2r', src: ['web'],
+    doc: 'L’écran a avancé seul (média suivant déjà en cache).',
+    fields: { id: req(MEDIA_ID, 'id affiché') },
+  },
+  'media:cached': {
+    dir: 's2r', src: ['web'],
+    doc: 'Accusé : média en cache sur l’écran.',
+    fields: { id: req(MEDIA_ID, 'id du média') },
+  },
+  'media:need': {
+    dir: 's2r', src: ['web'],
+    doc: 'media:show pour un média absent du cache : demande l’envoi complet.',
+    fields: { id: req(MEDIA_ID, 'id du média') },
+  },
+  'media:chunkack': {
+    dir: 's2r', src: ['web'],
+    doc: 'Accusé cumulatif de fragments media:chunk reçus (régulation du débit).',
+    fields: {
+      mediaId: req(MEDIA_ID, 'id du transfert'),
+      got: req(int(0, LIMITS.uploadChunks), 'fragments reçus'),
+    },
+  },
+  'media:need-chunks': {
+    dir: 's2r', src: ['web'],
+    doc: 'Fragments manquants à renvoyer.',
+    fields: {
+      mediaId: req(MEDIA_ID, 'id du transfert'),
+      missing: req(arrayOf(int(0, LIMITS.uploadChunks - 1), LIMITS.missingChunks), 'indices'),
+    },
+  },
+  'media:ready': {
+    dir: 's2r', src: ['native'],
+    doc: 'Accusé natif : média complet en cache.',
+    fields: { mediaId: req(MEDIA_ID, 'id du média') },
+  },
+  'screen:alive': {
+    dir: 's2r', src: ['web'],
+    doc: 'Signe de vie d’un écran connecté (toutes les 15 s) : la télécommande signale un écran muet depuis 40 s.',
+    fields: {},
+  },
+  'call:state': {
+    dir: 's2r', src: ['web'],
+    doc: 'État du faux appel côté écran.',
+    fields: { state: req(oneOf('ringing', 'incall', 'declined', 'ended'), 'état') },
+  },
+};
+
+function explainInvalid(msg, opts = {}) {
+  try {
+    if (!isPlainObject(msg)) return 'objet attendu';
+    const m = /** @type {Record<string, any>} */ (msg);
+    const type = m.type;
+    if (typeof type !== 'string' || !hasOwn(SPECS, type)) return `type inconnu : ${String(type).slice(0, 40)}`;
+    const spec = SPECS[type];
+    const dir = opts.direction;
+    if (dir !== undefined) {
+      if (dir !== 'r2s' && dir !== 's2r') return 'direction invalide';
+      if (spec.dir !== 'both' && spec.dir !== dir) return `${type} n’est pas autorisé dans le sens ${dir}`;
+    }
+    for (const k of Object.keys(m)) {
+      if (k === 'type') continue;
+      const v = m[k];
+      if (v === undefined) continue;
+      if (k === '_id') {
+        if (!LEGACY_ID(v)) return '_id invalide';
+        continue;
+      }
+      if (k === 'target') {
+        if (spec.dir === 's2r') return 'target interdit sur un message écran → télécommande';
+        if (!TARGET(v)) return 'target invalide';
+        continue;
+      }
+      if (!hasOwn(spec.fields, k)) return `champ inconnu : ${k.slice(0, 40)}`;
+      if (!spec.fields[k].check(v)) return `champ invalide : ${k}`;
+    }
+    for (const [k, f] of Object.entries(spec.fields)) {
+      if (!f.optional && m[k] === undefined) return `champ manquant : ${k}`;
+    }
+    return spec.refine ? spec.refine(m, opts) : null;
+  } catch (_) {
+    return 'exception pendant la validation';
+  }
+}
+
+function validate(msg, opts = {}) {
+  return explainInvalid(msg, opts) === null;
+}
+
+function isAddressedTo(msg, me) {
+  const t = msg && msg.target;
+  if (t === undefined || t === null) return true;
+  if (Array.isArray(t.screens)) return t.screens.includes(me.screenId);
+  if (typeof t.group === 'string') return Array.isArray(me.groups) && me.groups.includes(t.group);
+  return false;
+}
+
+const MESSAGE_TYPES = Object.freeze(Object.fromEntries(
+  Object.entries(SPECS).map(([type, s]) => [type, Object.freeze({
+    direction: s.dir,
+    sources: Object.freeze([...s.src]),
+    description: s.doc,
+    fields: Object.freeze(Object.fromEntries(
+      Object.entries(s.fields).map(([k, f]) => [k, Object.freeze({ required: !f.optional, description: f.doc })]),
+    )),
+  })]),
+));
+
+const COMMON_FIELDS = Object.freeze({
+  _id: 'identifiant d’écho de l’ancien protocole en clair (toléré, inutile en v2)',
+  target: "adressage (r2s uniquement) : { screens: [screenId…] } ou { group: 'id' } ; absent = tous",
+});
+  return { HEX_COLOR_RE, MEDIA_ID_RE, SCREEN_ID_RE, GROUP_ID_RE, LIMITS, explainInvalid, validate, isAddressedTo, MESSAGE_TYPES, COMMON_FIELDS };
+})();
+// ── crypto.js ──
+__m["crypto.js"] = (function () {
+  const { ProtocolError } = __m["lib/errors.js"];
+  const { randomBytes, subtle } = __m["lib/env.js"];
+  const { asciiBytes, asciiString, b64uToBytes, bytesToB64u, concatBytes, exactBytes, utf8Decode, utf8Encode } = __m["lib/encoding.js"];
+  const { hkdfBits } = __m["lib/kdf.js"];
+  const { assertPairing } = __m["lib/pairingFormat.js"];
+  const { MEDIA_ID_RE } = __m["schema.js"];
+const FRAME_VERSION = 2;
+const FRAME_KIND = Object.freeze({ MESSAGE: 1, CHUNK: 2 });
+const IV_BYTES = 12;
+const TAG_BYTES = 16;
+const MAX_MESSAGE_BYTES = 40 * 1024;
+const MAX_CHUNK_BYTES = 16 * 1024;
+const MAX_CHUNKS = 4000;
+const MAX_SEQ = 0xffffffff;
+const MAX_TS = 2 ** 48 - 1;
+const DEFAULT_REPLAY_WINDOW = 1024;
+const DEFAULT_MAX_SKEW_MS = 5 * 60 * 1000;
+const DEFAULT_MAX_SENDERS = 256;
+
+const SENDER_RE = /^[A-Za-z0-9_-]{1,16}$/;
+const TYPE_RE = /^[a-z][a-z0-9:_-]{0,31}$/;
+
+const MAX_HEADER_BYTES = 3 + 16 + 4 + 6 + 1 + 64 + 4;
+const MAX_FRAME_CHARS = Math.ceil(((MAX_HEADER_BYTES + IV_BYTES + MAX_MESSAGE_BYTES + TAG_BYTES) * 4) / 3);
+
+const INFO = Object.freeze({
+  topic: 'setremote/v1/session/topic',
+  r2s: 'setremote/v1/session/key/remote-to-screen',
+  s2r: 'setremote/v1/session/key/screen-to-remote',
+  relayAuth: 'setremote/v1/session/relay-auth',
+});
+
+async function deriveSession(pairing) {
+  assertPairing(pairing);
+  const ikm = b64uToBytes(pairing.key);
+  const salt = b64uToBytes(pairing.channelId);
+  const [topic, r2sRaw, s2rRaw, relayAuth] = await Promise.all([
+    hkdfBits(ikm, salt, INFO.topic, 128),
+    hkdfBits(ikm, salt, INFO.r2s, 256),
+    hkdfBits(ikm, salt, INFO.s2r, 256),
+    hkdfBits(ikm, salt, INFO.relayAuth, 256),
+  ]);
+  const s = subtle();
+  const alg = { name: 'AES-GCM' };
+  const [r2s, s2r] = await Promise.all([
+    s.importKey('raw', r2sRaw, alg, false, ['encrypt', 'decrypt']),
+    s.importKey('raw', s2rRaw, alg, false, ['encrypt', 'decrypt']),
+  ]);
+  ikm.fill(0);
+  r2sRaw.fill(0);
+  s2rRaw.fill(0);
+  return { topic: bytesToB64u(topic), keys: { r2s, s2r }, relayAuth: bytesToB64u(relayAuth) };
+}
+
+function newSenderTag(prefix = '') {
+  if (typeof prefix !== 'string' || !/^[A-Za-z0-9_-]{0,8}$/.test(prefix)) {
+    throw new ProtocolError('bad-argument', 'préfixe d’émetteur invalide');
+  }
+  return prefix + bytesToB64u(randomBytes(6));
+}
+
+function checkSenderSeqTs(/** @type {any} */ o) {
+  if (!o || typeof o !== 'object') throw new ProtocolError('bad-argument', 'options { sender, seq } requises');
+  const { sender, seq } = o;
+  const ts = o.ts === undefined ? Date.now() : o.ts;
+  if (typeof sender !== 'string' || !SENDER_RE.test(sender)) throw new ProtocolError('bad-argument', 'sender invalide');
+  if (!Number.isInteger(seq) || seq < 0 || seq > MAX_SEQ) throw new ProtocolError('bad-argument', 'seq invalide (uint32)');
+  if (!Number.isInteger(ts) || ts < 0 || ts > MAX_TS) throw new ProtocolError('bad-argument', 'ts invalide');
+  return { sender, seq, ts };
+}
+
+function writeHeader(h) {
+  const sender = asciiBytes(h.sender);
+  let tail;
+  if (h.kind === FRAME_KIND.MESSAGE) {
+    tail = new Uint8Array(0);
+  } else {
+    const id = asciiBytes(/** @type {string} */ (h.mediaId));
+    const idx = /** @type {number} */ (h.index);
+    const tot = /** @type {number} */ (h.total);
+    tail = concatBytes(Uint8Array.of(id.length), id, Uint8Array.of(idx >> 8, idx & 255, tot >> 8, tot & 255));
+  }
+  const out = new Uint8Array(3 + sender.length + 10 + tail.length);
+  let o = 0;
+  out[o++] = FRAME_VERSION;
+  out[o++] = h.kind;
+  out[o++] = sender.length;
+  out.set(sender, o);
+  o += sender.length;
+  out[o++] = (h.seq >>> 24) & 255;
+  out[o++] = (h.seq >>> 16) & 255;
+  out[o++] = (h.seq >>> 8) & 255;
+  out[o++] = h.seq & 255;
+  const hi = Math.floor(h.ts / 2 ** 32);
+  const lo = h.ts % 2 ** 32;
+  out[o++] = (hi >>> 8) & 255;
+  out[o++] = hi & 255;
+  out[o++] = (lo >>> 24) & 255;
+  out[o++] = (lo >>> 16) & 255;
+  out[o++] = (lo >>> 8) & 255;
+  out[o++] = lo & 255;
+  out.set(tail, o);
+  return out;
+}
+
+function readHeader(b) {
+  const bad = (/** @type {string} */ why) => new ProtocolError('malformed', why);
+  if (b.length < 3) throw bad('trame trop courte');
+  const version = b[0];
+  if (version !== FRAME_VERSION) throw new ProtocolError('version', `version de trame ${version} non supportée`);
+  const kind = b[1];
+  if (kind !== FRAME_KIND.MESSAGE && kind !== FRAME_KIND.CHUNK) throw bad('type de trame inconnu');
+  const sLen = b[2];
+  if (sLen < 1 || sLen > 16) throw bad('longueur d’émetteur invalide');
+  let o = 3;
+  const need = (/** @type {number} */ n) => { if (o + n > b.length) throw bad('en-tête tronqué'); };
+  need(sLen + 10);
+  const sender = asciiString(b.subarray(o, o + sLen));
+  if (!SENDER_RE.test(sender)) throw bad('émetteur invalide');
+  o += sLen;
+  const seq = ((b[o] << 24) >>> 0) + (b[o + 1] << 16) + (b[o + 2] << 8) + b[o + 3];
+  o += 4;
+  const ts = (b[o] * 256 + b[o + 1]) * 2 ** 32 + ((b[o + 2] << 24) >>> 0) + (b[o + 3] << 16) + (b[o + 4] << 8) + b[o + 5];
+  o += 6;
+  const h = { version, kind, sender, seq, ts, headerLength: 0 };
+  if (kind === FRAME_KIND.CHUNK) {
+    need(1);
+    const len = b[o++];
+    if (len < 1 || len > 64) throw bad('longueur de mediaId invalide');
+    need(len + 4);
+    const mediaId = asciiString(b.subarray(o, o + len));
+    if (!MEDIA_ID_RE.test(mediaId)) throw bad('mediaId invalide');
+    o += len;
+    const index = (b[o] << 8) | b[o + 1];
+    const total = (b[o + 2] << 8) | b[o + 3];
+    o += 4;
+    if (total < 1 || total > MAX_CHUNKS) throw new ProtocolError('too-large', 'nombre de fragments hors plafond');
+    if (index >= total) throw bad('index de fragment hors bornes');
+    h.mediaId = mediaId;
+    h.index = index;
+    h.total = total;
+  }
+  h.headerLength = o;
+  if (b.length < o + IV_BYTES + TAG_BYTES) throw bad('trame trop courte');
+  return h;
+}
+
+function peekFrame(str) {
+  if (typeof str !== 'string') throw new ProtocolError('malformed', 'chaîne attendue');
+  if (str.length > MAX_FRAME_CHARS) throw new ProtocolError('too-large', 'trame trop longue');
+  const prefix = str.slice(0, Math.min(str.length, 4 * Math.ceil((MAX_HEADER_BYTES + IV_BYTES + TAG_BYTES) / 3)));
+  const usable = prefix.length === str.length ? prefix : prefix.slice(0, prefix.length - (prefix.length % 4));
+  const h = readHeader(b64uToBytes(usable));
+  const { headerLength, ...pub } = h;
+  return pub;
+}
+
+class ReplayState {
+  constructor(opts = {}) {
+    const windowSize = opts.windowSize ?? DEFAULT_REPLAY_WINDOW;
+    if (!Number.isInteger(windowSize) || windowSize < 32 || windowSize > 65536 || windowSize % 32 !== 0) {
+      throw new ProtocolError('bad-argument', 'windowSize : multiple de 32 entre 32 et 65536');
+    }
+    this.windowSize = windowSize;
+    this.maxSkewMs = opts.maxSkewMs ?? DEFAULT_MAX_SKEW_MS;
+    this.maxSenders = opts.maxSenders ?? DEFAULT_MAX_SENDERS;
+    this.now = opts.now ?? (() => Date.now());
+    this.senders = new Map();
+  }
+
+  check(sender, seq, ts) {
+    if (this.maxSkewMs !== Infinity && Math.abs(this.now() - ts) > this.maxSkewMs) {
+      throw new ProtocolError('stale', 'horodatage hors tolérance (horloge désynchronisée ou rejeu)');
+    }
+    const st = this.senders.get(sender);
+    if (!st || seq > st.max) return;
+    if (st.max - seq >= this.windowSize) throw new ProtocolError('replay', 'séquence trop ancienne');
+    const pos = seq % this.windowSize;
+    if (st.bits[pos >>> 5] & (1 << (pos & 31))) throw new ProtocolError('replay', 'séquence déjà reçue');
+  }
+
+  accept(sender, seq, ts) {
+    this.check(sender, seq, ts);
+    let st = this.senders.get(sender);
+    if (st) {
+      this.senders.delete(sender);
+    } else {
+      if (this.senders.size >= this.maxSenders) {
+        const oldest = this.senders.keys().next().value;
+        if (oldest !== undefined) this.senders.delete(oldest);
+      }
+      st = { max: seq, bits: new Uint32Array(this.windowSize / 32) };
+    }
+    this.senders.set(sender, st);
+    if (seq > st.max) {
+      const shift = seq - st.max;
+      if (shift >= this.windowSize) {
+        st.bits.fill(0);
+      } else {
+        for (let s = st.max + 1; s <= seq; s++) {
+          const p = s % this.windowSize;
+          st.bits[p >>> 5] &= ~(1 << (p & 31));
+        }
+      }
+      st.max = seq;
+    }
+    const pos = seq % this.windowSize;
+    st.bits[pos >>> 5] |= 1 << (pos & 31);
+  }
+}
+
+function createReplayState(opts) {
+  return new ReplayState(opts);
+}
+
+async function encryptFrame(header, plaintext, key) {
+  if (!key || typeof key !== 'object') throw new ProtocolError('bad-argument', 'clé AES-GCM attendue');
+  const iv = randomBytes(IV_BYTES);
+  const ct = new Uint8Array(
+    await subtle().encrypt({ name: 'AES-GCM', iv, additionalData: header, tagLength: 128 }, key, exactBytes(plaintext)),
+  );
+  return bytesToB64u(concatBytes(header, iv, ct));
+}
+
+async function decryptFrame(str, key, replayState, expectedKind) {
+  if (replayState === undefined) {
+    throw new ProtocolError('bad-argument', 'replayState requis (passer null pour désactiver explicitement)');
+  }
+  if (!key || typeof key !== 'object') throw new ProtocolError('bad-argument', 'clé AES-GCM attendue');
+  if (typeof str !== 'string') throw new ProtocolError('malformed', 'chaîne attendue');
+  if (str.length > MAX_FRAME_CHARS) throw new ProtocolError('too-large', 'trame trop longue');
+  const bytes = b64uToBytes(str);
+  const h = readHeader(bytes);
+  if (h.kind !== expectedKind) {
+    throw new ProtocolError('kind', expectedKind === FRAME_KIND.MESSAGE ? 'fragment reçu au lieu d’un message' : 'message reçu au lieu d’un fragment');
+  }
+  if (replayState) replayState.check(h.sender, h.seq, h.ts);
+  const hl = h.headerLength;
+  let pt;
+  try {
+    pt = new Uint8Array(
+      await subtle().decrypt(
+        {
+          name: 'AES-GCM',
+          iv: bytes.slice(hl, hl + IV_BYTES),
+          additionalData: bytes.slice(0, hl),
+          tagLength: 128,
+        },
+        key,
+        bytes.slice(hl + IV_BYTES),
+      ),
+    );
+  } catch (_) {
+    throw new ProtocolError('auth', 'authentification AES-GCM échouée');
+  }
+  if (replayState) replayState.accept(h.sender, h.seq, h.ts);
+  return { h, pt };
+}
+
+const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+function isPlainObject(v) {
+  if (v === null || typeof v !== 'object' || Array.isArray(v)) return false;
+  const proto = Object.getPrototypeOf(v);
+  return proto === Object.prototype || proto === null;
+}
+
+async function seal(obj, key, opts) {
+  const { sender, seq, ts } = checkSenderSeqTs(opts);
+  if (!isPlainObject(obj) || typeof obj.type !== 'string' || !TYPE_RE.test(obj.type)) {
+    throw new ProtocolError('bad-argument', 'objet { type } attendu');
+  }
+  let json;
+  try {
+    json = JSON.stringify(obj);
+  } catch (_) {
+    throw new ProtocolError('bad-argument', 'message non sérialisable en JSON');
+  }
+  const pt = utf8Encode(json);
+  if (pt.length > MAX_MESSAGE_BYTES) throw new ProtocolError('too-large', `message > ${MAX_MESSAGE_BYTES} octets`);
+  const header = writeHeader({ kind: FRAME_KIND.MESSAGE, sender, seq, ts });
+  return encryptFrame(header, pt, key);
+}
+
+async function open(str, key, replayState) {
+  const { pt } = await decryptFrame(str, key, replayState, FRAME_KIND.MESSAGE);
+  if (pt.length > MAX_MESSAGE_BYTES) throw new ProtocolError('too-large', 'message trop long');
+  let body;
+  try {
+    body = JSON.parse(utf8Decode(pt), (k, v) => {
+      if (FORBIDDEN_KEYS.has(k)) throw new ProtocolError('malformed', `clé interdite « ${k} »`);
+      return v;
+    });
+  } catch (e) {
+    if (e instanceof ProtocolError) throw e;
+    throw new ProtocolError('malformed', 'JSON invalide');
+  }
+  const m = /** @type {Record<string, unknown>} */ (body);
+  if (!isPlainObject(body) || typeof m.type !== 'string' || !TYPE_RE.test(m.type)) {
+    throw new ProtocolError('malformed', 'corps de message invalide');
+  }
+  return /** @type {{ type: string, [k: string]: unknown }} */ (m);
+}
+
+function toBytes(data) {
+  if (data instanceof Uint8Array) return data;
+  if (data instanceof ArrayBuffer) return new Uint8Array(data);
+  throw new ProtocolError('bad-argument', 'Uint8Array ou ArrayBuffer attendu');
+}
+
+async function sealChunk(data, key, opts) {
+  const { sender, seq, ts } = checkSenderSeqTs(opts);
+  const bytes = toBytes(data);
+  const { mediaId, index, total } = opts;
+  if (bytes.length > MAX_CHUNK_BYTES) throw new ProtocolError('too-large', `fragment > ${MAX_CHUNK_BYTES} octets`);
+  if (typeof mediaId !== 'string' || !MEDIA_ID_RE.test(mediaId)) throw new ProtocolError('bad-argument', 'mediaId invalide');
+  if (!Number.isInteger(total) || total < 1) throw new ProtocolError('bad-argument', 'total invalide');
+  if (total > MAX_CHUNKS) throw new ProtocolError('too-large', `plus de ${MAX_CHUNKS} fragments`);
+  if (!Number.isInteger(index) || index < 0 || index >= total) throw new ProtocolError('bad-argument', 'index invalide');
+  const header = writeHeader({ kind: FRAME_KIND.CHUNK, sender, seq, ts, mediaId, index, total });
+  return encryptFrame(header, bytes, key);
+}
+
+async function openChunk(str, key, replayState) {
+  const { h, pt } = await decryptFrame(str, key, replayState, FRAME_KIND.CHUNK);
+  if (pt.length > MAX_CHUNK_BYTES) throw new ProtocolError('too-large', 'fragment trop long');
+  return {
+    mediaId: /** @type {string} */ (h.mediaId),
+    index: /** @type {number} */ (h.index),
+    total: /** @type {number} */ (h.total),
+    data: pt,
+    sender: h.sender,
+    seq: h.seq,
+    ts: h.ts,
+  };
+}
+
+function splitIntoChunks(data, chunkSize = MAX_CHUNK_BYTES) {
+  const bytes = toBytes(data);
+  if (!Number.isInteger(chunkSize) || chunkSize < 1 || chunkSize > MAX_CHUNK_BYTES) {
+    throw new ProtocolError('bad-argument', 'taille de fragment invalide');
+  }
+  const total = Math.max(1, Math.ceil(bytes.length / chunkSize));
+  if (total > MAX_CHUNKS) throw new ProtocolError('too-large', `média > ${MAX_CHUNKS} fragments`);
+  const out = [];
+  for (let i = 0; i < total; i++) out.push(bytes.subarray(i * chunkSize, (i + 1) * chunkSize));
+  return out;
+}
+
+function createChunkAssembler(opts = {}) {
+  const maxParallel = opts.maxParallel ?? 4;
+  const maxTotalBytes = opts.maxTotalBytes ?? MAX_CHUNKS * MAX_CHUNK_BYTES;
+  const requireExpected = opts.requireExpected ?? true;
+  const pending = new Map();
+  const startEntry = (mediaId, total) => {
+    pending.delete(mediaId);
+    if (pending.size >= maxParallel) {
+      const oldest = pending.keys().next().value;
+      if (oldest !== undefined) pending.delete(oldest);
+    }
+    const e = { total, parts: new Array(total), got: 0, bytes: 0 };
+    pending.set(mediaId, e);
+    return e;
+  };
+  return {
+    expect(mediaId, total) {
+      if (typeof mediaId !== 'string' || !MEDIA_ID_RE.test(mediaId)) throw new ProtocolError('bad-argument', 'mediaId invalide');
+      if (!Number.isInteger(total) || total < 1 || total > MAX_CHUNKS) throw new ProtocolError('too-large', 'total hors plafond');
+      startEntry(mediaId, total);
+    },
+    add(c) {
+      let e = pending.get(c.mediaId);
+      if (!e && requireExpected) return null; // transfert non annoncé / pas pour nous
+      if (e && e.total !== c.total) {
+        if (requireExpected) return null; // incohérent avec l'annonce
+        e = undefined; // nouvel envoi du même média (taille différente)
+      }
+      if (!e) e = startEntry(c.mediaId, c.total);
+      if (e.parts[c.index] !== undefined) return null; // doublon (renvoi)
+      if (e.bytes + c.data.length > maxTotalBytes) {
+        pending.delete(c.mediaId);
+        throw new ProtocolError('too-large', 'média réassemblé trop volumineux');
+      }
+      e.parts[c.index] = c.data;
+      e.got++;
+      e.bytes += c.data.length;
+      if (e.got < e.total) return null;
+      pending.delete(c.mediaId);
+      return concatBytes(.../** @type {Uint8Array[]} */ (e.parts));
+    },
+    missing(mediaId, limit = 400) {
+      const e = pending.get(mediaId);
+      if (!e) return [];
+      const out = [];
+      for (let i = 0; i < e.total && out.length < limit; i++) if (e.parts[i] === undefined) out.push(i);
+      return out;
+    },
+    drop(mediaId) {
+      pending.delete(mediaId);
+    },
+    get size() {
+      return pending.size;
+    },
+  };
+}
+  return { FRAME_VERSION, FRAME_KIND, IV_BYTES, TAG_BYTES, MAX_MESSAGE_BYTES, MAX_CHUNK_BYTES, MAX_CHUNKS, MAX_SEQ, MAX_TS, DEFAULT_REPLAY_WINDOW, DEFAULT_MAX_SKEW_MS, DEFAULT_MAX_SENDERS, SENDER_RE, TYPE_RE, MAX_FRAME_CHARS, deriveSession, newSenderTag, peekFrame, ReplayState, createReplayState, seal, open, sealChunk, openChunk, splitIntoChunks, createChunkAssembler };
+})();
+// ── pairing.js ──
+__m["pairing.js"] = (function () {
+  const { ProtocolError } = __m["lib/errors.js"];
+  const { randomBytes, subtle } = __m["lib/env.js"];
+  const { b64uToBytes, bytesToB64u, concatBytes, timingSafeEqual, utf8Encode } = __m["lib/encoding.js"];
+  const { hkdfBits, lengthPrefixed, sha256 } = __m["lib/kdf.js"];
+  const { assertPairing, isValidPairing, CHANNEL_ID_BYTES, PAIRING_KEY_BYTES, CHANNEL_ID_CHARS, PAIRING_KEY_CHARS } = __m["lib/pairingFormat.js"];
+  const { createReplayState, deriveSession, open, seal } = __m["crypto.js"];
+const PAIRING_VERSION = 'v1';
+const MAX_URL_LENGTH = 4096;
+const FRAGMENT_RE = new RegExp(`^p=v1\\.([A-Za-z0-9_-]{${CHANNEL_ID_CHARS}})\\.([A-Za-z0-9_-]{${PAIRING_KEY_CHARS}})$`);
+
+function createPairing() {
+  return {
+    channelId: bytesToB64u(randomBytes(CHANNEL_ID_BYTES)),
+    key: bytesToB64u(randomBytes(PAIRING_KEY_BYTES)),
+  };
+}
+
+function pairingUrl(base, pairing) {
+  assertPairing(pairing);
+  if (typeof base !== 'string') throw new ProtocolError('bad-argument', 'base doit être une chaîne');
+  const i = base.indexOf('#');
+  const clean = i >= 0 ? base.slice(0, i) : base;
+  return `${clean}#p=${PAIRING_VERSION}.${pairing.channelId}.${pairing.key}`;
+}
+
+function parsePairingUrl(str) {
+  if (typeof str !== 'string' || str.length > MAX_URL_LENGTH) return null;
+  const i = str.indexOf('#');
+  const frag = i >= 0 ? str.slice(i + 1) : str;
+  for (const part of frag.split('&')) {
+    if (!part.startsWith('p=')) continue;
+    const m = FRAGMENT_RE.exec(part);
+    if (!m) return null;
+    const pairing = { channelId: m[1], key: m[2] };
+    return isValidPairing(pairing) ? pairing : null;
+  }
+  return null;
+}
+
+const RENDEZVOUS_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const RENDEZVOUS_CODE_LENGTH = 6;
+const RENDEZVOUS_TTL_MS = 2 * 60 * 1000;
+
+function createRendezvous(opts = {}) {
+  const now = opts.now ?? Date.now();
+  const ttlMs = opts.ttlMs ?? RENDEZVOUS_TTL_MS;
+  const A = RENDEZVOUS_ALPHABET;
+  const limit = 256 - (256 % A.length); // rejet des octets ≥ 248 : pas de biais modulo
+  let code = '';
+  while (code.length < RENDEZVOUS_CODE_LENGTH) {
+    for (const b of randomBytes(16)) {
+      if (b < limit && code.length < RENDEZVOUS_CODE_LENGTH) code += A[b % A.length];
+    }
+  }
+  return { code, expiresAt: now + ttlMs };
+}
+
+function normalizeRendezvousCode(input) {
+  if (typeof input !== 'string' || input.length > 32) return null;
+  const s = input.toUpperCase().replace(/[\s._-]/g, '');
+  if (s.length !== RENDEZVOUS_CODE_LENGTH) return null;
+  for (const ch of s) if (!RENDEZVOUS_ALPHABET.includes(ch)) return null;
+  return s;
+}
+
+function formatRendezvousCode(/** @type {string} */ code) {
+  const c = normalizeRendezvousCode(code);
+  if (!c) throw new ProtocolError('bad-argument', 'code de rendez-vous invalide');
+  return `${c.slice(0, 3)}-${c.slice(3)}`;
+}
+
+async function rendezvousTopic(code) {
+  const c = normalizeRendezvousCode(code);
+  if (!c) throw new ProtocolError('bad-argument', 'code de rendez-vous invalide');
+  const h = await sha256(utf8Encode(`setremote/v1/rendezvous/${c}`));
+  return bytesToB64u(h.subarray(0, 16));
+}
+
+const EC_ALG = Object.freeze({ name: 'ECDH', namedCurve: 'P-256' });
+
+function sanitizePublicJwk(jwk) {
+  const j = /** @type {any} */ (jwk);
+  if (!j || typeof j !== 'object' || j.kty !== 'EC' || j.crv !== 'P-256' || typeof j.x !== 'string' || typeof j.y !== 'string') {
+    throw new ProtocolError('bad-key', 'JWK public P-256 attendu');
+  }
+  if (Object.prototype.hasOwnProperty.call(j, 'd')) throw new ProtocolError('bad-key', 'clé privée présente dans le JWK');
+  let x;
+  let y;
+  try {
+    x = b64uToBytes(j.x);
+    y = b64uToBytes(j.y);
+  } catch (_) {
+    throw new ProtocolError('bad-key', 'coordonnées non base64url');
+  }
+  if (x.length !== 32 || y.length !== 32) throw new ProtocolError('bad-key', 'coordonnées de 32 octets attendues');
+  return { kty: 'EC', crv: 'P-256', x: j.x, y: j.y };
+}
+
+function jwkPoint(/** @type {unknown} */ jwk) {
+  const j = sanitizePublicJwk(jwk);
+  return concatBytes(Uint8Array.of(4), b64uToBytes(j.x), b64uToBytes(j.y));
+}
+
+async function ecdhKeyPair() {
+  const s = subtle();
+  const kp = /** @type {CryptoKeyPair} */ (await s.generateKey(EC_ALG, false, ['deriveBits']));
+  const jwk = await s.exportKey('jwk', kp.publicKey);
+  return { privateKey: kp.privateKey, publicJwk: sanitizePublicJwk(jwk) };
+}
+
+async function commitPublicKey(publicJwk) {
+  const h = await sha256(concatBytes(utf8Encode('setremote/v1/pair/commit'), jwkPoint(publicJwk)));
+  return bytesToB64u(h);
+}
+
+async function verifyCommitment(publicJwk, commitment) {
+  try {
+    if (typeof commitment !== 'string') return false;
+    const expected = b64uToBytes(await commitPublicKey(/** @type {PublicJwk} */ (publicJwk)));
+    return timingSafeEqual(expected, b64uToBytes(commitment));
+  } catch (_) {
+    return false;
+  }
+}
+
+function compareBytes(a, b) {
+  for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i] - b[i];
+  return a.length - b.length;
+}
+
+async function deriveSharedPairing(myKeyPair, peerPublicJwk, transcript = {}) {
+  if (!myKeyPair || typeof myKeyPair !== 'object' || !myKeyPair.privateKey) {
+    throw new ProtocolError('bad-argument', 'paire de clés ECDH attendue');
+  }
+  const myPoint = jwkPoint(myKeyPair.publicJwk);
+  const peerPoint = jwkPoint(peerPublicJwk);
+  if (timingSafeEqual(myPoint, peerPoint)) throw new ProtocolError('bad-key', 'clé réfléchie (identique à la nôtre)');
+
+  let code = '';
+  if (transcript.code !== undefined) {
+    const c = normalizeRendezvousCode(transcript.code);
+    if (!c) throw new ProtocolError('bad-argument', 'code de rendez-vous invalide');
+    code = c;
+  }
+  const context = transcript.context ?? '';
+  if (typeof context !== 'string' || context.length > 256) throw new ProtocolError('bad-argument', 'contexte invalide');
+
+  const s = subtle();
+  let peerKey;
+  try {
+    peerKey = await s.importKey('jwk', { ...sanitizePublicJwk(peerPublicJwk), ext: true }, EC_ALG, true, []);
+  } catch (_) {
+    throw new ProtocolError('bad-key', 'point invalide (hors courbe)');
+  }
+  const z = new Uint8Array(await s.deriveBits({ name: 'ECDH', public: peerKey }, myKeyPair.privateKey, 256));
+
+  const [lo, hi] = compareBytes(myPoint, peerPoint) < 0 ? [myPoint, peerPoint] : [peerPoint, myPoint];
+  const th = await sha256(concatBytes(
+    utf8Encode('setremote/v1/pair/transcript'),
+    lengthPrefixed(utf8Encode(code)),
+    lengthPrefixed(utf8Encode(context)),
+    lengthPrefixed(lo),
+    lengthPrefixed(hi),
+  ));
+  const [channelId, key, sasBytes] = await Promise.all([
+    hkdfBits(z, th, 'setremote/v1/pair/channel-id', 128),
+    hkdfBits(z, th, 'setremote/v1/pair/key', 256),
+    hkdfBits(z, th, 'setremote/v1/pair/sas', 48),
+  ]);
+  z.fill(0);
+  let n = 0;
+  for (const b of sasBytes) n = n * 256 + b; // 48 bits : entier exact en double
+  const sas = String(n % 1_000_000).padStart(6, '0');
+  const pairing = { channelId: bytesToB64u(channelId), key: bytesToB64u(key) };
+  key.fill(0);
+  return { pairing, sas };
+}
+
+function formatSas(/** @type {string} */ sas) {
+  if (typeof sas !== 'string' || !/^\d{6}$/.test(sas)) throw new ProtocolError('bad-argument', 'SAS invalide');
+  return `${sas.slice(0, 3)} ${sas.slice(3)}`;
+}
+
+const SESSION_TRANSFER_TYPE = 'pair:session';
+
+async function sealSessionForPeer(sessionPairing, peerPairing, opts = {}) {
+  assertPairing(sessionPairing);
+  assertPairing(peerPairing);
+  if (sessionPairing.channelId === peerPairing.channelId) {
+    throw new ProtocolError('bad-argument', 'le secret de session ne doit pas être l’appairage temporaire');
+  }
+  const label = opts.label ?? '';
+  if (typeof label !== 'string' || label.length > 40) throw new ProtocolError('bad-argument', 'label ≤ 40 caractères');
+  const temp = await deriveSession(peerPairing);
+  const msg = { type: SESSION_TRANSFER_TYPE, channelId: sessionPairing.channelId, key: sessionPairing.key };
+  if (label) msg.label = label;
+  return seal(msg, temp.keys.r2s, { sender: opts.sender ?? 'rdv', seq: 0 });
+}
+
+async function openSessionFromPeer(frame, peerPairing) {
+  assertPairing(peerPairing);
+  const temp = await deriveSession(peerPairing);
+  const msg = await open(frame, temp.keys.r2s, createReplayState({ maxSkewMs: RENDEZVOUS_TTL_MS * 2 }));
+  if (msg.type !== SESSION_TRANSFER_TYPE) throw new ProtocolError('invalid-message', 'type de remise inattendu');
+  const keys = Object.keys(msg);
+  if (keys.some(k => !['type', 'channelId', 'key', 'label'].includes(k))) {
+    throw new ProtocolError('invalid-message', 'champ inattendu dans la remise de session');
+  }
+  const pairing = { channelId: msg.channelId, key: msg.key };
+  if (!isValidPairing(pairing)) throw new ProtocolError('bad-pairing', 'secret de session invalide');
+  const label = msg.label ?? '';
+  if (typeof label !== 'string' || label.length > 40) throw new ProtocolError('invalid-message', 'label invalide');
+  return { pairing: /** @type {Pairing} */ (pairing), label };
+}
+
+const B64U_43 = /^[A-Za-z0-9_-]{43}$/;
+
+const RENDEZVOUS_MESSAGE_TYPES = Object.freeze({
+  'pair:commit': { from: 'screen', fields: { v: '1', commit: 'SHA-256 de la clé publique de l’écran (base64url 43)' } },
+  'pair:key': { from: 'remote', fields: { v: '1', jwk: 'clé publique ECDH P-256 de la télécommande' } },
+  'pair:reveal': { from: 'screen', fields: { v: '1', jwk: 'clé publique ECDH P-256 de l’écran' } },
+  'pair:session': { from: 'remote', fields: { v: '1', frame: 'sealSessionForPeer(...) — secret de session chiffré' } },
+  'pair:abort': { from: 'both', fields: { v: '1', reason: "'mismatch' | 'timeout' | 'cancel' (facultatif)" } },
+});
+
+function validateRendezvousMessage(msg) {
+  try {
+    const m = /** @type {any} */ (msg);
+    if (!m || typeof m !== 'object' || Array.isArray(m) || m.v !== 1) return false;
+    const keys = Object.keys(m);
+    const only = (/** @type {string[]} */ allowed) => keys.every(k => allowed.includes(k));
+    switch (m.type) {
+      case 'pair:commit':
+        return only(['type', 'v', 'commit']) && typeof m.commit === 'string' && B64U_43.test(m.commit);
+      case 'pair:key':
+      case 'pair:reveal':
+        if (!only(['type', 'v', 'jwk'])) return false;
+        sanitizePublicJwk(m.jwk);
+        return Object.keys(m.jwk).every(k => ['kty', 'crv', 'x', 'y', 'ext', 'key_ops'].includes(k));
+      case 'pair:session':
+        return only(['type', 'v', 'frame']) && typeof m.frame === 'string' && m.frame.length <= 1024 && /^[A-Za-z0-9_-]+$/.test(m.frame);
+      case 'pair:abort':
+        return only(['type', 'v', 'reason']) && (m.reason === undefined || ['mismatch', 'timeout', 'cancel'].includes(m.reason));
+      default:
+        return false;
+    }
+  } catch (_) {
+    return false;
+  }
+}
+  return { isValidPairing, assertPairing, CHANNEL_ID_BYTES, PAIRING_KEY_BYTES, PAIRING_VERSION, createPairing, pairingUrl, parsePairingUrl, RENDEZVOUS_ALPHABET, RENDEZVOUS_CODE_LENGTH, RENDEZVOUS_TTL_MS, createRendezvous, normalizeRendezvousCode, formatRendezvousCode, rendezvousTopic, sanitizePublicJwk, ecdhKeyPair, commitPublicKey, verifyCommitment, deriveSharedPairing, formatSas, sealSessionForPeer, openSessionFromPeer, RENDEZVOUS_MESSAGE_TYPES, validateRendezvousMessage };
+})();
+// ── channel.js ──
+__m["channel.js"] = (function () {
+  const { ProtocolError } = __m["lib/errors.js"];
+  const { randomBytes } = __m["lib/env.js"];
+  const { bytesToB64u } = __m["lib/encoding.js"];
+  const { FRAME_KIND, MAX_SEQ, createReplayState, deriveSession, newSenderTag, open, openChunk, peekFrame, seal, sealChunk } = __m["crypto.js"];
+  const { GROUP_ID_RE, SCREEN_ID_RE, explainInvalid, isAddressedTo } = __m["schema.js"];
+const SESSION_TOPIC_PREFIX = 'setremote/v2/s/';
+const RENDEZVOUS_TOPIC_PREFIX = 'setremote/v2/rdv/';
+
+function createScreenId() {
+  return bytesToB64u(randomBytes(12));
+}
+
+async function createSecureChannel(opts) {
+  const { role } = opts || /** @type {any} */ ({});
+  if (role !== 'remote' && role !== 'screen') throw new ProtocolError('bad-argument', "role : 'remote' | 'screen'");
+  const screenId = opts.screenId;
+  if (role === 'screen' && (typeof screenId !== 'string' || !SCREEN_ID_RE.test(screenId))) {
+    throw new ProtocolError('bad-argument', 'screenId requis pour un écran (createScreenId)');
+  }
+  const checkGroups = g => {
+    if (!Array.isArray(g) || g.length > 16 || !g.every(x => typeof x === 'string' && GROUP_ID_RE.test(x))) {
+      throw new ProtocolError('bad-argument', 'groupes invalides');
+    }
+    return [...g];
+  };
+  let groups = checkGroups(opts.groups ?? []);
+
+  const session = await deriveSession(opts.pairing);
+  const isRemote = role === 'remote';
+  const sender = newSenderTag(isRemote ? 'r' : 's');
+  const peerPrefix = isRemote ? 's' : 'r';
+  const sendKey = isRemote ? session.keys.r2s : session.keys.s2r;
+  const recvKey = isRemote ? session.keys.s2r : session.keys.r2s;
+  const sendDir = isRemote ? 'r2s' : 's2r';
+  const recvDir = isRemote ? 's2r' : 'r2s';
+  const replay = createReplayState(opts.replay);
+  let seq = 0;
+  const nextSeq = () => {
+    if (seq > MAX_SEQ) throw new ProtocolError('too-large', 'compteur de séquence épuisé : recréer le canal');
+    return seq++;
+  };
+
+  return {
+    role,
+    sender,
+    screenId: role === 'screen' ? screenId : undefined,
+    topic: session.topic,
+    mqttTopic: SESSION_TOPIC_PREFIX + session.topic,
+    relayAuth: session.relayAuth,
+
+    setGroups(g) {
+      groups = checkGroups(g);
+    },
+    get groups() {
+      return [...groups];
+    },
+
+    async seal(msg) {
+      const why = explainInvalid(msg, { direction: sendDir });
+      if (why) throw new ProtocolError('invalid-message', why);
+      return seal(msg, sendKey, { sender, seq: nextSeq() });
+    },
+
+    async sealChunk(data, meta) {
+      return sealChunk(data, sendKey, { sender, seq: nextSeq(), mediaId: meta.mediaId, index: meta.index, total: meta.total });
+    },
+
+    async receive(str) {
+      const h = peekFrame(str);
+      if (h.sender === sender) return null;
+      if (h.sender[0] !== peerPrefix) return null;
+      if (h.kind === FRAME_KIND.CHUNK) {
+        const chunk = await openChunk(str, recvKey, replay);
+        return { kind: 'chunk', chunk, sender: chunk.sender };
+      }
+      const message = await open(str, recvKey, replay);
+      const why = explainInvalid(message, { direction: recvDir });
+      if (why) throw new ProtocolError('invalid-message', why);
+      if (role === 'screen' && !isAddressedTo(message, { screenId: /** @type {string} */ (screenId), groups })) return null;
+      return { kind: 'message', message, sender: h.sender };
+    },
+  };
+}
+  return { SESSION_TOPIC_PREFIX, RENDEZVOUS_TOPIC_PREFIX, createScreenId, createSecureChannel };
+})();
+// ── index.js ──
+__m["index.js"] = (function () {
+
+  return { ...__star(__m["pairing.js"]), ...__star(__m["crypto.js"]), ...__star(__m["schema.js"]), ...__star(__m["channel.js"]), setCrypto: __m["lib/env.js"].setCrypto, getCrypto: __m["lib/env.js"].getCrypto, ProtocolError: __m["lib/errors.js"].ProtocolError, bytesToB64u: __m["lib/encoding.js"].bytesToB64u, b64uToBytes: __m["lib/encoding.js"].b64uToBytes, utf8Encode: __m["lib/encoding.js"].utf8Encode, utf8Decode: __m["lib/encoding.js"].utf8Decode };
+})();
+return Object.freeze(__m["index.js"]);
+})();
 // ══════════════════════════ APP NATIVE (coque iOS/Android) ══════════════════════════
 // La coque native injecte window.SETREMOTE_NATIVE avant le chargement et
 // expose window.ReactNativeWebView.postMessage pour les fonctions natives.
