@@ -60,10 +60,20 @@ export function diffPng(bufA, bufB, tolerance = 0) {
     return { identical: false, diffPixels: Infinity, total: A.width * A.height, sameSize: false,
       sizes: `${A.width}×${A.height} ≠ ${B.width}×${B.height}` };
   }
-  let n = 0;
+  let n = 0, maxDelta = 0;
   for (let i = 0; i < A.data.length; i += 4) {
-    if (Math.abs(A.data[i] - B.data[i]) > tolerance || Math.abs(A.data[i + 1] - B.data[i + 1]) > tolerance
-      || Math.abs(A.data[i + 2] - B.data[i + 2]) > tolerance || Math.abs(A.data[i + 3] - B.data[i + 3]) > tolerance) n++;
+    const d = Math.max(Math.abs(A.data[i] - B.data[i]), Math.abs(A.data[i + 1] - B.data[i + 1]),
+      Math.abs(A.data[i + 2] - B.data[i + 2]), Math.abs(A.data[i + 3] - B.data[i + 3]));
+    if (d > tolerance) n++;
+    if (d > maxDelta) maxDelta = d;
   }
-  return { identical: n === 0, diffPixels: n, total: A.width * A.height, sameSize: true };
+  return { identical: n === 0, diffPixels: n, maxDelta, total: A.width * A.height, sameSize: true };
+}
+
+// Bruit de rastérisation toléré : quelques pixels d'anticrénelage (coins
+// arrondis) peuvent varier de ±1 d'un rendu à l'autre. Tout écart plus grand,
+// ou touchant plus de NOISE_MAX_PIXELS pixels, reste un changement visuel.
+export const NOISE_MAX_PIXELS = 16;
+export function visuallyEqual(d) {
+  return d.identical || (d.sameSize && d.maxDelta <= 1 && d.diffPixels <= NOISE_MAX_PIXELS);
 }

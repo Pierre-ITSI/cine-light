@@ -53,11 +53,25 @@ export const SCENES = {
   },
 };
 
+// Fige les effets canvas sur une frame déterministe : chaque moteur actif est
+// relancé (t = 0, frame dessinée immédiatement) ; l'horloge étant en pause,
+// toutes les frames suivantes sont identiques — plus de course entre la
+// dernière frame peinte et la capture.
+function freezeCanvasFx() {
+  if (typeof _pvFxMain !== 'undefined' && _pvFxMain && _pvFxMain.current()) {
+    const n = _pvFxMain.current();
+    _pvFxMain.start(n, { ..._lastEffectParams });
+    _pvFxSticky.start(n, { ..._lastEffectParams });
+  }
+  if (typeof _screenFxR !== 'undefined' && _screenFxR.current()) _screenFxR.start(_screenFxR.current(), { ...(_screenFxParams || {}) });
+}
+
 // Capture d'une scène pour un fichier HTML donné
 export async function captureScene(browser, file, name) {
   const { page, errors, close } = await openPage(browser, { file, clock: true });
   try {
     await SCENES[name](page);
+    await page.evaluate(freezeCanvasFx);
     const png = await page.screenshot({ animations: 'disabled', caret: 'hide', scale: 'css' });
     return { png, errors: [...errors] };
   } finally { await close(); }

@@ -1,5 +1,6 @@
 // Non-régression visuelle : chaque écran clé de index.html doit être identique
-// au pixel près à sa capture de référence (tests/screenshots/*.png), rendue à
+// au pixel près (seul un bruit d'anticrénelage de ±1 sur ≤ 16 pixels est
+// toléré) à sa capture de référence (tests/screenshots/*.png), rendue à
 // partir du commit de référence noté dans tests/screenshots/baseline.json
 // (dernier état validé de l'interface).
 //
@@ -17,7 +18,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { launchBrowser, ROOT, INDEX_PATH } from './helpers/harness.mjs';
 import { SCENES, captureScene } from './helpers/scenes.mjs';
-import { diffPng } from './helpers/png.mjs';
+import { diffPng, visuallyEqual } from './helpers/png.mjs';
 
 const SNAP_DIR = path.join(ROOT, 'tests', 'screenshots');
 const ART_DIR = path.join(ROOT, 'tests', '.artifacts');
@@ -69,14 +70,14 @@ for (const name of Object.keys(SCENES)) {
     assert.deepEqual(cur.errors, [], 'erreurs de page pendant la scène');
     assert.ok(existsSync(snap), 'capture de référence manquante : ' + path.relative(ROOT, snap));
     const d = diffPng(cur.png, readFileSync(snap));
-    if (d.identical) return;
+    if (visuallyEqual(d)) { if (!d.identical) t.diagnostic(`bruit d'anticrénelage toléré : ${d.diffPixels} px à ±1`); return; }
     // Environnement différent (polices…) ? Rendre la référence ici même.
     const src = baselineFile();
     let detail = `${d.diffPixels} pixels différents de la capture stockée${d.sizes ? ' (' + d.sizes + ')' : ''}`;
     if (src) {
       const b = await captureScene(browser, src, name);
       const d2 = diffPng(cur.png, b.png);
-      if (d2.identical) {
+      if (visuallyEqual(d2)) {
         t.diagnostic(`${detail} — environnement différent ; rendu identique à la référence ${meta.ref.slice(0, 7)} rendue ici`);
         return;
       }
