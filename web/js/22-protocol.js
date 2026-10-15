@@ -5,8 +5,9 @@
 //              place (bornage des nombres, champs optionnels) ; false = rejet
 //   handle   : traitement (fonctions existantes de l'app)
 // Message inconnu, mal formé, hors rôle ou invalide : ignoré silencieusement.
-// Les formes de payload restent celles d'origine (rétrocompatibles avec les
-// télécommandes / écrans déjà déployés, PWA comme app native).
+// C'est la 2e barrière : chaque message a déjà été authentifié, déchiffré et
+// validé par le schéma strict du paquet protocole (20-mqtt.js) ; ici, on
+// borne et on aiguille.
 
 const _P = {
   isObj: (v) => v !== null && typeof v === 'object' && !Array.isArray(v),
@@ -35,8 +36,7 @@ const PROTO = {
   STROBE_DUR_MIN: 15, STROBE_DUR_MAX: 2000,    // ms
   VIB_MAX_ENTRIES: 20, VIB_MAX_MS: 2000,
   NAME_MAX: 40, MSG_MAX: 200, APP_MAX: 24, LOCK_TIME_MAX: 8, LOCK_DATE_MAX: 30,
-  PHOTO_MAX: 600000,                           // data-URL photo (caractères)
-  SDP_MAX: 200000, ICE_MAX: 4096,
+  SDP_MAX: 16000, ICE_MAX: 4096,               // = LIMITS du schéma (packages/protocol)
   ORDER_MAX: 500, MISSING_MAX: 400,
   VID_MAX_CHUNKS: 50000,                       // ≈ 600 Mo base64 en fragments de 12 000
   CALL_RINGS: ['classic', 'digital', 'soft', 'silent'],
@@ -74,7 +74,9 @@ function _validCallStart(m) {
   m.msg = _P.text(m.msg, PROTO.MSG_MAX);
   m.appName = _P.text(m.appName, PROTO.APP_MAX);
   if (!_P.hex(m.appColor)) m.appColor = null;
-  if (!(typeof m.photo === 'string' && m.photo.length <= PROTO.PHOTO_MAX)) m.photo = null; // contenu validé ensuite (safeImageData)
+  // La photo n'arrive plus dans ce message : préchargée en fragments (__callphoto)
+  delete m.photo;
+  m.hasPhoto = _P.bool(m.hasPhoto);
   // Sonnerie inconnue → classique (une clé comme « __proto__ » ne doit pas
   // fausser la cadence de répétition)
   if (!_P.oneOf(m.ring, PROTO.CALL_RINGS)) m.ring = 'classic';
@@ -215,6 +217,8 @@ const MSG_ROUTES = {
   'call:state':        { roles: ['remote'], validate: (m) => _P.oneOf(m.state, ['ringing', 'incall', 'declined', 'ended']), handle: (m) => remoteOnCallState(m) },
   'media:advanced':    { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenAdvanced(m.id) },
   'media:need':        { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenNeeds(m.id) },
+  // Signe de vie : la présence de l'écran est notée à la réception (20-mqtt.js)
+  'screen:alive':      { roles: ['remote'], validate: () => true, handle: () => {} },
   'caps': {
     roles: ['remote'],
     validate(m) {
@@ -238,4 +242,59 @@ function dispatchMessage(msg) {
   if (!route.validate(msg)) return false;
   route.handle(msg);
   return true;
+}
+
+// ── Émission : bornage aux plages du schéma AVANT scellement ──
+// Le schéma du paquet protocole REJETTE une valeur hors plage (ex. flash de
+// 5 ms) là où le récepteur la bornait : l'émetteur borne donc lui-même, sans
+// toucher aux curseurs de l'interface (flash ≥ 15 ms, strobe ≤ 30 Hz…).
+const _OUT_EFFECT_INT = { intensity: [0, 100], chaos: [0, 100], drift: [0, 100], smooth: [0, 100],
+  count: [1, 32], width: [1, 100], wing: [1, 4], rot: [0, 360], lead: [0, 1000], fade: [0, 1000] };
+function clampOutgoing(m) {
+  if (!_P.isObj(m)) return m;
+  const clampKeys = (o, keys, min, max, round) => {
+    for (const k of keys) {
+      if (o[k] === undefined) continue;
+      const v = _P.num(o[k], min, max);
+      if (v === null) delete o[k]; else o[k] = round ? Math.round(v) : v;
+    }
+  };
+  switch (m.type) {
+    case 'strobe':
+      clampKeys(m, ['freq', 'freqMin', 'freqMax'], PROTO.STROBE_FREQ_MIN, PROTO.STROBE_FREQ_MAX);
+      clampKeys(m, ['dur', 'durMin', 'durMax'], PROTO.STROBE_DUR_MIN, PROTO.STROBE_DUR_MAX);
+      break;
+    case 'effect':
+      if (_P.isObj(m.params)) {
+        const p = m.params;
+        clampKeys(p, ['speed'], 0.01, 240);
+        for (const k of Object.keys(_OUT_EFFECT_INT)) clampKeys(p, [k], _OUT_EFFECT_INT[k][0], _OUT_EFFECT_INT[k][1], true);
+        if (Array.isArray(p.blocks)) p.blocks = p.blocks.filter(_P.hex).slice(0, 8);
+        for (const k of ['color1', 'color2']) if (p[k] !== undefined && !_P.hex(p[k])) delete p[k];
+      }
+      break;
+    case 'vibrate':
+      if (typeof m.pattern === 'number') m.pattern = [m.pattern];
+      if (Array.isArray(m.pattern)) {
+        m.pattern = m.pattern.slice(0, PROTO.VIB_MAX_ENTRIES).map((v) => _P.num(v, 0, PROTO.VIB_MAX_MS) ?? 0);
+      }
+      break;
+    case 'torch-dim': clampKeys(m, ['level'], 0, 100); break;
+    case 'screen:brightness': clampKeys(m, ['value'], 0, 1); break;
+    case 'media-ctrl': clampKeys(m, ['time'], 0, 1e7); break;
+    case 'media-meta': m.dur = _P.num(m.dur, 0, 1e9); break;
+    case 'media-progress': m.cur = _P.num(m.cur, 0, 1e9); m.dur = _P.num(m.dur, 0, 1e9); break;
+    case 'call:start': {
+      // Une ligne : aucun caractère de contrôle ; message : sauts de ligne permis
+      const line = (v, max) => _P.text(v, max).replace(/[\u0000-\u001F\u007F]/g, ' ');
+      m.name = line(m.name, PROTO.NAME_MAX); m.label = line(m.label, PROTO.NAME_MAX);
+      m.appName = line(m.appName, PROTO.APP_MAX);
+      m.msg = _P.text(m.msg, PROTO.MSG_MAX).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '');
+      if (_P.isObj(m.lock)) m.lock = { time: line(m.lock.time, PROTO.LOCK_TIME_MAX), date: line(m.lock.date, PROTO.LOCK_DATE_MAX) };
+      if (m.appColor !== undefined && !_P.hex(m.appColor)) delete m.appColor;
+      clampKeys(m, ['autoAnswer'], 0, 60, true);
+      break;
+    }
+  }
+  return m;
 }

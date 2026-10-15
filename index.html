@@ -37,6 +37,8 @@
 <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash-2796x1290.png">
 <!-- mqtt.js embarqué et figé (5.16.1) : plus de dépendance à unpkg ni de mise à jour surprise -->
 <script src="vendor/mqtt-5.16.1.min.js"></script>
+<!-- QR d'appairage généré localement (qrcode-generator 2.0.4, MIT, figé) -->
+<script src="vendor/qrcode-generator-2.0.4.js"></script>
 <style>
 /* Polices auto-hébergées (vendor/fonts/, licence SIL OFL 1.1 jointe) : aucune
    requête vers Google. Fichiers woff2 de @fontsource/dm-mono@5.3.0 et
@@ -86,13 +88,9 @@ html,body{width:100%;min-height:100vh;background:radial-gradient(ellipse at cent
 #content-flash.torch-unavailable #torchDimSection,
 #content-flash.torch-unavailable .effect-grid{opacity:.4;pointer-events:none;filter:grayscale(.55)}
 
-#screen-connect{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:24px;padding:max(32px,env(safe-area-inset-top)) max(32px,env(safe-area-inset-right)) max(32px,env(safe-area-inset-bottom)) max(32px,env(safe-area-inset-left));animation:fadeIn .4s ease;min-height:100vh}
-#screen-connect h2{font-family:'Lato',sans-serif;font-weight:600;font-size:1.8rem;color:var(--accent);text-align:center}
-#screen-connect p{font-size:.72rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;text-align:center}
-.screen-input-row{display:flex;gap:10px;width:100%;max-width:340px}
-.screen-input-row input{flex:1;background:var(--mid);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:1.1rem;padding:14px 16px;border-radius:6px;outline:none;letter-spacing:.12em;text-align:center;transition:border-color .2s}
-.screen-input-row input:focus{border-color:var(--accent)}
-.screen-input-row input::placeholder{color:var(--muted);font-size:.85rem}
+/* Écran projecteur — rejoindre la télécommande (scan du QR ou code) : 25-pairing.css */
+#screen-connect{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:flex-start;background:var(--dark);gap:18px;padding:max(48px,env(safe-area-inset-top)) max(28px,env(safe-area-inset-right)) max(32px,env(safe-area-inset-bottom)) max(28px,env(safe-area-inset-left));animation:fadeIn .4s ease;min-height:100vh;overflow-y:auto}
+#screen-connect h2{font-family:'Lato',sans-serif;font-weight:600;font-size:1.75rem;color:var(--accent);text-align:center}
 .screen-go-btn{background:var(--accent);color:var(--dark);border:none;font-family:'DM Mono',monospace;font-size:.85rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:14px 20px;border-radius:6px;cursor:pointer}
 .screen-back{font-size:.65rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;background:none;border:none}
 .screen-back:hover{color:var(--text)}
@@ -123,11 +121,6 @@ html,body{width:100%;min-height:100vh;background:radial-gradient(ellipse at cent
 .panel{background:var(--mid);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:12px}
 .panel-label{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
 
-.channel-row{display:flex;gap:8px;align-items:center}
-.channel-row input{flex:1;background:var(--dark);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:.9rem;padding:10px 14px;border-radius:4px;outline:none;letter-spacing:.1em;transition:border-color .2s}
-.channel-row input:focus{border-color:var(--accent)}
-.connect-btn{background:var(--accent);color:var(--dark);border:none;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:10px 16px;border-radius:4px;cursor:pointer;white-space:nowrap}
-.status-indicator{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.7rem;color:var(--muted)}
 .dot{width:7px;height:7px;border-radius:50%;background:#444;transition:background .3s}
 .dot.connected{background:var(--green);box-shadow:0 0 6px var(--green)}
 .dot.connecting{background:var(--accent);animation:pulse 1s infinite}
@@ -159,6 +152,82 @@ input[type="range"]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;b
 #content-color input[type="range"],#content-effects input[type="range"]{height:10px}
 #content-color input[type="range"]::-webkit-slider-thumb,#content-effects input[type="range"]::-webkit-slider-thumb{width:32px;height:32px}
 #content-color input[type="range"]::-moz-range-thumb,#content-effects input[type="range"]::-moz-range-thumb{width:32px;height:32px}
+/* ══ Appairage sécurisé & état de la liaison (maquettes validées 1 à 4) ══ */
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Séparateur « ou avec le code » */
+.pair-or{align-self:stretch;display:flex;align-items:center;gap:10px;color:#8a8a8a;font-size:.625rem;letter-spacing:.15em;text-transform:uppercase}
+.pair-or::before,.pair-or::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.12)}
+
+/* — Télécommande : pastille de liaison (en-tête) — */
+.remote-header-end{display:flex;align-items:center;gap:8px}
+.link-pill{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:none;border-radius:14px;font-family:'DM Mono',monospace;font-size:.625rem;letter-spacing:.04em;white-space:nowrap;cursor:pointer;transition:background .3s,color .3s}
+.link-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+.link-pill.online{color:var(--green);background:rgba(95,223,138,.12)}
+.link-pill.reconnecting{color:#FF8a55;background:rgba(255,107,44,.14)}
+.link-pill.offline{color:#ff7a70;background:rgba(255,90,79,.14)}
+
+/* — Télécommande : appairer un écran (onglet QR) — */
+.pair-panel{display:flex;flex-direction:column;align-items:center;gap:12px}
+.pair-panel .panel-label{align-self:stretch;margin-bottom:0}
+.pair-panel .pair-or::before,.pair-panel .pair-or::after{background:rgba(255,255,255,.1)}
+.pair-qr{width:196px;height:196px;background:var(--text);border-radius:12px;padding:12px;flex-shrink:0}
+.pair-qr svg{display:block;width:172px;height:172px}
+.pair-steps{font-size:.75rem;color:#c8c8c8;text-align:center;line-height:1.5}
+.pair-steps b{color:var(--text)}
+.pair-steps span{color:#a8a8a8}
+.pair-code-row{display:flex;align-items:center;gap:12px}
+.pair-code{font-family:'Lato',sans-serif;font-weight:700;font-size:2.125rem;letter-spacing:.12em;color:var(--text)}
+.pair-refresh{width:44px;height:44px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:var(--mid2);color:#c8c8c8;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.pair-refresh:active{transform:scale(.95)}
+.pair-note{font-size:.6875rem;color:#a0a0a0;text-align:center}
+.pair-wait{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--accent)}
+.pair-wait-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.pair-screens{flex-direction:column;gap:10px}
+.pair-screens .panel-label{margin-bottom:0}
+.pair-screens-list{display:flex;flex-direction:column;gap:10px}
+.pair-screen{display:flex;align-items:center;gap:10px;font-size:.8125rem}
+.ps-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.pair-screen.off .ps-dot{background:#ff7a70}
+.ps-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps-link{font-size:.6875rem;color:#a0a0a0}
+.pair-screen.off .ps-link{color:#ff7a70}
+.pair-renew{border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)}
+.pair-e2e{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px 4px 4px;font-size:.6875rem;color:#a0a0a0;text-align:center;line-height:1.5}
+.pair-e2e svg{flex-shrink:0}
+
+/* — Écran projecteur : rejoindre (scan du QR ou code) — */
+.pj-sub{margin:0;font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase;color:#a8a8a8;text-align:center}
+.pj-viewfinder{position:relative;width:270px;height:270px;border-radius:18px;background:radial-gradient(circle at 40% 35%,#2a3240 0%,#12151b 70%);overflow:hidden;flex-shrink:0}
+.pj-viewfinder video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+.pj-viewfinder.live video{display:block}
+.pj-corners{position:absolute;inset:0}
+.pj-scanline{position:absolute;left:34px;right:34px;top:132px;height:2px;background:var(--accent);box-shadow:0 0 14px var(--accent);display:none}
+.pj-viewfinder.live .pj-scanline{display:block}
+.pj-cam-label{position:absolute;left:0;right:0;bottom:16px;padding:0 16px;text-align:center;font-size:.6875rem;color:#c8c8c8}
+.pj-form{align-self:stretch;display:flex;gap:10px;max-width:420px;width:100%;margin:0 auto}
+.pj-field{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.pj-field input{height:54px;width:100%;background:var(--mid);border:1px solid var(--accent);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:1.25rem;letter-spacing:.2em;text-align:center;text-transform:uppercase;outline:none}
+.pj-field input::placeholder{color:var(--muted)}
+.pj-form .screen-go-btn{height:54px;padding:0 22px;border-radius:8px;font-size:.8125rem}
+.pj-help{margin:0;max-width:420px;font-size:.6875rem;color:#a0a0a0;text-align:center;line-height:1.5}
+#screen-connect .screen-back{margin-top:auto;height:44px;padding:0 16px;color:#a8a8a8;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.1em;flex-shrink:0}
+
+/* — Vérification du nombre (code manuel), télécommande et écran — */
+#pair-verify{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);font-family:'DM Mono',monospace;color:var(--text)}
+.pv-dialog{position:absolute;left:18px;right:18px;top:150px;max-width:420px;margin:0 auto;background:var(--mid);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:26px 22px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.pv-dialog h2{margin:0;font-family:'Lato',sans-serif;font-weight:600;font-size:1.375rem}
+.pv-text{margin:0;font-size:.75rem;color:#c4c4c4;text-align:center;line-height:1.6}
+.pv-text b{color:var(--text)}
+.pv-sas{font-family:'Lato',sans-serif;font-weight:700;font-size:2.875rem;letter-spacing:.08em;color:var(--text);white-space:nowrap}
+.pv-warn{margin:0;font-size:.6875rem;color:#a8a8a8;text-align:center;line-height:1.6}
+.pv-actions{align-self:stretch;display:flex;gap:10px;margin-top:6px}
+.pv-cancel,.pv-ok{height:50px;border-radius:8px;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.pv-cancel{flex:1;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text)}
+.pv-ok{flex:1.4;border:none;background:var(--accent);color:#000;font-weight:500}
+.pv-ok:disabled{opacity:.55;cursor:default}
+.pv-foot{position:absolute;left:18px;right:18px;bottom:40px;font-size:.6875rem;color:#a8a8a8;text-align:center;line-height:1.6}
+@media (max-height:640px){.pv-dialog{top:24px}.pv-foot{display:none}}
 /* Gradients de couleur pour les sliders */
 #dimmerSlider{background:linear-gradient(to right,#333,#fff) !important}
 #kelvinSlider{background:linear-gradient(to right,#ff9b4a,#ffd2a0,#fff,#c9dfff,#a0c8ff) !important}
@@ -207,9 +276,6 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .preset-swatch{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.1)}
 .preset-name{font-size:.55rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.3}
 
-.qr-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:4px}
-.qr-wrap canvas{border-radius:8px;background:#fff;padding:8px}
-.qr-url{font-size:.58rem;color:var(--muted);letter-spacing:.06em;word-break:break-all;text-align:center}
 
 /* FLASH TAB */
 .torch-onoff-btn{width:100%;padding:18px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:1rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
@@ -568,13 +634,25 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 
 <div id="screen-connect">
   <h2>Écran projecteur</h2>
-  <p>Entrez le code affiché sur la télécommande</p>
-  <div class="screen-input-row">
-    <input type="text" id="screenChannelInput" placeholder="ex : set4271"
-           maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false"
-           onkeydown="if(event.key==='Enter') screenConnect()">
-    <button class="screen-go-btn" onclick="screenConnect()">OK →</button>
+  <p class="pj-sub">Scannez le QR affiché par la télécommande</p>
+  <div class="pj-viewfinder" id="pairScanBox">
+    <video id="pairScanVideo" playsinline muted></video>
+    <svg class="pj-corners" width="270" height="270" viewBox="0 0 270 270" fill="none" stroke="#F5F2EC" stroke-width="4" stroke-linecap="round" aria-hidden="true">
+      <path d="M30 70V40a10 10 0 0 1 10-10h30"/><path d="M200 30h30a10 10 0 0 1 10 10v30"/><path d="M240 200v30a10 10 0 0 1-10 10h-30"/><path d="M70 240H40a10 10 0 0 1-10-10v-30"/>
+    </svg>
+    <div class="pj-scanline"></div>
+    <div class="pj-cam-label" id="pairScanLabel">Caméra active — visez le QR</div>
   </div>
+  <div class="pair-or">ou saisir le code</div>
+  <form class="pj-form" onsubmit="event.preventDefault();screenPairWithCode()">
+    <label class="pj-field">
+      <span class="sr-only">Code d'appairage</span>
+      <input type="text" id="pairCodeInput" placeholder="K7M-4QP" maxlength="7"
+             autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+    </label>
+    <button type="submit" class="screen-go-btn">OK</button>
+  </form>
+  <p class="pj-help" id="pairCodeHelp">Avec le code, un nombre à 6 chiffres s'affichera ici et sur la télécommande pour confirmer l'appairage.</p>
   <button class="screen-back" onclick="goBackToSplash()">← Retour</button>
 </div>
 
@@ -596,9 +674,9 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
   <div id="screen-menu-hotspot" onclick="event.stopPropagation()" ondblclick="event.stopPropagation();openScreenMenu()"></div>
   <!-- Menu plein écran identique à l'app native -->
   <div id="screen-menu" onclick="event.stopPropagation()">
-    <div class="screen-menu-info" id="screenMenuChannel">Canal : —</div>
+    <div class="screen-menu-info" id="screenMenuInfo">Liaison chiffrée de bout en bout</div>
     <button class="screen-menu-btn" onclick="closeScreenMenu()">Reprendre l'affichage</button>
-    <button class="screen-menu-btn" onclick="closeScreenMenu();suspendScreen()">Changer de code canal</button>
+    <button class="screen-menu-btn" onclick="closeScreenMenu();suspendScreen()">Changer de télécommande</button>
     <button class="screen-menu-btn" onclick="closeScreenMenu();goBackToSplash()">Retour à l'accueil</button>
     <button class="screen-menu-btn danger" onclick="screenDisconnect()">Se déconnecter</button>
   </div>
@@ -612,17 +690,9 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
   </div>
   <div class="remote-header">
     <h2>SetRemote</h2>
-    <button class="back-btn" onclick="goBack()">← Retour</button>
-  </div>
-  <div class="panel">
-    <div class="panel-label">Canal de synchronisation</div>
-    <div class="channel-row">
-      <input type="text" id="channelInput" placeholder="ex: setlive42" maxlength="20"/>
-      <button class="connect-btn" onclick="connectChannel()">Connecter</button>
-    </div>
-    <div class="status-indicator">
-      <div class="dot" id="connDot"></div>
-      <span id="connLabel">Non connecté</span>
+    <div class="remote-header-end">
+      <button type="button" class="link-pill reconnecting" id="linkPill" onclick="openLinkDetail()" aria-label="État de la liaison — détail par écran"><span class="link-dot"></span><span id="linkPillLabel">Connexion…</span></button>
+      <button class="back-btn" onclick="goBack()">← Retour</button>
     </div>
   </div>
   <div class="swatch-row" id="previewRow">
@@ -1213,20 +1283,46 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
   </div>
 
   <div class="tab-content" id="content-qr">
-    <div class="panel">
-      <div class="panel-label">Ouvrir l'écran sur un autre appareil</div>
-      <div class="qr-wrap">
-        <canvas id="qrCanvas" width="200" height="200"></canvas>
-        <div class="qr-url" id="qrUrl">Connectez-vous d'abord à un canal</div>
+    <div class="panel pair-panel">
+      <div class="panel-label">Appairer un écran de jeu</div>
+      <div class="pair-qr" id="pairQr" role="img" aria-label="QR code d'appairage"></div>
+      <div class="pair-steps">Sur chaque écran de jeu : <b>Écran projecteur</b> → <b>Scanner</b><br><span>Autant d'écrans que nécessaire, ils jouent ensemble.</span></div>
+      <div class="pair-or">ou avec le code</div>
+      <div class="pair-code-row">
+        <span class="pair-code" id="pairCode">···&nbsp;···</span>
+        <button type="button" class="pair-refresh" aria-label="Générer un nouveau code" onclick="remoteNewPairCode()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+        </button>
       </div>
+      <div class="pair-note">Code valable 2 min · un nouveau code par écran</div>
+      <div class="pair-wait"><span class="pair-wait-dot"></span>En attente d'un écran…</div>
     </div>
-    <div class="panel" style="font-size:.65rem;color:var(--muted);line-height:1.8">
-      <div class="panel-label">Comment utiliser</div>
-      1. Sur l'écran : <strong style="color:var(--text)">Écran projecteur</strong> → taper le même code<br>
-      2. Ou scanner ce QR pour ouvrir directement<br>
-      3. Les couleurs s'envoient en temps réel ⚡
+    <div class="panel pair-screens" id="pairScreens" style="display:none">
+      <div class="panel-label">Écrans appairés (<span id="pairScreensCount">0</span>)</div>
+      <div id="pairScreensList" class="pair-screens-list"></div>
+    </div>
+    <button class="media-btn pair-renew" onclick="confirmNewSession()"><span class="media-icon">⟳</span> Nouvelle session</button>
+    <div class="pair-e2e">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      Chiffré de bout en bout : seuls vos appareils lisent les messages et les médias
     </div>
   </div>
+</div>
+
+<!-- Vérification du nombre (appairage par code), sur la télécommande comme sur l'écran -->
+<div id="pair-verify">
+  <div class="pv-dialog" role="dialog" aria-modal="true" aria-labelledby="pvTitle">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF6B2C" stroke-width="1.8" aria-hidden="true"><path d="M12 3l7 3v5c0 4.4-3 8.4-7 10-4-1.6-7-5.6-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+    <h2 id="pvTitle">Vérifiez le nombre</h2>
+    <p class="pv-text" id="pvText">L'écran de jeu affiche maintenant un nombre. Il doit être <b>identique</b> à celui-ci :</p>
+    <div class="pv-sas" id="pvSas">000 000</div>
+    <p class="pv-warn">S'il est différent, annulez : un autre appareil tente de s'interposer.</p>
+    <div class="pv-actions">
+      <button type="button" class="pv-cancel" onclick="pairVerifyAnswer(false)">Annuler</button>
+      <button type="button" class="pv-ok" id="pvOk" onclick="pairVerifyAnswer(true)">Identique</button>
+    </div>
+  </div>
+  <div class="pv-foot">Étape uniquement pour l'appairage par code.<br>Avec le QR code, la vérification est automatique.</div>
 </div>
 
 <script>
@@ -2896,7 +2992,7 @@ function nativePost(msg) {
 if (IN_NATIVE_APP) document.documentElement.classList.add('in-app');
 
 // ══════════════════════════ STATE ══════════════════════════
-let mode = null, channel = null, mqttClient = null;
+let mode = null, mqttClient = null;
 let currentColor = '#ffffff';
 let showHex = true;
 // Modèle couleur unifié : blanc (kelvin+tint) ↔ couleur (roue), mixés par crossfade, × dimmer
@@ -2909,17 +3005,108 @@ let strobeActive = false, strobeMode = 'regular';
 let strobeFreq = 2, strobeFlashDur = 50, strobeFreqMax = 8, strobeFlashDurMax = 200;
 let strobePreviewTimer = null, autoSendTimer = null;
 
-// ══════════════════════════ MQTT ══════════════════════════
+// ══════════════════════════ SESSION CHIFFRÉE ══════════════════════════
+// Une télécommande possède UN secret de session { channelId (128 bits),
+// key (256 bits) } partagé par tous ses écrans (packages/protocol, globale
+// SRP). Il est conservé (localStorage) jusqu'à « Nouvelle session », qui
+// révoque tous les écrans. Chaque écran conserve la dernière session rejointe
+// et un identifiant stable (screenId) tiré à son premier lancement.
+// Le secret n'apparaît que dans le FRAGMENT de l'URL d'appairage
+// (#p=v1.<channelId>.<key>) : jamais envoyé au serveur, effacé de la barre
+// d'adresse dès sa lecture.
+const _LS_KEYS = {
+  remote: 'setremote-session-v1',        // secret de la télécommande
+  screen: 'setremote-screen-session-v1', // dernière session rejointe par cet écran
+  screenId: 'setremote-screen-id',
+};
+let _session = null; // secret de la session active (télécommande ou écran)
+
+function _lsGet(k) { try { return localStorage.getItem(k); } catch (_) { return null; } }
+function _lsSet(k, v) {
+  try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (_) {}
+}
+function _readPairing(k) {
+  try {
+    const p = JSON.parse(_lsGet(k));
+    return SRP.isValidPairing(p) ? { channelId: p.channelId, key: p.key } : null;
+  } catch (_) { return null; }
+}
+function _writePairing(k, p) { _lsSet(k, p ? JSON.stringify({ channelId: p.channelId, key: p.key }) : null); }
+
+// Télécommande : la session persistée, ou une nouvelle au premier lancement
+function remoteSession() {
+  let p = _readPairing(_LS_KEYS.remote);
+  if (!p) { p = SRP.createPairing(); _writePairing(_LS_KEYS.remote, p); }
+  return p;
+}
+// « Nouvelle session » : nouveau secret, tous les écrans devront rescanner
+function renewRemoteSession() {
+  const p = SRP.createPairing();
+  _writePairing(_LS_KEYS.remote, p);
+  return p;
+}
+
+// Écran : dernière session rejointe (QR ou code)
+function screenStoredSession() { return _readPairing(_LS_KEYS.screen); }
+function screenSaveSession(p) { _writePairing(_LS_KEYS.screen, p); }
+
+// Écran : identifiant stable, annoncé dans « caps »
+function screenId() {
+  let id = _lsGet(_LS_KEYS.screenId);
+  if (!(typeof id === 'string' && SRP.SCREEN_ID_RE.test(id))) { id = SRP.createScreenId(); _lsSet(_LS_KEYS.screenId, id); }
+  return id;
+}
+
+// Adresse de l'app sans fragment (base du lien d'appairage)
+function pairingBaseUrl() { return location.href.split('#')[0]; }
+function pairingLink(p) { return SRP.pairingUrl(pairingBaseUrl(), p); }
+
+// Efface le fragment de la barre d'adresse (et de l'historique courant)
+function clearLocationHash() {
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+}
+// ══════════════════════════ MQTT + CHIFFREMENT DE BOUT EN BOUT ══════════════════════════
+// Tout ce qui passe par le relais est scellé (SRP.createSecureChannel) :
+// commandes, fragments d'images / sons / vidéo, signalisation WebRTC (SDP,
+// ICE). Topic opaque dérivé du secret ; le relais ne voit ni le contenu ni le
+// type des messages. Toute trame qui ne s'ouvre pas (falsifiée, rejouée, hors
+// délai, non chiffrée, hors schéma) est ignorée.
 const BROKER = 'wss://broker.hivemq.com:8884/mqtt';
 
-function mqttTopic(ch) { return 'setremote/v1/' + ch + '/cmd'; }
+let _sec = null;      // canal chiffré de la session (MQTT)
+let _secBc = null;    // 2e étiquette d'émetteur pour le repli BroadcastChannel
+let _connectSeq = 0;  // connexion la plus récente (les plus anciennes s'abandonnent)
+let _rxChain = Promise.resolve(), _txChain = Promise.resolve();
+// Compteurs (diagnostic et tests) : trames envoyées, reçues, rejetées
+const secStats = { sent: 0, received: 0, dropped: 0, refused: 0, lastError: null };
 
-function connectMQTT(ch, onConnected) {
+function _newClientId(prefix) { return prefix + '-' + mode + '-' + Math.random().toString(36).slice(2, 8); }
+
+// Connexion à la session chiffrée « pairing ». onConnected est rappelé à la
+// 1re connexion ET à chaque reconnexion automatique : la télécommande renvoie
+// alors son état (hello → caps → resynchronisation), l'écran ses capacités.
+async function connectSession(pairing, onConnected) {
   if (mqttClient) { mqttClient.end(true); mqttClient = null; }
+  _sec = null;
+  const seq = ++_connectSeq;
+  let ch, bc = null;
+  try {
+    const opts = { pairing, role: mode };
+    if (mode === 'screen') opts.screenId = screenId();
+    ch = await SRP.createSecureChannel(opts);
+    if (mode === 'remote') bc = await SRP.createSecureChannel(opts);
+  } catch (e) {
+    console.warn('SetRemote : session chiffrée indisponible', e);
+    if (mode === 'remote') setConnStatus('error');
+    return;
+  }
+  if (seq !== _connectSeq || !mode) return; // remplacée entre-temps (retour, nouvelle session)
+  _sec = ch; _secBc = bc;
+  _rxChain = Promise.resolve(); _txChain = Promise.resolve();
+  initBCFallback(ch);
 
-  const clientId = 'cl-' + mode + '-' + Math.random().toString(36).slice(2, 8);
   const client = mqtt.connect(BROKER, {
-    clientId,
+    clientId: _newClientId('cl'),
     clean: true,
     connectTimeout: 8000,
     reconnectPeriod: 3000,
@@ -2930,12 +3117,9 @@ function connectMQTT(ch, onConnected) {
   // Évènements d'un client remplacé ou fermé volontairement : ignorés
   const isCurrent = () => client === mqttClient && !client.disconnecting;
 
-  // Appelé à la 1re connexion ET à chaque reconnexion automatique : le rappel
-  // renvoie l'état utile (télécommande) ou les capacités (écran), ce qui
-  // déclenche la resynchronisation de l'autre côté.
   client.on('connect', () => {
     if (!isCurrent()) return;
-    client.subscribe(mqttTopic(ch), { qos: 0 }, () => {
+    client.subscribe(ch.mqttTopic, { qos: 0 }, () => {
       if (isCurrent()) onConnected();
     });
   });
@@ -2948,53 +3132,92 @@ function connectMQTT(ch, onConnected) {
   });
 
   // Coupure / hors-ligne / nouvelle tentative : mqtt.js se reconnecte seul
-  // (reconnectPeriod). On le reflète avec les états d'interface EXISTANTS.
+  // (reconnectPeriod). On le reflète dans l'indicateur de liaison.
   const onLost = () => {
     if (!isCurrent()) return;
     if (mode === 'remote') setConnStatus('connecting');
-    else if (mode === 'screen') setScreenStatus('Connexion à ' + ch + '…');
+    else if (mode === 'screen') { setScreenStatus('Connexion…'); stopScreenAlive(); }
   };
   client.on('close', onLost);
   client.on('offline', onLost);
   client.on('reconnect', onLost);
 
   client.on('message', (topic, payload) => {
-    try {
-      const msg = JSON.parse(payload.toString());
-      // Ignorer ses propres messages (même clientId dans le payload)
-      if (msg && msg._id === clientId) return;
-      // Table d'aiguillage : rôle, validation, puis traitement (22-protocol.js)
-      dispatchMessage(msg);
-    } catch (_) {}
+    if (topic !== ch.mqttTopic) return;
+    receiveFrame(ch, String(payload), 'mqtt');
   });
-
-  // Stocker l'ID pour filtrer l'echo
-  client._myId = clientId;
 }
 
+// Réception : les trames sont ouvertes UNE PAR UNE, dans l'ordre d'arrivée
+// (le déchiffrement est asynchrone ; l'ordre compte : début de transfert avant
+// ses fragments, dernière couleur gagnante…).
+const _BC_TYPES = ['color', 'strobe']; // seuls types acceptés du repli même appareil
+function receiveFrame(ch, str, via) {
+  _rxChain = _rxChain.then(async () => {
+    if (ch !== _sec) return;
+    let r;
+    try { r = await ch.receive(str); }
+    catch (e) { secStats.dropped++; secStats.lastError = (e && e.code) || 'error'; return; }
+    if (!r || r.kind !== 'message' || ch !== _sec) return; // écho, autre écran, fragment binaire
+    if (via === 'bc' && !_BC_TYPES.includes(r.message.type)) return;
+    secStats.received++;
+    if (mode === 'remote') remoteNoteScreen(r.sender, r.message);
+    try { dispatchMessage(r.message); } catch (e) { console.warn('SetRemote : message', r.message.type, e); }
+  });
+  return _rxChain;
+}
+
+// Envoi : forme « fil » (JSON), valeurs bornées aux plages du schéma, puis
+// scellement et publication DANS L'ORDRE des appels.
 function sendMsg(obj) {
-  if (!mqttClient || !mqttClient.connected) return;
-  const payload = JSON.stringify({ ...obj, _id: mqttClient._myId });
-  mqttClient.publish(mqttTopic(channel), payload, { qos: 0 });
-  // Fallback BroadcastChannel (même device)
-  if (window._bc) window._bc.postMessage(obj);
+  if (!mqttClient || !mqttClient.connected || !_sec) return;
+  let msg;
+  try { msg = prepareOutgoing(obj); } catch (_) { return; }
+  const ch = _sec, client = mqttClient;
+  const bc = (mode === 'remote' && window._bc && _secBc && _BC_TYPES.includes(msg.type)) ? _secBc : null;
+  _txChain = _txChain.then(async () => {
+    if (ch !== _sec) return;
+    let frame;
+    try { frame = await ch.seal(msg); }
+    catch (e) {
+      // Hors schéma malgré le bornage : à corriger côté émetteur, pas à avaler
+      secStats.refused++; secStats.lastError = (e && e.code) || 'error';
+      console.warn('SetRemote : message refusé à l\'envoi', msg.type, e && e.message);
+      return;
+    }
+    if (client === mqttClient && client.connected) { client.publish(ch.mqttTopic, frame, { qos: 0 }); secStats.sent++; }
+    if (bc && window._bc) { try { window._bc.postMessage(await bc.seal(msg)); } catch (_) {} }
+  });
 }
 
-// BroadcastChannel fallback (même navigateur, même device)
+// Copie JSON (toJSON des objets WebRTC, undefined retirés, NaN/Infinity → null)
+// puis bornage aux plages du schéma (22-protocol.js)
+function prepareOutgoing(obj) {
+  const m = JSON.parse(JSON.stringify(obj));
+  if (m && typeof m === 'object') delete m._id;
+  clampOutgoing(m);
+  return m;
+}
+
+// Repli BroadcastChannel (même navigateur, même appareil) : il transporte les
+// mêmes trames chiffrées (couleur et strobe), sous une étiquette d'émetteur
+// distincte pour ne pas perturber la fenêtre anti-rejeu du flux MQTT.
 function initBCFallback(ch) {
   // BroadcastChannel absent sur iOS < 15.4 : sans garde, l'exception
   // interrompait l'entrée en mode écran avant même la connexion MQTT.
+  if (window._bc) { try { window._bc.close(); } catch (_) {} window._bc = null; }
   if (typeof BroadcastChannel === 'undefined') return;
-  if (window._bc) { try { window._bc.close(); } catch (_) {} }
-  const bc = new BroadcastChannel('setremote_' + ch);
+  const bc = new BroadcastChannel('setremote_' + ch.topic);
   window._bc = bc;
-  if (mode === 'screen') {
-    // Seuls couleur et strobe transitent par ce repli, validés comme le réseau
-    bc.onmessage = e => {
-      const d = e.data;
-      if (d && (d.type === 'color' || d.type === 'strobe')) dispatchMessage(d);
-    };
-  }
+  if (mode === 'screen') bc.onmessage = e => { if (typeof e.data === 'string') receiveFrame(ch, e.data, 'bc'); };
+}
+
+// Ferme la session (client MQTT, repli, files d'attente)
+function closeSession() {
+  _connectSeq++;
+  if (mqttClient) { try { mqttClient.end(true); } catch (_) {} mqttClient = null; }
+  if (window._bc) { try { window._bc.close(); } catch (_) {} window._bc = null; }
+  _sec = null; _secBc = null;
 }
 // ══════════════════════════ PROTOCOLE — validation & aiguillage ══════════════════════════
 // Chaque type de message reçu est décrit par :
@@ -3003,8 +3226,9 @@ function initBCFallback(ch) {
 //              place (bornage des nombres, champs optionnels) ; false = rejet
 //   handle   : traitement (fonctions existantes de l'app)
 // Message inconnu, mal formé, hors rôle ou invalide : ignoré silencieusement.
-// Les formes de payload restent celles d'origine (rétrocompatibles avec les
-// télécommandes / écrans déjà déployés, PWA comme app native).
+// C'est la 2e barrière : chaque message a déjà été authentifié, déchiffré et
+// validé par le schéma strict du paquet protocole (20-mqtt.js) ; ici, on
+// borne et on aiguille.
 
 const _P = {
   isObj: (v) => v !== null && typeof v === 'object' && !Array.isArray(v),
@@ -3033,8 +3257,7 @@ const PROTO = {
   STROBE_DUR_MIN: 15, STROBE_DUR_MAX: 2000,    // ms
   VIB_MAX_ENTRIES: 20, VIB_MAX_MS: 2000,
   NAME_MAX: 40, MSG_MAX: 200, APP_MAX: 24, LOCK_TIME_MAX: 8, LOCK_DATE_MAX: 30,
-  PHOTO_MAX: 600000,                           // data-URL photo (caractères)
-  SDP_MAX: 200000, ICE_MAX: 4096,
+  SDP_MAX: 16000, ICE_MAX: 4096,               // = LIMITS du schéma (packages/protocol)
   ORDER_MAX: 500, MISSING_MAX: 400,
   VID_MAX_CHUNKS: 50000,                       // ≈ 600 Mo base64 en fragments de 12 000
   CALL_RINGS: ['classic', 'digital', 'soft', 'silent'],
@@ -3072,7 +3295,9 @@ function _validCallStart(m) {
   m.msg = _P.text(m.msg, PROTO.MSG_MAX);
   m.appName = _P.text(m.appName, PROTO.APP_MAX);
   if (!_P.hex(m.appColor)) m.appColor = null;
-  if (!(typeof m.photo === 'string' && m.photo.length <= PROTO.PHOTO_MAX)) m.photo = null; // contenu validé ensuite (safeImageData)
+  // La photo n'arrive plus dans ce message : préchargée en fragments (__callphoto)
+  delete m.photo;
+  m.hasPhoto = _P.bool(m.hasPhoto);
   // Sonnerie inconnue → classique (une clé comme « __proto__ » ne doit pas
   // fausser la cadence de répétition)
   if (!_P.oneOf(m.ring, PROTO.CALL_RINGS)) m.ring = 'classic';
@@ -3213,6 +3438,8 @@ const MSG_ROUTES = {
   'call:state':        { roles: ['remote'], validate: (m) => _P.oneOf(m.state, ['ringing', 'incall', 'declined', 'ended']), handle: (m) => remoteOnCallState(m) },
   'media:advanced':    { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenAdvanced(m.id) },
   'media:need':        { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenNeeds(m.id) },
+  // Signe de vie : la présence de l'écran est notée à la réception (20-mqtt.js)
+  'screen:alive':      { roles: ['remote'], validate: () => true, handle: () => {} },
   'caps': {
     roles: ['remote'],
     validate(m) {
@@ -3237,17 +3464,72 @@ function dispatchMessage(msg) {
   route.handle(msg);
   return true;
 }
+
+// ── Émission : bornage aux plages du schéma AVANT scellement ──
+// Le schéma du paquet protocole REJETTE une valeur hors plage (ex. flash de
+// 5 ms) là où le récepteur la bornait : l'émetteur borne donc lui-même, sans
+// toucher aux curseurs de l'interface (flash ≥ 15 ms, strobe ≤ 30 Hz…).
+const _OUT_EFFECT_INT = { intensity: [0, 100], chaos: [0, 100], drift: [0, 100], smooth: [0, 100],
+  count: [1, 32], width: [1, 100], wing: [1, 4], rot: [0, 360], lead: [0, 1000], fade: [0, 1000] };
+function clampOutgoing(m) {
+  if (!_P.isObj(m)) return m;
+  const clampKeys = (o, keys, min, max, round) => {
+    for (const k of keys) {
+      if (o[k] === undefined) continue;
+      const v = _P.num(o[k], min, max);
+      if (v === null) delete o[k]; else o[k] = round ? Math.round(v) : v;
+    }
+  };
+  switch (m.type) {
+    case 'strobe':
+      clampKeys(m, ['freq', 'freqMin', 'freqMax'], PROTO.STROBE_FREQ_MIN, PROTO.STROBE_FREQ_MAX);
+      clampKeys(m, ['dur', 'durMin', 'durMax'], PROTO.STROBE_DUR_MIN, PROTO.STROBE_DUR_MAX);
+      break;
+    case 'effect':
+      if (_P.isObj(m.params)) {
+        const p = m.params;
+        clampKeys(p, ['speed'], 0.01, 240);
+        for (const k of Object.keys(_OUT_EFFECT_INT)) clampKeys(p, [k], _OUT_EFFECT_INT[k][0], _OUT_EFFECT_INT[k][1], true);
+        if (Array.isArray(p.blocks)) p.blocks = p.blocks.filter(_P.hex).slice(0, 8);
+        for (const k of ['color1', 'color2']) if (p[k] !== undefined && !_P.hex(p[k])) delete p[k];
+      }
+      break;
+    case 'vibrate':
+      if (typeof m.pattern === 'number') m.pattern = [m.pattern];
+      if (Array.isArray(m.pattern)) {
+        m.pattern = m.pattern.slice(0, PROTO.VIB_MAX_ENTRIES).map((v) => _P.num(v, 0, PROTO.VIB_MAX_MS) ?? 0);
+      }
+      break;
+    case 'torch-dim': clampKeys(m, ['level'], 0, 100); break;
+    case 'screen:brightness': clampKeys(m, ['value'], 0, 1); break;
+    case 'media-ctrl': clampKeys(m, ['time'], 0, 1e7); break;
+    case 'media-meta': m.dur = _P.num(m.dur, 0, 1e9); break;
+    case 'media-progress': m.cur = _P.num(m.cur, 0, 1e9); m.dur = _P.num(m.dur, 0, 1e9); break;
+    case 'call:start': {
+      // Une ligne : aucun caractère de contrôle ; message : sauts de ligne permis
+      const line = (v, max) => _P.text(v, max).replace(/[\u0000-\u001F\u007F]/g, ' ');
+      m.name = line(m.name, PROTO.NAME_MAX); m.label = line(m.label, PROTO.NAME_MAX);
+      m.appName = line(m.appName, PROTO.APP_MAX);
+      m.msg = _P.text(m.msg, PROTO.MSG_MAX).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '');
+      if (_P.isObj(m.lock)) m.lock = { time: line(m.lock.time, PROTO.LOCK_TIME_MAX), date: line(m.lock.date, PROTO.LOCK_DATE_MAX) };
+      if (m.appColor !== undefined && !_P.hex(m.appColor)) delete m.appColor;
+      clampKeys(m, ['autoAnswer'], 0, 60, true);
+      break;
+    }
+  }
+  return m;
+}
 // ══════════════════════════ RESYNCHRONISATION (télécommande) ══════════════════════════
 // Un écran annonce ses capacités (« caps ») à chaque (re)connexion et en
 // réponse au « hello » de la télécommande (envoyé à chaque (re)connexion de
 // celle-ci). La télécommande renvoie alors un instantané complet de l'état :
 // un écran rechargé ou revenu d'une coupure retrouve exactement ce que la
 // télécommande affiche. Les médias lourds (fond d'écran verrouillé, bande son,
-// média actif) ne sont renvoyés que si l'écran ne les a pas.
+// photo d'appel, média actif) ne sont renvoyés que si l'écran ne les a pas.
 // Plusieurs « caps » rapprochés (plusieurs écrans) → un seul envoi groupé.
 let _resyncTimer = null, _resyncNeed = null;
 const RESYNC_DELAY_MS = 250;
-const _RESYNC_ASSETS = ['__lockwall', '__callaudio'];
+const _RESYNC_ASSETS = ['__lockwall', '__callaudio', '__callphoto'];
 
 function remoteScheduleResync(caps) {
   if (mode !== 'remote') return;
@@ -3286,10 +3568,325 @@ function remoteResync() {
   sendPoolOrder();
   if (_lockWallData && need.lacks.has('__lockwall')) sendImageChunks(_lockWallData, { mediaId: '__lockwall', show: false });
   if (_callAudioData && need.lacks.has('__callaudio')) sendImageChunks(_callAudioData, { mediaId: '__callaudio', show: false });
+  if (_callPhoto && need.lacks.has('__callphoto')) sendImageChunks(_callPhoto, { mediaId: '__callphoto', show: false });
   // Média diffusé absent de l'écran : media:show s'il est en cache écran,
   // sinon re-diffusion complète (même chemin qu'une sélection dans le pool)
   if (_activeMediaId && need.mediaMissing && _mediaPool.some((m) => m.id === _activeMediaId)) selectMedia(_activeMediaId);
   schedulePreload();
+}
+// ══════════════════════════ APPAIRAGE PAR CODE (sans caméra) ══════════════════════════
+// Un code court par écran (6 caractères sans I/L/O/0/1, valable 2 min). Les
+// deux appareils échangent des clés ECDH P-256 en clair sur un topic de
+// rendez-vous dérivé du code, avec engagement (commit / reveal), puis
+// comparent un nombre à 6 chiffres (SAS) : un appareil qui s'interpose
+// produit deux nombres différents. Après confirmation des deux côtés, la
+// télécommande remet à l'écran le secret de session COMMUN, chiffré pour lui
+// (SRP.sealSessionForPeer) : tous les écrans appairés jouent ensemble.
+//
+//   écran                         télécommande
+//   pair:commit  H(clé écran) ──►
+//                             ◄── pair:key     clé télécommande
+//   pair:reveal  clé écran    ──►  (vérifie l'engagement)
+//         [ les deux affichent la SAS ; l'utilisateur compare ]
+//                             ◄── pair:session secret de session chiffré
+// Chaque message est répété toutes les 1,5 s jusqu'à la réponse (QoS 0).
+const PAIR_RESEND_MS = 1500;
+const PAIR_SESSION_RESEND_MS = 20000; // télécommande : durée de remise du secret
+let _rdv = null;                  // rendez-vous affiché (télécommande) ou en cours (écran)
+const _rdvBackground = new Set(); // télécommande : remises qui se terminent en arrière-plan
+
+// — Transport du rendez-vous : client MQTT dédié, messages JSON validés —
+function _rdvOpen(r) {
+  const client = mqtt.connect(BROKER, { clientId: _newClientId('rdv'), clean: true, connectTimeout: 8000, reconnectPeriod: 3000 });
+  r.client = client;
+  client.on('connect', () => {
+    if (r.closed) return;
+    client.subscribe(r.mqttTopic, { qos: 0 }, () => { if (!r.closed && r.out) _rdvSend(r, r.out); });
+  });
+  client.on('message', (topic, payload) => {
+    if (r.closed || topic !== r.mqttTopic) return;
+    let m;
+    try { m = JSON.parse(String(payload)); } catch (_) { return; }
+    if (!SRP.validateRendezvousMessage(m)) return;
+    r.chain = r.chain.then(() => (r.closed ? null : r.onMessage(m))).catch(() => {}); // un message à la fois
+  });
+}
+function _rdvSend(r, msg) {
+  if (r.client && r.client.connected && !r.closed) r.client.publish(r.mqttTopic, JSON.stringify(msg), { qos: 0 });
+}
+// Répète « msg » jusqu'au prochain message ou à la fermeture
+function _rdvRepeat(r, msg) {
+  _rdvStopRepeat(r);
+  r.out = msg;
+  _rdvSend(r, msg);
+  r.repeat = setInterval(() => _rdvSend(r, msg), PAIR_RESEND_MS);
+}
+function _rdvStopRepeat(r) { if (r.repeat) { clearInterval(r.repeat); r.repeat = null; } r.out = null; }
+function _rdvClose(r) {
+  if (!r || r.closed) return;
+  r.closed = true;
+  _rdvStopRepeat(r);
+  clearTimeout(r.expiryTimer); clearTimeout(r.doneTimer);
+  if (r.client) { try { r.client.end(true); } catch (_) {} r.client = null; }
+}
+// Dernier message (abandon, remise du secret) répété quelques secondes, puis fermeture
+function _rdvFinishInBackground(r, msg, ms) {
+  if (_rdv === r) _rdv = null;
+  _rdvBackground.add(r);
+  _rdvRepeat(r, msg);
+  r.doneTimer = setTimeout(() => { _rdvClose(r); _rdvBackground.delete(r); }, ms);
+}
+
+// ══════════ Télécommande ══════════
+function _fmtPairCode(code) { return code.slice(0, 3) + '·' + code.slice(3); }
+
+// Nouveau code (bouton ⟳, expiration, ou après chaque écran appairé)
+async function remoteNewPairCode() {
+  if (mode !== 'remote') return;
+  if (_rdv) { _rdvClose(_rdv); _rdv = null; }
+  const { code, expiresAt } = SRP.createRendezvous();
+  const r = { role: 'remote', code, expiresAt, phase: 'waiting', chain: Promise.resolve(), closed: false };
+  _rdv = r;
+  const el = document.getElementById('pairCode');
+  if (el) el.textContent = _fmtPairCode(code);
+  // Expiré sans écran : un nouveau code s'affiche. Pendant une vérification, on
+  // laisse l'utilisateur finir (2 min de plus au maximum).
+  const onExpire = () => {
+    if (_rdv !== r) return;
+    if (r.phase === 'waiting' || Date.now() > expiresAt + SRP.RENDEZVOUS_TTL_MS) {
+      if (r.phase !== 'waiting') hidePairVerify();
+      remoteNewPairCode();
+    } else r.expiryTimer = setTimeout(onExpire, 5000);
+  };
+  r.expiryTimer = setTimeout(onExpire, Math.max(0, expiresAt - Date.now()));
+  r.mqttTopic = SRP.RENDEZVOUS_TOPIC_PREFIX + await SRP.rendezvousTopic(code);
+  if (r.closed) return;
+  r.onMessage = (m) => _remoteRdvMessage(r, m);
+  _rdvOpen(r);
+}
+
+// Arrête le code affiché (sauf vérification en cours, si keepBusy)
+function remoteStopPairCode(keepBusy) {
+  if (_rdv && _rdv.role === 'remote' && !(keepBusy && _rdv.phase !== 'waiting')) {
+    _rdvClose(_rdv); _rdv = null;
+    hidePairVerify();
+  }
+}
+function remoteStopAllPairing() {
+  remoteStopPairCode(false);
+  for (const r of _rdvBackground) _rdvClose(r);
+  _rdvBackground.clear();
+}
+
+async function _remoteRdvMessage(r, m) {
+  if (m.type === 'pair:commit') {
+    if (r.phase !== 'waiting') return; // un seul écran par code ; répétitions ignorées
+    r.phase = 'keyed';
+    r.commit = m.commit;
+    r.kp = await SRP.ecdhKeyPair();
+    if (!r.closed) _rdvRepeat(r, { type: 'pair:key', v: 1, jwk: r.kp.publicJwk });
+  } else if (m.type === 'pair:reveal') {
+    if (r.phase !== 'keyed') return;
+    // Révélation qui ne correspond pas à l'engagement : autre appareil, ignorée
+    if (!(await SRP.verifyCommitment(m.jwk, r.commit))) return;
+    let d;
+    try { d = await SRP.deriveSharedPairing(r.kp, m.jwk, { code: r.code }); } catch (_) { return; }
+    if (r.closed || r.phase !== 'keyed') return;
+    r.phase = 'verify'; r.temp = d.pairing;
+    _rdvStopRepeat(r);
+    showPairVerify('remote', d.sas, (ok) => _remotePairAnswer(r, ok));
+  } else if (m.type === 'pair:abort') {
+    if (r.phase === 'keyed' || r.phase === 'verify') { hidePairVerify(); remoteNewPairCode(); }
+  }
+}
+
+async function _remotePairAnswer(r, ok) {
+  hidePairVerify();
+  if (r.closed || r.phase !== 'verify') return;
+  if (!ok) {
+    r.phase = 'aborted';
+    _rdvFinishInBackground(r, { type: 'pair:abort', v: 1, reason: 'mismatch' }, 3000);
+    remoteNewPairCode();
+    return;
+  }
+  r.phase = 'sending';
+  let frame;
+  try { frame = await SRP.sealSessionForPeer(_session, r.temp); } catch (_) { _rdvClose(r); remoteNewPairCode(); return; }
+  _rdvFinishInBackground(r, { type: 'pair:session', v: 1, frame }, PAIR_SESSION_RESEND_MS);
+  remoteNewPairCode(); // un nouveau code par écran
+}
+
+// ══════════ Écran ══════════
+function _pairHelp(text) {
+  const el = document.getElementById('pairCodeHelp');
+  if (el) el.textContent = text || PAIR_HELP_DEFAULT;
+}
+const PAIR_HELP_DEFAULT = 'Avec le code, un nombre à 6 chiffres s\'affichera ici et sur la télécommande pour confirmer l\'appairage.';
+
+async function screenPairWithCode() {
+  const input = document.getElementById('pairCodeInput');
+  const code = SRP.normalizeRendezvousCode(input ? input.value : '');
+  if (!code) { _pairHelp('Code incomplet : 6 caractères, par exemple K7M-4QP.'); if (input) input.focus(); return; }
+  screenStopPairCode();
+  const r = { role: 'screen', code, phase: 'commit', chain: Promise.resolve(), closed: false };
+  _rdv = r;
+  _pairHelp('Recherche de la télécommande…');
+  r.expiryTimer = setTimeout(() => _screenPairFailed(r, 'Code expiré : demandez un nouveau code à la télécommande.'), SRP.RENDEZVOUS_TTL_MS);
+  const [kp, topic] = await Promise.all([SRP.ecdhKeyPair(), SRP.rendezvousTopic(code)]);
+  r.kp = kp;
+  r.commit = await SRP.commitPublicKey(kp.publicJwk);
+  if (r.closed) return;
+  r.mqttTopic = SRP.RENDEZVOUS_TOPIC_PREFIX + topic;
+  r.onMessage = (m) => _screenRdvMessage(r, m);
+  _rdvOpen(r);
+  _rdvRepeat(r, { type: 'pair:commit', v: 1, commit: r.commit });
+}
+
+function screenStopPairCode() {
+  if (_rdv && _rdv.role === 'screen') { _rdvClose(_rdv); _rdv = null; hidePairVerify(); }
+}
+
+async function _screenRdvMessage(r, m) {
+  if (m.type === 'pair:key') {
+    if (r.phase !== 'commit') return;
+    let d;
+    try { d = await SRP.deriveSharedPairing(r.kp, m.jwk, { code: r.code }); } catch (_) { return; }
+    if (r.closed || r.phase !== 'commit') return;
+    r.phase = 'verify'; r.temp = d.pairing;
+    _rdvRepeat(r, { type: 'pair:reveal', v: 1, jwk: r.kp.publicJwk });
+    showPairVerify('screen', d.sas, (ok) => _screenPairAnswer(r, ok));
+  } else if (m.type === 'pair:session') {
+    if (r.phase !== 'verify' && r.phase !== 'confirmed') return;
+    if (!r.frame) r.frame = m.frame;
+    _rdvStopRepeat(r); // la télécommande a reçu notre clé
+    if (r.phase === 'confirmed') await _screenPairFinish(r);
+  } else if (m.type === 'pair:abort') {
+    if (r.phase !== 'commit') _screenPairFailed(r, 'Appairage annulé sur la télécommande : demandez un nouveau code.');
+  }
+}
+
+async function _screenPairAnswer(r, ok) {
+  if (r.closed) return;
+  if (!ok) {
+    hidePairVerify();
+    r.phase = 'aborted';
+    _rdvFinishInBackground(r, { type: 'pair:abort', v: 1, reason: 'mismatch' }, 3000);
+    _pairHelp('');
+    return;
+  }
+  r.phase = 'confirmed';
+  if (r.frame) await _screenPairFinish(r);
+  else setPairVerifyWaiting();
+}
+
+async function _screenPairFinish(r) {
+  let res;
+  try { res = await SRP.openSessionFromPeer(r.frame, r.temp); }
+  catch (_) { _screenPairFailed(r, 'Échec de l\'appairage : réessayez avec un nouveau code.'); return; }
+  if (r.closed) return;
+  r.phase = 'done';
+  _rdvClose(r);
+  if (_rdv === r) _rdv = null;
+  hidePairVerify();
+  _pairHelp('');
+  const input = document.getElementById('pairCodeInput');
+  if (input) input.value = '';
+  screenJoinSession(res.pairing);
+}
+
+function _screenPairFailed(r, text) {
+  if (r.closed) return;
+  _rdvClose(r);
+  if (_rdv === r) _rdv = null;
+  hidePairVerify();
+  _pairHelp(text);
+}
+
+// ══════════ Vérification du nombre (SAS), commune aux deux rôles ══════════
+let _pvAnswer = null;
+function showPairVerify(role, sas, onAnswer) {
+  const el = document.getElementById('pair-verify');
+  if (!el) return;
+  _pvAnswer = onAnswer;
+  document.getElementById('pvText').innerHTML = (role === 'remote'
+    ? 'L\'écran de jeu affiche maintenant un nombre.'
+    : 'La télécommande affiche maintenant un nombre.')
+    + ' Il doit être <b>identique</b> à celui-ci :';
+  document.getElementById('pvSas').textContent = SRP.formatSas(sas);
+  const ok = document.getElementById('pvOk');
+  ok.disabled = false; ok.textContent = 'Identique';
+  el.style.display = 'block';
+}
+function hidePairVerify() {
+  _pvAnswer = null;
+  const el = document.getElementById('pair-verify');
+  if (el) el.style.display = 'none';
+}
+// Écran : confirmé avant la télécommande → on attend la remise du secret
+function setPairVerifyWaiting() {
+  const ok = document.getElementById('pvOk');
+  if (ok) { ok.disabled = true; ok.textContent = 'En attente…'; }
+}
+function pairVerifyAnswer(ok) {
+  const f = _pvAnswer;
+  if (!f) return;
+  if (!ok) _pvAnswer = null;
+  f(!!ok);
+}
+
+// ══════════ Écran : scan du QR dans l'app (BarcodeDetector) ══════════
+// Sans BarcodeDetector (iPhone, Firefox…) ou sans caméra : on invite à viser
+// le QR avec l'appareil photo du téléphone, qui ouvre le lien d'appairage.
+let _scan = null;
+async function startPairScan() {
+  stopPairScan();
+  const box = document.getElementById('pairScanBox'), label = document.getElementById('pairScanLabel');
+  if (!box || !label) return;
+  const s = { stopped: false };
+  _scan = s;
+  const fallback = () => {
+    if (_scan !== s) return;
+    box.classList.remove('live');
+    label.textContent = 'Visez le QR avec l\'appareil photo';
+  };
+  fallback();
+  if (!('BarcodeDetector' in window) || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  try {
+    const formats = await BarcodeDetector.getSupportedFormats();
+    if (!formats.includes('qr_code') || s.stopped) return;
+    s.detector = new BarcodeDetector({ formats: ['qr_code'] });
+    s.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    if (s.stopped) { s.stream.getTracks().forEach((t) => t.stop()); return; }
+    const v = document.getElementById('pairScanVideo');
+    v.srcObject = s.stream;
+    await v.play();
+    if (s.stopped) return;
+    box.classList.add('live');
+    label.textContent = 'Caméra active — visez le QR';
+    const tick = async () => {
+      if (s.stopped) return;
+      try {
+        for (const c of await s.detector.detect(v)) {
+          const p = SRP.parsePairingUrl(String((c && c.rawValue) || ''));
+          if (p) { stopPairScan(); screenJoinSession(p); return; }
+        }
+      } catch (_) {}
+      if (!s.stopped) s.timer = setTimeout(tick, 250);
+    };
+    tick();
+  } catch (_) { fallback(); }
+}
+function stopPairScan() {
+  const s = _scan;
+  if (!s) return;
+  _scan = null;
+  s.stopped = true;
+  clearTimeout(s.timer);
+  if (s.stream) s.stream.getTracks().forEach((t) => t.stop());
+  const v = document.getElementById('pairScanVideo');
+  if (v) v.srcObject = null;
+  const box = document.getElementById('pairScanBox');
+  if (box) box.classList.remove('live');
 }
 // ══════════════════════════ NAVIGATION ══════════════════════════
 function startMode(m) {
@@ -3315,67 +3912,86 @@ function startMode(m) {
     initWheel();
     loadColorMemories(); renderColorMemories();
     recomputeColor();
-    document.getElementById('channelInput').value = 'set' + Math.floor(Math.random()*9000+1000);
+    // Session chiffrée persistée : connexion immédiate, sans code à saisir
+    connectRemote(remoteSession());
   } else {
-    const hash = location.hash.replace('#','');
-    if (hash) { enterScreenMode(hash); }
-    else {
-      document.getElementById('screen-connect').style.display = 'flex';
-      setTimeout(() => document.getElementById('screenChannelInput').focus(), 100);
-    }
+    // Écran : rejoint la dernière session (QR déjà scanné), sinon appairage
+    const p = screenStoredSession();
+    if (p) screenJoinSession(p);
+    else showScreenPairing();
   }
 }
 
-function screenConnect() {
-  const ch = cleanChannel(document.getElementById('screenChannelInput').value);
-  if (!ch) return;
-  document.getElementById('screen-connect').style.display = 'none';
-  enterScreenMode(ch);
-}
-
-// Code canal : lettres/chiffres uniquement (un « + » ou « # » deviendrait un
-// joker MQTT et abonnerait l'écran à tous les canaux)
-function cleanChannel(s) {
-  return String(s || '').trim().toLowerCase().replace(/\W/g, '').slice(0, 40);
-}
-
-function enterScreenMode(ch) {
-  ch = cleanChannel(ch);
-  if (!ch) return;
-  if (mode === 'screen' && channel === ch && mqttClient) return; // déjà connecté
+// ── Écran : vue « rejoindre la télécommande » (scan du QR ou code) ──
+function showScreenPairing() {
   document.getElementById('splash').style.display = 'none';
-  mode = 'screen'; channel = ch;
+  document.getElementById('screen-connect').style.display = 'flex';
+  startPairScan();
+}
+function hideScreenPairing() {
+  stopPairScan();
+  screenStopPairCode();
+  document.getElementById('screen-connect').style.display = 'none';
+}
+
+// Lien d'appairage à l'ouverture (#p=v1.…) : le secret est lu puis effacé de
+// la barre d'adresse. Les anciens liens (#set1234) mènent à l'appairage.
+function handleLaunchHash() {
+  if (!location.hash) return;
+  const p = SRP.parsePairingUrl(location.hash);
+  clearLocationHash();
+  if (p) screenJoinSession(p);
+  else showScreenPairing();
+}
+
+// Écran : rejoint (et retient) une session — QR scanné, lien ou code + SAS
+function screenJoinSession(p) {
+  if (!SRP.isValidPairing(p)) return;
+  screenSaveSession(p);
+  hideScreenPairing();
+  enterScreenSession(p);
+}
+
+let _screenAliveTimer = null;
+function stopScreenAlive() { if (_screenAliveTimer) { clearInterval(_screenAliveTimer); _screenAliveTimer = null; } }
+
+function enterScreenSession(p) {
+  if (mode === 'screen' && _session && _session.channelId === p.channelId && _session.key === p.key && mqttClient) return; // déjà connecté
+  document.getElementById('splash').style.display = 'none';
+  mode = 'screen'; _session = { channelId: p.channelId, key: p.key };
   const el = document.getElementById('screen-mode');
   el.style.display = 'flex';
   el.style.backgroundColor = '#1a1a1a';
-  setScreenStatus('Connexion à ' + ch + '…');
+  setScreenStatus('Connexion…');
   requestFS();
   acquireWakeLock();
   setupScreenAutohide();
   if (!navigator.vibrate) { const b=document.getElementById('vibrateBtn'); if(b){b.classList.add('unavail');b.textContent='📳 Indispo (iPhone)';b.classList.remove('on');} vibrateEnabled=false; }
-  initBCFallback(ch);
   let firstConnect = true;
-  connectMQTT(ch, () => {
-    setScreenStatus('✓ En écoute — canal : ' + ch);
+  connectSession(_session, () => {
+    setScreenStatus('✓ En écoute — liaison chiffrée');
     // Confirmation visible uniquement à la 1re connexion : les reconnexions
     // automatiques ne doivent rien afficher (l'écran est peut-être dans le champ)
-    if (firstConnect && !screenBlackoutOn) flashScreenNotice('En écoute du canal « ' + ch + ' »');
+    if (firstConnect && !screenBlackoutOn) flashScreenNotice('Relié à la télécommande');
     firstConnect = false;
     sendCaps();
+    // Signe de vie : la télécommande signale un écran muet depuis 40 s
+    stopScreenAlive();
+    _screenAliveTimer = setInterval(() => sendMsg({ type: 'screen:alive' }), SCREEN_ALIVE_MS);
   });
 }
 
-function connectChannel() {
-  const ch = cleanChannel(document.getElementById('channelInput').value);
-  if (!ch) return;
-  channel = ch;
+// Télécommande : connexion à sa session (au démarrage et après « Nouvelle session »)
+function connectRemote(p) {
+  _session = { channelId: p.channelId, key: p.key };
+  _linkEverConnected = false;
   setConnStatus('connecting');
-  initBCFallback(ch);
-  connectMQTT(ch, () => {
+  if (document.getElementById('content-qr').classList.contains('active')) renderPairPanel();
+  connectSession(_session, () => {
     setConnStatus('connected');
     // Envoyer la couleur courante dès la connexion
     sendMsg({ type: 'color', color: currentColor });
-    // Demander au récepteur ses capacités (torche / vibreur)
+    // Demander aux écrans leurs capacités (torche / vibreur / cache)
     sendMsg({ type: 'hello' });
     // Resynchroniser l'option « avancer au clic » côté écran de jeu
     sendMsg({ type: 'media:autoadvance', on: _autoAdvance });
@@ -3383,15 +3999,25 @@ function connectChannel() {
     sendMsg({ type: 'screen:brightness', value: screenBrightnessPct / 100 });
     // Resynchroniser le comportement de fin de lecture vidéo
     sendMsg({ type: 'media:endmode', mode: _videoEndMode });
-    // Fond d'écran verrouillé + bande son : plus de renvoi systématique à
-    // chaque (re)connexion — la réponse « caps » au hello déclenche une
-    // resynchronisation complète qui ne les renvoie que si l'écran ne les a
-    // pas (24-resync.js).
+    // Fond d'écran verrouillé, bande son, photo d'appel : plus de renvoi
+    // systématique à chaque (re)connexion — la réponse « caps » au hello
+    // déclenche une resynchronisation complète qui ne les renvoie que si
+    // l'écran ne les a pas (24-resync.js).
     // Synchroniser l'ordre du pool et précharger les médias sur l'écran
     sendPoolOrder();
     schedulePreload();
   });
-  setTimeout(renderQR, 300);
+}
+
+// « Nouvelle session » : nouveau secret, tous les écrans appairés sont révoqués
+function confirmNewSession() {
+  if (!confirm('Nouvelle session : tous les écrans appairés seront déconnectés et devront scanner le nouveau QR. Continuer ?')) return;
+  newRemoteSession();
+}
+function newRemoteSession() {
+  remoteStopAllPairing();
+  clearPairedScreens();
+  connectRemote(renewRemoteSession());
 }
 
 function suspendScreen() {
@@ -3401,23 +4027,18 @@ function suspendScreen() {
   stopScreenEffect();
   screenCallHide();
   setBlackout(false);
-  // Déconnecter MQTT mais garder le canal en mémoire
-  if (mqttClient) { mqttClient.end(true); mqttClient = null; }
-  // Cacher l'écran et revenir à la saisie de canal
+  stopScreenAlive();
+  // Déconnecter (la session reste mémorisée : « Écran projecteur » la rejoint)
+  closeSession();
+  // Cacher l'écran et revenir à l'appairage (autre télécommande, nouveau QR)
   const el = document.getElementById('screen-mode');
   if (el) el.style.display = 'none';
-  // Pré-remplir le champ avec le canal actuel
-  const inp = document.getElementById('screenChannelInput');
-  if (inp && channel) inp.value = channel;
-  document.getElementById('screen-connect').style.display = 'flex';
-  setTimeout(() => { if (inp) inp.focus(); }, 100);
+  showScreenPairing();
 }
 
 // ── Menu de l'écran de jeu (double-clic OU appui long, coin haut-gauche) ──
 function openScreenMenu() {
   const m = document.getElementById('screen-menu');
-  const c = document.getElementById('screenMenuChannel');
-  if (c) c.textContent = 'Canal : ' + (channel || '—');
   if (m) m.style.display = 'flex';
 }
 
@@ -3469,7 +4090,7 @@ function closeScreenMenu() {
 }
 function screenDisconnect() {
   closeScreenMenu();
-  if (mqttClient) { try { mqttClient.end(true); } catch (_) {} mqttClient = null; }
+  closeSession();
   goBackToSplash();
 }
 
@@ -3486,19 +4107,19 @@ function goBackToSplash() {
   if (mode === 'screen') {
     if (screenStrobeTimer) { clearTimeout(screenStrobeTimer); screenStrobeTimer = null; }
     stopTorchDimLoop(); stopTorchEffectLoop(); releaseTorch();
-    if (mqttClient) { try { mqttClient.end(true); } catch (_) {} mqttClient = null; }
-    if (window._bc) { try { window._bc.close(); } catch (_) {} window._bc = null; }
+    stopScreenAlive();
+    closeSession();
     mode = null;
   }
   releaseWakeLock();
   nativePost({ type: 'brightness-restore' }); // l'app native rend la luminosité d'origine
   const sm = document.getElementById('screen-mode');
   if (sm) sm.style.display = 'none';
-  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  clearLocationHash();
   const cfgDiv = document.getElementById('screen-sacn-config');
   if (cfgDiv) cfgDiv.style.display = 'none';
   stopScreenSACN();
-  document.getElementById('screen-connect').style.display = 'none';
+  hideScreenPairing();
   document.getElementById('splash').style.display = 'flex';
   applyPendingUpdate();
 }
@@ -3506,7 +4127,9 @@ function goBackToSplash() {
 function goBack() {
   stopStrobe();
   stopMediaBroadcast(true);
-  if (mqttClient) { mqttClient.end(true); mqttClient = null; }
+  remoteStopAllPairing();
+  closeSession();
+  stopLinkWatch();
   document.getElementById('remote-mode').style.display = 'none';
   document.getElementById('splash').style.display = 'flex';
   mode = null;
@@ -3518,17 +4141,90 @@ function switchTab(t) {
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-' + t).classList.add('active');
   document.getElementById('content-' + t).classList.add('active');
-  if (t === 'qr') renderQR();
+  if (t === 'qr') renderPairPanel();
+  else remoteStopPairCode(true); // le code ne reste actif que sur l'onglet d'appairage
 }
 
 // ══════════════════════════ STATUS ══════════════════════════
+// Télécommande : pastille de liaison dans l'en-tête et liste des écrans
+// appairés (onglet d'appairage). Un écran est « hors ligne » s'il n'a rien
+// envoyé depuis 40 s (il émet un signe de vie toutes les 15 s).
+const SCREEN_ALIVE_MS = 15000, SCREEN_OFFLINE_MS = 40000;
+let _linkState = 'connecting', _linkEverConnected = false, _linkWatch = null;
+const _pairedScreens = new Map();   // screenId (ou étiquette d'émetteur) → { n, lastSeen }
+const _screenOfSender = new Map();  // étiquette d'émetteur → screenId
+let _pairedSeq = 0;
+
 function setConnStatus(s) {
-  const dot = document.getElementById('connDot'), lbl = document.getElementById('connLabel');
-  dot.className = 'dot';
-  if (s === 'connected')   { dot.classList.add('connected');  lbl.textContent = '✓ Connecté — canal : ' + channel; }
-  else if (s === 'connecting') { dot.classList.add('connecting'); lbl.textContent = 'Connexion…'; }
-  else if (s === 'error')      { dot.classList.add('error');      lbl.textContent = 'Erreur — réessayez'; }
-  else { lbl.textContent = 'Non connecté'; }
+  _linkState = s;
+  if (s === 'connected') {
+    // Retour de la liaison : délai de grâce avant de déclarer un écran muet
+    const now = Date.now();
+    for (const sc of _pairedScreens.values()) sc.lastSeen = Math.max(sc.lastSeen, now - SCREEN_OFFLINE_MS + 10000);
+    _linkEverConnected = true;
+  }
+  if (!_linkWatch && mode === 'remote') _linkWatch = setInterval(renderLinkStatus, 5000);
+  renderLinkStatus();
+}
+function stopLinkWatch() { if (_linkWatch) { clearInterval(_linkWatch); _linkWatch = null; } }
+
+function _offlineScreens(now) { return [..._pairedScreens.values()].filter((s) => now - s.lastSeen > SCREEN_OFFLINE_MS); }
+
+function renderLinkStatus() {
+  const now = Date.now();
+  const pill = document.getElementById('linkPill'), lbl = document.getElementById('linkPillLabel');
+  if (pill && lbl) {
+    let cls, text;
+    if (_linkState !== 'connected') {
+      cls = 'reconnecting'; text = _linkEverConnected ? 'Reconnexion…' : 'Connexion…';
+    } else {
+      const off = _offlineScreens(now).length;
+      if (off) { cls = 'offline'; text = 'Hors ligne · ' + off + (off > 1 ? ' écrans' : ' écran'); }
+      else { cls = 'online'; text = 'Internet · chiffré'; }
+    }
+    pill.className = 'link-pill ' + cls;
+    lbl.textContent = text;
+  }
+  renderPairedScreens(now);
+}
+
+function renderPairedScreens(now) {
+  const box = document.getElementById('pairScreens'), list = document.getElementById('pairScreensList');
+  if (!box || !list) return;
+  box.style.display = _pairedScreens.size ? 'flex' : 'none';
+  document.getElementById('pairScreensCount').textContent = String(_pairedScreens.size);
+  list.innerHTML = [..._pairedScreens.values()].sort((a, b) => a.n - b.n).map((s) => {
+    const off = _linkState === 'connected' && now - s.lastSeen > SCREEN_OFFLINE_MS;
+    return '<div class="pair-screen' + (off ? ' off' : '') + '"><span class="ps-dot"></span>'
+      + '<span class="ps-name">Écran ' + s.n + '</span><span class="ps-link">' + (off ? 'Hors ligne' : 'Internet') + '</span></div>';
+  }).join('');
+}
+
+// Chaque message authentifié d'un écran prouve qu'il est en ligne ; « caps »
+// rattache son étiquette d'émetteur (une par lancement) à son screenId stable.
+function remoteNoteScreen(sender, msg) {
+  if (msg.type === 'caps' && typeof msg.screenId === 'string' && SRP.SCREEN_ID_RE.test(msg.screenId)) {
+    for (const [snd, id] of _screenOfSender) if (id === msg.screenId && snd !== sender) _screenOfSender.delete(snd);
+    _screenOfSender.set(sender, msg.screenId);
+  }
+  const id = _screenOfSender.get(sender) || sender;
+  let sc = _pairedScreens.get(id);
+  if (!sc) {
+    if (_pairedScreens.size >= 64) return; // borne mémoire (au-delà : ignoré)
+    sc = { n: ++_pairedSeq, lastSeen: 0 };
+    _pairedScreens.set(id, sc);
+  }
+  const wasOff = Date.now() - sc.lastSeen > SCREEN_OFFLINE_MS;
+  sc.lastSeen = Date.now();
+  if (wasOff) renderLinkStatus();
+}
+function clearPairedScreens() { _pairedScreens.clear(); _screenOfSender.clear(); _pairedSeq = 0; renderLinkStatus(); }
+
+// Toucher la pastille : détail par écran (onglet d'appairage)
+function openLinkDetail() {
+  switchTab('qr');
+  const el = document.getElementById(_pairedScreens.size ? 'pairScreens' : 'content-qr');
+  if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 function setScreenStatus(msg) {
   const el = document.getElementById('screen-status');
@@ -5440,15 +6136,42 @@ function renderColorMemories(){
   });
 }
 
-// ══════════════════════════ QR ══════════════════════════
-function renderQR(){
-  const urlEl=document.getElementById('qrUrl'),canvas=document.getElementById('qrCanvas');
-  if(!channel){urlEl.textContent='Connectez-vous d\'abord à un canal';return;}
-  const url=location.origin+location.pathname+'#'+channel;
-  urlEl.textContent=url;
-  const img=new Image();img.crossOrigin='anonymous';
-  img.onload=()=>{const ctx=canvas.getContext('2d');ctx.clearRect(0,0,200,200);ctx.drawImage(img,0,0,200,200);};
-  img.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(url);
+// ══════════════════════════ QR D'APPAIRAGE ══════════════════════════
+// QR généré localement (vendor/qrcode-generator, MIT) : le lien d'appairage
+// contient le secret de session dans son fragment, il ne quitte jamais
+// l'appareil (plus aucun service de QR en ligne).
+let _pairQrFor = null; // lien actuellement dessiné (en mémoire seulement)
+
+// Onglet d'appairage : QR de la session + code de rendez-vous actif
+function renderPairPanel() {
+  if (mode !== 'remote' || !_session) return;
+  const link = pairingLink(_session);
+  const box = document.getElementById('pairQr');
+  if (box && link !== _pairQrFor) { box.innerHTML = qrSvg(link); _pairQrFor = link; }
+  if (!_rdv || _rdv.role !== 'remote') remoteNewPairCode();
+  renderLinkStatus();
+}
+
+// SVG d'un QR (correction M, une marge d'un module ; la carte claire
+// autour complète la zone de silence)
+function qrSvg(text) {
+  if (typeof qrcode !== 'function') return '';
+  const qr = qrcode(0, 'M');
+  qr.addData(text, 'Byte');
+  qr.make();
+  const n = qr.getModuleCount(), q = 1, size = n + 2 * q;
+  let d = '';
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n;) {
+      if (!qr.isDark(r, c)) { c++; continue; }
+      let e = c + 1;
+      while (e < n && qr.isDark(r, e)) e++;
+      d += 'M' + (c + q) + ' ' + (r + q) + 'h' + (e - c) + 'v1h-' + (e - c) + 'z';
+      c = e;
+    }
+  }
+  return '<svg viewBox="0 0 ' + size + ' ' + size + '" width="172" height="172" shape-rendering="crispEdges" aria-hidden="true">'
+    + '<path fill="#111" d="' + d + '"/></svg>';
 }
 
 // ══════════════════════════ UTILS ══════════════════════════
@@ -5556,9 +6279,10 @@ function sendCaps() {
   // actuellement affiché — la télécommande ne renvoie que ce qui manque.
   const cached = [];
   _mediaCache.forEach((c, id) => { if (cached.length < 500 && /^[A-Za-z0-9_-]{1,64}$/.test(id)) cached.push(id); });
+  // screenId : identifiant stable de cet écran (liste des écrans appairés)
   sendMsg({ type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate, videoMode: 'rtc',
             cached, active: screenMediaVisible() ? (_screenActiveId || null) : null,
-            blackout: screenBlackoutOn });
+            blackout: screenBlackoutOn, screenId: screenId() });
 }
 
 // Capacités du récepteur connecté (mémorisées pour choisir le transport vidéo).
@@ -6771,13 +7495,16 @@ function onCallAutoChange() {
   const v = parseInt(document.getElementById('callAutoSlider').value) || 0;
   document.getElementById('callAutoVal').textContent = v > 0 ? v + ' s' : 'Off';
 }
+// Photo de l'appelant : envoyée DÈS le choix, en fragments chiffrés mis en
+// cache sur l'écran sous '__callphoto' (comme le fond d'écran verrouillé) ;
+// call:start annonce seulement hasPhoto.
+let _callPhotoSending = null;
 function onCallPhoto(files) {
   if (!files || !files[0]) return;
   const img = new Image();
   img.onload = () => {
     // On conserve le ratio (cap 640 px sur le grand côté) : bon rendu à la
-    // fois en avatar rond (cover) et en photo plein écran. Compressé pour
-    // rester sous la limite de taille d'un message MQTT.
+    // fois en avatar rond (cover) et en photo plein écran.
     const maxD = 640;
     let w = img.width, h = img.height;
     const s = Math.min(1, maxD / Math.max(w, h));
@@ -6788,6 +7515,7 @@ function onCallPhoto(files) {
     URL.revokeObjectURL(img.src);
     const pv = document.getElementById('callPhotoPreview');
     if (pv) pv.style.backgroundImage = 'url(' + _callPhoto + ')';
+    _callPhotoSending = sendImageChunks(_callPhoto, { mediaId: '__callphoto', show: false });
   };
   img.onerror = () => URL.revokeObjectURL(img.src);
   img.src = URL.createObjectURL(files[0]);
@@ -6817,8 +7545,10 @@ function onLockWall(files) {
   img.onerror = () => URL.revokeObjectURL(img.src);
   img.src = URL.createObjectURL(files[0]);
 }
-function triggerCall() {
+async function triggerCall() {
   const lockOn = callKind !== 'call' && document.getElementById('lockToggle').checked;
+  // La photo (fragments) part avant l'appel qui l'affiche
+  if (_callPhotoSending) { try { await _callPhotoSending; } catch (_) {} }
   sendMsg({
     type: 'call:start',
     kind: callKind,
@@ -6828,7 +7558,7 @@ function triggerCall() {
     msg: (document.getElementById('callMsgText').value || '').slice(0, 200),
     appName: (document.getElementById('callAppName').value || '').slice(0, 24),
     appColor: document.getElementById('callAppColor').value,
-    photo: _callPhoto,
+    hasPhoto: !!_callPhoto,
     ring: callRing,
     present: callPresent,
     photoMode: (callStyle !== 'minimal') ? callPhotoMode : 'avatar',
@@ -6934,6 +7664,10 @@ function _scHeadAvatar(m) {
   return (m.photoMode === 'full' && m.photo && m.style !== 'minimal') ? '' : _scAvatarHtml(m);
 }
 
+function _cachedCallPhoto() {
+  const c = _mediaCache.get('__callphoto');
+  return c && c.kind === 'img' ? safeImageData(c.data) : null;
+}
 function screenCallStart(m) {
   screenCallStopTimers();
   _stopCallAudio();
@@ -6948,7 +7682,8 @@ function screenCallStart(m) {
     msg: String(m.msg || '').slice(0, 200),
     appName: String(m.appName || '').slice(0, 24),
     appColor: safeHexColor(m.appColor, null),
-    photo: safeImageData(m.photo),
+    // Photo préchargée en fragments (__callphoto), validée à la réception
+    photo: m.hasPhoto ? _cachedCallPhoto() : null,
     photoMode: m.photoMode === 'full' ? 'full' : 'avatar',
     present: m.present === 'banner' ? 'banner' : 'full',
     ring: m.ring,
@@ -7414,7 +8149,8 @@ function exitFS() {
   if (ex && document.fullscreenElement) ex.call(document).catch(() => {});
 }
 
-if (location.hash && cleanChannel(location.hash)) enterScreenMode(location.hash);
+// Ouverture par un lien d'appairage (#p=v1.…) ou un ancien lien (#set1234)
+handleLaunchHash();
 
 // ══════════════════════════ PWA — installation & hors-ligne ══════════════════════════
 let _deferredInstall = null;

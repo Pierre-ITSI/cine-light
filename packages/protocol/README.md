@@ -6,11 +6,11 @@ Appairage, chiffrement de bout en bout et schéma des messages entre la
 (Hermes) dès qu'une implémentation WebCrypto (`crypto.subtle` +
 `crypto.getRandomValues`) est disponible ou injectée.
 
-> Ce paquet est autonome : il ne modifie ni `index.html` ni `expo-app/`.
-> L'intégration est décrite plus bas.
+> Ce paquet est autonome. La PWA l'intègre (`index.html`, voir §6) ;
+> `expo-app/` pas encore (§7).
 
 ```sh
-cd packages/protocol && npm test     # 57 tests node --test, aucune installation
+cd packages/protocol && npm test     # 58 tests node --test, aucune installation
 # (également exécutés par le `npm test` racine via tests/protocol-package.test.mjs)
 ```
 
@@ -84,7 +84,7 @@ https://<app>/#p=v1.<channelId>.<key>
 ```
 
 `parsePairingUrl()` renvoie `null` pour tout autre fragment (dont l'ancien
-`#set4271`), ce qui permet à l'app de basculer en mode historique.
+`#set4271`) : la PWA affiche alors l'écran d'appairage.
 
 ### 3.2 Dérivation (HKDF-SHA256, IKM = key, sel = channelId)
 
@@ -215,30 +215,37 @@ const r = await ch.receive(frame);  // null (ignoré) | { kind: 'message', messa
                                     // lève ProtocolError si invalide → ignorer la trame
 ```
 
-## 5. Parcours utilisateur
+## 5. Parcours utilisateur (implémenté dans la PWA)
 
 ### 5.1 QR code (cas normal, autant d'écrans que voulu)
 
-1. Sur la télécommande : **« Nouvelle session »** → un QR s'affiche (et un
-   bouton « Partager le lien »).
-2. Sur chaque écran : scanner le QR avec l'appareil photo (ou l'app) → l'écran
-   ouvre l'app, lit le secret dans le fragment, l'efface de la barre d'adresse
-   et rejoint la session. Tous les écrans scannent **le même** QR.
-3. La télécommande voit apparaître chaque écran (nom + identifiant via `caps`),
-   peut le renommer et le ranger dans des groupes.
-4. **« Masquer le QR »** dès que les écrans sont connectés ; **« Nouvelle
-   session »** révoque tous les appareils (il faut rescanner).
+1. **Télécommande** : la session est créée au premier lancement et conservée
+   (`localStorage`) ; la connexion est immédiate, sans code canal. L'onglet
+   **📡 QR** affiche le QR d'appairage, généré **sur l'appareil**
+   (`vendor/qrcode-generator-2.0.4.js`, plus aucun service en ligne).
+2. **Écran** : *Écran projecteur* → la caméra vise le QR (BarcodeDetector,
+   quand le navigateur le propose), ou l'appareil photo du téléphone ouvre le
+   lien. L'app lit le secret dans le fragment, l'efface de la barre d'adresse,
+   le retient pour la prochaine ouverture et rejoint la session. Tous les
+   écrans scannent **le même** QR et reçoivent les mêmes commandes.
+3. La télécommande liste les **écrans appairés** (identifiés par le `screenId`
+   annoncé dans `caps`) et l'en-tête affiche l'état de la liaison
+   (*Internet · chiffré*, *Reconnexion…*, *Hors ligne · N écran(s)* quand un
+   écran n'a rien envoyé depuis 40 s ; il émet `screen:alive` toutes les 15 s).
+4. **« Nouvelle session »** (onglet QR) révoque tous les écrans : il faut
+   rescanner. Un ancien lien `#set4271` mène à l'écran d'appairage.
 
 ### 5.2 Code manuel (sans caméra) — un code par écran
 
-1. Télécommande : **« Ajouter un écran par code »** → affiche `K7P-Q4X`
-   (2 minutes de validité, sans I/L/O/0/1).
-2. Écran : **« J'ai un code »** → saisit `K7P-Q4X`.
-3. Les **deux** appareils affichent un nombre à 6 chiffres, ex. `042 913`.
+1. Télécommande : l'onglet QR affiche aussi un code `K7M·4QP` (2 minutes,
+   sans I/L/O/0/1, bouton ⟳ pour en tirer un autre ; renouvelé seul).
+2. Écran : *Écran projecteur* → « ou saisir le code » → `K7M-4QP` → **OK**.
+3. Les **deux** appareils affichent un nombre à 6 chiffres, ex. `482 917`.
    L'utilisateur vérifie qu'ils sont **identiques** et appuie sur
-   **« Ça correspond »** sur chacun (sinon **« Différent »** → abandon,
-   nouveau code).
-4. L'écran rejoint la session commune. Pour l'écran suivant : nouveau code.
+   **« Identique »** sur chacun (sinon **« Annuler »** → abandon, nouveau
+   code).
+4. L'écran reçoit le secret de session **commun** et rejoint les autres. Un
+   nouveau code s'affiche aussitôt pour l'écran suivant.
 
 Sous le capot (topic `setremote/v2/rdv/<rendezvousTopic(code)>`, messages en
 clair validés par `validateRendezvousMessage`) :
@@ -261,87 +268,29 @@ doublons, abandonner à l'expiration du code ou sur `pair:abort`.
 
 ## 6. Intégration dans la PWA (`web/`, `index.html` généré)
 
-`index.html` est **généré** par `npm run build` à partir de `web/js/*.js`
-(scripts classiques concaténés) et de `web/styles/*.css`. On ne le modifie
-jamais à la main. Points d'accroche :
+`index.html` est **généré** par `npm run build`. Le paquet y est assemblé par
+`web/bundle-protocol.mjs` en une IIFE (script classique, sans dépendance) qui
+expose l'API dans la globale **`SRP`**, en tête du `<script>` unique.
 
 | Où | Quoi |
 |---|---|
-| `web/index.template.html` | charger le paquet (module ES) avant l'initialisation |
-| `web/js/20-mqtt.js`, `client.on('message')` | **déchiffrer** (`ch.receive`) **en amont** de `dispatchMessage(msg)` |
-| `web/js/20-mqtt.js`, `sendMsg(obj)` | **chiffrer** (`ch.seal`) ; topic `ch.mqttTopic` au lieu de `setremote/v1/<canal>/cmd` |
-| `web/js/22-protocol.js`, `dispatchMessage` | inchangé : `MSG_ROUTES` reste la 2e barrière (rôle + bornage) |
-| `web/js/66-torch-flash.js`, `sendCaps()` | ajouter `screenId`, `name`, `groups` |
-| `web/js/24-resync.js` | multi-écran : la resynchronisation peut cibler `target: { screens: [caps.screenId] }` |
-| `sw.js` | ajouter `./packages/protocol/*.js` au `SHELL` et incrémenter `CACHE` (aujourd'hui `setremote-v52`) |
+| `web/js/12-session.js` | secret de la télécommande (`setremote-session-v1`), dernière session de l'écran, `screenId` stable, lien d'appairage |
+| `web/js/20-mqtt.js` | `connectSession()` : `createSecureChannel`, topic `ch.mqttTopic` ; **réception** une trame à la fois (`ch.receive` ; tout échec = trame ignorée, comptée dans `secStats`) puis `dispatchMessage` ; **envoi** `sendMsg` → forme JSON, bornage (`clampOutgoing`), `ch.seal`, publication dans l'ordre des appels |
+| `web/js/22-protocol.js` | `MSG_ROUTES` reste la 2e barrière ; `clampOutgoing()` borne à l'émission (flash ≥ 15 ms, strobe ≤ 30 Hz, vibreur, effets…) sans toucher aux curseurs |
+| `web/js/26-pairing.js` | rendez-vous par code (commit / key / reveal / session, répétés toutes les 1,5 s), dialogue de vérification du nombre, scan du QR dans l'app |
+| `web/js/32-status.js` | pastille de liaison et liste des écrans appairés |
+| `web/js/64-qr-utils.js` | QR en SVG (correction M) |
 
-1. **Chargement.** Les scripts de `web/js` sont classiques et ne peuvent pas
-   faire `import`. Il faut donc un module qui publie l'API, et
-   l'initialisation (`99-init.js`) doit attendre `srp-ready`. Rappel :
-   WebCrypto n'est disponible qu'en HTTPS ou sur `localhost`.
-
-   ```html
-   <script type="module">
-     import * as P from './packages/protocol/index.js';
-     window.SRP = P; window.dispatchEvent(new Event('srp-ready'));
-   </script>
-   ```
-
-2. **Télécommande.**
-   - `pairing = SRP.createPairing()`, persisté en `localStorage` pour survivre
-     au rechargement.
-   - QR = `SRP.pairingUrl(location.href, pairing)`.
-3. **Écran.**
-   - Au démarrage, appeler `SRP.parsePairingUrl(location.href)`.
-   - Si un appairage est trouvé, effacer le fragment avec
-     `history.replaceState(null, '', location.pathname + location.search)`,
-     puis persister l'appairage.
-   - Sinon, si le fragment est un ancien code, passer en **mode historique**.
-   - `screenId` : tiré par `SRP.createScreenId()` au premier lancement, puis
-     conservé en `localStorage`.
-4. **Réception et envoi** (`20-mqtt.js`) :
-
-```js
-// ch = await SRP.createSecureChannel({ pairing, role: mode, screenId, groups })
-client.subscribe(ch.mqttTopic, { qos: 0 }, ...);
-client.on('message', async (_t, payload) => {
-  let r;
-  try { r = await ch.receive(payload.toString()); }
-  catch (e) { if (e.code === 'stale') signalerHorloge(); return; }   // trame ignorée
-  if (!r) return;                                   // écho, autre écran, pas pour nous
-  if (r.kind === 'message') dispatchMessage(r.message);   // MSG_ROUTES inchangé
-  else onChunk(r.chunk);                                    // assembleur de fragments
-});
-async function sendMsg(obj) {
-  if (!mqttClient || !mqttClient.connected) return;
-  mqttClient.publish(ch.mqttTopic, await ch.seal(obj), { qos: 0 });
-}
-```
-
-   `ch.seal` lève `invalid-message` si l'objet sort du schéma. Il faut
-   journaliser cette erreur, pas l'avaler : elle signale un émetteur qui
-   devrait borner ses valeurs.
-
-5. **Médias.**
-   - Télécommande : lire le fichier en `ArrayBuffer`, le découper avec
-     `splitIntoChunks()`, annoncer par `media:upload` (avec `target` si
-     besoin), envoyer `ch.sealChunk(...)` pour chaque fragment, puis
-     `media:play`.
-   - Écran : appeler `asm.expect(mediaId, totalChunks)` à réception du
-     `media:upload`, puis `asm.add(chunk)` pour chaque fragment ;
-     `asm.missing()` alimente `media:need-chunks`.
-   - Le JSON base64 `media:chunk` (jusqu'à 50 000 fragments, comme
-     aujourd'hui) reste accepté pour compatibilité.
-6. **Repli `BroadcastChannel`** (même appareil). Aujourd'hui il transporte
-   `color` et `strobe` en clair ; il peut transporter les mêmes trames
-   chiffrées.
-7. **À adapter avant d'activer la validation stricte à l'envoi.**
-   - `flashDurSlider` et `flashDurMaxSlider` ont `min="5"` dans
-     `web/index.template.html` : passer à **15**, ou borner dans
-     `buildStrobePayload()`.
-   - Les écrans d'appairage (QR « nouvelle session », saisie du code,
-     comparaison de la SAS) sont une **interface nouvelle** : il faut une
-     maquette validée avant de les implémenter.
+- **Tout** passe par `seal`/`open` : commandes, fragments d'images / sons /
+  vidéo base64 (`media-img-*`, `media:chunk`), photo d'appel (`__callphoto`),
+  signalisation WebRTC (`rtc-offer`, `rtc-answer`, `rtc-ice`). Le fichier
+  vidéo lui-même passe par le canal de données WebRTC (chiffré DTLS).
+- **Repli `BroadcastChannel`** (même appareil) : mêmes trames chiffrées
+  (`color`, `strobe`), sous une étiquette d'émetteur distincte pour ne pas
+  perturber la fenêtre anti-rejeu du flux MQTT.
+- WebCrypto n'existe qu'en HTTPS, sur `localhost` ou en `file://`.
+- Toutes les commandes vont à tous les écrans (comportement historique) ; le
+  ciblage par écran (`target`) viendra avec l'interface correspondante.
 
 ## 7. Intégration React Native (`expo-app`, Expo SDK 56, Hermes)
 
@@ -401,9 +350,10 @@ Alternative : `import { install } from 'react-native-quick-crypto'; install();`
 1. Livrer le chiffrement **avant** le relais privé : les trames v2 circulent
    déjà sur le broker public (topic opaque 128 bits, contenu chiffré) → la
    fuite de médias et l'injection cessent immédiatement.
-2. Mode historique (`#set4271`) conservé derrière un bandeau d'avertissement,
-   en réception **validée par `validate()`** (bloque déjà les charges de la
-   revue), puis désactivé par défaut, puis retiré.
+2. **Pas de coexistence** avec les anciens codes canal (décision produit) :
+   la PWA ne parle plus que le protocole chiffré ; un ancien lien `#set4271`
+   mène à l'écran d'appairage. L'app native (`expo-app`) doit migrer à son
+   tour pour rester compatible.
 3. Bascule vers le relais privé par simple changement d'URL/transport.
 
 ## 9. Limites connues / suites

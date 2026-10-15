@@ -1,9 +1,13 @@
-// Robustesse du protocole (Partie 3) : table d'aiguillage + validateurs,
-// bornage des effets, cycle de vie MQTT (coupure / reconnexion) et
-// resynchronisation complète d'un écran (re)connecté.
+// Robustesse du protocole (Partie 3) : table d'aiguillage + validateurs
+// (2e barrière, après le schéma strict du paquet protocole), bornage des
+// effets, cycle de vie MQTT (coupure / reconnexion) et resynchronisation
+// complète d'un écran (re)connecté — le tout sur la session chiffrée.
 import { test, before, after, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { launchBrowser, openPage, waitFor, sleep, connectFakeClients, FakeBroker } from './helpers/harness.mjs';
+import {
+  launchBrowser, openPage, waitFor, sleep, connectFakeClients, FakeBroker, SRP,
+  fakePeer, deliverFrame, publishedBy, pairingHash,
+} from './helpers/harness.mjs';
 
 let browser;
 before(async () => { browser = await launchBrowser(); });
@@ -16,23 +20,26 @@ async function spy(page, names) {
     for (const n of names) {
       const orig = window[n];
       window.__calls[n] = [];
-      window[n] = function (...args) { window.__calls[n].push(JSON.parse(JSON.stringify(args))); return orig.apply(this, args); };
+      window[n] = function (...args) { (window.__calls[n] ||= []).push(JSON.parse(JSON.stringify(args))); return orig.apply(this, args); };
     }
   }, names);
 }
 const calls = (page, n) => page.evaluate((n) => window.__calls[n], n);
-// Livraison par le vrai gestionnaire 'message' (JSON.parse, filtre d'écho, aiguillage)
-const deliver = (page, msg) => page.evaluate((msg) => {
-  mqttClient._deliver(mqttTopic(channel), msg);
-}, msg);
+// 2e barrière : un message déjà authentifié et conforme au schéma passe par
+// la table d'aiguillage (rôle, bornage, traitement). On l'y présente
+// directement pour éprouver ses validateurs (valeurs que le schéma refuserait).
+const deliver = (page, msg) => page.evaluate((msg) => { dispatchMessage(msg); }, msg);
 
 describe('écran : validation des messages reçus', () => {
-  let ctx;
+  let ctx, remote;
   before(async () => {
     ctx = await openPage(browser);
-    await ctx.page.evaluate(() => enterScreenMode('proto'));
+    const pairing = SRP.createPairing();
+    await ctx.page.evaluate((p) => screenJoinSession(p), pairing);
+    await waitFor(ctx.page, () => !!mqttClient);
     await connectFakeClients(ctx.page);
     await waitFor(ctx.page, () => mqttClient.connected);
+    remote = await fakePeer(pairing, 'remote');
   });
   after(async () => { await ctx?.close(); });
 
@@ -46,16 +53,26 @@ describe('écran : validation des messages reçus', () => {
     assert.equal(await page.evaluate(() => screenBaseColor), '#A0B1C2');
   });
 
-  test('messages inconnus, hors rôle, mal formés ou écho : ignorés sans erreur', async () => {
+  test('messages inconnus, hors rôle, mal formés, non chiffrés ou écho : ignorés sans erreur', async () => {
     const { page } = ctx;
-    await spy(page, ['applyReceiverCaps', 'receiveColor', 'remoteOnCallState']);
-    for (const raw of ['42', 'null', '[]', '"color"', '{"type":{"x":1}}', '{"type":"__proto__"}', '{"type":"toString"}', 'pas du json']) {
-      await page.evaluate((raw) => mqttClient._deliver(mqttTopic(channel), raw), raw);
-    }
-    await deliver(page, { type: 'caps', torch: false });         // réservé à la télécommande
-    await deliver(page, { type: 'call:state', state: 'ringing' });
-    await deliver(page, { type: 'media:clear', mediaId: 'all' }); // vocabulaire natif inconnu de la PWA
-    await deliver(page, { type: 'color', color: '#010203', _id: await page.evaluate(() => mqttClient._myId) }); // écho
+    await spy(page, ['applyReceiverCaps', 'receiveColor', 'remoteOnCallState', 'dispatchMessage']);
+    const dropped0 = await page.evaluate(() => secStats.dropped);
+    // Ancien protocole en clair et charges quelconques : rejetées avant tout traitement
+    const raws = ['42', 'null', '[]', '"color"', '{"type":"color","color":"#010203"}', '{"type":{"x":1}}', '{"type":"__proto__"}', 'pas du json'];
+    for (const raw of raws) await deliverFrame(page, raw);
+    assert.equal(await page.evaluate(() => secStats.dropped) - dropped0, raws.length);
+    // Authentifiées mais hors schéma ou hors sens : rejetées par le schéma strict
+    await deliverFrame(page, await remote.forge({ type: 'caps', torch: false, vibrate: false })); // réservé à la télécommande
+    await deliverFrame(page, await remote.forge({ type: 'call:state', state: 'ringing' }));
+    await deliverFrame(page, await remote.forge({ type: 'color', color: 'red' }));
+    await deliverFrame(page, await remote.forge({ type: 'eval', code: 'alert(1)' }));
+    assert.equal(await page.evaluate(() => secStats.lastError), 'invalid-message');
+    // Vocabulaire natif connu du schéma mais pas de la PWA : ignoré par l'aiguillage
+    await deliverFrame(page, await remote.seal({ type: 'media:clear', mediaId: 'all' }));
+    // Écho : la propre trame de l'écran ne lui revient pas
+    const echo = await page.evaluate(async () => { const f = await _sec.seal({ type: 'screen:alive' }); return f; });
+    await deliverFrame(page, echo);
+    assert.deepEqual((await calls(page, 'dispatchMessage')).map((a) => a[0].type), ['media:clear']);
     assert.deepEqual(await calls(page, 'applyReceiverCaps'), []);
     assert.deepEqual(await calls(page, 'remoteOnCallState'), []);
     assert.deepEqual(await calls(page, 'receiveColor'), []);
@@ -147,12 +164,13 @@ describe('écran : validation des messages reçus', () => {
 
   test("appel : sonnerie inconnue → classique, champs plafonnés", async () => {
     const { page } = ctx;
-    await deliver(page, { type: 'call:start', kind: 'call', style: 'glass', name: 'N'.repeat(500), ring: '__proto__', autoAnswer: 'x', lock: true });
+    await deliver(page, { type: 'call:start', kind: 'call', style: 'glass', name: 'N'.repeat(500), ring: '__proto__', autoAnswer: 'x', lock: true, photo: 'data:image/png;base64,AAAA' });
     const cfg = await page.evaluate(() => ({ ..._callCfg }));
     assert.equal(cfg.ring, 'classic');
     assert.equal(cfg.name.length, 40);
     assert.equal(cfg.autoAnswer, 0);
     assert.equal(cfg.lock, null);
+    assert.equal(cfg.photo, null, 'photo en ligne ignorée (seul le cache __callphoto compte)');
     // Cadence normale de la sonnerie (aucune boucle à 0 ms)
     const n = await page.evaluate(async () => { let k = 0; const o = window._ringBurst; window._ringBurst = (x) => { k++; return o(x); }; await new Promise((r) => setTimeout(r, 400)); window._ringBurst = o; return k; });
     assert.ok(n <= 1, 'sonnerie répétée ' + n + ' fois en 400 ms');
@@ -196,53 +214,66 @@ describe('écran : validation des messages reçus', () => {
 });
 
 describe('cycle de vie MQTT', () => {
-  test('télécommande : coupure → « Connexion… », reconnexion → « Connecté », réabonnement + hello', async () => {
+  test('télécommande : coupure → « Reconnexion… », reconnexion → « Internet · chiffré », réabonnement + hello', async () => {
     const { page, errors, close } = await openPage(browser);
-    await page.evaluate(() => { startMode('remote'); document.getElementById('channelInput').value = 'life1'; connectChannel(); });
-    const status = () => page.evaluate(() => ({ dot: document.getElementById('connDot').className, label: document.getElementById('connLabel').textContent }));
-    assert.deepEqual(await status(), { dot: 'dot connecting', label: 'Connexion…' });
+    await page.evaluate(() => startMode('remote'));
+    await waitFor(page, () => !!mqttClient);
+    const status = () => page.evaluate(() => ({ pill: document.getElementById('linkPill').className, label: document.getElementById('linkPillLabel').textContent }));
+    assert.deepEqual(await status(), { pill: 'link-pill reconnecting', label: 'Connexion…' });
     await connectFakeClients(page);
-    await waitFor(page, () => document.getElementById('connDot').className === 'dot connected');
-    assert.equal((await status()).label, '✓ Connecté — canal : life1');
-    const hellos = () => page.evaluate(() => mqttClient.published.map((p) => JSON.parse(p.payload)).filter((m) => m.type === 'hello').length);
+    await waitFor(page, () => document.getElementById('linkPill').classList.contains('online'));
+    assert.equal((await status()).label, 'Internet · chiffré');
+    const hellos = async () => (await publishedBy(page, 'hello')).length;
     assert.equal(await hellos(), 1);
     // Coupure réseau : close + offline + reconnect
     await page.evaluate(() => mqttClient._drop());
-    assert.deepEqual(await status(), { dot: 'dot connecting', label: 'Connexion…' });
+    assert.deepEqual(await status(), { pill: 'link-pill reconnecting', label: 'Reconnexion…' });
     await page.evaluate(() => mqttClient.emit('error', new Error('ws')));
-    assert.equal((await status()).dot, 'dot error');
+    assert.equal((await status()).label, 'Reconnexion…');
     await page.evaluate(() => mqttClient.emit('reconnect'));
-    assert.equal((await status()).dot, 'dot connecting');
+    assert.equal((await status()).pill, 'link-pill reconnecting');
     await page.evaluate(() => mqttClient._connect());
-    await waitFor(page, () => document.getElementById('connDot').className === 'dot connected');
+    await waitFor(page, () => document.getElementById('linkPill').classList.contains('online'));
+    await sleep(50);
     assert.equal(await hellos(), 2, 'hello renvoyé à la reconnexion → resynchronisation');
-    assert.deepEqual(await page.evaluate(() => mqttClient.subscriptions), ['setremote/v1/life1/cmd']);
-    // Changement de canal : les évènements de l'ancien client sont ignorés
-    await page.evaluate(() => { window.__old = mqttClient; document.getElementById('channelInput').value = 'life2'; connectChannel(); });
+    const topic = await page.evaluate(() => _sec.mqttTopic);
+    assert.match(topic, /^setremote\/v2\/s\/[A-Za-z0-9_-]{22}$/);
+    assert.deepEqual(await page.evaluate(() => mqttClient.subscriptions), [topic]);
+    // Nouvelle session : nouveau topic, les évènements de l'ancien client sont ignorés
+    await page.evaluate(() => { window.__old = mqttClient; window.__oldSession = _session; newRemoteSession(); });
+    await waitFor(page, () => mqttClient && mqttClient !== window.__old);
     await connectFakeClients(page);
-    await waitFor(page, () => document.getElementById('connLabel').textContent.includes('life2'));
+    await waitFor(page, () => document.getElementById('linkPill').classList.contains('online'));
+    const renewed = await page.evaluate(() => ({ topic: _sec.mqttTopic, same: JSON.stringify(_session) === JSON.stringify(window.__oldSession),
+      stored: JSON.stringify(JSON.parse(localStorage.getItem('setremote-session-v1'))) === JSON.stringify(_session) }));
+    assert.notEqual(renewed.topic, topic);
+    assert.equal(renewed.same, false);
+    assert.equal(renewed.stored, true);
     await page.evaluate(() => { window.__old.disconnecting = false; window.__old.emit('close'); window.__old.emit('reconnect'); });
-    assert.equal((await status()).dot, 'dot connected');
-    // Fin volontaire (retour) : pas d'état « Connexion… » parasite
+    assert.equal((await status()).pill, 'link-pill online');
+    // Fin volontaire (retour) : pas d'état « Reconnexion… » parasite
     await page.evaluate(() => goBack());
-    assert.equal((await status()).dot, 'dot connected');
+    assert.equal((await status()).pill, 'link-pill online');
     assert.deepEqual(errors, []);
     await close();
   });
 
-  test('écran : reconnexion silencieuse, capacités renvoyées (avec cache et média actif)', async () => {
+  test('écran : reconnexion silencieuse, capacités renvoyées (avec cache, média actif et screenId)', async () => {
     const { page, errors, close } = await openPage(browser);
-    await page.evaluate(() => enterScreenMode('life3'));
+    await page.evaluate((p) => screenJoinSession(p), SRP.createPairing());
+    await waitFor(page, () => !!mqttClient);
     await connectFakeClients(page);
     await waitFor(page, () => document.getElementById('screen-status').textContent.startsWith('✓'));
-    const caps = () => page.evaluate(() => mqttClient.published.map((p) => JSON.parse(p.payload)).filter((m) => m.type === 'caps'));
+    const caps = () => publishedBy(page, 'caps');
     assert.equal((await caps()).length, 1);
     assert.deepEqual((await caps())[0].cached, []);
     assert.equal((await caps())[0].active, null);
+    assert.equal((await caps())[0].screenId, await page.evaluate(() => localStorage.getItem('setremote-screen-id')));
     await page.evaluate(() => mqttClient._drop());
-    assert.equal(await page.textContent('#screen-status'), 'Connexion à life3…');
+    assert.equal(await page.textContent('#screen-status'), 'Connexion…');
     await page.evaluate(() => { document.getElementById('screen-notice').style.display = 'none'; mqttClient._connect(); });
     await waitFor(page, () => document.getElementById('screen-status').textContent.startsWith('✓'));
+    await sleep(50);
     assert.equal((await caps()).length, 2);
     assert.equal(await page.evaluate(() => document.getElementById('screen-notice').style.display), 'none', 'aucune notice visible à la reconnexion');
     assert.deepEqual(errors, []);
@@ -255,9 +286,12 @@ describe('resynchronisation télécommande → écran', () => {
     const broker = new FakeBroker();
     const remote = await openPage(browser, { broker, seed: 7 });
     const rp = remote.page;
-    await rp.evaluate(() => { startMode('remote'); document.getElementById('channelInput').value = 'sync1'; connectChannel(); });
+    await rp.evaluate(() => startMode('remote'));
+    await waitFor(rp, () => !!mqttClient);
     await connectFakeClients(rp);
-    let screen = await openPage(browser, { broker, hash: 'sync1', seed: 8 });
+    const hash = await pairingHash(rp);
+    let screen = await openPage(browser, { broker, hash, seed: 8 });
+    await waitFor(screen.page, () => !!mqttClient);
     await connectFakeClients(screen.page);
     await broker.flush();
 
@@ -298,12 +332,13 @@ describe('resynchronisation télécommande → écran', () => {
     await screen.close();
     broker.pages.splice(broker.pages.indexOf(screen.page), 1);
     broker.clear();
-    screen = await openPage(browser, { broker, hash: 'sync1', seed: 9 });
+    screen = await openPage(browser, { broker, hash, seed: 9 });
     assert.equal(await screen.page.evaluate(() => screenBlackoutOn), false, 'écran neuf');
+    await waitFor(screen.page, () => !!mqttClient);
     await connectFakeClients(screen.page);
     await expectState(screen.page);
     await sleep(800); await broker.flush();
-    const sentAfterReload = broker.sent(rp).map((m) => m.type + (m.mediaId ? ':' + m.mediaId : ''));
+    const sentAfterReload = (await broker.sent(rp)).map((m) => m.type + (m.mediaId ? ':' + m.mediaId : ''));
     assert.ok(sentAfterReload.includes('media-img-start:__lockwall'), 'fond verrouillé renvoyé à l\'écran qui l\'a perdu');
     assert.ok(sentAfterReload.includes('media-img-start:m1'), 'média actif re-diffusé');
     assert.equal(sentAfterReload.filter((t) => t === 'blackout').length, 1, 'un seul instantané');
@@ -312,9 +347,9 @@ describe('resynchronisation télécommande → écran', () => {
     await sleep(500); await broker.flush(); broker.clear();
     await rp.evaluate(() => mqttClient._drop());
     await rp.evaluate(() => mqttClient._connect());
-    await waitFor(rp, () => document.getElementById('connDot').className === 'dot connected');
+    await waitFor(rp, () => document.getElementById('linkPill').classList.contains('online'));
     await sleep(700); await broker.flush();
-    let types = broker.sent(rp).map((m) => m.type);
+    let types = (await broker.sent(rp)).map((m) => m.type);
     assert.ok(types.includes('hello') && types.includes('blackout') && types.includes('effect') && types.includes('strobe'), types.join(','));
     assert.ok(!types.includes('media-img-start') && !types.includes('media:show'), 'aucun média renvoyé : ' + types.join(','));
     await expectState(screen.page);
@@ -323,8 +358,8 @@ describe('resynchronisation télécommande → écran', () => {
     broker.clear();
     await screen.page.evaluate(() => { mqttClient._drop(); mqttClient._connect(); });
     await sleep(700); await broker.flush();
-    assert.ok(broker.sent(screen.page, 'caps').length === 1);
-    types = broker.sent(rp).map((m) => m.type);
+    assert.ok((await broker.sent(screen.page, 'caps')).length === 1);
+    types = (await broker.sent(rp)).map((m) => m.type);
     assert.ok(types.includes('color') && !types.includes('media-img-start'), types.join(','));
     await expectState(screen.page);
 
@@ -335,16 +370,20 @@ describe('resynchronisation télécommande → écran', () => {
 
   test('plusieurs « caps » rapprochés → un seul instantané ; écran sans liste de cache (ancien/natif) accepté', async () => {
     const { page, errors, close } = await openPage(browser);
-    await page.evaluate(() => { startMode('remote'); document.getElementById('channelInput').value = 'multi'; connectChannel(); });
+    await page.evaluate(() => startMode('remote'));
+    await waitFor(page, () => !!mqttClient);
     await connectFakeClients(page);
     await waitFor(page, () => mqttClient.connected);
     await sleep(100);
     await page.evaluate(() => { mqttClient.published.length = 0; });
-    await deliver(page, { type: 'caps', torch: true, vibrate: true, videoMode: 'rtc', cached: [], active: null });
-    await deliver(page, { type: 'caps', torch: true, vibrate: true, media: true, videoMode: 'b64' }); // écran natif
-    await deliver(page, { type: 'caps', torch: false, cached: 'x', active: '<bad>' });               // champs invalides ignorés
+    const pairing = await page.evaluate(() => _session);
+    const [a, b, c] = await Promise.all([fakePeer(pairing, 'screen'), fakePeer(pairing, 'screen'), fakePeer(pairing, 'screen')]);
+    await deliverFrame(page, await a.seal({ type: 'caps', torch: true, vibrate: true, videoMode: 'rtc', cached: [], active: null, screenId: a.screenId }));
+    await deliverFrame(page, await b.seal({ type: 'caps', torch: false, vibrate: true, media: true, videoMode: 'b64' })); // écran natif
+    await deliverFrame(page, await c.forge({ type: 'caps', torch: true, cached: 'x', active: '<bad>' }));               // hors schéma : rejeté
+    assert.equal(await page.evaluate(() => secStats.lastError), 'invalid-message');
     await sleep(600);
-    const sent = await page.evaluate(() => mqttClient.published.map((p) => JSON.parse(p.payload).type));
+    const sent = (await publishedBy(page)).map((m) => m.type);
     assert.equal(sent.filter((t) => t === 'color').length, 1, sent.join(','));
     assert.equal(sent.filter((t) => t === 'blackout').length, 0, 'OFF jamais imposé tant que l\'utilisateur n\'y a pas touché');
     assert.equal(await page.evaluate(() => document.getElementById('content-flash').classList.contains('torch-unavailable')), true);
@@ -354,17 +393,20 @@ describe('resynchronisation télécommande → écran', () => {
 
   test('télécommande rechargée : ne rallume jamais un écran éteint, reprend son état OFF', async () => {
     const broker = new FakeBroker();
-    const screen = await openPage(browser, { broker, hash: 'keepoff', seed: 11 });
+    const pairing = SRP.createPairing();
+    const screen = await openPage(browser, { broker, hash: SRP.pairingUrl('x', pairing).split('#')[1], seed: 11 });
+    await waitFor(screen.page, () => !!mqttClient);
     await connectFakeClients(screen.page);
     await screen.page.evaluate(() => setBlackout(true));
-    // Télécommande neuve (rechargée) qui rejoint le canal
+    // Télécommande rechargée : elle retrouve sa session persistée
     const remote = await openPage(browser, { broker, seed: 12 });
     const rp = remote.page;
-    await rp.evaluate(() => { startMode('remote'); document.getElementById('channelInput').value = 'keepoff'; connectChannel(); });
+    await rp.evaluate((p) => { localStorage.setItem('setremote-session-v1', JSON.stringify(p)); startMode('remote'); }, pairing);
+    await waitFor(rp, () => !!mqttClient);
     await connectFakeClients(rp);
     await sleep(800); await broker.flush();
     assert.equal(await screen.page.evaluate(() => screenBlackoutOn), true, 'écran toujours éteint');
-    assert.ok(!broker.sent(rp, 'blackout').length, 'aucun ordre OFF/ON envoyé');
+    assert.ok(!(await broker.sent(rp, 'blackout')).length, 'aucun ordre OFF/ON envoyé');
     assert.equal(await rp.evaluate(() => remoteBlackout), true, 'la télécommande affiche l\'état réel');
     assert.equal(await rp.evaluate(() => document.getElementById('stickyBlackoutBtn').textContent), 'Écran OFF');
     // L'utilisateur rallume : l'ordre passe, puis reste imposé aux resynchronisations
@@ -374,7 +416,7 @@ describe('resynchronisation télécommande → écran', () => {
     broker.clear();
     await screen.page.evaluate(() => { setBlackout(true); mqttClient._drop(); mqttClient._connect(); });
     await sleep(800); await broker.flush();
-    assert.equal(broker.sent(rp, 'blackout').length, 1);
+    assert.equal((await broker.sent(rp, 'blackout')).length, 1);
     assert.equal(await screen.page.evaluate(() => screenBlackoutOn), false, 'choix de l\'utilisateur réappliqué');
     assert.deepEqual(remote.errors, []);
     assert.deepEqual(screen.errors, []);

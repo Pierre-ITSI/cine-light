@@ -112,13 +112,16 @@ function onCallAutoChange() {
   const v = parseInt(document.getElementById('callAutoSlider').value) || 0;
   document.getElementById('callAutoVal').textContent = v > 0 ? v + ' s' : 'Off';
 }
+// Photo de l'appelant : envoyée DÈS le choix, en fragments chiffrés mis en
+// cache sur l'écran sous '__callphoto' (comme le fond d'écran verrouillé) ;
+// call:start annonce seulement hasPhoto.
+let _callPhotoSending = null;
 function onCallPhoto(files) {
   if (!files || !files[0]) return;
   const img = new Image();
   img.onload = () => {
     // On conserve le ratio (cap 640 px sur le grand côté) : bon rendu à la
-    // fois en avatar rond (cover) et en photo plein écran. Compressé pour
-    // rester sous la limite de taille d'un message MQTT.
+    // fois en avatar rond (cover) et en photo plein écran.
     const maxD = 640;
     let w = img.width, h = img.height;
     const s = Math.min(1, maxD / Math.max(w, h));
@@ -129,6 +132,7 @@ function onCallPhoto(files) {
     URL.revokeObjectURL(img.src);
     const pv = document.getElementById('callPhotoPreview');
     if (pv) pv.style.backgroundImage = 'url(' + _callPhoto + ')';
+    _callPhotoSending = sendImageChunks(_callPhoto, { mediaId: '__callphoto', show: false });
   };
   img.onerror = () => URL.revokeObjectURL(img.src);
   img.src = URL.createObjectURL(files[0]);
@@ -158,8 +162,10 @@ function onLockWall(files) {
   img.onerror = () => URL.revokeObjectURL(img.src);
   img.src = URL.createObjectURL(files[0]);
 }
-function triggerCall() {
+async function triggerCall() {
   const lockOn = callKind !== 'call' && document.getElementById('lockToggle').checked;
+  // La photo (fragments) part avant l'appel qui l'affiche
+  if (_callPhotoSending) { try { await _callPhotoSending; } catch (_) {} }
   sendMsg({
     type: 'call:start',
     kind: callKind,
@@ -169,7 +175,7 @@ function triggerCall() {
     msg: (document.getElementById('callMsgText').value || '').slice(0, 200),
     appName: (document.getElementById('callAppName').value || '').slice(0, 24),
     appColor: document.getElementById('callAppColor').value,
-    photo: _callPhoto,
+    hasPhoto: !!_callPhoto,
     ring: callRing,
     present: callPresent,
     photoMode: (callStyle !== 'minimal') ? callPhotoMode : 'avatar',
@@ -275,6 +281,10 @@ function _scHeadAvatar(m) {
   return (m.photoMode === 'full' && m.photo && m.style !== 'minimal') ? '' : _scAvatarHtml(m);
 }
 
+function _cachedCallPhoto() {
+  const c = _mediaCache.get('__callphoto');
+  return c && c.kind === 'img' ? safeImageData(c.data) : null;
+}
 function screenCallStart(m) {
   screenCallStopTimers();
   _stopCallAudio();
@@ -289,7 +299,8 @@ function screenCallStart(m) {
     msg: String(m.msg || '').slice(0, 200),
     appName: String(m.appName || '').slice(0, 24),
     appColor: safeHexColor(m.appColor, null),
-    photo: safeImageData(m.photo),
+    // Photo préchargée en fragments (__callphoto), validée à la réception
+    photo: m.hasPhoto ? _cachedCallPhoto() : null,
     photoMode: m.photoMode === 'full' ? 'full' : 'avatar',
     present: m.present === 'banner' ? 'banner' : 'full',
     ring: m.ring,

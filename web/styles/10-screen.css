@@ -1,10 +1,6 @@
-#screen-connect{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);gap:24px;padding:max(32px,env(safe-area-inset-top)) max(32px,env(safe-area-inset-right)) max(32px,env(safe-area-inset-bottom)) max(32px,env(safe-area-inset-left));animation:fadeIn .4s ease;min-height:100vh}
-#screen-connect h2{font-family:'Lato',sans-serif;font-weight:600;font-size:1.8rem;color:var(--accent);text-align:center}
-#screen-connect p{font-size:.72rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;text-align:center}
-.screen-input-row{display:flex;gap:10px;width:100%;max-width:340px}
-.screen-input-row input{flex:1;background:var(--mid);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:1.1rem;padding:14px 16px;border-radius:6px;outline:none;letter-spacing:.12em;text-align:center;transition:border-color .2s}
-.screen-input-row input:focus{border-color:var(--accent)}
-.screen-input-row input::placeholder{color:var(--muted);font-size:.85rem}
+/* Écran projecteur — rejoindre la télécommande (scan du QR ou code) : 25-pairing.css */
+#screen-connect{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:flex-start;background:var(--dark);gap:18px;padding:max(48px,env(safe-area-inset-top)) max(28px,env(safe-area-inset-right)) max(32px,env(safe-area-inset-bottom)) max(28px,env(safe-area-inset-left));animation:fadeIn .4s ease;min-height:100vh;overflow-y:auto}
+#screen-connect h2{font-family:'Lato',sans-serif;font-weight:600;font-size:1.75rem;color:var(--accent);text-align:center}
 .screen-go-btn{background:var(--accent);color:var(--dark);border:none;font-family:'DM Mono',monospace;font-size:.85rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:14px 20px;border-radius:6px;cursor:pointer}
 .screen-back{font-size:.65rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;background:none;border:none}
 .screen-back:hover{color:var(--text)}

@@ -18,5 +18,6 @@ function exitFS() {
   if (ex && document.fullscreenElement) ex.call(document).catch(() => {});
 }
 
-if (location.hash && cleanChannel(location.hash)) enterScreenMode(location.hash);
+// Ouverture par un lien d'appairage (#p=v1.…) ou un ancien lien (#set1234)
+handleLaunchHash();
 

@@ -2,7 +2,7 @@
 // synchronisation des trois modes de sélection et envoi automatique.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { launchBrowser, openPage, waitFor, connectFakeClients } from './helpers/harness.mjs';
+import { launchBrowser, openPage, waitFor, sleep, connectFakeClients, publishedBy } from './helpers/harness.mjs';
 
 // Oracle indépendant (formules de référence de l'app)
 function kelvinToRgb(K) {
@@ -125,18 +125,21 @@ test('HUE et RGB restent alignés, crossfade partagé entre les modes', async ()
   await page.click('#chip-wheel');
 });
 
-test('envoi automatique de la couleur sur le canal (≤ 40 ms après le réglage)', async () => {
+test('envoi automatique de la couleur sur la session chiffrée (≤ 40 ms après le réglage)', async () => {
   const { page } = ctx;
-  await page.evaluate(() => { document.getElementById('channelInput').value = 'colortest'; connectChannel(); });
+  await waitFor(page, () => !!mqttClient);
   await connectFakeClients(page);
-  await waitFor(page, () => document.getElementById('connLabel').textContent.includes('Connecté'));
+  await waitFor(page, () => document.getElementById('linkPill').classList.contains('online'));
   await page.evaluate(() => { mqttClient.published.length = 0; setKelvin(2700); });
-  const sent = await waitFor(page, () => {
-    const m = mqttClient.published.map((p) => JSON.parse(p.payload)).filter((m) => m.type === 'color');
-    return m.length ? m : null;
-  });
+  await waitFor(page, () => mqttClient.published.length > 0);
+  await sleep(100);
+  const sent = await publishedBy(page, 'color');
   const s = await state(page);
   assert.equal(sent.at(-1).color, s.color);
-  assert.equal(sent.at(-1)._id, await page.evaluate(() => mqttClient._myId));
+  assert.equal(sent.at(-1)._id, undefined, 'plus d\'identifiant d\'écho en clair');
+  // Sur le fil : trame opaque, ni type ni couleur lisibles
+  const wire = await page.evaluate(() => mqttClient.published.at(-1).payload);
+  assert.match(wire, /^[A-Za-z0-9_-]+$/);
+  assert.ok(!wire.includes('color') && !wire.includes(s.color.slice(1)));
   assert.deepEqual(ctx.errors, []);
 });

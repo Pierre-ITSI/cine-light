@@ -1,0 +1,76 @@
+/* ══ Appairage sécurisé & état de la liaison (maquettes validées 1 à 4) ══ */
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Séparateur « ou avec le code » */
+.pair-or{align-self:stretch;display:flex;align-items:center;gap:10px;color:#8a8a8a;font-size:.625rem;letter-spacing:.15em;text-transform:uppercase}
+.pair-or::before,.pair-or::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.12)}
+
+/* — Télécommande : pastille de liaison (en-tête) — */
+.remote-header-end{display:flex;align-items:center;gap:8px}
+.link-pill{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:none;border-radius:14px;font-family:'DM Mono',monospace;font-size:.625rem;letter-spacing:.04em;white-space:nowrap;cursor:pointer;transition:background .3s,color .3s}
+.link-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+.link-pill.online{color:var(--green);background:rgba(95,223,138,.12)}
+.link-pill.reconnecting{color:#FF8a55;background:rgba(255,107,44,.14)}
+.link-pill.offline{color:#ff7a70;background:rgba(255,90,79,.14)}
+
+/* — Télécommande : appairer un écran (onglet QR) — */
+.pair-panel{display:flex;flex-direction:column;align-items:center;gap:12px}
+.pair-panel .panel-label{align-self:stretch;margin-bottom:0}
+.pair-panel .pair-or::before,.pair-panel .pair-or::after{background:rgba(255,255,255,.1)}
+.pair-qr{width:196px;height:196px;background:var(--text);border-radius:12px;padding:12px;flex-shrink:0}
+.pair-qr svg{display:block;width:172px;height:172px}
+.pair-steps{font-size:.75rem;color:#c8c8c8;text-align:center;line-height:1.5}
+.pair-steps b{color:var(--text)}
+.pair-steps span{color:#a8a8a8}
+.pair-code-row{display:flex;align-items:center;gap:12px}
+.pair-code{font-family:'Lato',sans-serif;font-weight:700;font-size:2.125rem;letter-spacing:.12em;color:var(--text)}
+.pair-refresh{width:44px;height:44px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:var(--mid2);color:#c8c8c8;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.pair-refresh:active{transform:scale(.95)}
+.pair-note{font-size:.6875rem;color:#a0a0a0;text-align:center}
+.pair-wait{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--accent)}
+.pair-wait-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.pair-screens{flex-direction:column;gap:10px}
+.pair-screens .panel-label{margin-bottom:0}
+.pair-screens-list{display:flex;flex-direction:column;gap:10px}
+.pair-screen{display:flex;align-items:center;gap:10px;font-size:.8125rem}
+.ps-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.pair-screen.off .ps-dot{background:#ff7a70}
+.ps-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps-link{font-size:.6875rem;color:#a0a0a0}
+.pair-screen.off .ps-link{color:#ff7a70}
+.pair-renew{border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)}
+.pair-e2e{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px 4px 4px;font-size:.6875rem;color:#a0a0a0;text-align:center;line-height:1.5}
+.pair-e2e svg{flex-shrink:0}
+
+/* — Écran projecteur : rejoindre (scan du QR ou code) — */
+.pj-sub{margin:0;font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase;color:#a8a8a8;text-align:center}
+.pj-viewfinder{position:relative;width:270px;height:270px;border-radius:18px;background:radial-gradient(circle at 40% 35%,#2a3240 0%,#12151b 70%);overflow:hidden;flex-shrink:0}
+.pj-viewfinder video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+.pj-viewfinder.live video{display:block}
+.pj-corners{position:absolute;inset:0}
+.pj-scanline{position:absolute;left:34px;right:34px;top:132px;height:2px;background:var(--accent);box-shadow:0 0 14px var(--accent);display:none}
+.pj-viewfinder.live .pj-scanline{display:block}
+.pj-cam-label{position:absolute;left:0;right:0;bottom:16px;padding:0 16px;text-align:center;font-size:.6875rem;color:#c8c8c8}
+.pj-form{align-self:stretch;display:flex;gap:10px;max-width:420px;width:100%;margin:0 auto}
+.pj-field{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.pj-field input{height:54px;width:100%;background:var(--mid);border:1px solid var(--accent);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:1.25rem;letter-spacing:.2em;text-align:center;text-transform:uppercase;outline:none}
+.pj-field input::placeholder{color:var(--muted)}
+.pj-form .screen-go-btn{height:54px;padding:0 22px;border-radius:8px;font-size:.8125rem}
+.pj-help{margin:0;max-width:420px;font-size:.6875rem;color:#a0a0a0;text-align:center;line-height:1.5}
+#screen-connect .screen-back{margin-top:auto;height:44px;padding:0 16px;color:#a8a8a8;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.1em;flex-shrink:0}
+
+/* — Vérification du nombre (code manuel), télécommande et écran — */
+#pair-verify{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);font-family:'DM Mono',monospace;color:var(--text)}
+.pv-dialog{position:absolute;left:18px;right:18px;top:150px;max-width:420px;margin:0 auto;background:var(--mid);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:26px 22px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.pv-dialog h2{margin:0;font-family:'Lato',sans-serif;font-weight:600;font-size:1.375rem}
+.pv-text{margin:0;font-size:.75rem;color:#c4c4c4;text-align:center;line-height:1.6}
+.pv-text b{color:var(--text)}
+.pv-sas{font-family:'Lato',sans-serif;font-weight:700;font-size:2.875rem;letter-spacing:.08em;color:var(--text);white-space:nowrap}
+.pv-warn{margin:0;font-size:.6875rem;color:#a8a8a8;text-align:center;line-height:1.6}
+.pv-actions{align-self:stretch;display:flex;gap:10px;margin-top:6px}
+.pv-cancel,.pv-ok{height:50px;border-radius:8px;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.pv-cancel{flex:1;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text)}
+.pv-ok{flex:1.4;border:none;background:var(--accent);color:#000;font-weight:500}
+.pv-ok:disabled{opacity:.55;cursor:default}
+.pv-foot{position:absolute;left:18px;right:18px;bottom:40px;font-size:.6875rem;color:#a8a8a8;text-align:center;line-height:1.6}
+@media (max-height:640px){.pv-dialog{top:24px}.pv-foot{display:none}}

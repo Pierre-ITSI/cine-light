@@ -8,7 +8,11 @@
 //   par un faux client qui ne se connecte jamais tout seul : mqttClient ne
 //   joint aucun broker et sendMsg reste sans effet, sauf si un test le
 //   connecte explicitement (FakeBroker) pour observer le protocole.
+// • Chiffrement de bout en bout : les trames publiées sont opaques ; les tests
+//   les déchiffrent côté Node avec le paquet protocole (decodeFrames, sent())
+//   et forgent des trames de pairs (fakePeer) pour éprouver la réception.
 import { createRequire } from 'node:module';
+import * as SRP from '../../packages/protocol/index.js';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 
@@ -50,6 +54,8 @@ function initScript({ seed }) {
       this.connected = false; this.disconnecting = false; this.reconnecting = false;
       this._h = {}; this.published = []; this.subscriptions = [];
       clients.push(this);
+      // Option autoConnect : le « broker » accepte aussitôt chaque client
+      if (window.__fakeAutoConnect) setTimeout(() => { if (!this.connected && !this.disconnecting) this._connect(); }, 0);
     }
     on(ev, fn) { (this._h[ev] = this._h[ev] || []).push(fn); return this; }
     emit(ev, ...args) { (this._h[ev] || []).slice().forEach((fn) => fn(...args)); }
@@ -103,7 +109,7 @@ function initScript({ seed }) {
 export async function openPage(browser, opts = {}) {
   const {
     file = INDEX_PATH, hash = '', viewport = { width: 390, height: 844 },
-    clock = false, seed = 42, broker = null, waitLoad = true,
+    clock = false, seed = 42, broker = null, waitLoad = true, autoConnect = false,
   } = opts;
   const context = await browser.newContext({
     viewport, deviceScaleFactor: 1, locale: 'fr-FR', timezoneId: 'Europe/Paris',
@@ -114,6 +120,7 @@ export async function openPage(browser, opts = {}) {
     return u.startsWith('file:') || u.startsWith('data:') || u.startsWith('blob:') ? route.continue() : route.abort();
   });
   await context.addInitScript(initScript, { seed });
+  if (autoConnect) await context.addInitScript(() => { window.__fakeAutoConnect = true; });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message || String(e)));
@@ -157,10 +164,69 @@ export class FakeBroker {
     });
   }
   async flush() { await Promise.all([...this._chains.values()]); }
-  // Messages publiés par une page (types optionnellement filtrés)
-  sent(page, type) { return this.log.filter((e) => e.from === page && e.msg && (!type || e.msg.type === type)).map((e) => e.msg); }
+  // Messages de SESSION publiés par une page, déchiffrés (types optionnellement filtrés)
+  async sent(page, type) {
+    const pairing = await page.evaluate(() => _session);
+    const frames = this.log.filter((e) => e.from === page && e.topic.startsWith(SRP.SESSION_TOPIC_PREFIX)).map((e) => e.payload);
+    const msgs = await decodeFrames(pairing, frames);
+    return type ? msgs.filter((m) => m.type === type) : msgs;
+  }
+  // Messages EN CLAIR (rendez-vous d'appairage) publiés par une page
+  plain(page, type) { return this.log.filter((e) => e.from === page && e.msg && (!type || e.msg.type === type)).map((e) => e.msg); }
   clear() { this.log.length = 0; }
 }
+
+export { SRP };
+
+// Déchiffre des trames d'une session (messages des deux sens ; fragments et
+// trames illisibles ignorés). Sans anti-rejeu : pour observer, pas pour filtrer.
+export async function decodeFrames(pairing, frames) {
+  const { keys } = await SRP.deriveSession(pairing);
+  const out = [];
+  for (const f of frames) {
+    for (const key of [keys.r2s, keys.s2r]) {
+      try { out.push(await SRP.open(f, key, null)); break; } catch (_) {}
+    }
+  }
+  return out;
+}
+
+// Messages publiés par le client MQTT courant d'une page, déchiffrés
+export async function publishedBy(page, type) {
+  const { pairing, frames } = await page.evaluate(() => ({
+    pairing: _session, frames: mqttClient ? mqttClient.published.map((p) => p.payload) : [],
+  }));
+  const msgs = await decodeFrames(pairing, frames);
+  return type ? msgs.filter((m) => m.type === type) : msgs;
+}
+
+// Pair simulé côté Node (télécommande ou écran) sur la session d'une page :
+//   seal(msg)  → trame valide (schéma vérifié), comme l'app
+//   forge(msg) → trame authentique mais HORS schéma (2e barrière, rejets)
+export async function fakePeer(pairing, role = 'remote', screenId = SRP.createScreenId()) {
+  const ch = await SRP.createSecureChannel({ pairing, role, screenId: role === 'screen' ? screenId : undefined });
+  const { keys } = await SRP.deriveSession(pairing);
+  const sender = SRP.newSenderTag(role === 'remote' ? 'r' : 's');
+  let seq = 0;
+  return {
+    ch, screenId, topic: ch.mqttTopic,
+    seal: (msg) => ch.seal(msg),
+    forge: (msg, o = {}) => SRP.seal(msg, role === 'remote' ? keys.r2s : keys.s2r, { sender, seq: seq++, ...o }),
+    receive: (frame) => ch.receive(frame),
+  };
+}
+
+// Livre une trame au client MQTT de la page (vrai gestionnaire 'message') et
+// attend qu'elle soit traitée (déchiffrement + aiguillage)
+export async function deliverFrame(page, frame, topic) {
+  await page.evaluate(([f, t]) => {
+    mqttClient._deliver(t || _sec.mqttTopic, f);
+    return _rxChain.then(() => null);
+  }, [frame, topic || null]);
+}
+
+// Lien d'appairage (fragment « p=v1.… ») de la télécommande d'une page
+export const pairingHash = (page) => page.evaluate(() => pairingLink(_session).split('#')[1]);
 
 // Connecte tous les faux clients non connectés d'une page (simule le broker)
 export async function connectFakeClients(page) {

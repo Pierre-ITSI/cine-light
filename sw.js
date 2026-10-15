@@ -1,5 +1,5 @@
 /* Service Worker — SetRemote PWA */
-const CACHE = 'setremote-v53';
+const CACHE = 'setremote-v54';
 const SHELL = [
   './',
   './index.html',
@@ -8,6 +8,8 @@ const SHELL = [
   './icon-512.png',
   './apple-touch-icon.png',
   './vendor/mqtt-5.16.1.min.js', // version figée, servie depuis notre origine
+  // QR d'appairage généré sur l'appareil (qrcode-generator, MIT, figé)
+  './vendor/qrcode-generator-2.0.4.js',
   // Polices auto-hébergées (plus de Google Fonts) : disponibles hors ligne
   './vendor/fonts/dm-mono-latin-300-normal.woff2',
   './vendor/fonts/dm-mono-latin-ext-300-normal.woff2',
@@ -21,7 +23,7 @@ const SHELL = [
   './vendor/fonts/lato-latin-ext-700-normal.woff2',
 ];
 // Seules les ressources de notre origine sont mises en cache : aucune origine
-// tierce (les images QR générées à la volée n'encombrent pas le cache).
+// tierce (le QR d'appairage est dessiné sur l'appareil, plus aucun service en ligne).
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();

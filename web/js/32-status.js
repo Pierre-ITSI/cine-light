@@ -1,11 +1,83 @@
 // ══════════════════════════ STATUS ══════════════════════════
+// Télécommande : pastille de liaison dans l'en-tête et liste des écrans
+// appairés (onglet d'appairage). Un écran est « hors ligne » s'il n'a rien
+// envoyé depuis 40 s (il émet un signe de vie toutes les 15 s).
+const SCREEN_ALIVE_MS = 15000, SCREEN_OFFLINE_MS = 40000;
+let _linkState = 'connecting', _linkEverConnected = false, _linkWatch = null;
+const _pairedScreens = new Map();   // screenId (ou étiquette d'émetteur) → { n, lastSeen }
+const _screenOfSender = new Map();  // étiquette d'émetteur → screenId
+let _pairedSeq = 0;
+
 function setConnStatus(s) {
-  const dot = document.getElementById('connDot'), lbl = document.getElementById('connLabel');
-  dot.className = 'dot';
-  if (s === 'connected')   { dot.classList.add('connected');  lbl.textContent = '✓ Connecté — canal : ' + channel; }
-  else if (s === 'connecting') { dot.classList.add('connecting'); lbl.textContent = 'Connexion…'; }
-  else if (s === 'error')      { dot.classList.add('error');      lbl.textContent = 'Erreur — réessayez'; }
-  else { lbl.textContent = 'Non connecté'; }
+  _linkState = s;
+  if (s === 'connected') {
+    // Retour de la liaison : délai de grâce avant de déclarer un écran muet
+    const now = Date.now();
+    for (const sc of _pairedScreens.values()) sc.lastSeen = Math.max(sc.lastSeen, now - SCREEN_OFFLINE_MS + 10000);
+    _linkEverConnected = true;
+  }
+  if (!_linkWatch && mode === 'remote') _linkWatch = setInterval(renderLinkStatus, 5000);
+  renderLinkStatus();
+}
+function stopLinkWatch() { if (_linkWatch) { clearInterval(_linkWatch); _linkWatch = null; } }
+
+function _offlineScreens(now) { return [..._pairedScreens.values()].filter((s) => now - s.lastSeen > SCREEN_OFFLINE_MS); }
+
+function renderLinkStatus() {
+  const now = Date.now();
+  const pill = document.getElementById('linkPill'), lbl = document.getElementById('linkPillLabel');
+  if (pill && lbl) {
+    let cls, text;
+    if (_linkState !== 'connected') {
+      cls = 'reconnecting'; text = _linkEverConnected ? 'Reconnexion…' : 'Connexion…';
+    } else {
+      const off = _offlineScreens(now).length;
+      if (off) { cls = 'offline'; text = 'Hors ligne · ' + off + (off > 1 ? ' écrans' : ' écran'); }
+      else { cls = 'online'; text = 'Internet · chiffré'; }
+    }
+    pill.className = 'link-pill ' + cls;
+    lbl.textContent = text;
+  }
+  renderPairedScreens(now);
+}
+
+function renderPairedScreens(now) {
+  const box = document.getElementById('pairScreens'), list = document.getElementById('pairScreensList');
+  if (!box || !list) return;
+  box.style.display = _pairedScreens.size ? 'flex' : 'none';
+  document.getElementById('pairScreensCount').textContent = String(_pairedScreens.size);
+  list.innerHTML = [..._pairedScreens.values()].sort((a, b) => a.n - b.n).map((s) => {
+    const off = _linkState === 'connected' && now - s.lastSeen > SCREEN_OFFLINE_MS;
+    return '<div class="pair-screen' + (off ? ' off' : '') + '"><span class="ps-dot"></span>'
+      + '<span class="ps-name">Écran ' + s.n + '</span><span class="ps-link">' + (off ? 'Hors ligne' : 'Internet') + '</span></div>';
+  }).join('');
+}
+
+// Chaque message authentifié d'un écran prouve qu'il est en ligne ; « caps »
+// rattache son étiquette d'émetteur (une par lancement) à son screenId stable.
+function remoteNoteScreen(sender, msg) {
+  if (msg.type === 'caps' && typeof msg.screenId === 'string' && SRP.SCREEN_ID_RE.test(msg.screenId)) {
+    for (const [snd, id] of _screenOfSender) if (id === msg.screenId && snd !== sender) _screenOfSender.delete(snd);
+    _screenOfSender.set(sender, msg.screenId);
+  }
+  const id = _screenOfSender.get(sender) || sender;
+  let sc = _pairedScreens.get(id);
+  if (!sc) {
+    if (_pairedScreens.size >= 64) return; // borne mémoire (au-delà : ignoré)
+    sc = { n: ++_pairedSeq, lastSeen: 0 };
+    _pairedScreens.set(id, sc);
+  }
+  const wasOff = Date.now() - sc.lastSeen > SCREEN_OFFLINE_MS;
+  sc.lastSeen = Date.now();
+  if (wasOff) renderLinkStatus();
+}
+function clearPairedScreens() { _pairedScreens.clear(); _screenOfSender.clear(); _pairedSeq = 0; renderLinkStatus(); }
+
+// Toucher la pastille : détail par écran (onglet d'appairage)
+function openLinkDetail() {
+  switchTab('qr');
+  const el = document.getElementById(_pairedScreens.size ? 'pairScreens' : 'content-qr');
+  if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 function setScreenStatus(msg) {
   const el = document.getElementById('screen-status');

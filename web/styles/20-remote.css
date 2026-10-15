@@ -19,11 +19,6 @@
 .panel{background:var(--mid);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:12px}
 .panel-label{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
 
-.channel-row{display:flex;gap:8px;align-items:center}
-.channel-row input{flex:1;background:var(--dark);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:.9rem;padding:10px 14px;border-radius:4px;outline:none;letter-spacing:.1em;transition:border-color .2s}
-.channel-row input:focus{border-color:var(--accent)}
-.connect-btn{background:var(--accent);color:var(--dark);border:none;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:10px 16px;border-radius:4px;cursor:pointer;white-space:nowrap}
-.status-indicator{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.7rem;color:var(--muted)}
 .dot{width:7px;height:7px;border-radius:50%;background:#444;transition:background .3s}
 .dot.connected{background:var(--green);box-shadow:0 0 6px var(--green)}
 .dot.connecting{background:var(--accent);animation:pulse 1s infinite}

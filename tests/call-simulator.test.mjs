@@ -2,13 +2,13 @@
 // verrouillé / bannière), décrocher / raccrocher, et sécurité des champs reçus.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { launchBrowser, openPage, waitFor, sleep, connectFakeClients } from './helpers/harness.mjs';
+import { launchBrowser, openPage, waitFor, sleep, connectFakeClients, fakePeer, deliverFrame } from './helpers/harness.mjs';
 
 let browser, ctx;
 before(async () => {
   browser = await launchBrowser();
   ctx = await openPage(browser);
-  await ctx.page.evaluate(() => enterScreenMode('calls'));
+  await ctx.page.evaluate(() => screenJoinSession(SRP.createPairing()));
 });
 after(async () => { await ctx?.close(); await browser?.close(); });
 
@@ -98,10 +98,21 @@ test('sécurité : photo / nom / couleur forgés ne s’exécutent pas', async (
   const { page } = ctx;
   await reset(page);
   const forged = 'x)"><img src=x onerror=window.__p=1>';
+  // La photo ne vient plus que du cache __callphoto (fragments validés à la
+  // réception) : on y tente d'abord des contenus forgés
+  const photoVia = (data) => page.evaluate((data) => {
+    _mediaCache.delete('__callphoto');
+    mediaImgStart({ id: 'ph', total: 1, mediaId: '__callphoto', show: false });
+    mediaImgChunk({ id: 'ph', i: 0, data });
+    return _mediaCache.has('__callphoto');
+  }, data);
+  for (const bad of [forged, 'javascript:window.__p=4', 'data:image/png;base64,AAAA") ; x:url("https://evil', 'data:image/svg+xml;base64,PHN2Zz4=']) {
+    assert.equal(await photoVia(bad), false, 'fragment de photo non conforme rejeté : ' + bad);
+  }
   const cases = [
-    { kind: 'call', style: 'glass', photo: forged, photoMode: 'full', name: '<img src=x onerror=window.__p=2>' },
-    { kind: 'call', style: 'tonal', photo: forged, present: 'banner', name: 'A' },
-    { kind: 'sms', style: 'tonal', photo: forged, name: 'B', appColor: 'red;background:url(x)', appName: '<b onmouseover=window.__p=3>' },
+    { kind: 'call', style: 'glass', hasPhoto: true, photo: forged, photoMode: 'full', name: '<img src=x onerror=window.__p=2>' },
+    { kind: 'call', style: 'tonal', hasPhoto: true, photo: forged, present: 'banner', name: 'A' },
+    { kind: 'sms', style: 'tonal', hasPhoto: true, photo: forged, name: 'B', appColor: 'red;background:url(x)', appName: '<b onmouseover=window.__p=3>' },
     { kind: 'chat', style: 'minimal', photo: 'javascript:window.__p=4', lock: { time: '<img src=x onerror=window.__p=5>', date: '' } },
     { kind: 'call', style: 'glass', photo: 'data:image/png;base64,AAAA") ; x:url("https://evil', ring: '__proto__' },
   ];
@@ -121,20 +132,26 @@ test('sécurité : photo / nom / couleur forgés ne s’exécutent pas', async (
     assert.doesNotMatch(r.bg, /url\(/);
     await page.evaluate(() => screenCallHide());
   }
-  // Même charge utile reçue par le réseau (chemin MQTT complet)
+  // Par le réseau (chemin complet, chiffré) : une photo en ligne est refusée par le schéma
   await connectFakeClients(page);
-  await page.evaluate((forged) => {
-    mqttClient._deliver(mqttTopic(channel), { type: 'call:start', kind: 'call', style: 'glass', name: 'Z', photo: forged, photoMode: 'full', ring: 'silent' });
-  }, forged);
+  await waitFor(page, () => mqttClient.connected);
+  const remote = await fakePeer(await page.evaluate(() => _session), 'remote');
+  await deliverFrame(page, await remote.forge({ type: 'call:start', kind: 'call', style: 'glass', name: 'Z', photo: forged, photoMode: 'full', ring: 'silent' }));
+  assert.equal(await page.evaluate(() => [_callState, secStats.lastError].join()), 'idle,invalid-message');
+  // Une vraie photo, en fragments chiffrés sous __callphoto, puis l'appel qui l'annonce
+  const okPhoto = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = c.height = 4; return c.toDataURL('image/png'); });
+  await deliverFrame(page, await remote.seal({ type: 'media-img-start', id: 'ph2', total: 1, mediaId: '__callphoto', show: false }));
+  await deliverFrame(page, await remote.seal({ type: 'media-img-chunk', id: 'ph2', i: 0, data: okPhoto }));
+  await deliverFrame(page, await remote.seal({ type: 'call:start', kind: 'call', style: 'glass', name: 'Ok', hasPhoto: true, photoMode: 'full', ring: 'silent' }));
   await waitFor(page, () => _callState === 'ringing');
   await sleep(150);
   assert.equal(await page.evaluate(() => window.__p), undefined);
   assert.equal(await page.evaluate(() => document.querySelectorAll('#screen-call img').length), 0);
-  // Une vraie data-URL image est acceptée
-  const okPhoto = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = c.height = 4; return c.toDataURL('image/png'); });
-  await page.evaluate((p) => screenCallStart({ kind: 'call', style: 'glass', name: 'Ok', photo: p, ring: 'silent' }), okPhoto);
-  assert.equal(await page.evaluate(() => _callCfg.photo !== null), true);
+  assert.equal(await page.evaluate(() => _callCfg.photo), okPhoto);
   assert.match(await page.evaluate(() => document.getElementById('screen-call').innerHTML), /background-image:url\(data:image\/png;base64,/);
+  // Sans hasPhoto, la photo en cache n'est pas affichée
+  await page.evaluate(() => screenCallStart({ kind: 'call', style: 'glass', name: 'Sans', ring: 'silent' }));
+  assert.equal(await page.evaluate(() => _callCfg.photo), null);
   await page.evaluate(() => screenCallHide());
   assert.deepEqual(ctx.errors, []);
 });

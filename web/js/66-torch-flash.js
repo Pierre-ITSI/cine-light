@@ -87,9 +87,10 @@ function sendCaps() {
   // actuellement affiché — la télécommande ne renvoie que ce qui manque.
   const cached = [];
   _mediaCache.forEach((c, id) => { if (cached.length < 500 && /^[A-Za-z0-9_-]{1,64}$/.test(id)) cached.push(id); });
+  // screenId : identifiant stable de cet écran (liste des écrans appairés)
   sendMsg({ type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate, videoMode: 'rtc',
             cached, active: screenMediaVisible() ? (_screenActiveId || null) : null,
-            blackout: screenBlackoutOn });
+            blackout: screenBlackoutOn, screenId: screenId() });
 }
 
 // Capacités du récepteur connecté (mémorisées pour choisir le transport vidéo).

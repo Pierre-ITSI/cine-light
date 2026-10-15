@@ -8,7 +8,7 @@ let browser, ctx, imgs;
 before(async () => {
   browser = await launchBrowser();
   ctx = await openPage(browser);
-  await ctx.page.evaluate(() => enterScreenMode('media'));
+  await ctx.page.evaluate(() => screenJoinSession(SRP.createPairing()));
   // Vraies data-URL d'images (PNG/JPEG générées par canvas)
   imgs = await ctx.page.evaluate(() => ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff'].map((col, i) => {
     const c = document.createElement('canvas'); c.width = 48 + i; c.height = 32;

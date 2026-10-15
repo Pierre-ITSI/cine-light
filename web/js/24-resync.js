@@ -4,11 +4,11 @@
 // celle-ci). La télécommande renvoie alors un instantané complet de l'état :
 // un écran rechargé ou revenu d'une coupure retrouve exactement ce que la
 // télécommande affiche. Les médias lourds (fond d'écran verrouillé, bande son,
-// média actif) ne sont renvoyés que si l'écran ne les a pas.
+// photo d'appel, média actif) ne sont renvoyés que si l'écran ne les a pas.
 // Plusieurs « caps » rapprochés (plusieurs écrans) → un seul envoi groupé.
 let _resyncTimer = null, _resyncNeed = null;
 const RESYNC_DELAY_MS = 250;
-const _RESYNC_ASSETS = ['__lockwall', '__callaudio'];
+const _RESYNC_ASSETS = ['__lockwall', '__callaudio', '__callphoto'];
 
 function remoteScheduleResync(caps) {
   if (mode !== 'remote') return;
@@ -47,6 +47,7 @@ function remoteResync() {
   sendPoolOrder();
   if (_lockWallData && need.lacks.has('__lockwall')) sendImageChunks(_lockWallData, { mediaId: '__lockwall', show: false });
   if (_callAudioData && need.lacks.has('__callaudio')) sendImageChunks(_callAudioData, { mediaId: '__callaudio', show: false });
+  if (_callPhoto && need.lacks.has('__callphoto')) sendImageChunks(_callPhoto, { mediaId: '__callphoto', show: false });
   // Média diffusé absent de l'écran : media:show s'il est en cache écran,
   // sinon re-diffusion complète (même chemin qu'une sélection dans le pool)
   if (_activeMediaId && need.mediaMissing && _mediaPool.some((m) => m.id === _activeMediaId)) selectMedia(_activeMediaId);

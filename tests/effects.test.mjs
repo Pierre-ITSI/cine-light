@@ -89,7 +89,7 @@ test('chaque effet : sélection, réglages, aperçu et rendu canvas sans erreur'
 
 test("écran : receiveEffect lance chaque effet sur le canvas plein écran", async () => {
   const { page, errors, close } = await openPage(browser);
-  await page.evaluate(() => enterScreenMode('fx'));
+  await page.evaluate(() => screenJoinSession(SRP.createPairing()));
   const keys = await page.evaluate(() => Object.keys(EFFECT_CONFIG));
   for (const key of keys) {
     await page.evaluate((key) => receiveEffect({ type: 'effect', name: key, active: true, params: { speed: EFFECT_CONFIG[key].def, intensity: 100 } }), key);

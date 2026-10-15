@@ -36,6 +36,8 @@
 <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="splash-2796x1290.png">
 <!-- mqtt.js embarqué et figé (5.16.1) : plus de dépendance à unpkg ni de mise à jour surprise -->
 <script src="vendor/mqtt-5.16.1.min.js"></script>
+<!-- QR d'appairage généré localement (qrcode-generator 2.0.4, MIT, figé) -->
+<script src="vendor/qrcode-generator-2.0.4.js"></script>
 <style>
 /* @@STYLES@@ */
 </style>
@@ -116,13 +118,25 @@
 
 <div id="screen-connect">
   <h2>Écran projecteur</h2>
-  <p>Entrez le code affiché sur la télécommande</p>
-  <div class="screen-input-row">
-    <input type="text" id="screenChannelInput" placeholder="ex : set4271"
-           maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false"
-           onkeydown="if(event.key==='Enter') screenConnect()">
-    <button class="screen-go-btn" onclick="screenConnect()">OK →</button>
+  <p class="pj-sub">Scannez le QR affiché par la télécommande</p>
+  <div class="pj-viewfinder" id="pairScanBox">
+    <video id="pairScanVideo" playsinline muted></video>
+    <svg class="pj-corners" width="270" height="270" viewBox="0 0 270 270" fill="none" stroke="#F5F2EC" stroke-width="4" stroke-linecap="round" aria-hidden="true">
+      <path d="M30 70V40a10 10 0 0 1 10-10h30"/><path d="M200 30h30a10 10 0 0 1 10 10v30"/><path d="M240 200v30a10 10 0 0 1-10 10h-30"/><path d="M70 240H40a10 10 0 0 1-10-10v-30"/>
+    </svg>
+    <div class="pj-scanline"></div>
+    <div class="pj-cam-label" id="pairScanLabel">Caméra active — visez le QR</div>
   </div>
+  <div class="pair-or">ou saisir le code</div>
+  <form class="pj-form" onsubmit="event.preventDefault();screenPairWithCode()">
+    <label class="pj-field">
+      <span class="sr-only">Code d'appairage</span>
+      <input type="text" id="pairCodeInput" placeholder="K7M-4QP" maxlength="7"
+             autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+    </label>
+    <button type="submit" class="screen-go-btn">OK</button>
+  </form>
+  <p class="pj-help" id="pairCodeHelp">Avec le code, un nombre à 6 chiffres s'affichera ici et sur la télécommande pour confirmer l'appairage.</p>
   <button class="screen-back" onclick="goBackToSplash()">← Retour</button>
 </div>
 
@@ -144,9 +158,9 @@
   <div id="screen-menu-hotspot" onclick="event.stopPropagation()" ondblclick="event.stopPropagation();openScreenMenu()"></div>
   <!-- Menu plein écran identique à l'app native -->
   <div id="screen-menu" onclick="event.stopPropagation()">
-    <div class="screen-menu-info" id="screenMenuChannel">Canal : —</div>
+    <div class="screen-menu-info" id="screenMenuInfo">Liaison chiffrée de bout en bout</div>
     <button class="screen-menu-btn" onclick="closeScreenMenu()">Reprendre l'affichage</button>
-    <button class="screen-menu-btn" onclick="closeScreenMenu();suspendScreen()">Changer de code canal</button>
+    <button class="screen-menu-btn" onclick="closeScreenMenu();suspendScreen()">Changer de télécommande</button>
     <button class="screen-menu-btn" onclick="closeScreenMenu();goBackToSplash()">Retour à l'accueil</button>
     <button class="screen-menu-btn danger" onclick="screenDisconnect()">Se déconnecter</button>
   </div>
@@ -160,17 +174,9 @@
   </div>
   <div class="remote-header">
     <h2>SetRemote</h2>
-    <button class="back-btn" onclick="goBack()">← Retour</button>
-  </div>
-  <div class="panel">
-    <div class="panel-label">Canal de synchronisation</div>
-    <div class="channel-row">
-      <input type="text" id="channelInput" placeholder="ex: setlive42" maxlength="20"/>
-      <button class="connect-btn" onclick="connectChannel()">Connecter</button>
-    </div>
-    <div class="status-indicator">
-      <div class="dot" id="connDot"></div>
-      <span id="connLabel">Non connecté</span>
+    <div class="remote-header-end">
+      <button type="button" class="link-pill reconnecting" id="linkPill" onclick="openLinkDetail()" aria-label="État de la liaison — détail par écran"><span class="link-dot"></span><span id="linkPillLabel">Connexion…</span></button>
+      <button class="back-btn" onclick="goBack()">← Retour</button>
     </div>
   </div>
   <div class="swatch-row" id="previewRow">
@@ -761,20 +767,46 @@
   </div>
 
   <div class="tab-content" id="content-qr">
-    <div class="panel">
-      <div class="panel-label">Ouvrir l'écran sur un autre appareil</div>
-      <div class="qr-wrap">
-        <canvas id="qrCanvas" width="200" height="200"></canvas>
-        <div class="qr-url" id="qrUrl">Connectez-vous d'abord à un canal</div>
+    <div class="panel pair-panel">
+      <div class="panel-label">Appairer un écran de jeu</div>
+      <div class="pair-qr" id="pairQr" role="img" aria-label="QR code d'appairage"></div>
+      <div class="pair-steps">Sur chaque écran de jeu : <b>Écran projecteur</b> → <b>Scanner</b><br><span>Autant d'écrans que nécessaire, ils jouent ensemble.</span></div>
+      <div class="pair-or">ou avec le code</div>
+      <div class="pair-code-row">
+        <span class="pair-code" id="pairCode">···&nbsp;···</span>
+        <button type="button" class="pair-refresh" aria-label="Générer un nouveau code" onclick="remoteNewPairCode()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+        </button>
       </div>
+      <div class="pair-note">Code valable 2 min · un nouveau code par écran</div>
+      <div class="pair-wait"><span class="pair-wait-dot"></span>En attente d'un écran…</div>
     </div>
-    <div class="panel" style="font-size:.65rem;color:var(--muted);line-height:1.8">
-      <div class="panel-label">Comment utiliser</div>
-      1. Sur l'écran : <strong style="color:var(--text)">Écran projecteur</strong> → taper le même code<br>
-      2. Ou scanner ce QR pour ouvrir directement<br>
-      3. Les couleurs s'envoient en temps réel ⚡
+    <div class="panel pair-screens" id="pairScreens" style="display:none">
+      <div class="panel-label">Écrans appairés (<span id="pairScreensCount">0</span>)</div>
+      <div id="pairScreensList" class="pair-screens-list"></div>
+    </div>
+    <button class="media-btn pair-renew" onclick="confirmNewSession()"><span class="media-icon">⟳</span> Nouvelle session</button>
+    <div class="pair-e2e">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      Chiffré de bout en bout : seuls vos appareils lisent les messages et les médias
     </div>
   </div>
+</div>
+
+<!-- Vérification du nombre (appairage par code), sur la télécommande comme sur l'écran -->
+<div id="pair-verify">
+  <div class="pv-dialog" role="dialog" aria-modal="true" aria-labelledby="pvTitle">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF6B2C" stroke-width="1.8" aria-hidden="true"><path d="M12 3l7 3v5c0 4.4-3 8.4-7 10-4-1.6-7-5.6-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+    <h2 id="pvTitle">Vérifiez le nombre</h2>
+    <p class="pv-text" id="pvText">L'écran de jeu affiche maintenant un nombre. Il doit être <b>identique</b> à celui-ci :</p>
+    <div class="pv-sas" id="pvSas">000 000</div>
+    <p class="pv-warn">S'il est différent, annulez : un autre appareil tente de s'interposer.</p>
+    <div class="pv-actions">
+      <button type="button" class="pv-cancel" onclick="pairVerifyAnswer(false)">Annuler</button>
+      <button type="button" class="pv-ok" id="pvOk" onclick="pairVerifyAnswer(true)">Identique</button>
+    </div>
+  </div>
+  <div class="pv-foot">Étape uniquement pour l'appairage par code.<br>Avec le QR code, la vérification est automatique.</div>
 </div>
 
 <script>

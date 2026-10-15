@@ -1,5 +1,5 @@
 // ══════════════════════════ STATE ══════════════════════════
-let mode = null, channel = null, mqttClient = null;
+let mode = null, mqttClient = null;
 let currentColor = '#ffffff';
 let showHex = true;
 // Modèle couleur unifié : blanc (kelvin+tint) ↔ couleur (roue), mixés par crossfade, × dimmer

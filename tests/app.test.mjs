@@ -1,7 +1,7 @@
 // Chargement, navigation, onglets, sortie de session écran.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { launchBrowser, openPage, waitFor, sleep } from './helpers/harness.mjs';
+import { launchBrowser, openPage, waitFor, sleep, SRP } from './helpers/harness.mjs';
 
 let browser;
 before(async () => { browser = await launchBrowser(); });
@@ -34,17 +34,25 @@ test('chargement : aucune erreur de page, splash affiché', async () => {
 test("télécommande : startMode('remote') puis chaque onglet", async () => {
   const { page, errors, close } = await openPage(browser);
   await page.evaluate(() => startMode('remote'));
+  // Session chiffrée créée et connexion lancée d'office (plus de code canal)
+  await waitFor(page, () => !!mqttClient);
   const base = await page.evaluate(() => ({
-    mode, client: mqttClient,
+    mode, session: _session, stored: JSON.parse(localStorage.getItem('setremote-session-v1')),
+    topic: mqttClient.subscriptions.length ? mqttClient.subscriptions : _sec.mqttTopic,
     remote: getComputedStyle(document.getElementById('remote-mode')).display,
     splash: getComputedStyle(document.getElementById('splash')).display,
-    channel: document.getElementById('channelInput').value,
+    pill: document.getElementById('linkPillLabel').textContent,
+    oldInput: !!document.getElementById('channelInput'),
   }));
   assert.equal(base.mode, 'remote');
-  assert.equal(base.client, null, 'aucune connexion tant que « Connecter » n\'est pas pressé');
+  assert.ok(SRP.isValidPairing(base.session), 'secret de session 128 + 256 bits');
+  assert.deepEqual(base.stored, base.session, 'persisté jusqu\'à « Nouvelle session »');
+  assert.match(String(base.topic), /^setremote\/v2\/s\/[A-Za-z0-9_-]{22}$/, 'topic opaque dérivé');
+  assert.ok(!String(base.topic).includes(base.session.channelId));
   assert.equal(base.remote, 'block');
   assert.equal(base.splash, 'none');
-  assert.match(base.channel, /^set\d{4}$/);
+  assert.equal(base.pill, 'Connexion…');
+  assert.equal(base.oldInput, false, 'plus de saisie de code canal');
   for (const t of ['color', 'effects', 'flash', 'media', 'call', 'qr', 'color']) {
     await page.click('#tab-' + t);
     const r = await page.evaluate((t) => {
@@ -59,24 +67,37 @@ test("télécommande : startMode('remote') puis chaque onglet", async () => {
     }, t);
     assert.deepEqual(r, { active: 1, mine: true, visible: true, btn: true, others: 0 }, 'onglet ' + t);
   }
-  const qr = await page.evaluate(() => document.getElementById('qrUrl').textContent);
-  assert.match(qr, /Connectez-vous/);
+  // Onglet d'appairage : QR local et code de rendez-vous
+  await page.click('#tab-qr');
+  const pair = await page.evaluate(() => ({
+    svg: !!document.querySelector('#pairQr svg path'), code: document.getElementById('pairCode').textContent,
+    rdv: _rdv && _rdv.role, text: document.getElementById('content-qr').textContent,
+  }));
+  assert.ok(pair.svg, 'QR dessiné localement');
+  assert.match(pair.code, /^[A-HJKMNP-Z2-9]{3}·[A-HJKMNP-Z2-9]{3}$/);
+  assert.equal(pair.rdv, 'remote');
+  assert.doesNotMatch(pair.text, /#p=|v1\./, 'le lien secret n\'est pas affiché en clair');
+  // Même session au rechargement de la télécommande
+  const again = await page.evaluate(() => { const s = _session; goBack(); startMode('remote'); return [s, _session]; });
+  assert.deepEqual(again[0], again[1]);
   // Retour à l'accueil
   await page.evaluate(() => goBack());
-  const back = await page.evaluate(() => ({ mode, splash: getComputedStyle(document.getElementById('splash')).display }));
-  assert.deepEqual(back, { mode: null, splash: 'flex' });
+  const back = await page.evaluate(() => ({ mode, splash: getComputedStyle(document.getElementById('splash')).display, rdv: _rdv, client: mqttClient }));
+  assert.deepEqual(back, { mode: null, splash: 'flex', rdv: null, client: null });
   assert.deepEqual(errors, []);
   await close();
 });
 
 test('goBackToSplash termine réellement la session écran', async () => {
   const { page, errors, close } = await openPage(browser);
-  await page.evaluate(() => enterScreenMode('Plateau 7!'));
+  const pairing = SRP.createPairing();
+  await page.evaluate((p) => screenJoinSession(p), pairing);
+  await waitFor(page, () => !!mqttClient);
   const on = await page.evaluate(() => ({
-    mode, channel, hasClient: !!mqttClient,
+    mode, session: _session, hasClient: !!mqttClient, bc: !!window._bc,
     screen: getComputedStyle(document.getElementById('screen-mode')).display,
   }));
-  assert.deepEqual(on, { mode: 'screen', channel: 'plateau7', hasClient: true, screen: 'flex' });
+  assert.deepEqual(on, { mode: 'screen', session: pairing, hasClient: true, bc: true, screen: 'flex' });
   // Session active : appel qui sonne, strobe, effet, média, blackout
   await page.evaluate(() => {
     screenCallStart({ kind: 'call', style: 'glass', name: 'Maman', ring: 'silent' });
@@ -103,20 +124,48 @@ test('goBackToSplash termine réellement la session écran', async () => {
   await close();
 });
 
-test("écran : ouverture directe par #canal et menu", async () => {
+test('écran : un ancien lien #set1234 mène à l\'écran d\'appairage, sans connexion', async () => {
   const { page, errors, close } = await openPage(browser, { hash: 'set1234' });
-  const st = await page.evaluate(() => ({ mode, channel, splash: getComputedStyle(document.getElementById('splash')).display }));
-  assert.deepEqual(st, { mode: 'screen', channel: 'set1234', splash: 'none' });
+  await sleep(100);
+  const st = await page.evaluate(() => ({
+    mode, client: mqttClient, hash: location.hash,
+    splash: getComputedStyle(document.getElementById('splash')).display,
+    join: getComputedStyle(document.getElementById('screen-connect')).display,
+    title: document.querySelector('#screen-connect h2').textContent,
+  }));
+  assert.deepEqual(st, { mode: null, client: null, hash: '', splash: 'none', join: 'flex', title: 'Écran projecteur' });
+  assert.deepEqual(errors, []);
+  await close();
+});
+
+test('écran : lien d\'appairage #p=v1.… → rejoint la session, fragment effacé ; menu et suspension', async () => {
+  const pairing = SRP.createPairing();
+  const { page, errors, close } = await openPage(browser, { hash: SRP.pairingUrl('x', pairing).split('#')[1] });
+  await waitFor(page, () => !!mqttClient);
+  const st = await page.evaluate(() => ({
+    mode, session: _session, hash: location.hash, href: location.href,
+    stored: JSON.parse(localStorage.getItem('setremote-screen-session-v1')),
+    splash: getComputedStyle(document.getElementById('splash')).display,
+    topic: _sec.mqttTopic,
+  }));
+  assert.equal(st.mode, 'screen');
+  assert.deepEqual(st.session, pairing);
+  assert.equal(st.hash, '', 'secret effacé de la barre d\'adresse');
+  assert.ok(!st.href.includes(pairing.key));
+  assert.deepEqual(st.stored, pairing, 'session retenue pour « Écran projecteur »');
+  assert.equal(st.splash, 'none');
   await page.evaluate(() => openScreenMenu());
-  assert.equal(await page.evaluate(() => document.getElementById('screenMenuChannel').textContent), 'Canal : set1234');
+  assert.equal(await page.evaluate(() => document.getElementById('screenMenuInfo').textContent), 'Liaison chiffrée de bout en bout');
   await page.evaluate(() => closeScreenMenu());
   await page.evaluate(() => suspendScreen());
   const sus = await page.evaluate(() => ({
     client: mqttClient, connect: getComputedStyle(document.getElementById('screen-connect')).display,
-    input: document.getElementById('screenChannelInput').value,
   }));
-  assert.deepEqual(sus, { client: null, connect: 'flex', input: 'set1234' });
-  await waitFor(page, () => document.activeElement && document.activeElement.id === 'screenChannelInput');
+  assert.deepEqual(sus, { client: null, connect: 'flex' });
+  // Retour à l'accueil puis « Écran projecteur » : la session retenue est rejointe
+  await page.evaluate(() => { goBackToSplash(); startMode('screen'); });
+  await waitFor(page, () => !!mqttClient);
+  assert.deepEqual(await page.evaluate(() => [mode, _session]), ['screen', pairing]);
   assert.deepEqual(errors, []);
   await close();
 });
