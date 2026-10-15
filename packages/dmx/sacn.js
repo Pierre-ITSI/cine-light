@@ -13,7 +13,7 @@ import {
   toBytes, u16be, u32be, w16be, w32be, bytesEqual, decodeUtf8Field, writeUtf8Field, uuidString, uuidBytes,
 } from './bytes.js';
 
-/** UDP port for E1.31 (ACN_SDT_MULTICAST_PORT, E1.31 §9.3 / Appendix A). */
+/** UDP port for E1.31 (ACN_SDT_MULTICAST_PORT, E1.31 §9 and Appendix A). */
 export const SACN_PORT = 5568;
 
 /** ACN Packet Identifier "ASC-E1.17\0\0\0" (E1.31 §5.3). */
@@ -103,7 +103,7 @@ export const SACN_MAX_PACKET = DISCOVERY_MAX_LEN;
 /**
  * @typedef {object} SacnReject
  * @property {false} ok
- * @property {string} reason  machine-readable reason (see README section of docs/DMX-NATIVE.md)
+ * @property {string} reason  machine-readable reason (list in docs/DMX-NATIVE.md, « Codes de rejet »)
  * @property {number} [startCode]
  * @property {number} [universe]
  */
@@ -235,7 +235,7 @@ function parseDiscovery(b, cid) {
 }
 
 /**
- * IPv4 multicast group for a universe (E1.31 §9.3.1): 239.255.{hi}.{lo}.
+ * IPv4 multicast group for a universe (E1.31 §9, IPv4 multicast addressing): 239.255.{hi}.{lo}.
  * @param {number} universe 1–63999, or 64214 (discovery)
  * @returns {string}
  */

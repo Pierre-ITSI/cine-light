@@ -98,15 +98,26 @@ export function mixColor(p) {
   );
 }
 
-/** Legacy DMX CCT scaling (3ch and 9ch modes): 0–255 → 1700–20000 K. */
+/**
+ * DMX CCT: 0–255 over the app's kelvin range (kelvinSlider 1700–20000 in
+ * web/index.template.html), same scaling as the legacy 3ch mode.
+ */
 export function dmxToKelvin(v) {
   return Math.round(KELVIN_MIN + (v / 255) * (KELVIN_MAX - KELVIN_MIN));
 }
 
 /**
- * Legacy DMX tint scaling: 0 → −100 (magenta), 127 and 128 → 0, 255 → +100 (green).
- * Note: two neutral values (127, 128) — kept for compatibility.
+ * DMX tint → app tint (−100 magenta … +100 green): 0 → −100, 128 → 0 (the only
+ * neutral value), 255 → +100.
  */
 export function dmxToTint(v) {
+  return v >= 128 ? ((v - 128) / 127) * 100 : ((v - 128) / 128) * 100;
+}
+
+/**
+ * Legacy 3ch/9ch tint scaling (web/js/60-sacn.js): 127 AND 128 are both neutral,
+ * 0 → −100, 255 → +100. Identical to dmxToTint for v ≥ 128. Kept for migration notes.
+ */
+export function legacyDmxToTint(v) {
   return v <= 127 ? ((v / 127) - 1) * 100 : ((v - 128) / 127) * 100;
 }

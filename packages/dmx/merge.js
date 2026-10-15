@@ -20,7 +20,10 @@
 // Art-Net 4 ("Data merging"): sources are told apart by IP address; at most two
 // are merged (extra sources ignored); HTP by default, LTP optional; a failed
 // source stays in the merge buffer for 10 s; if both fail the output holds the
-// last merge result.
+// last merge result. Art-Net has no receiver data-loss timeout like E1.31; its
+// ArtDmx section asks senders to retransmit unchanged data about every 4 s, so
+// the universe is declared lost after 5 s without any ArtDmx (4 s + 1 s margin,
+// configurable).
 //
 // Both mergers emit onUniverse(universe, Uint8Array(512), info) only when the
 // merged output changes, and onSignal(universe, lost, info) on signal changes.
@@ -32,6 +35,8 @@ import { E131_NETWORK_DATA_LOSS_TIMEOUT_MS } from './sacn.js';
 
 /** Art-Net merge buffer hold time for a failed source (Art-Net 4, "Data merging"). */
 export const ARTNET_SOURCE_TIMEOUT_MS = 10000;
+/** Art-Net universe signal loss: no ArtDmx for 5 s (spec keep-alive ≈ 4 s + margin). */
+export const ARTNET_LOSS_TIMEOUT_MS = 5000;
 /** Art-Net merges at most two sources. */
 export const ARTNET_MAX_MERGE_SOURCES = 2;
 /** Sequence window of E1.31 §6.7.2. */
@@ -254,6 +259,7 @@ export class SacnMerger {
   universes() { return Array.from(this._universes.keys()); }
 }
 
+
 /**
  * Art-Net merger. Feed it parseArtNet() ArtDmx results with the sender's IP.
  */
@@ -261,7 +267,8 @@ export class ArtNetMerger {
   /**
    * @param {object} [opts]
    * @param {() => number} [opts.now]
-   * @param {number} [opts.timeoutMs=10000]  merge-buffer hold time of a failed source; also the loss timeout
+   * @param {number} [opts.sourceTimeoutMs=10000] merge-buffer hold time of a failed source
+   * @param {number} [opts.lossTimeoutMs=5000]    universe declared lost without any ArtDmx for this long
    * @param {'htp'|'ltp'} [opts.mergeMode='htp']
    * @param {number} [opts.maxSources=2]
    * @param {UniverseListener} [opts.onUniverse]
@@ -270,7 +277,8 @@ export class ArtNetMerger {
   constructor(opts) {
     const o = opts || {};
     this.now = o.now || defaultNow;
-    this.timeoutMs = o.timeoutMs == null ? ARTNET_SOURCE_TIMEOUT_MS : o.timeoutMs;
+    this.sourceTimeoutMs = o.sourceTimeoutMs == null ? ARTNET_SOURCE_TIMEOUT_MS : o.sourceTimeoutMs;
+    this.lossTimeoutMs = o.lossTimeoutMs == null ? ARTNET_LOSS_TIMEOUT_MS : o.lossTimeoutMs;
     this.mergeMode = o.mergeMode === 'ltp' ? 'ltp' : 'htp';
     this.maxSources = o.maxSources == null ? ARTNET_MAX_MERGE_SOURCES : o.maxSources;
     this.onUniverse = o.onUniverse || noop;
@@ -281,10 +289,16 @@ export class ArtNetMerger {
   _universe(pa) {
     let st = this._universes.get(pa);
     if (!st) {
-      st = { universe: pa, sources: new Map(), output: null, ltp: new Uint8Array(512), lost: null };
+      st = { universe: pa, sources: new Map(), output: null, ltp: new Uint8Array(512), lost: null, lastPacket: -Infinity };
       this._universes.set(pa, st);
     }
     return st;
+  }
+
+  _purge(u, t) {
+    let removed = false;
+    for (const [k, s] of u.sources) if (t - s.lastSeen > this.sourceTimeoutMs) { u.sources.delete(k); removed = true; }
+    return removed;
   }
 
   /**
@@ -297,7 +311,7 @@ export class ArtNetMerger {
     const t = this.now();
     const ip = String(sourceIp || 'unknown');
     const u = this._universe(pkt.portAddress);
-    for (const [k, s] of u.sources) if (t - s.lastSeen > this.timeoutMs) u.sources.delete(k);
+    this._purge(u, t);
     let s = u.sources.get(ip);
     if (!s) {
       if (u.sources.size >= this.maxSources) return 'ignored-extra-source';
@@ -317,24 +331,25 @@ export class ArtNetMerger {
     s.seq = pkt.sequence;
     s.lastSeen = t;
     s.data = frame;
-    return this._recompute(u, t, 'data') ? 'applied' : 'unchanged';
+    u.lastPacket = t;
+    return this._recompute(u, 'data') ? 'applied' : 'unchanged';
   }
 
+  /** Apply timeouts (call periodically, e.g. every 10–50 ms). */
   tick() {
     const t = this.now();
     for (const u of this._universes.values()) {
-      let expired = false;
-      for (const [k, s] of u.sources) if (t - s.lastSeen > this.timeoutMs) { u.sources.delete(k); expired = true; }
-      if (expired) this._recompute(u, t, 'timeout');
+      if (this._purge(u, t)) this._recompute(u, 'source-timeout');
+      if (u.output && u.lost === false && t - u.lastPacket > this.lossTimeoutMs) {
+        u.lost = true; // the output holds the last merge result
+        this.onSignal(u.universe, true, { reason: 'timeout' });
+      }
     }
   }
 
-  _recompute(u, t, reason) {
+  _recompute(u, reason) {
     const live = Array.from(u.sources.values()).filter((s) => s.data);
-    if (!live.length) {
-      if (u.output && u.lost !== true) { u.lost = true; this.onSignal(u.universe, true, { reason }); }
-      return false; // output holds the last merge result
-    }
+    if (!live.length) return false; // output holds the last merge result
     let out;
     if (this.mergeMode === 'ltp') out = u.ltp.slice();
     else if (live.length === 1) out = live[0].data.slice();
@@ -343,7 +358,7 @@ export class ArtNetMerger {
       for (const s of live) for (let i = 0; i < 512; i++) if (s.data[i] > out[i]) out[i] = s.data[i];
     }
     const info = { protocol: 'artnet', sources: live.length, merging: live.length > 1, mode: this.mergeMode, reason };
-    if (u.lost !== false) { u.lost = false; this.onSignal(u.universe, false, info); }
+    if (reason === 'data' && u.lost !== false) { u.lost = false; this.onSignal(u.universe, false, info); }
     if (u.output && sameBytes(out, u.output)) return false;
     u.output = out;
     this.onUniverse(u.universe, out, info);

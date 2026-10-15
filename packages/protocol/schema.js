@@ -133,6 +133,7 @@ export const LIMITS = Object.freeze({
   targetScreens: 64,
   screenGroups: 16,
   screenNameChars: 40,
+  dmxMediaSlots: 25,
 });
 
 const TARGET = (/** @type {unknown} */ v) => {
@@ -186,6 +187,25 @@ const ICE = object({
 
 const STROBE_FREQ = num(...LIMITS.strobeFreqHz);
 const STROBE_DUR = num(...LIMITS.strobeFlashMs);
+
+/** Look calculé par la passerelle DMX (packages/dmx) : champs par défaut omis. */
+const DMX_LOOK = object({
+  color: req(HEX, 'couleur #rrggbb, dimmer et mélange couleur/blanc déjà appliqués'),
+  strobe: opt(object({
+    freq: req(STROBE_FREQ, 'fréquence Hz (la passerelle émet 0,5–30)'),
+    dur: req(STROBE_DUR, 'durée du flash ms'),
+  }), 'stroboscope actif (absent = pas de strobe)'),
+  effect: opt(object({
+    name: req(oneOf(...EFFECT_NAMES), 'effet'),
+    speed: req(num(0.01, 240), 'vitesse dans l’unité de l’effet'),
+    intensity: req(int(0, 100), 'intensité % (= dimmer de la console)'),
+  }), 'effet en cours (absent = aucun)'),
+  media: opt(object({
+    index: req(int(1, LIMITS.dmxMediaSlots), 'n° du média dans le pool (1–25)'),
+    playback: req(oneOf('play', 'pause', 'loop', 'rewind'), 'lecture, pause, boucle, retour au début et pause'),
+  }), 'média affiché (absent = média masqué)'),
+  blackout: opt(oneOf(true), 'noir total (absent = écran allumé)'),
+});
 
 // ─────────────────────────── Table des messages ───────────────────────────
 
@@ -416,6 +436,21 @@ const SPECS = {
   },
   'call:answer': { dir: 'r2s', src: ['web'], doc: 'Décroche le faux appel.', fields: {} },
   'call:end': { dir: 'r2s', src: ['web'], doc: 'Termine le faux appel / la notification.', fields: {} },
+
+  // ═══ Passerelle DMX → écran ═══
+  'dmx:look': {
+    dir: 'r2s', src: [],
+    doc: 'Nouveau (passerelle DMX, packages/dmx, voir docs/DMX.md) : état de l’écran calculé depuis la console '
+      + '(sACN / Art-Net). live:true = signal console présent, la console a la priorité et l’écran ignore les '
+      + 'commandes de look de la télécommande ; live:false (envoyé une fois à la perte du signal) = l’écran garde '
+      + 'ce look et la télécommande peut reprendre la main. Envoyé au changement (≤ 30/s par écran) et toutes les '
+      + 'secondes tant que live. Les déclenchements Appel/SMS passent par call:start / call:end.',
+    fields: {
+      seq: req(int(0, 0xffff), 'compteur 16 bits de la passerelle (rebouclage 65535 → 0)'),
+      live: req(bool, 'signal console présent (priorité console)'),
+      look: req(DMX_LOOK, 'look à afficher'),
+    },
+  },
 
   // ═══ Signalisation WebRTC (transfert vidéo pair-à-pair) ═══
   'rtc-offer': {

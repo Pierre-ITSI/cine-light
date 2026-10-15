@@ -1,6 +1,6 @@
 // Gateway patch: which DMX universe/address/personality drives each screen.
 //
-//   { screenId → { protocol: 'sacn'|'artnet', universe, address (1–512), personality, name?, loss? } }
+//   { screenId → { protocol: 'sacn'|'artnet', universe, address (1–512), personality, name? } }
 //
 // sACN universes are 1–63999; Art-Net universes are 15-bit Port-Addresses
 // 0–32767 (Net·Sub-Net·Universe). The two namespaces are distinct: sACN 1 and
@@ -11,28 +11,16 @@ import { footprint, getPersonality, PERSONALITY_IDS } from './personalities.js';
 
 export const PROTOCOLS = Object.freeze(['sacn', 'artnet']);
 export const UNIVERSE_RANGE = Object.freeze({ sacn: [1, 63999], artnet: [0, 32767] });
-export const LOSS_MODES = Object.freeze(['hold', 'black', 'release']);
-/** Default loss-of-signal timings (ms) once the protocol has declared the signal lost. */
-export const LOSS_DEFAULTS = Object.freeze({ afterMs: 3000, fadeMs: 1000 });
-const SCREEN_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
-
-/**
- * @typedef {object} LossPolicy
- * @property {'hold'|'black'|'release'} mode
- *   hold: keep the last look; black: fade to black after afterMs; release: hand
- *   the screen back to the remote app after afterMs
- * @property {number} [afterMs]  delay after the signal is declared lost (default 3000)
- * @property {number} [fadeMs]   fade duration for 'black' (default 1000)
- */
+/** Same rule as SCREEN_ID_RE in packages/protocol/schema.js. */
+const SCREEN_ID_RE = /^[A-Za-z0-9_-]{8,32}$/;
 
 /**
  * @typedef {object} PatchEntry
  * @property {'sacn'|'artnet'} protocol
  * @property {number} universe
  * @property {number} address      DMX start address 1–512
- * @property {string} personality  simple3 | standard8 | rgb6 | extended16
+ * @property {string} personality  simple3 | color5 | standard8 | extended16
  * @property {string} [name]       display name (UI only)
- * @property {LossPolicy} [loss]   overrides the engine default
  */
 
 /**
@@ -45,15 +33,6 @@ const SCREEN_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
  * @property {number} [universe]
  */
 
-/** Normalise a loss policy; returns null if invalid. */
-export function normalizeLoss(loss) {
-  if (loss == null) return null;
-  if (typeof loss !== 'object' || LOSS_MODES.indexOf(loss.mode) === -1) return null;
-  const ms = (v, d, max) => (v == null ? d : (Number.isFinite(v) && v >= 0 && v <= max ? v : NaN));
-  const out = { mode: loss.mode, afterMs: ms(loss.afterMs, LOSS_DEFAULTS.afterMs, 600000), fadeMs: ms(loss.fadeMs, LOSS_DEFAULTS.fadeMs, 10000) };
-  return Number.isNaN(out.afterMs) || Number.isNaN(out.fadeMs) ? null : out;
-}
-
 /**
  * Structural validation of one entry (types, ranges). Range overflow
  * (address + footprint − 1 > 512) is reported separately by checkPatch().
@@ -63,7 +42,7 @@ export function normalizeLoss(loss) {
  */
 export function validateEntry(screenId, e) {
   const errs = [];
-  if (typeof screenId !== 'string' || !SCREEN_ID_RE.test(screenId)) errs.push('screenId invalide');
+  if (typeof screenId !== 'string' || !SCREEN_ID_RE.test(screenId)) errs.push('screenId invalide (8–32 caractères A-Z a-z 0-9 _ -)');
   if (!e || typeof e !== 'object') return errs.concat('entrée manquante');
   if (PROTOCOLS.indexOf(e.protocol) === -1) errs.push('protocole inconnu : ' + e.protocol);
   const range = UNIVERSE_RANGE[e.protocol];
@@ -72,7 +51,6 @@ export function validateEntry(screenId, e) {
   }
   if (!(Number.isInteger(e.address) && e.address >= 1 && e.address <= 512)) errs.push('adresse hors plage 1–512 : ' + e.address);
   if (!getPersonality(e.personality)) errs.push('personnalité inconnue : ' + e.personality + ' (' + PERSONALITY_IDS.join(', ') + ')');
-  if (e.loss != null && !normalizeLoss(e.loss)) errs.push('politique de perte de signal invalide');
   if (e.name != null && typeof e.name !== 'string') errs.push('nom invalide');
   return errs;
 }
@@ -107,7 +85,6 @@ export class Patch {
     if (errs.length) throw new TypeError('Patch ' + screenId + ' : ' + errs.join(' ; '));
     const e = { protocol: entry.protocol, universe: entry.universe, address: entry.address, personality: entry.personality };
     if (entry.name) e.name = entry.name;
-    if (entry.loss) e.loss = normalizeLoss(entry.loss);
     this._m.set(screenId, e);
     return this;
   }
@@ -137,7 +114,7 @@ export class Patch {
     const r = autoAddress(screenIds, opts);
     for (const id of Object.keys(r.entries)) {
       const prev = this.get(id);
-      this.set(id, Object.assign({}, r.entries[id], prev && prev.name ? { name: prev.name } : null, prev && prev.loss ? { loss: prev.loss } : null));
+      this.set(id, Object.assign({}, r.entries[id], prev && prev.name ? { name: prev.name } : null));
     }
     return { overflow: r.overflow };
   }

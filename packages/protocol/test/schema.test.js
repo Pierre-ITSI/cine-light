@@ -53,6 +53,31 @@ test('plafonds strobe : ≤ 30 Hz et flash ≥ 15 ms (alignés sur PROTO de l’
   assert.equal(s({ random: true, freqMin: 1, freqMax: 31, durMin: 15, durMax: 20 }), false);
 });
 
+test('dmx:look (passerelle DMX) : sens r2s, look strict, target facultatif', () => {
+  const look = { color: '#ff8800', strobe: { freq: 0.5, dur: 50 }, effect: { name: 'fire', speed: 3, intensity: 40 }, media: { index: 3, playback: 'pause' } };
+  const ok = { type: 'dmx:look', seq: 42, live: true, look };
+  assert.equal(explainInvalid(ok, { direction: 'r2s' }), null);
+  assert.equal(validate({ ...ok, target: { screens: ['AbCdEfGh12345678'] } }, { direction: 'r2s' }), true);
+  assert.equal(validate({ ...ok, target: { group: 'plateau' } }), true);
+  assert.equal(validate(ok, { direction: 's2r' }), false, 'un écran n’émet pas de dmx:look');
+  assert.equal(MESSAGE_TYPES['dmx:look'].direction, 'r2s');
+  assert.equal(LIMITS.dmxMediaSlots, 25);
+  const bad = (/** @type {object} */ l) => validate({ type: 'dmx:look', seq: 1, live: true, look: { color: '#ffffff', ...l } });
+  assert.equal(bad({}), true);
+  assert.equal(bad({ blackout: true }), true);
+  assert.equal(bad({ strobe: { freq: 30.5, dur: 20 } }), false, 'plafond 30 Hz');
+  assert.equal(bad({ strobe: { freq: 10, dur: 14 } }), false, 'flash ≥ 15 ms');
+  assert.equal(bad({ strobe: { freq: 10 } }), false, 'strobe incomplet');
+  assert.equal(bad({ effect: { name: 'eval', speed: 1, intensity: 10 } }), false, 'effet inconnu');
+  assert.equal(bad({ effect: { name: 'tv', speed: 1, intensity: 101 } }), false);
+  assert.equal(bad({ media: { index: 0, playback: 'play' } }), false, 'index 0 = média masqué : champ absent');
+  assert.equal(bad({ media: { index: 2, playback: 'stop' } }), false);
+  assert.equal(bad({ color: 'red' }), false);
+  assert.equal(validate({ type: 'dmx:look', seq: -1, live: true, look: { color: '#ffffff' } }), false);
+  assert.equal(validate({ type: 'dmx:look', seq: 1, live: 1, look: { color: '#ffffff' } }), false);
+  assert.equal(validate({ type: 'dmx:look', seq: 1, live: true, look: { color: '#ffffff' }, fade: 1000 }), false, 'champ inconnu');
+});
+
 test('valeurs non JSON et prototypes piégés', () => {
   assert.equal(validate(null), false);
   assert.equal(validate('color'), false);

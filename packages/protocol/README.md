@@ -131,8 +131,8 @@ kind 2 : idLen + mediaId (≤ 40) + index u16 + total u16
 ### 3.4 Schéma applicatif (`schema.js`)
 
 `MESSAGE_TYPES` documente les **44 types** utilisés aujourd'hui par
-`index.html` et `expo-app`, plus le nouveau `screen:config` (45 au total :
-30 `r2s`, 14 `s2r`, 1 `both` ; sources et champs décrits).
+`index.html` et `expo-app`, plus les nouveaux `screen:config` et `dmx:look`
+(46 au total : 31 `r2s`, 14 `s2r`, 1 `both` ; sources et champs décrits).
 `validate(msg, { direction })` est une **liste blanche stricte** : type ou
 champ inconnu, mauvais type, nombre non fini, chaîne/tableau trop long,
 data-URL non conforme ⇒ rejet. Les bornes sont **alignées sur `PROTO`**
@@ -164,6 +164,9 @@ Des tests de **dérive** relisent `web/js/*.js` (ou `index.html` à défaut) et
   télécommande renomme un écran / fixe ses groupes.
 - WebRTC (`rtc-offer`) : cibler **un** écran ; les réponses sont rattachées à
   l'écran par l'étiquette `sender` (authentifiée) apprise via `caps`.
+- `dmx:look { target?, seq, live, look }` : émis par la passerelle DMX
+  (`packages/dmx`), pas encore branché dans `web/js`. Règles de priorité
+  console / télécommande : `docs/DMX.md`.
 
 ## 4. API
 

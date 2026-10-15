@@ -134,6 +134,16 @@ export const REAL_MESSAGES = [
   { direction: 'r2s', where: 'multi-écran : couleur ciblée', msg: { type: 'color', color: '#00ff00', target: { screens: [SCREEN_A] } } },
   { direction: 'r2s', where: 'multi-écran : groupe', msg: { type: 'blackout', on: false, target: { group: 'cuisine' } } },
   { direction: 'r2s', where: 'multi-écran : screen:config', msg: { type: 'screen:config', target: { screens: [SCREEN_A] }, name: 'Écran cuisine', groups: ['cuisine', 'g2'] } },
+  // ── passerelle DMX (packages/dmx GatewayEngine) → écran ──
+  { direction: 'r2s', where: 'passerelle DMX : couleur seule', msg: { type: 'dmx:look', target: { screens: [SCREEN_A] }, seq: 1, live: true, look: { color: '#ffefe1' } } },
+  {
+    direction: 'r2s', where: 'passerelle DMX : Étendu 16 complet',
+    msg: {
+      type: 'dmx:look', target: { screens: [SCREEN_A, 'ZyXwVuTs98765432'] }, seq: 65535, live: true,
+      look: { color: '#ff0000', strobe: { freq: 30, dur: 17 }, effect: { name: 'pulse', speed: 128.235, intensity: 100 }, media: { index: 25, playback: 'loop' }, blackout: true },
+    },
+  },
+  { direction: 'r2s', where: 'passerelle DMX : perte du signal (garde le look)', msg: { type: 'dmx:look', target: { screens: [SCREEN_A] }, seq: 0, live: false, look: { color: '#000000', media: { index: 1, playback: 'rewind' } } } },
 
   // ── écran → télécommande ──
   { direction: 's2r', where: 'sendCaps (web, avant resync)', msg: { type: 'caps', torch: false, vibrate: false, videoMode: 'rtc' } },
@@ -224,6 +234,12 @@ export const ATTACKS = [
   { why: 'target screenId trop court', msg: { type: 'color', color: '#ffffff', target: { screens: ['abc'] } } },
   { why: 'target sur message écran → télécommande', msg: { type: 'media:cached', id: 'm1', target: { group: 'g' } } },
   { why: 'screen:config sans target', msg: { type: 'screen:config', name: 'x' } },
+  { why: 'dmx:look strobe > 30 Hz', msg: { type: 'dmx:look', seq: 1, live: true, look: { color: '#ffffff', strobe: { freq: 31, dur: 20 } } } },
+  { why: 'dmx:look champ inconnu dans le look', msg: { type: 'dmx:look', seq: 1, live: true, look: { color: '#ffffff', eval: 1 } } },
+  { why: 'dmx:look média hors des 25 emplacements', msg: { type: 'dmx:look', seq: 1, live: true, look: { color: '#ffffff', media: { index: 26, playback: 'play' } } } },
+  { why: 'dmx:look sans live', msg: { type: 'dmx:look', seq: 1, look: { color: '#ffffff' } } },
+  { why: 'dmx:look seq > 16 bits', msg: { type: 'dmx:look', seq: 65536, live: true, look: { color: '#ffffff' } } },
+  { why: 'dmx:look blackout: false (défaut transmis)', msg: { type: 'dmx:look', seq: 1, live: true, look: { color: '#ffffff', blackout: false } } },
   { why: 'screen:config vers un groupe', msg: { type: 'screen:config', name: 'x', target: { group: 'g' } } },
   { why: 'caps avec nom multiligne', msg: { type: 'caps', torch: true, vibrate: true, name: 'a\nb' } },
   { why: 'tableau au lieu d’objet', msg: /** @type {any} */ (['color', '#ffffff']) },
