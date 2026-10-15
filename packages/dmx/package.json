@@ -1,0 +1,26 @@
+{
+  "name": "@setremote/dmx",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SetRemote DMX gateway engine: sACN (E1.31) and Art-Net 4 parsing, merge, fixture personalities, patch and gateway engine. Zero dependencies; browsers, Node 22, React Native/Hermes.",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./sacn.js": "./sacn.js",
+    "./artnet.js": "./artnet.js",
+    "./merge.js": "./merge.js",
+    "./personalities.js": "./personalities.js",
+    "./color.js": "./color.js",
+    "./patch.js": "./patch.js",
+    "./engine.js": "./engine.js",
+    "./messages.js": "./messages.js"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  }
+}
