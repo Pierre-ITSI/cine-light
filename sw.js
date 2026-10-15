@@ -1,5 +1,5 @@
 /* Service Worker — SetRemote PWA */
-const CACHE = 'setremote-v52';
+const CACHE = 'setremote-v53';
 const SHELL = [
   './',
   './index.html',
@@ -8,10 +8,20 @@ const SHELL = [
   './icon-512.png',
   './apple-touch-icon.png',
   './vendor/mqtt-5.16.1.min.js', // version figée, servie depuis notre origine
+  // Polices auto-hébergées (plus de Google Fonts) : disponibles hors ligne
+  './vendor/fonts/dm-mono-latin-300-normal.woff2',
+  './vendor/fonts/dm-mono-latin-ext-300-normal.woff2',
+  './vendor/fonts/dm-mono-latin-400-normal.woff2',
+  './vendor/fonts/dm-mono-latin-ext-400-normal.woff2',
+  './vendor/fonts/dm-mono-latin-500-normal.woff2',
+  './vendor/fonts/dm-mono-latin-ext-500-normal.woff2',
+  './vendor/fonts/lato-latin-400-normal.woff2',
+  './vendor/fonts/lato-latin-ext-400-normal.woff2',
+  './vendor/fonts/lato-latin-700-normal.woff2',
+  './vendor/fonts/lato-latin-ext-700-normal.woff2',
 ];
-// Seules ces origines tierces sont mises en cache (polices). Le reste
-// (ex. images QR générées à la volée) n'encombre pas le cache.
-const CACHEABLE_ORIGINS = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'];
+// Seules les ressources de notre origine sont mises en cache : aucune origine
+// tierce (les images QR générées à la volée n'encombrent pas le cache).
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
@@ -58,7 +68,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  const cacheable = url.origin === self.location.origin || CACHEABLE_ORIGINS.includes(url.origin);
+  const cacheable = url.origin === self.location.origin;
 
   // Autres ressources : cache d'abord, repli réseau (+ mise en cache opportuniste)
   e.respondWith(

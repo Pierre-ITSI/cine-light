@@ -2,7 +2,8 @@
 //
 // • Chromium : chemin configurable par PW_CHROMIUM (sinon navigateur géré par
 //   Playwright, installé en CI via « npx playwright install --with-deps »).
-// • Hermétique : toute requête http(s) est bloquée (polices Google, QR…),
+// • Hermétique : toute requête http(s) est bloquée (images QR…) ; les
+//   polices, servies depuis vendor/fonts/ en file://, se chargent,
 //   Math.random est déterministe, et la bibliothèque mqtt.js est remplacée
 //   par un faux client qui ne se connecte jamais tout seul : mqttClient ne
 //   joint aucun broker et sendMsg reste sans effet, sauf si un test le
