@@ -72,7 +72,7 @@ test('détection de falsification : chaque octet de la trame est protégé', asy
 });
 
 test('le type du message est chiffré : le relais ne le voit pas', async () => {
-  const types = ['blackout', 'call:start', 'rtc-offer', 'color'];
+  const types = ['blackout', 'call:start', 'rtc-offer', 'color', 'dmx:look'];
   const frames = await Promise.all(types.map((type, i) => seal({ type }, session.keys.r2s, { ...R, seq: 40 + i, ts: 1_700_000_000_000 })));
   for (const [i, f] of frames.entries()) {
     const raw = Buffer.from(b64uToBytes(f));

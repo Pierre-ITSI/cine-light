@@ -93,6 +93,17 @@ test('adressage : un écran, un groupe, configuration des groupes', async () => 
   assert.equal(B.inbox.at(-1).message.type, 'hello');
 });
 
+test('dmx:look (passerelle DMX) : chiffré, ciblé, type invisible sur le relais', async () => {
+  const { remote, idA, bus, A, B } = await setup();
+  const look = { type: 'dmx:look', target: { screens: [idA] }, seq: 7, live: true, look: { color: '#ff8800', strobe: { freq: 12, dur: 30 } } };
+  const frame = await remote.seal(look);
+  assert.ok(!Buffer.from(frame, 'base64url').includes('dmx'), 'type absent de la trame');
+  await bus.publish(frame);
+  assert.deepEqual(A.inbox.at(-1).message, look);
+  assert.equal(B.inbox.length, 0, 'B n’est pas visé');
+  await assert.rejects(remote.seal({ ...look, look: { color: '#ff8800', strobe: { freq: 31, dur: 30 } } }), isCode('invalid-message'));
+});
+
 test('écrans → télécommande : identité dans caps, fenêtres anti-rejeu par émetteur', async () => {
   const { screenA, screenB, idA, idB, bus, R, A, B } = await setup();
   const capsA = await screenA.seal({ type: 'caps', torch: true, vibrate: true, videoMode: 'rtc', screenId: idA, name: 'Écran A' });
