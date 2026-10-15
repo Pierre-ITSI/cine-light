@@ -346,9 +346,38 @@ describe('resynchronisation télécommande → écran', () => {
     await sleep(600);
     const sent = await page.evaluate(() => mqttClient.published.map((p) => JSON.parse(p.payload).type));
     assert.equal(sent.filter((t) => t === 'color').length, 1, sent.join(','));
-    assert.equal(sent.filter((t) => t === 'blackout').length, 1);
+    assert.equal(sent.filter((t) => t === 'blackout').length, 0, 'OFF jamais imposé tant que l\'utilisateur n\'y a pas touché');
     assert.equal(await page.evaluate(() => document.getElementById('content-flash').classList.contains('torch-unavailable')), true);
     assert.deepEqual(errors, []);
     await close();
+  });
+
+  test('télécommande rechargée : ne rallume jamais un écran éteint, reprend son état OFF', async () => {
+    const broker = new FakeBroker();
+    const screen = await openPage(browser, { broker, hash: 'keepoff', seed: 11 });
+    await connectFakeClients(screen.page);
+    await screen.page.evaluate(() => setBlackout(true));
+    // Télécommande neuve (rechargée) qui rejoint le canal
+    const remote = await openPage(browser, { broker, seed: 12 });
+    const rp = remote.page;
+    await rp.evaluate(() => { startMode('remote'); document.getElementById('channelInput').value = 'keepoff'; connectChannel(); });
+    await connectFakeClients(rp);
+    await sleep(800); await broker.flush();
+    assert.equal(await screen.page.evaluate(() => screenBlackoutOn), true, 'écran toujours éteint');
+    assert.ok(!broker.sent(rp, 'blackout').length, 'aucun ordre OFF/ON envoyé');
+    assert.equal(await rp.evaluate(() => remoteBlackout), true, 'la télécommande affiche l\'état réel');
+    assert.equal(await rp.evaluate(() => document.getElementById('stickyBlackoutBtn').textContent), 'Écran OFF');
+    // L'utilisateur rallume : l'ordre passe, puis reste imposé aux resynchronisations
+    await rp.evaluate(() => toggleBlackout());
+    await sleep(300); await broker.flush();
+    assert.equal(await screen.page.evaluate(() => screenBlackoutOn), false);
+    broker.clear();
+    await screen.page.evaluate(() => { setBlackout(true); mqttClient._drop(); mqttClient._connect(); });
+    await sleep(800); await broker.flush();
+    assert.equal(broker.sent(rp, 'blackout').length, 1);
+    assert.equal(await screen.page.evaluate(() => screenBlackoutOn), false, 'choix de l\'utilisateur réappliqué');
+    assert.deepEqual(remote.errors, []);
+    assert.deepEqual(screen.errors, []);
+    await screen.close(); await remote.close();
   });
 });

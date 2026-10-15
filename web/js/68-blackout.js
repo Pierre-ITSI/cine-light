@@ -1,9 +1,12 @@
 // ══════════════════════════ BLACKOUT (Off écran) ══════════════════════════
 let remoteBlackout = false, screenBlackoutOn = false;
+// La télécommande n'impose son état OFF/ON lors d'une resynchronisation que si
+// l'utilisateur l'a choisi dans cette session : une télécommande rechargée ne
+// doit jamais rallumer un écran éteint en pleine prise. Tant qu'il n'y a pas
+// touché, elle reprend l'état annoncé par l'écran (caps.blackout).
+let _blackoutTouched = false;
 
-// — Télécommande : envoie l'ordre à l'écran —
-function toggleBlackout() {
-  remoteBlackout = !remoteBlackout;
+function renderRemoteBlackout() {
   const btn = document.getElementById('blackoutBtn');
   if (btn) btn.classList.toggle('on', remoteBlackout);
   const lbl = document.getElementById('blackoutLabel');
@@ -14,7 +17,21 @@ function toggleBlackout() {
   const sb = document.getElementById('stickyBlackoutBtn');
   if (sb) { sb.classList.toggle('on', remoteBlackout); sb.textContent = remoteBlackout ? 'Écran OFF' : 'Écran ON'; }
   updateStatusRings();
+}
+
+// — Télécommande : envoie l'ordre à l'écran —
+function toggleBlackout() {
+  remoteBlackout = !remoteBlackout;
+  _blackoutTouched = true;
+  renderRemoteBlackout();
   sendMsg({ type: 'blackout', on: remoteBlackout });
+}
+
+// — Télécommande : adopte l'état annoncé par un écran (sans rien renvoyer) —
+function remoteAdoptScreenBlackout(on) {
+  if (_blackoutTouched || remoteBlackout === !!on) return;
+  remoteBlackout = !!on;
+  renderRemoteBlackout();
 }
 
 // — Écran : applique le noir total —

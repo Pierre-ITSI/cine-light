@@ -222,6 +222,7 @@ const MSG_ROUTES = {
       // Champs optionnels des écrans récents (absents chez les anciens / natifs)
       if (m.cached !== undefined && !(Array.isArray(m.cached) && m.cached.length <= PROTO.ORDER_MAX && m.cached.every(_P.id))) delete m.cached;
       if (m.active !== undefined && m.active !== null && !_P.id(m.active)) delete m.active;
+      if (m.blackout !== undefined && typeof m.blackout !== 'boolean') delete m.blackout;
       return true;
     },
     handle: (m) => { applyReceiverCaps(m); remoteScheduleResync(m); },

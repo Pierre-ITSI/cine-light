@@ -1549,6 +1549,7 @@ const MSG_ROUTES = {
       // Champs optionnels des écrans récents (absents chez les anciens / natifs)
       if (m.cached !== undefined && !(Array.isArray(m.cached) && m.cached.length <= PROTO.ORDER_MAX && m.cached.every(_P.id))) delete m.cached;
       if (m.active !== undefined && m.active !== null && !_P.id(m.active)) delete m.active;
+      if (m.blackout !== undefined && typeof m.blackout !== 'boolean') delete m.blackout;
       return true;
     },
     handle: (m) => { applyReceiverCaps(m); remoteScheduleResync(m); },
@@ -1591,6 +1592,7 @@ function remoteScheduleResync(caps) {
     for (const id of _RESYNC_ASSETS) if (!_screenCached.has(id)) need.lacks.add(id);
   }
   // « active » n'est envoyé que par les écrans récents (absent = inconnu)
+  if (typeof caps.blackout === 'boolean') remoteAdoptScreenBlackout(caps.blackout);
   if (Object.prototype.hasOwnProperty.call(caps, 'active') && caps.active !== _activeMediaId) need.mediaMissing = true;
   if (_resyncTimer) clearTimeout(_resyncTimer);
   _resyncTimer = setTimeout(remoteResync, RESYNC_DELAY_MS);
@@ -1603,7 +1605,7 @@ function remoteResync() {
   if (mode !== 'remote' || !mqttClient || !mqttClient.connected) return;
   // Lumière
   sendMsg({ type: 'color', color: currentColor });
-  sendMsg({ type: 'blackout', on: remoteBlackout });
+  if (_blackoutTouched) sendMsg({ type: 'blackout', on: remoteBlackout });
   sendMsg({ type: 'screen:brightness', value: screenBrightnessPct / 100 });
   if (activeScreenEffect) sendMsg({ type: 'effect', name: activeScreenEffect, active: true, params: buildEffectParams() });
   if (strobeActive) sendMsg(buildStrobePayload()); // après l'effet : le strobe prime
@@ -3884,7 +3886,8 @@ function sendCaps() {
   const cached = [];
   _mediaCache.forEach((c, id) => { if (cached.length < 500 && /^[A-Za-z0-9_-]{1,64}$/.test(id)) cached.push(id); });
   sendMsg({ type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate, videoMode: 'rtc',
-            cached, active: screenMediaVisible() ? (_screenActiveId || null) : null });
+            cached, active: screenMediaVisible() ? (_screenActiveId || null) : null,
+            blackout: screenBlackoutOn });
 }
 
 // Capacités du récepteur connecté (mémorisées pour choisir le transport vidéo).
@@ -3999,10 +4002,13 @@ function stopTorchEffectLoop() { if (_torchEffectTimer) { clearTimeout(_torchEff
 
 // ══════════════════════════ BLACKOUT (Off écran) ══════════════════════════
 let remoteBlackout = false, screenBlackoutOn = false;
+// La télécommande n'impose son état OFF/ON lors d'une resynchronisation que si
+// l'utilisateur l'a choisi dans cette session : une télécommande rechargée ne
+// doit jamais rallumer un écran éteint en pleine prise. Tant qu'il n'y a pas
+// touché, elle reprend l'état annoncé par l'écran (caps.blackout).
+let _blackoutTouched = false;
 
-// — Télécommande : envoie l'ordre à l'écran —
-function toggleBlackout() {
-  remoteBlackout = !remoteBlackout;
+function renderRemoteBlackout() {
   const btn = document.getElementById('blackoutBtn');
   if (btn) btn.classList.toggle('on', remoteBlackout);
   const lbl = document.getElementById('blackoutLabel');
@@ -4013,7 +4019,21 @@ function toggleBlackout() {
   const sb = document.getElementById('stickyBlackoutBtn');
   if (sb) { sb.classList.toggle('on', remoteBlackout); sb.textContent = remoteBlackout ? 'Écran OFF' : 'Écran ON'; }
   updateStatusRings();
+}
+
+// — Télécommande : envoie l'ordre à l'écran —
+function toggleBlackout() {
+  remoteBlackout = !remoteBlackout;
+  _blackoutTouched = true;
+  renderRemoteBlackout();
   sendMsg({ type: 'blackout', on: remoteBlackout });
+}
+
+// — Télécommande : adopte l'état annoncé par un écran (sans rien renvoyer) —
+function remoteAdoptScreenBlackout(on) {
+  if (_blackoutTouched || remoteBlackout === !!on) return;
+  remoteBlackout = !!on;
+  renderRemoteBlackout();
 }
 
 // — Écran : applique le noir total —

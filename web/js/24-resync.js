@@ -24,6 +24,7 @@ function remoteScheduleResync(caps) {
     for (const id of _RESYNC_ASSETS) if (!_screenCached.has(id)) need.lacks.add(id);
   }
   // « active » n'est envoyé que par les écrans récents (absent = inconnu)
+  if (typeof caps.blackout === 'boolean') remoteAdoptScreenBlackout(caps.blackout);
   if (Object.prototype.hasOwnProperty.call(caps, 'active') && caps.active !== _activeMediaId) need.mediaMissing = true;
   if (_resyncTimer) clearTimeout(_resyncTimer);
   _resyncTimer = setTimeout(remoteResync, RESYNC_DELAY_MS);
@@ -36,7 +37,7 @@ function remoteResync() {
   if (mode !== 'remote' || !mqttClient || !mqttClient.connected) return;
   // Lumière
   sendMsg({ type: 'color', color: currentColor });
-  sendMsg({ type: 'blackout', on: remoteBlackout });
+  if (_blackoutTouched) sendMsg({ type: 'blackout', on: remoteBlackout });
   sendMsg({ type: 'screen:brightness', value: screenBrightnessPct / 100 });
   if (activeScreenEffect) sendMsg({ type: 'effect', name: activeScreenEffect, active: true, params: buildEffectParams() });
   if (strobeActive) sendMsg(buildStrobePayload()); // après l'effet : le strobe prime
