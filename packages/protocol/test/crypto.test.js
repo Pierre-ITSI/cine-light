@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   deriveSession, seal, open, sealChunk, openChunk, peekFrame, createReplayState, splitIntoChunks,
   createChunkAssembler, newSenderTag, MAX_MESSAGE_BYTES, MAX_CHUNK_BYTES, MAX_CHUNKS, MAX_FRAME_CHARS,
+  DEFAULT_MAX_SKEW_MS, FRAME_VERSION,
 } from '../crypto.js';
 import { createPairing } from '../pairing.js';
 import { setCrypto, getCrypto } from '../lib/env.js';
@@ -41,15 +42,16 @@ test('aller-retour : message simple, Unicode, et proche du plafond', async () =>
   const f = await seal(msg, session.keys.r2s, { ...R, seq: 1 });
   assert.match(f, /^[A-Za-z0-9_-]+$/);
   assert.deepEqual(await open(f, session.keys.r2s, rs), msg);
-  const big = { type: 'call:start', kind: 'call', photo: 'data:image/jpeg;base64,' + 'A'.repeat(MAX_MESSAGE_BYTES - 200) };
+  const big = { type: 'media-img-chunk', id: 'k3j9x1', i: 0, data: 'data:image/jpeg;base64,' + 'A'.repeat(MAX_MESSAGE_BYTES - 200) };
   const fb = await seal(big, session.keys.r2s, { ...R, seq: 2 });
   assert.ok(fb.length <= MAX_FRAME_CHARS);
   assert.deepEqual(await open(fb, session.keys.r2s, rs), big);
 });
 
-test('peekFrame lit l’en-tête sans déchiffrer', async () => {
+test('peekFrame lit l’en-tête sans déchiffrer (pas de type en clair)', async () => {
   const f = await seal({ type: 'color', color: '#ffffff' }, session.keys.r2s, { ...R, seq: 7, ts: 1_700_000_000_123 });
-  assert.deepEqual(peekFrame(f), { version: 1, kind: 1, sender: R.sender, seq: 7, ts: 1_700_000_000_123, type: 'color' });
+  assert.equal(FRAME_VERSION, 2);
+  assert.deepEqual(peekFrame(f), { version: 2, kind: 1, sender: R.sender, seq: 7, ts: 1_700_000_000_123 });
 });
 
 test('détection de falsification : chaque octet de la trame est protégé', async () => {
@@ -69,13 +71,30 @@ test('détection de falsification : chaque octet de la trame est protégé', asy
   await assert.rejects(open(/** @type {any} */ (42), session.keys.r2s, null), isCode('malformed'));
 });
 
-test('changer le type dans l’en-tête (AAD) est détecté', async () => {
-  const f = await seal({ type: 'blackout', on: false }, session.keys.r2s, { ...R, seq: 4 });
-  const bytes = b64uToBytes(f);
-  const at = Buffer.from(bytes).indexOf('blackout');
-  assert.ok(at > 0);
-  bytes.set(Buffer.from('blackouu'), at);
-  await assert.rejects(open(bytesToB64u(bytes), session.keys.r2s, null), isCode('auth'));
+test('le type du message est chiffré : le relais ne le voit pas', async () => {
+  const types = ['blackout', 'call:start', 'rtc-offer', 'color'];
+  const frames = await Promise.all(types.map((type, i) => seal({ type }, session.keys.r2s, { ...R, seq: 40 + i, ts: 1_700_000_000_000 })));
+  for (const [i, f] of frames.entries()) {
+    const raw = Buffer.from(b64uToBytes(f));
+    assert.equal(raw.indexOf(types[i]), -1, `type « ${types[i]} » absent des octets de la trame`);
+    assert.ok(!f.includes(Buffer.from(types[i]).toString('base64url').slice(0, 6)));
+    assert.equal(/** @type {any} */ (peekFrame(f)).type, undefined);
+  }
+  // Même en-tête (émetteur, seq, ts) : seule la taille du chiffré diffère selon le contenu
+  const h0 = b64uToBytes(frames[0]).subarray(0, 3 + R.sender.length + 10);
+  const h3 = b64uToBytes(frames[3]).subarray(0, 3 + R.sender.length + 10);
+  assert.deepEqual(h0.subarray(0, 3 + R.sender.length), h3.subarray(0, 3 + R.sender.length));
+  // Le type est authentifié comme le reste : un clair sans type est refusé
+  await assert.rejects(seal(/** @type {any} */ ({ color: '#ffffff' }), session.keys.r2s, { ...R, seq: 50 }), isCode('bad-argument'));
+});
+
+test('tolérance d’horloge par défaut : 5 minutes', async () => {
+  assert.equal(DEFAULT_MAX_SKEW_MS, 5 * 60 * 1000);
+  let now = 1_800_000_000_000;
+  const rs = createReplayState({ now: () => now });
+  await open(await seal({ type: 'hello' }, session.keys.r2s, { ...R, seq: 1, ts: now - 4 * 60_000 }), session.keys.r2s, rs);
+  await assert.rejects(open(await seal({ type: 'hello' }, session.keys.r2s, { ...R, seq: 2, ts: now - 6 * 60_000 }), session.keys.r2s, rs), isCode('stale'));
+  await assert.rejects(open(await seal({ type: 'hello' }, session.keys.r2s, { ...R, seq: 3, ts: now + 6 * 60_000 }), session.keys.r2s, rs), isCode('stale'));
 });
 
 test('mauvaise clé et mauvais sens sont rejetés', async () => {
@@ -126,6 +145,11 @@ test('horodatage hors tolérance : rejeu d’un enregistrement ancien après red
   const fresh = await seal({ type: 'hello' }, session.keys.r2s, { ...R, seq: 3, ts: now - 5_000 });
   await open(fresh, session.keys.r2s, rs);
   now += 121_000;
+  await assert.rejects(open(fresh, session.keys.r2s, createReplayState({ now: () => now, maxSkewMs: 120_000 })), isCode('stale'));
+  // Tolérance par défaut (5 min) : la même trame est encore acceptée par un récepteur neuf…
+  await open(fresh, session.keys.r2s, createReplayState({ now: () => now }));
+  // … puis refusée au-delà
+  now += 180_000;
   await assert.rejects(open(fresh, session.keys.r2s, createReplayState({ now: () => now })), isCode('stale'));
 });
 
@@ -156,7 +180,7 @@ test('LRU des émetteurs borné', async () => {
 });
 
 test('plafonds et arguments', async () => {
-  const huge = { type: 'call:start', photo: 'A'.repeat(MAX_MESSAGE_BYTES + 1) };
+  const huge = { type: 'media-img-chunk', data: 'A'.repeat(MAX_MESSAGE_BYTES + 1) };
   await assert.rejects(seal(huge, session.keys.r2s, { ...R, seq: 1 }), isCode('too-large'));
   await assert.rejects(open('A'.repeat(MAX_FRAME_CHARS + 1), session.keys.r2s, null), isCode('too-large'));
   await assert.rejects(seal({ type: 'hello' }, session.keys.r2s, { sender: 'bad sender', seq: 1 }), isCode('bad-argument'));
@@ -166,10 +190,14 @@ test('plafonds et arguments', async () => {
   await assert.rejects(seal(/** @type {any} */ ({ type: 'x', n: 1n }), session.keys.r2s, { ...R, seq: 1 }), isCode('bad-argument'));
   const f = await seal({ type: 'hello' }, session.keys.r2s, { ...R, seq: 1 });
   await assert.rejects(open(f, session.keys.r2s, /** @type {any} */ (undefined)), isCode('bad-argument'), 'replayState obligatoire');
-  // Version inconnue
-  const v2 = b64uToBytes(f);
-  v2[0] = 2;
-  await assert.rejects(open(bytesToB64u(v2), session.keys.r2s, null), isCode('version'));
+  // Version inconnue, dont l'ancienne v1 (type en clair)
+  for (const v of [1, 3]) {
+    const other = b64uToBytes(f);
+    other[0] = v;
+    await assert.rejects(open(bytesToB64u(other), session.keys.r2s, null), isCode('version'));
+  }
+  assert.ok(MAX_MESSAGE_BYTES <= 40 * 1024, 'plafond abaissé (photo d’appel en fragments)');
+  assert.ok(MAX_FRAME_CHARS <= 64 * 1024, `trame max ${MAX_FRAME_CHARS} caractères : un relais à 64 Kio suffit`);
 });
 
 test('clés de prototype dans le clair chiffré : rejetées à l’ouverture', async () => {

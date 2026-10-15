@@ -8,21 +8,25 @@
  *
  * Format de trame (octets, puis base64url sans remplissage) :
  *
- *   0      version            0x01
+ *   0      version            0x02
  *   1      kind               0x01 = message JSON, 0x02 = fragment de média
  *   2      senderLen          1..16
  *   3..    sender             ASCII [A-Za-z0-9_-]
  *   +4     seq                uint32 big-endian
  *   +6     ts                 uint48 big-endian (ms depuis l'époque Unix)
- *   kind=1 : typeLen (1) + type ASCII [a-z0-9:_-] (≤ 32)
+ *   kind=1 : rien de plus (le TYPE du message est DANS le chiffré)
  *   kind=2 : idLen (1) + mediaId ASCII (≤ 64) + index uint16 + total uint16
  *   ── fin de l'en-tête : tout ce qui précède est l'AAD AES-GCM ──
  *   +12    IV                 96 bits aléatoires
  *   …      ciphertext ‖ tag   AES-256-GCM, tag 128 bits
  *
  * L'en-tête circule en clair mais il est intégralement authentifié (AAD) :
- * modifier la version, le type, l'émetteur, la séquence, l'horodatage ou les
- * métadonnées de fragment fait échouer le déchiffrement.
+ * modifier la version, l'émetteur, la séquence, l'horodatage ou les
+ * métadonnées de fragment fait échouer le déchiffrement. Le type d'un
+ * message (« color », « call:start »…) n'apparaît pas en clair : le relais
+ * ne voit que des messages et des fragments opaques.
+ *
+ * Version 2 : le type est passé de l'en-tête (v1, en clair) au chiffré.
  */
 import { ProtocolError } from './lib/errors.js';
 import { randomBytes, subtle } from './lib/env.js';
@@ -33,16 +37,20 @@ import { hkdfBits } from './lib/kdf.js';
 import { assertPairing } from './lib/pairingFormat.js';
 import { MEDIA_ID_RE } from './schema.js';
 
-export const FRAME_VERSION = 1;
+export const FRAME_VERSION = 2;
 export const FRAME_KIND = Object.freeze({ MESSAGE: 1, CHUNK: 2 });
 export const IV_BYTES = 12;
 export const TAG_BYTES = 16;
 /**
- * Plafond du JSON clair d'un message (octets UTF-8). 640 Kio : la photo d'un
- * faux appel peut atteindre 600 000 caractères (PROTO.PHOTO_MAX de l'app).
- * Trame chiffrée maximale ≈ 874 000 caractères : le relais doit accepter 1 Mio.
+ * Plafond du JSON clair d'un message (octets UTF-8, type compris) : 40 Kio.
+ * Tout message valide pour le schéma tient dessous (le plus gros : un
+ * media:order / caps de 500 identifiants de 64 caractères, ≈ 36 Kio). Les
+ * gros contenus (images, sons, photo d'appel, vidéo) voyagent en fragments
+ * (media-img-chunk, media:chunk : ≤ 20 000 caractères chacun, ou sealChunk).
+ * Trame chiffrée maximale : MAX_FRAME_CHARS = 54 782 caractères, donc un
+ * relais plafonné à 64 Kio par trame suffit.
  */
-export const MAX_MESSAGE_BYTES = 640 * 1024;
+export const MAX_MESSAGE_BYTES = 40 * 1024;
 /** Plafond du clair d'un fragment de média. */
 export const MAX_CHUNK_BYTES = 16 * 1024;
 /** Nombre maximal de fragments par média (16 Ko × 4000 ≈ 64 Mo). */
@@ -50,12 +58,13 @@ export const MAX_CHUNKS = 4000;
 export const MAX_SEQ = 0xffffffff;
 export const MAX_TS = 2 ** 48 - 1;
 export const DEFAULT_REPLAY_WINDOW = 1024;
-export const DEFAULT_MAX_SKEW_MS = 2 * 60 * 1000;
+export const DEFAULT_MAX_SKEW_MS = 5 * 60 * 1000;
 export const DEFAULT_MAX_SENDERS = 256;
 
 export const SENDER_RE = /^[A-Za-z0-9_-]{1,16}$/;
 export const TYPE_RE = /^[a-z][a-z0-9:_-]{0,31}$/;
 
+/** En-tête le plus long : celui d'un fragment (le message n'a pas de partie variable). */
 const MAX_HEADER_BYTES = 3 + 16 + 4 + 6 + 1 + 64 + 4;
 /** Longueur maximale (caractères) d'une trame acceptée par open/openChunk. */
 export const MAX_FRAME_CHARS = Math.ceil(((MAX_HEADER_BYTES + IV_BYTES + MAX_MESSAGE_BYTES + TAG_BYTES) * 4) / 3);
@@ -125,7 +134,7 @@ export function newSenderTag(prefix = '') {
 /**
  * @typedef {{
  *   version: number, kind: number, sender: string, seq: number, ts: number,
- *   type?: string, mediaId?: string, index?: number, total?: number,
+ *   mediaId?: string, index?: number, total?: number,
  *   headerLength: number
  * }} FrameHeader
  */
@@ -141,7 +150,7 @@ function checkSenderSeqTs(/** @type {any} */ o) {
 }
 
 /**
- * @param {{ kind: number, sender: string, seq: number, ts: number, type?: string,
+ * @param {{ kind: number, sender: string, seq: number, ts: number,
  *           mediaId?: string, index?: number, total?: number }} h
  */
 function writeHeader(h) {
@@ -149,8 +158,7 @@ function writeHeader(h) {
   /** @type {Uint8Array} */
   let tail;
   if (h.kind === FRAME_KIND.MESSAGE) {
-    const type = asciiBytes(/** @type {string} */ (h.type));
-    tail = concatBytes(Uint8Array.of(type.length), type);
+    tail = new Uint8Array(0);
   } else {
     const id = asciiBytes(/** @type {string} */ (h.mediaId));
     const idx = /** @type {number} */ (h.index);
@@ -205,16 +213,9 @@ function readHeader(b) {
   o += 6;
   /** @type {FrameHeader} */
   const h = { version, kind, sender, seq, ts, headerLength: 0 };
-  need(1);
-  const len = b[o++];
-  if (kind === FRAME_KIND.MESSAGE) {
-    if (len < 1 || len > 32) throw bad('longueur de type invalide');
-    need(len);
-    const type = asciiString(b.subarray(o, o + len));
-    if (!TYPE_RE.test(type)) throw bad('type invalide');
-    h.type = type;
-    o += len;
-  } else {
+  if (kind === FRAME_KIND.CHUNK) {
+    need(1);
+    const len = b[o++];
     if (len < 1 || len > 64) throw bad('longueur de mediaId invalide');
     need(len + 4);
     const mediaId = asciiString(b.subarray(o, o + len));
@@ -406,8 +407,8 @@ function isPlainObject(v) {
 }
 
 /**
- * Chiffre un message JSON. Le champ `type` part dans l'en-tête (AAD), le
- * reste dans le chiffré.
+ * Chiffre un message JSON, `type` compris : seuls l'émetteur, la séquence et
+ * l'horodatage restent visibles (en clair mais authentifiés).
  *
  * @param {{ type: string, [k: string]: unknown }} obj
  * @param {CryptoKey} key  clé du SENS d'émission (keys.r2s ou keys.s2r)
@@ -419,17 +420,16 @@ export async function seal(obj, key, opts) {
   if (!isPlainObject(obj) || typeof obj.type !== 'string' || !TYPE_RE.test(obj.type)) {
     throw new ProtocolError('bad-argument', 'objet { type } attendu');
   }
-  const { type, ...rest } = obj;
   /** @type {string} */
   let json;
   try {
-    json = JSON.stringify(rest);
+    json = JSON.stringify(obj);
   } catch (_) {
     throw new ProtocolError('bad-argument', 'message non sérialisable en JSON');
   }
   const pt = utf8Encode(json);
   if (pt.length > MAX_MESSAGE_BYTES) throw new ProtocolError('too-large', `message > ${MAX_MESSAGE_BYTES} octets`);
-  const header = writeHeader({ kind: FRAME_KIND.MESSAGE, sender, seq, ts, type });
+  const header = writeHeader({ kind: FRAME_KIND.MESSAGE, sender, seq, ts });
   return encryptFrame(header, pt, key);
 }
 
@@ -447,7 +447,7 @@ export async function seal(obj, key, opts) {
  * @returns {Promise<{ type: string, [k: string]: unknown }>}
  */
 export async function open(str, key, replayState) {
-  const { h, pt } = await decryptFrame(str, key, replayState, FRAME_KIND.MESSAGE);
+  const { pt } = await decryptFrame(str, key, replayState, FRAME_KIND.MESSAGE);
   if (pt.length > MAX_MESSAGE_BYTES) throw new ProtocolError('too-large', 'message trop long');
   /** @type {unknown} */
   let body;
@@ -460,10 +460,11 @@ export async function open(str, key, replayState) {
     if (e instanceof ProtocolError) throw e;
     throw new ProtocolError('malformed', 'JSON invalide');
   }
-  if (!isPlainObject(body) || Object.prototype.hasOwnProperty.call(body, 'type')) {
+  const m = /** @type {Record<string, unknown>} */ (body);
+  if (!isPlainObject(body) || typeof m.type !== 'string' || !TYPE_RE.test(m.type)) {
     throw new ProtocolError('malformed', 'corps de message invalide');
   }
-  return { type: /** @type {string} */ (h.type), .../** @type {object} */ (body) };
+  return /** @type {{ type: string, [k: string]: unknown }} */ (m);
 }
 
 // ─────────────────────────── Fragments de média ───────────────────────────

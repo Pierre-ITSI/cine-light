@@ -10,7 +10,7 @@ Appairage, chiffrement de bout en bout et schéma des messages entre la
 > L'intégration est décrite plus bas.
 
 ```sh
-cd packages/protocol && npm test     # 54 tests node --test, aucune installation
+cd packages/protocol && npm test     # 57 tests node --test, aucune installation
 # (également exécutés par le `npm test` racine via tests/protocol-package.test.mjs)
 ```
 
@@ -48,15 +48,18 @@ broker **public** `wss://broker.hivemq.com:8884/mqtt`, topic
   *réflexion* d'une trame, pas un appareil compromis. Évolution possible :
   signature ECDSA des ordres par la télécommande.
 - **Métadonnées visibles par le relais** : topic opaque, tailles, horaires,
-  adresses IP, nombre d'appareils et le **type** de message (dans l'en-tête,
-  en clair mais authentifié — exigence « l'AAD lie le type » ; le contenu reste
-  chiffré).
+  adresses IP, nombre d'appareils, nature de la trame (message ou fragment de
+  média) et l'étiquette d'émetteur. Le **type** de message (`color`,
+  `call:start`…) est **dans le chiffré** depuis la version 2 de la trame : le
+  relais ne le voit plus. Les tailles et la cadence peuvent toutefois le
+  laisser deviner (ex. rafale de fragments = média).
 - **Pas de confidentialité persistante** (forward secrecy) au sein d'une
   session : si le secret fuit, le trafic enregistré de cette session se
   déchiffre. Mitigation : nouvelle session par tournage / journée.
 - **Rejeu dans la tolérance d'horloge** : un récepteur qui vient de redémarrer
-  (fenêtre vide) accepte une trame enregistrée il y a moins de 2 min
-  (`maxSkewMs`, réglable).
+  (fenêtre vide) accepte une trame enregistrée il y a moins de **5 min**
+  (`maxSkewMs`, réglable). Réciproquement, un appareil dont l'horloge dérive
+  de plus de 5 min ignore toutes les trames (erreur `stale`).
 - **Déni de service** : un relais public ne peut pas être protégé ; le relais
   privé doit plafonner la taille des paquets et le débit (voir
   [`docs/BROKER.md`](../../docs/BROKER.md)).
@@ -97,22 +100,28 @@ https://<app>/#p=v1.<channelId>.<key>
 Chaîne base64url (sans remplissage) des octets :
 
 ```
-0      version = 0x01
+0      version = 0x02
 1      kind    = 0x01 message JSON | 0x02 fragment de média
 2      senderLen (1..16), puis sender ASCII [A-Za-z0-9_-]
 +4     seq  uint32 BE        (compteur par émetteur)
 +6     ts   uint48 BE (ms)   (horloge de l'émetteur)
-kind 1 : typeLen + type ASCII (≤ 32)             ex. "color"
-kind 2 : idLen + mediaId (≤ 40) + index u16 + total u16
+kind 1 : rien de plus (le type est dans le chiffré)
+kind 2 : idLen + mediaId (≤ 64) + index u16 + total u16
 ──────── tout ce qui précède = AAD AES-GCM ────────
 +12    IV aléatoire 96 bits
 …      chiffré ‖ tag 128 bits
 ```
 
-- Message : le clair est le JSON de l'objet **sans** `type` (le type est dans
-  l'en-tête authentifié). Plafond : **640 Kio** de clair (la photo d'un faux
-  appel peut atteindre 600 000 caractères) ; trame max. ≈ 874 000 caractères,
-  donc un relais réglé à **1 Mio** par message.
+- Message : le clair est le JSON de l'objet **complet, `type` compris**
+  (version 2 ; en version 1 le type était en clair dans l'en-tête — une trame
+  v1 est refusée avec `version`). Plafond : **40 Kio** de clair. Tout message
+  valide pour le schéma tient dessous (pire cas : `media:order` ou `caps` de
+  500 identifiants de 64 caractères ≈ 36 Kio, vérifié par un test). Les gros
+  contenus voyagent **en fragments** : images, sons, vidéo en base64 et
+  **photo d'un faux appel** (`media-img-*` sous l'id `__callphoto`, comme le
+  fond d'écran verrouillé `__lockwall`). Trame max. : **54 782 caractères**
+  (`MAX_FRAME_CHARS`), donc un relais plafonné à **64 Kio par trame** suffit
+  (avant : 1 Mio à cause de la photo d'appel en ligne).
 - Fragment : clair binaire **≤ 16 Kio**, **≤ 4000** fragments par média
   (≈ 64 Mo), `mediaId` ≤ 64 caractères. `mediaId`, `index` et `total` sont dans
   l'AAD : un fragment ne peut
@@ -120,7 +129,7 @@ kind 2 : idLen + mediaId (≤ 40) + index u16 + total u16
 - **Anti-rejeu** (`ReplayState`) : fenêtre glissante de 1024 séquences **par
   émetteur** (télécommande et chaque écran ont leur propre étiquette aléatoire
   `sender`, préfixée `r`/`s`), refus des doublons et des séquences trop
-  anciennes, refus si `|maintenant − ts| > 2 min`. L'état n'est modifié
+  anciennes, refus si `|maintenant − ts| > 5 min`. L'état n'est modifié
   qu'**après** authentification (une trame forgée ne peut pas l'empoisonner) ;
   vérification et enregistrement sont atomiques (deux copies simultanées : une
   seule acceptée).
@@ -130,17 +139,21 @@ kind 2 : idLen + mediaId (≤ 40) + index u16 + total u16
 
 ### 3.4 Schéma applicatif (`schema.js`)
 
-`MESSAGE_TYPES` documente les **44 types** utilisés aujourd'hui par
+`MESSAGE_TYPES` documente les **45 types** utilisés aujourd'hui par
 `index.html` et `expo-app`, plus les nouveaux `screen:config` et `dmx:look`
-(46 au total : 31 `r2s`, 14 `s2r`, 1 `both` ; sources et champs décrits).
+(47 au total : 31 `r2s`, 15 `s2r`, 1 `both` ; sources et champs décrits).
+`screen:alive` (écran → télécommande, sans champ) est le signe de vie qu'un
+écran envoie toutes les 15 s.
 `validate(msg, { direction })` est une **liste blanche stricte** : type ou
 champ inconnu, mauvais type, nombre non fini, chaîne/tableau trop long,
 data-URL non conforme ⇒ rejet. Les bornes sont **alignées sur `PROTO`**
 (`web/js/22-protocol.js`) : strobe **0,1–30 Hz** et flash **15–2000 ms**,
 vibreur ≤ 20 valeurs de 0 à 2000 ms, effet `count ≤ 32`,
 `media-img-start.total ≤ 2000`, `media:upload.totalChunks ≤ 50 000` (chemin
-base64 historique), identifiants ≤ 64 caractères, SDP ≤ 200 000, photo
-d'appel = `data:image/(jpeg|png|webp|gif);base64,…` ≤ 600 000 caractères.
+base64 historique), identifiants ≤ 64 caractères, SDP ≤ 16 000 caractères
+(une offre WebRTC « données seules » en fait ≈ 1 000). `call:start` n'a plus
+de champ `photo` : `hasPhoto: true` indique que la photo a été envoyée avant,
+en fragments sous `__callphoto`.
 
 **Différence voulue avec `MSG_ROUTES`** : l'app *borne* une valeur hors plage
 (flash de 5 ms ramené à 15 ms) ; le schéma la *rejette*, à l'envoi comme à la
@@ -395,8 +408,6 @@ Alternative : `import { install } from 'react-native-quick-crypto'; install();`
 
 ## 9. Limites connues / suites
 
-- `call:start.photo` (≤ 600 000 caractères) voyage dans un seul message :
-  à terme, la passer par fragments (`mediaId: '__callphoto'`).
 - Pas de rotation automatique de clé ni de révocation d'un écran isolé
   (révocation = nouvelle session pour tous).
 - `MESSAGE_TYPES` doit évoluer avec l'app : le test de dérive le rappelle.

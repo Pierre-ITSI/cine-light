@@ -4,6 +4,9 @@ import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { MESSAGE_TYPES, LIMITS, validate, explainInvalid, isAddressedTo } from '../schema.js';
+import { MAX_MESSAGE_BYTES } from '../crypto.js';
+import { RENDEZVOUS_MESSAGE_TYPES } from '../pairing.js';
+import { utf8Encode } from '../lib/encoding.js';
 import { REAL_MESSAGES, ATTACKS } from './fixtures.js';
 
 test('accepte tous les messages réels (avec et sans contrôle du sens)', () => {
@@ -76,6 +79,40 @@ test('dmx:look (passerelle DMX) : sens r2s, look strict, target facultatif', () 
   assert.equal(validate({ type: 'dmx:look', seq: -1, live: true, look: { color: '#ffffff' } }), false);
   assert.equal(validate({ type: 'dmx:look', seq: 1, live: 1, look: { color: '#ffffff' } }), false);
   assert.equal(validate({ type: 'dmx:look', seq: 1, live: true, look: { color: '#ffffff' }, fade: 1000 }), false, 'champ inconnu');
+});
+
+test('tout message valide pour le schéma tient dans MAX_MESSAGE_BYTES (pires cas)', () => {
+  const pad = (/** @type {string} */ base, /** @type {number} */ i, /** @type {number} */ len) => (base.repeat(len) + String(i)).slice(-len);
+  const id64 = (/** @type {number} */ i) => pad('A', i, 64);
+  const ids = Array.from({ length: LIMITS.poolSize }, (_, i) => id64(i));
+  const target = { screens: Array.from({ length: LIMITS.targetScreens }, (_, i) => pad('S', i, 32)) };
+  const groups = Array.from({ length: LIMITS.screenGroups }, (_, i) => pad('g', i, 32));
+  const lone = (/** @type {number} */ n) => '\ud800'.repeat(n); // échappé en \ud800 par JSON : 6 octets par caractère
+  const esc = (/** @type {number} */ n) => '"\\'.repeat(n / 2); // « " » et « \ » : 2 octets chacun en JSON
+  const worst = [
+    { type: 'media:order', ids, target },
+    { type: 'caps', torch: false, vibrate: false, videoMode: 'none', media: false, cached: ids, active: id64(0), blackout: false, screenId: pad('S', 0, 32), name: lone(LIMITS.screenNameChars), groups },
+    { type: 'rtc-offer', kind: 'file', sdp: { type: 'offer', sdp: esc(LIMITS.sdpChars) }, target },
+    { type: 'rtc-answer', sdp: { type: 'answer', sdp: esc(LIMITS.sdpChars) } },
+    { type: 'rtc-ice', from: 'remote', candidate: { candidate: esc(LIMITS.iceCandidateChars), sdpMid: lone(64), sdpMLineIndex: 255, usernameFragment: lone(256) }, target },
+    { type: 'media-img-chunk', id: id64(1), i: LIMITS.imgChunks - 1, data: 'A'.repeat(LIMITS.imgChunkChars), target },
+    { type: 'media:chunk', mediaId: id64(2), index: LIMITS.uploadChunks - 1, data: 'A'.repeat(LIMITS.uploadChunkChars), target },
+    { type: 'media:need-chunks', mediaId: id64(3), missing: Array(LIMITS.missingChunks).fill(LIMITS.uploadChunks - 1) },
+    { type: 'screen:config', name: lone(LIMITS.screenNameChars), groups, target },
+    {
+      type: 'dmx:look', seq: 0xffff, live: true, target,
+      look: { color: '#ffffff', strobe: { freq: 30, dur: 2000 }, effect: { name: 'paparazzi', speed: 240, intensity: 100 }, media: { index: LIMITS.dmxMediaSlots, playback: 'rewind' }, blackout: true },
+    },
+    {
+      type: 'call:start', kind: 'whatsapp', style: 'generic', name: lone(40), label: lone(40), msg: lone(200), appName: lone(24), appColor: '#ffffff',
+      hasPhoto: true, ring: 'classic', present: 'banner', photoMode: 'avatar', hasAudio: false, autoAnswer: 60, lock: { time: lone(8), date: lone(30) }, target,
+    },
+  ];
+  for (const m of worst) {
+    assert.equal(explainInvalid(m), null, `${m.type} : ${explainInvalid(m)}`);
+    const bytes = utf8Encode(JSON.stringify(m)).length;
+    assert.ok(bytes <= MAX_MESSAGE_BYTES, `${m.type} : ${bytes} octets > ${MAX_MESSAGE_BYTES}`);
+  }
 });
 
 test('valeurs non JSON et prototypes piégés', () => {
@@ -163,7 +200,9 @@ const WEB = webSources();
 const HTML_INPUT_TYPES = /^(text|range|number|checkbox|color|file|button|submit|module|date|time|radio|hidden)$/;
 
 test('dérive : la PWA n’utilise que des types connus', { skip: WEB === null }, () => {
-  const types = [...extractTypes(/** @type {string} */ (WEB))].filter(t => !NON_RELAY.has(t) && !HTML_INPUT_TYPES.test(t));
+  // Les messages de rendez-vous (appairage par code) ont leur propre validateur
+  const types = [...extractTypes(/** @type {string} */ (WEB))]
+    .filter(t => !NON_RELAY.has(t) && !HTML_INPUT_TYPES.test(t) && !(t in RENDEZVOUS_MESSAGE_TYPES));
   assert.ok(types.length > 30, `extraction suspecte (${types.length} types)`);
   const unknown = types.filter(t => !(t in MESSAGE_TYPES));
   assert.deepEqual(unknown, [], `types absents du schéma : ${unknown.join(', ')}`);

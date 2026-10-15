@@ -20,12 +20,12 @@ trois rôles :
    (`#`, `+`) ni lister les sessions actives. Sinon un tiers apprend les
    topics, voit les métadonnées et peut inonder une session.
 2. **Limitation de débit** par connexion et par session.
-3. **Plafond de taille de paquet.** La plus grosse trame légitime vient d'un
-   `call:start` avec photo. La photo peut atteindre 600 000 caractères
-   (plafond actuel de l'app), ce qui donne au plus 640 Kio de JSON chiffré,
-   soit environ 875 Ko en base64url. Un fragment de média fait environ 22 Ko.
-   Un plafond de **1 Mio** suffit. Si l'on veut descendre à 64 Kio, par
-   exemple pour Ably, il faut d'abord faire passer la photo par fragments.
+3. **Plafond de taille de paquet.** Depuis la version 2 de la trame, la photo
+   d'un faux appel passe par fragments (`__callphoto`) comme les autres
+   médias : le JSON clair d'un message est plafonné à 40 Kio
+   (`MAX_MESSAGE_BYTES`), soit une trame d'au plus **54 782 caractères**
+   (`MAX_FRAME_CHARS`). Un fragment de média fait environ 22 Ko. Un plafond de
+   **64 Kio par trame** suffit (compatible avec l'offre gratuite d'Ably).
 
 À cela s'ajoutent la disponibilité et le support des WebSockets depuis un
 navigateur (PWA) et depuis React Native.
@@ -48,7 +48,7 @@ Profil de charge estimé pour un plateau actif, soit 1 télécommande et 1 à
 | WebSocket navigateur | WSS (8884) | WSS | WSS | À configurer (listener `websockets` + TLS) | Natif | SDK JS / React Native |
 | UE | Région Serverless non documentée (Serverless et Starter sur AWS seulement) | Francfort (eu-central-1) au choix | Région « Europe » (Francfort) depuis 2024 | Allemagne / Finlande | Juridiction `eu` des Durable Objects. Le TLS est terminé au point de présence le plus proche | UE en option, plutôt Enterprise (à confirmer) |
 | Exploitation | Nulle | Nulle | Nulle | **Élevée** : mises à jour, TLS, supervision, sauvegardes, astreinte | Faible : environ 150 lignes de code à maintenir et tester, pas de serveur | Nulle |
-| Bloquant pour nous | 100 connexions pour **toute** la base d'utilisateurs ; isolation impossible | Coût fixe élevé dès le 1er jour ; isolation par topic incertaine | Débit par client (si confirmé) incompatible avec 25 Hz et les fragments ; isolation impossible | Exploitation | Écrire un relais (simple) | 64 Kio par message (photo d'appel trop grosse) ; facturation à chaque livraison |
+| Bloquant pour nous | 100 connexions pour **toute** la base d'utilisateurs ; isolation impossible | Coût fixe élevé dès le 1er jour ; isolation par topic incertaine | Débit par client (si confirmé) incompatible avec 25 Hz et les fragments ; isolation impossible | Exploitation | Écrire un relais (simple) | Facturation à chaque livraison (les 64 Kio par message suffisent depuis la trame v2) |
 
 Autres options écartées :
 
@@ -140,7 +140,7 @@ par JWT n'est pas confirmée.
   (`ctx.acceptWebSocket`, `webSocketMessage`) :
   - rediffuse chaque trame texte aux autres sockets de la session ;
   - trames binaires et caractères hors `[A-Za-z0-9_-]` refusés ;
-  - **1 Mio max.** par trame (fermeture 1009 au-delà) ;
+  - **64 Kio max.** par trame (fermeture 1009 au-delà ; trame légitime ≤ 54 782 caractères) ;
   - **seau à jetons** par socket : environ 100 trames/s en rafale, 2 Mo/s ;
   - **32 sockets max.** par session.
   - Rendez-vous : 4 sockets, trames de 4 Kio, durée de vie de 5 min.

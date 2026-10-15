@@ -103,7 +103,6 @@ export const GROUP_ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
 /** Fragment de data-URL (images/sons) : aucun guillemet, parenthèse ni chevron possible. */
 const DATAURL_SLICE_RE = /^[A-Za-z0-9+/=:;,.-]*$/;
 const BASE64_RE = /^[A-Za-z0-9+/]*={0,2}$/;
-const IMG_DATAURL_RE = /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/]+={0,2}$/;
 const MIME_RE = /^[a-z]+\/[a-z0-9.+-]{1,40}$/i;
 const PRINTABLE_RE = /^[\x20-\x7E\r\n]*$/;
 
@@ -127,8 +126,7 @@ export const LIMITS = Object.freeze({
   uploadChunkChars: 20_000,
   poolSize: 500,
   missingChunks: 400,
-  callPhotoChars: 600_000,
-  sdpChars: 200_000,
+  sdpChars: 16_000,
   iceCandidateChars: 4096,
   targetScreens: 64,
   screenGroups: 16,
@@ -322,7 +320,7 @@ const SPECS = {
     fields: {
       id: req(MEDIA_ID, 'identifiant du transfert'),
       total: req(int(1, LIMITS.imgChunks), 'nombre de fragments'),
-      mediaId: opt(nullable(MEDIA_ID), 'id du média en cache (__lockwall, __callaudio, m12…)'),
+      mediaId: opt(nullable(MEDIA_ID), 'id du média en cache (__lockwall, __callaudio, __callphoto, m12…)'),
       show: opt(bool, 'afficher à réception (false = préchargement)'),
     },
   },
@@ -413,7 +411,8 @@ const SPECS = {
   // ═══ Télécommande → écran : faux appel / notification ═══
   'call:start': {
     dir: 'r2s', src: ['web'],
-    doc: 'Faux appel entrant ou notification (SMS / messagerie) affiché par l’écran.',
+    doc: 'Faux appel entrant ou notification (SMS / messagerie) affiché par l’écran. La photo n’y voyage plus : '
+      + 'elle est envoyée avant, en fragments media-img-* sous l’id __callphoto (comme __lockwall).',
     fields: {
       kind: req(oneOf('call', 'sms', 'chat', 'whatsapp'), 'appel / sms / messagerie (whatsapp = ancien nom)'),
       style: opt(oneOf('glass', 'tonal', 'minimal', 'ios', 'android', 'generic'), 'style visuel (ios/android/generic = anciens noms)'),
@@ -422,7 +421,7 @@ const SPECS = {
       msg: opt(text(200), 'texte du message'),
       appName: opt(line(24), 'nom de l’application fictive'),
       appColor: opt(HEX, 'couleur de l’application fictive'),
-      photo: opt(nullable(str(LIMITS.callPhotoChars, IMG_DATAURL_RE)), 'photo data:image/…;base64 (pas d’URL)'),
+      hasPhoto: opt(bool, 'photo de l’appelant préchargée en fragments (media-img-*, mediaId __callphoto) ; plus jamais en ligne'),
       ring: opt(oneOf('classic', 'digital', 'soft', 'silent'), 'sonnerie'),
       present: opt(oneOf('full', 'banner'), 'plein écran ou bandeau'),
       photoMode: opt(oneOf('avatar', 'full'), 'photo en avatar ou plein écran'),
@@ -562,6 +561,11 @@ const SPECS = {
     dir: 's2r', src: ['native'],
     doc: 'Accusé natif : média complet en cache.',
     fields: { mediaId: req(MEDIA_ID, 'id du média') },
+  },
+  'screen:alive': {
+    dir: 's2r', src: ['web'],
+    doc: 'Signe de vie d’un écran connecté (toutes les 15 s) : la télécommande signale un écran muet depuis 40 s.',
+    fields: {},
   },
   'call:state': {
     dir: 's2r', src: ['web'],
