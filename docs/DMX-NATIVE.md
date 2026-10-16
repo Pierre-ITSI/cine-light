@@ -451,7 +451,7 @@ l'app). Le contrat du pont est celui du § 9.1, inchangé.
 | `web/bundle-protocol.mjs`, `web/build.mjs` | `packages/dmx` assemblé dans `index.html` sous la globale `SRDMX`, juste après `SRP` |
 | `web/js/00-native-bridge.js` | `nativePost(msg)` (page → coque) et `window.SRNative.receive(msg)` (coque → page : objet ou chaîne JSON ; message inconnu ignoré) |
 | `web/js/86-dmx-gateway.js` | moteur (`GatewayEngine`, `tick()` toutes les 10 ms), écoute, patch mémorisé **par session** (`localStorage`, clé `setremote-dmx-v1`, 8 sessions au plus), envoi des `dmx:look` et des appels / SMS, ArtPollReply |
-| `web/js/87-dmx-gateway-ui.js` | écrans de la passerelle (maquettes 14 à 17) |
+| `web/js/87-dmx-gateway-ui.js` | écrans de la passerelle (maquettes 14 à 17) et table des canaux en PDF |
 | `web/js/36-dmx-screen.js` | écran de jeu : `dmx:look`, priorité console, Identifier |
 | `web/js/82-call-list.js` | listes d'appels et de SMS numérotées (maquette 18) |
 
@@ -495,3 +495,25 @@ d'identité de source (Art-Net, réponse aux ArtPoll, affichage) ; `port`
 Tests : `tests/dmx-gateway.test.mjs` simule la coque (paquets construits avec
 `packages/dmx`, messages postés relevés) ; `tests/call-list.test.mjs` couvre
 les listes d'appels.
+
+### Table des canaux en PDF (écran 17)
+
+Le bouton « PDF » de la table des canaux produit un document HTML autonome
+(A4, noir sur blanc, polices système, aucune requête) : titre, date et
+protocole, patch en cours (écran, univers, adresses, mode), puis la table de
+chaque mode utilisé (celle du mode affiché si rien n'est patché) et, pour
+Étendu 16, la règle des emplacements.
+
+| Sens | Message |
+|---|---|
+| page → coque | `{ type: 'pdf:preview', html, title }` (html ≤ 1 Mo en UTF-8, titre ≤ 120 caractères sans caractère de contrôle) |
+| coque → page | `{ type: 'pdf:error', reason }` : `invalid-html`, `too-large`, `invalid-title`, `unavailable` (binaire sans `expo-print`), `print-failed` |
+
+La coque (`expo-app/src/lib/pdfPreview.ts`, branché dans `app/index.tsx`)
+ouvre la feuille système d'`expo-print` (`Print.printAsync({ html })`, A4,
+marges passées en option sur iOS) : impression, partage et « Enregistrer en
+PDF ». Fermer la feuille sans imprimer n'est pas une erreur ; une seule
+demande à la fois. Le titre est validé mais `expo-print` ne permet pas de
+nommer la tâche d'impression. Dans un navigateur, la page imprime le même
+document depuis un iframe caché (`print()`). Tests :
+`tests/dmx-channels-pdf.test.mjs` et `expo-app/test/pdf-preview.test.mjs`.

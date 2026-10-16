@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -7,12 +7,14 @@ import { Paths } from 'expo-file-system';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { ShouldStartLoadRequest, WebViewNavigationEvent } from 'react-native-webview/lib/WebViewTypes';
 import SetRemoteUdp, { createDmxBridge, type DmxBridge } from '../modules/setremote-udp';
+import { createPdfPreviewer, type PdfPrintFn } from '../src/lib/pdfPreview';
 
 // Coque native de SetRemote : la PWA (fonctionnalités de référence) tourne dans
 // une vue web plein écran ; le natif apporte ce que le web ne sait pas faire :
 // barre d'état masquée en permanence, écran toujours allumé, vraie luminosité
 // matérielle, et réception UDP pour la passerelle DMX (sACN, Art-Net ; module
-// local modules/setremote-udp, contrat du pont dans docs/DMX-NATIVE.md § 9).
+// local modules/setremote-udp, contrat du pont dans docs/DMX-NATIVE.md § 9),
+// aperçu PDF in-app de la table des canaux DMX (expo-print, src/lib/pdfPreview.ts).
 // Les anciens écrans 100 % natifs restent accessibles sur /native.
 //
 // ── D'où vient l'interface ──
@@ -113,11 +115,28 @@ export default function AppShell() {
     webRef.current?.reload();
   }, []);
 
+  // Aperçu PDF (table des canaux DMX) : { type: 'pdf:preview', html, title }
+  // venant de la page → feuille système d'impression / d'aperçu d'expo-print
+  // (partage et « Enregistrer en PDF » compris). Échec → { type: 'pdf:error' }
+  // via window.SRNative.receive ; fermer la feuille n'est pas un échec.
+  // expo-print est chargé à la demande : un binaire de développement construit
+  // sans lui répond « unavailable » au lieu de planter au lancement.
+  const pdf = useMemo(() => createPdfPreviewer({
+    platform: Platform.OS,
+    loadPrint: () => {
+      const Print = require('expo-print') as typeof import('expo-print');
+      const print: PdfPrintFn = (options) => Print.printAsync(options);
+      return print;
+    },
+    inject: (script) => webRef.current?.injectJavaScript(script),
+  }), []);
+
   // Messages de la PWA → fonctions natives
   const onMessage = useCallback(async (e: WebViewMessageEvent) => {
     let msg: { type?: string; value?: unknown };
     try { msg = JSON.parse(e.nativeEvent.data); } catch { return; }
     if (dmx.current?.handle(msg)) return;
+    if (pdf.handle(msg)) return;
     if (msg.type === 'brightness-restore') { restoreBrightness(); return; }
     if (msg.type === 'brightness' && typeof msg.value === 'number' && isFinite(msg.value)) {
       const v = Math.min(1, Math.max(0, msg.value));
@@ -128,7 +147,7 @@ export default function AppShell() {
         await Brightness.setBrightnessAsync(v);
       } catch { /* indisponible : sans effet */ }
     }
-  }, [restoreBrightness]);
+  }, [restoreBrightness, pdf]);
 
   // Les liens externes s'ouvrent dans le navigateur, pas dans la coque.
   // En local, toute page file:// est admise (index.html…) : la

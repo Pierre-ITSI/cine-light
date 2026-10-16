@@ -158,6 +158,15 @@ await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encry
       WebRTC sur le Wi-Fi, mode Wi-Fi local natif).
 - [ ] **Privacy Report** : Xcode → Archive → Organizer → Generate Privacy
       Report ; après envoi, surveiller l'e-mail Apple (ITMS-91053).
+- [ ] **Table des canaux DMX → PDF** (passerelle › Patch › Table des canaux,
+      bouton « PDF » ; module natif `expo-print`, nouveau build requis) :
+      la feuille système d'aperçu s'ouvre sur un A4 (titre, date, patch,
+      table de chaque mode utilisé) ; partage et « Enregistrer en PDF »
+      (iOS : Partager › Enregistrer dans Fichiers ; Android : imprimante
+      « Enregistrer au format PDF »). Fermer la feuille sans imprimer
+      n'affiche aucune erreur. Vérifier les marges (iOS : marges passées à
+      expo-print, voir `src/lib/pdfPreview.ts`) et qu'aucun texte n'est
+      coupé.
 
 ## Passerelle DMX (module `setremote-udp`)
 

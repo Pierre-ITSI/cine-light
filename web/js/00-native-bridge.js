@@ -21,6 +21,7 @@ if (IN_NATIVE_APP) document.documentElement.classList.add('in-app');
 //   dmx:packets { packets: [{ src, port, data (base64) }] }  datagrammes UDP reçus
 //   net:info    { interfaces: [{ name, kind, ip, mask }] }    interfaces réseau
 //   dmx:error   { reason }                                    échec d'écoute UDP
+//   pdf:error   { reason }                                    échec de l'aperçu PDF (table des canaux)
 // Tout le reste est ignoré ; une erreur de traitement ne remonte jamais à la coque.
 window.SRNative = window.SRNative || {};
 window.SRNative.receive = function (msg) {
@@ -31,6 +32,7 @@ window.SRNative.receive = function (msg) {
     if (m.type === 'dmx:packets') return gwOnNativePackets(m.packets);
     if (m.type === 'net:info') return gwOnNetInfo(m.interfaces);
     if (m.type === 'dmx:error') return gwOnNativeError(m.reason);
+    if (m.type === 'pdf:error') return gwOnPdfError(m.reason);
   } catch (e) { console.warn('SetRemote : message natif', m.type, e); }
   return false;
 };

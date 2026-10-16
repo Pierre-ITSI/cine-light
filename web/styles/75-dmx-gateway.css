@@ -14,7 +14,7 @@
 .gw-head-title{font-family:'Lato',sans-serif;font-weight:600;font-size:1.125rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #gwViewPatch .gw-head-title{font-size:1.1875rem}
 .gw-head-btn{height:36px;padding:0 10px;border-radius:6px;border:1px solid rgba(255,255,255,.14);background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:.625rem;text-transform:uppercase;cursor:pointer;flex-shrink:0}
-.gw-head-spacer{width:60px;flex-shrink:0}
+.gw-pdf-btn{height:32px}
 
 /* Cartes */
 .gw-card{background:var(--mid);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}

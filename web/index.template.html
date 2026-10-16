@@ -867,8 +867,9 @@
     <div class="gw-head">
       <button type="button" class="gw-back" onclick="gwShowView('patch')">← Patch</button>
       <span class="gw-head-title" id="gwChTitle">Étendu 16</span>
-      <span class="gw-head-spacer"></span>
+      <button type="button" class="gw-head-btn gw-pdf-btn" id="gwPdfBtn" onclick="gwChannelsPdf()">PDF</button>
     </div>
+    <div class="gw-error" id="gwPdfError" role="alert" style="display:none"></div>
     <div class="gw-ctable" id="gwChRows"></div>
     <div class="gw-rule" id="gwChNote">Effet, média, appel, SMS : n × 10 à n × 10 + 9 choisit le n°. 1–9 et valeurs hors liste : sans effet. Appel et SMS se déclenchent une fois, à l'entrée dans la plage.</div>
   </section>

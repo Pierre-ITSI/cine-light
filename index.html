@@ -406,7 +406,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .gw-head-title{font-family:'Lato',sans-serif;font-weight:600;font-size:1.125rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #gwViewPatch .gw-head-title{font-size:1.1875rem}
 .gw-head-btn{height:36px;padding:0 10px;border-radius:6px;border:1px solid rgba(255,255,255,.14);background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:.625rem;text-transform:uppercase;cursor:pointer;flex-shrink:0}
-.gw-head-spacer{width:60px;flex-shrink:0}
+.gw-pdf-btn{height:32px}
 
 /* Cartes */
 .gw-card{background:var(--mid);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
@@ -1518,8 +1518,9 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
     <div class="gw-head">
       <button type="button" class="gw-back" onclick="gwShowView('patch')">← Patch</button>
       <span class="gw-head-title" id="gwChTitle">Étendu 16</span>
-      <span class="gw-head-spacer"></span>
+      <button type="button" class="gw-head-btn gw-pdf-btn" id="gwPdfBtn" onclick="gwChannelsPdf()">PDF</button>
     </div>
+    <div class="gw-error" id="gwPdfError" role="alert" style="display:none"></div>
     <div class="gw-ctable" id="gwChRows"></div>
     <div class="gw-rule" id="gwChNote">Effet, média, appel, SMS : n × 10 à n × 10 + 9 choisit le n°. 1–9 et valeurs hors liste : sans effet. Appel et SMS se déclenchent une fois, à l'entrée dans la plage.</div>
   </section>
@@ -5003,6 +5004,7 @@ if (IN_NATIVE_APP) document.documentElement.classList.add('in-app');
 //   dmx:packets { packets: [{ src, port, data (base64) }] }  datagrammes UDP reçus
 //   net:info    { interfaces: [{ name, kind, ip, mask }] }    interfaces réseau
 //   dmx:error   { reason }                                    échec d'écoute UDP
+//   pdf:error   { reason }                                    échec de l'aperçu PDF (table des canaux)
 // Tout le reste est ignoré ; une erreur de traitement ne remonte jamais à la coque.
 window.SRNative = window.SRNative || {};
 window.SRNative.receive = function (msg) {
@@ -5013,6 +5015,7 @@ window.SRNative.receive = function (msg) {
     if (m.type === 'dmx:packets') return gwOnNativePackets(m.packets);
     if (m.type === 'net:info') return gwOnNetInfo(m.interfaces);
     if (m.type === 'dmx:error') return gwOnNativeError(m.reason);
+    if (m.type === 'pdf:error') return gwOnPdfError(m.reason);
   } catch (e) { console.warn('SetRemote : message natif', m.type, e); }
   return false;
 };
@@ -11099,12 +11102,13 @@ function gwIdentify(id) {
 //   16 · Écran patché : TOUS les canaux de son empreinte, valeur et sens
 //        décodé, badge « Console » tant que la console a la priorité,
 //        Identifier / Dépatcher
-//   17 · Table des canaux d'un mode, pour le pupitreur
+//   17 · Table des canaux d'un mode, pour le pupitreur, et son document PDF
+//        (bouton « PDF » : patch + tables des modes utilisés)
 // Accès : onglet QR de la télécommande, dans l'app native seulement (à valider :
 // aucune maquette ne montre l'accès). Dans un navigateur, la vue explique
 // qu'il faut l'app (même principe que l'onglet Flash sur iPhone).
 let _gwView = null, _gwMonitorId = null, _gwMonitorPct = false, _gwChannelsMode = DMX_DEFAULT_PERSONALITY;
-let _gwRenderTimer = null;
+let _gwRenderTimer = null, _gwPdfError = null;
 
 const _GW_MODE_DESC = { simple3: 'R · G · B', color5: 'Dimmer · RGB · Strobo', standard8: '+ CCT · Tint · Mix', extended16: '+ Effet · Média · Appel · SMS' };
 const _GW_SHORT_LABEL = { mix: 'Mix', strobe: 'Strobo' };
@@ -11145,6 +11149,7 @@ function closeDmxGateway() {
 }
 function gwShowView(v) {
   _gwView = v;
+  _gwPdfError = null;
   for (const [k, id] of [['gateway', 'gwViewGateway'], ['patch', 'gwViewPatch'], ['monitor', 'gwViewMonitor'], ['channels', 'gwViewChannels']]) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('active', k === v);
@@ -11437,6 +11442,138 @@ function renderGwChannels() {
     + escapeHtml(_GW_SHORT_LABEL[c.key] || c.label) + '</span><span>' + escapeHtml(_GW_CH_VALUES[c.key] || '') + '</span></div>').join('');
   // Rappel des « emplacements » : seulement pour le mode qui en a (Étendu 16)
   document.getElementById('gwChNote').style.display = pers.id === 'extended16' ? 'block' : 'none';
+  const err = document.getElementById('gwPdfError');
+  err.textContent = _gwPdfError ? (_GW_PDF_ERRORS[_gwPdfError] || _GW_PDF_ERRORS.default) : '';
+  err.style.display = _gwPdfError ? 'block' : 'none';
+}
+
+// ── 17 · Table des canaux en PDF ──
+// Document imprimable pour le pupitreur : A4, noir sur blanc, titre et date,
+// patch en cours (écran, univers, adresses, mode), puis la table de chaque
+// mode utilisé (celle du mode affiché si rien n'est patché) et la règle des
+// emplacements (Étendu 16).
+//   App native : nativePost({ type: 'pdf:preview', html, title }) ; la coque
+//     l'ouvre avec expo-print (aperçu système : imprimer, partager,
+//     enregistrer en PDF) et répond { type: 'pdf:error', reason } en cas
+//     d'échec (window.SRNative.receive → gwOnPdfError).
+//   Navigateur : le même document dans un iframe caché, puis print() (aperçu
+//     d'impression du navigateur, « Enregistrer au format PDF »).
+// Document autonome, sans aucune requête (ni police, ni image, ni script) :
+// les polices de l'app (woff2 locaux) ne sont pas lisibles par le moteur
+// d'impression de la coque, d'où des piles de polices système.
+const GW_PDF_TITLE = 'SetRemote — Table des canaux';
+const GW_PDF_MAX_BYTES = 1024 * 1024; // revérifié par la coque
+const _GW_PDF_ERRORS = {
+  'too-large': 'Table trop volumineuse pour l\'aperçu PDF.',
+  unavailable: 'Aperçu PDF indisponible : mettez SetRemote à jour.',
+  default: 'Aperçu PDF impossible. Réessayez.',
+};
+const _GW_PROTOCOL_NAME = { sacn: 'sACN (E1.31)', artnet: 'Art-Net' };
+const _GW_MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const _GW_PDF_CSS = '@page{size:A4;margin:14mm 12mm}'
+  + 'html,body{margin:0;padding:0;background:#fff;color:#000}'
+  + 'body{font:10pt/1.4 Lato,"Helvetica Neue",Helvetica,Arial,"Liberation Sans",sans-serif;-webkit-text-size-adjust:100%;text-size-adjust:100%}'
+  + 'h1{font-size:17pt;line-height:1.2;margin:0 0 3pt}'
+  + '.meta{margin:0 0 12pt;font-size:9.5pt}'
+  + 'h2{font-size:12pt;margin:16pt 0 4pt;break-after:avoid;page-break-after:avoid}'
+  + 'section{break-inside:avoid;page-break-inside:avoid}' // une table de mode tient sur une page
+  + '.screens{margin:0 0 5pt;font-size:9pt}'
+  + 'table{width:100%;border-collapse:collapse}'
+  + 'thead{display:table-header-group}'
+  + 'tr{break-inside:avoid;page-break-inside:avoid}'
+  + 'th,td{border:.75pt solid #000;padding:3pt 6pt;text-align:left;vertical-align:top}'
+  + 'th{font-size:8.5pt;letter-spacing:.04em;text-transform:uppercase}'
+  + '.num{font-family:"DM Mono",ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono","Liberation Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap}'
+  + 'td.n{width:9mm;text-align:right}'
+  + '.empty{margin:0}'
+  + '.note{margin:8pt 0 0;padding:6pt 8pt;border:.75pt solid #000;font-size:9pt;break-inside:avoid;page-break-inside:avoid}';
+
+function _gwPdfDate(d) {
+  const p = (n) => String(n).padStart(2, '0');
+  return (d.getDate() === 1 ? '1er' : d.getDate()) + ' ' + _GW_MONTHS[d.getMonth()] + ' ' + d.getFullYear() + ', ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+function gwChannelsPdfHtml(now) {
+  const esc = escapeHtml;
+  const patched = gwPatchOrder().filter((id) => gwState.patch.has(id)).map((id) => ({ id, name: gwScreenName(id), e: gwState.patch.get(id) }));
+  // Modes : ceux du patch, dans l'ordre d'apparition ; sinon le mode affiché
+  const modes = [];
+  for (const r of patched) if (!modes.includes(r.e.personality)) modes.push(r.e.personality);
+  if (!modes.length) modes.push(_gwChannelsMode);
+  const note = document.getElementById('gwChNote').textContent.trim();
+  let h = '<h1>' + esc(GW_PDF_TITLE) + '</h1>'
+    + '<p class="meta">' + esc(_gwPdfDate(now || new Date())) + ' · ' + esc(_GW_PROTOCOL_NAME[gwState.protocol] || gwState.protocol) + '</p>'
+    + '<h2>Patch</h2>';
+  h += patched.length
+    ? '<table class="patch"><thead><tr><th>Écran</th><th>Univers</th><th>Adresses</th><th>Mode</th></tr></thead><tbody>'
+      + patched.map((r) => '<tr><td>' + esc(r.name) + '</td><td class="num">' + r.e.universe + '</td><td class="num">' + r.e.address + '–' + SRDMX.lastChannel(r.e)
+        + '</td><td>' + esc(SRDMX.getPersonality(r.e.personality).name) + '</td></tr>').join('')
+      + '</tbody></table>'
+    : '<p class="empty">Aucun écran patché.</p>';
+  for (const m of modes) {
+    const pers = SRDMX.getPersonality(m);
+    const users = patched.filter((r) => r.e.personality === m).map((r) => r.name);
+    h += '<section class="mode" data-mode="' + esc(pers.id) + '"><h2>' + esc(pers.name) + ' — ' + pers.footprint + ' canaux</h2>'
+      + (users.length ? '<p class="screens">' + esc(users.join(', ')) + '</p>' : '')
+      + '<table class="channels"><thead><tr><th>N°</th><th>Fonction</th><th>Valeurs</th></tr></thead><tbody>'
+      + pers.channels.map((c) => '<tr><td class="num n">' + c.n + '</td><td>' + esc(_GW_SHORT_LABEL[c.key] || c.label) + '</td><td>' + esc(_GW_CH_VALUES[c.key] || '') + '</td></tr>').join('')
+      + '</tbody></table>'
+      + (pers.id === 'extended16' && note ? '<p class="note">' + esc(note) + '</p>' : '')
+      + '</section>';
+  }
+  // Document assemblé hors de la page (inerte), puis sérialisé
+  const doc = document.implementation.createHTMLDocument(GW_PDF_TITLE);
+  doc.documentElement.lang = 'fr';
+  const charset = doc.createElement('meta');
+  charset.setAttribute('charset', 'utf-8');
+  doc.head.prepend(charset);
+  const style = doc.createElement('style');
+  style.textContent = _GW_PDF_CSS;
+  doc.head.append(style);
+  doc.body.innerHTML = h;
+  return '<!DOCTYPE html>' + doc.documentElement.outerHTML;
+}
+
+// Bouton « PDF »
+function gwChannelsPdf() {
+  _gwPdfError = null;
+  let html = '';
+  try { html = gwChannelsPdfHtml(); } catch (e) { console.warn('SetRemote : table des canaux en PDF', e); }
+  if (!html) return gwOnPdfError('build-failed');
+  if (new TextEncoder().encode(html).length > GW_PDF_MAX_BYTES) return gwOnPdfError('too-large');
+  if (IN_NATIVE_APP) nativePost({ type: 'pdf:preview', html, title: GW_PDF_TITLE });
+  else gwPrintHtml(html);
+  gwRender();
+  return true;
+}
+
+// Navigateur : impression depuis un iframe caché (le précédent est retiré).
+// Pas de display:none : certains navigateurs n'impriment pas un cadre non rendu.
+function gwPrintHtml(html) {
+  const old = document.getElementById('gwPrintFrame');
+  if (old) old.remove();
+  const f = document.createElement('iframe');
+  f.id = 'gwPrintFrame';
+  f.title = GW_PDF_TITLE;
+  f.tabIndex = -1;
+  f.setAttribute('aria-hidden', 'true');
+  f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none';
+  let printed = false;
+  f.addEventListener('load', () => {
+    const doc = f.contentDocument;
+    if (printed || !doc || doc.title !== GW_PDF_TITLE) return; // about:blank initial
+    printed = true;
+    try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { gwOnPdfError('print-failed'); }
+  });
+  f.srcdoc = html;
+  document.body.appendChild(f);
+}
+
+// Coque → page : { type: 'pdf:error', reason } (expo-app/src/lib/pdfPreview.ts)
+function gwOnPdfError(reason) {
+  _gwPdfError = typeof reason === 'string' && /^[a-z0-9-]{1,40}$/.test(reason) ? reason : 'unknown';
+  gwRender();
+  return true;
 }
 // ══════════════════════════ FULLSCREEN ══════════════════════════
 function requestFS() {
