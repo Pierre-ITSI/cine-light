@@ -8,6 +8,12 @@ par le moteur de recherche, et recoupées quand c'était possible. Quand les
 sources se contredisent, c'est indiqué **« à confirmer »**. Il faut revérifier
 ces valeurs à l'ouverture des comptes.
 
+**Mise à jour du 16 octobre 2026** : la recommandation devient le **relais
+SetRemote auto-hébergé sur le VPS OVH existant** (gratuit, en France, sans
+tiers). Il est implémenté et testé (`relay/`), avec un kit de déploiement
+(`relay/deploy/`, mode d'emploi en français) et un transport client désactivé
+par défaut (`RELAY_URL`, §5). Cloudflare reste l'alternative (§2).
+
 ## 0. Ce dont on a réellement besoin
 
 Avec le chiffrement de bout en bout de `packages/protocol`, le relais ne voit
@@ -39,16 +45,16 @@ Profil de charge estimé pour un plateau actif, soit 1 télécommande et 1 à
 
 ## 1. Options comparées
 
-| | **HiveMQ Cloud Serverless** | **HiveMQ Cloud Starter** | **EMQX Cloud Serverless** | **Mosquitto / EMQX auto-hébergé (VPS)** | **Cloudflare Workers + Durable Objects** | **Ably** (pub/sub managé) |
-|---|---|---|---|---|---|---|
-| Prix / gratuit | Gratuit : 100 connexions, 10 Go/mois | 0,34 $/h (≈ 248 $/mois) + 0,80 $/M messages ; 100 $ de crédit offert au 1er cluster | Gratuit/mois : 1 M minutes-session (≈ 23 connexions 24 h/24), 1 Go de trafic. Puis 2 $/M minutes-session, 0,15 $/Go. Plafond de dépense réglable (0 par défaut) | VPS Hetzner CX23 ≈ 4 à 5,50 €/mois HT (tarifs relevés en avril 2026, sources divergentes) | Gratuit : 100 000 requêtes/jour, 13 000 Go-s/jour. Payant : 5 $/mois minimum, 1 M requêtes et 400 000 Go-s inclus, puis 0,15 $/M requêtes et 12,50 $/M Go-s. Messages WebSocket entrants facturés au ratio 20:1, sortants gratuits | Gratuit : 6 M messages/mois, 200 connexions simultanées, 200 canaux. Standard 29 $/mois + usage |
-| Taille max. message | 5 Mo | 5 Mo | 1 Mo (à confirmer) | Configurable (`max_packet_size`) | 32 Mio en réception (depuis le 31/10/2025) | **64 Kio** (gratuit) |
-| Connexions | **100 au total** | 10 000 (pricing) ou 25 000 (page produit) : à confirmer | 1000 sessions max. ; publication 10 msg/s par client (à confirmer) | Celles du VPS (plusieurs milliers) | Pas de plafond documenté par objet ; une instance par session | 200 (gratuit) ; 50 msg/s par canal |
-| Auth et ACL : un client limité à un topic par jeton court ? | **Non.** Identifiants nom/mot de passe créés à la console. Une seule permission (un filtre de topic) par identifiant. Pas de JWT | **Partiel.** JWT via JWKS, mais uniquement les claims standards (`iss`, `sub`, `aud`, `iat`, `exp`, `scope`). D'après le forum, on ne peut pas attribuer de rôle ou de topic via le JWT (option Enterprise) | **Non.** Ni JWT, ni auth HTTP, ni autorisation étendue. Mot de passe ou X.509, ACL en base interne | **Oui.** EMQX : JWT avec claim `acl`. Mosquitto : plugin d'auth (ex. mosquitto-go-auth, JWT ou HTTP), maintenance à vérifier | **Oui, par construction.** Le relais est notre code : le topic est la capacité, sans abonnement joker possible, plus une preuve `relayAuth` | **Oui.** Jeton ou JWT avec `capability` limitée à un canal |
-| WebSocket navigateur | WSS (8884) | WSS | WSS | À configurer (listener `websockets` + TLS) | Natif | SDK JS / React Native |
-| UE | Région Serverless non documentée (Serverless et Starter sur AWS seulement) | Francfort (eu-central-1) au choix | Région « Europe » (Francfort) depuis 2024 | Allemagne / Finlande | Juridiction `eu` des Durable Objects. Le TLS est terminé au point de présence le plus proche | UE en option, plutôt Enterprise (à confirmer) |
-| Exploitation | Nulle | Nulle | Nulle | **Élevée** : mises à jour, TLS, supervision, sauvegardes, astreinte | Faible : environ 150 lignes de code à maintenir et tester, pas de serveur | Nulle |
-| Bloquant pour nous | 100 connexions pour **toute** la base d'utilisateurs ; isolation impossible | Coût fixe élevé dès le 1er jour ; isolation par topic incertaine | Débit par client (si confirmé) incompatible avec 25 Hz et les fragments ; isolation impossible | Exploitation | Écrire un relais (simple) | Facturation à chaque livraison (les 64 Kio par message suffisent depuis la trame v2) |
+| | **HiveMQ Cloud Serverless** | **HiveMQ Cloud Starter** | **EMQX Cloud Serverless** | **Mosquitto / EMQX auto-hébergé (VPS)** | **Cloudflare Workers + Durable Objects** | **Ably** (pub/sub managé) | **Relais SetRemote auto-hébergé** (VPS OVH existant, `relay/`) |
+|---|---|---|---|---|---|---|---|
+| Prix / gratuit | Gratuit : 100 connexions, 10 Go/mois | 0,34 $/h (≈ 248 $/mois) + 0,80 $/M messages ; 100 $ de crédit offert au 1er cluster | Gratuit/mois : 1 M minutes-session (≈ 23 connexions 24 h/24), 1 Go de trafic. Puis 2 $/M minutes-session, 0,15 $/Go. Plafond de dépense réglable (0 par défaut) | VPS Hetzner CX23 ≈ 4 à 5,50 €/mois HT (tarifs relevés en avril 2026, sources divergentes) | Gratuit : 100 000 requêtes/jour, 13 000 Go-s/jour. Payant : 5 $/mois minimum, 1 M requêtes et 400 000 Go-s inclus, puis 0,15 $/M requêtes et 12,50 $/M Go-s. Messages WebSocket entrants facturés au ratio 20:1, sortants gratuits | Gratuit : 6 M messages/mois, 200 connexions simultanées, 200 canaux. Standard 29 $/mois + usage | **0 € de plus** : le VPS est déjà payé ; trafic des VPS OVH en principe illimité (à vérifier selon l'offre) |
+| Taille max. message | 5 Mo | 5 Mo | 1 Mo (à confirmer) | Configurable (`max_packet_size`) | 32 Mio en réception (depuis le 31/10/2025) | **64 Kio** (gratuit) | **64 Kio** (réglable) ; 4 Kio en rendez-vous |
+| Connexions | **100 au total** | 10 000 (pricing) ou 25 000 (page produit) : à confirmer | 1000 sessions max. ; publication 10 msg/s par client (à confirmer) | Celles du VPS (plusieurs milliers) | Pas de plafond documenté par objet ; une instance par session | 200 (gratuit) ; 50 msg/s par canal | 4000 par défaut (réglable) ; mesuré : 450 connexions à 25 trames/s ≈ 25 % d'un cœur |
+| Auth et ACL : un client limité à un topic par jeton court ? | **Non.** Identifiants nom/mot de passe créés à la console. Une seule permission (un filtre de topic) par identifiant. Pas de JWT | **Partiel.** JWT via JWKS, mais uniquement les claims standards (`iss`, `sub`, `aud`, `iat`, `exp`, `scope`). D'après le forum, on ne peut pas attribuer de rôle ou de topic via le JWT (option Enterprise) | **Non.** Ni JWT, ni auth HTTP, ni autorisation étendue. Mot de passe ou X.509, ACL en base interne | **Oui.** EMQX : JWT avec claim `acl`. Mosquitto : plugin d'auth (ex. mosquitto-go-auth, JWT ou HTTP), maintenance à vérifier | **Oui, par construction.** Le relais est notre code : le topic est la capacité, sans abonnement joker possible, plus une preuve `relayAuth` | **Oui.** Jeton ou JWT avec `capability` limitée à un canal | **Oui, par construction** (même conception que la colonne Cloudflare) : une salle par topic, aucun joker, preuve `relayAuth` en TOFU |
+| WebSocket navigateur | WSS (8884) | WSS | WSS | À configurer (listener `websockets` + TLS) | Natif | SDK JS / React Native | Natif (`wss://`, TLS par Caddy) |
+| UE | Région Serverless non documentée (Serverless et Starter sur AWS seulement) | Francfort (eu-central-1) au choix | Région « Europe » (Francfort) depuis 2024 | Allemagne / Finlande | Juridiction `eu` des Durable Objects. Le TLS est terminé au point de présence le plus proche | UE en option, plutôt Enterprise (à confirmer) | **France** (OVHcloud) ; TLS terminé sur notre serveur ; aucun tiers |
+| Exploitation | Nulle | Nulle | Nulle | **Élevée** : mises à jour, TLS, supervision, sauvegardes, astreinte | Faible : environ 150 lignes de code à maintenir et tester, pas de serveur | Nulle | **Faible à moyenne** : `docker compose`, certificat automatique, redémarrage automatique ; mises à jour d'images à appliquer ; environ 300 lignes de code testées |
+| Bloquant pour nous | 100 connexions pour **toute** la base d'utilisateurs ; isolation impossible | Coût fixe élevé dès le 1er jour ; isolation par topic incertaine | Débit par client (si confirmé) incompatible avec 25 Hz et les fragments ; isolation impossible | Exploitation | Écrire un relais (simple) | Facturation à chaque livraison (les 64 Kio par message suffisent depuis la trame v2) | Rien de bloquant ; disponibilité = celle d'un seul VPS (pas de redondance) |
 
 Autres options écartées :
 
@@ -104,31 +110,58 @@ refuse les jokers et limite le débit le fait.
   - Capacités : https://ably.com/docs/auth/capabilities.
 - **Supabase** : https://supabase.com/docs/guides/realtime/limits.
 
-## 2. Recommandation
+## 2. Recommandation (mise à jour du 16 octobre 2026)
 
-**(a) Lancement sous quelques semaines, exploitation quasi nulle : un relais
-WebSocket sur Cloudflare Workers + Durable Objects, juridiction `eu`, offre
-Workers Paid à 5 $/mois.**
+**(a) Recommandé : le relais SetRemote auto-hébergé sur le VPS OVH existant**
+(`relay/server.js`, déployé par `relay/deploy/`).
 
-- Une instance d'objet par session : isolation native et aucun joker
-  possible.
-- Plafond de taille et limitation de débit codés dans le relais.
-- Pas de serveur à maintenir, hibernation des WebSockets inactifs.
-- Le client est un simple `WebSocket`, ce qui permet de supprimer mqtt.js.
-- **En attendant** que le relais soit prêt, livrer les trames chiffrées v2 sur
-  le broker public actuel. La fuite de contenu et l'injection cessent
-  immédiatement.
+- **Gratuit** : le VPS est déjà payé ; aucun compte, aucune carte, aucune
+  facturation à l'usage.
+- **Confidentialité** : serveur en France chez OVHcloud, TLS terminé chez
+  nous, **aucun tiers** (ni HiveMQ, ni Cloudflare) ne voit les métadonnées
+  (IP, topics, horaires). Aucun journal de connexion (voir
+  `relay/deploy/README.md`, « Ce qui est journalisé »).
+- **Même conception que le relais Cloudflare** (§2.1) : une salle par topic
+  opaque, aucun joker, plafonds de taille et de débit, preuve `relayAuth` en
+  TOFU. Le contrat de connexion (chemins, sous-protocole, preuve) est le
+  même : un relais Cloudflare pourrait le remplacer sans toucher au client.
+- **Exploitation raisonnable** : trois conteneurs (`docker compose`),
+  certificat Let's Encrypt automatique (Caddy), redémarrage automatique,
+  script de vérification depuis l'extérieur, mode d'emploi en français pour
+  un non-spécialiste.
+- **Mesuré** (Docker, TLS) : 50 plateaux simulés (450 connexions, 25 trames/s
+  par télécommande en continu) → relais 22 Mio et 25 % d'un cœur, Caddy
+  64 Mio et 40 % d'un cœur. Le plus petit VPS suffit pour des dizaines de
+  plateaux simultanés.
+- **Limites assumées** : un seul serveur (une panne du VPS coupe les
+  plateaux jusqu'à son retour, sauf repli autorisé, §5) ; mises à jour
+  d'images à appliquer ; sans fichier TOFU, un redémarrage réarme la preuve.
 
-**(b) Passage à l'échelle : rester sur Durable Objects**, qui montent en
-charge session par session avec un coût proportionnel. Estimation : un
-plateau actif 10 h, éveillé environ 50 % du temps, consomme environ 2 300 Go-s
-par jour. Pour 1000 journées-plateau par mois, on arrive à environ 30 à
-60 $/mois au total. Si un besoin MQTT natif apparaît (passerelles sACN/IoT
-tierces), ajouter un cluster EMQX auto-hébergé sous licence commerciale, avec
-JWT `acl` par topic. HiveMQ Starter est à écarter tant que l'attribution d'ACL
-par JWT n'est pas confirmée.
+**(b) Alternative : Cloudflare Workers + Durable Objects**, juridiction `eu`,
+offre Workers Paid à 5 $/mois. À préférer si l'on ne veut plus aucun serveur à
+maintenir, ou pour une disponibilité multi-région :
 
-### 2.1 Conception du relais (à implémenter, environ 150 lignes TypeScript)
+- une instance d'objet par session : isolation native, aucun joker ;
+- pas de serveur, hibernation des WebSockets inactifs ;
+- montée en charge session par session, coût proportionnel. Estimation : un
+  plateau actif 10 h, éveillé environ 50 % du temps, consomme environ
+  2 300 Go-s par jour ; pour 1000 journées-plateau par mois, environ 30 à
+  60 $/mois au total ;
+- à implémenter en reprenant le contrat de connexion de `relay/server.js` et
+  sa suite de tests (`relay/test/`).
+
+**(c) Passage à l'échelle** : mesuré, 50 plateaux dans le pire cas
+(curseurs en mouvement permanent) prennent un quart de cœur au relais et
+40 % d'un cœur à Caddy ; l'usage réel, bien plus calme, laisse de la marge
+pour bien davantage. Au-delà : VPS plus gros, puis Durable Objects (b). Si un besoin MQTT
+natif apparaît (passerelles sACN/IoT tierces), ajouter un EMQX auto-hébergé
+sous licence commerciale, avec JWT `acl` par topic. HiveMQ Starter est à
+écarter tant que l'attribution d'ACL par JWT n'est pas confirmée.
+
+### 2.1 Conception du relais (implémentée : `relay/server.js`)
+
+Conception d'origine, prévue pour Cloudflare. L'implémentation Node en un seul
+processus la suit ; ses écarts et précisions sont listés en §2.2.
 
 - **Routes** :
   - `wss://relay.<domaine>/v2/s/<topic>` : `<topic>` = `session.topic`, 22 caractères base64url, refus sinon.
@@ -156,49 +189,145 @@ par JWT n'est pas confirmée.
 - **Aucune journalisation** des contenus. Seuls des compteurs sont tenus :
   rejets de taille, de débit et de format.
 
+### 2.2 Implémentation auto-hébergée : écarts et précisions
+
+| Point | Conception (Durable Objects) | `relay/server.js` (Node 22, un processus, dépendance unique `ws`) |
+|---|---|---|
+| Salles | un objet par session | `Map` en mémoire ; salle vide libérée aussitôt |
+| Plafonds globaux | plateforme | sockets (4000), salles (2000), mémoire (RSS > 384 Mio : nouvelles connexions refusées), plus `mem_limit` Docker |
+| Limites par IP | binding Rate Limiting | dans le processus : 30 nouvelles connexions en rafale puis 60/min, 64 sockets simultanés ; IPv6 comptée par /64. `X-Forwarded-For` lu seulement si le pair direct est le proxy déclaré (`RELAY_TRUST_PROXY`), de droite à gauche |
+| Débit | seau à jetons, trame refusée | seau à jetons par socket (100 trames/s, 2 Mo/s, capacité 1 s). Au-delà, la lecture du socket est suspendue et les trames attendent leur tour, dans l'ordre : l'émetteur est ralenti, **rien n'est perdu** (une rafale de resynchronisation passe entière). File démesurée : fermeture 1008 |
+| Destinataire lent | — | au-delà de 4 Mio en attente d'envoi, ses trames sont perdues (comme le QoS 0 de MQTT) |
+| Alphabet | `[A-Za-z0-9_-]` | sessions : `[A-Za-z0-9_-]` (sorties de `seal` / `sealChunk`) ; rendez-vous : JSON compact des messages `pair:*`, donc en plus `{ } [ ] " : ,` |
+| Rendez-vous | 5 min | 5 min depuis la création, non prolongeables en se reconnectant ; puis fermeture 4410 et refus 410 pendant 5 min |
+| TOFU | stockage de l'objet, alarme à 30 jours | `Map` LRU en mémoire (100 000 entrées max.), purge à 30 jours d'inactivité ; fichier JSON facultatif (`RELAY_AUTH_FILE`) : SHA-256 du topic, SHA-256 de la preuve, jour d'activité. **Sans fichier, un redémarrage réarme le TOFU** : la 1re connexion qui suit fait foi. La 1re preuve vue évince les sockets sans preuve (4401). `RELAY_REQUIRE_AUTH=1` (kit de déploiement) refuse toute connexion de session sans preuve |
+| Keepalive | hibernation | ping/pong toutes les 25 s (socket muet coupé) et battement texte vide, que le navigateur voit (contrairement aux pings) : le client se reconnecte après 70 s de silence |
+| Arrêt | — | SIGTERM : plus de nouvelles connexions, sockets fermés en 1001 (les clients se reconnectent et se resynchronisent), fichier TOFU écrit |
+| Journaux | compteurs | aucun journal par connexion ; compteurs agrégés sur `/healthz` |
+
+**Contrat de connexion** (à respecter par tout autre relais, par exemple
+Cloudflare) :
+
+- `wss://<relais>/v2/s/<topic>` et `wss://<relais>/v2/rdv/<id>` : 22
+  caractères base64url canoniques (16 octets), rien d'autre dans l'URL ;
+- sous-protocoles `setremote.v2` (toujours ; le seul renvoyé par le relais)
+  et `auth.<relayAuth>` (43 caractères, sessions seulement, jamais renvoyé) ;
+- trames texte relayées telles quelles aux AUTRES sockets de la salle (pas
+  d'écho) ; une trame vide est un battement, ignorée par le client ;
+- refus HTTP avant la poignée de main : 404 (chemin), 401 (preuve), 403
+  (origine, si `RELAY_ORIGINS`), 410 (rendez-vous expiré), 429 (limites par
+  IP), 503 (plafonds, arrêt). Fermetures : 1001, 1003, 1007, 1008, 1009,
+  4401, 4410.
+
 ## 3. Ce que le responsable produit doit faire
 
-1. **Créer un compte Cloudflare d'organisation**, et non un compte personnel :
-   - e-mail générique, 2FA obligatoire ;
-   - inviter les développeurs avec des rôles limités.
-2. **Souscrire Workers Paid** (5 $/mois) avec une **carte bancaire** :
-   - activer les alertes de facturation ;
-   - l'offre gratuite suffit pour une bêta, mais elle coupe net au-delà des
-     quotas journaliers.
-3. **Choisir le nom de domaine** du relais (ex. `relay.<domaine-de-l-app>`) :
-   - zone DNS chez Cloudflare, ou à défaut le sous-domaine `*.workers.dev` ;
-   - créer un **jeton d'API** limité au déploiement des Workers pour la CI.
-4. **RGPD** :
-   - mettre à jour la politique de confidentialité : le relais traite des
-     adresses IP et des métadonnées, le contenu est chiffré de bout en bout ;
-   - accepter et archiver le DPA de Cloudflare dans le tableau de bord ;
-   - valider le choix de la juridiction `eu`.
-5. **Plan B uniquement** (EMQX Serverless, à éviter pour les raisons
-   ci-dessus) : compte EMQX, région Europe, carte, plafond de dépense à 0 au
-   départ.
-6. Arbitrer **la date de fin du mode historique en clair**. Proposition :
-   8 semaines après la sortie de l'app native compatible.
+**Relais auto-hébergé (recommandé)** :
 
-## 4. Plan de migration depuis le broker public (avec rétrocompatibilité)
+1. **Déployer le relais** sur le VPS en suivant `relay/deploy/README.md`
+   (environ 30 minutes) : sous-domaine DNS, ports 80 et 443 (TCP) et 3478
+   (UDP et TCP), Docker, `.env`, `docker compose up -d --build`, puis
+   `check.sh` depuis l'extérieur.
+2. **Choisir le moment de la bascule** (§5), hors tournage, et prévoir de
+   recharger l'app sur tous les appareils.
+3. **RGPD** :
+   - mettre à jour la politique de confidentialité (texte proposé dans
+     `relay/deploy/README.md`, « Ce qui est journalisé ») ;
+   - registre des traitements : OVHcloud (France) comme sous-traitant ;
+     après la bascule, plus aucun échange par le broker public de HiveMQ.
+4. **Exploitation** : appliquer les mises à jour une fois par mois
+   (`docker compose pull`, `docker compose build --pull`,
+   `docker compose up -d`), surveiller `https://<relais>/healthz` (un
+   service de surveillance externe n'y verrait que des totaux). Aucune
+   sauvegarde indispensable : les certificats se redemandent, la mémoire TOFU
+   se reconstitue.
+5. Arbitrer **la fin du broker public** : retirer mqtt.js une fois l'app
+   native passée au relais.
 
-| Phase | Contenu | Compatibilité |
+**Alternative Cloudflare (si choisie plus tard)** : compte d'organisation
+(e-mail générique, 2FA, rôles limités) ; Workers Paid à 5 $/mois avec carte et
+alertes de facturation ; domaine du relais (zone chez Cloudflare ou
+`*.workers.dev`) et jeton d'API limité au déploiement pour la CI ; DPA
+Cloudflare accepté et archivé, juridiction `eu`.
+
+## 4. Plan de migration depuis le broker public
+
+| Phase | Contenu | État, compatibilité |
 |---|---|---|
-| **0** (immédiat) | Intégrer `packages/protocol`. La validation à la réception existe déjà dans la PWA (`MSG_ROUTES`, `web/js/22-protocol.js`, qui borne les valeurs). On peut y ajouter `validate()` du paquet comme contrôle strict | Aucun changement de protocole ; les charges de la revue sont déjà bloquées |
-| **1** (S+1 à S+2) | Nouvelles sessions **v2 chiffrées** (QR `#p=v1.…` ou code + SAS), **toujours sur `broker.hivemq.com`**, topic `setremote/v2/s/<topic>` | Un ancien QR ou code (`#set4271`) ouvre le **mode historique** avec un bandeau « non sécurisé ». Une télécommande à jour peut piloter un ancien écran via « Mode compatibilité », désactivé par défaut |
-| **2** (S+2 à S+4) | Déploiement du relais Cloudflare. Les apps v2 publient **sur les deux** (relais + broker public) et s'abonnent aux deux | Les copies en double sont **éliminées gratuitement par l'anti-rejeu** (même émetteur et même `seq` : la 2e est rejetée). Des versions v2 mixtes se retrouvent donc toujours |
-| **3** (quand > 95 % des sessions viennent de versions capables du relais) | Arrêt de la publication sur le broker public ; mode historique masqué derrière un réglage avancé | La PWA se met à jour via le service worker en quelques jours. Le natif dépend de la validation des stores : attendre au moins un cycle de version |
-| **4** | Suppression du mode historique et de mqtt.js (`vendor/mqtt-5.16.1.min.js`, `MqttTransport`) | Les anciens clients ne peuvent plus se connecter et sont invités à mettre à jour |
+| **0** | `packages/protocol` intégré ; validation stricte à la réception | Fait |
+| **1** | Sessions **v2 chiffrées** (QR `#p=v1.…` ou code + SAS) sur `broker.hivemq.com`, topic opaque `setremote/v2/s/<topic>` | Fait. Pas de mode historique : décision produit (`packages/protocol/README.md`, §8) |
+| **2** | Relais auto-hébergé déployé et vérifié ; client prêt mais **désactivé** (`RELAY_URL` vide) | Livré avec `relay/` ; rien ne change pour les utilisateurs |
+| **3** | **Bascule** : `RELAY_URL` et `STUN_URLS` renseignés, nouvelle PWA et nouvelle version native (qui embarque l'interface) | §5 : deux versions sur des transports différents ne se voient pas |
+| **4** | Après le passage de l'app native : suppression du broker public, de mqtt.js (`vendor/mqtt-5.16.1.min.js`) et de `RELAY_FALLBACK_MQTT` | Les anciens clients sont invités à mettre à jour |
 
-**Retour arrière** : chaque phase est derrière un indicateur de
-fonctionnalité. Revenir de la phase 2 à la phase 1 consiste à ne plus
-utiliser le relais. Le chiffrement reste actif.
+**Retour arrière** : remettre `RELAY_URL` à `''`, reconstruire et publier :
+retour au broker public, chiffrement inchangé. Le relais peut rester en
+service.
 
 **Côté code** :
 
-- PWA : remplacer `connectMQTT` et `sendMsg` (`web/js/20-mqtt.js`) par un transport abstrait, avec
-  une implémentation MQTT (phases 1-2) et une implémentation WebSocket relais
-  (phases 2-4).
-- `expo-app` : ajouter un `RelayTransport` qui implémente l'interface
-  `RemoteTransport` existante.
+- PWA : fait. `transportConnect()` (`web/js/19-relay.js`) choisit le
+  transport ; `RelayClient` a la même surface que le client mqtt.js utilisé
+  par `web/js/20-mqtt.js` (session) et `web/js/26-pairing.js` (rendez-vous).
+- `expo-app` : ajouter un `RelayTransport` (interface `RemoteTransport`
+  existante) qui respecte le contrat de §2.2, quand l'app native adoptera le
+  protocole chiffré.
 - Les trames étant des chaînes, les transports Wi-Fi local et BLE
   transportent aussi les trames chiffrées sans modification de format.
+
+## 5. Bascule vers le relais (transition)
+
+**Réglages** (`web/js/01-config.js`, puis `npm run build`) :
+
+| Réglage | Défaut | Rôle |
+|---|---|---|
+| `RELAY_URL` | `''` (broker public) | `'wss://relais.mondomaine.fr'` : sessions ET rendez-vous d'appairage passent par le relais. `wss://` exigé (`ws://` accepté seulement sur la machine locale, pour les tests) |
+| `STUN_URLS` | `['stun:stun.l.google.com:19302']` | `['stun:relais.mondomaine.fr:3478']` : le coturn du kit remplace le STUN de Google pour la vidéo WebRTC |
+| `RELAY_FALLBACK_MQTT` | `false` | `true` : si le relais reste injoignable dès le départ (3 échecs), cette connexion passe par le broker public (toujours chiffrée) jusqu'à la prochaine session ou au rechargement |
+
+Une coque native ou un test peut aussi fournir `window.SETREMOTE_CONFIG`
+(mêmes clés) avant le script de l'app ; toute valeur invalide est ignorée.
+
+**Ce qui change** : seulement le transport. Le scellement, les secrets de
+session et les appairages existants sont identiques (aucun réappairage). La
+preuve `relayAuth` part dans `Sec-WebSocket-Protocol`. Les libellés de
+l'interface ne changent pas (« Internet · chiffré », « Reconnexion… »).
+
+**Reconnexion** : attente exponentielle de 1 s à 30 s avec gigue, remise à 1 s
+après 10 s de connexion stable, nouvelle tentative immédiate au retour du
+réseau, reconnexion après 70 s sans rien recevoir. Chaque reconnexion émet
+`connect` : la télécommande renvoie `hello`, les écrans `caps`, et la
+resynchronisation existante (`web/js/24-resync.js`) remet chaque écran dans
+l'état exact de la télécommande. Testé avec un vrai relais redémarré
+(`tests/relay.test.mjs`).
+
+**Repli** : par défaut, un relais en panne laisse la pastille sur
+« Reconnexion… » jusqu'à son retour. `RELAY_FALLBACK_MQTT: true` rétablit la
+liaison par le broker public, mais une télécommande repliée et un écran resté
+sur le relais ne se voient pas : à n'activer qu'en connaissance de cause.
+
+**Versions mélangées** : télécommande et écrans doivent utiliser le même
+transport.
+
+- La PWA prend la nouvelle version au prochain chargement (service worker,
+  navigation réseau d'abord) ; un écran resté ouvert plusieurs jours garde
+  l'ancienne : **recharger tous les appareils après la bascule**.
+- L'app native embarque l'interface au moment de sa construction
+  (`expo-app/scripts/embed-web.mjs`) : il faut une nouvelle version publiée
+  sur les stores. D'ici là, un appareil natif et une PWA à jour ne se voient
+  pas.
+- Si cela pose problème, une période de double publication (relais et broker
+  public à la fois) est possible : les doublons seraient éliminés
+  gratuitement par l'anti-rejeu (même émetteur, même `seq`). Elle n'est pas
+  implémentée.
+
+**Procédure proposée** :
+
+1. Déployer le relais et passer `check.sh` (§3).
+2. Essayer sur un plateau de test : construction avec `RELAY_URL`, ou
+   injection de `window.SETREMOTE_CONFIG` par la coque native.
+3. Entre deux tournages : renseigner les réglages, `npm run build`,
+   augmenter `CACHE` dans `sw.js`, `npm test`, publier la PWA, publier
+   l'app native.
+4. Faire recharger l'app sur tous les appareils.
+5. Surveiller `/healthz` les premiers jours (`refused_by_status`,
+   `tofu_rejected`, `throttled`, `dropped_slow`).
