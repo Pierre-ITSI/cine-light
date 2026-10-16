@@ -1,0 +1,62 @@
+# GitHub Pages → redirection vers https://set-remote.itsi-app.com/
+#
+# NE S'EXÉCUTE JAMAIS TOUT SEUL : uniquement à la main (onglet Actions →
+# « Pages : redirection vers set-remote.itsi-app.com » → Run workflow, en
+# tapant REDIRIGER). À faire le jour de la bascule, APRÈS avoir réglé
+# Settings → Pages → Source sur « GitHub Actions ». Voir docs/HOSTING.md,
+# étape 4 (et le retour arrière).
+#
+# Remplace le site GitHub Pages par web/pages-redirect.mjs : page de
+# redirection qui garde le fragment (secret d'appairage des QR codes) et
+# service worker qui se désinstalle (PWA installées sur github.io).
+name: "Pages : redirection vers set-remote.itsi-app.com"
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Taper REDIRIGER pour remplacer le site GitHub Pages par la redirection"
+        required: true
+      target:
+        description: "Nouvelle adresse de la PWA"
+        required: true
+        default: "https://set-remote.itsi-app.com/"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ inputs.confirm == 'REDIRIGER' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Site de redirection
+        env:
+          TARGET: ${{ inputs.target }}
+        run: node web/pages-redirect.mjs --out _site --target "$TARGET"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
