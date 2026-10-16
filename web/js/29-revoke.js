@@ -162,6 +162,7 @@ async function _scrRevoke(id) {
   const t0 = Date.now();
   while (Date.now() - t0 < REKEY_WAIT_MS && !online.every((s) => _rkAcks.has(s))) await new Promise((r) => setTimeout(r, 50));
   _rkAcks = null;
+  if (mode !== 'remote') return true; // télécommande quittée entre-temps : la nouvelle session est déjà enregistrée
   remoteSwitchSession(next);
   return true;
 }
@@ -344,12 +345,17 @@ async function screenOnKeyOffer(m) {
 function screenOnPairwise(m, tag) {
   const me = screenId();
   if (m.sid !== me) return;
-  if (m.type === 'key:confirm' && tag === 'pending' && _pwPending && m.xid === _pwPending.xid && m.rid === _pwPending.rid) {
+  // Clé de l'échange en cours : key:confirm, ou une session:rekey scellée avec
+  // elle (key:confirm perdu) — seule la télécommande qui a fait l'échange la
+  // détient : la clé est adoptée
+  if (tag === 'pending' && _pwPending && m.rid === _pwPending.rid
+      && ((m.type === 'key:confirm' && m.xid === _pwPending.xid) || m.type === 'session:rekey')) {
     const p = _pwPending;
     _pwPending = null;
     _pw = { rid: p.rid, s: p.s, kid: p.kid, ch: _session.channelId, keys: p.keys };
     screenSavePairwise(_pw);
     sendPairwise({ type: 'key:ok', sid: me, xid: p.xid }, _pw.keys);
+    if (m.type === 'session:rekey') screenOnRekey(m);
   } else if (m.type === 'session:rekey' && tag === 'active' && _pw && m.rid === _pw.rid) {
     screenOnRekey(m);
   }

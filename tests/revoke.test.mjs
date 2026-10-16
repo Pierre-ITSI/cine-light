@@ -198,6 +198,20 @@ test('écran absent pendant le retrait : à son retour, la session en cours lui 
   await r.close();
 });
 
+test('confirmation de clé perdue : l\'écran adopte sa clé à la réception de la nouvelle session', async () => {
+  const r = await rig(2, 27);
+  const [A, B] = r.screens;
+  const { rp } = r;
+  // key:confirm jamais reçu par B : sa clé est restée « en cours »
+  await B.page.evaluate(() => { _pwPending = { ..._pw, xid: 'x'.repeat(16) }; _pw = null; screenSavePairwise(null); });
+  await rp.evaluate((a) => scrRevoke(a), A.id);
+  const next = await session(rp);
+  await waitFor(B.page, (ch) => _session.channelId === ch && mqttClient.connected, next.channelId, { timeout: 8000 });
+  assert.equal(await B.page.evaluate(() => JSON.parse(localStorage.getItem('setremote-screen-pairwise-v1')).ch), next.channelId, 'clé adoptée et suivie');
+  for (const p of [r.remote, B]) assert.deepEqual(p.errors, []);
+  await r.close();
+});
+
 test('retirer un écran absent : les autres suivent ; s\'il revient pendant l\'écoute, il affiche « Écran retiré »', async () => {
   const r = await rig(3, 24);
   const [A, B, C] = r.screens;
