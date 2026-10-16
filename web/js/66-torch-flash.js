@@ -98,6 +98,9 @@ function sendCaps() {
   // Clé par écran (29-revoke.js) : échange pris en charge, et kid de la clé détenue
   caps.kx = 1;
   if (_pw) caps.kid = _pw.kid;
+  // Bluetooth seul (4 Kio par trame) : une longue liste du cache ne tiendrait
+  // pas ; sans elle, la télécommande garde celle de la dernière annonce
+  if (linkBleOnly() && JSON.stringify(caps).length > LINK_CAPS_BLE_MAX) delete caps.cached;
   sendMsg(caps);
 }
 

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { MESSAGE_TYPES, LIMITS, RING_ID_RE, validate, explainInvalid, isAddressedTo } from '../schema.js';
+import { MESSAGE_TYPES, LIMITS, RING_ID_RE, CALL_PHOTO_ID_RE, CALL_AUDIO_ID_RE, validate, explainInvalid, isAddressedTo } from '../schema.js';
 import { MAX_MESSAGE_BYTES } from '../crypto.js';
 import { RENDEZVOUS_MESSAGE_TYPES } from '../pairing.js';
 import { utf8Encode } from '../lib/encoding.js';
@@ -76,6 +76,30 @@ test('call:start : son intégré, son importé (ringId) et volume, champs facult
   assert.equal(validate({ type: 'media:need', id: '__ring_0123456789abcdef' }, { direction: 's2r' }), true);
   assert.equal(MESSAGE_TYPES['call:start'].fields.ringId.required, false);
   assert.equal(MESSAGE_TYPES['call:start'].fields.ringVolume.required, false);
+});
+
+test('préparation hors ligne : photo / bande son préparées (photoId, audioId), vidéo mise en cache sans affichage', () => {
+  const c = (/** @type {object} */ o) => validate({ type: 'call:start', kind: 'call', hasPhoto: true, hasAudio: true, ...o }, { direction: 'r2s' });
+  const ph = '__ph_' + '0123456789abcdef'.repeat(2) + '01234567', au = '__au_' + 'f'.repeat(40);
+  assert.equal(ph.length, 45);
+  assert.equal(c({ photoId: ph, audioId: au }), true);
+  assert.ok(CALL_PHOTO_ID_RE.test(ph) && CALL_AUDIO_ID_RE.test(au));
+  for (const bad of [au, '__callphoto', '__ph_' + 'a'.repeat(39), '__ph_' + 'A'.repeat(40), '__ph_' + 'a'.repeat(41), null, '']) {
+    assert.equal(c({ photoId: bad }), false, String(bad));
+  }
+  assert.equal(c({ audioId: ph }), false, 'une photo n’est pas une bande son');
+  // Plus de 40 caractères : un écran d'une version antérieure ne l'accepte pas en cache (ids ≤ 40)
+  assert.ok(ph.length > 40 && validate({ type: 'media-img-start', id: 'x1', total: 3, mediaId: ph, show: false }, { direction: 'r2s' }));
+  assert.equal(validate({ type: 'media:cached', id: au }, { direction: 's2r' }), true);
+  // Vidéo : offre « cache » et envoi base64 sans affichage
+  const sdp = { type: 'offer', sdp: 'v=0\r\n' };
+  assert.equal(validate({ type: 'rtc-offer', sdp, kind: 'cache', target: { screens: ['ScreenOne0000001'] } }, { direction: 'r2s' }), true);
+  assert.equal(validate({ type: 'rtc-offer', sdp, kind: 'show' }, { direction: 'r2s' }), false);
+  const up = { type: 'media:upload', mediaId: 'q8w7e6', kind: 'video', mime: 'video/mp4', totalChunks: 4, poolId: 'm4' };
+  assert.equal(validate({ ...up, show: false }, { direction: 'r2s' }), true);
+  assert.equal(validate({ ...up, show: 0 }, { direction: 'r2s' }), false);
+  assert.equal(MESSAGE_TYPES['call:start'].fields.photoId.required, false);
+  assert.equal(MESSAGE_TYPES['media:upload'].fields.show.required, false);
 });
 
 test('dmx:look (passerelle DMX) : sens r2s, look strict, target facultatif', () => {
@@ -218,7 +242,9 @@ const NON_RELAY = new Set(['brightness', 'brightness-restore',
   // pont natif de la passerelle DMX (docs/DMX-NATIVE.md)
   'dmx:listen', 'dmx:stop', 'udp:send', 'net:info', 'dmx:packets', 'dmx:error',
   // aperçu PDF de la table des canaux (expo-print dans la coque)
-  'pdf:preview', 'pdf:error']);
+  'pdf:preview', 'pdf:error',
+  // liaisons locales Wi-Fi / Bluetooth : le pont porte des trames déjà scellées (docs/OFFLINE.md)
+  'link:start', 'link:stop', 'link:send', 'link:state', 'link:frames', 'link:peers', 'link:error']);
 
 /** @param {string} src */
 function extractTypes(src) {

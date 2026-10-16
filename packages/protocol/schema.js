@@ -36,6 +36,10 @@
  *    réception UDP de la passerelle DMX (docs/DMX-NATIVE.md, contrat du pont) ;
  *  - 'pdf:preview' (PWA → coque) et 'pdf:error' (coque → PWA) : aperçu PDF de
  *    la table des canaux DMX (expo-print, expo-app/src/lib/pdfPreview.ts) ;
+ *  - 'link:start', 'link:stop', 'link:send', 'link:state?' (PWA → coque) et
+ *    'link:frames', 'link:peers', 'link:state', 'link:error' (coque → PWA) :
+ *    liaisons locales Wi-Fi / Bluetooth (docs/OFFLINE.md). Elles portent les
+ *    MÊMES trames scellées que le relais : seule l'enveloppe est hors schéma ;
  *  - messages du canal de données WebRTC ({ meta } / { done }).
  */
 
@@ -112,6 +116,15 @@ export const SCREEN_ID_RE = /^[A-Za-z0-9_-]{8,32}$/;
 export const GROUP_ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
 /** Son importé (sonnerie / notification) : id dérivé du contenu, « __ring_ » + 16 hex (SHA-256 tronqué). */
 export const RING_ID_RE = /^__ring_[0-9a-f]{16}$/;
+/**
+ * Photo / bande son d'un appel enregistré, PRÉPARÉE sur l'écran (tournage sans
+ * réseau, docs/OFFLINE.md) : id dérivé du contenu, « __ph_ » / « __au_ » + 40 hex
+ * (SHA-256 tronqué). 45 caractères exprès : un écran d'une version antérieure
+ * n'accepte en cache que des ids de 40 caractères au plus, il ne l'accuse donc
+ * jamais et la télécommande ne lui envoie jamais photoId / audioId.
+ */
+export const CALL_PHOTO_ID_RE = /^__ph_[0-9a-f]{40}$/;
+export const CALL_AUDIO_ID_RE = /^__au_[0-9a-f]{40}$/;
 /** Fragment de data-URL (images/sons) : aucun guillemet, parenthèse ni chevron possible. */
 const DATAURL_SLICE_RE = /^[A-Za-z0-9+/=:;,.-]*$/;
 const BASE64_RE = /^[A-Za-z0-9+/]*={0,2}$/;
@@ -411,7 +424,7 @@ const SPECS = {
     fields: {
       id: req(MEDIA_ID, 'identifiant du transfert'),
       total: req(int(1, LIMITS.imgChunks), 'nombre de fragments'),
-      mediaId: opt(nullable(MEDIA_ID), 'id du média en cache (__lockwall, __callaudio, __callphoto, __ring_…, m12…)'),
+      mediaId: opt(nullable(MEDIA_ID), 'id du média en cache (__lockwall, __callaudio, __callphoto, __ring_…, __ph_… / __au_… préparés, m12…)'),
       show: opt(bool, 'afficher à réception (false = préchargement)'),
     },
   },
@@ -482,6 +495,7 @@ const SPECS = {
       mime: req(str(80, MIME_RE), 'type MIME'),
       totalChunks: req(int(1, LIMITS.uploadChunks), 'nombre de fragments'),
       poolId: opt(nullable(MEDIA_ID), 'id du média dans le pool (cache)'),
+      show: opt(bool, 'false = mise en cache seulement (préparation hors ligne) : rien n’est affiché ni interrompu ; absent = lire'),
     },
   },
   'media:chunk': {
@@ -522,6 +536,10 @@ const SPECS = {
       present: opt(oneOf('full', 'banner'), 'plein écran ou bandeau'),
       photoMode: opt(oneOf('avatar', 'full'), 'photo en avatar ou plein écran'),
       hasAudio: opt(bool, 'bande son préchargée (__callaudio) à jouer au décroché'),
+      photoId: opt(str(45, CALL_PHOTO_ID_RE), 'photo PRÉPARÉE de l’appel enregistré (__ph_…, déjà en cache sur l’écran) à la place de __callphoto ; '
+        + 'absente du cache : pas de photo (jamais celle d’un autre appel)'),
+      audioId: opt(str(45, CALL_AUDIO_ID_RE), 'bande son PRÉPARÉE de l’appel enregistré (__au_…) à la place de __callaudio ; '
+        + 'absente du cache : décroché silencieux'),
       autoAnswer: opt(int(0, 60), 'décroché automatique après n s (0 = non)'),
       lock: opt(nullable(object({
         time: req(line(8), 'heure affichée'),
@@ -550,10 +568,11 @@ const SPECS = {
   // ═══ Signalisation WebRTC (transfert vidéo pair-à-pair) ═══
   'rtc-offer': {
     dir: 'r2s', src: ['web'],
-    doc: 'Offre WebRTC (canal de données « file »). En multi-écran : cibler UN écran (target.screens).',
+    doc: 'Offre WebRTC (canal de données « file »). En multi-écran : cibler UN écran (target.screens). '
+      + 'kind « cache » : préparation hors ligne, le fichier est mis en cache sans interrompre ni remplacer ce que l’écran affiche.',
     fields: {
       sdp: req(SDP('offer'), 'RTCSessionDescription'),
-      kind: opt(oneOf('file'), 'usage'),
+      kind: opt(oneOf('file', 'cache'), 'usage : diffusion (file) ou mise en cache seulement (cache)'),
     },
   },
   'rtc-answer': {

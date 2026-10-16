@@ -48,7 +48,7 @@ function remoteResync() {
   _resyncTimer = null;
   const pending = _resyncPending;
   _resyncPending = new Map();
-  if (mode !== 'remote' || !mqttClient || !mqttClient.connected) return;
+  if (mode !== 'remote' || !sessionLinkUp()) return; // Internet ou liaison locale (21-links.js)
   const ids = [...pending.keys()].filter((id) => id && scrKnown(id));
   // 1) Lumière et réglages : un envoi par état identique
   const groups = new Map();

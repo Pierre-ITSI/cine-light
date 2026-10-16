@@ -512,7 +512,7 @@ function schedulePreload() { setTimeout(preloadPoolToScreen, 300); }
 // Les vidéos sont mises en cache par l'écran à leur première lecture.
 async function preloadPoolToScreen() {
   if (_preloadRunning || mode !== 'remote') return;
-  if (!mqttClient || !mqttClient.connected) return;
+  if (!mediaLinkUp()) return; // Internet ou Wi-Fi local : jamais en Bluetooth (21-links.js)
   _preloadRunning = true;
   try {
     for (const it of [..._mediaPool]) {
@@ -525,7 +525,7 @@ async function preloadPoolToScreen() {
       for (let g = 0; g < 150 && _vidJobsBusy(); g++) {
         await new Promise(r => setTimeout(r, 400));
       }
-      if (!mqttClient || !mqttClient.connected) return;
+      if (!mediaLinkUp()) return;
       const ids = lack();
       if (!ids.length || !_mediaPool.includes(it)) continue;
       if (!_preloadInflight.has(it.id)) _preloadInflight.set(it.id, new Set());

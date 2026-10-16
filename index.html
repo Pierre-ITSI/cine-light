@@ -2225,6 +2225,8 @@ const MEDIA_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const SCREEN_ID_RE = /^[A-Za-z0-9_-]{8,32}$/;
 const GROUP_ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
 const RING_ID_RE = /^__ring_[0-9a-f]{16}$/;
+const CALL_PHOTO_ID_RE = /^__ph_[0-9a-f]{40}$/;
+const CALL_AUDIO_ID_RE = /^__au_[0-9a-f]{40}$/;
 const DATAURL_SLICE_RE = /^[A-Za-z0-9+/=:;,.-]*$/;
 const BASE64_RE = /^[A-Za-z0-9+/]*={0,2}$/;
 const MIME_RE = /^[a-z]+\/[a-z0-9.+-]{1,40}$/i;
@@ -2511,7 +2513,7 @@ const SPECS = {
     fields: {
       id: req(MEDIA_ID, 'identifiant du transfert'),
       total: req(int(1, LIMITS.imgChunks), 'nombre de fragments'),
-      mediaId: opt(nullable(MEDIA_ID), 'id du média en cache (__lockwall, __callaudio, __callphoto, __ring_…, m12…)'),
+      mediaId: opt(nullable(MEDIA_ID), 'id du média en cache (__lockwall, __callaudio, __callphoto, __ring_…, __ph_… / __au_… préparés, m12…)'),
       show: opt(bool, 'afficher à réception (false = préchargement)'),
     },
   },
@@ -2582,6 +2584,7 @@ const SPECS = {
       mime: req(str(80, MIME_RE), 'type MIME'),
       totalChunks: req(int(1, LIMITS.uploadChunks), 'nombre de fragments'),
       poolId: opt(nullable(MEDIA_ID), 'id du média dans le pool (cache)'),
+      show: opt(bool, 'false = mise en cache seulement (préparation hors ligne) : rien n’est affiché ni interrompu ; absent = lire'),
     },
   },
   'media:chunk': {
@@ -2621,6 +2624,10 @@ const SPECS = {
       present: opt(oneOf('full', 'banner'), 'plein écran ou bandeau'),
       photoMode: opt(oneOf('avatar', 'full'), 'photo en avatar ou plein écran'),
       hasAudio: opt(bool, 'bande son préchargée (__callaudio) à jouer au décroché'),
+      photoId: opt(str(45, CALL_PHOTO_ID_RE), 'photo PRÉPARÉE de l’appel enregistré (__ph_…, déjà en cache sur l’écran) à la place de __callphoto ; '
+        + 'absente du cache : pas de photo (jamais celle d’un autre appel)'),
+      audioId: opt(str(45, CALL_AUDIO_ID_RE), 'bande son PRÉPARÉE de l’appel enregistré (__au_…) à la place de __callaudio ; '
+        + 'absente du cache : décroché silencieux'),
       autoAnswer: opt(int(0, 60), 'décroché automatique après n s (0 = non)'),
       lock: opt(nullable(object({
         time: req(line(8), 'heure affichée'),
@@ -2647,10 +2654,11 @@ const SPECS = {
 
   'rtc-offer': {
     dir: 'r2s', src: ['web'],
-    doc: 'Offre WebRTC (canal de données « file »). En multi-écran : cibler UN écran (target.screens).',
+    doc: 'Offre WebRTC (canal de données « file »). En multi-écran : cibler UN écran (target.screens). '
+      + 'kind « cache » : préparation hors ligne, le fichier est mis en cache sans interrompre ni remplacer ce que l’écran affiche.',
     fields: {
       sdp: req(SDP('offer'), 'RTCSessionDescription'),
-      kind: opt(oneOf('file'), 'usage'),
+      kind: opt(oneOf('file', 'cache'), 'usage : diffusion (file) ou mise en cache seulement (cache)'),
     },
   },
   'rtc-answer': {
@@ -2839,7 +2847,7 @@ const COMMON_FIELDS = Object.freeze({
   _id: 'identifiant d’écho de l’ancien protocole en clair (toléré, inutile en v2)',
   target: "adressage (r2s uniquement) : { screens: [screenId…] } ou { group: 'id' } ; absent = tous",
 });
-  return { HEX_COLOR_RE, MEDIA_ID_RE, SCREEN_ID_RE, GROUP_ID_RE, RING_ID_RE, LIMITS, explainInvalid, validate, isAddressedTo, MESSAGE_TYPES, COMMON_FIELDS };
+  return { HEX_COLOR_RE, MEDIA_ID_RE, SCREEN_ID_RE, GROUP_ID_RE, RING_ID_RE, CALL_PHOTO_ID_RE, CALL_AUDIO_ID_RE, LIMITS, explainInvalid, validate, isAddressedTo, MESSAGE_TYPES, COMMON_FIELDS };
 })();
 // ── crypto.js ──
 __m["crypto.js"] = (function () {
@@ -5536,11 +5544,16 @@ function nativePost(msg) {
 if (IN_NATIVE_APP) document.documentElement.classList.add('in-app');
 
 // Coque → PWA : la coque appelle window.SRNative.receive(msg) (objet, ou
-// chaîne JSON). Contrat du pont : docs/DMX-NATIVE.md. Messages :
+// chaîne JSON). Contrats du pont : docs/DMX-NATIVE.md (passerelle DMX, PDF) et
+// docs/OFFLINE.md (liaisons locales). Messages :
 //   dmx:packets { packets: [{ src, port, data (base64) }] }  datagrammes UDP reçus
 //   net:info    { interfaces: [{ name, kind, ip, mask }] }    interfaces réseau
 //   dmx:error   { reason }                                    échec d'écoute UDP
 //   pdf:error   { reason }                                    échec de l'aperçu PDF (table des canaux)
+//   link:frames { frames: [{ peer, mode, data }] }            trames reçues en Wi-Fi local / Bluetooth
+//   link:peers  { peers: [{ peer, mode, name? }] }            pairs locaux (à chaque changement)
+//   link:state  { lan: { available, active, error? }, ble }   état des liaisons locales
+//   link:error  { mode, reason }                              erreur d'une liaison locale
 // Tout le reste est ignoré ; une erreur de traitement ne remonte jamais à la coque.
 window.SRNative = window.SRNative || {};
 window.SRNative.receive = function (msg) {
@@ -5552,6 +5565,10 @@ window.SRNative.receive = function (msg) {
     if (m.type === 'net:info') return gwOnNetInfo(m.interfaces);
     if (m.type === 'dmx:error') return gwOnNativeError(m.reason);
     if (m.type === 'pdf:error') return gwOnPdfError(m.reason);
+    if (m.type === 'link:frames') return linkOnFrames(m.frames);
+    if (m.type === 'link:peers') return linkOnPeers(m.peers);
+    if (m.type === 'link:state') return linkOnState(m);
+    if (m.type === 'link:error') return linkOnError(m.mode, m.reason);
   } catch (e) { console.warn('SetRemote : message natif', m.type, e); }
   return false;
 };
@@ -5843,14 +5860,18 @@ let _secBc = null;    // 2e étiquette d'émetteur pour le repli BroadcastChanne
 let _connectSeq = 0;  // connexion la plus récente (les plus anciennes s'abandonnent)
 let _rxChain = Promise.resolve(), _txChain = Promise.resolve();
 let _secRecvKey = null; // clé du sens de réception : authentifie les trames « périmées »
-// Compteurs (diagnostic et tests) : trames envoyées, reçues, rejetées
-const secStats = { sent: 0, received: 0, dropped: 0, refused: 0, lastError: null };
+// Compteurs (diagnostic et tests) : trames envoyées, reçues, rejetées ;
+// duplicates : trames déjà reçues (doublon arrivé par une autre liaison, ou rejeu)
+const secStats = { sent: 0, received: 0, dropped: 0, refused: 0, duplicates: 0, lastError: null };
+let _onSessionUp = null; // rappel de (re)connexion de la session courante
 
 function _newClientId(prefix) { return prefix + '-' + mode + '-' + Math.random().toString(36).slice(2, 8); }
 
 // Connexion à la session chiffrée « pairing ». onConnected est rappelé à la
 // 1re connexion ET à chaque reconnexion automatique : la télécommande renvoie
 // alors son état (hello → caps → resynchronisation), l'écran ses capacités.
+// Transports : Internet (internetConnect, broker ou relais) et liaisons
+// locales de l'app native (21-links.js), ouvertes selon le choix de liaison.
 async function connectSession(pairing, onConnected) {
   if (mqttClient) { mqttClient.end(true); mqttClient = null; }
   _sec = null;
@@ -5872,10 +5893,18 @@ async function connectSession(pairing, onConnected) {
   if (seq !== _connectSeq || !mode) return; // remplacée entre-temps (retour, nouvelle session)
   _sec = ch; _secBc = bc; _secRecvKey = recvKey;
   _rxChain = Promise.resolve(); _txChain = Promise.resolve();
+  _onSessionUp = onConnected;
+  _rxLastSeq.clear(); _dupSeen.clear();
   resetClockSkew();
   initBCFallback(ch);
+  linkSync(); // Wi-Fi local / Bluetooth : salle = topic de CETTE session (21-links.js)
+  if (linkInternetWanted()) internetConnect(ch);
+}
 
-  // Broker public, ou relais privé si RELAY_URL est configuré (19-relay.js)
+// Transport Internet de la session : broker public, ou relais privé si
+// RELAY_URL est configuré (19-relay.js)
+function internetConnect(ch) {
+  const onConnected = _onSessionUp;
   const client = transportConnect(ch.mqttTopic, ch.relayAuth, {
     clientId: _newClientId('cl'),
     clean: true,
@@ -5891,7 +5920,7 @@ async function connectSession(pairing, onConnected) {
   client.on('connect', () => {
     if (!isCurrent()) return;
     client.subscribe(ch.mqttTopic, { qos: 0 }, () => {
-      if (isCurrent()) onConnected();
+      if (isCurrent() && onConnected) onConnected();
     });
   });
 
@@ -5903,11 +5932,12 @@ async function connectSession(pairing, onConnected) {
   });
 
   // Coupure / hors-ligne / nouvelle tentative : mqtt.js se reconnecte seul
-  // (reconnectPeriod). On le reflète dans l'indicateur de liaison.
+  // (reconnectPeriod). On le reflète dans l'indicateur de liaison. Écran
+  // encore relié par une liaison locale : il reste en écoute (signes de vie).
   const onLost = () => {
     if (!isCurrent()) return;
     if (mode === 'remote') setConnStatus('connecting');
-    else if (mode === 'screen') { setScreenStatus('Connexion…'); stopScreenAlive(); }
+    else if (mode === 'screen' && !_linkPeers.size) { setScreenStatus('Connexion…'); stopScreenAlive(); }
   };
   client.on('close', onLost);
   client.on('offline', onLost);
@@ -5918,6 +5948,12 @@ async function connectSession(pairing, onConnected) {
     receiveFrame(ch, String(payload), 'mqtt');
   });
 }
+// Internet fermé volontairement (liaison locale seule choisie)
+function internetDisconnect() {
+  const c = mqttClient;
+  mqttClient = null;
+  if (c) { try { c.end(true); } catch (_) {} }
+}
 
 // Réception : les trames sont ouvertes UNE PAR UNE, dans l'ordre d'arrivée
 // (le déchiffrement est asynchrone ; l'ordre compte : début de transfert avant
@@ -5927,7 +5963,9 @@ const _BC_TYPES = ['color', 'strobe']; // seuls types acceptés du repli même a
 // d'après son étiquette d'émetteur authentifiée (rattachée par « caps ») ;
 // null si inconnu. Lu par les gestionnaires (réponse WebRTC, accusés, lecture…).
 let _rxFrom = null;
-function receiveFrame(ch, str, via) {
+// via : 'mqtt' (Internet), 'bc' (même appareil), 'lan' / 'ble' (liaisons
+// locales, 21-links.js) ; peer : pair local qui l'a portée
+function receiveFrame(ch, str, via, peer) {
   _rxChain = _rxChain.then(async () => {
     if (ch !== _sec) return;
     let r;
@@ -5937,6 +5975,9 @@ function receiveFrame(ch, str, via) {
     catch (e) {
       secStats.dropped++; secStats.lastError = (e && e.code) || 'error';
       if (secStats.lastError === 'stale') await noteStaleFrame(ch, str);
+      // Même trame déjà reçue par une autre liaison : écartée par la fenêtre
+      // anti-rejeu, elle prouve tout de même que cette liaison fonctionne
+      else if (secStats.lastError === 'replay') { secStats.duplicates++; await noteDuplicateFrame(ch, str, via, peer); }
       return;
     }
     if (r) noteFreshFrame(r.sender);
@@ -5948,15 +5989,59 @@ function receiveFrame(ch, str, via) {
     }
     if (!r || r.kind !== 'message' || ch !== _sec) return; // écho, autre écran, fragment binaire
     if (via === 'bc' && !_BC_TYPES.includes(r.message.type)) return;
+    if (mode === 'remote') remoteNoteScreen(r.sender, r.message, via, peer);
+    // Plusieurs liaisons : une trame plus ancienne qu'une trame du même type
+    // déjà appliquée (doublée par une liaison plus rapide) n'écrase pas l'état
+    if (!_rxInOrder(str, r.sender, r.message.type)) { secStats.dropped++; secStats.lastError = 'order'; return; }
     secStats.received++;
-    if (mode === 'remote') {
-      remoteNoteScreen(r.sender, r.message);
-      _rxFrom = _screenOfSender.get(r.sender) || null;
-    }
+    if (mode === 'remote') _rxFrom = _screenOfSender.get(r.sender) || null;
     try { dispatchMessage(r.message); } catch (e) { console.warn('SetRemote : message', r.message.type, e); }
     finally { _rxFrom = null; }
   });
   return _rxChain;
+}
+
+// ── Ordre entre liaisons ──
+// Chaque liaison livre dans l'ordre ; deux liaisons peuvent se doubler (une
+// trame perdue par l'une, rattrapée plus tard par l'autre). Pour les états où
+// « le dernier gagne », la trame d'un numéro de séquence inférieur au dernier
+// appliqué (même émetteur, même type) est ignorée.
+const _RX_LATEST_WINS = new Set(['color', 'strobe', 'effect', 'blackout', 'screen:brightness', 'torch-onoff', 'torch-dim',
+  'torch-effect', 'media:autoadvance', 'media:endmode', 'dmx:look', 'media-progress', 'call:state']);
+const _rxLastSeq = new Map(); // 'émetteur|type' → séquence appliquée
+function _rxInOrder(str, sender, type) {
+  if (!_RX_LATEST_WINS.has(type)) return true;
+  let seq;
+  try { seq = SRP.peekFrame(str).seq; } catch (_) { return true; }
+  const k = sender + '|' + type;
+  const last = _rxLastSeq.get(k);
+  if (last !== undefined && seq < last) return false;
+  if (last === undefined && _rxLastSeq.size >= 512) _rxLastSeq.delete(_rxLastSeq.keys().next().value);
+  _rxLastSeq.set(k, seq);
+  return true;
+}
+
+// ── Doublons d'une autre liaison ──
+// Télécommande : la liaison qui a porté le doublon est notée pour l'écran
+// émetteur (liaison affichée, 21-links.js), après authentification (sans
+// toucher à la fenêtre anti-rejeu), au plus toutes les 2 s par liaison.
+const _dupSeen = new Map(); // 'émetteur|liaison|pair' → dernière authentification
+async function noteDuplicateFrame(ch, str, via, peer) {
+  if (mode !== 'remote' || !_secRecvKey || ch !== _sec || !via || via === 'bc') return;
+  let h;
+  try { h = SRP.peekFrame(str); } catch (_) { return; }
+  if (h.kind === SRP.FRAME_KIND.PAIRWISE) return;
+  const k = h.sender + '|' + via + '|' + (peer || '');
+  const now = Date.now();
+  if (now - (_dupSeen.get(k) || 0) < 2000) return;
+  try {
+    if (h.kind === SRP.FRAME_KIND.CHUNK) await SRP.openChunk(str, _secRecvKey, null);
+    else await SRP.open(str, _secRecvKey, null);
+  } catch (_) { return; } // non authentique : ignorée
+  if (ch !== _sec) return;
+  if (!_dupSeen.has(k) && _dupSeen.size >= 256) _dupSeen.delete(_dupSeen.keys().next().value);
+  _dupSeen.set(k, now);
+  remoteNoteVia(h.sender, via, peer);
 }
 
 // ── Horloge décalée ──
@@ -6006,9 +6091,11 @@ function sendMsg(obj) {
     if (!obj) return;     // cible vide
     scrTrack(obj);
   }
-  if (!mqttClient || !mqttClient.connected || !_sec) return;
+  if (!_sec || !sessionLinkUp()) return;
   let msg;
   try { msg = prepareOutgoing(obj); } catch (_) { return; }
+  // Seul le Bluetooth relie encore les appareils : un média ne partirait nulle part
+  if (LINK_MEDIA_TYPES.has(msg.type) && !mediaLinkUp()) return;
   const ch = _sec, client = mqttClient;
   const bc = (mode === 'remote' && window._bc && _secBc && _BC_TYPES.includes(msg.type)) ? _secBc : null;
   _txChain = _txChain.then(async () => {
@@ -6021,22 +6108,33 @@ function sendMsg(obj) {
       console.warn('SetRemote : message refusé à l\'envoi', msg.type, e && e.message);
       return;
     }
-    if (client === mqttClient && client.connected) { client.publish(ch.mqttTopic, frame, { qos: 0 }); secStats.sent++; }
+    if (_transmit(ch, client, frame, msg)) secStats.sent++;
     if (bc && window._bc) { try { window._bc.postMessage(await bc.seal(msg)); } catch (_) {} }
   });
+}
+
+// Une trame scellée part sur TOUTES les liaisons ouvertes : Internet, puis
+// Wi-Fi local / Bluetooth (21-links.js). true si au moins une l'a prise.
+function _transmit(ch, client, frame, msg) {
+  let out = false;
+  if (client && client === mqttClient && client.connected) { client.publish(ch.mqttTopic, frame, { qos: 0 }); out = true; }
+  if (_linkPeers.size && linkTransmit(frame, msg && msg.type, msg && msg.target)) out = true;
+  return out;
 }
 
 // Message scellé avec une clé PAR ÉCRAN (pairwise.js, 29-revoke.js), publié
 // sur la session en cours dans l'ordre des envois. Résolu une fois publié.
 function sendPairwise(obj, keys) {
-  if (!mqttClient || !mqttClient.connected || !_sec || !keys) return Promise.resolve();
+  if (!_sec || !sessionLinkUp() || !keys) return Promise.resolve();
   const ch = _sec, client = mqttClient;
   _txChain = _txChain.then(async () => {
     if (ch !== _sec) return;
     let frame;
     try { frame = await ch.sealPairwise(JSON.parse(JSON.stringify(obj)), keys); }
     catch (e) { secStats.refused++; secStats.lastError = (e && e.code) || 'error'; console.warn('SetRemote : message refusé à l\'envoi', obj && obj.type, e && e.message); return; }
-    if (client === mqttClient && client.connected) { client.publish(ch.mqttTopic, frame, { qos: 0 }); secStats.sent++; }
+    // Adressé à un écran (sid) : ses pairs locaux s'ils sont connus
+    const target = mode === 'remote' && obj && typeof obj.sid === 'string' ? { screens: [obj.sid] } : null;
+    if (_transmit(ch, client, frame, { type: obj && obj.type, target })) secStats.sent++;
   });
   return _txChain;
 }
@@ -6068,8 +6166,301 @@ function closeSession() {
   _connectSeq++;
   if (mqttClient) { try { mqttClient.end(true); } catch (_) {} mqttClient = null; }
   if (window._bc) { try { window._bc.close(); } catch (_) {} window._bc = null; }
-  _sec = null; _secBc = null; _secRecvKey = null;
+  _sec = null; _secBc = null; _secRecvKey = null; _onSessionUp = null;
+  linkStop(); // liaisons locales de la session fermées (21-links.js)
+  _rxLastSeq.clear(); _dupSeen.clear();
   resetClockSkew();
+}
+// ══════════════════════════ LIAISONS LOCALES : WI-FI LOCAL ET BLUETOOTH ══════════════════════════
+// Maquettes validées 4 (indicateur de liaison), 5 (liaison de chaque écran),
+// 10 (tourner sans réseau) et 13 (« Liaison par défaut »). Contrat du pont
+// avec la coque native et choix de conception : docs/OFFLINE.md.
+//
+// Les trames restent celles de la session chiffrée de bout en bout
+// (packages/protocol) : la coque ne fait que les porter entre appareils
+// proches. Chaque trame part sur TOUTES les liaisons ouvertes (Internet :
+// broker MQTT ou relais, 20-mqtt.js / 19-relay.js ; Wi-Fi local ; Bluetooth) ;
+// la fenêtre anti-rejeu du canal écarte les doublons à la réception, et les
+// trames de toutes les liaisons passent par le même receiveFrame (20-mqtt.js).
+//   PWA → coque  link:start { modes, role, room }   ouvre / remplace les liaisons locales
+//                link:stop { modes? }               ferme (toutes, ou celles citées)
+//                link:send { frames, to? }          trames vers des pairs (to : identifiants de link:peers)
+//                link:state?                        demande l'état des liaisons
+//   coque → PWA  link:frames { frames: [{ peer, mode, data }] }
+//                link:peers { peers: [{ peer, mode, name? }] }   à chaque changement
+//                link:state { lan: { available, active, error? }, ble: { … } }
+//                link:error { mode, reason }
+// Plafonds par trame : 64 Kio en Wi-Fi local, 4 Kio en Bluetooth. Le
+// Bluetooth ne porte que des COMMANDES : jamais de média (fragments, envoi
+// base64, signalisation WebRTC) ni de trame trop grande, refusées ici avant
+// tout envoi (to restreint aux pairs Wi-Fi local, ou rien).
+//
+// Choix de la liaison (télécommande, mémorisé : setremote-link-v1) :
+//   auto      Internet ET liaisons locales disponibles, EN PARALLÈLE (une
+//             coupure du Wi-Fi du lieu ou de la 4G passe inaperçue)
+//   internet  Internet seul (comportement d'avant)
+//   lan, ble  cette liaison locale seule, sans Internet
+// Un écran ouvre toujours Internet et toutes les liaisons locales de l'app :
+// il suit la télécommande, quel que soit son choix. Hors de l'app native
+// (navigateur), aucune liaison locale : tout passe par Internet, comme avant.
+const LINK_PREF_KEY = 'setremote-link-v1';
+const LINK_PREFS = ['auto', 'internet', 'lan', 'ble'];
+const LINK_MODES = ['lan', 'ble'];
+const LINK_FRAME_MAX = Object.freeze({ lan: 64 * 1024, ble: 4 * 1024 });
+const LINK_RX_BATCH_MAX = 512;   // trames traitées au plus par link:frames
+const LINK_PEERS_MAX = 64;
+const LINK_CAPS_BLE_MAX = 2800; // caractères JSON : une annonce « caps » plus longue dépasserait 4 Kio une fois scellée
+const LINK_LABELS = Object.freeze({ internet: 'Internet', lan: 'Wi-Fi local', ble: 'Bluetooth', off: 'Hors ligne' });
+// Médias et leur signalisation : Internet ou Wi-Fi local seulement
+const LINK_MEDIA_TYPES = new Set(['media-img-start', 'media-img-chunk', 'media:upload', 'media:chunk', 'media:play',
+  'media:chunkack', 'media:need-chunks', 'rtc-offer', 'rtc-answer', 'rtc-ice']);
+
+// État annoncé par la coque (link:state) ; available null = encore inconnu
+const linkNative = { lan: { available: null, active: false, error: null }, ble: { available: null, active: false, error: null } };
+const _linkPeers = new Map();      // 'mode:peer' → { key, peer, mode, name }
+const _linkPeerScreen = new Map(); // télécommande : 'mode:peer' → screenId (appris des trames authentifiées)
+let _linkStarted = null;           // dernier link:start : { key, modes, role, room } (null : liaisons fermées)
+let _linkStateAsked = false;
+
+// ── Choix de la liaison ──
+function linkPref() {
+  let p = null;
+  try { const o = JSON.parse(_lsGet(LINK_PREF_KEY)); p = o && o.mode; } catch (_) {}
+  return LINK_PREFS.includes(p) ? p : 'auto';
+}
+// Liaison locale utilisable : app native, et pas déclarée indisponible par la coque
+function linkModeUsable(m) { return IN_NATIVE_APP && LINK_MODES.includes(m) && linkNative[m].available !== false; }
+function setLinkPref(p) {
+  if (!LINK_PREFS.includes(p)) return false;
+  if ((p === 'lan' || p === 'ble') && !linkModeUsable(p)) return false; // navigateur, ou liaison indisponible
+  _lsSet(LINK_PREF_KEY, JSON.stringify({ v: 1, mode: p }));
+  linkApplyPref();
+  return true;
+}
+// Libellé du choix (Réglages, vue « Tourner sans réseau »)
+function linkPrefLabel(p) { return p === 'auto' ? 'Auto' : LINK_LABELS[p === 'internet' ? 'internet' : p]; }
+
+// Liaisons locales voulues dans le rôle courant
+function linkModesWanted() {
+  if (!IN_NATIVE_APP || (mode !== 'remote' && mode !== 'screen')) return [];
+  const usable = LINK_MODES.filter(linkModeUsable);
+  if (mode === 'screen') return usable;
+  const p = linkPref();
+  if (p === 'internet') return [];
+  if (p === 'lan' || p === 'ble') return usable.includes(p) ? [p] : [];
+  return usable;
+}
+// Internet (broker / relais) voulu ? Toujours, sauf télécommande réglée sur une liaison locale seule
+function linkInternetWanted() {
+  if (mode !== 'remote' || !IN_NATIVE_APP) return true;
+  const p = linkPref();
+  return p !== 'lan' && p !== 'ble';
+}
+
+// ── Pairs ──
+function linkPeerCount(m) {
+  if (!m) return _linkPeers.size;
+  let n = 0;
+  for (const p of _linkPeers.values()) if (p.mode === m) n++;
+  return n;
+}
+// Session joignable par au moins une liaison (Internet ou un pair local)
+function sessionLinkUp() { return !!(mqttClient && mqttClient.connected) || _linkPeers.size > 0; }
+// Liaison capable de porter un média : Internet ou Wi-Fi local
+function mediaLinkUp() { return !!(mqttClient && mqttClient.connected) || linkPeerCount('lan') > 0; }
+// Seul le Bluetooth relie encore les appareils : commandes seulement
+function linkBleOnly() { return linkPeerCount('ble') > 0 && !mediaLinkUp(); }
+
+// (Re)démarre ou arrête les liaisons locales de la session courante.
+// La salle (room) est le topic opaque de la session (22 caractères, dérivé du
+// secret) : après un retrait d'écran (29-revoke.js), la nouvelle session est
+// annoncée à la coque par un nouveau link:start.
+function linkSync() {
+  if (!IN_NATIVE_APP) return;
+  if (!_linkStateAsked) { _linkStateAsked = true; nativePost({ type: 'link:state?' }); }
+  const want = _sec ? linkModesWanted() : [];
+  if (!want.length) { linkStop(); return; }
+  const room = _sec.topic;
+  const key = JSON.stringify([want, mode, room]);
+  if (_linkStarted && _linkStarted.key === key) return;
+  if (_linkStarted && _linkStarted.room !== room) linkClearPeers(); // nouvelle salle : pairs à redécouvrir
+  else for (const [k, p] of [..._linkPeers]) if (!want.includes(p.mode)) _linkPeers.delete(k);
+  _linkStarted = { key, modes: want.slice(), role: mode, room };
+  nativePost({ type: 'link:start', modes: want.slice(), role: mode, room });
+}
+function linkStop() {
+  if (_linkStarted) { _linkStarted = null; nativePost({ type: 'link:stop' }); }
+  linkClearPeers();
+}
+function linkClearPeers() { _linkPeers.clear(); _linkPeerScreen.clear(); }
+
+// Choix changé : liaisons locales et Internet ajustés sans quitter la session
+function linkApplyPref() {
+  if (_sec && (mode === 'remote' || mode === 'screen')) {
+    const want = linkInternetWanted();
+    if (want && !mqttClient) internetConnect(_sec);
+    else if (!want && mqttClient) { internetDisconnect(); if (mode === 'remote') setConnStatus('connecting'); }
+    linkSync();
+  }
+  linkChanged();
+}
+
+// ── Coque → PWA ──
+function linkOnState(m) {
+  if (!m || typeof m !== 'object') return false;
+  for (const k of LINK_MODES) {
+    const s = m[k];
+    if (!s || typeof s !== 'object') continue;
+    linkNative[k] = {
+      available: typeof s.available === 'boolean' ? s.available : linkNative[k].available,
+      active: s.active === true,
+      error: typeof s.error === 'string' && s.error ? s.error.replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, 120) : null,
+    };
+  }
+  linkSync();
+  linkChanged();
+  return true;
+}
+function linkOnError(m, reason) {
+  if (!LINK_MODES.includes(m)) return false;
+  linkNative[m].error = typeof reason === 'string' && reason ? reason.replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, 120) : 'erreur';
+  linkChanged();
+  return true;
+}
+const _LINK_PEER_RE = /^[\x21-\x7E]{1,128}$/;
+function linkOnPeers(list) {
+  if (!Array.isArray(list)) return false;
+  const wasUp = sessionLinkUp();
+  const before = new Set(_linkPeers.keys());
+  _linkPeers.clear();
+  if (_linkStarted) {
+    for (const p of list.slice(0, LINK_PEERS_MAX)) {
+      if (!p || typeof p !== 'object' || typeof p.peer !== 'string' || !_LINK_PEER_RE.test(p.peer)) continue;
+      if (!LINK_MODES.includes(p.mode) || !_linkStarted.modes.includes(p.mode)) continue;
+      const key = p.mode + ':' + p.peer;
+      _linkPeers.set(key, { key, peer: p.peer, mode: p.mode, name: typeof p.name === 'string' ? p.name.slice(0, 40) : '' });
+    }
+  }
+  for (const k of [..._linkPeerScreen.keys()]) if (!_linkPeers.has(k)) _linkPeerScreen.delete(k);
+  const added = [..._linkPeers.keys()].filter((k) => !before.has(k));
+  linkPeersChanged(added, wasUp);
+  return true;
+}
+function linkOnFrames(frames) {
+  if (!Array.isArray(frames)) return false;
+  for (const f of frames.slice(0, LINK_RX_BATCH_MAX)) {
+    if (!f || typeof f !== 'object' || !LINK_MODES.includes(f.mode) || typeof f.data !== 'string') continue;
+    if (!f.data || f.data.length > LINK_FRAME_MAX[f.mode]) continue; // au-delà du plafond de la liaison : ignorée
+    const peer = typeof f.peer === 'string' && _LINK_PEER_RE.test(f.peer) ? f.peer : null;
+    if (_sec) receiveFrame(_sec, f.data, f.mode, peer);
+  }
+  return true;
+}
+
+// Pairs apparus ou disparus : comme une (re)connexion du transport Internet
+function linkPeersChanged(added, wasUp) {
+  const up = sessionLinkUp();
+  if (_sec && mode === 'remote') {
+    if (added.length) {
+      if (!wasUp) remoteLinkGrace(); // retour de la liaison : délai de grâce des écrans
+      _linkEverConnected = true;
+      // Les écrans joints s'annoncent (caps) : resynchronisation de chacun
+      linkSendLocal({ type: 'hello' }, added);
+    }
+    renderLinkStatus();
+  } else if (_sec && mode === 'screen') {
+    if (up && !wasUp) screenOnSessionConnected();
+    else if (!up && wasUp) { setScreenStatus('Connexion…'); stopScreenAlive(); }
+  }
+  linkChanged();
+}
+
+// ── Envoi ──
+// Pairs locaux d'écrans (télécommande) ; null si l'un d'eux n'a pas encore de pair connu
+function linkPeersOfScreens(ids) {
+  const out = [];
+  for (const id of ids) {
+    let found = false;
+    for (const [k, sid] of _linkPeerScreen) if (sid === id && _linkPeers.has(k)) { out.push(_linkPeers.get(k)); found = true; }
+    if (!found) return null;
+  }
+  return out;
+}
+// Trame scellée vers les liaisons locales. type : type du message (médias :
+// jamais en Bluetooth) ; target : adresse de l'ordre (télécommande : pairs des
+// écrans visés) ; only : clés de pairs imposées. true si la coque l'a reçue.
+function linkTransmit(frame, type, target, only) {
+  if (!_linkPeers.size || typeof frame !== 'string') return false;
+  const bleOk = !LINK_MEDIA_TYPES.has(type) && frame.length <= LINK_FRAME_MAX.ble;
+  const lanOk = frame.length <= LINK_FRAME_MAX.lan;
+  let peers = [..._linkPeers.values()];
+  if (only) peers = peers.filter((p) => only.includes(p.key));
+  else if (mode === 'remote' && target && Array.isArray(target.screens)) {
+    const sel = linkPeersOfScreens(target.screens);
+    if (sel) peers = sel;
+  }
+  // Un même identifiant annoncé sur deux liaisons serait ambigu pour la coque :
+  // jamais de trame interdite au Bluetooth vers lui (contrat : identifiants
+  // distincts par liaison, docs/OFFLINE.md)
+  const bleIds = new Set([..._linkPeers.values()].filter((p) => p.mode === 'ble').map((p) => p.peer));
+  peers = peers.filter((p) => (p.mode === 'ble' ? bleOk : lanOk && (bleOk || !bleIds.has(p.peer))));
+  if (!peers.length) return false;
+  const to = [...new Set(peers.map((p) => p.peer))];
+  // Sans « to », la coque enverrait aussi aux pairs apparus entre-temps :
+  // seulement pour une trame que toutes les liaisons acceptent, vers tous les pairs
+  const all = !only && bleOk && lanOk && peers.length === _linkPeers.size;
+  nativePost(all ? { type: 'link:send', frames: [frame] } : { type: 'link:send', frames: [frame], to });
+  return true;
+}
+// Message scellé envoyé aux seuls pairs locaux donnés (hello à un écran qui apparaît)
+function linkSendLocal(obj, keys) {
+  if (!_sec || !keys || !keys.length) return;
+  let msg;
+  try { msg = prepareOutgoing(obj); } catch (_) { return; }
+  const ch = _sec;
+  _txChain = _txChain.then(async () => {
+    if (ch !== _sec) return;
+    let frame;
+    try { frame = await ch.seal(msg); } catch (_) { return; }
+    if (linkTransmit(frame, msg.type, null, keys)) secStats.sent++;
+  });
+}
+
+// ── Télécommande : liaison de chaque écran (maquettes 4 et 5) ──
+// Chaque trame authentifiée d'un écran note la liaison qui l'a portée (y
+// compris un doublon arrivé par une autre liaison) ; un écran émet un signe de
+// vie toutes les 15 s sur toutes ses liaisons. Liaison affichée : Internet si
+// elle le relie, sinon Wi-Fi local, sinon Bluetooth.
+function linkNoteVia(sc, via, peer, id) {
+  const k = via === 'bc' || !via ? 'mqtt' : via;
+  if (!sc.via) sc.via = {};
+  sc.via[k] = Date.now();
+  if (peer && LINK_MODES.includes(via) && SRP.SCREEN_ID_RE.test(id)) {
+    const key = via + ':' + peer;
+    if (_linkPeerScreen.has(key) || _linkPeerScreen.size < LINK_PEERS_MAX * 2) _linkPeerScreen.set(key, id);
+  }
+}
+function linkForgetScreen(id) { for (const [k, s] of [..._linkPeerScreen]) if (s === id) _linkPeerScreen.delete(k); }
+// 'internet' | 'lan' | 'ble' | 'off'
+function scrLinkOf(id, now = Date.now()) {
+  const sc = _pairedScreens.get(id);
+  if (!sc) return 'off';
+  if (remoteLinkUp() && now - sc.lastSeen > SCREEN_OFFLINE_MS) return 'off';
+  const v = sc.via;
+  if (!v) return 'internet'; // noté sans détail de transport
+  const fresh = (k) => now - (v[k] || 0) <= SCREEN_OFFLINE_MS;
+  if (fresh('mqtt') && _linkState === 'connected') return 'internet';
+  if (fresh('lan') && linkPeerCount('lan')) return 'lan';
+  if (fresh('ble') && linkPeerCount('ble')) return 'ble';
+  return fresh('lan') ? 'lan' : fresh('ble') ? 'ble' : 'internet';
+}
+// Un écran peut-il recevoir un média (préparation) ?
+function scrMediaReachable(id) { const l = scrLinkOf(id); return l === 'internet' || l === 'lan'; }
+
+// Rafraîchit ce qui montre les liaisons (vue « Tourner sans réseau », Réglages)
+function linkChanged() {
+  if (typeof renderOfflineView === 'function') renderOfflineView();
+  if (typeof renderSettingsLink === 'function') renderSettingsLink();
 }
 // ══════════════════════════ PROTOCOLE — validation & aiguillage ══════════════════════════
 // Chaque type de message reçu est décrit par :
@@ -6458,7 +6849,7 @@ function remoteResync() {
   _resyncTimer = null;
   const pending = _resyncPending;
   _resyncPending = new Map();
-  if (mode !== 'remote' || !mqttClient || !mqttClient.connected) return;
+  if (mode !== 'remote' || !sessionLinkUp()) return; // Internet ou liaison locale (21-links.js)
   const ids = [...pending.keys()].filter((id) => id && scrKnown(id));
   // 1) Lumière et réglages : un envoi par état identique
   const groups = new Map();
@@ -8091,40 +8482,66 @@ function switchTab(t) {
 // Télécommande : pastille de liaison dans l'en-tête et liste des écrans
 // appairés (onglet d'appairage). Un écran est « hors ligne » s'il n'a rien
 // envoyé depuis 40 s (il émet un signe de vie toutes les 15 s).
+// Maquette 4, cinq états : « Internet · chiffré », « Reconnexion… »,
+// « Wi-Fi local », « Bluetooth » (commandes seulement), « Hors ligne · n
+// écran(s) ». Avec les liaisons locales (21-links.js), la pastille montre la
+// liaison la plus faible qui relie encore un écran : Internet, sinon Wi-Fi
+// local, sinon Bluetooth ; chaque écran garde la sienne (maquette 5).
 const SCREEN_ALIVE_MS = 15000, SCREEN_OFFLINE_MS = 40000;
-let _linkState = 'connecting', _linkEverConnected = false, _linkWatch = null;
-const _pairedScreens = new Map();   // screenId (ou étiquette d'émetteur) → { n, lastSeen }
+let _linkState = 'connecting', _linkEverConnected = false, _linkWatch = null; // _linkState : transport Internet
+const _pairedScreens = new Map();   // screenId (ou étiquette d'émetteur) → { n, lastSeen, via? }
 const _screenOfSender = new Map();  // étiquette d'émetteur → screenId
 let _pairedSeq = 0;
 
 function setConnStatus(s) {
   _linkState = s;
   if (s === 'connected') {
-    // Retour de la liaison : délai de grâce avant de déclarer un écran muet
-    const now = Date.now();
-    for (const sc of _pairedScreens.values()) sc.lastSeen = Math.max(sc.lastSeen, now - SCREEN_OFFLINE_MS + 10000);
+    remoteLinkGrace();
     _linkEverConnected = true;
   }
   if (!_linkWatch && mode === 'remote') _linkWatch = setInterval(renderLinkStatus, 5000);
   renderLinkStatus();
 }
+// Retour de la liaison : délai de grâce avant de déclarer un écran muet
+function remoteLinkGrace() {
+  const now = Date.now();
+  for (const sc of _pairedScreens.values()) sc.lastSeen = Math.max(sc.lastSeen, now - SCREEN_OFFLINE_MS + 10000);
+  if (!_linkWatch && mode === 'remote') _linkWatch = setInterval(renderLinkStatus, 5000);
+}
 function stopLinkWatch() { if (_linkWatch) { clearInterval(_linkWatch); _linkWatch = null; } }
+// La télécommande est-elle reliée (Internet ou un pair local) ?
+function remoteLinkUp() { return _linkState === 'connected' || _linkPeers.size > 0; }
 
 function _offlineScreens(now) { return [..._pairedScreens.values()].filter((s) => now - s.lastSeen > SCREEN_OFFLINE_MS); }
+
+// Liaison la plus faible en service : 0 Internet, 1 Wi-Fi local, 2 Bluetooth
+const _LINK_RANK = { internet: 0, lan: 1, ble: 2 };
+function remoteWorstLink(now) {
+  const inet = _linkState === 'connected';
+  let worst = inet ? 0 : (linkPeerCount('lan') ? 1 : 2);
+  for (const id of _pairedScreens.keys()) {
+    const l = scrLinkOf(id, now);
+    if (l !== 'off') worst = Math.max(worst, _LINK_RANK[l]);
+  }
+  return ['online', 'lan', 'ble'][worst];
+}
 
 function renderLinkStatus() {
   const now = Date.now();
   const pill = document.getElementById('linkPill'), lbl = document.getElementById('linkPillLabel');
   if (pill && lbl) {
     let cls, text;
-    if (_linkState !== 'connected') {
+    if (!remoteLinkUp()) {
       cls = 'reconnecting'; text = _linkEverConnected ? 'Reconnexion…' : 'Connexion…';
     } else if (clockSkewed) {
       cls = 'skew'; text = 'Horloge décalée'; // trames authentiques mais hors des 5 min de tolérance
     } else {
       const off = _offlineScreens(now).length;
       if (off) { cls = 'offline'; text = 'Hors ligne · ' + off + (off > 1 ? ' écrans' : ' écran'); }
-      else { cls = 'online'; text = 'Internet · chiffré'; }
+      else {
+        cls = remoteWorstLink(now);
+        text = cls === 'online' ? 'Internet · chiffré' : LINK_LABELS[cls];
+      }
     }
     pill.className = 'link-pill ' + cls;
     lbl.textContent = text;
@@ -8140,17 +8557,29 @@ function renderPairedScreens(now) {
   document.getElementById('pairScreensCount').textContent = String(_pairedScreens.size);
   const order = (id, s) => { const e = _scrReg.screens.get(id); return e ? e.n : 1e6 + s.n; };
   list.innerHTML = [..._pairedScreens.entries()].sort((a, b) => order(...a) - order(...b)).map(([id, s]) => {
-    const off = _linkState === 'connected' && now - s.lastSeen > SCREEN_OFFLINE_MS;
-    return '<div class="pair-screen' + (off ? ' off' : '') + '"><span class="ps-dot"></span>'
-      + '<span class="ps-name">' + escapeHtml(scrName(id)) + '</span><span class="ps-link">' + (off ? 'Hors ligne' : 'Internet') + '</span></div>';
+    const off = remoteLinkUp() && now - s.lastSeen > SCREEN_OFFLINE_MS;
+    const l = off ? 'off' : scrLinkOf(id, now);
+    return '<div class="pair-screen' + (off ? ' off' : l === 'internet' ? '' : ' ' + l) + '"><span class="ps-dot"></span>'
+      + '<span class="ps-name">' + escapeHtml(scrName(id)) + '</span><span class="ps-link">' + LINK_LABELS[l] + '</span></div>';
   }).join('');
   if (typeof renderScreensUi === 'function') renderScreensUi(); // liaison de chaque écran (maquette 5)
+}
+
+// Doublon authentifié arrivé par une autre liaison : cette liaison relie l'écran
+function remoteNoteVia(sender, via, peer) {
+  const id = _screenOfSender.get(sender) || sender;
+  const sc = _pairedScreens.get(id);
+  if (!sc) return;
+  const before = scrLinkOf(id);
+  linkNoteVia(sc, via, peer, id);
+  if (scrLinkOf(id) !== before) renderLinkStatus();
 }
 
 // Chaque message authentifié d'un écran prouve qu'il est en ligne ; « caps »
 // rattache son étiquette d'émetteur (une par lancement) à son screenId stable
 // et l'inscrit au registre de la session (nom, groupes : 28-screens.js).
-function remoteNoteScreen(sender, msg) {
+// via / peer : liaison qui l'a porté (21-links.js) ; absente : sans détail.
+function remoteNoteScreen(sender, msg, via, peer) {
   if (msg.type === 'caps' && typeof msg.screenId === 'string' && SRP.SCREEN_ID_RE.test(msg.screenId)) {
     for (const [snd, id] of _screenOfSender) if (id === msg.screenId && snd !== sender) _screenOfSender.delete(snd);
     _screenOfSender.set(sender, msg.screenId);
@@ -8169,10 +8598,12 @@ function remoteNoteScreen(sender, msg) {
     _pairedScreens.set(id, sc);
   }
   const wasOff = Date.now() - sc.lastSeen > SCREEN_OFFLINE_MS;
+  const before = via ? scrLinkOf(id) : null;
   sc.lastSeen = Date.now();
-  if (wasOff) renderLinkStatus();
+  if (via) linkNoteVia(sc, via, peer, id);
+  if (wasOff || (via && scrLinkOf(id) !== before)) renderLinkStatus();
 }
-function clearPairedScreens() { _pairedScreens.clear(); _screenOfSender.clear(); _pairedSeq = 0; renderLinkStatus(); }
+function clearPairedScreens() { _pairedScreens.clear(); _screenOfSender.clear(); _linkPeerScreen.clear(); _pairedSeq = 0; renderLinkStatus(); }
 
 // Toucher la pastille : détail par écran (onglet d'appairage)
 function openLinkDetail() {
@@ -10540,6 +10971,9 @@ function sendCaps() {
   // Clé par écran (29-revoke.js) : échange pris en charge, et kid de la clé détenue
   caps.kx = 1;
   if (_pw) caps.kid = _pw.kid;
+  // Bluetooth seul (4 Kio par trame) : une longue liste du cache ne tiendrait
+  // pas ; sans elle, la télécommande garde celle de la dernière annonce
+  if (linkBleOnly() && JSON.stringify(caps).length > LINK_CAPS_BLE_MAX) delete caps.cached;
   sendMsg(caps);
 }
 
@@ -11295,7 +11729,7 @@ function schedulePreload() { setTimeout(preloadPoolToScreen, 300); }
 // Les vidéos sont mises en cache par l'écran à leur première lecture.
 async function preloadPoolToScreen() {
   if (_preloadRunning || mode !== 'remote') return;
-  if (!mqttClient || !mqttClient.connected) return;
+  if (!mediaLinkUp()) return; // Internet ou Wi-Fi local : jamais en Bluetooth (21-links.js)
   _preloadRunning = true;
   try {
     for (const it of [..._mediaPool]) {
@@ -11308,7 +11742,7 @@ async function preloadPoolToScreen() {
       for (let g = 0; g < 150 && _vidJobsBusy(); g++) {
         await new Promise(r => setTimeout(r, 400));
       }
-      if (!mqttClient || !mqttClient.connected) return;
+      if (!mediaLinkUp()) return;
       const ids = lack();
       if (!ids.length || !_mediaPool.includes(it)) continue;
       if (!_preloadInflight.has(it.id)) _preloadInflight.set(it.id, new Set());
@@ -13069,7 +13503,7 @@ const _ringOnScreens = {
 // les écrans donnés (défaut : la cible) qui ne l'ont pas déjà
 async function ringSendIfMissing(id, screens) {
   if (!ringLibHas(id)) return;
-  if (!mqttClient || !mqttClient.connected) return; // renvoyé à la resynchronisation
+  if (!mediaLinkUp()) return; // renvoyé à la resynchronisation (jamais en Bluetooth seul)
   const lack = () => (screens || scrTargetIds()).filter((s) => scrKnown(s) && !_ringOn(id, s));
   if (!lack().length) return;
   const data = await ringLibData(id);

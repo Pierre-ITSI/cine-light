@@ -326,7 +326,7 @@ const _ringOnScreens = {
 // les écrans donnés (défaut : la cible) qui ne l'ont pas déjà
 async function ringSendIfMissing(id, screens) {
   if (!ringLibHas(id)) return;
-  if (!mqttClient || !mqttClient.connected) return; // renvoyé à la resynchronisation
+  if (!mediaLinkUp()) return; // renvoyé à la resynchronisation (jamais en Bluetooth seul)
   const lack = () => (screens || scrTargetIds()).filter((s) => scrKnown(s) && !_ringOn(id, s));
   if (!lack().length) return;
   const data = await ringLibData(id);

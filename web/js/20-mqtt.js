@@ -11,14 +11,18 @@ let _secBc = null;    // 2e étiquette d'émetteur pour le repli BroadcastChanne
 let _connectSeq = 0;  // connexion la plus récente (les plus anciennes s'abandonnent)
 let _rxChain = Promise.resolve(), _txChain = Promise.resolve();
 let _secRecvKey = null; // clé du sens de réception : authentifie les trames « périmées »
-// Compteurs (diagnostic et tests) : trames envoyées, reçues, rejetées
-const secStats = { sent: 0, received: 0, dropped: 0, refused: 0, lastError: null };
+// Compteurs (diagnostic et tests) : trames envoyées, reçues, rejetées ;
+// duplicates : trames déjà reçues (doublon arrivé par une autre liaison, ou rejeu)
+const secStats = { sent: 0, received: 0, dropped: 0, refused: 0, duplicates: 0, lastError: null };
+let _onSessionUp = null; // rappel de (re)connexion de la session courante
 
 function _newClientId(prefix) { return prefix + '-' + mode + '-' + Math.random().toString(36).slice(2, 8); }
 
 // Connexion à la session chiffrée « pairing ». onConnected est rappelé à la
 // 1re connexion ET à chaque reconnexion automatique : la télécommande renvoie
 // alors son état (hello → caps → resynchronisation), l'écran ses capacités.
+// Transports : Internet (internetConnect, broker ou relais) et liaisons
+// locales de l'app native (21-links.js), ouvertes selon le choix de liaison.
 async function connectSession(pairing, onConnected) {
   if (mqttClient) { mqttClient.end(true); mqttClient = null; }
   _sec = null;
@@ -40,10 +44,18 @@ async function connectSession(pairing, onConnected) {
   if (seq !== _connectSeq || !mode) return; // remplacée entre-temps (retour, nouvelle session)
   _sec = ch; _secBc = bc; _secRecvKey = recvKey;
   _rxChain = Promise.resolve(); _txChain = Promise.resolve();
+  _onSessionUp = onConnected;
+  _rxLastSeq.clear(); _dupSeen.clear();
   resetClockSkew();
   initBCFallback(ch);
+  linkSync(); // Wi-Fi local / Bluetooth : salle = topic de CETTE session (21-links.js)
+  if (linkInternetWanted()) internetConnect(ch);
+}
 
-  // Broker public, ou relais privé si RELAY_URL est configuré (19-relay.js)
+// Transport Internet de la session : broker public, ou relais privé si
+// RELAY_URL est configuré (19-relay.js)
+function internetConnect(ch) {
+  const onConnected = _onSessionUp;
   const client = transportConnect(ch.mqttTopic, ch.relayAuth, {
     clientId: _newClientId('cl'),
     clean: true,
@@ -59,7 +71,7 @@ async function connectSession(pairing, onConnected) {
   client.on('connect', () => {
     if (!isCurrent()) return;
     client.subscribe(ch.mqttTopic, { qos: 0 }, () => {
-      if (isCurrent()) onConnected();
+      if (isCurrent() && onConnected) onConnected();
     });
   });
 
@@ -71,11 +83,12 @@ async function connectSession(pairing, onConnected) {
   });
 
   // Coupure / hors-ligne / nouvelle tentative : mqtt.js se reconnecte seul
-  // (reconnectPeriod). On le reflète dans l'indicateur de liaison.
+  // (reconnectPeriod). On le reflète dans l'indicateur de liaison. Écran
+  // encore relié par une liaison locale : il reste en écoute (signes de vie).
   const onLost = () => {
     if (!isCurrent()) return;
     if (mode === 'remote') setConnStatus('connecting');
-    else if (mode === 'screen') { setScreenStatus('Connexion…'); stopScreenAlive(); }
+    else if (mode === 'screen' && !_linkPeers.size) { setScreenStatus('Connexion…'); stopScreenAlive(); }
   };
   client.on('close', onLost);
   client.on('offline', onLost);
@@ -86,6 +99,12 @@ async function connectSession(pairing, onConnected) {
     receiveFrame(ch, String(payload), 'mqtt');
   });
 }
+// Internet fermé volontairement (liaison locale seule choisie)
+function internetDisconnect() {
+  const c = mqttClient;
+  mqttClient = null;
+  if (c) { try { c.end(true); } catch (_) {} }
+}
 
 // Réception : les trames sont ouvertes UNE PAR UNE, dans l'ordre d'arrivée
 // (le déchiffrement est asynchrone ; l'ordre compte : début de transfert avant
@@ -95,7 +114,9 @@ const _BC_TYPES = ['color', 'strobe']; // seuls types acceptés du repli même a
 // d'après son étiquette d'émetteur authentifiée (rattachée par « caps ») ;
 // null si inconnu. Lu par les gestionnaires (réponse WebRTC, accusés, lecture…).
 let _rxFrom = null;
-function receiveFrame(ch, str, via) {
+// via : 'mqtt' (Internet), 'bc' (même appareil), 'lan' / 'ble' (liaisons
+// locales, 21-links.js) ; peer : pair local qui l'a portée
+function receiveFrame(ch, str, via, peer) {
   _rxChain = _rxChain.then(async () => {
     if (ch !== _sec) return;
     let r;
@@ -105,6 +126,9 @@ function receiveFrame(ch, str, via) {
     catch (e) {
       secStats.dropped++; secStats.lastError = (e && e.code) || 'error';
       if (secStats.lastError === 'stale') await noteStaleFrame(ch, str);
+      // Même trame déjà reçue par une autre liaison : écartée par la fenêtre
+      // anti-rejeu, elle prouve tout de même que cette liaison fonctionne
+      else if (secStats.lastError === 'replay') { secStats.duplicates++; await noteDuplicateFrame(ch, str, via, peer); }
       return;
     }
     if (r) noteFreshFrame(r.sender);
@@ -116,15 +140,59 @@ function receiveFrame(ch, str, via) {
     }
     if (!r || r.kind !== 'message' || ch !== _sec) return; // écho, autre écran, fragment binaire
     if (via === 'bc' && !_BC_TYPES.includes(r.message.type)) return;
+    if (mode === 'remote') remoteNoteScreen(r.sender, r.message, via, peer);
+    // Plusieurs liaisons : une trame plus ancienne qu'une trame du même type
+    // déjà appliquée (doublée par une liaison plus rapide) n'écrase pas l'état
+    if (!_rxInOrder(str, r.sender, r.message.type)) { secStats.dropped++; secStats.lastError = 'order'; return; }
     secStats.received++;
-    if (mode === 'remote') {
-      remoteNoteScreen(r.sender, r.message);
-      _rxFrom = _screenOfSender.get(r.sender) || null;
-    }
+    if (mode === 'remote') _rxFrom = _screenOfSender.get(r.sender) || null;
     try { dispatchMessage(r.message); } catch (e) { console.warn('SetRemote : message', r.message.type, e); }
     finally { _rxFrom = null; }
   });
   return _rxChain;
+}
+
+// ── Ordre entre liaisons ──
+// Chaque liaison livre dans l'ordre ; deux liaisons peuvent se doubler (une
+// trame perdue par l'une, rattrapée plus tard par l'autre). Pour les états où
+// « le dernier gagne », la trame d'un numéro de séquence inférieur au dernier
+// appliqué (même émetteur, même type) est ignorée.
+const _RX_LATEST_WINS = new Set(['color', 'strobe', 'effect', 'blackout', 'screen:brightness', 'torch-onoff', 'torch-dim',
+  'torch-effect', 'media:autoadvance', 'media:endmode', 'dmx:look', 'media-progress', 'call:state']);
+const _rxLastSeq = new Map(); // 'émetteur|type' → séquence appliquée
+function _rxInOrder(str, sender, type) {
+  if (!_RX_LATEST_WINS.has(type)) return true;
+  let seq;
+  try { seq = SRP.peekFrame(str).seq; } catch (_) { return true; }
+  const k = sender + '|' + type;
+  const last = _rxLastSeq.get(k);
+  if (last !== undefined && seq < last) return false;
+  if (last === undefined && _rxLastSeq.size >= 512) _rxLastSeq.delete(_rxLastSeq.keys().next().value);
+  _rxLastSeq.set(k, seq);
+  return true;
+}
+
+// ── Doublons d'une autre liaison ──
+// Télécommande : la liaison qui a porté le doublon est notée pour l'écran
+// émetteur (liaison affichée, 21-links.js), après authentification (sans
+// toucher à la fenêtre anti-rejeu), au plus toutes les 2 s par liaison.
+const _dupSeen = new Map(); // 'émetteur|liaison|pair' → dernière authentification
+async function noteDuplicateFrame(ch, str, via, peer) {
+  if (mode !== 'remote' || !_secRecvKey || ch !== _sec || !via || via === 'bc') return;
+  let h;
+  try { h = SRP.peekFrame(str); } catch (_) { return; }
+  if (h.kind === SRP.FRAME_KIND.PAIRWISE) return;
+  const k = h.sender + '|' + via + '|' + (peer || '');
+  const now = Date.now();
+  if (now - (_dupSeen.get(k) || 0) < 2000) return;
+  try {
+    if (h.kind === SRP.FRAME_KIND.CHUNK) await SRP.openChunk(str, _secRecvKey, null);
+    else await SRP.open(str, _secRecvKey, null);
+  } catch (_) { return; } // non authentique : ignorée
+  if (ch !== _sec) return;
+  if (!_dupSeen.has(k) && _dupSeen.size >= 256) _dupSeen.delete(_dupSeen.keys().next().value);
+  _dupSeen.set(k, now);
+  remoteNoteVia(h.sender, via, peer);
 }
 
 // ── Horloge décalée ──
@@ -174,9 +242,11 @@ function sendMsg(obj) {
     if (!obj) return;     // cible vide
     scrTrack(obj);
   }
-  if (!mqttClient || !mqttClient.connected || !_sec) return;
+  if (!_sec || !sessionLinkUp()) return;
   let msg;
   try { msg = prepareOutgoing(obj); } catch (_) { return; }
+  // Seul le Bluetooth relie encore les appareils : un média ne partirait nulle part
+  if (LINK_MEDIA_TYPES.has(msg.type) && !mediaLinkUp()) return;
   const ch = _sec, client = mqttClient;
   const bc = (mode === 'remote' && window._bc && _secBc && _BC_TYPES.includes(msg.type)) ? _secBc : null;
   _txChain = _txChain.then(async () => {
@@ -189,22 +259,33 @@ function sendMsg(obj) {
       console.warn('SetRemote : message refusé à l\'envoi', msg.type, e && e.message);
       return;
     }
-    if (client === mqttClient && client.connected) { client.publish(ch.mqttTopic, frame, { qos: 0 }); secStats.sent++; }
+    if (_transmit(ch, client, frame, msg)) secStats.sent++;
     if (bc && window._bc) { try { window._bc.postMessage(await bc.seal(msg)); } catch (_) {} }
   });
+}
+
+// Une trame scellée part sur TOUTES les liaisons ouvertes : Internet, puis
+// Wi-Fi local / Bluetooth (21-links.js). true si au moins une l'a prise.
+function _transmit(ch, client, frame, msg) {
+  let out = false;
+  if (client && client === mqttClient && client.connected) { client.publish(ch.mqttTopic, frame, { qos: 0 }); out = true; }
+  if (_linkPeers.size && linkTransmit(frame, msg && msg.type, msg && msg.target)) out = true;
+  return out;
 }
 
 // Message scellé avec une clé PAR ÉCRAN (pairwise.js, 29-revoke.js), publié
 // sur la session en cours dans l'ordre des envois. Résolu une fois publié.
 function sendPairwise(obj, keys) {
-  if (!mqttClient || !mqttClient.connected || !_sec || !keys) return Promise.resolve();
+  if (!_sec || !sessionLinkUp() || !keys) return Promise.resolve();
   const ch = _sec, client = mqttClient;
   _txChain = _txChain.then(async () => {
     if (ch !== _sec) return;
     let frame;
     try { frame = await ch.sealPairwise(JSON.parse(JSON.stringify(obj)), keys); }
     catch (e) { secStats.refused++; secStats.lastError = (e && e.code) || 'error'; console.warn('SetRemote : message refusé à l\'envoi', obj && obj.type, e && e.message); return; }
-    if (client === mqttClient && client.connected) { client.publish(ch.mqttTopic, frame, { qos: 0 }); secStats.sent++; }
+    // Adressé à un écran (sid) : ses pairs locaux s'ils sont connus
+    const target = mode === 'remote' && obj && typeof obj.sid === 'string' ? { screens: [obj.sid] } : null;
+    if (_transmit(ch, client, frame, { type: obj && obj.type, target })) secStats.sent++;
   });
   return _txChain;
 }
@@ -236,6 +317,8 @@ function closeSession() {
   _connectSeq++;
   if (mqttClient) { try { mqttClient.end(true); } catch (_) {} mqttClient = null; }
   if (window._bc) { try { window._bc.close(); } catch (_) {} window._bc = null; }
-  _sec = null; _secBc = null; _secRecvKey = null;
+  _sec = null; _secBc = null; _secRecvKey = null; _onSessionUp = null;
+  linkStop(); // liaisons locales de la session fermées (21-links.js)
+  _rxLastSeq.clear(); _dupSeen.clear();
   resetClockSkew();
 }
