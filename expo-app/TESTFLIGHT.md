@@ -3,8 +3,10 @@
 L'app iOS est une **coque native** (Expo) qui affiche l'interface web de
 SetRemote en plein écran, et ajoute en natif : barre d'état masquée en
 permanence, écran toujours allumé, vraie luminosité matérielle pilotée depuis
-la télécommande, et réception UDP pour la passerelle DMX (module local
-`modules/setremote-udp`, voir « Passerelle DMX » plus bas).
+la télécommande, réception UDP pour la passerelle DMX (module local
+`modules/setremote-udp`, voir « Passerelle DMX » plus bas) et liaisons hors
+ligne télécommande ↔ écrans en Wi-Fi local et en Bluetooth (module local
+`modules/setremote-link`, voir « Liaisons hors ligne » plus bas).
 
 L'interface web est **embarquée dans le binaire** et chargée en `file://`
 (plus aucun chargement depuis GitHub Pages : App Review 2.5.2 / 4.2,
@@ -275,3 +277,128 @@ nativePost({ type: 'net:info' });   // → { type: 'net:info', interfaces: [...]
       `SETREMOTE_MULTICAST_ENTITLEMENT=1`, puis mêmes essais : sACN multicast
       en Wi-Fi puis en Ethernet (l'écoute suit l'interface quand on branche
       l'adaptateur), ArtPoll broadcast reçu, plus de « multicast-not-permitted ».
+
+## Liaisons hors ligne (module `setremote-link`)
+
+Le module `modules/setremote-link` relie la télécommande et ses écrans sans
+Internet : **Wi-Fi local** (Bonjour + TCP) et **Bluetooth LE** (écran
+périphérique, télécommande centrale). Contrat, format et limites :
+`docs/OFFLINE-NATIVE.md`. Code natif : **nouveau build** obligatoire.
+
+Vérifié sous Linux : types, tests Node (`npm test` dans `expo-app`),
+`expo export`, `expo prebuild` iOS / Android (autolinking, `NSBonjourServices`,
+permissions), Kotlin compilé et rejoué sur JVM. **Le Swift n'a jamais été
+compilé** : le premier build EAS iOS le vérifie (erreurs éventuelles dans
+`modules/setremote-link/ios/*.swift`).
+
+### Matériel
+
+- **Deux à quatre téléphones** avec le build : au moins un iPhone et un
+  Android (tester les deux sens : télécommande iPhone → écran Android, et
+  l'inverse), idéalement un Android 11 ou plus ancien.
+- Un **routeur de voyage sans Internet** (port WAN débranché), réseau Wi-Fi
+  dédié.
+- Un ordinateur sur ce Wi-Fi : Safari → Développement (iPhone),
+  `chrome://inspect` (Android) ; sur Mac, `dns-sd -B _setremote._tcp` puis
+  `dns-sd -L <instance> _setremote._tcp` ; `nc` pour l'essai « appareil
+  étranger ».
+- Un mètre ou un couloir de 50 m pour l'essai de portée.
+
+Tant que l'interface de la page n'est pas branchée, piloter le pont depuis la
+console de l'inspecteur, sur **chaque** appareil (même `ROOM` partout) :
+
+```js
+const ROOM = 'AbCdEfGhIjKlMnOpQrStUv';          // 22 caractères base64url, identique partout
+let rx = 0, peers = [];
+window.SRNative = { receive(m) {
+  if (m.type === 'link:frames') { rx += m.frames.length; window.last = m.frames.at(-1); }
+  else if (m.type === 'link:peers') { peers = m.peers; console.log('pairs', JSON.stringify(m.peers)); }
+  else console.log(JSON.stringify(m));
+} };
+setInterval(() => { if (rx) console.log('trames/s', rx); rx = 0; }, 1000);
+// Télécommande :
+nativePost({ type: 'link:start', modes: ['lan'], role: 'remote', room: ROOM, name: 'Télécommande' });
+// Écran :
+nativePost({ type: 'link:start', modes: ['lan'], role: 'screen', room: ROOM, name: 'Écran 1' });
+// Envoi (télécommande → tous, écran → sa télécommande) :
+nativePost({ type: 'link:send', frames: ['bonjour ' + Date.now()] });
+// Débit : trames de 4 Kio en continu
+let n = 0; const flood = setInterval(() => nativePost({ type: 'link:send', frames: [String(n++).padEnd(4096, 'x')] }), 10);
+// clearInterval(flood)
+```
+
+### Wi-Fi local (routeur sans Internet)
+
+- [ ] **Démarrage** : télécommande puis un écran sur le Wi-Fi du routeur,
+      **données mobiles activées** (Android : vérifie que le socket passe par
+      le Wi-Fi sans Internet, pas par le 4G). `link:state` : `lan.active:
+      true` des deux côtés ; iOS : l'invite « réseau local » apparaît au
+      premier `link:start` (pas au lancement de l'app). `link:peers` arrive
+      des deux côtés en moins de 3 s, avec les noms.
+- [ ] **Annonce** : sur le Mac, `dns-sd -L` montre le TXT `r=<16 hex>` et
+      `v=1`, une instance `SetRemote-xxxxxx` ; ni topic ni nom d'appareil.
+- [ ] **Trames** : dans les deux sens, contenu identique (`last.data`),
+      ordre conservé (compteur), `to: [<peer>]` n'atteint que cet écran ;
+      `to: ['l-000000000000']` → `unknown-peer`. Une trame de 65 536
+      caractères passe ; 65 537 → `too-large` (mode `lan`).
+- [ ] **Plusieurs écrans** (2 à 3) : tous dans `link:peers` ; un envoi sans
+      `to` arrive partout ; `trames/s` stable avec le flot de 4 Kio.
+- [ ] **Autre plateau** : un écran avec un autre `ROOM` n'apparaît jamais.
+- [ ] **Appareil étranger** : depuis l'ordinateur, `nc <ip> <port>` puis taper
+      n'importe quoi, et `head -c 100000000 /dev/urandom | nc <ip> <port>` :
+      la connexion est fermée en moins de 5 s, aucune entrée dans
+      `link:peers`, pas de plantage, mémoire stable (Xcode / Android Studio).
+- [ ] **Reconnexion** : Wi-Fi coupé puis rétabli sur l'écran ; routeur
+      redémarré ; app télécommande tuée puis relancée (et `link:start`
+      renvoyé) : les écrans reviennent seuls dans `link:peers`. Un écran tué
+      disparaît de la liste en moins de 15 s.
+- [ ] **Arrière-plan** : télécommande à l'écran d'accueil 30 s (les écrans
+      la voient partir), retour : liaisons rouvertes **sans** nouveau
+      `link:start`. Même essai côté écran. Android : ouvrir puis fermer
+      aussitôt le volet de notifications ne coupe rien (délai de grâce 2 s).
+- [ ] **Rechargement** de la page (inspecteur) : plus aucune trame, les autres
+      appareils voient le pair partir.
+- [ ] **iOS, réseau local refusé** (Réglages › SetRemote › Réseau local
+      désactivé) : `link:error` `local-network-denied` ; le réactiver : la
+      liaison repart seule.
+
+### Bluetooth (mode avion, Bluetooth activé)
+
+- [ ] **Autorisations** : aucune invite Bluetooth au lancement de l'app ; elle
+      apparaît au premier `link:start` avec `modes: ['ble']`. Android 12+ :
+      « Appareils à proximité » seulement (aucune demande de localisation) ;
+      Android ≤ 11, télécommande : localisation ; localisation coupée →
+      `location-off`.
+- [ ] **Appairage** : mode avion **avec Bluetooth activé** sur tous les
+      appareils, `modes: ['ble']` ; écran puis télécommande : `link:peers`
+      en moins de 5 s, pour chaque combinaison iPhone / Android
+      (télécommande iPhone + écran Android, et l'inverse).
+- [ ] **Trames** : 4 096 caractères passent, 4 097 → `too-large` (mode
+      `ble`) ; ordre et contenu conservés.
+- [ ] **Débit et latence** : flot de 4 Kio pendant 60 s, noter `trames/s`
+      (≈ Ko/s) dans chaque sens et pour chaque combinaison ; aller-retour
+      (écran qui renvoie chaque trame reçue) sur 100 trames courtes : noter
+      la médiane. Avec 3 écrans : noter le débit par écran.
+- [ ] **Plusieurs écrans** : jusqu'à 3 (ou 8 si disponibles) ; un 9ᵉ →
+      `too-many-peers`.
+- [ ] **Bluetooth coupé** pendant la liaison : `powered-off`, pairs partis ;
+      rallumé : la liaison repart seule.
+- [ ] **Autorisation refusée** : `unauthorized` ; un nouveau `link:start`
+      repose la question (Android : plus de boîte après deux refus).
+- [ ] **Arrière-plan / premier plan** : comme en Wi-Fi ; au retour, la
+      liaison repart sans nouveau `link:start`.
+- [ ] **Les deux liaisons** : `modes: ['lan', 'ble']` ; chaque écran apparaît
+      deux fois (`l-…` et `b-…`) ; couper le Wi-Fi : la liaison Bluetooth
+      reste.
+- [ ] **Autres appareils Bluetooth** : avec une montre ou des écouteurs
+      connectés à l'écran Android, démarrer puis arrêter la liaison : la
+      montre / les écouteurs ne sont jamais déconnectés.
+
+### Portée
+
+- [ ] Télécommande fixe, un écran qui s'éloigne par pas de 5 m (en vue
+      directe, puis à travers une cloison) : noter la distance où les
+      trames cessent et celle où le pair disparaît (15 s), en Wi-Fi (routeur
+      au milieu) et en Bluetooth ; revenir : reconnexion seule, délai noté.
+- [ ] 30 minutes de trames courtes (30/s) en Bluetooth : batterie et
+      température notées, aucun `congested`.

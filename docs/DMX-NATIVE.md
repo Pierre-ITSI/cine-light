@@ -220,7 +220,9 @@ simple.
    `call:start`. Les sons importés des entrées 1 à 20 (`__ring_…`) sont
    envoyés d'avance, au démarrage de la passerelle.
 8. **Liaison locale passerelle → écrans** pour les plateaux de plus de
-   quelques écrans (§ 6).
+   quelques écrans (§ 6) : le transport natif existe (module
+   `setremote-link`, Wi-Fi local et Bluetooth, `docs/OFFLINE-NATIVE.md`) ;
+   reste à l'utiliser côté vue web pour les `dmx:look`.
 9. **Retirer l'ancien mode DMX** (3CH/9CH, pont WebSocket, plugin Capacitor
    `SACN`) : **fait** (bouton « Mode DMX » de l'accueil, `screen.html`,
    `web/js/60-sacn.js` supprimés ; voir `docs/DMX.md` § 8).

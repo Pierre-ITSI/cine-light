@@ -106,7 +106,7 @@ Restent dans la production actuelle (voir `web/js/01-config.js`, `20-mqtt.js`) :
 
 ### C.1 API à motif obligatoire probablement utilisées
 
-J'ai inventorié les `PrivacyInfo.xcprivacy` et le code natif iOS des dépendances installées (`expo-app/node_modules`, versions verrouillées : expo 56.0.12, react-native 0.85.3, react-native-webview 13.16.1, expo-file-system 56.0.8, expo-video 56.1.4, expo-image 56.0.11 avec SDWebImage ~5.21, react-native-ble-plx 3.5.1, react-native-tcp-socket 6.4.1).
+J'ai inventorié les `PrivacyInfo.xcprivacy` et le code natif iOS des dépendances installées (`expo-app/node_modules`, versions verrouillées : expo 56.0.12, react-native 0.85.3, react-native-webview 13.16.1, expo-file-system 56.0.8, expo-video 56.1.4, expo-image 56.0.11 avec SDWebImage ~5.21, react-native-ble-plx 3.5.1, react-native-tcp-socket 6.4.1). **Mise à jour du 16 octobre 2026** : `expo-video`, `expo-image`, `react-native-ble-plx` et `react-native-tcp-socket` ont été retirés (anciens écrans natifs) ; les liaisons hors ligne passent par le module local `setremote-link` (Network.framework, CoreBluetooth, CryptoKit : aucune API « required reason » utilisée). Les lignes ci-dessous qui ne citent que ces bibliothèques restent couvertes par React Native et Expo.
 
 | Catégorie | Code(s) | Signification (Apple) | Qui l'utilise (preuve) |
 |---|---|---|---|
