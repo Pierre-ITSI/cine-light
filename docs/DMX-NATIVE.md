@@ -1,7 +1,13 @@
 # Passerelle DMX : réception UDP dans l'app native (Expo SDK 56)
 
 Pour les développeurs. Complète `docs/DMX.md` (manuel des pupitreurs) et le
-paquet `packages/dmx` (moteur). Sources consultées le **15 octobre 2026**.
+paquet `packages/dmx` (moteur). Sources consultées le **15 octobre 2026**
+(§ 9 : 16 octobre 2026).
+
+> **État** : l'option B est réalisée dans `expo-app/modules/setremote-udp`
+> (Swift, Kotlin, pont TypeScript). Le **contrat du pont** entre la vue web et
+> le natif, les choix de sockets et la variable d'entitlement sont au **§ 9**,
+> qui prime sur les propositions des § 1 et 4.
 
 ## 1. Ce qu'il faut côté natif
 
@@ -67,7 +73,8 @@ pas une base solide.
 
 Créé avec `npx create-expo-module@latest --local` (dossier `modules/`,
 autolinking ; [Expo Modules](https://docs.expo.dev/modules/get-started/)).
-API proposée, volontairement minimale :
+API proposée, volontairement minimale (proposition initiale ; l'API réalisée,
+pilotée par la vue web, est au § 9) :
 
 ```ts
 // modules/setremote-udp/index.ts
@@ -143,8 +150,9 @@ code court (≈ 200 lignes par plateforme) et maîtrisé, alors que
 - Démarches : remplir le formulaire avec l'usage précis (sACN 239.255.x.y:5568,
   ArtPoll broadcast :6454) ; délai rapporté de quelques jours à deux semaines,
   sans suivi ; une fois accordée, activer la capacité sur l'App ID et le profil
-  de provisionnement, puis déclarer l'entitlement
-  (`ios.entitlements` dans `app.json`). Le simulateur fonctionne sans.
+  de provisionnement, puis déclarer l'entitlement. Le simulateur fonctionne
+  sans. **Ne pas l'écrire dans `app.json`** : il est ajouté par le config
+  plugin du module quand `SETREMOTE_MULTICAST_ENTITLEMENT=1` (§ 9.4).
 
 ## 6. Débits : console → passerelle → écrans
 
@@ -180,17 +188,18 @@ simple.
 
 ## 7. Plan de mise en œuvre
 
-1. **Module natif** `modules/setremote-udp` (Expo Modules) : API du § 4,
-   regroupement 10 ms, choix d'interface ; tests sur appareil avec `sACNView`,
-   la sortie unicast d'une console (grandMA3 onPC, Eos Nomad, MagicQ PC, Titan
-   onPC) et Wireshark.
-2. **iOS unicast d'abord** (sockets BSD ou `NWListener`), sans autorisation ;
+1. **Module natif** `modules/setremote-udp` (Expo Modules) : **fait** (§ 9),
+   regroupement 20 ms, choix d'interface ; reste à tester sur appareil avec
+   `sACNView`, la sortie unicast d'une console (grandMA3 onPC, Eos Nomad,
+   MagicQ PC, Titan onPC) et Wireshark (`expo-app/TESTFLIGHT.md`).
+2. **iOS unicast d'abord** (sockets BSD), sans autorisation : **fait** ;
    **déposer la demande d'autorisation multicast** en parallèle.
-3. **Android** : `DatagramSocket` + `MulticastSocket`, `MulticastLock`,
-   permissions (dont `ACCESS_LOCAL_NETWORK` avant de cibler l'API 37).
-4. **Brancher le moteur** : `GatewayEngine.handlePacket` sur l'événement
-   `packets`, `sendUdp` sur `send`, `send` sur le canal chiffré ; consommer
-   `packages/dmx` depuis l'app Expo (Metro : `watchFolders` vers `packages/`).
+3. **Android** : `MulticastSocket`, `MulticastLock`, permissions : **fait**
+   (`ACCESS_LOCAL_NETWORK` à ajouter avant de cibler l'API 37 ; cible
+   actuelle : 36).
+4. **Brancher le moteur** — dans la **vue web** (le moteur y tourne, § 9) :
+   `GatewayEngine.handlePacket` sur les `dmx:packets`, `sendUdp` sur
+   `udp:send`, `send` sur le canal chiffré.
 5. **Écran de la passerelle** : IP et interface (filaire/Wi-Fi), éditeur de
    patch (`Patch.check()`, `autoAddress()`), moniteur (`engine.snapshot()` :
    univers, sources, état du signal, écrans, compteurs de rejets).
@@ -217,3 +226,208 @@ renvoient `{ ok: false, reason }` (comptés dans `engine.snapshot().counters`).
 | sACN (`parseSacn`) | `type`, `too-short`, `too-long`, `preamble`, `postamble`, `acn-id`, `root-flags`, `root-length`, `root-vector`, `framing-flags`, `framing-length`, `framing-vector`, `priority` (> 200), `sync-address`, `universe` (hors 1–63999), `dmp-flags`, `dmp-length`, `dmp-vector`, `dmp-address-type`, `dmp-first-address`, `dmp-increment`, `dmp-count`, `start-code` (START code non nul), `discovery-flags`, `discovery-length`, `discovery-vector` |
 | Art-Net (`parseArtNet`) | `type`, `too-short`, `too-long`, `id`, `protocol-version` (< 14), `length` (Length hors 2–512 ou impaire), `truncated`, `port-address` (Net > 127), `unsupported-opcode` |
 | Moteur (`handlePacket`) | `unknown-protocol` ; issues de fusion : `applied`, `unchanged`, `staged`, `held`, `synced`, `terminated`, `ignored-preview`, `out-of-sequence`, `ignored-extra-source`, `discovery`, `poll-replied`, `poll-not-targeted`, `poll-ignored` |
+
+## 9. Module `setremote-udp` : contrat du pont et choix techniques
+
+Réalisé dans `expo-app/modules/setremote-udp` (module Expo local, autolinké
+depuis `expo-app/modules/`) et branché dans `expo-app/app/index.tsx`. La
+passerelle tourne dans la **vue web** (moteur `packages/dmx` côté page) ; le
+natif ne fait que recevoir et envoyer des datagrammes.
+
+```
+modules/setremote-udp/
+  expo-module.config.json   autolinking : SetRemoteUdpModule (iOS), expo.modules.setremoteudp.SetRemoteUdpModule (Android)
+  index.ts                  module natif + pont
+  src/bridge.ts             contrat, validation, relevé par lots (pur, testé sous Node)
+  src/SetRemoteUdpModule.ts requireOptionalNativeModule('SetRemoteUdp') (null sans le module)
+  ios/                      SetRemoteUdpModule.swift (API JS), UdpGateway.swift (sockets), SetRemoteUdp.podspec
+  android/                  SetRemoteUdpModule.kt, UdpGateway.kt, AndroidManifest.xml (permissions)
+  app.plugin.js             entitlement multicast (variable d'environnement), permissions Android
+  test/bridge.test.mjs      cd expo-app && npm test
+```
+
+### 9.1 Contrat du pont (figé, partagé avec le côté web)
+
+**Page → natif** : `window.ReactNativeWebView.postMessage(JSON.stringify(msg))`.
+
+| Message | Effet |
+|---|---|
+| `{type:'dmx:listen', protocol:'sacn'\|'artnet', universes:[int], multicast:boolean}` | Démarre l'écoute, ou **remplace** celle en cours (une seule à la fois). sACN : UDP **5568** ; si `multicast`, adhésion à `239.255.(u>>8).(u&255)` pour chaque univers, sur l'interface active (Ethernet, sinon Wi-Fi). Art-Net : UDP **6454**, unicast + broadcast. |
+| `{type:'dmx:stop'}` | Arrête l'écoute, vide la file. |
+| `{type:'udp:send', host:string, port:int, data:base64}` | Envoie un datagramme (ex. ArtPollReply) **depuis le socket d'écoute**, donc depuis le port 5568 ou 6454. |
+| `{type:'net:info'}` | Demande la liste des interfaces (réponse `net:info`). |
+
+**Natif → page** : `webView.injectJavaScript("window.SRNative&&window.SRNative.receive(" + JSON + ");true;")`.
+La page définit `window.SRNative = { receive(msg) { … } }` ; tant qu'elle ne
+l'a pas fait, les messages sont perdus sans erreur.
+
+| Message | Quand |
+|---|---|
+| `{type:'dmx:packets', packets:[{src:'ip', port:int, data:base64}]}` | Datagrammes bruts reçus, **par lots toutes les 20 ms**, jamais de lot vide. `src`/`port` = adresse et port de l'**émetteur**. |
+| `{type:'net:info', interfaces:[{name, kind:'ethernet'\|'wifi'\|'other', ip, mask}]}` | En réponse à `net:info`, à chaque **changement de réseau** (regroupé, sans doublon) et au retour au premier plan. **IPv4 uniquement.** |
+| `{type:'dmx:error', reason:string}` | Voir § 9.2. |
+
+Précisions :
+
+- **Validation** (`src/bridge.ts`, refaite par le natif) : `protocol` ∈
+  {sacn, artnet} ; `universes` : tableau d'au plus **64** entiers (absent =
+  `[]`, doublons retirés), sACN 1–63999 plus **64214** (découverte E1.31),
+  Art-Net 0–32767 (Port-Address) ; `multicast` : seul `true` l'active ;
+  `host` : IPv4 littérale `a.b.c.d` (jamais de DNS, ni `0.0.0.0`) ; `port`
+  1–65535 ; `data` : base64 avec bourrage, **1 à 1500 octets**. Message
+  invalide : `dmx:error` `invalid-…`, rien n'est envoyé au natif.
+- **`multicast` en Art-Net** (qui n'utilise pas le multicast) : « je veux aussi
+  le trafic de groupe », c'est-à-dire l'**ArtPoll en broadcast**. Android
+  prend alors le `MulticastLock` (le Wi-Fi filtre aussi le broadcast) ; iOS
+  sans entitlement répond `multicast-not-permitted`. Le socket reçoit le
+  broadcast quand le système le permet, quel que soit le drapeau.
+- **Débit** : file native de 512 datagrammes ; le pont la relève toutes les
+  20 ms, au plus **128** paquets par lot. Si JS prend du retard, ce sont les
+  **plus anciens** qui sont jetés (file pleine, ou plus de 128 en attente au
+  relevé) : en DMX seul l'état le plus récent d'un univers compte. Datagrammes
+  de plus de 1500 octets ignorés (sACN ≤ 638, Art-Net ≤ 530). Limite : le
+  contrat n'a pas d'accusé de réception ; si c'est le **moteur de la vue web**
+  (et non le thread JS de React Native) qui prend du retard, les lots déjà
+  injectés s'exécutent en différé au lieu d'être jetés. La page doit donc
+  traiter un lot vite (analyse et fusion, rendu à part).
+- **Cycle de vie** : en arrière-plan, le natif **ferme les sockets** (iOS les
+  suspendrait ; Android relâche aussi le `MulticastLock`) et les **rouvre au
+  retour** si la page écoutait, puis republie `net:info`. Un **nouveau
+  document** dans la vue web (navigation, rechargement, plantage du moteur
+  web) arrête l'écoute ; un simple changement d'ancre (`#`) non. Le natif ne
+  journalise jamais le contenu des paquets.
+- **Décodage côté page** : `Uint8Array.from(atob(p.data), (c) => c.charCodeAt(0))`
+  puis `engine.handlePacket(bytes, { address: p.src, port: p.port })` ; pour
+  `sendUdp(bytes, host, port)` du moteur : `udp:send` avec
+  `btoa(String.fromCharCode(...bytes))`.
+
+### 9.2 Raisons de `dmx:error`
+
+| `reason` | Origine | État de l'écoute |
+|---|---|---|
+| `invalid-protocol`, `invalid-universes`, `invalid-host`, `invalid-port`, `invalid-data` | validation (pont, puis natif) | inchangé ; commande ignorée |
+| `native-unavailable` | binaire sans le module (Expo Go, ancien build, navigateur) | — |
+| `bind-failed` | port 5568 / 6454 refusé (pris par une autre app sans partage) | **arrêtée** |
+| `socket-failed` | erreur de réception (socket invalidé par le système) | **arrêtée** |
+| `listen-failed` | erreur inattendue du module au démarrage | **arrêtée** |
+| `multicast-not-permitted` | iOS : binaire sans l'entitlement multicast (ou groupe refusé, EPERM) ; aussi `udp:send` vers une adresse de groupe | **l'unicast continue** |
+| `multicast-failed` | adhésion multicast refusée pour une autre raison | **l'unicast continue** |
+| `not-listening` | `udp:send` sans écoute (pas de port source) | — |
+| `send-failed` | échec de l'envoi (iOS : souvent l'accès au réseau local refusé) | inchangé |
+
+Après une erreur « arrêtée », la page peut renvoyer `dmx:listen`.
+
+### 9.3 Choix des sockets
+
+**iOS (Swift)** : `ios/UdpGateway.swift`.
+
+- **Unicast et broadcast : un socket BSD** par écoute (`socket`/`bind` sur
+  `0.0.0.0:<port>`, `SO_REUSEADDR` + `SO_REUSEPORT`, `SO_BROADCAST`, non
+  bloquant), lu par une `DispatchSource` sur une file série. Pourquoi pas
+  `NWListener` : Network.framework **ne gère pas le broadcast** (TN3151 :
+  « If you need something that's not supported by Network framework, use BSD
+  Sockets » ; Quinn, forums Apple 655920 et 756489) ; en UDP, un `NWListener`
+  crée une `NWConnection` par émetteur (à accepter, démarrer et nettoyer) et
+  ne permet pas d'envoyer **depuis son port** vers un hôte quelconque ; or
+  l'ArtPollReply doit partir du port 6454. `recvfrom()` donne directement
+  l'adresse de l'émetteur et `sendto()` répond depuis le même socket.
+- **Multicast sACN : `NWConnectionGroup` + `NWMulticastGroup`** (méthode
+  documentée par Apple), `requiredInterface` = interface filaire sinon Wi-Fi
+  (d'après `NWPathMonitor`), `allowLocalEndpointReuse` pour partager le port
+  5568 avec le socket BSD. Si le groupe échoue pour une autre raison qu'une
+  permission (ex. `EADDRINUSE` si le partage de port est refusé), **repli** :
+  `IP_ADD_MEMBERSHIP` sur le socket BSD (l'entitlement couvre aussi les
+  sockets BSD). Le groupe est recréé quand l'interface préférée change.
+- **Sans l'entitlement** : recevoir de l'**unicast** n'exige ni
+  l'entitlement ni même l'accès au réseau local (TN3179, tableau « Receiving
+  an incoming UDP unicast : no »). Le module sait si le binaire porte
+  l'entitlement grâce à la clé Info.plist `SetRemoteMulticastEntitlement`
+  (posée par le config plugin) : sinon il répond `multicast-not-permitted` dès
+  `dmx:listen` (sACN `multicast:true`, ou Art-Net `multicast:true`), sans
+  tenter le groupe, et l'unicast continue. Un échec `EPERM`/`EACCES` du groupe
+  donne la même raison. Le simulateur est réputé autorisé.
+- **Invite « réseau local »** : l'envoi (ArtPollReply) l'exige. Au démarrage
+  de l'écoute, le module connecte un socket UDP à une adresse du sous-réseau
+  (port 9, aucun trafic, méthode de TN3179) pour faire apparaître l'invite à
+  ce moment-là plutôt qu'au premier ArtPollReply.
+- **`net:info`** : `getifaddrs` (IPv4, interfaces actives hors boucle locale) ;
+  type d'après `NWPathMonitor` (`.wiredEthernet`, `.wifi`), à défaut
+  heuristique `en0` = Wi-Fi, autres `enN` = Ethernet (les noms BSD ne sont
+  pas une API, TN3179).
+
+**Android (Kotlin)** : `android/…/UdpGateway.kt`.
+
+- **Un `MulticastSocket`** lié à `0.0.0.0:<port>` (`SO_REUSEADDR`,
+  `SO_BROADCAST`, tampon de réception 1 Mo), lu par un **thread dédié** ;
+  toute la gestion d'état sur un seul thread (`ScheduledExecutorService`).
+- **Réseau** : Ethernet s'il existe (`NetworkCapabilities.TRANSPORT_ETHERNET`),
+  sinon Wi-Fi. Les sockets y sont attachés par **`Network.bindSocket()`**,
+  pas par `bindProcessToNetwork()` qui ferait aussi passer la vue web (relais
+  MQTT, WebRTC) par un réseau lumière souvent sans Internet. Les groupes sont
+  rejoints sur l'interface de ce réseau. Changement de réseau (callback
+  `ConnectivityManager`, regroupé 300 ms) : sockets rouverts sur le nouveau.
+- **`WifiManager.MulticastLock`** (non compté) tenu **seulement pendant une
+  écoute `multicast:true`**, relâché à l'arrêt et en arrière-plan.
+- Linux limite les adhésions IGMP à **20 par socket**
+  (`igmp_max_memberships`) : au-delà, des sockets auxiliaires sur un port
+  éphémère portent les adhésions suivantes et le socket principal reçoit ces
+  groupes (`IP_MULTICAST_ALL`, actif par défaut sous Linux).
+- **`net:info`** : `ConnectivityManager` / `LinkProperties` de chaque réseau,
+  type par `TRANSPORT_ETHERNET` / `TRANSPORT_WIFI` (VPN : `other`).
+- **Permissions** (manifeste du module + config plugin) : `INTERNET`,
+  `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`, `CHANGE_WIFI_MULTICAST_STATE`.
+  Cible actuelle : API 36 ; `ACCESS_LOCAL_NETWORK` (permission d'exécution)
+  sera à ajouter et à demander avant de cibler l'API 37.
+
+**Commun** : base64 calculé en natif à la réception (pas sur le thread JS) ;
+file bornée, relevée par `drain(max)` **synchrone** depuis le pont toutes les
+20 ms : si le thread JS est en retard, il relève moins souvent et la file jette
+les plus anciens. Événements natifs nommés `onSetRemoteUdpError` et
+`onSetRemoteUdpNetwork` (sur iOS, un événement est remis à tout module qui
+déclare le même nom).
+
+### 9.4 Entitlement multicast iOS : variable `SETREMOTE_MULTICAST_ENTITLEMENT`
+
+| Valeur | Effet au prebuild (`app.plugin.js`) |
+|---|---|
+| absente, `0`, `false`… (**défaut**) | pas d'entitlement ; Info.plist `SetRemoteMulticastEntitlement = false` → sACN multicast et ArtPoll broadcast répondent `multicast-not-permitted`, l'unicast fonctionne |
+| `1`, `true`, `yes`, `on` | `com.apple.developer.networking.multicast = true` dans `SetRemote.entitlements` ; Info.plist `SetRemoteMulticastEntitlement = true` |
+
+À n'activer **qu'une fois l'autorisation accordée par Apple** et la capacité
+« Multicast Networking » cochée sur l'App ID `com.pikoo.setremote` (sinon la
+signature du build échoue). La variable doit être visible **à la résolution
+de la config par EAS CLI et sur le serveur de build** : la mettre dans le
+profil de build, par exemple
+
+```json
+"preview": { "env": { "SETREMOTE_MULTICAST_ENTITLEMENT": "1" }, … }
+```
+
+ou dans les variables d'environnement EAS du projet ; en local,
+`SETREMOTE_MULTICAST_ENTITLEMENT=1 npx expo prebuild --platform ios`. Un
+prebuild sans `--clean` retire l'entitlement si la variable repasse à 0.
+
+### 9.5 Vérifié / à vérifier
+
+Vérifié sans appareil (Linux) : `npx tsc --noEmit` ; tests Node du pont et de
+la cohérence TS / Swift / Kotlin / plugin (`cd expo-app && npm test`) ;
+`npx expo export` iOS et Android ; `npx expo prebuild` iOS et Android dans
+une copie : module autolinké (pod `SetRemoteUdp` résolu,
+`ExpoModulesProvider` avec `SetRemoteUdpModule`, projet Gradle
+`setremote-udp` avec `expo.modules.setremoteudp.SetRemoteUdpModule`),
+entitlement présent seulement avec la variable, permissions Android ; code
+Kotlin **compilé** (Kotlin 2.0.21) contre le framework Android API 36 et des
+stubs reprenant les signatures d'`expo-modules-core` 56, file et analyse IPv4
+exécutées sur JVM. **Le Swift n'a pas pu être compilé** (pas de Xcode) : à
+compiler au premier build EAS. Procédure sur appareil :
+`expo-app/TESTFLIGHT.md`, « Passerelle DMX ».
+
+Références : Apple TN3151 *Choosing the right networking API* ; TN3179
+*Understanding local network privacy*
+(<https://developer.apple.com/documentation/technotes/tn3179-understanding-local-network-privacy>) ;
+forums Apple <https://developer.apple.com/forums/thread/655920>,
+<https://developer.apple.com/forums/thread/756489>,
+<https://developer.apple.com/forums/thread/708731> (multicast sur iPad en
+Ethernet : `NWMulticastGroup` fonctionne, entitlement requis) ; Android
+[`Network.bindSocket`](https://developer.android.com/reference/android/net/Network#bindSocket(java.net.DatagramSocket)),
+[`MulticastLock`](https://developer.android.com/reference/android/net/wifi/WifiManager.MulticastLock).

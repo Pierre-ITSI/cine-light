@@ -3,7 +3,8 @@
 L'app iOS est une **coque native** (Expo) qui affiche l'interface web de
 SetRemote en plein écran, et ajoute en natif : barre d'état masquée en
 permanence, écran toujours allumé, vraie luminosité matérielle pilotée depuis
-la télécommande.
+la télécommande, et réception UDP pour la passerelle DMX (module local
+`modules/setremote-udp`, voir « Passerelle DMX » plus bas).
 
 L'interface web est **embarquée dans le binaire** et chargée en `file://`
 (plus aucun chargement depuis GitHub Pages : App Review 2.5.2 / 4.2,
@@ -159,3 +160,110 @@ await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encry
       WebRTC sur le Wi-Fi, mode Wi-Fi local natif).
 - [ ] **Privacy Report** : Xcode → Archive → Organizer → Generate Privacy
       Report ; après envoi, surveiller l'e-mail Apple (ITMS-91053).
+
+## Passerelle DMX (module `setremote-udp`)
+
+Le module natif `modules/setremote-udp` reçoit le sACN (UDP 5568) et
+l'Art-Net (UDP 6454) pour la vue web ; contrat du pont et choix techniques :
+`docs/DMX-NATIVE.md` § 9. C'est du code natif : il faut un **nouveau build**
+(dev client ou TestFlight), un simple rechargement JS ne suffit pas.
+
+Vérifié sous Linux : types, tests Node du pont (`npm test` dans `expo-app`),
+`expo export` et `expo prebuild` iOS / Android (module autolinké, entitlement
+seulement avec la variable, permissions Android), Kotlin compilé contre
+l'API Android 36. **Le Swift n'a jamais été compilé** : le premier build EAS
+iOS le vérifie ; en cas d'erreur, elle est dans
+`modules/setremote-udp/ios/*.swift`.
+
+### Entitlement multicast iOS : `SETREMOTE_MULTICAST_ENTITLEMENT`
+
+Désactivé par défaut. **Ne l'activer qu'après l'accord d'Apple**
+(<https://developer.apple.com/contact/request/networking-multicast>) et une
+fois la capacité « Multicast Networking » cochée sur l'App ID
+`com.pikoo.setremote` ; sinon la signature échoue. Pour l'activer, ajouter au
+profil de build voulu dans `eas.json` :
+
+```json
+"env": { "SETREMOTE_MULTICAST_ENTITLEMENT": "1" }
+```
+
+(ou une variable d'environnement EAS du projet), puis relancer un build : le
+config plugin ajoute `com.apple.developer.networking.multicast` et la clé
+Info.plist `SetRemoteMulticastEntitlement = true`. Sans elle, l'app reçoit
+l'**unicast** et répond `dmx:error` « multicast-not-permitted » aux demandes
+multicast / broadcast.
+
+### Matériel et logiciels
+
+- iPhone ou iPad (puis Android) avec le build ; un ordinateur sur le **même
+  réseau** (Wi-Fi dédié, ou switch + adaptateur **USB-C → Ethernet** sur
+  l'appareil).
+- Émetteur : **sACNView** (gratuit, Windows / macOS / Linux) pour le sACN ;
+  pour l'Art-Net, la version hors ligne d'une console (grandMA3 onPC, Eos
+  Nomad, MagicQ PC, Titan onPC) ou tout émetteur Art-Net unicast.
+- **Wireshark** sur l'ordinateur (filtres `udp.port == 5568`,
+  `udp.port == 6454`).
+- Inspecteur web : Safari → Développement → appareil → page SetRemote (iOS),
+  `chrome://inspect` (Android). Tant que l'écran de passerelle de la page n'est
+  pas branché, piloter le pont depuis la console de l'inspecteur :
+
+```js
+let n = 0, last = null;
+window.SRNative = { receive(m) {
+  if (m.type === 'dmx:packets') { n += m.packets.length; last = m.packets[m.packets.length - 1]; }
+  else console.log(m);
+} };
+setInterval(() => { if (n) console.log('paquets/s', n); n = 0; }, 1000);
+nativePost({ type: 'net:info' });   // → { type: 'net:info', interfaces: [...] }
+```
+
+### Étapes (unicast d'abord)
+
+- [ ] **Réseau** : `net:info` liste l'IPv4 de l'appareil ; Wi-Fi en
+      `kind: 'wifi'` ; avec l'adaptateur Ethernet, une seconde interface en
+      `kind: 'ethernet'`. Brancher / débrancher l'adaptateur : un `net:info`
+      arrive seul, sans demande.
+- [ ] **sACN unicast** : `nativePost({ type: 'dmx:listen', protocol: 'sacn', universes: [1], multicast: false })`.
+      sACNView → Transmit, univers 1, **Unicast** vers l'IP de l'appareil,
+      faire bouger un fader. Attendu : `paquets/s` (≈ 44 pendant un
+      mouvement, moins au repos selon l'émetteur), `last.src` = IP de
+      l'ordinateur, `atob(last.data).slice(4, 13) === 'ASC-E1.17'`. iOS :
+      aucune invite système n'est nécessaire pour recevoir de l'unicast ;
+      l'invite « réseau local » apparaît au démarrage de l'écoute (texte :
+      « … recevoir le DMX de la console lumière … ») : l'accepter.
+- [ ] **Art-Net unicast** : `nativePost({ type: 'dmx:listen', protocol: 'artnet', universes: [0], multicast: false })`
+      (remplace l'écoute sACN). Console : sortie Art-Net **unicast** vers
+      l'IP de l'appareil. Attendu : `atob(last.data).startsWith('Art-Net\0')`.
+- [ ] **Envoi depuis le port d'écoute** (ArtPollReply) :
+      `nativePost({ type: 'udp:send', host: '<IP ordinateur>', port: 6454, data: btoa('Art-Net\0test') })`.
+      Wireshark : datagramme de l'appareil, **port source 6454**. Sans écoute
+      en cours : `dmx:error` « not-listening ».
+- [ ] **Validation** : `nativePost({ type: 'udp:send', host: 'console.local', port: 6454, data: 'AA==' })`
+      → « invalid-host » ; 65 univers → « invalid-universes ».
+- [ ] **Sans entitlement (iOS)** : `dmx:listen` sACN avec `multicast: true`
+      → « multicast-not-permitted », et l'unicast continue d'arriver.
+- [ ] **Arrière-plan** : écoute en cours, revenir à l'écran d'accueil 30 s,
+      rouvrir l'app : les paquets reprennent sans nouveau `dmx:listen`, et un
+      `net:info` arrive. Wireshark / sACNView ne doivent rien montrer
+      d'anormal pendant l'absence (les sockets sont fermés).
+- [ ] **Charge** : 8 univers dans sACNView, 44 Hz, 10 minutes : ≈ 350
+      paquets/s, aucun `dmx:error`, mémoire stable (Xcode → Debug navigator ;
+      Android Studio → Profiler), latence visuelle inchangée au bout de
+      10 minutes (pas d'arriéré qui s'accumule).
+- [ ] **Rechargement** : recharger la page (inspecteur), redéfinir
+      `window.SRNative` comme ci-dessus : plus aucun `dmx:packets` (l'écoute
+      appartient au document qui l'a demandée).
+- [ ] **`dmx:stop`** : `nativePost({ type: 'dmx:stop' })` → plus de paquets.
+
+### Puis multicast
+
+- [ ] **Android** (pas d'entitlement) : `dmx:listen` sACN `universes: [1, 2]`,
+      `multicast: true` ; sACNView en **multicast** (239.255.0.1 et
+      239.255.0.2) : réception en Wi-Fi puis en Ethernet. Pendant l'écoute,
+      `adb shell dumpsys wifi | grep -i -A3 multicast` montre le verrou
+      « SetRemoteUdp » ; il disparaît après `dmx:stop` ou en arrière-plan.
+      Art-Net `multicast: true` : l'ArtPoll d'une console (broadcast) arrive.
+- [ ] **iOS, une fois l'entitlement accordé** : build avec
+      `SETREMOTE_MULTICAST_ENTITLEMENT=1`, puis mêmes essais : sACN multicast
+      en Wi-Fi puis en Ethernet (l'écoute suit l'interface quand on branche
+      l'adaptateur), ArtPoll broadcast reçu, plus de « multicast-not-permitted ».
