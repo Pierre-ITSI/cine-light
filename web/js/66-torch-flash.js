@@ -98,11 +98,9 @@ function sendCaps() {
   sendMsg(caps);
 }
 
-// Capacités du récepteur connecté (mémorisées pour choisir le transport vidéo).
-let _recvCaps = null;
-// Télécommande : applique les capacités reçues à l'onglet Flash
+// Télécommande : applique les capacités reçues à l'onglet Flash (transport
+// vidéo de chaque écran : scrState(id).caps, 28-screens.js)
 function applyReceiverCaps(caps) {
-  _recvCaps = caps || null;
   const flash = document.getElementById('content-flash');
   const notice = document.getElementById('flashUnavailNotice');
   const unavailable = caps && caps.torch === false;

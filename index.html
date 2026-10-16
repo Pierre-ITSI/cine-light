@@ -9768,11 +9768,9 @@ function sendCaps() {
   sendMsg(caps);
 }
 
-// Capacités du récepteur connecté (mémorisées pour choisir le transport vidéo).
-let _recvCaps = null;
-// Télécommande : applique les capacités reçues à l'onglet Flash
+// Télécommande : applique les capacités reçues à l'onglet Flash (transport
+// vidéo de chaque écran : scrState(id).caps, 28-screens.js)
 function applyReceiverCaps(caps) {
-  _recvCaps = caps || null;
   const flash = document.getElementById('content-flash');
   const notice = document.getElementById('flashUnavailNotice');
   const unavailable = caps && caps.torch === false;
@@ -9885,7 +9883,9 @@ let remoteBlackout = false, screenBlackoutOn = false;
 // La télécommande n'impose son état OFF/ON lors d'une resynchronisation que si
 // l'utilisateur l'a choisi dans cette session : une télécommande rechargée ne
 // doit jamais rallumer un écran éteint en pleine prise. Tant qu'il n'y a pas
-// touché, elle reprend l'état annoncé par l'écran (caps.blackout).
+// touché, elle reprend l'état annoncé par l'écran (caps.blackout). Par écran :
+// remoteBlackout / _blackoutTouched sont ceux de la cible (scrAdoptBlackout,
+// 28-screens.js).
 let _blackoutTouched = false;
 
 function renderRemoteBlackout() {
@@ -9907,13 +9907,6 @@ function toggleBlackout() {
   _blackoutTouched = true;
   renderRemoteBlackout();
   sendMsg({ type: 'blackout', on: remoteBlackout });
-}
-
-// — Télécommande : adopte l'état annoncé par un écran (sans rien renvoyer) —
-function remoteAdoptScreenBlackout(on) {
-  if (_blackoutTouched || remoteBlackout === !!on) return;
-  remoteBlackout = !!on;
-  renderRemoteBlackout();
 }
 
 // — Écran : applique le noir total —
@@ -10935,12 +10928,6 @@ function _mediaViewReset() {
   showMediaPlay(false); showMediaTimeline(false);
   _mediaSeeking = false;
 }
-// Ferme les transferts vers la cible et remet l'interface à zéro, sans notifier les écrans
-function teardownBroadcast() {
-  _vidStopJobs(scrTargetIds());
-  _mediaViewReset();
-}
-
 // Arrêt complet (bouton « Arrêter la diffusion ») : vide la sélection + éteint
 // les écrans de la cible. everywhere : tous les transferts (retour à l'accueil)
 function stopMediaBroadcast(notify = true, everywhere = false) {

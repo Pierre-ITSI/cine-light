@@ -920,12 +920,6 @@ function _mediaViewReset() {
   showMediaPlay(false); showMediaTimeline(false);
   _mediaSeeking = false;
 }
-// Ferme les transferts vers la cible et remet l'interface à zéro, sans notifier les écrans
-function teardownBroadcast() {
-  _vidStopJobs(scrTargetIds());
-  _mediaViewReset();
-}
-
 // Arrêt complet (bouton « Arrêter la diffusion ») : vide la sélection + éteint
 // les écrans de la cible. everywhere : tous les transferts (retour à l'accueil)
 function stopMediaBroadcast(notify = true, everywhere = false) {

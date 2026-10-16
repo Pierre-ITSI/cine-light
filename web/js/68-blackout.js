@@ -3,7 +3,9 @@ let remoteBlackout = false, screenBlackoutOn = false;
 // La télécommande n'impose son état OFF/ON lors d'une resynchronisation que si
 // l'utilisateur l'a choisi dans cette session : une télécommande rechargée ne
 // doit jamais rallumer un écran éteint en pleine prise. Tant qu'il n'y a pas
-// touché, elle reprend l'état annoncé par l'écran (caps.blackout).
+// touché, elle reprend l'état annoncé par l'écran (caps.blackout). Par écran :
+// remoteBlackout / _blackoutTouched sont ceux de la cible (scrAdoptBlackout,
+// 28-screens.js).
 let _blackoutTouched = false;
 
 function renderRemoteBlackout() {
@@ -25,13 +27,6 @@ function toggleBlackout() {
   _blackoutTouched = true;
   renderRemoteBlackout();
   sendMsg({ type: 'blackout', on: remoteBlackout });
-}
-
-// — Télécommande : adopte l'état annoncé par un écran (sans rien renvoyer) —
-function remoteAdoptScreenBlackout(on) {
-  if (_blackoutTouched || remoteBlackout === !!on) return;
-  remoteBlackout = !!on;
-  renderRemoteBlackout();
 }
 
 // — Écran : applique le noir total —
