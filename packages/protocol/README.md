@@ -181,6 +181,14 @@ base64 historique), identifiants ≤ 64 caractères, SDP ≤ 16 000 caractères
 de champ `photo` : `hasPhoto: true` indique que la photo a été envoyée avant,
 en fragments sous `__callphoto`.
 
+**Tournage sans réseau** ([`docs/OFFLINE.md`](../../docs/OFFLINE.md)) : les
+mêmes trames passent aussi en Wi-Fi local et en Bluetooth (pont natif `link:*`,
+hors schéma : seule l'enveloppe change). Champs ajoutés : `call:start.photoId`
+/ `audioId` (photo / bande son **préparées** d'un appel enregistré, ids
+`__ph_` / `__au_` + 40 hex dérivés du contenu, `CALL_PHOTO_ID_RE` /
+`CALL_AUDIO_ID_RE`), `rtc-offer.kind: 'cache'` et `media:upload.show: false`
+(vidéo mise en cache sans interrompre ni afficher quoi que ce soit).
+
 **Différence voulue avec `MSG_ROUTES`** : l'app *borne* une valeur hors plage
 (flash de 5 ms ramené à 15 ms) ; le schéma la *rejette*, à l'envoi comme à la
 réception. L'émetteur doit donc borner lui-même (voir §6, curseurs de flash).
