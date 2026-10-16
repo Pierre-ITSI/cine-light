@@ -333,14 +333,20 @@ let n = 0; const flood = setInterval(() => nativePost({ type: 'link:send', frame
       **données mobiles activées** (Android : vérifie que le socket passe par
       le Wi-Fi sans Internet, pas par le 4G). `link:state` : `lan.active:
       true` des deux côtés ; iOS : l'invite « réseau local » apparaît au
-      premier `link:start` (pas au lancement de l'app). `link:peers` arrive
-      des deux côtés en moins de 3 s, avec les noms.
+      premier `link:start` (pas au lancement de l'app). Juste après chaque
+      `link:start` : un `link:state` et un `link:peers` (vide au début) ;
+      puis `link:peers` avec le pair des deux côtés en moins de 3 s.
 - [ ] **Annonce** : sur le Mac, `dns-sd -L` montre le TXT `r=<16 hex>` et
       `v=1`, une instance `SetRemote-xxxxxx` ; ni topic ni nom d'appareil.
 - [ ] **Trames** : dans les deux sens, contenu identique (`last.data`),
       ordre conservé (compteur), `to: [<peer>]` n'atteint que cet écran ;
-      `to: ['l-000000000000']` → `unknown-peer`. Une trame de 65 536
+      `to: ['lan-000000000000']` → `unknown-peer`. Une trame de 65 536
       caractères passe ; 65 537 → `too-large` (mode `lan`).
+- [ ] **`to` côté écran** : liaisons `['lan', 'ble']` des deux côtés ; sur
+      l'écran, `link:send` d'une trame de 10 000 caractères avec
+      `to: [<pair lan-… de la télécommande>]` : elle n'arrive qu'en `lan` ;
+      même trame avec `to: [<pair ble-…>]` → `too-large` (mode `ble`), rien
+      n'arrive.
 - [ ] **Plusieurs écrans** (2 à 3) : tous dans `link:peers` ; un envoi sans
       `to` arrive partout ; `trames/s` stable avec le flot de 4 Kio.
 - [ ] **Autre plateau** : un écran avec un autre `ROOM` n'apparaît jamais.
@@ -388,7 +394,7 @@ let n = 0; const flood = setInterval(() => nativePost({ type: 'link:send', frame
 - [ ] **Arrière-plan / premier plan** : comme en Wi-Fi ; au retour, la
       liaison repart sans nouveau `link:start`.
 - [ ] **Les deux liaisons** : `modes: ['lan', 'ble']` ; chaque écran apparaît
-      deux fois (`l-…` et `b-…`) ; couper le Wi-Fi : la liaison Bluetooth
+      deux fois (`lan-…` et `ble-…`) ; couper le Wi-Fi : la liaison Bluetooth
       reste.
 - [ ] **Autres appareils Bluetooth** : avec une montre ou des écouteurs
       connectés à l'écran Android, démarrer puis arrêter la liaison : la

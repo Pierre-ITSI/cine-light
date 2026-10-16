@@ -36,7 +36,9 @@ modules/setremote-link/
 | Débit, latence | Mbit/s, quelques ms | quelques Ko/s à quelques dizaines de Ko/s par écran (§ 6) |
 
 Les deux liaisons peuvent tourner ensemble (`modes: ['lan', 'ble']`) : un
-écran est alors vu sous deux identifiants de pair, un par liaison. C'est à la
+écran est alors vu sous **deux identifiants de pair distincts**, `lan-…` et
+`ble-…` (§ 2.3). La topologie est en étoile : un écran n'a pour pairs que des
+télécommandes de la même salle (la poignée de main exige le rôle opposé). C'est à la
 vue web de choisir par où envoyer (`to`) et de dédoublonner à la réception
 (numéros de séquence de `packages/protocol`).
 
@@ -48,9 +50,9 @@ vue web de choisir par où envoyer (`to`) et de dédoublonner à la réception
 
 | Message | Effet |
 |---|---|
-| `{type:'link:start', modes:['lan'\|'ble', …], role:'remote'\|'screen', room:<topic base64url, 22 caractères>, name?:string}` | Démarre les liaisons demandées pour ce topic, ou **remplace** la configuration en cours : les liaisons non listées s'arrêtent ; une liaison listée avec le même topic, le même rôle et le même nom continue sans couper ses pairs. |
+| `{type:'link:start', modes:['lan'\|'ble', …], role:'remote'\|'screen', room:<topic base64url, 22 caractères>, name?:string}` | Démarre les liaisons demandées pour ce topic, ou **remplace** la configuration en cours (modes **et** salle) : les liaisons non listées s'arrêtent ; une liaison listée avec le même topic, le même rôle et le même nom continue sans couper ses pairs. Toujours suivi d'un `link:peers` (liste vide si la salle a changé) et d'un `link:state`. |
 | `{type:'link:stop', modes?:[…]}` | Arrête les liaisons listées (toutes si `modes` est absent). Pairs retirés, file vidée quand plus rien ne tourne. |
-| `{type:'link:send', frames:[string], to?:[peerId]}` | Télécommande : à tous ses pairs, ou à ceux listés. Écran : à sa télécommande (ses pairs, en pratique un seul). Ordre conservé par pair. |
+| `{type:'link:send', frames:[string], to?:[peerId]}` | À tous les pairs (`to` absent), ou **seulement à ceux listés, dans les deux rôles** : la télécommande vise des écrans ; l'écran vise l'un des identifiants de sa télécommande (par ex. `lan-…` pour réserver une trame volumineuse au Wi-Fi). Même routage des deux côtés (`routeFrames`). Ordre conservé par pair. |
 | `{type:'link:state?'}` | Réponse `link:state` immédiate. |
 
 ### 2.2 Natif → page
@@ -62,8 +64,8 @@ vue web de choisir par où envoyer (`to`) et de dédoublonner à la réception
 | Message | Quand |
 |---|---|
 | `{type:'link:frames', frames:[{peer, mode, data}]}` | Trames reçues, **par lots toutes les 20 ms** (au plus 256 trames et 1 Mio par lot ; jamais de lot vide), dans l'ordre d'arrivée. |
-| `{type:'link:peers', peers:[{peer, mode, name?}]}` | **À chaque changement** (pair admis ou parti), liste complète. Les trames déjà reçues passent avant. |
-| `{type:'link:state', lan:{available, active, error?}, ble:{available, active, error?}}` | À chaque changement, et en réponse à `link:state?`. |
+| `{type:'link:peers', peers:[{peer, mode, name?}]}` | **Après chaque `link:start`** (même vide), puis **à chaque changement** (pair admis ou parti), liste complète. Les trames déjà reçues passent avant. |
+| `{type:'link:state', lan:{available, active, error?}, ble:{available, active, error?}}` | Après chaque `link:start` et `link:stop` (même inchangé), à chaque changement, et en réponse à `link:state?`. |
 | `{type:'link:error', mode:'lan'\|'ble'\|null, reason}` | Voir § 2.4. `mode` vaut `null` quand l'erreur ne tient pas à une liaison (validation). |
 
 ### 2.3 Précisions
@@ -80,8 +82,11 @@ vue web de choisir par où envoyer (`to`) et de dédoublonner à la réception
   pour chaque liaison active) ; une trame de 4 à 64 Kio part vers les pairs
   Wi-Fi et est refusée pour les pairs Bluetooth (`too-large`, mode `ble`, une
   fois par `link:send`). Les autres trames du même `link:send` partent.
-- **Identifiants de pair** : opaques, tirés au hasard à chaque connexion
-  (`l-` ou `b-` + 12 chiffres hexadécimaux). Une reconnexion donne un nouvel
+- **Identifiants de pair** : opaques, tirés au hasard à chaque connexion,
+  **préfixés par la liaison** : `lan-` ou `ble-` + 12 chiffres hexadécimaux
+  (ex. `lan-3fa9c2e1b07d`). Un même appareil joint en Wi-Fi local et en
+  Bluetooth a donc **toujours deux identifiants différents** ; un identifiant
+  n'appartient jamais qu'à une liaison. Une reconnexion donne un nouvel
   identifiant : l'identité durable d'un écran est celle de
   `packages/protocol`, pas celle-ci.
 - **`name`** : affiché chez le pair (`link:peers`). Il voyage dans le HELLO,
@@ -140,6 +145,30 @@ vue web de choisir par où envoyer (`to`) et de dédoublonner à la réception
 - Un téléphone qui sert **lui-même de point d'accès** n'a pas de réseau Wi-Fi
   client : `lan` peut afficher `no-network` alors que les écrans connectés à
   son point d'accès le joignent quand même.
+- Avant tout `link:start`, `available` est déjà renseigné (réseau Wi-Fi /
+  Ethernet présent ; Bluetooth présent, allumé, pas refusé) : la page peut
+  griser une liaison sans la démarrer. L'autorisation Bluetooth encore jamais
+  demandée compte comme disponible.
+
+### 2.6 Attentes de la vue web (`docs/OFFLINE.md` § 2.2, branche web)
+
+| Attente de la page | Côté natif |
+|---|---|
+| Identifiants distincts par liaison (même appareil en Wi-Fi et en Bluetooth : deux `peer`) | `lan-…` / `ble-…` + 12 hex tirés à chaque connexion (`LinkMode.prefix`) ; vérifié sur JVM et par `test/native.test.mjs` |
+| `to` honoré dans les deux rôles | `routeFrames` (Kotlin, Swift) ignore le rôle ; testé sur JVM (écran visant `lan-…` de sa télécommande) et dans `test/bridge.test.mjs` |
+| `link:peers` après chaque `link:start` (vide si la salle change), puis à chaque changement | `publishPeers()` à la fin de `start` (Kotlin, Swift) ; le pont envoie `[]` sans module natif ou sur `start-failed` |
+| `link:state` en réponse à `link:start`, `link:stop`, `link:state?`, et à tout changement | `refreshState(force)` après `start` / `stop` ; `getState()` ; publication sur changement |
+| Topologie en étoile | rôle opposé exigé à la poignée de main (`role`) |
+| Ordre par liaison | TCP ; Bluetooth : un message fragmenté à la fois par pair, valeurs ATT ordonnées |
+| Au plus 512 trames par `link:frames` | 256 par lot |
+| Refus des trames de plus de 4 Kio vers un pair Bluetooth (défense en profondeur) | refus par pair dans `routeFrames`, `too-large` (mode `ble`) |
+| `name` non envoyé par la page | accepté s'il l'était ; rien n'est diffusé sans lui |
+
+**À aligner côté page** : `LINK_PEERS_MAX = 64` (`web/js/21-links.js`)
+coupe la liste de `link:peers` à 64 entrées, alors qu'une télécommande peut
+avoir **72 pairs** (64 en Wi-Fi + 8 en Bluetooth ; avec les deux liaisons,
+chaque écran compte deux fois). Monter cette borne à 128 côté page, ou
+accepter qu'au-delà de 64 pairs certains soient ignorés.
 
 ## 3. Découverte sans fuite du topic
 
@@ -398,3 +427,30 @@ plugin). Conservés car la vue web en a besoin : `expo-camera` et
   l'app en pause plus de 2 s ; les liaisons sont coupées puis rouvertes au
   retour.
 - **API 37 Android** : `ACCESS_LOCAL_NETWORK` à ajouter avant de la cibler.
+
+## 10. Évolution proposée : deux salles à la fois (appairage par code en local)
+
+La page propose (`docs/OFFLINE.md` § 7) `link:start { room, rooms?: [rdv] }`
+ou un `link:rdv { room }` éphémère, pour que la télécommande soit à la fois
+dans la salle de sa session et dans celle du rendez-vous d'un code. **Non
+réalisé.** Faisabilité côté natif :
+
+- **Pour l'appairage par code, c'est simple** : seule la **télécommande** a
+  besoin de deux salles ; l'écran qui s'appaire n'a encore que la salle du
+  rendez-vous (une seule). Or la télécommande est le côté facile des deux
+  liaisons :
+  - Wi-Fi : un second `NWListener` / `ServerSocket` publié sous sa propre
+    instance Bonjour avec le `roomTag` du rendez-vous ; chaque salle garde sa
+    clé de poignée de main, rien ne change sur le fil ;
+  - Bluetooth : le central accepte simplement deux `roomTag` au scan.
+  À prévoir : `LinkConfig` devient une liste (≤ 2 salles), les pairs et les
+  trames portent leur salle (champ `room` : indice ou étiquette, à ajouter à
+  `link:peers` et `link:frames`), le plafond de pairs se partage. Ordre de
+  grandeur : un à deux jours par plateforme, tests compris.
+- **Un écran dans deux salles** (par ex. écoute de l'ancien topic après un
+  retrait, `docs/OFFLINE.md` § 8) : facile en Wi-Fi (deux recherches,
+  deux connexions), **difficile en Bluetooth** : l'annonce n'a la place que
+  pour un `roomTag` (iOS : nom local de 29 octets au plus, deux étiquettes
+  hexadécimales n'y tiennent pas ; Android : une seule donnée de service de
+  27 octets dans la réponse au scan). Il faudrait des étiquettes plus courtes,
+  des annonces alternées, ou une lecture GATT des salles après connexion.
