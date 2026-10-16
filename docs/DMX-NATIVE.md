@@ -47,9 +47,10 @@ engine.start();                                                 // tick() toutes
   depuis juin 2025 ([Expo, New Architecture](https://docs.expo.dev/guides/new-architecture/)).
   Une bibliothèque sans TurboModule ne fonctionne que via la couche de
   compatibilité (interop) : à tester, sans garantie à long terme.
-- Le projet utilise déjà un **dev client** (`react-native-tcp-socket`,
-  `react-native-ble-plx`) : un module natif de plus ne change pas la chaîne de
-  build (`expo prebuild`, EAS).
+- Le projet utilise déjà un **dev client** (à l'époque pour
+  `react-native-tcp-socket` et `react-native-ble-plx`, retirés depuis au profit
+  du module local `setremote-link`, `docs/OFFLINE-NATIVE.md`) : un module
+  natif de plus ne change pas la chaîne de build (`expo prebuild`, EAS).
 - iOS : `NSLocalNetworkUsageDescription` est déjà déclaré dans
   `expo-app/app.json` (invite « réseau local »).
 - La passerelle doit rester **au premier plan, écran allumé**
@@ -219,7 +220,9 @@ simple.
    `call:start`. Les sons importés des entrées 1 à 20 (`__ring_…`) sont
    envoyés d'avance, au démarrage de la passerelle.
 8. **Liaison locale passerelle → écrans** pour les plateaux de plus de
-   quelques écrans (§ 6).
+   quelques écrans (§ 6) : le transport natif existe (module
+   `setremote-link`, Wi-Fi local et Bluetooth, `docs/OFFLINE-NATIVE.md`) ;
+   reste à l'utiliser côté vue web pour les `dmx:look`.
 9. **Retirer l'ancien mode DMX** (3CH/9CH, pont WebSocket, plugin Capacitor
    `SACN`) : **fait** (bouton « Mode DMX » de l'accueil, `screen.html`,
    `web/js/60-sacn.js` supprimés ; voir `docs/DMX.md` § 8).

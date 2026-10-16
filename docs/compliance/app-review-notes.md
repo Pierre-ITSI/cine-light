@@ -58,8 +58,8 @@ PERMISSIONS (asked only when the feature is used)
 - Camera: take a photo or video to show on the playback screen; control the playback device's torch.
 - Photos: choose media (system picker).
 - Microphone: only when filming a video to show.
-- Local network: only for the optional DMX gateway (receives sACN / Art-Net from a lighting console on the local network).
-Bluetooth is not used.
+- Local network: for the optional DMX gateway (receives sACN / Art-Net from a lighting console on the local network), and for the optional offline link between the remote and its playback screens on a Wi-Fi network without Internet (Bonjour service _setremote._tcp).
+- Bluetooth: only when the user starts the optional offline Bluetooth link between the remote and its playback screens (film sets without Wi-Fi or Internet). Foreground only, no background mode, no location. The data exchanged is end-to-end encrypted by the app.
 
 PRIVACY
 No account, no analytics, no ads, no tracking. Encryption uses only the cryptography built into the operating system (Web Crypto API in WKWebView).

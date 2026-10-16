@@ -409,6 +409,14 @@ expose l'API dans la globale **`SRP`**, en tête du `<script>` unique.
 
 ## 7. Intégration React Native (`expo-app`, Expo SDK 56, Hermes)
 
+> **Octobre 2026** : les écrans 100 % natifs d'`expo-app` et leurs transports
+> en clair ont été retirés ; le protocole tourne dans la **vue web** de la
+> coque (WebCrypto de WKWebView / WebView Android). Les liaisons hors ligne
+> (Wi-Fi local, Bluetooth) transportent les trames telles quelles via le
+> module natif `expo-app/modules/setremote-link` (`docs/OFFLINE-NATIVE.md`).
+> Cette section ne sert que si du code React Native devait un jour chiffrer
+> lui-même.
+
 Hermes n'a pas de `crypto.subtle`. Bibliothèque recommandée :
 **[react-native-quick-crypto](https://github.com/margelo/react-native-quick-crypto)** (Margelo).
 
@@ -448,13 +456,13 @@ Alternative : `import { install } from 'react-native-quick-crypto'; install();`
 - Dépendance locale : `"@setremote/protocol": "file:../packages/protocol"` et
   ajouter `../packages` aux `watchFolders` de Metro. Le paquet est en ESM avec
   un champ `exports` ; à défaut, importer `../packages/protocol/index.js`.
-- Le build **web** d'Expo (`createTransport.web.ts`) utilise le WebCrypto du
-  navigateur : aucun polyfill.
+- Le build **web** d'Expo utilise le WebCrypto du navigateur : aucun
+  polyfill.
 - UTF-8/base64 : le paquet a ses propres implémentations (pas de `Buffer`,
   `TextDecoder` facultatif).
-- Les trames sont des chaînes : elles passent telles quelles par
-  `MqttTransport`, `WifiTransport` (une trame par ligne) et `BleTransport`
-  (découpage existant). À brancher dans `RemoteTransport.send/onMessage`.
+- Les trames sont des chaînes opaques : le relais MQTT et les liaisons hors
+  ligne (`link:send` / `link:frames`, `docs/OFFLINE-NATIVE.md`) les
+  transportent telles quelles.
 - **À adapter dans l'UI** : la durée de flash native a `min={10}` → **15** ms.
 - Repli possible pour Expo Go (non fourni ici) : un objet `{ subtle,
   getRandomValues }` construit sur `@noble/curves` / `@noble/ciphers` /

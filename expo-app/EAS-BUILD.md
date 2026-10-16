@@ -1,7 +1,8 @@
 # Tester Ciné Light sur iPhone (EAS Build)
 
-L'app utilise des modules natifs (torche via `expo-camera`, `expo-video`,
-`expo-navigation-bar`, vibreur…). **Expo Go ne suffit pas** : il faut un
+L'app utilise des modules natifs (`expo-camera`, `expo-navigation-bar`,
+`expo-print`, modules locaux `setremote-udp` et `setremote-link`…).
+**Expo Go ne suffit pas** : il faut un
 *development build* ou un *preview build* généré par EAS.
 
 EAS Build compile **dans le cloud** : pas besoin de Mac ni de Xcode pour
@@ -91,11 +92,12 @@ rebuild tant que tu ne touches pas aux modules natifs.
 
 ---
 
-## Dev client — tester Wi-Fi local & Bluetooth (spec 5)
+## Dev client — tester les liaisons hors ligne (Wi-Fi local & Bluetooth)
 
-Les modes **Wi-Fi local** et **Bluetooth** reposent sur des modules natifs
-(`react-native-tcp-socket`, `react-native-ble-plx`) **absents d'Expo Go**. Il
-faut un **dev client** — c'est le profil `development`.
+Les liaisons **Wi-Fi local** et **Bluetooth** entre la télécommande et ses
+écrans reposent sur le module natif local `modules/setremote-link`
+(contrat et choix techniques : `docs/OFFLINE-NATIVE.md`), **absent d'Expo
+Go**. Il faut un **dev client** — c'est le profil `development`.
 
 ### Approche CNG (aucun dossier natif à committer)
 
@@ -105,9 +107,11 @@ exécute `expo prebuild` automatiquement dans le cloud à chaque build, en
 appliquant les config plugins (permissions Bluetooth, réseau local, etc.).
 Rien à générer ni committer manuellement.
 
-> Vérifié : `expo prebuild` applique bien le plugin `react-native-ble-plx`
-> (permissions `BLUETOOTH_SCAN/CONNECT`, `ACCESS_FINE_LOCATION`) et la
-> permission réseau local iOS (`NSLocalNetworkUsageDescription`).
+> Vérifié : `expo prebuild` applique le config plugin de
+> `modules/setremote-link` (iOS : `NSBonjourServices` `_setremote._tcp`,
+> `NSBluetoothAlwaysUsageDescription`, `NSLocalNetworkUsageDescription` ;
+> Android : `BLUETOOTH_SCAN` `neverForLocation`, `BLUETOOTH_CONNECT`,
+> `BLUETOOTH_ADVERTISE`, localisation seulement jusqu'à l'API 30).
 
 ### Construire et lancer le dev client
 
@@ -122,19 +126,11 @@ npx expo start --dev-client   # serveur Metro ; scanne le QR depuis l'app
 Le JS se recharge à chaud ; un rebuild n'est nécessaire que si tu ajoutes ou
 changes un module **natif**.
 
-### Tester le Wi-Fi local
+### Tester les liaisons hors ligne
 
-1. Mets l'iPhone (écran projecteur) et le téléphone télécommande sur le
-   **même Wi-Fi** — aucune connexion Internet requise.
-2. Télécommande → onglet **Canal** → mode **Wi-Fi local** → « Démarrer l'hôte ».
-   Un QR `ip:port` (ex. `192.168.1.5:8777`) s'affiche.
-3. Écran projecteur → mode **Wi-Fi local** → saisis `ip:port` (ou scanne).
-4. Pilote couleur / strobe / torche : tout passe par le réseau local.
-
-### Bluetooth — état
-
-La télécommande (rôle central) est prête. Le rôle **périphérique** de l'écran
-nécessite encore un module natif dédié à trancher — voir `CONNECTIVITY.md`.
+Procédure complète sur appareils (deux à quatre téléphones, routeur de voyage
+sans Internet, mode avion avec Bluetooth, arrière-plan, portée) :
+`TESTFLIGHT.md`, « Liaisons hors ligne ».
 
 ### Option locale sans EAS (Mac uniquement)
 

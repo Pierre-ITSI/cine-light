@@ -2674,7 +2674,7 @@
   "native.permission.bluetooth": {
     "original": "SetRemote utilise le Bluetooth pour relier la télécommande et l'écran sans Wi-Fi ni Internet.",
     "file": "expo-app/app.json",
-    "location": "expo-app/app.json plugins react-native-ble-plx.bluetoothAlwaysPermission (NSBluetoothAlwaysUsageDescription)",
+    "location": "expo-app/app.json plugins ./modules/setremote-link/app.plugin.js bluetoothPermission (NSBluetoothAlwaysUsageDescription)",
     "type": "permission"
   },
   "pwa.manifest.name": {
