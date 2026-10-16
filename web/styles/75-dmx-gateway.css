@@ -121,8 +121,7 @@
 #gwChNote{margin-top:auto;font-size:.65625rem}
 
 /* Accès depuis l'onglet QR : app native uniquement (UDP impossible en navigateur) */
-.gw-entry{display:none}
-html.in-app .gw-entry{display:flex}
+.gw-entry{display:flex}
 .gw-entry-state{font-size:.6rem;color:var(--green);letter-spacing:.08em}
 
 /* Écran de jeu : « Identifier » (clignotement 2 Hz pendant 3 s, état inchangé) */

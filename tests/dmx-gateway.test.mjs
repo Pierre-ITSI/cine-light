@@ -74,7 +74,7 @@ const live = (s) => s.page.evaluate(() => screenDmxLive());
 const patch = (rp, id, e) => rp.evaluate(([id, e]) => gwPatchSet(id, e), [id, e]);
 const S8 = (r, g, b, dim = 255) => [dim, r, g, b, 0, 128, 0, 0];
 
-test('navigateur seul : passerelle masquée, la vue explique qu\'il faut l\'app, aucune écoute', async () => {
+test('navigateur seul : accès visible, la vue explique qu\'il faut l\'app, aucune écoute', async () => {
   const { page, errors, close } = await openPage(browser);
   await page.evaluate(() => startMode('remote'));
   const st = await page.evaluate(() => ({
@@ -82,7 +82,7 @@ test('navigateur seul : passerelle masquée, la vue explique qu\'il faut l\'app,
     entry: getComputedStyle(document.getElementById('gwEntryBtn')).display,
     receive: typeof window.SRNative.receive,
   }));
-  assert.deepEqual(st, { native: false, entry: 'none', receive: 'function' });
+  assert.deepEqual(st, { native: false, entry: 'flex', receive: 'function' });
   await page.evaluate(() => openDmxGateway());
   const v = await page.evaluate(() => ({
     running: gwRunning(),

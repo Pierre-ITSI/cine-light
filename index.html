@@ -539,8 +539,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 #gwChNote{margin-top:auto;font-size:.65625rem}
 
 /* Accès depuis l'onglet QR : app native uniquement (UDP impossible en navigateur) */
-.gw-entry{display:none}
-html.in-app .gw-entry{display:flex}
+.gw-entry{display:flex}
 .gw-entry-state{font-size:.6rem;color:var(--green);letter-spacing:.08em}
 
 /* Écran de jeu : « Identifier » (clignotement 2 Hz pendant 3 s, état inchangé) */
@@ -1481,7 +1480,7 @@ html.in-app .gw-entry{display:flex}
       <div class="panel-label">Écrans appairés (<span id="pairScreensCount">0</span>)</div>
       <div id="pairScreensList" class="pair-screens-list"></div>
     </div>
-    <!-- Passerelle DMX : app native uniquement (accès à valider : aucune maquette) -->
+    <!-- Passerelle DMX : visible partout ; hors de l'app native, la vue explique qu'il faut l'app (validé) -->
     <button type="button" class="media-btn gw-entry" id="gwEntryBtn" onclick="openDmxGateway()"><span class="media-icon">🎛</span> Passerelle DMX <span class="gw-entry-state" id="gwEntryState"></span></button>
     <button class="media-btn pair-renew" onclick="confirmNewSession()"><span class="media-icon">⟳</span> Nouvelle session</button>
     <div class="pair-e2e">
