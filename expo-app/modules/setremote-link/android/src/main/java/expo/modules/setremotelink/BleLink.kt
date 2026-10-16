@@ -563,7 +563,7 @@ internal class BleLink(private val manager: LinkManager, private val context: Co
       override fun onDescriptorWrite(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) = manager.post {
         if (closed) return@post
         if (status != BluetoothGatt.GATT_SUCCESS) return@post dropLink(this@CentralLink, FAIL_BACKOFF_MS)
-        sendMessage(handshake.hello()) // abonné : le canal est prêt
+        handshake.helloIfNeeded()?.let { sendMessage(it) } // abonné : le canal est prêt
       }
 
       override fun onCharacteristicWrite(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) =
@@ -904,7 +904,7 @@ internal class BleLink(private val manager: LinkManager, private val context: Co
     }
     if (responseNeeded) respond(device, requestId, status, offset, value)
     // Abonné : le canal est prêt, notre HELLO part (après la réponse à l'abonnement).
-    created?.sendMessage(created.handshake.hello())
+    created?.let { s -> s.handshake.helloIfNeeded()?.let { s.sendMessage(it) } }
   }
 
   private inner class PeripheralSession(val device: BluetoothDevice, config: LinkConfig) : Session(config) {

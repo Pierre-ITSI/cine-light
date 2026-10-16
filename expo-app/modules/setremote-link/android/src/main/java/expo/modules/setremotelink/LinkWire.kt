@@ -272,6 +272,13 @@ internal class Handshake(
     return LinkWire.encodeHello(role, roomTag, nonce, name)
   }
 
+  /**
+   * HELLO à envoyer quand le canal devient prêt, sauf s'il est déjà parti : en
+   * Bluetooth, le HELLO du pair (et donc notre HELLO paresseux) peut être
+   * traité avant le rappel « abonné ». Un second HELLO ferait échouer le pair.
+   */
+  fun helloIfNeeded(): ByteArray? = if (helloSent) null else hello()
+
   private fun fail(reason: String): HandshakeEvent {
     state = 3
     return HandshakeEvent(error = reason)

@@ -397,7 +397,7 @@ extension BleLink: CBCentralManagerDelegate, CBPeripheralDelegate {
   func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
     guard let l = links[peripheral.identifier], characteristic.uuid == LinkWire.txUUID else { return }
     guard error == nil, characteristic.isNotifying else { return dropLink(l, backoff: 5, cancel: true) }
-    l.sendMessage(l.handshake.hello()) // abonné : le canal est prêt
+    if let hello = l.handshake.helloIfNeeded() { l.sendMessage(hello) } // abonné : le canal est prêt
   }
 
   func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
@@ -456,7 +456,7 @@ extension BleLink: CBPeripheralManagerDelegate {
     }
     s.setupWork = work
     manager.queue.asyncAfter(deadline: .now() + LinkLimits.bleSetupTimeout, execute: work)
-    s.sendMessage(s.handshake.hello()) // abonné : le canal est prêt
+    if let hello = s.handshake.helloIfNeeded() { s.sendMessage(hello) } // abonné : le canal est prêt
   }
 
   func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didUnsubscribeFrom characteristic: CBCharacteristic) {

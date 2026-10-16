@@ -194,6 +194,15 @@ export class Handshake {
     return encodeHello({ role: this.o.role, roomTag: this.o.roomTag, nonce: this.o.nonce, name: this.o.name });
   }
 
+  /**
+   * HELLO à envoyer quand le canal devient prêt, sauf s'il est déjà parti : en
+   * Bluetooth, le HELLO du pair (et donc notre HELLO paresseux) peut être
+   * traité avant le rappel « abonné ». Un second HELLO ferait échouer le pair.
+   */
+  helloIfNeeded(): Uint8Array | null {
+    return this.helloSent ? null : this.hello();
+  }
+
   private fail(error: NonNullable<HandshakeEvent['error']>): HandshakeEvent {
     this.state = 'closed';
     return { error };

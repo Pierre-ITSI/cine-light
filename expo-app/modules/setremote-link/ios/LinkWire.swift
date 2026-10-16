@@ -311,6 +311,13 @@ final class Handshake {
     return LinkWire.encodeHello(role: role, roomTag: roomTag, nonce: nonce, name: name)
   }
 
+  /// HELLO à envoyer quand le canal devient prêt, sauf s'il est déjà parti : en
+  /// Bluetooth, le HELLO du pair (et donc notre HELLO paresseux) peut être
+  /// traité avant le rappel « abonné ». Un second HELLO ferait échouer le pair.
+  func helloIfNeeded() -> Data? {
+    helloSent ? nil : hello()
+  }
+
   private func fail(_ reason: String) -> HandshakeEvent {
     state = 3
     return HandshakeEvent(error: reason)
