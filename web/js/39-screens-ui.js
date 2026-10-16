@@ -7,6 +7,8 @@
 // ouvert par le bouton « Cible : … » placé sous l'aperçu de la télécommande.
 // Feuilles (même présentation que la maquette 6) pour renommer un écran,
 // choisir ses groupes, créer / modifier / supprimer un groupe.
+// Maquette 5b : « Retirer l'écran » (bouton rouge à côté de Renommer) et sa
+// confirmation ; le retrait lui-même : 29-revoke.js.
 // Modèle (registre, cible, état de chaque écran) : 28-screens.js.
 let _svOpen = false;
 let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group', … }
@@ -27,7 +29,7 @@ function renderScreensUi() {
   renderScreensView();
   if (_sheet && (_sheet.kind === 'target' || _sheet.kind === 'screenGroups')) renderSheet();
 }
-function closeScreensUi() { closeSheet(); closeScreensView(); }
+function closeScreensUi() { closeRevokeDialog(); closeSheet(); closeScreensView(); }
 
 // ── Bouton « Cible : … » (maquette 6) ──
 // Affiché dès deux écrans (ou une cible autre que « Tous »)
@@ -252,16 +254,45 @@ function renderScreensView() {
       + escapeHtml(groups.length ? groups.join(' · ') : 'Sans groupe') + '</button><span class="sv-flex"></span>'
       + '<button type="button" class="sv-btn" onclick="scrIdentify(\'' + id + '\')">Identifier</button>'
       + '<button type="button" class="sv-icon" aria-label="Renommer" onclick="openRenameScreen(\'' + id + '\')">'
-      + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button></div></div>';
+      + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>'
+      + '<button type="button" class="sv-icon sv-revoke" aria-label="Retirer l\'écran" onclick="openRevokeDialog(\'' + id + '\')">' + _UNLINK_SVG(16, 2) + '</button></div></div>';
   }).join('') : '<div class="sv-empty">Aucun écran appairé : touchez « + Appairer » puis scannez le QR sur chaque écran de jeu.</div>');
   _setHtml(document.getElementById('svGroups'), _scrReg.groups.map((g) => '<button type="button" class="sv-chip' + (t.k === 'group' && t.id === g.id ? ' on' : '')
     + '" onclick="openGroupEditor(\'' + g.id + '\')">' + escapeHtml(g.name) + ' · ' + scrGroupMembers(g.id).length + '</button>').join('')
     + (_scrReg.groups.length < SCR_GROUPS_MAX ? '<button type="button" class="sv-chip add" onclick="openGroupEditor(null)">+ Nouveau groupe</button>' : ''));
 }
 
+// ── Retirer un écran (maquette 5b) ──
+const _UNLINK_SVG = (size, sw) => '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + sw
+  + '" aria-hidden="true"><path d="M15 7l2-2a3.5 3.5 0 015 5l-2 2M9 17l-2 2a3.5 3.5 0 01-5-5l2-2M8 8l8 8"/></svg>';
+let _revokeId = null;
+function openRevokeDialog(id) {
+  if (!scrKnown(id)) return;
+  _revokeId = id;
+  document.getElementById('rvTitle').textContent = 'Retirer « ' + scrName(id) + ' » ?';
+  // Écrans qui ne pourront pas suivre (pas de clé par écran) : dit avant de confirmer
+  const lost = scrRevokeFollowers(id).lost;
+  const w = document.getElementById('rvLost');
+  w.textContent = lost.length ? (lost.length > 1 ? 'Ne pourront pas suivre et devront être appairés à nouveau : ' : 'Ne pourra pas suivre et devra être appairé à nouveau : ')
+    + lost.map((s) => '« ' + scrName(s) + ' »').join(', ') + '.' : '';
+  w.style.display = lost.length ? 'block' : 'none';
+  document.getElementById('sr-revoke').classList.add('open');
+}
+function closeRevokeDialog() {
+  _revokeId = null;
+  const d = document.getElementById('sr-revoke');
+  if (d) d.classList.remove('open');
+}
+function confirmRevoke() {
+  const id = _revokeId;
+  closeRevokeDialog();
+  if (id) scrRevoke(id).then(() => renderScreensUi());
+}
+
 // Échap : ferme la feuille, puis la vue
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  if (_sheet) closeSheet();
+  if (_revokeId) closeRevokeDialog();
+  else if (_sheet) closeSheet();
   else if (_svOpen) closeScreensView();
 });

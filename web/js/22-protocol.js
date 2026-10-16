@@ -181,6 +181,13 @@ const MSG_ROUTES = {
     handle: (m) => screenApplyDmxLook(m),
   },
   'screen:identify':   { roles: ['screen'], validate: () => true, handle: () => screenIdentify() },
+  // Clé par écran et retrait (29-revoke.js) ; le canal chiffré a déjà vérifié l'adresse (cet écran)
+  'key:offer': {
+    roles: ['screen'],
+    validate: (m) => SRP.SCREEN_ID_RE.test(m.rid) && SRP.EXCHANGE_ID_RE.test(m.xid) && _P.isObj(m.jwk),
+    handle: (m) => screenOnKeyOffer(m),
+  },
+  'screen:revoked':    { roles: ['screen'], validate: () => true, handle: (m) => screenOnRevoked(m) },
   // Nom et groupes de cet écran (télécommande, 28-screens.js)
   'screen:config': {
     roles: ['screen'],
@@ -237,6 +244,11 @@ const MSG_ROUTES = {
   'call:state':        { roles: ['remote'], validate: (m) => _P.oneOf(m.state, ['ringing', 'incall', 'declined', 'ended']), handle: (m) => remoteOnCallState(m) },
   'media:advanced':    { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenAdvanced(m.id) },
   'media:need':        { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenNeeds(m.id) },
+  'key:answer': {
+    roles: ['remote'],
+    validate: (m) => SRP.SCREEN_ID_RE.test(m.sid) && SRP.SCREEN_ID_RE.test(m.rid) && SRP.EXCHANGE_ID_RE.test(m.xid) && _P.isObj(m.jwk),
+    handle: (m) => remoteOnKeyAnswer(m),
+  },
   // Signe de vie : la présence de l'écran est notée à la réception (20-mqtt.js)
   'screen:alive':      { roles: ['remote'], validate: () => true, handle: () => {} },
   'caps': {

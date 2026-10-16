@@ -68,3 +68,26 @@
 .sv-chip.on{border-color:var(--accent);background:rgba(255,107,44,.1);color:#FF8a55}
 .sv-chip.add{border:1px dashed rgba(255,255,255,.25);background:transparent;color:#c8c8c8}
 .sv-note{font-size:.6875rem;color:#a8a8a8;line-height:1.6;text-align:center}
+
+/* — Retirer un écran (maquette 5b) : bouton rouge et confirmation — */
+.sv-icon.sv-revoke{border-color:rgba(255,122,112,.45);color:#ff7a70}
+#sr-revoke{display:none;position:fixed;inset:0;z-index:550;background:rgba(0,0,0,.78);font-family:'DM Mono',monospace;color:var(--text)}
+#sr-revoke.open{display:block}
+.rv-dialog{position:absolute;left:18px;right:18px;top:230px;max-width:420px;margin:0 auto;background:var(--mid);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:24px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.rv-dialog svg{align-self:center;flex-shrink:0}
+.rv-dialog h2{margin:0;text-align:center;font-family:'Lato',sans-serif;font-weight:600;font-size:1.25rem;overflow-wrap:anywhere}
+.rv-text{margin:0;font-size:.75rem;color:#c4c4c4;text-align:center;line-height:1.6}
+.rv-sub{margin:0;font-size:.6875rem;color:#a8a8a8;text-align:center;line-height:1.6}
+.rv-lost{margin:0;font-size:.6875rem;color:#f0dca8;text-align:center;line-height:1.6}
+.rv-actions{display:flex;gap:10px;margin-top:4px}
+.rv-cancel,.rv-ok{height:48px;border-radius:8px;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.rv-cancel{flex:1;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text)}
+.rv-ok{flex:1.3;border:1px solid #ff7a70;background:rgba(255,122,112,.14);color:#ff8f86}
+@media (max-height:640px){.rv-dialog{top:24px}}
+
+/* — Écran de jeu retiré (maquette 5c) — */
+#screen-revoked{display:none;position:fixed;inset:0;z-index:700;background:#000;color:var(--text);font-family:'DM Mono',monospace;padding:max(22px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(22px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}
+.srv-title{font-family:'Lato',sans-serif;font-weight:600;font-size:1.375rem}
+.srv-text{margin:0;max-width:300px;font-size:.75rem;color:#b8b8b8;line-height:1.6}
+.srv-join{margin-top:10px;height:50px;padding:0 22px;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.srv-home{margin-top:4px;padding:8px 12px;border:none;background:none;font-family:'DM Mono',monospace;font-size:.6875rem;color:#a8a8a8;cursor:pointer}

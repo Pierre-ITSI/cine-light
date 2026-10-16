@@ -45,6 +45,7 @@ function handleLaunchHash() {
 // Écran : rejoint (et retient) une session — QR scanné, lien ou code + SAS
 function screenJoinSession(p) {
   if (!SRP.isValidPairing(p)) return;
+  screenPwOnJoin(p); // clé par écran d'une autre session : effacée (29-revoke.js)
   screenSaveSession(p);
   hideScreenPairing();
   enterScreenSession(p);
@@ -66,33 +67,46 @@ function enterScreenSession(p) {
   acquireWakeLock();
   setupScreenAutohide();
   if (!navigator.vibrate) { const b=document.getElementById('vibrateBtn'); if(b){b.classList.add('unavail');b.textContent='📳 Indispo (iPhone)';b.classList.remove('on');} vibrateEnabled=false; }
-  let firstConnect = true;
-  connectSession(_session, () => {
-    setScreenStatus(_screenCfg.name ? '✓ ' + _screenCfg.name + ' — liaison chiffrée' : '✓ En écoute — liaison chiffrée');
-    // Confirmation visible uniquement à la 1re connexion : les reconnexions
-    // automatiques ne doivent rien afficher (l'écran est peut-être dans le champ)
-    if (firstConnect && !screenBlackoutOn) flashScreenNotice('Relié à la télécommande');
-    firstConnect = false;
-    sendCaps();
-    // Signe de vie : la télécommande signale un écran muet depuis 40 s
-    stopScreenAlive();
-    _screenAliveTimer = setInterval(() => sendMsg({ type: 'screen:alive' }), SCREEN_ALIVE_MS);
-  });
+  _screenFirstConnect = true;
+  // Clé par écran chargée AVANT la connexion (une offre de clé n'est acceptée
+  // qu'en son absence, 29-revoke.js)
+  const s = _session;
+  screenPwLoad().catch(() => {}).then(() => { if (mode === 'screen' && _session === s) connectSession(s, screenOnSessionConnected); });
+}
+// (Re)connexion de l'écran, aussi après une nouvelle session remise par la télécommande (session:rekey)
+let _screenFirstConnect = false;
+function screenOnSessionConnected() {
+  setScreenStatus(_screenCfg.name ? '✓ ' + _screenCfg.name + ' — liaison chiffrée' : '✓ En écoute — liaison chiffrée');
+  // Confirmation visible uniquement à la 1re connexion : les reconnexions
+  // automatiques ne doivent rien afficher (l'écran est peut-être dans le champ)
+  if (_screenFirstConnect && !screenBlackoutOn) flashScreenNotice('Relié à la télécommande');
+  _screenFirstConnect = false;
+  sendCaps();
+  // Signe de vie : la télécommande signale un écran muet depuis 40 s
+  stopScreenAlive();
+  _screenAliveTimer = setInterval(() => sendMsg({ type: 'screen:alive' }), SCREEN_ALIVE_MS);
 }
 
-// Télécommande : connexion à sa session (au démarrage et après « Nouvelle session »)
-function connectRemote(p) {
+// Télécommande : connexion à sa session (au démarrage et après « Nouvelle session »).
+// keep : nouvelle session après le retrait d'un écran (29-revoke.js) : registre,
+// état de chaque écran, patch DMX et liaison affichée sont gardés tels quels.
+function connectRemote(p, o = {}) {
   _session = { channelId: p.channelId, key: p.key };
-  _linkEverConnected = false;
-  setConnStatus('connecting');
-  // État « Tous les écrans » = réglages affichés ; noms, groupes et cible de
-  // cette session (28-screens.js) ; une cible retenue (groupe, écran) montre
-  // son propre état
-  _scrAllState = null; scrInitAll();
-  scrLoad();
-  if (scrTarget().k !== 'all') scrLoadView();
-  if (document.getElementById('content-qr').classList.contains('active')) renderPairPanel();
-  gwOnSessionChanged(); // passerelle DMX : patch de cette session
+  if (!o.keep) {
+    _linkEverConnected = false;
+    setConnStatus('connecting');
+    // État « Tous les écrans » = réglages affichés ; noms, groupes et cible de
+    // cette session (28-screens.js) ; une cible retenue (groupe, écran) montre
+    // son propre état
+    _scrAllState = null; scrInitAll();
+    scrLoad();
+    if (scrTarget().k !== 'all') scrLoadView();
+  }
+  if (document.getElementById('content-qr').classList.contains('active')) renderPairPanel(); // nouveau QR, nouveau code
+  if (!o.keep) {
+    gwOnSessionChanged(); // passerelle DMX : patch de cette session
+    rkStartListeners();   // anciens topics encore écoutés après un retrait
+  }
   connectSession(_session, () => {
     setConnStatus('connected');
     // Demander aux écrans leurs capacités (torche / vibreur / cache). Chaque
@@ -110,6 +124,7 @@ function confirmNewSession() {
 }
 function newRemoteSession() {
   remoteStopAllPairing();
+  rkClearAll();       // tous les écrans révoqués : plus rien à remettre sur les anciens topics
   _vidStopJobs(null); // transferts vidéo vers les écrans révoqués
   clearPairedScreens();
   connectRemote(renewRemoteSession());
@@ -220,6 +235,7 @@ function goBackToSplash() {
 
 function goBack() {
   closeScreensUi(); // vue « Écrans connectés », choix de la cible (39-screens-ui.js)
+  rkStopListeners(); // anciens topics : réécoutés au prochain lancement de la télécommande
   stopStrobe();
   stopMediaBroadcast(true, true);
   gwStop(); // passerelle DMX : les écrans gardent leur look et sont rendus à la télécommande

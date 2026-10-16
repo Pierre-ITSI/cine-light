@@ -300,6 +300,29 @@ input[type="range"]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;b
 .sv-chip.on{border-color:var(--accent);background:rgba(255,107,44,.1);color:#FF8a55}
 .sv-chip.add{border:1px dashed rgba(255,255,255,.25);background:transparent;color:#c8c8c8}
 .sv-note{font-size:.6875rem;color:#a8a8a8;line-height:1.6;text-align:center}
+
+/* — Retirer un écran (maquette 5b) : bouton rouge et confirmation — */
+.sv-icon.sv-revoke{border-color:rgba(255,122,112,.45);color:#ff7a70}
+#sr-revoke{display:none;position:fixed;inset:0;z-index:550;background:rgba(0,0,0,.78);font-family:'DM Mono',monospace;color:var(--text)}
+#sr-revoke.open{display:block}
+.rv-dialog{position:absolute;left:18px;right:18px;top:230px;max-width:420px;margin:0 auto;background:var(--mid);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:24px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.rv-dialog svg{align-self:center;flex-shrink:0}
+.rv-dialog h2{margin:0;text-align:center;font-family:'Lato',sans-serif;font-weight:600;font-size:1.25rem;overflow-wrap:anywhere}
+.rv-text{margin:0;font-size:.75rem;color:#c4c4c4;text-align:center;line-height:1.6}
+.rv-sub{margin:0;font-size:.6875rem;color:#a8a8a8;text-align:center;line-height:1.6}
+.rv-lost{margin:0;font-size:.6875rem;color:#f0dca8;text-align:center;line-height:1.6}
+.rv-actions{display:flex;gap:10px;margin-top:4px}
+.rv-cancel,.rv-ok{height:48px;border-radius:8px;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.rv-cancel{flex:1;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text)}
+.rv-ok{flex:1.3;border:1px solid #ff7a70;background:rgba(255,122,112,.14);color:#ff8f86}
+@media (max-height:640px){.rv-dialog{top:24px}}
+
+/* — Écran de jeu retiré (maquette 5c) — */
+#screen-revoked{display:none;position:fixed;inset:0;z-index:700;background:#000;color:var(--text);font-family:'DM Mono',monospace;padding:max(22px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(22px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}
+.srv-title{font-family:'Lato',sans-serif;font-weight:600;font-size:1.375rem}
+.srv-text{margin:0;max-width:300px;font-size:.75rem;color:#b8b8b8;line-height:1.6}
+.srv-join{margin-top:10px;height:50px;padding:0 22px;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.srv-home{margin-top:4px;padding:8px 12px;border:none;background:none;font-family:'DM Mono',monospace;font-size:.6875rem;color:#a8a8a8;cursor:pointer}
 /* Gradients de couleur pour les sliders */
 #dimmerSlider{background:linear-gradient(to right,#333,#fff) !important}
 #kelvinSlider{background:linear-gradient(to right,#ff9b4a,#ffd2a0,#fff,#c9dfff,#a0c8ff) !important}
@@ -904,6 +927,15 @@ button.st-row{cursor:pointer}
   </form>
   <p class="pj-help" id="pairCodeHelp">Avec le code, un nombre à 6 chiffres s'affichera ici et sur la télécommande pour confirmer l'appairage.</p>
   <button class="screen-back" onclick="goBackToSplash()">← Retour</button>
+</div>
+
+<!-- Écran de jeu retiré par la télécommande (maquette 5c) -->
+<div id="screen-revoked" role="alertdialog" aria-labelledby="srvTitle" aria-describedby="srvText">
+  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#a8a8a8" stroke-width="1.6" aria-hidden="true"><path d="M15 7l2-2a3.5 3.5 0 015 5l-2 2M9 17l-2 2a3.5 3.5 0 01-5-5l2-2M8 8l8 8"/></svg>
+  <div class="srv-title" id="srvTitle">Écran retiré</div>
+  <p class="srv-text" id="srvText">La télécommande a retiré cet écran de la session. Il ne reçoit plus aucune commande.</p>
+  <button type="button" class="srv-join" onclick="screenRevokedJoin()">Rejoindre une session</button>
+  <button type="button" class="srv-home" onclick="screenRevokedHome()">← Accueil</button>
 </div>
 
 <div id="screen-mode" onclick="requestFS()">
@@ -1623,6 +1655,21 @@ button.st-row{cursor:pointer}
     <span class="sr-sheet-grip" aria-hidden="true"></span>
     <h2 id="srSheetTitle">Envoyer les commandes à…</h2>
     <div class="sr-sheet-body" id="srSheetBody"></div>
+  </div>
+</div>
+
+<!-- Retirer un écran : confirmation (maquette 5b) -->
+<div id="sr-revoke" onclick="if(event.target===this)closeRevokeDialog()">
+  <div class="rv-dialog" role="dialog" aria-modal="true" aria-labelledby="rvTitle">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ff7a70" stroke-width="1.8" aria-hidden="true"><path d="M15 7l2-2a3.5 3.5 0 015 5l-2 2M9 17l-2 2a3.5 3.5 0 01-5-5l2-2M8 8l8 8"/></svg>
+    <h2 id="rvTitle">Retirer cet écran ?</h2>
+    <p class="rv-text">Cet écran est déconnecté et ne pourra plus rien recevoir ni déchiffrer.</p>
+    <p class="rv-sub">Les autres écrans passent automatiquement sur de nouvelles clés, sans interruption visible. Pour réutiliser cet appareil, il faudra l'appairer à nouveau.</p>
+    <p class="rv-lost" id="rvLost" style="display:none"></p>
+    <div class="rv-actions">
+      <button type="button" class="rv-cancel" onclick="closeRevokeDialog()">Annuler</button>
+      <button type="button" class="rv-ok" id="rvOk" onclick="confirmRevoke()">Retirer</button>
+    </div>
   </div>
 </div>
 
@@ -5565,6 +5612,8 @@ const _LS_KEYS = {
   screen: 'setremote-screen-session-v1', // dernière session rejointe par cet écran
   screenId: 'setremote-screen-id',
   screenConfig: 'setremote-screen-config-v1', // nom et groupes de cet écran (screen:config), par session
+  remoteId: 'setremote-remote-id',            // identifiant stable de la télécommande (clés par écran)
+  screenPairwise: 'setremote-screen-pairwise-v1', // écran : sa clé par écran avec la télécommande (29-revoke.js)
 };
 let _session = null; // secret de la session active (télécommande ou écran)
 
@@ -5591,6 +5640,30 @@ function renewRemoteSession() {
   const p = SRP.createPairing();
   _writePairing(_LS_KEYS.remote, p);
   return p;
+}
+// Retrait d'un écran : la nouvelle session (déjà remise aux autres écrans) devient celle de la télécommande
+function saveRemoteSession(p) { _writePairing(_LS_KEYS.remote, p); }
+
+// Télécommande : identifiant stable (lié aux clés par écran, pairwise.js)
+function remoteId() {
+  let id = _lsGet(_LS_KEYS.remoteId);
+  if (!(typeof id === 'string' && SRP.SCREEN_ID_RE.test(id))) { id = SRP.createRemoteId(); _lsSet(_LS_KEYS.remoteId, id); }
+  return id;
+}
+
+// Écran : clé par écran avec la télécommande { rid, s (secret), kid, ch (session) }.
+// Valable pour la lignée de sessions où elle a été établie (suivie au fil des
+// session:rekey) ; rejoindre une AUTRE session (QR, code) l'efface.
+function screenStoredPairwise() {
+  try {
+    const o = JSON.parse(_lsGet(_LS_KEYS.screenPairwise));
+    if (!o || typeof o !== 'object' || !SRP.SCREEN_ID_RE.test(o.rid) || !SRP.PAIRWISE_SECRET_RE.test(o.s)
+      || !SRP.KEY_ID_RE.test(o.kid) || typeof o.ch !== 'string') return null;
+    return { rid: o.rid, s: o.s, kid: o.kid, ch: o.ch };
+  } catch (_) { return null; }
+}
+function screenSavePairwise(r) {
+  _lsSet(_LS_KEYS.screenPairwise, r ? JSON.stringify({ rid: r.rid, s: r.s, kid: r.kid, ch: r.ch }) : null);
 }
 
 // Écran : dernière session rejointe (QR ou code)
@@ -5858,13 +5931,21 @@ function receiveFrame(ch, str, via) {
   _rxChain = _rxChain.then(async () => {
     if (ch !== _sec) return;
     let r;
-    try { r = await ch.receive(str); }
+    // Trames scellées avec une clé PAR ÉCRAN (29-revoke.js) : télécommande, la
+    // clé de l'écran émetteur ; écran, la sienne (et celle d'un échange en cours)
+    try { r = await ch.receive(str, { pairwise: mode === 'remote' ? remotePairwiseCandidates : screenPairwiseCandidates }); }
     catch (e) {
       secStats.dropped++; secStats.lastError = (e && e.code) || 'error';
       if (secStats.lastError === 'stale') await noteStaleFrame(ch, str);
       return;
     }
     if (r) noteFreshFrame(r.sender);
+    if (r && r.kind === 'pairwise' && ch === _sec && via !== 'bc') {
+      secStats.received++;
+      if (mode === 'remote') remoteOnPairwise(r.tag, r.message);
+      else screenOnPairwise(r.message, r.tag);
+      return;
+    }
     if (!r || r.kind !== 'message' || ch !== _sec) return; // écho, autre écran, fragment binaire
     if (via === 'bc' && !_BC_TYPES.includes(r.message.type)) return;
     secStats.received++;
@@ -5943,6 +6024,21 @@ function sendMsg(obj) {
     if (client === mqttClient && client.connected) { client.publish(ch.mqttTopic, frame, { qos: 0 }); secStats.sent++; }
     if (bc && window._bc) { try { window._bc.postMessage(await bc.seal(msg)); } catch (_) {} }
   });
+}
+
+// Message scellé avec une clé PAR ÉCRAN (pairwise.js, 29-revoke.js), publié
+// sur la session en cours dans l'ordre des envois. Résolu une fois publié.
+function sendPairwise(obj, keys) {
+  if (!mqttClient || !mqttClient.connected || !_sec || !keys) return Promise.resolve();
+  const ch = _sec, client = mqttClient;
+  _txChain = _txChain.then(async () => {
+    if (ch !== _sec) return;
+    let frame;
+    try { frame = await ch.sealPairwise(JSON.parse(JSON.stringify(obj)), keys); }
+    catch (e) { secStats.refused++; secStats.lastError = (e && e.code) || 'error'; console.warn('SetRemote : message refusé à l\'envoi', obj && obj.type, e && e.message); return; }
+    if (client === mqttClient && client.connected) { client.publish(ch.mqttTopic, frame, { qos: 0 }); secStats.sent++; }
+  });
+  return _txChain;
 }
 
 // Copie JSON (toJSON des objets WebRTC, undefined retirés, NaN/Infinity → null)
@@ -6158,6 +6254,13 @@ const MSG_ROUTES = {
     handle: (m) => screenApplyDmxLook(m),
   },
   'screen:identify':   { roles: ['screen'], validate: () => true, handle: () => screenIdentify() },
+  // Clé par écran et retrait (29-revoke.js) ; le canal chiffré a déjà vérifié l'adresse (cet écran)
+  'key:offer': {
+    roles: ['screen'],
+    validate: (m) => SRP.SCREEN_ID_RE.test(m.rid) && SRP.EXCHANGE_ID_RE.test(m.xid) && _P.isObj(m.jwk),
+    handle: (m) => screenOnKeyOffer(m),
+  },
+  'screen:revoked':    { roles: ['screen'], validate: () => true, handle: (m) => screenOnRevoked(m) },
   // Nom et groupes de cet écran (télécommande, 28-screens.js)
   'screen:config': {
     roles: ['screen'],
@@ -6214,6 +6317,11 @@ const MSG_ROUTES = {
   'call:state':        { roles: ['remote'], validate: (m) => _P.oneOf(m.state, ['ringing', 'incall', 'declined', 'ended']), handle: (m) => remoteOnCallState(m) },
   'media:advanced':    { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenAdvanced(m.id) },
   'media:need':        { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenNeeds(m.id) },
+  'key:answer': {
+    roles: ['remote'],
+    validate: (m) => SRP.SCREEN_ID_RE.test(m.sid) && SRP.SCREEN_ID_RE.test(m.rid) && SRP.EXCHANGE_ID_RE.test(m.xid) && _P.isObj(m.jwk),
+    handle: (m) => remoteOnKeyAnswer(m),
+  },
   // Signe de vie : la présence de l'écran est notée à la réception (20-mqtt.js)
   'screen:alive':      { roles: ['remote'], validate: () => true, handle: () => {} },
   'caps': {
@@ -6773,7 +6881,8 @@ function stopPairScan() {
 // ── Télécommande ──
 // Registre par session (localStorage, 8 sessions les plus récentes) :
 //   écrans  screenId → { n (« Écran n » par défaut), name (null : jamais
-//           nommé ; '' : nom effacé), groups: [ids] }
+//           nommé ; '' : nom effacé), groups: [ids], pk : clé par écran
+//           { s (secret), kid, ok (confirmée par l'écran) } (29-revoke.js) }
 //   groupes [{ id, name }]
 //   cible   { k: 'all' } | { k: 'group', id } | { k: 'screen', id }
 // Chaque ordre émis (sendMsg) porte la cible courante : rien (= tous les
@@ -6850,6 +6959,8 @@ function scrLoad() {
         name: typeof e.name === 'string' ? scrCleanName(e.name) : null,
         groups: (Array.isArray(e.groups) ? e.groups : []).filter((g, i, a) => gids.has(g) && a.indexOf(g) === i),
         at: typeof e.at === 'number' && Number.isFinite(e.at) ? e.at : 0,
+        pk: e.pk && typeof e.pk === 'object' && SRP.PAIRWISE_SECRET_RE.test(e.pk.s) && SRP.KEY_ID_RE.test(e.pk.kid)
+          ? { s: e.pk.s, kid: e.pk.kid, ok: !!e.pk.ok } : null,
       });
       reg.seq = Math.max(reg.seq, n);
     }
@@ -6867,7 +6978,7 @@ function scrSave() {
   const o = _scrStore();
   const sessions = o.sessions && typeof o.sessions === 'object' && !Array.isArray(o.sessions) ? o.sessions : {};
   const screens = {};
-  for (const [id, e] of _scrReg.screens) screens[id] = { n: e.n, name: e.name, groups: e.groups, at: e.at };
+  for (const [id, e] of _scrReg.screens) screens[id] = { n: e.n, name: e.name, groups: e.groups, at: e.at, pk: e.pk || null };
   sessions[sid] = { at: Date.now(), seq: _scrReg.seq, screens, groups: _scrReg.groups, target: _scrReg.target };
   const ids = Object.keys(sessions).sort((a, b) => ((sessions[b] && sessions[b].at) || 0) - ((sessions[a] && sessions[a].at) || 0));
   for (const id of ids.slice(SCR_SESSIONS_MAX)) delete sessions[id];
@@ -6892,7 +7003,7 @@ function scrRegister(id) {
   let e = _scrReg.screens.get(id);
   if (!e) {
     if (_scrReg.screens.size >= SCR_MAX && !_scrEvictOne()) return null;
-    e = { n: ++_scrReg.seq, name: null, groups: [], at: Date.now() };
+    e = { n: ++_scrReg.seq, name: null, groups: [], at: Date.now(), pk: null };
     _scrReg.screens.set(id, e);
     scrSave();
     scrChanged();
@@ -6902,7 +7013,7 @@ function scrRegister(id) {
 // Registre plein : on oublie l'écran le plus ancien, ni nommé, ni groupé, ni visé, hors ligne
 function _scrEvictOne() {
   const t = _scrReg.target;
-  const cands = [..._scrReg.screens].filter(([id, e]) => !e.name && !e.groups.length && !(t.k === 'screen' && t.id === id) && !scrOnline(id))
+  const cands = [..._scrReg.screens].filter(([id, e]) => !e.name && !e.groups.length && !e.pk && !(t.k === 'screen' && t.id === id) && !scrOnline(id))
     .sort((a, b) => a[1].at - b[1].at);
   if (!cands.length) return false;
   _scrReg.screens.delete(cands[0][0]);
@@ -7158,6 +7269,7 @@ function scrOnCaps(id, caps) {
     const groups = Array.isArray(caps.groups) ? caps.groups : [];
     st.needsConfig = (e.name || '') !== cn || groups.length !== e.groups.length || e.groups.some((g) => !groups.includes(g));
     scrSave();
+    kxOnCaps(id, caps); // clé par écran : établie, vérifiée ou à établir (29-revoke.js)
   }
   scrRefreshCachedView();
   scrChanged();
@@ -7311,6 +7423,404 @@ function renderScreenIdentity() {
   const el = document.getElementById('screenMenuInfo');
   if (el) el.textContent = _screenCfg.name ? '« ' + _screenCfg.name + ' » · liaison chiffrée de bout en bout' : 'Liaison chiffrée de bout en bout';
 }
+// ══════════════════════════ CLÉS PAR ÉCRAN & RETRAIT D'UN ÉCRAN ══════════════════════════
+// Maquettes validées 5b (« Retirer l'écran » + confirmation) et 5c (écran retiré).
+//
+// Tous les écrans partagent la clé de session : ignorer un écran ne suffit pas
+// à le retirer. Chaque écran a donc AUSSI une clé propre avec la télécommande
+// (packages/protocol/pairwise.js), établie par ECDH P-256 éphémère DANS la
+// session chiffrée, juste après l'appairage (QR ou code) ou à la première
+// connexion d'un écran appairé avant cette version (caps.kx = 1) :
+//   key:offer (session) → key:answer (session) → key:confirm (pairwise) → key:ok (pairwise)
+// Télécommande : secret conservé par écran dans le registre de la session
+// (28-screens.js, pk) ; écran : dans setremote-screen-pairwise-v1. caps.kid
+// permet de vérifier que les deux côtés ont la même clé ; un écran qui en a
+// déjà une avec cette télécommande ignore toute nouvelle offre (premier échange
+// retenu) ; une clé qui diffère n'est jamais remplacée d'office (pkConflict).
+//
+// Retrait (scrRevoke) :
+//   1. l'écran retiré reçoit screen:revoked (clé de session, ancien topic) :
+//      il efface sa session et ses clés et affiche 5c ;
+//   2. nouvelle session (channelId + clé, même dérivation) ; registre, patch
+//      DMX et choix « ne plus demander » du stroboscope y passent, sans
+//      l'écran retiré (nom, groupes et clé oubliés) ;
+//   3. chaque autre écran reçoit session:rekey (nouvelle session, son nom et
+//      ses groupes) scellé avec SA clé pairwise, sur l'ancien topic ; il
+//      accuse (rekey:ok), passe sur le nouveau topic et garde affichage, cache
+//      et état : la resynchronisation n'y renvoie que ce qui manque ;
+//   4. la télécommande bascule dès que les écrans en ligne ont accusé (ou au
+//      bout de REKEY_WAIT_MS) ; le QR et le code d'appairage sont renouvelés ;
+//   5. elle garde un ÉCOUTEUR LÉGER sur l'ancien topic pendant RK_LISTEN_MS
+//      (24 h, conservé) : un écran absent pendant le retrait y revient et
+//      reçoit la session en cours (sa clé pairwise) ; l'écran retiré, ou tout
+//      appareil inconnu (ancien QR rejoué), reçoit screen:revoked.
+// Les écrans sans clé pairwise (version antérieure jamais reconnectée, clé en
+// conflit) ne peuvent pas suivre : à leur retour sur l'ancien topic, ils
+// reçoivent screen:revoked { reason: 'renewed' } et doivent être réappairés.
+const REKEY_WAIT_MS = 3000;                  // accusés des écrans en ligne avant la bascule
+const RK_LISTEN_MS = 24 * 60 * 60 * 1000;    // écoute de l'ancien topic après un retrait
+const RK_RECORDS_MAX = 4;                    // anciens topics écoutés au plus (retraits successifs)
+const RK_RESEND_MS = 4000;                   // pas plus d'un envoi par écran et par période
+const KX_RETRY_MS = 10000;                   // échange de clés sans réponse : relancé ensuite
+const RK_LS_KEY = 'setremote-rekey-v1';
+
+// ══════════ Télécommande : clé par écran ══════════
+const _pwCache = new Map(); // screenId → Promise<{ r2s, s2r, kid }>
+const _kx = new Map();      // screenId → échange en cours { xid, kp, at, ch }
+
+function pkOf(id) { const e = _scrReg.screens.get(id); return e && e.pk && !e.pkConflict ? e.pk : null; }
+function pwKeys(id) {
+  const pk = pkOf(id);
+  if (!pk) return Promise.resolve(null);
+  const c = _pwCache.get(id);
+  if (c && c.s === pk.s) return c.p;
+  const p = SRP.pairwiseKeys(pk.s, { remoteId: remoteId(), screenId: id }).catch(() => null);
+  _pwCache.set(id, { s: pk.s, p });
+  return p;
+}
+// Trames pairwise reçues sur la session : clé de l'écran rattaché à l'émetteur
+async function remotePairwiseCandidates(sender) {
+  const id = _screenOfSender.get(sender);
+  const keys = id ? await pwKeys(id) : null;
+  return keys ? [{ keys, tag: id }] : null;
+}
+
+// À chaque « caps » d'un écran connu
+function kxOnCaps(id, caps) {
+  if (mode !== 'remote' || caps.kx !== 1) return; // écran sans échange de clés (ancienne version)
+  const e = _scrReg.screens.get(id);
+  if (!e) return;
+  const kid = typeof caps.kid === 'string' ? caps.kid : null;
+  if (e.pk && kid === e.pk.kid) {
+    if (!e.pk.ok || e.pkConflict) { e.pk.ok = true; e.pkConflict = false; scrSave(); }
+    return;
+  }
+  if (kid) { e.pkConflict = true; scrChanged(); return; } // l'écran détient une AUTRE clé : jamais remplacée d'office
+  kxStart(id); // l'écran n'a pas (ou plus) de clé avec nous
+}
+async function kxStart(id) {
+  const cur = _kx.get(id);
+  if (cur && Date.now() - cur.at < KX_RETRY_MS) return;
+  const at = Date.now();
+  _kx.set(id, { at });
+  let kp;
+  try { kp = await SRP.ecdhKeyPair(); } catch (_) { _kx.delete(id); return; }
+  if (mode !== 'remote' || !_session) return;
+  const xid = SRP.createExchangeId();
+  _kx.set(id, { xid, kp, at, ch: _session.channelId });
+  sendMsg({ type: 'key:offer', rid: remoteId(), xid, jwk: kp.publicJwk, target: { screens: [id] } });
+}
+// key:answer (session) : seulement de l'émetteur rattaché à l'écran visé, pour notre offre
+async function remoteOnKeyAnswer(m) {
+  const sid = _rxFrom;
+  if (!sid || m.sid !== sid || m.rid !== remoteId()) return;
+  const x = _kx.get(sid);
+  if (!x || !x.kp || x.xid !== m.xid || !_session || x.ch !== _session.channelId) return;
+  _kx.delete(sid);
+  let r;
+  try {
+    r = await SRP.derivePairwiseSecret(x.kp, { offerJwk: x.kp.publicJwk, answerJwk: m.jwk, channelId: x.ch, remoteId: remoteId(), screenId: sid, exchangeId: x.xid });
+  } catch (_) { return; }
+  const e = _scrReg.screens.get(sid);
+  if (!e) return;
+  e.pk = { s: r.secret, kid: r.kid, ok: false };
+  e.pkConflict = false;
+  scrSave();
+  const keys = await pwKeys(sid);
+  if (keys) sendPairwise({ type: 'key:confirm', sid, rid: remoteId(), xid: x.xid }, keys);
+}
+// Trame pairwise d'un écran (sur la session en cours)
+function remoteOnPairwise(sid, m) {
+  if (!sid || m.sid !== sid) return;
+  const e = _scrReg.screens.get(sid);
+  if (m.type === 'key:ok') { if (e && e.pk && !e.pk.ok) { e.pk.ok = true; scrSave(); } }
+  else if (m.type === 'rekey:ok') rkAcked(sid);
+}
+
+// ══════════ Télécommande : retrait ══════════
+let _revokeChain = Promise.resolve();
+let _rkAcks = null; // accusés attendus pendant un retrait : Set des écrans passés
+// Retraits successifs : l'un après l'autre
+function scrRevoke(id) {
+  const p = _revokeChain.then(() => _scrRevoke(id));
+  _revokeChain = p.catch((e) => console.warn('SetRemote : retrait d\'écran', e));
+  return p;
+}
+// Écrans qui pourront suivre (clé pairwise) / qui devront être réappairés
+function scrRevokeFollowers(id) {
+  const all = [..._scrReg.screens.keys()].filter((s) => s !== id);
+  return { follow: all.filter((s) => pkOf(s)), lost: all.filter((s) => !pkOf(s)) };
+}
+
+async function _scrRevoke(id) {
+  if (mode !== 'remote' || !_session || !scrKnown(id)) return false;
+  const old = { channelId: _session.channelId, key: _session.key };
+  // 1. Ce qui concerne l'écran retiré s'arrête ; il est prévenu (ancien topic)
+  _vidStopJobs([id]);
+  _kx.delete(id);
+  const st = _scrStates.get(id);
+  if (st && st.call) sendMsg({ type: 'call:end', target: { screens: [id] } });
+  sendMsg({ type: 'screen:revoked', target: { screens: [id] } });
+  // 2. Nouvelle session ; clés des écrans qui suivent (avant tout oubli)
+  const next = SRP.createPairing();
+  const { follow } = scrRevokeFollowers(id);
+  const keys = {};
+  for (const s of follow) keys[s] = await pwKeys(s);
+  // 3. Tout est ENREGISTRÉ avant le premier envoi : une télécommande rechargée
+  // au milieu du retrait repart sur la nouvelle session et écoute l'ancienne
+  rkUpdateRecords((recs) => {
+    for (const r of recs) { r.pending = r.pending.filter((s) => s !== id); if (!r.revoked.includes(id)) r.revoked.push(id); }
+    recs.unshift({ ch: old.channelId, key: old.key, until: Date.now() + RK_LISTEN_MS, revoked: [id], pending: follow.slice() });
+  });
+  saveRemoteSession(next);
+  scrForget(id, next.channelId);
+  gwMigrateSession(old.channelId, next.channelId, id);
+  _rkMigrateFlashWarning(old.channelId, next.channelId);
+  // 4. Nouvelle session remise à chaque écran qui suit (sa clé, ancien topic)
+  _rkAcks = new Set();
+  for (const s of follow) {
+    const e = _scrReg.screens.get(s);
+    if (keys[s]) sendPairwise(rkMessage(s, e, next), keys[s]);
+  }
+  // 5. Bascule dès que les écrans en ligne ont accusé (ou au bout du délai)
+  const online = follow.filter(scrOnline);
+  const t0 = Date.now();
+  while (Date.now() - t0 < REKEY_WAIT_MS && !online.every((s) => _rkAcks.has(s))) await new Promise((r) => setTimeout(r, 50));
+  _rkAcks = null;
+  remoteSwitchSession(next);
+  return true;
+}
+function rkMessage(sid, e, p) {
+  const m = { type: 'session:rekey', sid, rid: remoteId(), channelId: p.channelId, key: p.key };
+  if (e && e.name) m.name = e.name;
+  if (e && e.groups.length) m.groups = e.groups.slice();
+  return m;
+}
+// Oubli de l'écran retiré (nom, groupes, clé, état) et registre passé sur la nouvelle session
+function scrForget(id, newSid) {
+  const oldSid = _scrReg.sid;
+  _scrReg.screens.delete(id);
+  _scrStates.delete(id);
+  _pwCache.delete(id);
+  _pairedScreens.delete(id);
+  for (const [snd, s] of [..._screenOfSender]) if (s === id) _screenOfSender.delete(snd);
+  _scrReg.sid = newSid;
+  scrSave();
+  if (oldSid && oldSid !== newSid) {
+    const o = _scrStore();
+    if (o.sessions && o.sessions[oldSid]) { delete o.sessions[oldSid]; _lsSet(SCR_LS_KEY, JSON.stringify(o)); }
+  }
+  const t = _scrReg.target;
+  if (_scrValidTarget(t).k !== t.k) scrSetTarget({ k: 'all' }); else scrRefreshCachedView();
+  scrChanged();
+}
+// « Ne plus demander » (avertissement stroboscope, par session) : suit la session
+function _rkMigrateFlashWarning(oldSid, newSid) {
+  try {
+    const o = JSON.parse(_lsGet(FLASH_WARN_KEY));
+    if (o && o.skip === oldSid) _lsSet(FLASH_WARN_KEY, JSON.stringify({ skip: newSid }));
+  } catch (_) {}
+}
+// La télécommande passe sur la nouvelle session : même état, mêmes écrans
+function remoteSwitchSession(p) {
+  remoteStopAllPairing(); // code de rendez-vous et remises en cours : ancien secret
+  _screenOfSender.clear(); // les écrans se réannonceront (nouvelles étiquettes)
+  connectRemote(p, { keep: true });
+  rkStartListeners();
+  renderLinkStatus();
+}
+// Accusé d'un écran passé sur la nouvelle session (pendant le retrait ou plus tard)
+function rkAcked(sid) {
+  if (_rkAcks) _rkAcks.add(sid);
+  rkUpdateRecords((recs) => { for (const r of recs) r.pending = r.pending.filter((s) => s !== sid); });
+}
+
+// ── Écouteur léger des anciens topics (conservé) ──
+function rkRecords() {
+  try {
+    const o = JSON.parse(_lsGet(RK_LS_KEY));
+    const recs = o && Array.isArray(o.records) ? o.records : [];
+    const ids = (a) => (Array.isArray(a) ? a.filter((s) => typeof s === 'string' && SRP.SCREEN_ID_RE.test(s)).slice(0, SCR_MAX) : []);
+    return recs.filter((r) => r && SRP.isValidPairing({ channelId: r.ch, key: r.key }) && typeof r.until === 'number' && r.until > Date.now())
+      .map((r) => ({ ch: r.ch, key: r.key, until: r.until, revoked: ids(r.revoked), pending: ids(r.pending) }))
+      .slice(0, RK_RECORDS_MAX);
+  } catch (_) { return []; }
+}
+function rkUpdateRecords(fn) {
+  const recs = rkRecords();
+  fn(recs);
+  _lsSet(RK_LS_KEY, recs.length ? JSON.stringify({ v: 1, records: recs.slice(0, RK_RECORDS_MAX) }) : null);
+  for (const L of _rkListeners.values()) L.rec = recs.find((r) => r.ch === L.rec.ch) || L.rec;
+}
+function rkClearAll() { rkStopListeners(); _lsSet(RK_LS_KEY, null); }
+
+const _rkListeners = new Map(); // ancien channelId → { rec, ch, client, senders, last, chain }
+let _rkTimer = null;
+function rkStartListeners() {
+  if (mode !== 'remote') return;
+  const recs = rkRecords();
+  for (const [ch, L] of [..._rkListeners]) if (!recs.some((r) => r.ch === ch)) rkStopListener(L);
+  for (const r of recs) if (!_rkListeners.has(r.ch) && (!_session || r.ch !== _session.channelId)) rkStartListener(r);
+  if (!_rkTimer && _rkListeners.size) _rkTimer = setInterval(rkStartListeners, 10 * 60 * 1000); // expirations
+}
+function rkStopListener(L) {
+  _rkListeners.delete(L.rec.ch);
+  L.closed = true;
+  try { L.client && L.client.end(true); } catch (_) {}
+}
+function rkStopListeners() {
+  for (const L of [..._rkListeners.values()]) rkStopListener(L);
+  if (_rkTimer) { clearInterval(_rkTimer); _rkTimer = null; }
+}
+async function rkStartListener(rec) {
+  const L = { rec, ch: null, client: null, senders: new Map(), last: new Map(), chain: Promise.resolve(), closed: false };
+  _rkListeners.set(rec.ch, L);
+  try { L.ch = await SRP.createSecureChannel({ pairing: { channelId: rec.ch, key: rec.key }, role: 'remote' }); }
+  catch (_) { _rkListeners.delete(rec.ch); return; }
+  if (L.closed) return;
+  const topic = L.ch.mqttTopic;
+  const client = transportConnect(topic, L.ch.relayAuth, { clientId: _newClientId('rk'), clean: true, connectTimeout: 8000, reconnectPeriod: 3000 });
+  L.client = client;
+  client.on('connect', () => {
+    if (L.closed) return;
+    // Les écrans encore sur l'ancien topic s'annoncent (caps) : servis un à un
+    client.subscribe(topic, { qos: 0 }, () => { if (!L.closed) rkPublish(L, L.ch.seal({ type: 'hello' })); });
+  });
+  client.on('message', (t, payload) => {
+    if (L.closed || t !== topic) return;
+    L.chain = L.chain.then(() => rkOnFrame(L, String(payload))).catch(() => {});
+  });
+}
+function rkPublish(L, framePromise) {
+  return Promise.resolve(framePromise).then((f) => {
+    if (!L.closed && L.client && L.client.connected) L.client.publish(L.ch.mqttTopic, f, { qos: 0 });
+  }).catch(() => {});
+}
+async function rkOnFrame(L, str) {
+  let r;
+  try {
+    r = await L.ch.receive(str, {
+      pairwise: async (snd) => { const sid = L.senders.get(snd); const k = sid ? await pwKeys(sid) : null; return k ? [{ keys: k, tag: sid }] : null; },
+    });
+  } catch (_) { return; }
+  if (!r || L.closed) return;
+  if (r.kind === 'pairwise') {
+    if (r.message.type === 'rekey:ok' && r.message.sid === r.tag) rkAcked(r.tag);
+    return;
+  }
+  if (r.kind !== 'message') return;
+  const m = r.message;
+  if (m.type === 'caps' && typeof m.screenId === 'string' && SRP.SCREEN_ID_RE.test(m.screenId)) L.senders.set(r.sender, m.screenId);
+  if (m.type !== 'caps' && m.type !== 'screen:alive') return;
+  const sid = L.senders.get(r.sender);
+  if (sid) rkServe(L, sid);
+}
+// Un écran resté sur l'ancien topic : la session en cours s'il peut suivre, sinon le retrait
+async function rkServe(L, sid) {
+  const now = Date.now();
+  if (now - (L.last.get(sid) || 0) < RK_RESEND_MS || !_session || mode !== 'remote') return;
+  L.last.set(sid, now);
+  const keys = !L.rec.revoked.includes(sid) && scrKnown(sid) ? await pwKeys(sid) : null;
+  if (keys) {
+    rkPublish(L, L.ch.sealPairwise(rkMessage(sid, _scrReg.screens.get(sid), _session), keys));
+    return;
+  }
+  const reason = L.rec.revoked.includes(sid) || !scrKnown(sid) ? 'revoked' : 'renewed';
+  rkPublish(L, L.ch.seal({ type: 'screen:revoked', reason, target: { screens: [sid] } }));
+}
+
+// ══════════ Écran : clé par écran ══════════
+let _pw = null;        // clé établie { rid, s, kid, ch, keys }
+let _pwPending = null; // échange en cours { rid, xid, s, kid, keys }
+async function screenPwLoad() {
+  const r = screenStoredPairwise();
+  _pwPending = null;
+  _pw = r ? Object.assign(r, { keys: await SRP.pairwiseKeys(r.s, { remoteId: r.rid, screenId: screenId() }).catch(() => null) }) : null;
+  if (_pw && !_pw.keys) _pw = null;
+}
+// Rejoindre une AUTRE session (QR, code) : la clé d'une autre lignée est effacée
+function screenPwOnJoin(p) {
+  const r = screenStoredPairwise();
+  if (r && (!p || r.ch !== p.channelId)) screenSavePairwise(null);
+}
+function screenPwWipe() { screenSavePairwise(null); _pw = null; _pwPending = null; }
+function screenPairwiseCandidates() {
+  const c = [];
+  if (_pw && _pw.keys) c.push({ keys: _pw.keys, tag: 'active' });
+  if (_pwPending && _pwPending.keys) c.push({ keys: _pwPending.keys, tag: 'pending' });
+  return c;
+}
+// key:offer (session, adressé à cet écran)
+async function screenOnKeyOffer(m) {
+  if (!_session) return;
+  if (_pw && _pw.rid === m.rid) return; // clé déjà établie avec cette télécommande : la première est retenue
+  const ch = _session.channelId, me = screenId();
+  let r, keys;
+  try {
+    const kp = await SRP.ecdhKeyPair();
+    r = await SRP.derivePairwiseSecret(kp, { offerJwk: m.jwk, answerJwk: kp.publicJwk, channelId: ch, remoteId: m.rid, screenId: me, exchangeId: m.xid });
+    keys = await SRP.pairwiseKeys(r.secret, { remoteId: m.rid, screenId: me });
+    if (!_session || _session.channelId !== ch) return;
+    _pwPending = { rid: m.rid, xid: m.xid, s: r.secret, kid: r.kid, keys };
+    sendMsg({ type: 'key:answer', sid: me, rid: m.rid, xid: m.xid, jwk: kp.publicJwk });
+  } catch (_) {}
+}
+// Trame pairwise ouverte (tag : clé établie « active » ou échange « pending »)
+function screenOnPairwise(m, tag) {
+  const me = screenId();
+  if (m.sid !== me) return;
+  if (m.type === 'key:confirm' && tag === 'pending' && _pwPending && m.xid === _pwPending.xid && m.rid === _pwPending.rid) {
+    const p = _pwPending;
+    _pwPending = null;
+    _pw = { rid: p.rid, s: p.s, kid: p.kid, ch: _session.channelId, keys: p.keys };
+    screenSavePairwise(_pw);
+    sendPairwise({ type: 'key:ok', sid: me, xid: p.xid }, _pw.keys);
+  } else if (m.type === 'session:rekey' && tag === 'active' && _pw && m.rid === _pw.rid) {
+    screenOnRekey(m);
+  }
+}
+// Nouvelle session remise par la télécommande (retrait d'un autre écran) :
+// accusé sur l'ancien topic, puis bascule, sans rien effacer de l'affichage
+async function screenOnRekey(m) {
+  const p = { channelId: m.channelId, key: m.key };
+  if (!SRP.isValidPairing(p) || !_session || _session.channelId === p.channelId) return;
+  await sendPairwise({ type: 'rekey:ok', sid: screenId(), channelId: p.channelId }, _pw.keys);
+  screenSaveSession(p);
+  _pw.ch = p.channelId;
+  screenSavePairwise(_pw);
+  _session = p;
+  _screenCfg = { name: typeof m.name === 'string' ? scrCleanName(m.name) : _screenCfg.name, groups: Array.isArray(m.groups) ? m.groups.slice() : _screenCfg.groups };
+  screenSaveConfig(p, _screenCfg);
+  renderScreenIdentity();
+  connectSession(p, screenOnSessionConnected);
+}
+
+// ══════════ Écran retiré (maquette 5c) ══════════
+// screen:revoked (session, adressé à cet écran) : session et clés effacées,
+// plus aucune connexion ; « Rejoindre une session » mène à l'appairage.
+function screenOnRevoked(m) {
+  screenSaveSession(null);
+  _lsSet(_LS_KEYS.screenConfig, null);
+  screenPwWipe();
+  _screenCfg = { name: '', groups: [] };
+  renderScreenIdentity();
+  goBackToSplash(); // arrête tout (médias, appel, effets, strobe, torche) et ferme la session
+  _session = null;
+  showScreenRevoked(m && m.reason === 'renewed' ? 'renewed' : 'revoked');
+}
+const _REVOKED_TEXT = {
+  revoked: 'La télécommande a retiré cet écran de la session. Il ne reçoit plus aucune commande.',
+  renewed: 'La télécommande a renouvelé sa session sans pouvoir y inviter cet écran. Appairez-le de nouveau pour le réutiliser.',
+};
+function showScreenRevoked(reason) {
+  document.getElementById('splash').style.display = 'none';
+  const t = document.getElementById('srvText');
+  if (t) t.textContent = _REVOKED_TEXT[reason] || _REVOKED_TEXT.revoked;
+  document.getElementById('screen-revoked').style.display = 'flex';
+}
+function hideScreenRevoked() { document.getElementById('screen-revoked').style.display = 'none'; }
+function screenRevokedJoin() { hideScreenRevoked(); startMode('screen'); }
+function screenRevokedHome() { hideScreenRevoked(); document.getElementById('splash').style.display = 'flex'; }
 // ══════════════════════════ NAVIGATION ══════════════════════════
 function startMode(m) {
   document.getElementById('splash').style.display = 'none';
@@ -7358,6 +7868,7 @@ function handleLaunchHash() {
 // Écran : rejoint (et retient) une session — QR scanné, lien ou code + SAS
 function screenJoinSession(p) {
   if (!SRP.isValidPairing(p)) return;
+  screenPwOnJoin(p); // clé par écran d'une autre session : effacée (29-revoke.js)
   screenSaveSession(p);
   hideScreenPairing();
   enterScreenSession(p);
@@ -7379,33 +7890,46 @@ function enterScreenSession(p) {
   acquireWakeLock();
   setupScreenAutohide();
   if (!navigator.vibrate) { const b=document.getElementById('vibrateBtn'); if(b){b.classList.add('unavail');b.textContent='📳 Indispo (iPhone)';b.classList.remove('on');} vibrateEnabled=false; }
-  let firstConnect = true;
-  connectSession(_session, () => {
-    setScreenStatus(_screenCfg.name ? '✓ ' + _screenCfg.name + ' — liaison chiffrée' : '✓ En écoute — liaison chiffrée');
-    // Confirmation visible uniquement à la 1re connexion : les reconnexions
-    // automatiques ne doivent rien afficher (l'écran est peut-être dans le champ)
-    if (firstConnect && !screenBlackoutOn) flashScreenNotice('Relié à la télécommande');
-    firstConnect = false;
-    sendCaps();
-    // Signe de vie : la télécommande signale un écran muet depuis 40 s
-    stopScreenAlive();
-    _screenAliveTimer = setInterval(() => sendMsg({ type: 'screen:alive' }), SCREEN_ALIVE_MS);
-  });
+  _screenFirstConnect = true;
+  // Clé par écran chargée AVANT la connexion (une offre de clé n'est acceptée
+  // qu'en son absence, 29-revoke.js)
+  const s = _session;
+  screenPwLoad().catch(() => {}).then(() => { if (mode === 'screen' && _session === s) connectSession(s, screenOnSessionConnected); });
+}
+// (Re)connexion de l'écran, aussi après une nouvelle session remise par la télécommande (session:rekey)
+let _screenFirstConnect = false;
+function screenOnSessionConnected() {
+  setScreenStatus(_screenCfg.name ? '✓ ' + _screenCfg.name + ' — liaison chiffrée' : '✓ En écoute — liaison chiffrée');
+  // Confirmation visible uniquement à la 1re connexion : les reconnexions
+  // automatiques ne doivent rien afficher (l'écran est peut-être dans le champ)
+  if (_screenFirstConnect && !screenBlackoutOn) flashScreenNotice('Relié à la télécommande');
+  _screenFirstConnect = false;
+  sendCaps();
+  // Signe de vie : la télécommande signale un écran muet depuis 40 s
+  stopScreenAlive();
+  _screenAliveTimer = setInterval(() => sendMsg({ type: 'screen:alive' }), SCREEN_ALIVE_MS);
 }
 
-// Télécommande : connexion à sa session (au démarrage et après « Nouvelle session »)
-function connectRemote(p) {
+// Télécommande : connexion à sa session (au démarrage et après « Nouvelle session »).
+// keep : nouvelle session après le retrait d'un écran (29-revoke.js) : registre,
+// état de chaque écran, patch DMX et liaison affichée sont gardés tels quels.
+function connectRemote(p, o = {}) {
   _session = { channelId: p.channelId, key: p.key };
-  _linkEverConnected = false;
-  setConnStatus('connecting');
-  // État « Tous les écrans » = réglages affichés ; noms, groupes et cible de
-  // cette session (28-screens.js) ; une cible retenue (groupe, écran) montre
-  // son propre état
-  _scrAllState = null; scrInitAll();
-  scrLoad();
-  if (scrTarget().k !== 'all') scrLoadView();
-  if (document.getElementById('content-qr').classList.contains('active')) renderPairPanel();
-  gwOnSessionChanged(); // passerelle DMX : patch de cette session
+  if (!o.keep) {
+    _linkEverConnected = false;
+    setConnStatus('connecting');
+    // État « Tous les écrans » = réglages affichés ; noms, groupes et cible de
+    // cette session (28-screens.js) ; une cible retenue (groupe, écran) montre
+    // son propre état
+    _scrAllState = null; scrInitAll();
+    scrLoad();
+    if (scrTarget().k !== 'all') scrLoadView();
+  }
+  if (document.getElementById('content-qr').classList.contains('active')) renderPairPanel(); // nouveau QR, nouveau code
+  if (!o.keep) {
+    gwOnSessionChanged(); // passerelle DMX : patch de cette session
+    rkStartListeners();   // anciens topics encore écoutés après un retrait
+  }
   connectSession(_session, () => {
     setConnStatus('connected');
     // Demander aux écrans leurs capacités (torche / vibreur / cache). Chaque
@@ -7423,6 +7947,7 @@ function confirmNewSession() {
 }
 function newRemoteSession() {
   remoteStopAllPairing();
+  rkClearAll();       // tous les écrans révoqués : plus rien à remettre sur les anciens topics
   _vidStopJobs(null); // transferts vidéo vers les écrans révoqués
   clearPairedScreens();
   connectRemote(renewRemoteSession());
@@ -7533,6 +8058,7 @@ function goBackToSplash() {
 
 function goBack() {
   closeScreensUi(); // vue « Écrans connectés », choix de la cible (39-screens-ui.js)
+  rkStopListeners(); // anciens topics : réécoutés au prochain lancement de la télécommande
   stopStrobe();
   stopMediaBroadcast(true, true);
   gwStop(); // passerelle DMX : les écrans gardent leur look et sont rendus à la télécommande
@@ -7898,6 +8424,8 @@ function screenIdentify() {
 // ouvert par le bouton « Cible : … » placé sous l'aperçu de la télécommande.
 // Feuilles (même présentation que la maquette 6) pour renommer un écran,
 // choisir ses groupes, créer / modifier / supprimer un groupe.
+// Maquette 5b : « Retirer l'écran » (bouton rouge à côté de Renommer) et sa
+// confirmation ; le retrait lui-même : 29-revoke.js.
 // Modèle (registre, cible, état de chaque écran) : 28-screens.js.
 let _svOpen = false;
 let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group', … }
@@ -7918,7 +8446,7 @@ function renderScreensUi() {
   renderScreensView();
   if (_sheet && (_sheet.kind === 'target' || _sheet.kind === 'screenGroups')) renderSheet();
 }
-function closeScreensUi() { closeSheet(); closeScreensView(); }
+function closeScreensUi() { closeRevokeDialog(); closeSheet(); closeScreensView(); }
 
 // ── Bouton « Cible : … » (maquette 6) ──
 // Affiché dès deux écrans (ou une cible autre que « Tous »)
@@ -8143,17 +8671,46 @@ function renderScreensView() {
       + escapeHtml(groups.length ? groups.join(' · ') : 'Sans groupe') + '</button><span class="sv-flex"></span>'
       + '<button type="button" class="sv-btn" onclick="scrIdentify(\'' + id + '\')">Identifier</button>'
       + '<button type="button" class="sv-icon" aria-label="Renommer" onclick="openRenameScreen(\'' + id + '\')">'
-      + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button></div></div>';
+      + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>'
+      + '<button type="button" class="sv-icon sv-revoke" aria-label="Retirer l\'écran" onclick="openRevokeDialog(\'' + id + '\')">' + _UNLINK_SVG(16, 2) + '</button></div></div>';
   }).join('') : '<div class="sv-empty">Aucun écran appairé : touchez « + Appairer » puis scannez le QR sur chaque écran de jeu.</div>');
   _setHtml(document.getElementById('svGroups'), _scrReg.groups.map((g) => '<button type="button" class="sv-chip' + (t.k === 'group' && t.id === g.id ? ' on' : '')
     + '" onclick="openGroupEditor(\'' + g.id + '\')">' + escapeHtml(g.name) + ' · ' + scrGroupMembers(g.id).length + '</button>').join('')
     + (_scrReg.groups.length < SCR_GROUPS_MAX ? '<button type="button" class="sv-chip add" onclick="openGroupEditor(null)">+ Nouveau groupe</button>' : ''));
 }
 
+// ── Retirer un écran (maquette 5b) ──
+const _UNLINK_SVG = (size, sw) => '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + sw
+  + '" aria-hidden="true"><path d="M15 7l2-2a3.5 3.5 0 015 5l-2 2M9 17l-2 2a3.5 3.5 0 01-5-5l2-2M8 8l8 8"/></svg>';
+let _revokeId = null;
+function openRevokeDialog(id) {
+  if (!scrKnown(id)) return;
+  _revokeId = id;
+  document.getElementById('rvTitle').textContent = 'Retirer « ' + scrName(id) + ' » ?';
+  // Écrans qui ne pourront pas suivre (pas de clé par écran) : dit avant de confirmer
+  const lost = scrRevokeFollowers(id).lost;
+  const w = document.getElementById('rvLost');
+  w.textContent = lost.length ? (lost.length > 1 ? 'Ne pourront pas suivre et devront être appairés à nouveau : ' : 'Ne pourra pas suivre et devra être appairé à nouveau : ')
+    + lost.map((s) => '« ' + scrName(s) + ' »').join(', ') + '.' : '';
+  w.style.display = lost.length ? 'block' : 'none';
+  document.getElementById('sr-revoke').classList.add('open');
+}
+function closeRevokeDialog() {
+  _revokeId = null;
+  const d = document.getElementById('sr-revoke');
+  if (d) d.classList.remove('open');
+}
+function confirmRevoke() {
+  const id = _revokeId;
+  closeRevokeDialog();
+  if (id) scrRevoke(id).then(() => renderScreensUi());
+}
+
 // Échap : ferme la feuille, puis la vue
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  if (_sheet) closeSheet();
+  if (_revokeId) closeRevokeDialog();
+  else if (_sheet) closeSheet();
   else if (_svOpen) closeScreensView();
 });
 // ══════════════════════════ COLOR WHEEL ══════════════════════════
@@ -9974,6 +10531,9 @@ function sendCaps() {
             blackout: screenBlackoutOn, screenId: screenId() };
   if (_screenCfg.name) caps.name = _screenCfg.name;
   if (_screenCfg.groups.length) caps.groups = _screenCfg.groups.slice();
+  // Clé par écran (29-revoke.js) : échange pris en charge, et kid de la clé détenue
+  caps.kx = 1;
+  if (_pw) caps.kid = _pw.kid;
   sendMsg(caps);
 }
 
@@ -13243,6 +13803,25 @@ function gwOnSessionChanged() {
   gwLoadPatch();
   _gw.engine.setPatch(new SRDMX.Patch(gwState.patch.toJSON()));
   gwListen();
+  gwRender();
+}
+
+// Retrait d'un écran (29-revoke.js) : le patch passe sur la nouvelle session,
+// sans l'écran retiré
+function gwMigrateSession(oldSid, newSid, removeId) {
+  const o = _gwStore();
+  const pts = o.patches && typeof o.patches === 'object' ? o.patches : {};
+  if (gwState.patchSession !== oldSid) {
+    // Patch de l'ancienne session pas encore chargé : on le charge, comme gwLoadPatch
+    let p = new SRDMX.Patch();
+    if (pts[oldSid] && pts[oldSid].patch) { try { p = SRDMX.Patch.fromJSON(pts[oldSid].patch); } catch (_) { p = new SRDMX.Patch(); } }
+    gwState.patch = p;
+  }
+  gwState.patch.delete(removeId);
+  gwState.patchSession = newSid;
+  if (pts[oldSid]) { delete pts[oldSid]; o.patches = pts; _lsSet(DMX_LS_KEY, JSON.stringify(o)); }
+  gwSave();
+  if (_gw) { _gw.engine.setPatch(new SRDMX.Patch(gwState.patch.toJSON())); gwListen(); }
   gwRender();
 }
 

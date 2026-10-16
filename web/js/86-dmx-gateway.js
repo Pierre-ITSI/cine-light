@@ -151,6 +151,25 @@ function gwOnSessionChanged() {
   gwRender();
 }
 
+// Retrait d'un écran (29-revoke.js) : le patch passe sur la nouvelle session,
+// sans l'écran retiré
+function gwMigrateSession(oldSid, newSid, removeId) {
+  const o = _gwStore();
+  const pts = o.patches && typeof o.patches === 'object' ? o.patches : {};
+  if (gwState.patchSession !== oldSid) {
+    // Patch de l'ancienne session pas encore chargé : on le charge, comme gwLoadPatch
+    let p = new SRDMX.Patch();
+    if (pts[oldSid] && pts[oldSid].patch) { try { p = SRDMX.Patch.fromJSON(pts[oldSid].patch); } catch (_) { p = new SRDMX.Patch(); } }
+    gwState.patch = p;
+  }
+  gwState.patch.delete(removeId);
+  gwState.patchSession = newSid;
+  if (pts[oldSid]) { delete pts[oldSid]; o.patches = pts; _lsSet(DMX_LS_KEY, JSON.stringify(o)); }
+  gwSave();
+  if (_gw) { _gw.engine.setPatch(new SRDMX.Patch(gwState.patch.toJSON())); gwListen(); }
+  gwRender();
+}
+
 // ── Coque → PWA ──
 function gwOnNativePackets(packets) {
   if (!_gw || !Array.isArray(packets)) return false;

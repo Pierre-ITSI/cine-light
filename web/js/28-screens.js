@@ -4,7 +4,8 @@
 // ── Télécommande ──
 // Registre par session (localStorage, 8 sessions les plus récentes) :
 //   écrans  screenId → { n (« Écran n » par défaut), name (null : jamais
-//           nommé ; '' : nom effacé), groups: [ids] }
+//           nommé ; '' : nom effacé), groups: [ids], pk : clé par écran
+//           { s (secret), kid, ok (confirmée par l'écran) } (29-revoke.js) }
 //   groupes [{ id, name }]
 //   cible   { k: 'all' } | { k: 'group', id } | { k: 'screen', id }
 // Chaque ordre émis (sendMsg) porte la cible courante : rien (= tous les
@@ -81,6 +82,8 @@ function scrLoad() {
         name: typeof e.name === 'string' ? scrCleanName(e.name) : null,
         groups: (Array.isArray(e.groups) ? e.groups : []).filter((g, i, a) => gids.has(g) && a.indexOf(g) === i),
         at: typeof e.at === 'number' && Number.isFinite(e.at) ? e.at : 0,
+        pk: e.pk && typeof e.pk === 'object' && SRP.PAIRWISE_SECRET_RE.test(e.pk.s) && SRP.KEY_ID_RE.test(e.pk.kid)
+          ? { s: e.pk.s, kid: e.pk.kid, ok: !!e.pk.ok } : null,
       });
       reg.seq = Math.max(reg.seq, n);
     }
@@ -98,7 +101,7 @@ function scrSave() {
   const o = _scrStore();
   const sessions = o.sessions && typeof o.sessions === 'object' && !Array.isArray(o.sessions) ? o.sessions : {};
   const screens = {};
-  for (const [id, e] of _scrReg.screens) screens[id] = { n: e.n, name: e.name, groups: e.groups, at: e.at };
+  for (const [id, e] of _scrReg.screens) screens[id] = { n: e.n, name: e.name, groups: e.groups, at: e.at, pk: e.pk || null };
   sessions[sid] = { at: Date.now(), seq: _scrReg.seq, screens, groups: _scrReg.groups, target: _scrReg.target };
   const ids = Object.keys(sessions).sort((a, b) => ((sessions[b] && sessions[b].at) || 0) - ((sessions[a] && sessions[a].at) || 0));
   for (const id of ids.slice(SCR_SESSIONS_MAX)) delete sessions[id];
@@ -123,7 +126,7 @@ function scrRegister(id) {
   let e = _scrReg.screens.get(id);
   if (!e) {
     if (_scrReg.screens.size >= SCR_MAX && !_scrEvictOne()) return null;
-    e = { n: ++_scrReg.seq, name: null, groups: [], at: Date.now() };
+    e = { n: ++_scrReg.seq, name: null, groups: [], at: Date.now(), pk: null };
     _scrReg.screens.set(id, e);
     scrSave();
     scrChanged();
@@ -133,7 +136,7 @@ function scrRegister(id) {
 // Registre plein : on oublie l'écran le plus ancien, ni nommé, ni groupé, ni visé, hors ligne
 function _scrEvictOne() {
   const t = _scrReg.target;
-  const cands = [..._scrReg.screens].filter(([id, e]) => !e.name && !e.groups.length && !(t.k === 'screen' && t.id === id) && !scrOnline(id))
+  const cands = [..._scrReg.screens].filter(([id, e]) => !e.name && !e.groups.length && !e.pk && !(t.k === 'screen' && t.id === id) && !scrOnline(id))
     .sort((a, b) => a[1].at - b[1].at);
   if (!cands.length) return false;
   _scrReg.screens.delete(cands[0][0]);
@@ -389,6 +392,7 @@ function scrOnCaps(id, caps) {
     const groups = Array.isArray(caps.groups) ? caps.groups : [];
     st.needsConfig = (e.name || '') !== cn || groups.length !== e.groups.length || e.groups.some((g) => !groups.includes(g));
     scrSave();
+    kxOnCaps(id, caps); // clé par écran : établie, vérifiée ou à établir (29-revoke.js)
   }
   scrRefreshCachedView();
   scrChanged();

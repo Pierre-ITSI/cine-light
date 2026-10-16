@@ -99,13 +99,21 @@ function receiveFrame(ch, str, via) {
   _rxChain = _rxChain.then(async () => {
     if (ch !== _sec) return;
     let r;
-    try { r = await ch.receive(str); }
+    // Trames scellées avec une clé PAR ÉCRAN (29-revoke.js) : télécommande, la
+    // clé de l'écran émetteur ; écran, la sienne (et celle d'un échange en cours)
+    try { r = await ch.receive(str, { pairwise: mode === 'remote' ? remotePairwiseCandidates : screenPairwiseCandidates }); }
     catch (e) {
       secStats.dropped++; secStats.lastError = (e && e.code) || 'error';
       if (secStats.lastError === 'stale') await noteStaleFrame(ch, str);
       return;
     }
     if (r) noteFreshFrame(r.sender);
+    if (r && r.kind === 'pairwise' && ch === _sec && via !== 'bc') {
+      secStats.received++;
+      if (mode === 'remote') remoteOnPairwise(r.tag, r.message);
+      else screenOnPairwise(r.message, r.tag);
+      return;
+    }
     if (!r || r.kind !== 'message' || ch !== _sec) return; // écho, autre écran, fragment binaire
     if (via === 'bc' && !_BC_TYPES.includes(r.message.type)) return;
     secStats.received++;
@@ -184,6 +192,21 @@ function sendMsg(obj) {
     if (client === mqttClient && client.connected) { client.publish(ch.mqttTopic, frame, { qos: 0 }); secStats.sent++; }
     if (bc && window._bc) { try { window._bc.postMessage(await bc.seal(msg)); } catch (_) {} }
   });
+}
+
+// Message scellé avec une clé PAR ÉCRAN (pairwise.js, 29-revoke.js), publié
+// sur la session en cours dans l'ordre des envois. Résolu une fois publié.
+function sendPairwise(obj, keys) {
+  if (!mqttClient || !mqttClient.connected || !_sec || !keys) return Promise.resolve();
+  const ch = _sec, client = mqttClient;
+  _txChain = _txChain.then(async () => {
+    if (ch !== _sec) return;
+    let frame;
+    try { frame = await ch.sealPairwise(JSON.parse(JSON.stringify(obj)), keys); }
+    catch (e) { secStats.refused++; secStats.lastError = (e && e.code) || 'error'; console.warn('SetRemote : message refusé à l\'envoi', obj && obj.type, e && e.message); return; }
+    if (client === mqttClient && client.connected) { client.publish(ch.mqttTopic, frame, { qos: 0 }); secStats.sent++; }
+  });
+  return _txChain;
 }
 
 // Copie JSON (toJSON des objets WebRTC, undefined retirés, NaN/Infinity → null)

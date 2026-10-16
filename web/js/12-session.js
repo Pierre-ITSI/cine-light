@@ -12,6 +12,8 @@ const _LS_KEYS = {
   screen: 'setremote-screen-session-v1', // dernière session rejointe par cet écran
   screenId: 'setremote-screen-id',
   screenConfig: 'setremote-screen-config-v1', // nom et groupes de cet écran (screen:config), par session
+  remoteId: 'setremote-remote-id',            // identifiant stable de la télécommande (clés par écran)
+  screenPairwise: 'setremote-screen-pairwise-v1', // écran : sa clé par écran avec la télécommande (29-revoke.js)
 };
 let _session = null; // secret de la session active (télécommande ou écran)
 
@@ -38,6 +40,30 @@ function renewRemoteSession() {
   const p = SRP.createPairing();
   _writePairing(_LS_KEYS.remote, p);
   return p;
+}
+// Retrait d'un écran : la nouvelle session (déjà remise aux autres écrans) devient celle de la télécommande
+function saveRemoteSession(p) { _writePairing(_LS_KEYS.remote, p); }
+
+// Télécommande : identifiant stable (lié aux clés par écran, pairwise.js)
+function remoteId() {
+  let id = _lsGet(_LS_KEYS.remoteId);
+  if (!(typeof id === 'string' && SRP.SCREEN_ID_RE.test(id))) { id = SRP.createRemoteId(); _lsSet(_LS_KEYS.remoteId, id); }
+  return id;
+}
+
+// Écran : clé par écran avec la télécommande { rid, s (secret), kid, ch (session) }.
+// Valable pour la lignée de sessions où elle a été établie (suivie au fil des
+// session:rekey) ; rejoindre une AUTRE session (QR, code) l'efface.
+function screenStoredPairwise() {
+  try {
+    const o = JSON.parse(_lsGet(_LS_KEYS.screenPairwise));
+    if (!o || typeof o !== 'object' || !SRP.SCREEN_ID_RE.test(o.rid) || !SRP.PAIRWISE_SECRET_RE.test(o.s)
+      || !SRP.KEY_ID_RE.test(o.kid) || typeof o.ch !== 'string') return null;
+    return { rid: o.rid, s: o.s, kid: o.kid, ch: o.ch };
+  } catch (_) { return null; }
+}
+function screenSavePairwise(r) {
+  _lsSet(_LS_KEYS.screenPairwise, r ? JSON.stringify({ rid: r.rid, s: r.s, kid: r.kid, ch: r.ch }) : null);
 }
 
 // Écran : dernière session rejointe (QR ou code)

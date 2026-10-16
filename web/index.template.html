@@ -96,6 +96,15 @@
   <button class="screen-back" onclick="goBackToSplash()">← Retour</button>
 </div>
 
+<!-- Écran de jeu retiré par la télécommande (maquette 5c) -->
+<div id="screen-revoked" role="alertdialog" aria-labelledby="srvTitle" aria-describedby="srvText">
+  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#a8a8a8" stroke-width="1.6" aria-hidden="true"><path d="M15 7l2-2a3.5 3.5 0 015 5l-2 2M9 17l-2 2a3.5 3.5 0 01-5-5l2-2M8 8l8 8"/></svg>
+  <div class="srv-title" id="srvTitle">Écran retiré</div>
+  <p class="srv-text" id="srvText">La télécommande a retiré cet écran de la session. Il ne reçoit plus aucune commande.</p>
+  <button type="button" class="srv-join" onclick="screenRevokedJoin()">Rejoindre une session</button>
+  <button type="button" class="srv-home" onclick="screenRevokedHome()">← Accueil</button>
+</div>
+
 <div id="screen-mode" onclick="requestFS()">
   <canvas id="screen-fx-canvas" width="240" height="136"></canvas>
   <img id="screen-media-img" alt="">
@@ -813,6 +822,21 @@
     <span class="sr-sheet-grip" aria-hidden="true"></span>
     <h2 id="srSheetTitle">Envoyer les commandes à…</h2>
     <div class="sr-sheet-body" id="srSheetBody"></div>
+  </div>
+</div>
+
+<!-- Retirer un écran : confirmation (maquette 5b) -->
+<div id="sr-revoke" onclick="if(event.target===this)closeRevokeDialog()">
+  <div class="rv-dialog" role="dialog" aria-modal="true" aria-labelledby="rvTitle">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ff7a70" stroke-width="1.8" aria-hidden="true"><path d="M15 7l2-2a3.5 3.5 0 015 5l-2 2M9 17l-2 2a3.5 3.5 0 01-5-5l2-2M8 8l8 8"/></svg>
+    <h2 id="rvTitle">Retirer cet écran ?</h2>
+    <p class="rv-text">Cet écran est déconnecté et ne pourra plus rien recevoir ni déchiffrer.</p>
+    <p class="rv-sub">Les autres écrans passent automatiquement sur de nouvelles clés, sans interruption visible. Pour réutiliser cet appareil, il faudra l'appairer à nouveau.</p>
+    <p class="rv-lost" id="rvLost" style="display:none"></p>
+    <div class="rv-actions">
+      <button type="button" class="rv-cancel" onclick="closeRevokeDialog()">Annuler</button>
+      <button type="button" class="rv-ok" id="rvOk" onclick="confirmRevoke()">Retirer</button>
+    </div>
   </div>
 </div>
 

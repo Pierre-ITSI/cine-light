@@ -95,6 +95,9 @@ function sendCaps() {
             blackout: screenBlackoutOn, screenId: screenId() };
   if (_screenCfg.name) caps.name = _screenCfg.name;
   if (_screenCfg.groups.length) caps.groups = _screenCfg.groups.slice();
+  // Clé par écran (29-revoke.js) : échange pris en charge, et kid de la clé détenue
+  caps.kx = 1;
+  if (_pw) caps.kid = _pw.kid;
   sendMsg(caps);
 }
 
