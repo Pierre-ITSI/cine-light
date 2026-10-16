@@ -27,7 +27,7 @@ Dernière mise à jour : [DATE DE PUBLICATION]
 
 Le responsable du traitement est :
 
-**itsi app**, [FORME JURIDIQUE] au capital de [CAPITAL] €, immatriculée au RCS de [VILLE] sous le numéro [SIREN]
+**ITSI APP**, [FORME JURIDIQUE] au capital de [CAPITAL] €, immatriculée au RCS de [VILLE] sous le numéro [SIREN]
 Siège social : 64 résidence Les Jardins de Saint-Colomban, 35350 Saint-Coulomb
 E-mail : pierre@itsi-app.com
 Site web : [SITE WEB]
@@ -197,4 +197,4 @@ Nous pouvons mettre à jour cette politique, par exemple si une fonction change.
 
 ## 14. Contact
 
-itsi app — 64 résidence Les Jardins de Saint-Colomban, 35350 Saint-Coulomb — pierre@itsi-app.com — [SITE WEB]
+ITSI APP — 64 résidence Les Jardins de Saint-Colomban, 35350 Saint-Coulomb — pierre@itsi-app.com — [SITE WEB]

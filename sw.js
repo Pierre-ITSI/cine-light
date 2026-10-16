@@ -1,5 +1,5 @@
 /* Service Worker — SetRemote PWA */
-const CACHE = 'setremote-v61';
+const CACHE = 'setremote-v62';
 const SHELL = [
   './',
   './index.html',

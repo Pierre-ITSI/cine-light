@@ -250,7 +250,7 @@ Points juridiques **à faire valider** (questions ouvertes) :
 | Content Rights : *Does your app contain, show, or access third-party content?* | **Non**. L'app n'affiche que des contenus fournis par l'utilisateur. |
 | Sign-in required | Non (aucun compte) |
 | Catégorie principale / secondaire | **Photo & Video** / **Utilities** (voir `store-listing.md`) |
-| Copyright | `© 2026 itsi app` |
+| Copyright | `© 2026 ITSI APP` |
 | Support URL | `[SITE WEB]/support` |
 | Marketing URL (facultatif) | `[SITE WEB]` |
 | Notes pour App Review | Voir `app-review-notes.md` |
