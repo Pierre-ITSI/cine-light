@@ -36,6 +36,7 @@ function setCallKind(k) {
   if (btn) btn.innerHTML = k === 'call'
     ? '<span class="media-icon">📞</span> Faire sonner'
     : '<span class="media-icon">💬</span> Envoyer la notification';
+  renderCallListSaveLabel(); // « + Enregistrer l'appel / le SMS actuel »
 }
 function setCallStyle(s) {
   callStyle = s;
@@ -85,7 +86,7 @@ function onCallAudio(files) {
   r.onload = async () => {
     _callAudioData = String(r.result);
     if (st) st.textContent = '📤 Envoi de la bande son…';
-    await sendImageChunks(_callAudioData, { mediaId: '__callaudio', show: false });
+    await ensureCallAssets(null, _callAudioData);
     if (st) st.textContent = '✓ « ' + (f.name || 'audio') + ' » prête — jouée au décroché.';
     const c = document.getElementById('callAudioClear');
     if (c) c.style.display = 'inline-block';
@@ -95,6 +96,7 @@ function onCallAudio(files) {
 }
 function clearCallAudio() {
   _callAudioData = null;
+  _callAudioOnScreens = null;
   const st = document.getElementById('callAudioStatus');
   if (st) st.textContent = 'Aucune bande son — le décroché reste silencieux.';
   const c = document.getElementById('callAudioClear');
@@ -132,7 +134,7 @@ function onCallPhoto(files) {
     URL.revokeObjectURL(img.src);
     const pv = document.getElementById('callPhotoPreview');
     if (pv) pv.style.backgroundImage = 'url(' + _callPhoto + ')';
-    _callPhotoSending = sendImageChunks(_callPhoto, { mediaId: '__callphoto', show: false });
+    _callPhotoSending = ensureCallAssets(_callPhoto, null);
   };
   img.onerror = () => URL.revokeObjectURL(img.src);
   img.src = URL.createObjectURL(files[0]);
@@ -162,12 +164,12 @@ function onLockWall(files) {
   img.onerror = () => URL.revokeObjectURL(img.src);
   img.src = URL.createObjectURL(files[0]);
 }
-async function triggerCall() {
+// Réglages de l'appel du formulaire (champs de call:start, sans photo ni son :
+// hasPhoto / hasAudio disent s'ils accompagnent l'appel). Aussi la forme d'une
+// entrée de la liste enregistrée (82-call-list.js).
+function callFormFields() {
   const lockOn = callKind !== 'call' && document.getElementById('lockToggle').checked;
-  // La photo (fragments) part avant l'appel qui l'affiche
-  if (_callPhotoSending) { try { await _callPhotoSending; } catch (_) {} }
-  sendMsg({
-    type: 'call:start',
+  return {
     kind: callKind,
     style: callStyle,
     name: (document.getElementById('callName').value || 'Inconnu').slice(0, 40),
@@ -185,8 +187,34 @@ async function triggerCall() {
       time: (document.getElementById('lockTime').value || '').slice(0, 8),
       date: (document.getElementById('lockDate').value || '').slice(0, 30),
     } : null,
-  });
-  _setCallStatusUI(callKind === 'call' ? '📞 Sonnerie envoyée…' : '💬 Notification envoyée');
+  };
+}
+
+// Photo et bande son d'un appel : un seul exemplaire en cache sur les écrans
+// (__callphoto, __callaudio). Avant chaque appel, on (re)envoie ceux de cet
+// appel s'ils diffèrent de ceux déjà envoyés (appel du formulaire, entrée de
+// la liste, déclenchement par la console). Envois et appels restent dans l'ordre.
+let _callPhotoOnScreens = null, _callAudioOnScreens = null, _callAssetChain = Promise.resolve();
+function ensureCallAssets(photo, audio) {
+  _callAssetChain = _callAssetChain.then(async () => {
+    if (photo && photo !== _callPhotoOnScreens) {
+      _callPhotoOnScreens = photo;
+      await sendImageChunks(photo, { mediaId: '__callphoto', show: false });
+    }
+    if (audio && audio !== _callAudioOnScreens) {
+      _callAudioOnScreens = audio;
+      await sendImageChunks(audio, { mediaId: '__callaudio', show: false });
+    }
+  }).catch(() => {});
+  return _callAssetChain;
+}
+
+async function triggerCall() {
+  const fields = callFormFields();
+  // La photo et la bande son (fragments) partent avant l'appel qui les utilise
+  await ensureCallAssets(_callPhoto, _callAudioData);
+  sendMsg(Object.assign({ type: 'call:start' }, fields));
+  _setCallStatusUI(fields.kind === 'call' ? '📞 Sonnerie envoyée…' : '💬 Notification envoyée');
 }
 function _setCallStatusUI(t) {
   const el = document.getElementById('callStatus');

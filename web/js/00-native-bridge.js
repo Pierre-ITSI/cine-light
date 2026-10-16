@@ -16,3 +16,22 @@ function nativePost(msg) {
 }
 if (IN_NATIVE_APP) document.documentElement.classList.add('in-app');
 
+// Coque → PWA : la coque appelle window.SRNative.receive(msg) (objet, ou
+// chaîne JSON). Contrat du pont : docs/DMX-NATIVE.md. Messages :
+//   dmx:packets { packets: [{ src, port, data (base64) }] }  datagrammes UDP reçus
+//   net:info    { interfaces: [{ name, kind, ip, mask }] }    interfaces réseau
+//   dmx:error   { reason }                                    échec d'écoute UDP
+// Tout le reste est ignoré ; une erreur de traitement ne remonte jamais à la coque.
+window.SRNative = window.SRNative || {};
+window.SRNative.receive = function (msg) {
+  let m = msg;
+  if (typeof m === 'string') { try { m = JSON.parse(m); } catch (_) { return false; } }
+  if (!m || typeof m !== 'object' || typeof m.type !== 'string') return false;
+  try {
+    if (m.type === 'dmx:packets') return gwOnNativePackets(m.packets);
+    if (m.type === 'net:info') return gwOnNetInfo(m.interfaces);
+    if (m.type === 'dmx:error') return gwOnNativeError(m.reason);
+  } catch (e) { console.warn('SetRemote : message natif', m.type, e); }
+  return false;
+};
+

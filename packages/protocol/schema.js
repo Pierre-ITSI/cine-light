@@ -25,6 +25,9 @@
  *
  * Hors périmètre MQTT (non listés ici, ne transitent pas par le relais) :
  *  - 'brightness', 'brightness-restore' : pont WebView → shell natif (expo-app/app/index.tsx) ;
+ *  - 'dmx:listen', 'dmx:stop', 'udp:send', 'net:info' (PWA → coque) et
+ *    'dmx:packets', 'net:info', 'dmx:error' (coque → PWA, window.SRNative.receive) :
+ *    réception UDP de la passerelle DMX (docs/DMX-NATIVE.md, contrat du pont) ;
  *  - 'setUniverse', 'dmx' : pont sACN WebSocket local (index.html, screen.html) ;
  *  - 'code_changed', 'error' : pont WebSocket de screen.html ;
  *  - messages du canal de données WebRTC ({ meta } / { done }).
@@ -312,6 +315,13 @@ const SPECS = {
       return null;
     },
   },
+  'screen:identify': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Fait clignoter l’écran ciblé 3 s (2 Hz) pour le reconnaître sur le décor (« Identifier » de la passerelle DMX) ; '
+      + 'son état (couleur, média, appel…) n’est pas modifié. Doit cibler target.screens.',
+    fields: {},
+    refine: m => (!m.target || !m.target.screens ? 'screen:identify doit cibler target.screens' : null),
+  },
 
   // ═══ Télécommande → écran : médias ═══
   'media-img-start': {
@@ -438,8 +448,8 @@ const SPECS = {
 
   // ═══ Passerelle DMX → écran ═══
   'dmx:look': {
-    dir: 'r2s', src: [],
-    doc: 'Nouveau (passerelle DMX, packages/dmx, voir docs/DMX.md) : état de l’écran calculé depuis la console '
+    dir: 'r2s', src: ['web'],
+    doc: 'Passerelle DMX (packages/dmx, voir docs/DMX.md ; PWA : web/js/86-dmx-gateway.js → 36-dmx-screen.js) : état de l’écran calculé depuis la console '
       + '(sACN / Art-Net). live:true = signal console présent, la console a la priorité et l’écran ignore les '
       + 'commandes de look de la télécommande ; live:false (envoyé une fois à la perte du signal) = l’écran garde '
       + 'ce look et la télécommande peut reprendre la main. Envoyé au changement (≤ 30/s par écran) et toutes les '

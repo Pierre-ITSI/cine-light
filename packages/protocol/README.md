@@ -143,8 +143,9 @@ kind 2 : idLen + mediaId (≤ 64) + index u16 + total u16
 ### 3.4 Schéma applicatif (`schema.js`)
 
 `MESSAGE_TYPES` documente les **45 types** utilisés aujourd'hui par
-`index.html` et `expo-app`, plus les nouveaux `screen:config` et `dmx:look`
-(47 au total : 31 `r2s`, 15 `s2r`, 1 `both` ; sources et champs décrits).
+`index.html` et `expo-app`, plus les nouveaux `screen:config`, `dmx:look` et
+`screen:identify` (48 au total : 32 `r2s`, 15 `s2r`, 1 `both` ; sources et
+champs décrits).
 `screen:alive` (écran → télécommande, sans champ) est le signe de vie qu'un
 écran envoie toutes les 15 s.
 `validate(msg, { direction })` est une **liste blanche stricte** : type ou
@@ -181,8 +182,11 @@ Des tests de **dérive** relisent `web/js/*.js` (ou `index.html` à défaut) et
 - WebRTC (`rtc-offer`) : cibler **un** écran ; les réponses sont rattachées à
   l'écran par l'étiquette `sender` (authentifiée) apprise via `caps`.
 - `dmx:look { target?, seq, live, look }` : émis par la passerelle DMX
-  (`packages/dmx`), pas encore branché dans `web/js`. Règles de priorité
-  console / télécommande : `docs/DMX.md`.
+  (`packages/dmx`, assemblé dans la PWA sous la globale `SRDMX` ;
+  `web/js/86-dmx-gateway.js`), appliqué par l'écran (`web/js/36-dmx-screen.js`).
+  Règles de priorité console / télécommande : `docs/DMX.md`.
+- `screen:identify { target: { screens: [...] } }` : l'écran ciblé clignote
+  3 s (« Identifier » du moniteur de la passerelle), sans changer son état.
 
 ## 4. API
 

@@ -296,9 +296,11 @@ autorisation n'est pas obtenue :
   elle répond en unicast avec un ArtPollReply qui annonce un port de sortie par
   univers patché.
 
-L'IP de la passerelle est affichée dans son écran de réglages, avec la liste
-des univers reçus, les sources (nom, priorité, IP) et l'état du signal :
-vérifier là la numérotation des univers Art-Net (0 ou 1 selon la console).
+L'IP de la passerelle est affichée dans son écran (télécommande, onglet QR →
+« Passerelle DMX »), avec un voyant qui clignote à chaque paquet reçu et la
+liste des univers reçus (source, IP, cadence, ou délai depuis le dernier
+paquet) : vérifier là la numérotation des univers Art-Net (0 ou 1 selon la
+console).
 
 ## 6. Réseau : conseils de plateau
 
@@ -346,24 +348,32 @@ La passerelle envoie aux écrans, dans la session chiffrée :
 - Le schéma strict est dans `packages/protocol/schema.js` (`dmx:look`, sens
   télécommande → écran).
 
-**Pas encore branché dans l'app.** Les messages inconnus étant ignorés par
-`dispatchMessage`, il faudra ajouter une route à `MSG_ROUTES`
-(`web/js/22-protocol.js`), par exemple :
+**Branché dans la PWA** (16 octobre 2026) :
 
-```js
-'dmx:look': {
-  roles: ['screen'],
-  validate: (m) => _P.int(m.seq, 0, 0xffff) !== null && typeof m.live === 'boolean'
-    && (m.look = dmxExpandLook(m.look)) !== null,          // expandLook() de packages/dmx/messages.js
-  handle: (m) => screenApplyDmxLook(m),                    // à écrire : ordre seq, priorité console, rendu
-},
-```
-
-`screenApplyDmxLook` devra : appliquer couleur/strobe/effet/média/blackout ;
-tant que `live` est vrai (et moins de 3 s depuis le dernier `dmx:look`),
-ignorer `color`, `strobe`, `effect`, `blackout`, `media:show`, `media-stop`,
-`media-ctrl` venant de la télécommande ; redémarrer le strobe seulement si sa
-fréquence ou sa durée change (voir § 8, défaut n° 4).
+- **Passerelle** (télécommande dans l'app native) : `web/js/86-dmx-gateway.js`
+  (moteur `packages/dmx` assemblé sous la globale `SRDMX`, contrat du pont
+  natif : `docs/DMX-NATIVE.md` § 9) et `87-dmx-gateway-ui.js` (maquettes 14
+  à 17).
+- **Écran** : route `dmx:look` de `MSG_ROUTES` (`web/js/22-protocol.js`,
+  validée par `expandLook()`), appliquée par `screenApplyDmxLook`
+  (`web/js/36-dmx-screen.js`) : ordre `seq`, couleur, strobe redémarré
+  seulement si sa fréquence ou sa durée change (§ 8, défaut n° 4 corrigé :
+  il flashe la couleur de la console), effet et vitesse, média et lecture,
+  noir. Tant que `live` est vrai (et moins de 3 s depuis le dernier
+  `dmx:look`), `dispatchMessage` ignore `color`, `strobe`, `effect`,
+  `blackout`, `media:show`, `media-stop`, `media-ctrl` de la télécommande ;
+  une image ou une vidéo diffusée par la télécommande est mise en cache sans
+  s'afficher.
+- **Médias** : la console n'affiche que des médias **déjà en cache** sur
+  l'écran (les images du pool sont préchargées ; une vidéo l'est à sa
+  première lecture depuis la télécommande). Un média absent du cache n'est pas
+  redemandé (la rediffusion s'afficherait aussi sur les autres écrans) : il
+  apparaît dès qu'il arrive en cache.
+- **Appels / SMS** : entrée *n* = n-ième entrée des listes « Appels » / « SMS »
+  de l'onglet Appel (maquette 18) ; sa photo et sa bande son partent avant
+  `call:start` si elles diffèrent de celles en cache sur les écrans.
+- **Identifier** (moniteur) : message `screen:identify` ciblé ; l'écran
+  clignote 3 s à 2 Hz sans changer d'état.
 
 ## 8. Ancien mode DMX 3CH / 9CH : incohérences constatées
 

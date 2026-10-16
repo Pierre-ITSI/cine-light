@@ -135,6 +135,7 @@ export const REAL_MESSAGES = [
   { direction: 'r2s', where: 'multi-écran : couleur ciblée', msg: { type: 'color', color: '#00ff00', target: { screens: [SCREEN_A] } } },
   { direction: 'r2s', where: 'multi-écran : groupe', msg: { type: 'blackout', on: false, target: { group: 'cuisine' } } },
   { direction: 'r2s', where: 'multi-écran : screen:config', msg: { type: 'screen:config', target: { screens: [SCREEN_A] }, name: 'Écran cuisine', groups: ['cuisine', 'g2'] } },
+  { direction: 'r2s', where: 'passerelle DMX : identifier un écran', msg: { type: 'screen:identify', target: { screens: [SCREEN_A] } } },
   // ── passerelle DMX (packages/dmx GatewayEngine) → écran ──
   { direction: 'r2s', where: 'passerelle DMX : couleur seule', msg: { type: 'dmx:look', target: { screens: [SCREEN_A] }, seq: 1, live: true, look: { color: '#ffefe1' } } },
   {
@@ -240,6 +241,8 @@ export const ATTACKS = [
   { why: 'target screenId trop court', msg: { type: 'color', color: '#ffffff', target: { screens: ['abc'] } } },
   { why: 'target sur message écran → télécommande', msg: { type: 'media:cached', id: 'm1', target: { group: 'g' } } },
   { why: 'screen:config sans target', msg: { type: 'screen:config', name: 'x' } },
+  { why: 'screen:identify sans target (tous les écrans)', msg: { type: 'screen:identify' } },
+  { why: 'screen:identify avec champ', msg: { type: 'screen:identify', target: { screens: [SCREEN_A] }, ms: 1e9 } },
   { why: 'dmx:look strobe > 30 Hz', msg: { type: 'dmx:look', seq: 1, live: true, look: { color: '#ffffff', strobe: { freq: 31, dur: 20 } } } },
   { why: 'dmx:look champ inconnu dans le look', msg: { type: 'dmx:look', seq: 1, live: true, look: { color: '#ffffff', eval: 1 } } },
   { why: 'dmx:look média hors des 25 emplacements', msg: { type: 'dmx:look', seq: 1, live: true, look: { color: '#ffffff', media: { index: 26, playback: 'play' } } } },

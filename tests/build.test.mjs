@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { build, listFragments, OUTPUT, ROOT_DIR, HEADER } from '../web/build.mjs';
-import { bundleProtocol } from '../web/bundle-protocol.mjs';
+import { bundleProtocol, bundleDmx } from '../web/bundle-protocol.mjs';
 
 test('index.html correspond exactement à web/ (npm run build)', () => {
   const { html, cssFrags, jsFrags } = build();
@@ -51,6 +51,23 @@ test('paquet protocole : IIFE classique en tête du <script>, même API que les 
   assert.deepEqual((await screen.receive(await remote.seal({ type: 'color', color: '#ff0000' }))).message, { type: 'color', color: '#ff0000' });
   assert.deepEqual((await remote.receive(await screen.seal({ type: 'screen:alive' }))).message, { type: 'screen:alive' });
   await assert.rejects(remote.receive('pas-une-trame'), (e) => e instanceof SRP.ProtocolError || e.name === 'ProtocolError');
+});
+
+test('passerelle DMX : IIFE classique SRDMX juste après SRP, mêmes exports que packages/dmx', async () => {
+  const { html, protocol, dmx } = build();
+  assert.deepEqual(bundleDmx(), dmx, 'assemblage déterministe');
+  const script = html.slice(html.indexOf('<script>') + 8).replace(/^\n/, '');
+  assert.ok(script.startsWith(protocol.code + dmx.code), 'SRP puis SRDMX, avant web/js');
+  assert.match(dmx.code, /^var SRDMX = \(function \(\) \{$/m);
+  assert.doesNotMatch(dmx.code, /^\s*(import|export)\s/m);
+  const SRDMX = new Function(dmx.code + '\nreturn SRDMX;')();
+  const esm = await import('../packages/dmx/index.js');
+  assert.deepEqual(Object.keys(SRDMX).sort(), Object.keys(esm).sort());
+  assert.ok(Object.isFrozen(SRDMX));
+  // Même décodage que les modules ES
+  const pkt = esm.buildSacnDataPacket({ cid: '5f1e7a52-3c4b-4d8e-9a10-2b3c4d5e6f70', universe: 7, data: [255, 255, 128, 0], sequence: 1 });
+  assert.deepEqual(SRDMX.parseSacn(pkt).data, esm.parseSacn(pkt).data);
+  assert.equal(SRDMX.decode('standard8', [255, 255, 128, 0, 0, 128, 0, 0]).color, esm.decode('standard8', [255, 255, 128, 0, 0, 128, 0, 0]).color);
 });
 
 test('interface inchangée : <style> et balisage identiques à la référence visuelle', (t) => {

@@ -160,7 +160,9 @@ test('isAddressedTo : tous, liste d’écrans, groupe', () => {
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, '..', '..', '..');
 /** Types qui ne passent PAS par le relais (ponts locaux), documentés dans schema.js. */
-const NON_RELAY = new Set(['brightness', 'brightness-restore', 'setUniverse', 'dmx', 'code_changed', 'error']);
+const NON_RELAY = new Set(['brightness', 'brightness-restore', 'setUniverse', 'dmx', 'code_changed', 'error',
+  // pont natif de la passerelle DMX (docs/DMX-NATIVE.md)
+  'dmx:listen', 'dmx:stop', 'udp:send', 'net:info', 'dmx:packets', 'dmx:error']);
 
 /** @param {string} src */
 function extractTypes(src) {

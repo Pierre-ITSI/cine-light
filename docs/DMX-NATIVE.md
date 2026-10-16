@@ -7,7 +7,9 @@ paquet `packages/dmx` (moteur). Sources consultées le **15 octobre 2026**
 > **État** : l'option B est réalisée dans `expo-app/modules/setremote-udp`
 > (Swift, Kotlin, pont TypeScript). Le **contrat du pont** entre la vue web et
 > le natif, les choix de sockets et la variable d'entitlement sont au **§ 9**,
-> qui prime sur les propositions des § 1 et 4.
+> qui prime sur les propositions des § 1 et 4. Le **côté vue web** (moteur
+> assemblé dans la PWA sous la globale `SRDMX`, écrans de la passerelle) est
+> au **§ 10**.
 
 ## 1. Ce qu'il faut côté natif
 
@@ -199,18 +201,22 @@ simple.
    actuelle : 36).
 4. **Brancher le moteur** — dans la **vue web** (le moteur y tourne, § 9) :
    `GatewayEngine.handlePacket` sur les `dmx:packets`, `sendUdp` sur
-   `udp:send`, `send` sur le canal chiffré.
-5. **Écran de la passerelle** : IP et interface (filaire/Wi-Fi), éditeur de
-   patch (`Patch.check()`, `autoAddress()`), moniteur (`engine.snapshot()` :
-   univers, sources, état du signal, écrans, compteurs de rejets).
-6. **Côté écran** : route `dmx:look` dans `MSG_ROUTES`
-   (`web/js/22-protocol.js`) et équivalent natif ; ordre `seq` ; priorité
-   console tant que `live` ; reprise par la télécommande après `live: false` ou
-   3 s sans message ; strobe redémarré seulement s'il change (voir
-   `docs/DMX.md` § 7–8).
-7. **Appels et SMS** : fournir à la passerelle les 20 premières entrées des
-   listes enregistrées de la télécommande (`setTriggerEntries`) — mécanisme de
-   synchronisation à définir.
+   `udp:send`, `send` sur le canal chiffré : **fait** (§ 10).
+5. **Écran de la passerelle** — **fait** (maquettes 14 à 17, § 10) : IP,
+   masque et interface (lecture seule) avec voyant de réception, univers
+   reçus, patch (`Patch.check()`, `autoAddress()`), moniteur de tous les
+   canaux d'un écran, table des canaux d'un mode.
+6. **Côté écran** — **fait pour la PWA** (`web/js/36-dmx-screen.js`) : route
+   `dmx:look` dans `MSG_ROUTES` ; ordre `seq` ; priorité console tant que
+   `live` ; reprise par la télécommande après `live: false` ou 3 s sans
+   message ; strobe redémarré seulement s'il change (voir `docs/DMX.md`
+   § 7–8). Reste l'équivalent dans l'écran natif d'`expo-app`.
+7. **Appels et SMS** — **fait** : la télécommande-passerelle donne au moteur
+   les 20 premières entrées de ses listes enregistrées (onglet Appel,
+   maquette 18) à chaque modification (`setTriggerEntries`) ; une entrée
+   déclenchée envoie d'abord sa photo / sa bande son (`__callphoto`,
+   `__callaudio`) si elles diffèrent de celles en cache sur les écrans, puis
+   `call:start`.
 8. **Liaison locale passerelle → écrans** pour les plateaux de plus de
    quelques écrans (§ 6).
 9. **Retirer l'ancien mode DMX** (3CH/9CH, pont WebSocket, plugin Capacitor
@@ -431,3 +437,38 @@ forums Apple <https://developer.apple.com/forums/thread/655920>,
 Ethernet : `NWMulticastGroup` fonctionne, entitlement requis) ; Android
 [`Network.bindSocket`](https://developer.android.com/reference/android/net/Network#bindSocket(java.net.DatagramSocket)),
 [`MulticastLock`](https://developer.android.com/reference/android/net/wifi/WifiManager.MulticastLock).
+
+## 10. Côté vue web : la passerelle dans la PWA
+
+La passerelle est la **télécommande** de la PWA embarquée, ouverte depuis
+l'onglet **QR** (bouton « Passerelle DMX », visible seulement dans l'app :
+`IN_NATIVE_APP`, pont présent ; dans un navigateur, la vue indique qu'il faut
+l'app). Le contrat du pont est celui du § 9.1, inchangé.
+
+| Fichier | Rôle |
+|---|---|
+| `web/bundle-protocol.mjs`, `web/build.mjs` | `packages/dmx` assemblé dans `index.html` sous la globale `SRDMX`, juste après `SRP` |
+| `web/js/00-native-bridge.js` | `nativePost(msg)` (page → coque) et `window.SRNative.receive(msg)` (coque → page : objet ou chaîne JSON ; message inconnu ignoré) |
+| `web/js/86-dmx-gateway.js` | moteur (`GatewayEngine`, `tick()` toutes les 10 ms), écoute, patch mémorisé **par session** (`localStorage`, clé `setremote-dmx-v1`, 8 sessions au plus), envoi des `dmx:look` et des appels / SMS, ArtPollReply |
+| `web/js/87-dmx-gateway-ui.js` | écrans de la passerelle (maquettes 14 à 17) |
+| `web/js/36-dmx-screen.js` | écran de jeu : `dmx:look`, priorité console, Identifier |
+| `web/js/82-call-list.js` | listes d'appels et de SMS numérotées (maquette 18) |
+
+Ce que la page envoie, et quand :
+
+- `dmx:listen` au démarrage de la passerelle, puis **à chaque changement** de
+  patch ou de protocole (il remplace l'écoute en cours) : univers patchés du
+  protocole, ou `[1]` (sACN) / `[0]` (Art-Net) tant que rien n'est patché.
+- `dmx:stop` à l'arrêt de la passerelle et en quittant la télécommande.
+- `udp:send` pour chaque ArtPollReply construit par le moteur, vers l'IP de
+  la console qui a envoyé l'ArtPoll, port 6454.
+
+Traitement des `dmx:packets` : chaque lot est traité **aussitôt et
+entièrement** (base64 → octets, `engine.handlePacket`, statistiques), sans
+attente ; le rendu des écrans de la passerelle est regroupé à part (au plus
+5 fois par seconde), le voyant ne fait que basculer une classe. Bornes côté
+page : 2 000 datagrammes par lot, 4 096 caractères base64 par datagramme.
+
+Tests : `tests/dmx-gateway.test.mjs` simule la coque (paquets construits avec
+`packages/dmx`, messages postés relevés) ; `tests/call-list.test.mjs` couvre
+les listes d'appels.

@@ -147,6 +147,7 @@
   <div id="screen-dim"></div>
   <div id="screen-call"></div>
   <div id="screen-blackout"></div>
+  <div id="screen-identify"></div>
   <div class="status-pill" id="screen-status">Connexion…</div>
   <div id="screen-notice"></div>
   <div id="screen-bar">
@@ -764,6 +765,23 @@
       </div>
       <div class="media-status" id="callStatus">—</div>
     </div>
+    <!-- Appels et SMS enregistrés, numérotés (maquette 18) : cibles des canaux Appel / SMS de la passerelle DMX -->
+    <div class="panel call-list" id="callListPanel">
+      <div class="panel-label">Liste enregistrée</div>
+      <div class="cl-kinds">
+        <button type="button" class="gw-seg-btn active" id="clKind-call" onclick="setCallListKind('call')">Appels (0)</button>
+        <button type="button" class="gw-seg-btn" id="clKind-sms" onclick="setCallListKind('sms')">SMS (0)</button>
+      </div>
+      <div class="cl-head"><span>N°</span><span id="callListWho">Appelant</span><span>DMX</span><span></span></div>
+      <div class="cl-rows" id="callListRows"></div>
+      <div class="media-pool-empty" id="callListEmpty">Réglez l'appel ci-dessus puis enregistrez-le : il prend le numéro suivant.</div>
+      <button type="button" class="cl-save" id="callListSave" onclick="saveCurrentCall()">+ Enregistrer l'appel actuel</button>
+      <div class="cl-note">Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16). Valeur 0 : raccrocher. Glissez pour changer l'ordre.</div>
+      <div class="cl-actions" id="callListActions">
+        <button type="button" class="cl-go" id="callListGo" onclick="triggerSelectedCallEntry()">Appeler n°1</button>
+        <button type="button" class="cl-del" id="callListDel" onclick="deleteSelectedCallEntry()">Supprimer</button>
+      </div>
+    </div>
   </div>
 
   <div class="tab-content" id="content-qr">
@@ -785,12 +803,118 @@
       <div class="panel-label">Écrans appairés (<span id="pairScreensCount">0</span>)</div>
       <div id="pairScreensList" class="pair-screens-list"></div>
     </div>
+    <!-- Passerelle DMX : app native uniquement (accès à valider : aucune maquette) -->
+    <button type="button" class="media-btn gw-entry" id="gwEntryBtn" onclick="openDmxGateway()"><span class="media-icon">🎛</span> Passerelle DMX <span class="gw-entry-state" id="gwEntryState"></span></button>
     <button class="media-btn pair-renew" onclick="confirmNewSession()"><span class="media-icon">⟳</span> Nouvelle session</button>
     <div class="pair-e2e">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
       Chiffré de bout en bout : seuls vos appareils lisent les messages et les médias
     </div>
   </div>
+</div>
+
+<!-- Passerelle DMX : console (sACN / Art-Net) → écrans (maquettes 14 à 17) -->
+<div id="dmx-gateway" role="dialog" aria-label="Passerelle DMX">
+  <section class="gw-view" id="gwViewGateway">
+    <div class="gw-head gw-head-gw">
+      <div>
+        <div class="gw-kicker">Mode passerelle</div>
+        <div class="gw-title">Console → écrans</div>
+      </div>
+      <button type="button" class="gw-back" onclick="closeDmxGateway()">← Télécommande</button>
+    </div>
+    <div class="flash-unavail-notice" id="gwNeedsApp" style="display:none">
+      <strong>🎛 Nécessite l'app SetRemote</strong>
+      Un navigateur ne peut pas recevoir le sACN ni l'Art-Net (UDP). Ouvrez SetRemote dans l'app iPhone, iPad ou Android pour faire de cet appareil la passerelle de la console.
+    </div>
+    <div class="gw-card">
+      <span class="gw-label">Protocole</span>
+      <div class="gw-seg">
+        <button type="button" class="gw-seg-btn active" id="gwProto-sacn" onclick="gwSetProtocol('sacn')">sACN (E1.31)</button>
+        <button type="button" class="gw-seg-btn" id="gwProto-artnet" onclick="gwSetProtocol('artnet')">Art-Net</button>
+      </div>
+    </div>
+    <div class="gw-card">
+      <span class="gw-label">Réseau de l'appareil</span>
+      <div class="gw-net">
+        <span class="gw-led" id="gwLed" title="Clignote à chaque paquet reçu"></span>
+        <span class="gw-net-main">
+          <span class="gw-ip" id="gwIp">—</span>
+          <span class="gw-ip-sub" id="gwIpSub">Recherche de l'interface réseau…</span>
+        </span>
+        <span class="gw-sig" id="gwSig">Aucun signal</span>
+      </div>
+      <div class="gw-warn" id="gwNetWarn" style="display:none"></div>
+      <div class="gw-error" id="gwError" style="display:none"></div>
+      <div class="gw-tips">
+        <div class="gw-tip"><span>1</span><span><b>Adresse fixe, pas de DHCP.</b> Réglages › Ethernet › Configurer l'IP › Manuelle. En DHCP, l'adresse peut changer en plein tournage.</span></div>
+        <div class="gw-tip"><span>2</span><span><b>Unicast de préférence.</b> Sur la console, envoyez les univers directement à <span id="gwIpTip">cette adresse</span> plutôt qu'en multicast ou en broadcast.</span></div>
+      </div>
+    </div>
+    <div class="gw-card gw-univ">
+      <span class="gw-label">Univers reçus</span>
+      <div id="gwUniverses"></div>
+    </div>
+    <button type="button" class="gw-primary" id="gwPatchBtn" onclick="gwShowView('patch')">Patcher les écrans (0)</button>
+    <button type="button" class="gw-run" id="gwRunBtn" onclick="gwToggleRun()">Arrêter la passerelle</button>
+    <div class="gw-foot">La console a toujours la priorité. Si son signal s'arrête, les écrans gardent le dernier état reçu jusqu'à une action sur la télécommande.</div>
+  </section>
+
+  <section class="gw-view" id="gwViewPatch">
+    <div class="gw-head">
+      <button type="button" class="gw-back" onclick="gwShowView('gateway')">← Passerelle</button>
+      <span class="gw-head-title">Patch</span>
+      <button type="button" class="gw-head-btn" onclick="gwAutoAddress()">Auto-adresser</button>
+    </div>
+    <div class="gw-ptable-head"><span>Écran</span><span>Univ.</span><span>Adresse</span><span>Mode</span></div>
+    <div class="gw-prows" id="gwPatchRows"></div>
+    <div class="gw-warn" id="gwPatchWarn" style="display:none"></div>
+    <div class="gw-card">
+      <span class="gw-label">Modes disponibles</span>
+      <div class="gw-modes" id="gwModes"></div>
+    </div>
+    <button type="button" class="gw-link" onclick="gwOpenChannels()">Table des canaux pour le pupitreur →</button>
+  </section>
+
+  <section class="gw-view" id="gwViewMonitor">
+    <div class="gw-head">
+      <button type="button" class="gw-back" onclick="gwShowView('patch')">← Patch</button>
+      <span class="gw-head-title" id="gwMonName">Écran</span>
+      <span class="gw-console" id="gwMonConsole" hidden>Console</span>
+    </div>
+    <div class="gw-fields">
+      <label class="gw-field">Univers<input type="text" inputmode="numeric" id="gwMonUniverse" autocomplete="off" onchange="gwMonitorEdit()"></label>
+      <label class="gw-field">Adresse<input type="text" inputmode="numeric" id="gwMonAddress" autocomplete="off" onchange="gwMonitorEdit()"></label>
+      <label class="gw-field gw-field-mode">Mode<select id="gwMonMode" onchange="gwMonitorEdit()">
+        <option value="extended16">Étendu 16</option><option value="standard8">Standard 8</option><option value="color5">Couleur 5</option><option value="simple3">Simple 3</option>
+      </select></label>
+    </div>
+    <div class="gw-card gw-chs">
+      <div class="gw-chs-head">
+        <span class="gw-label" id="gwMonRange">Canaux</span>
+        <span class="gw-chs-tools">
+          <span class="gw-unit"><button type="button" class="active" id="gwUnit-raw" onclick="gwSetMonitorUnit(false)">0–255</button><button type="button" id="gwUnit-pct" onclick="gwSetMonitorUnit(true)">%</button></span>
+          <span class="gw-swatch" id="gwMonSwatch"></span>
+        </span>
+      </div>
+      <div id="gwMonRows"></div>
+    </div>
+    <div class="gw-rule">La console a toujours la priorité. Si son signal s'arrête, l'écran garde le dernier état reçu jusqu'à une action sur la télécommande.</div>
+    <div class="gw-actions">
+      <button type="button" class="gw-btn" id="gwIdentifyBtn" onclick="gwIdentify()">Identifier</button>
+      <button type="button" class="gw-btn" id="gwUnpatchBtn" onclick="gwUnpatch()">Dépatcher</button>
+    </div>
+  </section>
+
+  <section class="gw-view" id="gwViewChannels">
+    <div class="gw-head">
+      <button type="button" class="gw-back" onclick="gwShowView('patch')">← Patch</button>
+      <span class="gw-head-title" id="gwChTitle">Étendu 16</span>
+      <span class="gw-head-spacer"></span>
+    </div>
+    <div class="gw-ctable" id="gwChRows"></div>
+    <div class="gw-rule" id="gwChNote">Effet, média, appel, SMS : n × 10 à n × 10 + 9 choisit le n°. 1–9 et valeurs hors liste : sans effet. Appel et SMS se déclenchent une fois, à l'entrée dans la plage.</div>
+  </section>
 </div>
 
 <!-- Vérification du nombre (appairage par code), sur la télécommande comme sur l'écran -->

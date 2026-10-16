@@ -3,8 +3,10 @@ buildEffectCards();
 loadFxMemories();
 renderFxMemories();
 
-// ── Onglet Appel : état initial des options ──
+// ── Onglet Appel : état initial des options, appels et SMS enregistrés ──
 _syncCallPhotoRow();
+loadCallList();
+renderCallList();
 
 // ── Mini-carte sticky : apparaît dès que la preview commence à être masquée ──
 (function initStickyPreview() {

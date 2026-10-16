@@ -20,7 +20,7 @@ async function screenHandleOffer(sdp) {
   _screenPendingIce = [];
   _vidParts = []; _vidMeta = null;
   const oldVid = document.getElementById('screen-media-video'); // stoppe la vidéo précédente pendant le transfert
-  if (oldVid) { try { oldVid.pause(); } catch (_) {} }
+  if (oldVid && !screenDmxLive()) { try { oldVid.pause(); } catch (_) {} }
   _screenPc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
   _screenPc.onicecandidate = e => { if (e.candidate) sendMsg({ type: 'rtc-ice', from: 'screen', candidate: e.candidate }); };
   _screenPc.ondatachannel = e => setupScreenFileChannel(e.channel);
@@ -61,8 +61,10 @@ function screenAssembleVideo() {
     if (old && old.url && old.url !== url) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
     _mediaCache.set(mediaId, { kind: 'vid', url });
     sendMsg({ type: 'media:cached', id: mediaId });
+    // Console prioritaire (passerelle DMX) : mise en cache seulement
+    if (screenDmxLive()) { screenDmxOnCached(mediaId); return; }
     _screenActiveId = mediaId;
-  }
+  } else if (screenDmxLive()) return;
   screenPlayVideoUrl(url);
 }
 
@@ -90,6 +92,7 @@ function screenPlayVideoUrl(url) {
   vid.onpause = () => sendScreenState(vid);
   vid.onended = () => {
     vid._wantPlay = false;
+    if (screenDmxOwnsMedia()) return; // console : « lecture » s'arrête sur la dernière image
     if (_screenVidEndMode === 'off') {
       // « 1× puis off » : coupe le média, l'écran revient au fond couleur
       hideScreenMedia();

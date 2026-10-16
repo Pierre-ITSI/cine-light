@@ -1,9 +1,10 @@
 // ════════════════════════════════════════════════════════════════════════════
-// Assemble packages/protocol (modules ES) en UN script classique pour la PWA.
+// Assemble un paquet de packages/ (modules ES) en UN script classique pour la
+// PWA : packages/protocol → globale SRP, packages/dmx → globale SRDMX.
 //
 // Les scripts de web/js sont classiques (globales, onclick= inline) : ils ne
 // peuvent pas faire « import ». Ce petit assembleur, sans dépendance, produit
-// une IIFE qui expose l'API publique du paquet dans la globale SRP :
+// une IIFE qui expose l'API publique du paquet dans une globale :
 //
 //   var SRP = (function () { 'use strict'; … return Object.freeze({ … }); })();
 //
@@ -21,6 +22,9 @@ import { fileURLToPath } from 'node:url';
 const WEB_DIR = dirname(fileURLToPath(import.meta.url));
 export const PROTOCOL_DIR = resolve(WEB_DIR, '..', 'packages', 'protocol');
 export const PROTOCOL_GLOBAL = 'SRP';
+// Passerelle DMX (sACN / Art-Net) : moteur sans dépendance, même assemblage
+export const DMX_DIR = resolve(WEB_DIR, '..', 'packages', 'dmx');
+export const DMX_GLOBAL = 'SRDMX';
 
 const ID = '[A-Za-z_$][\\w$]*';
 const SPEC = `'(\\.{1,2}/[^']+\\.js)'`;
@@ -61,8 +65,8 @@ function stripCommentLines(src) {
   return out.join('\n');
 }
 
-function parseModule(abs) {
-  const file = relative(PROTOCOL_DIR, abs).split(sep).join('/');
+function parseModule(abs, pkgDir) {
+  const file = relative(pkgDir, abs).split(sep).join('/');
   let src = readFileSync(abs, 'utf8');
   const deps = [];
   const imports = [];
@@ -71,7 +75,7 @@ function parseModule(abs) {
   const stars = [];
   const dep = (spec) => {
     const p = resolve(dirname(abs), spec);
-    if (!p.startsWith(PROTOCOL_DIR + sep)) throw new Error(`bundle-protocol: import hors du paquet dans ${file}`);
+    if (!p.startsWith(pkgDir + sep)) throw new Error(`bundle-protocol: import hors du paquet dans ${file}`);
     if (!deps.includes(p)) deps.push(p);
     return p;
   };
@@ -93,16 +97,34 @@ function parseModule(abs) {
  * @returns {{ code: string, modules: string[], exports: string[] }}
  */
 export function bundleProtocol(opts = {}) {
-  const entry = resolve(PROTOCOL_DIR, opts.entry || 'index.js');
-  const globalName = opts.globalName || PROTOCOL_GLOBAL;
+  return bundlePackage({ dir: PROTOCOL_DIR, globalName: PROTOCOL_GLOBAL, label: '@setremote/protocol', ...opts });
+}
+
+/**
+ * Moteur de la passerelle DMX (packages/dmx) → globale SRDMX.
+ * @param {{ entry?: string, globalName?: string }} [opts]
+ * @returns {{ code: string, modules: string[], exports: string[] }}
+ */
+export function bundleDmx(opts = {}) {
+  return bundlePackage({ dir: DMX_DIR, globalName: DMX_GLOBAL, label: '@setremote/dmx', ...opts });
+}
+
+/**
+ * @param {{ dir: string, globalName: string, label: string, entry?: string }} opts
+ * @returns {{ code: string, modules: string[], exports: string[] }}
+ */
+export function bundlePackage(opts) {
+  const pkgDir = opts.dir;
+  const entry = resolve(pkgDir, opts.entry || 'index.js');
+  const globalName = opts.globalName;
   const mods = new Map();
   const order = [];
   const visiting = new Set();
   const visit = (abs) => {
     if (mods.has(abs) && !visiting.has(abs)) return;
-    if (visiting.has(abs)) throw new Error('bundle-protocol: import circulaire via ' + relative(PROTOCOL_DIR, abs));
+    if (visiting.has(abs)) throw new Error('bundle-protocol: import circulaire via ' + relative(pkgDir, abs));
     visiting.add(abs);
-    const m = parseModule(abs);
+    const m = parseModule(abs, pkgDir);
     mods.set(abs, m);
     for (const d of m.deps) visit(d);
     visiting.delete(abs);
@@ -141,7 +163,7 @@ export function bundleProtocol(opts = {}) {
     );
   }
   const exportsList = [...exported.get(entry)].sort();
-  const code = `// ══════ @setremote/protocol — assemblé par web/bundle-protocol.mjs depuis packages/protocol (ne pas éditer) ══════
+  const code = `// ══════ ${opts.label} — assemblé par web/bundle-protocol.mjs depuis ${relative(resolve(WEB_DIR, '..'), pkgDir).split(sep).join('/')} (ne pas éditer) ══════
 var ${globalName} = (function () {
 'use strict';
 const __m = Object.create(null);
@@ -150,6 +172,6 @@ ${parts.join('\n')}
 return Object.freeze(__m[${key(entry)}]);
 })();
 `;
-  if (/<\/script/i.test(code)) throw new Error('bundle-protocol: « </script » interdit dans le paquet');
+  if (/<\/script/i.test(code)) throw new Error('bundle-protocol: « </script » interdit dans le paquet ' + opts.label);
   return { code, modules: order.map((m) => m.file), exports: exportsList };
 }

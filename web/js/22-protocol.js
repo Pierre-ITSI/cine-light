@@ -168,6 +168,14 @@ const MSG_ROUTES = {
   'call:start':        { roles: ['screen'], validate: _validCallStart, handle: (m) => screenCallStart(m) },
   'call:answer':       { roles: ['screen'], validate: () => true, handle: () => screenCallAnswer() },
   'call:end':          { roles: ['screen'], validate: () => true, handle: () => screenCallEnd() },
+  // Passerelle DMX : look calculé depuis la console (36-dmx-screen.js, docs/DMX.md § 7)
+  'dmx:look': {
+    roles: ['screen'],
+    validate: (m) => _P.int(m.seq, 0, 0xffff) !== null && typeof m.live === 'boolean'
+      && (m.look = SRDMX.expandLook(m.look)) !== null,
+    handle: (m) => screenApplyDmxLook(m),
+  },
+  'screen:identify':   { roles: ['screen'], validate: () => true, handle: () => screenIdentify() },
   'rtc-offer':         { roles: ['screen'], validate: _validSdp('offer'), handle: (m) => screenHandleOffer(m.sdp) },
   // Candidats ICE dans les deux sens : chaque rôle n'accepte que ceux de l'autre
   'rtc-ice': {
@@ -240,6 +248,8 @@ function dispatchMessage(msg) {
   const route = MSG_ROUTES[msg.type];
   if (!route.roles.includes(mode)) return false;
   if (!route.validate(msg)) return false;
+  // Console prioritaire (passerelle DMX) : ordres de look de la télécommande ignorés
+  if (mode === 'screen' && !screenDmxAllows(msg.type)) return false;
   route.handle(msg);
   return true;
 }

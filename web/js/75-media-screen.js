@@ -76,7 +76,8 @@ function mediaImgStart(msg) {
   if (typeof msg.id !== 'string' || !Number.isInteger(total) || total < 1 || total > IMG_MAX_CHUNKS) return;
   const mediaId = (typeof msg.mediaId === 'string' && _RE_MEDIA_ID.test(msg.mediaId)) ? msg.mediaId : null;
   if (_imgBufs.size >= IMG_MAX_PARALLEL) _imgBufs.delete(_imgBufs.keys().next().value); // le plus ancien
-  _imgBufs.set(msg.id, { total, parts: new Array(total), got: 0, mediaId, show: msg.show !== false });
+  // Console prioritaire (passerelle DMX) : l'image est mise en cache sans s'afficher
+  _imgBufs.set(msg.id, { total, parts: new Array(total), got: 0, mediaId, show: msg.show !== false && !screenDmxLive() });
 }
 function mediaImgChunk(msg) {
   const b = _imgBufs.get(msg.id);
@@ -96,6 +97,7 @@ function mediaImgChunk(msg) {
   if (b.mediaId) {
     _mediaCache.set(b.mediaId, { kind: isAudio ? 'audio' : 'img', data: dataUrl });
     sendMsg({ type: 'media:cached', id: b.mediaId });
+    screenDmxOnCached(b.mediaId);
   }
   if (b.show && !isAudio) {
     const im = document.getElementById('screen-media-img');
@@ -112,6 +114,7 @@ function playScreenVid(vid) {
   vid._wantPlay = true;
   const p = vid.play();
   if (p && p.catch) p.catch(() => {
+    if (!vid._wantPlay) return; // mise en pause entre-temps (télécommande, console)
     vid.muted = true; vid._autoMuted = true;
     const p2 = vid.play(); if (p2 && p2.catch) p2.catch(() => {});
   });
@@ -168,8 +171,10 @@ function screenVidUploadPlay(msg) {
       if (old && old.url && old.url !== url) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
       _mediaCache.set(up.poolId, { kind: 'vid', url });
       sendMsg({ type: 'media:cached', id: up.poolId });
+      // Console prioritaire (passerelle DMX) : mise en cache seulement
+      if (screenDmxLive()) { screenDmxOnCached(up.poolId); return; }
       _screenActiveId = up.poolId;
-    }
+    } else if (screenDmxLive()) return;
     screenPlayVideoUrl(url);
   } catch (_) { setScreenStatus('⚠ Vidéo illisible'); }
 }

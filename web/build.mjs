@@ -12,6 +12,9 @@
 //                             ES), assemblés par web/bundle-protocol.mjs en une
 //                             IIFE qui expose la globale SRP, placée EN TÊTE du
 //                             <script> (avant web/js). Déterministe.
+//   packages/dmx/*.js         passerelle DMX (sACN / Art-Net : analyse, fusion,
+//                             personnalités, patch, moteur), même assemblage →
+//                             globale SRDMX, juste après SRP.
 //
 // Le fichier produit (index.html à la racine) reste l'artefact servi tel quel
 // par GitHub Pages : aucune étape de build côté hébergement.
@@ -23,7 +26,7 @@
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { bundleProtocol } from './bundle-protocol.mjs';
+import { bundleProtocol, bundleDmx } from './bundle-protocol.mjs';
 
 export const WEB_DIR = dirname(fileURLToPath(import.meta.url));
 export const ROOT_DIR = resolve(WEB_DIR, '..');
@@ -69,21 +72,22 @@ export function build() {
     if (/<\/script/i.test(f.text)) throw new Error(`build: « </script » interdit dans ${f.name}`);
   }
   const protocol = bundleProtocol();
+  const dmx = bundleDmx();
   let html = replaceOnce(tpl, STYLES_MARK, concat(cssFrags), 'STYLES');
-  html = replaceOnce(html, SCRIPTS_MARK, protocol.code + concat(jsFrags), 'SCRIPTS');
+  html = replaceOnce(html, SCRIPTS_MARK, protocol.code + dmx.code + concat(jsFrags), 'SCRIPTS');
   // En-tête juste après le doctype (le doctype reste la 1re ligne : aucun
   // risque de mode quirks).
   const nl = html.indexOf('\n');
   if (!/^<!DOCTYPE html>$/i.test(html.slice(0, nl))) throw new Error('build: le gabarit doit commencer par <!DOCTYPE html>');
   html = html.slice(0, nl + 1) + HEADER + '\n' + html.slice(nl + 1);
-  return { html, cssFrags, jsFrags, protocol };
+  return { html, cssFrags, jsFrags, protocol, dmx };
 }
 
 function main(argv) {
   const check = argv.includes('--check');
   const outIdx = argv.indexOf('--out');
   const out = outIdx >= 0 ? resolve(argv[outIdx + 1]) : OUTPUT;
-  const { html, cssFrags, jsFrags, protocol } = build();
+  const { html, cssFrags, jsFrags, protocol, dmx } = build();
   if (check) {
     let current = '';
     try { current = readFileSync(out, 'utf8'); } catch (_) {}
@@ -92,12 +96,13 @@ function main(argv) {
       process.exit(1);
     }
     console.log('✓ index.html à jour (' + cssFrags.length + ' CSS, ' + jsFrags.length + ' JS, paquet protocole '
-      + protocol.modules.length + ' modules)');
+      + protocol.modules.length + ' modules, passerelle DMX ' + dmx.modules.length + ' modules)');
     return;
   }
   writeFileSync(out, html);
   console.log('✓ ' + out + ' — ' + cssFrags.length + ' fragments CSS, ' + jsFrags.length
-    + ' fragments JS, paquet protocole (' + protocol.modules.length + ' modules → SRP), '
+    + ' fragments JS, paquet protocole (' + protocol.modules.length + ' modules → SRP), passerelle DMX ('
+    + dmx.modules.length + ' modules → SRDMX), '
     + Buffer.byteLength(html) + ' octets');
 }
 

@@ -97,6 +97,7 @@ function connectRemote(p) {
   _linkEverConnected = false;
   setConnStatus('connecting');
   if (document.getElementById('content-qr').classList.contains('active')) renderPairPanel();
+  gwOnSessionChanged(); // passerelle DMX : patch de cette session
   connectSession(_session, () => {
     setConnStatus('connected');
     // Envoyer la couleur courante dès la connexion
@@ -137,6 +138,7 @@ function suspendScreen() {
   stopScreenEffect();
   screenCallHide();
   setBlackout(false);
+  screenDmxReset();
   stopScreenAlive();
   // Déconnecter (la session reste mémorisée : « Écran projecteur » la rejoint)
   closeSession();
@@ -212,6 +214,7 @@ function goBackToSplash() {
   stopScreenEffect();
   screenCallHide();
   setBlackout(false);
+  screenDmxReset();
   // Fermer réellement la session écran : sinon le téléphone continue de
   // recevoir (et de sonner sur un appel simulé) derrière l'écran d'accueil.
   if (mode === 'screen') {
@@ -237,6 +240,8 @@ function goBackToSplash() {
 function goBack() {
   stopStrobe();
   stopMediaBroadcast(true);
+  gwStop(); // passerelle DMX : les écrans gardent leur look et sont rendus à la télécommande
+  closeDmxGateway();
   remoteStopAllPairing();
   closeSession();
   stopLinkWatch();

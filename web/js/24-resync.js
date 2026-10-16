@@ -46,8 +46,9 @@ function remoteResync() {
   sendMsg({ type: 'media:endmode', mode: _videoEndMode });
   sendPoolOrder();
   if (_lockWallData && need.lacks.has('__lockwall')) sendImageChunks(_lockWallData, { mediaId: '__lockwall', show: false });
-  if (_callAudioData && need.lacks.has('__callaudio')) sendImageChunks(_callAudioData, { mediaId: '__callaudio', show: false });
-  if (_callPhoto && need.lacks.has('__callphoto')) sendImageChunks(_callPhoto, { mediaId: '__callphoto', show: false });
+  // Photo / bande son : celles du formulaire (un appel de la liste renverra les siennes)
+  if (need.lacks.has('__callaudio')) { _callAudioOnScreens = null; if (_callAudioData) ensureCallAssets(null, _callAudioData); }
+  if (need.lacks.has('__callphoto')) { _callPhotoOnScreens = null; if (_callPhoto) ensureCallAssets(_callPhoto, null); }
   // Média diffusé absent de l'écran : media:show s'il est en cache écran,
   // sinon re-diffusion complète (même chemin qu'une sélection dans le pool)
   if (_activeMediaId && need.mediaMissing && _mediaPool.some((m) => m.id === _activeMediaId)) selectMedia(_activeMediaId);

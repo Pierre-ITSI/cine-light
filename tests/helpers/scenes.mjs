@@ -2,6 +2,7 @@
 // d'une page neuve, horloge figée (T0) et aléa déterministe : deux rendus du
 // même HTML dans le même environnement sont identiques au pixel près.
 import { openPage } from './harness.mjs';
+import { buildSacnDataPacket } from '../../packages/dmx/index.js';
 
 // Session et code d'appairage déterministes (QR identique d'un rendu à
 // l'autre), lien d'appairage indépendant du chemin local du fichier.
@@ -37,6 +38,40 @@ const scrollTo = (id) => (page) => page.evaluate((id) => {
   const el = document.getElementById(id);
   document.getElementById('remote-mode').scrollTop += el.getBoundingClientRect().top - 120;
 }, id);
+
+// ── Passerelle DMX (maquettes 14 à 18) ──
+// Scènes rendues « dans l'app native » : pont simulé (la passerelle exige l'UDP de la coque)
+const NATIVE_INIT = { fn: () => { window.SETREMOTE_NATIVE = { platform: 'ios', bridge: 1 }; window.ReactNativeWebView = { postMessage: () => {} }; } };
+export const NATIVE_SCENES = new Set(['remote-qr-dmx-entry', 'dmx-gateway', 'dmx-patch', 'dmx-monitor', 'dmx-channels']);
+const DMX_IDS = ['ScreenOne0000001', 'ScreenTwo0000002', 'ScreenTri0000003'];
+const DMX_CID = '5f1e7a52-3c4b-4d8e-9a10-2b3c4d5e6f70';
+const _dmxSeq = new Map();
+// Datagramme sACN (base64) tel que la coque le remet à la page
+function sacnB64(universe, slots) {
+  const sequence = ((_dmxSeq.get(universe) || 0) + 1) & 0xff;
+  _dmxSeq.set(universe, sequence);
+  return Buffer.from(buildSacnDataPacket({ cid: DMX_CID, universe, data: slots, sequence, sourceName: 'Console Eos' })).toString('base64');
+}
+const feed = (page, packets) => page.evaluate((p) => window.SRNative.receive({ type: 'dmx:packets', packets: p }), packets);
+const pkt = (universe, slots) => ({ src: '10.0.0.10', port: 5568, data: sacnB64(universe, slots) });
+// Télécommande dans l'app : liaison établie, 3 écrans appairés, passerelle
+// ouverte, IP connue. Capture juste après la dernière action (voyant allumé
+// par le dernier paquet reçu).
+const gateway = (extra) => async (page) => {
+  _dmxSeq.clear();
+  await fixRandom(page);
+  await page.evaluate(() => startMode('remote'));
+  await page.clock.runFor(400);
+  await page.evaluate((ids) => {
+    setConnStatus('connected');
+    ids.forEach((id, i) => remoteNoteScreen('s' + i + 'AAAAAAA', { type: 'caps', screenId: id }));
+    openDmxGateway();
+    window.SRNative.receive({ type: 'net:info', interfaces: [{ name: 'en1', kind: 'ethernet', ip: '10.0.0.42', mask: '255.255.255.0' }] });
+  }, DMX_IDS);
+  if (extra) await extra(page);
+};
+const patchAll = (page, entries) => page.evaluate(([ids, entries]) => entries.forEach((e, i) => gwPatchSet(ids[i], e)), [DMX_IDS, entries]);
+const E16 = (universe, address) => ({ universe, address, personality: 'extended16' });
 
 export const SCENES = {
   'splash': async (page) => { await page.clock.runFor(1000); },
@@ -83,6 +118,69 @@ export const SCENES = {
   'screen-sms-lock-minimal': screenCall({ kind: 'sms', style: 'minimal', name: 'Léa', msg: 'Tu es où ??', lock: { time: '', date: '' } }),
   'screen-chat-lock-glass': screenCall({ kind: 'chat', style: 'glass', name: 'Léa', msg: 'On t’attend sur le plateau', appName: 'Chatly', lock: { time: '07:42', date: '' } }),
   'screen-chat-banner-tonal': screenCall({ kind: 'chat', style: 'tonal', name: 'Régie', msg: 'Moteur demandé dans 5 min', appName: 'Chatly', appColor: '#22aa66' }),
+  // Accès à la passerelle (onglet QR, app native seulement)
+  'remote-qr-dmx-entry': remote('qr', async (page) => {
+    await page.evaluate(() => { setConnStatus('connected'); remoteNoteScreen('sAAAAAAAA', { type: 'caps', screenId: 'ScreenOne0000001' }); renderLinkStatus(); });
+    await scrollTo('gwEntryBtn')(page);
+  }),
+  // 14 · Passerelle : univers 1 reçu (≈ 44 Hz), univers 2 perdu depuis 6 s
+  'dmx-gateway': gateway(async (page) => {
+    await patchAll(page, [E16(1, 1), E16(1, 17), E16(2, 1)]);
+    const u1 = [204, 0, 255, 180, 96, 82, 128, 40];
+    await feed(page, [pkt(1, u1), pkt(2, [255])]);
+    for (let i = 0; i < 10; i++) { await page.clock.runFor(500); await feed(page, [pkt(1, u1)]); }
+    await feed(page, Array.from({ length: 43 }, () => pkt(1, u1)));
+    await page.clock.runFor(1000);
+    await feed(page, [pkt(1, u1)]);
+    await page.evaluate(() => gwRender());
+  }),
+  // Navigateur seul : la passerelle demande l'app
+  'dmx-gateway-browser': remote(null, (page) => page.evaluate(() => openDmxGateway())),
+  // 15 · Patch : « Écran 3 » (21–36) chevauche « Écran 2 » (17–32)
+  'dmx-patch': gateway(async (page) => {
+    await patchAll(page, [E16(1, 1), E16(1, 17), E16(1, 21)]);
+    await page.evaluate(() => gwShowView('patch'));
+  }),
+  // 16 · Écran patché sous la console : les 16 canaux, valeurs et sens
+  'dmx-monitor': gateway(async (page) => {
+    await patchAll(page, [E16(1, 1), E16(1, 17), E16(1, 33)]);
+    const slots = new Array(48).fill(0);
+    [204, 0, 255, 180, 96, 82, 128, 40, 0, 0, 0, 30, 0, 0, 0, 0].forEach((v, i) => { slots[16 + i] = v; });
+    await feed(page, [pkt(1, slots)]);
+    await page.evaluate((id) => gwOpenMonitor(id), DMX_IDS[1]);
+  }),
+  // 17 · Table des canaux (Étendu 16)
+  'dmx-channels': gateway(async (page) => {
+    await patchAll(page, [E16(1, 1)]);
+    await page.evaluate(() => gwOpenChannels('extended16'));
+  }),
+  // 18 · Onglet Appel : appels et SMS numérotés (plages DMX)
+  'remote-call-list': remote('call', async (page) => {
+    await page.evaluate(async () => {
+      const photo = (c) => { const k = document.createElement('canvas'); k.width = k.height = 8; const g = k.getContext('2d'); g.fillStyle = c; g.fillRect(0, 0, 8, 8); return k.toDataURL('image/jpeg', 0.7); };
+      const add = async (f) => {
+        setCallKind(f.kind || 'call'); setCallStyle(f.style); setCallPresent(f.present || 'full');
+        document.getElementById('callName').value = f.name;
+        document.getElementById('callAutoSlider').value = String(f.auto || 0); onCallAutoChange();
+        document.getElementById('lockToggle').checked = !!f.lock;
+        _callPhoto = f.photo ? photo(f.photo) : null;
+        _callAudioData = f.audio ? 'data:audio/mpeg;base64,AAAA' : null;
+        await saveCurrentCall();
+      };
+      await add({ name: 'Maman', style: 'glass', photo: '#c08060', audio: true });
+      await add({ name: 'Agence immobilière', style: 'tonal', auto: 8 });
+      await add({ name: 'Numéro masqué', style: 'minimal' });
+      await add({ name: 'Hôpital Saint-Louis', style: 'glass', present: 'banner' });
+      await add({ name: 'Julien', style: 'tonal', photo: '#406080' });
+      await add({ kind: 'sms', name: 'Léa', style: 'glass', lock: true });
+      await add({ kind: 'sms', name: 'Régie', style: 'tonal' });
+      await add({ kind: 'chat', name: 'Chatly — Tom', style: 'minimal' });
+      setCallKind('call');
+      _callListSel.call = callList.call[0].id;
+      setCallListKind('call');
+    });
+    await scrollTo('callListPanel')(page);
+  }),
   'screen-effect-police': async (page) => {
     await joinScreen(page);
     await page.evaluate(() => receiveEffect({ name: 'police', active: true, params: { speed: 3, intensity: 100, chaos: 0, drift: 0 } }));
@@ -105,7 +203,7 @@ function freezeCanvasFx() {
 
 // Capture d'une scène pour un fichier HTML donné
 export async function captureScene(browser, file, name) {
-  const { page, errors, close } = await openPage(browser, { file, clock: true });
+  const { page, errors, close } = await openPage(browser, { file, clock: true, init: NATIVE_SCENES.has(name) ? NATIVE_INIT : null });
   try {
     await SCENES[name](page);
     await page.evaluate(freezeCanvasFx);
