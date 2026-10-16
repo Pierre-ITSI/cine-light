@@ -240,7 +240,7 @@ final class LinkManager {
     let changed = sig != lastStateSignature
     lastStateSignature = sig
     stateLock.unlock()
-    if changed { emit?(LinkManager.stateEvent, s) }
+    if changed { emit?(LinkManager.stateEvent, s.mapValues { $0 as Any? }) }
   }
 
   private func currentSnapshot() -> [String: Any] {
@@ -256,6 +256,7 @@ final class LinkManager {
       if !p.name.isEmpty { d["name"] = p.name }
       return d
     }
-    emit?(LinkManager.peersEvent, ["peers": list])
+    let body: [String: Any?] = ["peers": list]
+    emit?(LinkManager.peersEvent, body)
   }
 }

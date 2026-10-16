@@ -6,14 +6,17 @@ import * as Brightness from 'expo-brightness';
 import { Paths } from 'expo-file-system';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { ShouldStartLoadRequest, WebViewNavigationEvent } from 'react-native-webview/lib/WebViewTypes';
+import SetRemoteLink, { createLinkBridge, type LinkBridge } from '../modules/setremote-link';
 import SetRemoteUdp, { createDmxBridge, type DmxBridge } from '../modules/setremote-udp';
 import { createPdfPreviewer, type PdfPrintFn } from '../src/lib/pdfPreview';
 
 // Coque native de SetRemote : la PWA (fonctionnalités de référence) tourne dans
 // une vue web plein écran ; le natif apporte ce que le web ne sait pas faire :
 // barre d'état masquée en permanence, écran toujours allumé, vraie luminosité
-// matérielle, et réception UDP pour la passerelle DMX (sACN, Art-Net ; module
+// matérielle, réception UDP pour la passerelle DMX (sACN, Art-Net ; module
 // local modules/setremote-udp, contrat du pont dans docs/DMX-NATIVE.md § 9),
+// liaisons hors ligne télécommande ↔ écrans en Wi-Fi local et en Bluetooth LE
+// (module local modules/setremote-link, contrat dans docs/OFFLINE-NATIVE.md),
 // aperçu PDF in-app de la table des canaux DMX (expo-print, src/lib/pdfPreview.ts).
 // Les anciens écrans 100 % natifs (/native, /remote, /screen) et leurs
 // transports en clair ont été retirés : la vue web est la seule interface.
@@ -103,18 +106,38 @@ export default function AppShell() {
     return () => { bridge.dispose(); dmx.current = null; };
   }, []);
 
-  // L'écoute appartient au document qui l'a demandée : un nouveau document
-  // (navigation, rechargement) l'arrête ; un changement d'ancre (#) non.
+  // Liaisons hors ligne télécommande ↔ écrans (Wi-Fi local, Bluetooth LE) :
+  // link:start / link:stop / link:send / link:state? venant de la page ;
+  // trames reçues remises par lots toutes les 20 ms, pairs, état et erreurs
+  // via window.SRNative.receive(). Trames opaques (chiffrées par la page) ;
+  // le natif coupe les liaisons en arrière-plan et les rouvre au retour.
+  const link = useRef<LinkBridge | null>(null);
+  useEffect(() => {
+    const bridge = createLinkBridge({
+      native: SetRemoteLink,
+      inject: (script) => webRef.current?.injectJavaScript(script),
+    });
+    link.current = bridge;
+    return () => { bridge.dispose(); link.current = null; };
+  }, []);
+
+  // Écoute DMX et liaisons appartiennent au document qui les a demandées : un
+  // nouveau document (navigation, rechargement) les arrête ; un changement
+  // d'ancre (#) non.
+  const resetBridges = useCallback(() => {
+    dmx.current?.reset();
+    link.current?.reset();
+  }, []);
   const currentDoc = useRef<string | null>(null);
   const onLoadStart = useCallback((e: WebViewNavigationEvent) => {
     const doc = e.nativeEvent.url.split('#')[0];
-    if (doc !== currentDoc.current || e.nativeEvent.navigationType === 'reload') dmx.current?.reset();
+    if (doc !== currentDoc.current || e.nativeEvent.navigationType === 'reload') resetBridges();
     currentDoc.current = doc;
-  }, []);
+  }, [resetBridges]);
   const reloadWeb = useCallback(() => {
-    dmx.current?.reset();
+    resetBridges();
     webRef.current?.reload();
-  }, []);
+  }, [resetBridges]);
 
   // Aperçu PDF (table des canaux DMX) : { type: 'pdf:preview', html, title }
   // venant de la page → feuille système d'impression / d'aperçu d'expo-print
@@ -136,6 +159,7 @@ export default function AppShell() {
   const onMessage = useCallback(async (e: WebViewMessageEvent) => {
     let msg: { type?: string; value?: unknown };
     try { msg = JSON.parse(e.nativeEvent.data); } catch { return; }
+    if (link.current?.handle(msg)) return;
     if (dmx.current?.handle(msg)) return;
     if (pdf.handle(msg)) return;
     if (msg.type === 'brightness-restore') { restoreBrightness(); return; }
@@ -164,7 +188,7 @@ export default function AppShell() {
     return false;
   }, []);
 
-  const retry = useCallback(() => { dmx.current?.reset(); setFailed(false); setReloadKey(k => k + 1); }, []);
+  const retry = useCallback(() => { resetBridges(); setFailed(false); setReloadKey(k => k + 1); }, [resetBridges]);
 
   return (
     <View style={styles.root}>
