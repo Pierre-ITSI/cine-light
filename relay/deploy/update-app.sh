@@ -135,8 +135,8 @@ chown -R 0:0 "$STAGE/out"
 chmod -R u=rwX,go=rX "$STAGE/out"
 
 # 4. Bascule atomique : nouvelle version dans son propre dossier
-#    (<commit>-<date UTC>), puis renommage du lien « current »
-NEW="releases/$SHA-$(date -u +%Y%m%dT%H%M%SZ)"
+#    (<commit>-<date UTC>-<n° de processus>), puis renommage du lien « current »
+NEW="releases/$SHA-$(date -u +%Y%m%dT%H%M%SZ)-$$"
 [ ! -e "$NEW" ] || die "$NEW existe déjà"
 mv "$STAGE/out" "$NEW"
 relink current "$NEW"
@@ -146,4 +146,5 @@ for d in releases/*; do
   [ -d "$d" ] || continue
   [ "$d" = "$NEW" ] || [ "$d" = "$PREV" ] || rm -rf "$d"
 done
-say "version ${NEW#releases/} en service (précédente : ${PREV:+${PREV#releases/}}${PREV:-aucune})"
+PREV=${PREV#releases/}
+say "version ${NEW#releases/} en service (précédente : ${PREV:-aucune})"

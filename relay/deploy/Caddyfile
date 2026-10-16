@@ -27,15 +27,8 @@
 	reverse_proxy 127.0.0.1:{$RELAY_LOCAL_PORT:8080}
 }
 
-# ── PWA : fichiers statiques déposés par update-app.sh ──
-# /srv/app = APP_ROOT de l'hôte (lecture seule) ; « current » est un lien
-# symbolique relatif vers releases/<commit>-<date>, remplacé d'un coup à
-# chaque mise à jour. Seule la liste blanche de verify-app.mjs y figure.
-{$APP_DOMAIN} {
-	# Aucune directive « log » ici : aucun journal d'accès.
-	root * /srv/app/current
-	encode zstd gzip
-
+# En-têtes de sécurité du site de la PWA (pages ET erreurs)
+(app_headers) {
 	header {
 		-Server
 		# HTTPS seulement pendant un an, pour CE nom (pas les autres sous-domaines)
@@ -55,6 +48,18 @@
 		# (APP_CONNECT_EXTRA). WebRTC (STUN) et la caméra ne relèvent pas de la CSP.
 		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self'; connect-src 'self' wss://{$RELAY_DOMAIN} {$APP_CONNECT_EXTRA}; worker-src 'self'; manifest-src 'self'; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'none'; form-action 'self'"
 	}
+}
+
+# ── PWA : fichiers statiques déposés par update-app.sh ──
+# /srv/app = APP_ROOT de l'hôte (lecture seule) ; « current » est un lien
+# symbolique relatif vers releases/<commit>-<date>, remplacé d'un coup à
+# chaque mise à jour. Seule la liste blanche de verify-app.mjs y figure.
+{$APP_DOMAIN} {
+	# Aucune directive « log » ici : aucun journal d'accès.
+	root * /srv/app/current
+	encode zstd gzip
+
+	import app_headers
 
 	@manifest path *.webmanifest
 	header @manifest Content-Type "application/manifest+json"
@@ -73,5 +78,11 @@
 		header @immutable Cache-Control "public, max-age=31536000, immutable"
 		# Pas de liste des dossiers (pas de « browse ») : /vendor/ → 404
 		file_server
+	}
+	# Erreurs (404…) : jamais mises en cache, corps minimal
+	handle_errors {
+		import app_headers
+		header Cache-Control "no-store"
+		respond "{err.status_code}"
 	}
 }
