@@ -121,7 +121,13 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
 <p><strong>Shooting without a network</strong> (iPhone, iPad and Android apps): over local Wi-Fi or Bluetooth, the remote and the playback screens talk directly to each other, with no server. Messages stay end-to-end encrypted. To recognise each other, devices only broadcast a short random identifier derived from the session, which cannot be used to read the exchanges; a nearby device could however notice that several devices belong to the same session.</p>
 
 <h3 id="web">3.6 The web version</h3>
+<!-- HOSTING § 3.6: START. When the web version moves to set-remote.itsi-app.com (docs/HOSTING.md, step 5),
+     replace the line between this comment and « END » with the text below. Same markers
+     (HÉBERGEMENT) in confidentialite.html. Replacement:
+<p>The web version of SetRemote is hosted on our own server at <strong>OVHcloud</strong> (OVH SAS, Roubaix), in <strong>France</strong>. Like any hosting, this server receives the technical data of each visit (IP address, browser, requested page); it processes them only to answer and keeps no log of visits. The web version sets no cookie and loads only its own files, fonts included. The iPhone, iPad and Android apps embed their interface and do not download it. A pairing QR code scanned with the system camera, rather than inside SetRemote, opens the web version: our server then receives that visit, but not the session secret (§ 2). The former address (<code>pierre-itsi.github.io/cine-light</code>), hosted by GitHub Pages (GitHub, Inc., United States), now only redirects to the new one: GitHub receives the technical data of those visits, but not the session secret either.</p>
+-->
 <p>The web version of SetRemote is hosted by <strong>GitHub Pages</strong> (GitHub, Inc., United States). Like any host, GitHub receives the technical data of each visit (IP address, browser, requested page), under its own privacy policy. The web version sets no cookie and loads only its own files, fonts included. The iPhone, iPad and Android apps embed their interface and do not download it. A pairing QR code scanned with the system camera, rather than inside SetRemote, opens the web version: GitHub then receives that visit, but not the session secret (§ 2).</p>
+<!-- HOSTING § 3.6: END -->
 
 <h3 id="stores">3.7 Apple and Google</h3>
 <p>When you download SetRemote from the App Store or Google Play, Apple or Google process data (account, download, device) as independent controllers, under their own policies: <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener noreferrer">Apple</a>, <a href="https://policies.google.com/privacy?hl=en" target="_blank" rel="noopener noreferrer">Google</a>. They give us aggregated statistics (downloads, installed versions) and, if you agreed to it in your device settings, anonymized crash reports, which do not contain your content.</p>
@@ -153,13 +159,25 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
 <ul>
   <li><strong>the message relay</strong> (§ 3.2): encrypted messages, IP addresses and connection metadata;</li>
   <li><strong>Google LLC</strong> (United States), STUN server: your devices' public IP address when a video is sent (§ 3.3);</li>
+  <!-- HOSTING § 6: START. When the web version moves to set-remote.itsi-app.com (docs/HOSTING.md, step 5),
+     replace the line between this comment and « END » with the text below. Same markers
+     (HÉBERGEMENT) in confidentialite.html. Replacement:
+  <li><strong>OVH SAS</strong> (France), host of our web version server: technical data of visits, not logged (§ 3.6); <strong>GitHub, Inc.</strong> (United States), only for the redirection from the former address: technical data of those visits;</li>
+  -->
   <li><strong>GitHub, Inc.</strong> (United States), host of the web version: technical data of visits (§ 3.6);</li>
+  <!-- HOSTING § 6: END -->
   <li><strong>Apple and Google</strong>, to distribute the apps, as independent controllers (§ 3.7);</li>
   <li><strong>authorities</strong>, upon a legal request only: we hold almost nothing, and no content.</li>
 </ul>
 
 <h2 id="transfers">7. Transfers outside the European Union</h2>
+<!-- HOSTING § 7: START. When the web version moves to set-remote.itsi-app.com (docs/HOSTING.md, step 5),
+     replace the line between this comment and « END » with the text below. Same markers
+     (HÉBERGEMENT) in confidentialite.html. Replacement:
+<p>Google (STUN server) and GitHub (former address of the web version, which now only redirects) are based in the United States: the technical data they receive may be processed there, under their own commitments (for example the EU–US Data Privacy Framework or the European Commission's standard contractual clauses). The web version itself is hosted in France (§ 3.6). For the message relay, see § 3.2. Apple and Google may also transfer data outside the European Union under their policies.</p>
+-->
 <p>Google (STUN server) and GitHub (web version) are based in the United States: the technical data they receive may be processed there, under their own commitments (for example the EU–US Data Privacy Framework or the European Commission's standard contractual clauses). For the message relay, see § 3.2. Apple and Google may also transfer data outside the European Union under their policies.</p>
+<!-- HOSTING § 7: END -->
 
 <h2 id="rights">8. Your rights</h2>
 <p>You have the rights of access, rectification, erasure, restriction, objection and portability, and you may set instructions for what happens to your data after your death (Article 85 of the French Data Protection Act). To exercise them, write to <a href="mailto:pierre@itsi-app.com">pierre@itsi-app.com</a> or to 64 résidence Les Jardins de Saint-Colomban, 35350 Saint-Coulomb, France; we reply within one month. For the technical data processed by the providers of § 3.2, 3.3 and 3.6, you may also contact them directly.</p>

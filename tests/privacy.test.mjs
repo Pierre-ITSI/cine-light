@@ -121,3 +121,46 @@ test('relais : un seul paragraphe balisé à changer ; fidèle à la configurati
     assert.match(html, /GitHub Pages/);
   }
 });
+
+// Passage de la version web sur set-remote.itsi-app.com (docs/HOSTING.md,
+// étape 5) : texte de remplacement prêt en commentaire, NON appliqué.
+const HOSTING = { fr: ['HÉBERGEMENT', ' : DÉBUT', ' : FIN'], en: ['HOSTING', ': START', ': END'] };
+function hostingBlocks(html, [word, start, end]) {
+  const out = [];
+  for (const m of html.matchAll(new RegExp(`<!-- ${word} § ([\\d.]+)${start}\\.`, 'g'))) {
+    const endMark = `<!-- ${word} § ${m[1]}${end} -->`;
+    const from = html.lastIndexOf('\n', m.index) + 1;
+    const to = html.indexOf(endMark, m.index) + endMark.length;
+    const lines = html.slice(from, to).split('\n');
+    const close = lines.findIndex((l) => l.trim() === '-->');
+    assert.ok(close > 0 && lines.length === close + 3, `${word} § ${m[1]} : commentaire, ligne actuelle, repère de fin`);
+    out.push({ all: html.slice(from, to), sec: m[1], next: lines[close - 1], current: lines[close + 1] });
+  }
+  return out;
+}
+test('hébergement : trois passages balisés (§ 3.6, 6, 7), remplacement prêt et non appliqué', () => {
+  for (const [lang, file] of Object.entries(PAGES)) {
+    const html = read(file);
+    const blocks = hostingBlocks(html, HOSTING[lang]);
+    assert.deepEqual(blocks.map((b) => b.sec), ['3.6', '6', '7'], file);
+    assert.equal(html.split(`<!-- ${HOSTING[lang][0]} §`).length - 1, 6, `${file} : repères début/fin appariés`);
+    let applied = html;
+    for (const b of blocks) {
+      // Production actuelle : GitHub ; texte prêt : OVH, en France
+      assert.match(b.current, /GitHub/, `${file} § ${b.sec} : texte actuel`);
+      if (b.sec !== '7') assert.match(b.next, /OVH/, `${file} § ${b.sec} : remplacement`);
+      assert.match(b.next, /France/, `${file} § ${b.sec} : remplacement`);
+      assert.match(b.current.trim(), /^<(p|li)>.*<\/\1>$/);
+      assert.equal(b.next.trim().slice(0, 4), b.current.trim().slice(0, 4), 'même balise');
+      assert.equal(b.next.match(/^ */)[0], b.current.match(/^ */)[0], 'même retrait');
+      applied = applied.replace(b.all, b.next);
+    }
+    // Une fois appliqué : même plan, plus de « hébergée par GitHub Pages » ;
+    // GitHub reste cité pour la seule redirection de l'ancienne adresse
+    const outline = (h) => [...h.matchAll(/<h([23])[^>]*>\s*(\d+(?:\.\d+)?)?/g)].map((m) => m[1] + ':' + (m[2] || '-'));
+    assert.deepEqual(outline(applied), outline(html));
+    assert.doesNotMatch(applied, /(hébergée par|hosted by) <strong>GitHub Pages/);
+    assert.match(applied, /pierre-itsi\.github\.io\/cine-light/);
+    assert.doesNotMatch(applied, new RegExp(HOSTING[lang][0] + ' §'));
+  }
+});

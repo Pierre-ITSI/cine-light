@@ -120,7 +120,13 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
 <p><strong>Tourner sans réseau</strong> (applications iPhone, iPad et Android)&nbsp;: en Wi-Fi local ou en Bluetooth, la télécommande et les écrans de jeu échangent directement entre eux, sans aucun serveur. Les messages restent chiffrés de bout en bout. Pour se reconnaître, les appareils diffusent seulement un identifiant court et aléatoire, tiré de la session, qui ne permet pas de lire les échanges&nbsp;; un appareil à proximité peut toutefois remarquer que plusieurs appareils appartiennent à la même session.</p>
 
 <h3 id="web">3.6 La version web</h3>
+<!-- HÉBERGEMENT § 3.6 : DÉBUT. Lors du passage de la version web sur set-remote.itsi-app.com (docs/HOSTING.md, étape 5),
+     remplacer la ligne entre ce commentaire et « FIN » par le texte ci-dessous. Mêmes repères
+     (HOSTING) dans privacy.html. Remplacement :
+<p>La version web de SetRemote est hébergée sur notre propre serveur, chez <strong>OVHcloud</strong> (OVH SAS, Roubaix), en <strong>France</strong>. Comme tout hébergement, ce serveur reçoit les données techniques de chaque visite (adresse IP, navigateur, page demandée)&nbsp;; il ne les traite que le temps de répondre et ne tient aucun journal des visites. La version web ne dépose aucun cookie et ne charge que ses propres fichiers, polices comprises. Les applications iPhone, iPad et Android embarquent leur interface et ne la téléchargent pas. Un QR code d'appairage scanné avec l'appareil photo du système, plutôt que dans SetRemote, ouvre la version web&nbsp;: notre serveur reçoit alors cette visite, mais pas le secret de la session (§&nbsp;2). L'ancienne adresse (<code>pierre-itsi.github.io/cine-light</code>), hébergée par GitHub Pages (GitHub, Inc., États-Unis), ne sert plus qu'à rediriger vers la nouvelle&nbsp;: GitHub reçoit les données techniques de ces visites, mais pas davantage le secret de la session.</p>
+-->
 <p>La version web de SetRemote est hébergée par <strong>GitHub Pages</strong> (GitHub, Inc., États-Unis). Comme tout hébergeur, GitHub reçoit les données techniques de chaque visite (adresse IP, navigateur, page demandée), selon sa propre politique de confidentialité. La version web ne dépose aucun cookie et ne charge que ses propres fichiers, polices comprises. Les applications iPhone, iPad et Android embarquent leur interface et ne la téléchargent pas. Un QR code d'appairage scanné avec l'appareil photo du système, plutôt que dans SetRemote, ouvre la version web&nbsp;: GitHub reçoit alors cette visite, mais pas le secret de la session (§&nbsp;2).</p>
+<!-- HÉBERGEMENT § 3.6 : FIN -->
 
 <h3 id="stores">3.7 Apple et Google</h3>
 <p>Quand vous téléchargez SetRemote sur l'App Store ou Google Play, Apple ou Google traitent des données (compte, téléchargement, appareil) en tant que responsables de traitement indépendants, selon leurs propres politiques&nbsp;: <a href="https://www.apple.com/fr/legal/privacy/" target="_blank" rel="noopener noreferrer">Apple</a>, <a href="https://policies.google.com/privacy?hl=fr" target="_blank" rel="noopener noreferrer">Google</a>. Ils nous fournissent des statistiques agrégées (téléchargements, versions installées) et, si vous l'avez accepté dans les réglages de votre appareil, des rapports de plantage anonymisés, qui ne contiennent pas vos contenus.</p>
@@ -152,13 +158,25 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
 <ul>
   <li><strong>le relais des messages</strong> (§&nbsp;3.2)&nbsp;: messages chiffrés, adresses IP et métadonnées de connexion&nbsp;;</li>
   <li><strong>Google LLC</strong> (États-Unis), serveur STUN&nbsp;: adresse IP publique de vos appareils lors de l'envoi d'une vidéo (§&nbsp;3.3)&nbsp;;</li>
+  <!-- HÉBERGEMENT § 6 : DÉBUT. Lors du passage de la version web sur set-remote.itsi-app.com (docs/HOSTING.md, étape 5),
+     remplacer la ligne entre ce commentaire et « FIN » par le texte ci-dessous. Mêmes repères
+     (HOSTING) dans privacy.html. Remplacement :
+  <li><strong>OVH SAS</strong> (France), hébergeur de notre serveur de la version web&nbsp;: données techniques des visites, sans journal (§&nbsp;3.6)&nbsp;; <strong>GitHub, Inc.</strong> (États-Unis), pour la seule redirection depuis l'ancienne adresse&nbsp;: données techniques de ces visites&nbsp;;</li>
+  -->
   <li><strong>GitHub, Inc.</strong> (États-Unis), hébergeur de la version web&nbsp;: données techniques des visites (§&nbsp;3.6)&nbsp;;</li>
+  <!-- HÉBERGEMENT § 6 : FIN -->
   <li><strong>Apple et Google</strong>, pour la distribution des applications, en responsables indépendants (§&nbsp;3.7)&nbsp;;</li>
   <li>les <strong>autorités</strong>, sur réquisition légale uniquement&nbsp;: nous ne détenons presque rien, et aucun contenu.</li>
 </ul>
 
 <h2 id="transferts">7. Transferts hors de l'Union européenne</h2>
+<!-- HÉBERGEMENT § 7 : DÉBUT. Lors du passage de la version web sur set-remote.itsi-app.com (docs/HOSTING.md, étape 5),
+     remplacer la ligne entre ce commentaire et « FIN » par le texte ci-dessous. Mêmes repères
+     (HOSTING) dans privacy.html. Remplacement :
+<p>Google (serveur STUN) et GitHub (ancienne adresse de la version web, qui ne fait plus que rediriger) sont situés aux États-Unis&nbsp;: les données techniques qu'ils reçoivent peuvent y être traitées, dans le cadre de leurs propres engagements (par exemple le Data Privacy Framework UE–États-Unis ou les clauses contractuelles types de la Commission européenne). La version web elle-même est hébergée en France (§&nbsp;3.6). Pour le relais des messages, voir le §&nbsp;3.2. Apple et Google peuvent aussi transférer des données hors de l'Union européenne selon leurs politiques.</p>
+-->
 <p>Google (serveur STUN) et GitHub (version web) sont situés aux États-Unis&nbsp;: les données techniques qu'ils reçoivent peuvent y être traitées, dans le cadre de leurs propres engagements (par exemple le Data Privacy Framework UE–États-Unis ou les clauses contractuelles types de la Commission européenne). Pour le relais des messages, voir le §&nbsp;3.2. Apple et Google peuvent aussi transférer des données hors de l'Union européenne selon leurs politiques.</p>
+<!-- HÉBERGEMENT § 7 : FIN -->
 
 <h2 id="droits">8. Vos droits</h2>
 <p>Vous disposez des droits d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité de vos données, et pouvez définir des directives sur leur sort après votre décès (article&nbsp;85 de la loi Informatique et Libertés). Pour les exercer, écrivez à <a href="mailto:pierre@itsi-app.com">pierre@itsi-app.com</a> ou à 64 résidence Les Jardins de Saint-Colomban, 35350 Saint-Coulomb&nbsp;; nous répondons dans un délai d'un mois. Pour les données techniques traitées par les prestataires des §&nbsp;3.2, 3.3 et 3.6, vous pouvez aussi vous adresser directement à eux.</p>
