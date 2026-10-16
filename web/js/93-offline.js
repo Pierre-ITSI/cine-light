@@ -172,7 +172,8 @@ function renderOfflineView() {
   if (_prep && _prep.running) label = 'PRÉPARATION EN COURS…';
   else if (!list.length) why = '';
   else if (list.every((s) => items.every((it) => prepHas(s, it)))) label = 'TOUT EST PRÊT';
-  else if (!mediaLinkUp()) why = 'Pour préparer les écrans, il faut Internet ou le Wi-Fi local : le Bluetooth ne porte que les commandes.';
+  else if (!mediaLinkUp()) why = IN_NATIVE_APP ? 'Pour préparer les écrans, il faut Internet ou le Wi-Fi local : le Bluetooth ne porte que les commandes.'
+    : 'Pour préparer les écrans, il faut Internet.';
   else if (!work) why = 'Les écrans à préparer ne sont joignables ni par Internet ni en Wi-Fi local.';
   else on = true;
   btn.textContent = label;

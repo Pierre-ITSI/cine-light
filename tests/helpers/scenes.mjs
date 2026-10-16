@@ -82,7 +82,8 @@ const ringScene = (kind) => remote('call', async (page) => {
 // ── Passerelle DMX (maquettes 14 à 18) ──
 // Scènes rendues « dans l'app native » : pont simulé (la passerelle exige l'UDP de la coque)
 const NATIVE_INIT = { fn: () => { window.SETREMOTE_NATIVE = { platform: 'ios', bridge: 1 }; window.ReactNativeWebView = { postMessage: () => {} }; } };
-export const NATIVE_SCENES = new Set(['remote-qr-dmx-entry', 'dmx-gateway', 'dmx-patch', 'dmx-monitor', 'dmx-channels']);
+export const NATIVE_SCENES = new Set(['remote-qr-dmx-entry', 'dmx-gateway', 'dmx-patch', 'dmx-monitor', 'dmx-channels',
+  'remote-offline', 'remote-screens-links', 'remote-link-lan', 'remote-link-ble']);
 const DMX_IDS = ['ScreenOne0000001', 'ScreenTwo0000002', 'ScreenTri0000003'];
 const DMX_CID = '5f1e7a52-3c4b-4d8e-9a10-2b3c4d5e6f70';
 const _dmxSeq = new Map();
@@ -144,6 +145,44 @@ const multiScreen = (extra) => remote(null, async (page) => {
   if (extra) await extra(page);
 });
 const E16 = (universe, address) => ({ universe, address, personality: 'extended16' });
+
+// ── Tourner sans réseau (maquettes 4, 5 et 10) ──
+// Liaison locale simulée côté télécommande : pairs annoncés par la coque, et
+// liaison qui a porté les dernières trames de chaque écran.
+const linkScene = (links, inet) => (page) => page.evaluate(([ids, links, inet]) => {
+  if (!inet) _linkState = 'connecting';
+  links.forEach((l, i) => {
+    if (l === 'internet') return;
+    _linkPeers.set(l + ':p' + i, { key: l + ':p' + i, peer: 'p' + i, mode: l, name: '' });
+    _pairedScreens.get(ids[i]).via = { [l]: Date.now() };
+  });
+  renderLinkStatus();
+}, [SCR_IDS, links, inet]);
+// Maquette 10 : « Téléphone de Julie » prêt (18 médias, sonnerie, fond
+// d'écran, bande son), « TV salon » en cours (64 %), « Tablette cuisine »
+// hors ligne, jamais préparée
+const offlineScene = (extra) => multiScreen(async (page) => {
+  // Internet relié (abonnement, puis délai de grâce des écrans) AVANT de mettre la tablette hors ligne
+  await page.evaluate(() => { for (const c of window.__mqttClients) if (!c.connected && !c.disconnecting) c._connect(); });
+  await page.clock.runFor(100);
+  await page.evaluate(async (ids) => {
+    const [julie, tv, tab] = ids;
+    _mediaPool = Array.from({ length: 18 }, (_, i) => ({ id: 'm' + (i + 1), kind: i < 15 ? 'img' : 'vid', name: 'plan-' + (i + 1), file: null, thumb: null }));
+    ringLib = [{ id: '__ring_0123456789abcdef', name: 'sonnerie-prod.m4a', mime: 'audio/mp4', size: 80000, dur: 12, at: 1 }];
+    ringSettings.call.sound = '__ring_0123456789abcdef';
+    _lockWallData = 'data:image/jpeg;base64,AAAA';
+    callList.call = [{ id: 'e1', kind: 'call', style: 'glass', name: 'Maman', hasAudio: true }];
+    const au = '__au_' + 'a'.repeat(40);
+    _clPrepIds.set('e1', { photo: null, audio: au });
+    const all = [..._mediaPool.map((m) => m.id), '__ring_0123456789abcdef', '__lockwall', au];
+    for (const id of all) scrState(julie).cached.add(id);
+    for (const id of all.slice(0, 12).concat('__ring_0123456789abcdef')) scrState(tv).cached.add(id);
+    _pairedScreens.get(tab).lastSeen -= 60000;
+    await prepRefreshItems();
+  }, SCR_IDS);
+  if (extra) await extra(page);
+  await page.evaluate(() => { openOfflineView(); });
+});
 
 export const SCENES = {
   'splash': async (page) => { await page.clock.runFor(1000); },
@@ -297,6 +336,20 @@ export const SCENES = {
     openScreensView();
     openRevokeDialog(ids[2]);
   }, SCR_IDS)),
+  // 10 · Tourner sans réseau : liaison Auto, préparation (Prêt / 64 % / Non préparé)
+  'remote-offline': offlineScene((page) => page.evaluate((tv) => {
+    _prep = { running: true, targets: [tv], cur: { id: 'm13', sids: [tv], fracOf: () => 0.44 }, failed: new Set() };
+  }, SCR_IDS[1])),
+  // Navigateur seul : Wi-Fi local et Bluetooth demandent l'app ; préparation par Internet
+  'remote-offline-browser': offlineScene(),
+  // 5 · Liaison de chaque écran : Internet, Wi-Fi local, Bluetooth
+  'remote-screens-links': multiScreen(async (page) => {
+    await linkScene(['internet', 'lan', 'ble'], true)(page);
+    await page.evaluate(() => openScreensView());
+  }),
+  // 4 · Pastille « Wi-Fi local » (Internet perdu) et « Bluetooth » (commandes seulement)
+  'remote-link-lan': multiScreen(linkScene(['lan', 'lan', 'lan'], false)),
+  'remote-link-ble': multiScreen(linkScene(['lan', 'ble', 'lan'], false)),
   // 5c · Écran de jeu retiré par la télécommande
   'screen-revoked': async (page) => {
     await joinScreen(page);

@@ -61,18 +61,29 @@ test('deux transferts parallèles entrelacés, désordonnés et dupliqués', asy
   assert.deepEqual(a, [imgs[0], 'mA']);
 });
 
-test('plafond de 4 transferts simultanés : le plus ancien est abandonné', async () => {
+// Préparation hors ligne (docs/OFFLINE.md § 5.4) : la préparation s'ajoute à la
+// resynchronisation et aux diffusions ; le plafond passe de 4 à 6, et c'est le
+// transfert le plus INACTIF qui cède sa place (plus le plus ancien, qui pouvait
+// encore recevoir ses fragments)
+test('plafond de 6 transferts simultanés : le plus inactif est abandonné', async () => {
   const { page } = ctx;
-  const parts = imgs.map((s) => split(s, 3));
+  const parts = [...imgs, imgs[0], imgs[1]].map((s) => split(s, 3)); // 7 transferts
   const r = await page.evaluate(([parts]) => {
-    _mediaCache.clear();
-    parts.forEach((p, k) => mediaImgStart({ id: 't' + k, total: p.length, mediaId: 'p' + k, show: false }));
+    _mediaCache.clear(); _imgBufs.clear();
+    parts.slice(0, 6).forEach((p, k) => mediaImgStart({ id: 't' + k, total: p.length, mediaId: 'p' + k, show: false }));
     const sizeAfterStarts = _imgBufs.size;
+    // t0, le plus ancien, reçoit encore ses fragments ; t1 est le plus inactif
+    let t = Date.now() - 10000;
+    for (const b of _imgBufs.values()) b.at = t++;
+    mediaImgChunk({ id: 't0', i: 0, data: parts[0][0] });
+    mediaImgStart({ id: 't6', total: parts[6].length, mediaId: 'p6', show: false });
+    const kept = [..._imgBufs.keys()];
     parts.forEach((p, k) => p.forEach((data, i) => mediaImgChunk({ id: 't' + k, i, data })));
-    return { sizeAfterStarts, cached: [..._mediaCache.keys()].sort(), left: _imgBufs.size };
+    return { sizeAfterStarts, kept, cached: [..._mediaCache.keys()].sort(), left: _imgBufs.size };
   }, [parts]);
-  assert.equal(r.sizeAfterStarts, 4);
-  assert.deepEqual(r.cached, ['p1', 'p2', 'p3', 'p4']);
+  assert.equal(r.sizeAfterStarts, 6);
+  assert.deepEqual(r.kept, ['t0', 't2', 't3', 't4', 't5', 't6'], 't1 abandonné, pas t0 qui reçoit encore');
+  assert.deepEqual(r.cached, ['p0', 'p2', 'p3', 'p4', 'p5', 'p6']);
   assert.equal(r.left, 0);
 });
 

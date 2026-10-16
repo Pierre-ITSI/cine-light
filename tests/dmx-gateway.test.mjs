@@ -42,7 +42,8 @@ class FakeConsole {
     return this.deliver([{ src: o.src || '10.0.0.20', port: 6454, data: b64(buildArtDmx({ portAddress, data })) }]);
   }
   deliver(packets) { return this.page.evaluate((p) => window.SRNative.receive({ type: 'dmx:packets', packets: p }), packets); }
-  posted(type) { return this.page.evaluate((t) => window.__posted.filter((m) => !t || m.type === t), type || null); }
+  // Messages du pont de la passerelle (ceux des liaisons locales link:*, docs/OFFLINE.md, à part)
+  posted(type) { return this.page.evaluate((t) => window.__posted.filter((m) => (!t || m.type === t) && !/^link:/.test(m.type)), type || null); }
 }
 
 // Télécommande (app native, passerelle ouverte) + n écrans de jeu appairés
