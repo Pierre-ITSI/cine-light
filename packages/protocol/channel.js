@@ -16,7 +16,7 @@ import { ProtocolError } from './lib/errors.js';
 import { randomBytes } from './lib/env.js';
 import { bytesToB64u } from './lib/encoding.js';
 import {
-  FRAME_KIND, MAX_SEQ, createReplayState, deriveSession, newSenderTag, open, openChunk, peekFrame, seal, sealChunk,
+  FRAME_KIND, MAX_SEQ, createReplayState, deriveSession, newSenderTag, open, openChunk, openPairwise, peekFrame, seal, sealChunk, sealPairwise,
 } from './crypto.js';
 import { GROUP_ID_RE, SCREEN_ID_RE, explainInvalid, isAddressedTo } from './schema.js';
 
@@ -43,8 +43,16 @@ export function createScreenId() {
  *   replay?: ConstructorParameters<typeof import('./crypto.js').ReplayState>[0],
  * }} SecureChannelOptions
  *
+ * @typedef {{ r2s: CryptoKey, s2r: CryptoKey }} PairwiseKeys  (pairwiseKeys() de pairwise.js)
+ * @typedef {{ keys: PairwiseKeys, tag?: unknown }} PairwiseCandidate
+ * @typedef {{ pairwise?: (sender: string) => (PairwiseCandidate[] | null | Promise<PairwiseCandidate[] | null>) }} ReceiveOptions
+ *   pairwise : clés pairwise à essayer pour une trame 0x03 de cet émetteur
+ *   (écran : la sienne, et celle d'un échange en cours ; télécommande : celle
+ *   de l'écran rattaché à l'émetteur). Absent : trames pairwise ignorées.
+ *
  * @typedef {null
  *   | { kind: 'message', message: { type: string, [k: string]: unknown }, sender: string }
+ *   | { kind: 'pairwise', message: { type: string, [k: string]: unknown }, sender: string, tag: unknown }
  *   | { kind: 'chunk', chunk: import('./crypto.js').OpenedChunk, sender: string }} Received
  */
 
@@ -78,6 +86,7 @@ export async function createSecureChannel(opts) {
   /** @type {'r2s' | 's2r'} */
   const recvDir = isRemote ? 's2r' : 'r2s';
   const replay = createReplayState(opts.replay);
+  const pairwiseReplay = createReplayState(opts.replay); // trames pairwise : fenêtre distincte
   let seq = 0;
   const nextSeq = () => {
     if (seq > MAX_SEQ) throw new ProtocolError('too-large', 'compteur de séquence épuisé : recréer le canal');
@@ -110,9 +119,23 @@ export async function createSecureChannel(opts) {
      * @returns {Promise<string>}
      */
     async seal(msg) {
-      const why = explainInvalid(msg, { direction: sendDir });
+      const why = explainInvalid(msg, { direction: sendDir, channel: 'session' });
       if (why) throw new ProtocolError('invalid-message', why);
       return seal(msg, sendKey, { sender, seq: nextSeq() });
+    },
+
+    /**
+     * Valide (schéma : canal pairwise + sens) puis scelle avec une clé PAR
+     * ÉCRAN (trame 0x03) : seul le détenteur de cette clé peut l'ouvrir.
+     * @param {{ type: string, [k: string]: unknown }} msg
+     * @param {PairwiseKeys} keys
+     * @returns {Promise<string>}
+     */
+    async sealPairwise(msg, keys) {
+      const why = explainInvalid(msg, { direction: sendDir, channel: 'pairwise' });
+      if (why) throw new ProtocolError('invalid-message', why);
+      if (!keys || !keys[sendDir]) throw new ProtocolError('bad-argument', 'clés pairwise attendues');
+      return sealPairwise(msg, keys[sendDir], { sender, seq: nextSeq() });
     },
 
     /**
@@ -131,19 +154,36 @@ export async function createSecureChannel(opts) {
      *  - ProtocolError : trame invalide / falsifiée / rejouée → l'ignorer
      *    (éventuellement la compter pour détecter une attaque).
      *
+     * Trame pairwise (0x03) : ouverte avec les clés proposées par
+     * opts.pairwise ; null si aucune ne convient (trame destinée à un autre
+     * écran, ou sans résolveur). Jamais avec la clé de session.
+     *
      * @param {string} str
+     * @param {ReceiveOptions} [ropts]
      * @returns {Promise<Received>}
      */
-    async receive(str) {
+    async receive(str, ropts) {
       const h = peekFrame(str);
       if (h.sender === sender) return null;
       if (h.sender[0] !== peerPrefix) return null;
+      if (h.kind === FRAME_KIND.PAIRWISE) {
+        const cands = ropts && typeof ropts.pairwise === 'function' ? await ropts.pairwise(h.sender) : null;
+        for (const c of Array.isArray(cands) ? cands : []) {
+          let message;
+          try { message = await openPairwise(str, c.keys[recvDir], pairwiseReplay); }
+          catch (_) { continue; } // autre clé : trame destinée à un autre écran (ou forgée)
+          const why = explainInvalid(message, { direction: recvDir, channel: 'pairwise' });
+          if (why) throw new ProtocolError('invalid-message', why);
+          return { kind: 'pairwise', message, sender: h.sender, tag: c.tag };
+        }
+        return null;
+      }
       if (h.kind === FRAME_KIND.CHUNK) {
         const chunk = await openChunk(str, recvKey, replay);
         return { kind: 'chunk', chunk, sender: chunk.sender };
       }
       const message = await open(str, recvKey, replay);
-      const why = explainInvalid(message, { direction: recvDir });
+      const why = explainInvalid(message, { direction: recvDir, channel: 'session' });
       if (why) throw new ProtocolError('invalid-message', why);
       if (role === 'screen' && !isAddressedTo(message, { screenId: /** @type {string} */ (screenId), groups })) return null;
       return { kind: 'message', message, sender: h.sender };

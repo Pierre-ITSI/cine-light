@@ -10,9 +10,10 @@
     "./crypto": "./crypto.js",
     "./schema": "./schema.js",
     "./channel": "./channel.js",
+    "./pairwise": "./pairwise.js",
     "./package.json": "./package.json"
   },
-  "files": ["index.js", "pairing.js", "crypto.js", "schema.js", "channel.js", "lib/", "README.md"],
+  "files": ["index.js", "pairing.js", "crypto.js", "schema.js", "channel.js", "pairwise.js", "lib/", "README.md"],
   "sideEffects": false,
   "engines": {
     "node": ">=22"

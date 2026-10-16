@@ -19,6 +19,12 @@
  *  - `target` (adressage multi-écran) est accepté sur tout message
  *    télécommande → écran : absent = tous les écrans, { screens: [...] } =
  *    écrans listés, { group: 'id' } = membres du groupe. Voir isAddressedTo().
+ *  - canal : la plupart des messages voyagent dans la SESSION (clé commune) ;
+ *    ceux marqués `chan: 'pairwise'` (clés par écran : key:confirm, key:ok,
+ *    session:rekey, rekey:ok) ne sont valides QUE scellés avec la clé de
+ *    l'écran (pairwise.js), et inversement. explainInvalid(msg, { channel })
+ *    l'impose ('session' par défaut) : une session:rekey forgée avec la clé
+ *    de session est refusée.
  *
  * Sens : 'r2s' télécommande → écran, 's2r' écran → télécommande, 'both'.
  * Sources : 'web' = index.html (PWA), 'native' = expo-app.
@@ -44,8 +50,9 @@
  *   doc: string,
  *   fields: Record<string, Field>,
  *   refine?: (m: any, opts: ValidateOptions) => string | null,
+ *   chan?: 'session' | 'pairwise',
  * }} Spec
- * @typedef {{ direction?: 'r2s' | 's2r' }} ValidateOptions
+ * @typedef {{ direction?: 'r2s' | 's2r', channel?: 'session' | 'pairwise' }} ValidateOptions
  */
 
 const hasOwn = (/** @type {object} */ o, /** @type {string} */ k) => Object.prototype.hasOwnProperty.call(o, k);
@@ -111,6 +118,12 @@ const BASE64_RE = /^[A-Za-z0-9+/]*={0,2}$/;
 const MIME_RE = /^[a-z]+\/[a-z0-9.+-]{1,40}$/i;
 const PRINTABLE_RE = /^[\x20-\x7E\r\n]*$/;
 
+const B64U = (/** @type {number} */ n) => str(n, new RegExp(`^[A-Za-z0-9_-]{${n}}$`));
+/** Clé publique ECDH P-256 (JWK réduit, comme pair:key) */
+const JWK = object({
+  kty: req(oneOf('EC'), 'EC'), crv: req(oneOf('P-256'), 'P-256'),
+  x: req(B64U(43), 'abscisse base64url'), y: req(B64U(43), 'ordonnée base64url'),
+});
 const HEX = str(7, HEX_COLOR_RE);
 const MEDIA_ID = str(64, MEDIA_ID_RE);
 const SCREEN_ID = str(32, SCREEN_ID_RE);
@@ -137,7 +150,14 @@ export const LIMITS = Object.freeze({
   screenGroups: 16,
   screenNameChars: 40,
   dmxMediaSlots: 25,
+  keyIdChars: 11,
+  exchangeIdChars: 16,
 });
+const KID = B64U(11);
+const XID = B64U(16);
+/** Un seul écran visé (échange de clés, retrait) */
+const ONE_SCREEN = (/** @type {any} */ m, /** @type {string} */ type) => (!m.target || !Array.isArray(m.target.screens) || m.target.screens.length !== 1
+  ? `${type} doit cibler UN écran (target.screens)` : null);
 
 const TARGET = (/** @type {unknown} */ v) => {
   if (!isPlainObject(v)) return false;
@@ -324,6 +344,64 @@ const SPECS = {
       + 'son état (couleur, média, appel…) n’est pas modifié. Doit cibler target.screens.',
     fields: {},
     refine: m => (!m.target || !m.target.screens ? 'screen:identify doit cibler target.screens' : null),
+  },
+  'screen:revoked': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Retrait d’un écran (maquette 5c) : envoyé sur l’ANCIENNE session à l’écran retiré, qui efface sa session et ses clés et '
+      + 'affiche « Écran retiré ». reason « renewed » : session renouvelée sans pouvoir lui remettre la nouvelle (pas de clé pairwise).',
+    fields: { reason: opt(oneOf('revoked', 'renewed'), 'retiré par l’utilisateur (défaut) ou session renouvelée sans lui') },
+    refine: m => ONE_SCREEN(m, 'screen:revoked'),
+  },
+
+  // ═══ Clés par écran (pairwise.js) : échange dans la session ═══
+  'key:offer': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Début d’échange de clé pairwise : clé publique ECDH P-256 éphémère de la télécommande. Adressé à UN écran.',
+    fields: {
+      rid: req(SCREEN_ID, 'identifiant stable de la télécommande'),
+      xid: req(XID, 'identifiant de l’échange'),
+      jwk: req(JWK, 'clé publique éphémère de la télécommande'),
+    },
+    refine: m => ONE_SCREEN(m, 'key:offer'),
+  },
+  'key:answer': {
+    dir: 's2r', src: ['web'],
+    doc: 'Réponse de l’écran à key:offer : sa clé publique ECDH P-256 éphémère.',
+    fields: {
+      sid: req(SCREEN_ID, 'screenId de l’écran'),
+      rid: req(SCREEN_ID, 'télécommande de l’offre'),
+      xid: req(XID, 'échange auquel il répond'),
+      jwk: req(JWK, 'clé publique éphémère de l’écran'),
+    },
+  },
+  // ═══ Clés par écran : messages scellés avec la clé pairwise (trame 0x03) ═══
+  'key:confirm': {
+    dir: 'r2s', src: ['web'], chan: 'pairwise',
+    doc: 'Fin d’échange côté télécommande, scellé avec la NOUVELLE clé pairwise : l’ouvrir prouve que les deux côtés ont la même clé.',
+    fields: { sid: req(SCREEN_ID, 'écran'), rid: req(SCREEN_ID, 'télécommande'), xid: req(XID, 'échange') },
+  },
+  'key:ok': {
+    dir: 's2r', src: ['web'], chan: 'pairwise',
+    doc: 'Accusé de l’écran : clé pairwise adoptée (scellé avec elle).',
+    fields: { sid: req(SCREEN_ID, 'écran'), xid: req(XID, 'échange') },
+  },
+  'session:rekey': {
+    dir: 'r2s', src: ['web'], chan: 'pairwise',
+    doc: 'Nouvelle session après le retrait d’un autre écran, remise à CET écran (clé pairwise) sur l’ancien topic ; '
+      + 'il y passe et garde nom, groupes, cache et affichage.',
+    fields: {
+      sid: req(SCREEN_ID, 'écran destinataire (vérifié par l’écran)'),
+      rid: req(SCREEN_ID, 'télécommande'),
+      channelId: req(B64U(22), 'nouvelle session : channelId'),
+      key: req(B64U(43), 'nouvelle session : clé'),
+      name: opt(line(LIMITS.screenNameChars), 'nom de l’écran'),
+      groups: opt(arrayOf(GROUP_ID, LIMITS.screenGroups), 'groupes de l’écran'),
+    },
+  },
+  'rekey:ok': {
+    dir: 's2r', src: ['web'], chan: 'pairwise',
+    doc: 'Accusé de session:rekey (scellé pairwise, sur l’ancien topic) juste avant que l’écran passe sur le nouveau.',
+    fields: { sid: req(SCREEN_ID, 'écran'), channelId: req(B64U(22), 'session adoptée') },
   },
 
   // ═══ Télécommande → écran : médias ═══
@@ -513,6 +591,8 @@ const SPECS = {
       screenId: opt(SCREEN_ID, 'nouveau : identifiant stable de l’écran (tiré au 1er lancement)'),
       name: opt(line(LIMITS.screenNameChars), 'nouveau : nom affiché de l’écran'),
       groups: opt(arrayOf(GROUP_ID, LIMITS.screenGroups), 'nouveau : groupes de l’écran'),
+      kx: opt(oneOf(1), 'échange de clés pairwise pris en charge (version)'),
+      kid: opt(KID, 'kid de la clé pairwise que l’écran détient avec cette télécommande (absent : aucune)'),
     },
   },
   'media-meta': {
@@ -607,6 +687,11 @@ export function explainInvalid(msg, opts = {}) {
     const type = m.type;
     if (typeof type !== 'string' || !hasOwn(SPECS, type)) return `type inconnu : ${String(type).slice(0, 40)}`;
     const spec = SPECS[type];
+    const chan = opts.channel === undefined ? 'session' : opts.channel;
+    if (chan !== 'session' && chan !== 'pairwise') return 'canal invalide';
+    if ((spec.chan || 'session') !== chan) {
+      return chan === 'pairwise' ? `${type} n’est pas accepté scellé avec une clé pairwise` : `${type} n’est accepté que scellé avec une clé pairwise`;
+    }
     const dir = opts.direction;
     if (dir !== undefined) {
       if (dir !== 'r2s' && dir !== 's2r') return 'direction invalide';
@@ -622,6 +707,7 @@ export function explainInvalid(msg, opts = {}) {
       }
       if (k === 'target') {
         if (spec.dir === 's2r') return 'target interdit sur un message écran → télécommande';
+        if (spec.chan === 'pairwise') return 'target interdit sur un message pairwise (adressé par sa clé)';
         if (!TARGET(v)) return 'target invalide';
         continue;
       }
@@ -640,7 +726,8 @@ export function explainInvalid(msg, opts = {}) {
 /**
  * Valide un message applicatif (avant envoi ET après réception).
  * @param {unknown} msg
- * @param {ValidateOptions} [opts]  direction : 'r2s' | 's2r' pour vérifier aussi le sens
+ * @param {ValidateOptions} [opts]  direction : 'r2s' | 's2r' pour vérifier aussi le sens ;
+ *   channel : 'session' (défaut) | 'pairwise' (trame scellée avec une clé par écran)
  * @returns {boolean}
  */
 export function validate(msg, opts = {}) {
@@ -667,6 +754,7 @@ export function isAddressedTo(msg, me) {
  * Documentation lisible de chaque type : sens, sources, description, champs.
  * @type {Readonly<Record<string, Readonly<{
  *   direction: 'r2s' | 's2r' | 'both',
+ *   channel: 'session' | 'pairwise',
  *   sources: readonly string[],
  *   description: string,
  *   fields: Readonly<Record<string, Readonly<{ required: boolean, description: string }>>>
@@ -675,6 +763,7 @@ export function isAddressedTo(msg, me) {
 export const MESSAGE_TYPES = Object.freeze(Object.fromEntries(
   Object.entries(SPECS).map(([type, s]) => [type, Object.freeze({
     direction: s.dir,
+    channel: s.chan || 'session',
     sources: Object.freeze([...s.src]),
     description: s.doc,
     fields: Object.freeze(Object.fromEntries(

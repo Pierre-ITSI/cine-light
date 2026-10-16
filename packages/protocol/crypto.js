@@ -9,12 +9,14 @@
  * Format de trame (octets, puis base64url sans remplissage) :
  *
  *   0      version            0x02
- *   1      kind               0x01 = message JSON, 0x02 = fragment de média
+ *   1      kind               0x01 = message JSON, 0x02 = fragment de média,
+ *                             0x03 = message JSON scellé avec une clé PAR ÉCRAN
+ *                             (pairwise.js : jamais avec la clé de session)
  *   2      senderLen          1..16
  *   3..    sender             ASCII [A-Za-z0-9_-]
  *   +4     seq                uint32 big-endian
  *   +6     ts                 uint48 big-endian (ms depuis l'époque Unix)
- *   kind=1 : rien de plus (le TYPE du message est DANS le chiffré)
+ *   kind=1, 3 : rien de plus (le TYPE du message est DANS le chiffré)
  *   kind=2 : idLen (1) + mediaId ASCII (≤ 64) + index uint16 + total uint16
  *   ── fin de l'en-tête : tout ce qui précède est l'AAD AES-GCM ──
  *   +12    IV                 96 bits aléatoires
@@ -38,7 +40,7 @@ import { assertPairing } from './lib/pairingFormat.js';
 import { MEDIA_ID_RE } from './schema.js';
 
 export const FRAME_VERSION = 2;
-export const FRAME_KIND = Object.freeze({ MESSAGE: 1, CHUNK: 2 });
+export const FRAME_KIND = Object.freeze({ MESSAGE: 1, CHUNK: 2, PAIRWISE: 3 });
 export const IV_BYTES = 12;
 export const TAG_BYTES = 16;
 /**
@@ -157,7 +159,7 @@ function writeHeader(h) {
   const sender = asciiBytes(h.sender);
   /** @type {Uint8Array} */
   let tail;
-  if (h.kind === FRAME_KIND.MESSAGE) {
+  if (h.kind === FRAME_KIND.MESSAGE || h.kind === FRAME_KIND.PAIRWISE) {
     tail = new Uint8Array(0);
   } else {
     const id = asciiBytes(/** @type {string} */ (h.mediaId));
@@ -198,7 +200,7 @@ function readHeader(b) {
   const version = b[0];
   if (version !== FRAME_VERSION) throw new ProtocolError('version', `version de trame ${version} non supportée`);
   const kind = b[1];
-  if (kind !== FRAME_KIND.MESSAGE && kind !== FRAME_KIND.CHUNK) throw bad('type de trame inconnu');
+  if (kind !== FRAME_KIND.MESSAGE && kind !== FRAME_KIND.CHUNK && kind !== FRAME_KIND.PAIRWISE) throw bad('type de trame inconnu');
   const sLen = b[2];
   if (sLen < 1 || sLen > 16) throw bad('longueur d’émetteur invalide');
   let o = 3;
@@ -370,7 +372,7 @@ async function decryptFrame(str, key, replayState, expectedKind) {
   const bytes = b64uToBytes(str);
   const h = readHeader(bytes);
   if (h.kind !== expectedKind) {
-    throw new ProtocolError('kind', expectedKind === FRAME_KIND.MESSAGE ? 'fragment reçu au lieu d’un message' : 'message reçu au lieu d’un fragment');
+    throw new ProtocolError('kind', `trame de type ${h.kind} reçue au lieu de ${expectedKind}`);
   }
   // Rejet précoce (sans coût de déchiffrement), revérifié dans accept().
   if (replayState) replayState.check(h.sender, h.seq, h.ts);
@@ -416,6 +418,29 @@ function isPlainObject(v) {
  * @returns {Promise<string>}
  */
 export async function seal(obj, key, opts) {
+  return sealJson(obj, key, opts, FRAME_KIND.MESSAGE);
+}
+
+/**
+ * Comme seal(), pour une clé PAR ÉCRAN (pairwise.js) : trame de type 0x03.
+ * Le type de trame est dans l'AAD : une trame pairwise ne s'ouvre jamais avec
+ * open() (et une trame de session jamais avec openPairwise()), même si l'on
+ * se trompait de clé.
+ *
+ * @param {{ type: string, [k: string]: unknown }} obj
+ * @param {CryptoKey} key  clé pairwise du SENS d'émission
+ * @param {{ sender: string, seq: number, ts?: number }} opts
+ * @returns {Promise<string>}
+ */
+export async function sealPairwise(obj, key, opts) {
+  return sealJson(obj, key, opts, FRAME_KIND.PAIRWISE);
+}
+
+/**
+ * @param {{ type: string, [k: string]: unknown }} obj @param {CryptoKey} key
+ * @param {{ sender: string, seq: number, ts?: number }} opts @param {number} kind
+ */
+async function sealJson(obj, key, opts, kind) {
   const { sender, seq, ts } = checkSenderSeqTs(opts);
   if (!isPlainObject(obj) || typeof obj.type !== 'string' || !TYPE_RE.test(obj.type)) {
     throw new ProtocolError('bad-argument', 'objet { type } attendu');
@@ -429,7 +454,7 @@ export async function seal(obj, key, opts) {
   }
   const pt = utf8Encode(json);
   if (pt.length > MAX_MESSAGE_BYTES) throw new ProtocolError('too-large', `message > ${MAX_MESSAGE_BYTES} octets`);
-  const header = writeHeader({ kind: FRAME_KIND.MESSAGE, sender, seq, ts });
+  const header = writeHeader({ kind, sender, seq, ts });
   return encryptFrame(header, pt, key);
 }
 
@@ -447,7 +472,27 @@ export async function seal(obj, key, opts) {
  * @returns {Promise<{ type: string, [k: string]: unknown }>}
  */
 export async function open(str, key, replayState) {
-  const { pt } = await decryptFrame(str, key, replayState, FRAME_KIND.MESSAGE);
+  return openJson(str, key, replayState, FRAME_KIND.MESSAGE);
+}
+
+/**
+ * Comme open(), pour une trame scellée avec une clé PAR ÉCRAN (type 0x03).
+ *
+ * @param {string} str
+ * @param {CryptoKey} key  clé pairwise du sens de RÉCEPTION
+ * @param {ReplayState | null} replayState
+ * @returns {Promise<{ type: string, [k: string]: unknown }>}
+ */
+export async function openPairwise(str, key, replayState) {
+  return openJson(str, key, replayState, FRAME_KIND.PAIRWISE);
+}
+
+/**
+ * @param {string} str @param {CryptoKey} key @param {ReplayState | null} replayState @param {number} kind
+ * @returns {Promise<{ type: string, [k: string]: unknown }>}
+ */
+async function openJson(str, key, replayState, kind) {
+  const { pt } = await decryptFrame(str, key, replayState, kind);
   if (pt.length > MAX_MESSAGE_BYTES) throw new ProtocolError('too-large', 'message trop long');
   /** @type {unknown} */
   let body;

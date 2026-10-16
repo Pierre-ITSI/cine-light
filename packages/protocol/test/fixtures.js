@@ -6,8 +6,12 @@
 const B64_12000 = 'QUJD'.repeat(3000); // 12 000 caractères base64 (taille réelle des fragments)
 const DATAURL_HEAD = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/';
 const SCREEN_A = 'AbCdEfGh12345678';
+const REMOTE_R = 'RmTe0123456789ab';
+const XID = 'x1y2z3x1y2z3x1y2';
+const JWK_R = { kty: 'EC', crv: 'P-256', x: 'f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPHvRVEU', y: 'x_FEzRu9m36HLN_tue659LNpXW6pCyStikYjKIWI5a0' };
+const JWK_E = { kty: 'EC', crv: 'P-256', x: 'MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4', y: '4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM' };
 
-/** @type {Array<{ direction: 'r2s' | 's2r', where: string, msg: Record<string, unknown> }>} */
+/** @type {Array<{ direction: 'r2s' | 's2r', channel?: 'session' | 'pairwise', where: string, msg: Record<string, unknown> }>} */
 export const REAL_MESSAGES = [
   // ── télécommande → écran ──
   { direction: 'r2s', where: 'connectChannel / scheduleAutoSend', msg: { type: 'color', color: '#ffffff' } },
@@ -153,6 +157,19 @@ export const REAL_MESSAGES = [
   { direction: 'r2s', where: 'multi-écran : groupe', msg: { type: 'blackout', on: false, target: { group: 'cuisine' } } },
   { direction: 'r2s', where: 'multi-écran : screen:config', msg: { type: 'screen:config', target: { screens: [SCREEN_A] }, name: 'Écran cuisine', groups: ['cuisine', 'g2'] } },
   { direction: 'r2s', where: 'passerelle DMX : identifier un écran', msg: { type: 'screen:identify', target: { screens: [SCREEN_A] } } },
+  // ── clés par écran et retrait d'un écran (pairwise.js, web/js/29-revoke.js) ──
+  { direction: 'r2s', where: 'retrait : écran retiré', msg: { type: 'screen:revoked', target: { screens: [SCREEN_A] } } },
+  { direction: 'r2s', where: 'retrait : session renouvelée sans clé', msg: { type: 'screen:revoked', reason: 'renewed', target: { screens: [SCREEN_A] } } },
+  { direction: 'r2s', where: 'kxOffer', msg: { type: 'key:offer', rid: REMOTE_R, xid: XID, jwk: JWK_R, target: { screens: [SCREEN_A] } } },
+  { direction: 's2r', where: 'screenOnKeyOffer', msg: { type: 'key:answer', sid: SCREEN_A, rid: REMOTE_R, xid: XID, jwk: JWK_E } },
+  { direction: 'r2s', channel: 'pairwise', where: 'remoteOnKeyAnswer (pairwise)', msg: { type: 'key:confirm', sid: SCREEN_A, rid: REMOTE_R, xid: XID } },
+  { direction: 's2r', channel: 'pairwise', where: 'screenOnPairwise key:confirm (pairwise)', msg: { type: 'key:ok', sid: SCREEN_A, xid: XID } },
+  {
+    direction: 'r2s', channel: 'pairwise', where: 'revokeSendRekey (pairwise)',
+    msg: { type: 'session:rekey', sid: SCREEN_A, rid: REMOTE_R, channelId: 'C'.repeat(22), key: 'K'.repeat(43), name: 'TV salon', groups: ['gsalon1'] },
+  },
+  { direction: 's2r', channel: 'pairwise', where: 'screenOnRekey (pairwise)', msg: { type: 'rekey:ok', sid: SCREEN_A, channelId: 'C'.repeat(22) } },
+  { direction: 's2r', where: 'caps + clé pairwise', msg: { type: 'caps', torch: true, vibrate: true, screenId: SCREEN_A, kx: 1, kid: 'abcdefghijk' } },
   // ── passerelle DMX (packages/dmx GatewayEngine) → écran ──
   { direction: 'r2s', where: 'passerelle DMX : couleur seule', msg: { type: 'dmx:look', target: { screens: [SCREEN_A] }, seq: 1, live: true, look: { color: '#ffefe1' } } },
   {

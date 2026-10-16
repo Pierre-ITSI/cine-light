@@ -2183,6 +2183,11 @@ const BASE64_RE = /^[A-Za-z0-9+/]*={0,2}$/;
 const MIME_RE = /^[a-z]+\/[a-z0-9.+-]{1,40}$/i;
 const PRINTABLE_RE = /^[\x20-\x7E\r\n]*$/;
 
+const B64U = (/** @type {number} */ n) => str(n, new RegExp(`^[A-Za-z0-9_-]{${n}}$`));
+const JWK = object({
+  kty: req(oneOf('EC'), 'EC'), crv: req(oneOf('P-256'), 'P-256'),
+  x: req(B64U(43), 'abscisse base64url'), y: req(B64U(43), 'ordonnée base64url'),
+});
 const HEX = str(7, HEX_COLOR_RE);
 const MEDIA_ID = str(64, MEDIA_ID_RE);
 const SCREEN_ID = str(32, SCREEN_ID_RE);
@@ -2208,7 +2213,13 @@ const LIMITS = Object.freeze({
   screenGroups: 16,
   screenNameChars: 40,
   dmxMediaSlots: 25,
+  keyIdChars: 11,
+  exchangeIdChars: 16,
 });
+const KID = B64U(11);
+const XID = B64U(16);
+const ONE_SCREEN = (/** @type {any} */ m, /** @type {string} */ type) => (!m.target || !Array.isArray(m.target.screens) || m.target.screens.length !== 1
+  ? `${type} doit cibler UN écran (target.screens)` : null);
 
 const TARGET = (/** @type {unknown} */ v) => {
   if (!isPlainObject(v)) return false;
@@ -2389,6 +2400,62 @@ const SPECS = {
       + 'son état (couleur, média, appel…) n’est pas modifié. Doit cibler target.screens.',
     fields: {},
     refine: m => (!m.target || !m.target.screens ? 'screen:identify doit cibler target.screens' : null),
+  },
+  'screen:revoked': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Retrait d’un écran (maquette 5c) : envoyé sur l’ANCIENNE session à l’écran retiré, qui efface sa session et ses clés et '
+      + 'affiche « Écran retiré ». reason « renewed » : session renouvelée sans pouvoir lui remettre la nouvelle (pas de clé pairwise).',
+    fields: { reason: opt(oneOf('revoked', 'renewed'), 'retiré par l’utilisateur (défaut) ou session renouvelée sans lui') },
+    refine: m => ONE_SCREEN(m, 'screen:revoked'),
+  },
+
+  'key:offer': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Début d’échange de clé pairwise : clé publique ECDH P-256 éphémère de la télécommande. Adressé à UN écran.',
+    fields: {
+      rid: req(SCREEN_ID, 'identifiant stable de la télécommande'),
+      xid: req(XID, 'identifiant de l’échange'),
+      jwk: req(JWK, 'clé publique éphémère de la télécommande'),
+    },
+    refine: m => ONE_SCREEN(m, 'key:offer'),
+  },
+  'key:answer': {
+    dir: 's2r', src: ['web'],
+    doc: 'Réponse de l’écran à key:offer : sa clé publique ECDH P-256 éphémère.',
+    fields: {
+      sid: req(SCREEN_ID, 'screenId de l’écran'),
+      rid: req(SCREEN_ID, 'télécommande de l’offre'),
+      xid: req(XID, 'échange auquel il répond'),
+      jwk: req(JWK, 'clé publique éphémère de l’écran'),
+    },
+  },
+  'key:confirm': {
+    dir: 'r2s', src: ['web'], chan: 'pairwise',
+    doc: 'Fin d’échange côté télécommande, scellé avec la NOUVELLE clé pairwise : l’ouvrir prouve que les deux côtés ont la même clé.',
+    fields: { sid: req(SCREEN_ID, 'écran'), rid: req(SCREEN_ID, 'télécommande'), xid: req(XID, 'échange') },
+  },
+  'key:ok': {
+    dir: 's2r', src: ['web'], chan: 'pairwise',
+    doc: 'Accusé de l’écran : clé pairwise adoptée (scellé avec elle).',
+    fields: { sid: req(SCREEN_ID, 'écran'), xid: req(XID, 'échange') },
+  },
+  'session:rekey': {
+    dir: 'r2s', src: ['web'], chan: 'pairwise',
+    doc: 'Nouvelle session après le retrait d’un autre écran, remise à CET écran (clé pairwise) sur l’ancien topic ; '
+      + 'il y passe et garde nom, groupes, cache et affichage.',
+    fields: {
+      sid: req(SCREEN_ID, 'écran destinataire (vérifié par l’écran)'),
+      rid: req(SCREEN_ID, 'télécommande'),
+      channelId: req(B64U(22), 'nouvelle session : channelId'),
+      key: req(B64U(43), 'nouvelle session : clé'),
+      name: opt(line(LIMITS.screenNameChars), 'nom de l’écran'),
+      groups: opt(arrayOf(GROUP_ID, LIMITS.screenGroups), 'groupes de l’écran'),
+    },
+  },
+  'rekey:ok': {
+    dir: 's2r', src: ['web'], chan: 'pairwise',
+    doc: 'Accusé de session:rekey (scellé pairwise, sur l’ancien topic) juste avant que l’écran passe sur le nouveau.',
+    fields: { sid: req(SCREEN_ID, 'écran'), channelId: req(B64U(22), 'session adoptée') },
   },
 
   'media-img-start': {
@@ -2573,6 +2640,8 @@ const SPECS = {
       screenId: opt(SCREEN_ID, 'nouveau : identifiant stable de l’écran (tiré au 1er lancement)'),
       name: opt(line(LIMITS.screenNameChars), 'nouveau : nom affiché de l’écran'),
       groups: opt(arrayOf(GROUP_ID, LIMITS.screenGroups), 'nouveau : groupes de l’écran'),
+      kx: opt(oneOf(1), 'échange de clés pairwise pris en charge (version)'),
+      kid: opt(KID, 'kid de la clé pairwise que l’écran détient avec cette télécommande (absent : aucune)'),
     },
   },
   'media-meta': {
@@ -2659,6 +2728,11 @@ function explainInvalid(msg, opts = {}) {
     const type = m.type;
     if (typeof type !== 'string' || !hasOwn(SPECS, type)) return `type inconnu : ${String(type).slice(0, 40)}`;
     const spec = SPECS[type];
+    const chan = opts.channel === undefined ? 'session' : opts.channel;
+    if (chan !== 'session' && chan !== 'pairwise') return 'canal invalide';
+    if ((spec.chan || 'session') !== chan) {
+      return chan === 'pairwise' ? `${type} n’est pas accepté scellé avec une clé pairwise` : `${type} n’est accepté que scellé avec une clé pairwise`;
+    }
     const dir = opts.direction;
     if (dir !== undefined) {
       if (dir !== 'r2s' && dir !== 's2r') return 'direction invalide';
@@ -2674,6 +2748,7 @@ function explainInvalid(msg, opts = {}) {
       }
       if (k === 'target') {
         if (spec.dir === 's2r') return 'target interdit sur un message écran → télécommande';
+        if (spec.chan === 'pairwise') return 'target interdit sur un message pairwise (adressé par sa clé)';
         if (!TARGET(v)) return 'target invalide';
         continue;
       }
@@ -2704,6 +2779,7 @@ function isAddressedTo(msg, me) {
 const MESSAGE_TYPES = Object.freeze(Object.fromEntries(
   Object.entries(SPECS).map(([type, s]) => [type, Object.freeze({
     direction: s.dir,
+    channel: s.chan || 'session',
     sources: Object.freeze([...s.src]),
     description: s.doc,
     fields: Object.freeze(Object.fromEntries(
@@ -2727,7 +2803,7 @@ __m["crypto.js"] = (function () {
   const { assertPairing } = __m["lib/pairingFormat.js"];
   const { MEDIA_ID_RE } = __m["schema.js"];
 const FRAME_VERSION = 2;
-const FRAME_KIND = Object.freeze({ MESSAGE: 1, CHUNK: 2 });
+const FRAME_KIND = Object.freeze({ MESSAGE: 1, CHUNK: 2, PAIRWISE: 3 });
 const IV_BYTES = 12;
 const TAG_BYTES = 16;
 const MAX_MESSAGE_BYTES = 40 * 1024;
@@ -2794,7 +2870,7 @@ function checkSenderSeqTs(/** @type {any} */ o) {
 function writeHeader(h) {
   const sender = asciiBytes(h.sender);
   let tail;
-  if (h.kind === FRAME_KIND.MESSAGE) {
+  if (h.kind === FRAME_KIND.MESSAGE || h.kind === FRAME_KIND.PAIRWISE) {
     tail = new Uint8Array(0);
   } else {
     const id = asciiBytes(/** @type {string} */ (h.mediaId));
@@ -2831,7 +2907,7 @@ function readHeader(b) {
   const version = b[0];
   if (version !== FRAME_VERSION) throw new ProtocolError('version', `version de trame ${version} non supportée`);
   const kind = b[1];
-  if (kind !== FRAME_KIND.MESSAGE && kind !== FRAME_KIND.CHUNK) throw bad('type de trame inconnu');
+  if (kind !== FRAME_KIND.MESSAGE && kind !== FRAME_KIND.CHUNK && kind !== FRAME_KIND.PAIRWISE) throw bad('type de trame inconnu');
   const sLen = b[2];
   if (sLen < 1 || sLen > 16) throw bad('longueur d’émetteur invalide');
   let o = 3;
@@ -2954,7 +3030,7 @@ async function decryptFrame(str, key, replayState, expectedKind) {
   const bytes = b64uToBytes(str);
   const h = readHeader(bytes);
   if (h.kind !== expectedKind) {
-    throw new ProtocolError('kind', expectedKind === FRAME_KIND.MESSAGE ? 'fragment reçu au lieu d’un message' : 'message reçu au lieu d’un fragment');
+    throw new ProtocolError('kind', `trame de type ${h.kind} reçue au lieu de ${expectedKind}`);
   }
   if (replayState) replayState.check(h.sender, h.seq, h.ts);
   const hl = h.headerLength;
@@ -2988,6 +3064,14 @@ function isPlainObject(v) {
 }
 
 async function seal(obj, key, opts) {
+  return sealJson(obj, key, opts, FRAME_KIND.MESSAGE);
+}
+
+async function sealPairwise(obj, key, opts) {
+  return sealJson(obj, key, opts, FRAME_KIND.PAIRWISE);
+}
+
+async function sealJson(obj, key, opts, kind) {
   const { sender, seq, ts } = checkSenderSeqTs(opts);
   if (!isPlainObject(obj) || typeof obj.type !== 'string' || !TYPE_RE.test(obj.type)) {
     throw new ProtocolError('bad-argument', 'objet { type } attendu');
@@ -3000,12 +3084,20 @@ async function seal(obj, key, opts) {
   }
   const pt = utf8Encode(json);
   if (pt.length > MAX_MESSAGE_BYTES) throw new ProtocolError('too-large', `message > ${MAX_MESSAGE_BYTES} octets`);
-  const header = writeHeader({ kind: FRAME_KIND.MESSAGE, sender, seq, ts });
+  const header = writeHeader({ kind, sender, seq, ts });
   return encryptFrame(header, pt, key);
 }
 
 async function open(str, key, replayState) {
-  const { pt } = await decryptFrame(str, key, replayState, FRAME_KIND.MESSAGE);
+  return openJson(str, key, replayState, FRAME_KIND.MESSAGE);
+}
+
+async function openPairwise(str, key, replayState) {
+  return openJson(str, key, replayState, FRAME_KIND.PAIRWISE);
+}
+
+async function openJson(str, key, replayState, kind) {
+  const { pt } = await decryptFrame(str, key, replayState, kind);
   if (pt.length > MAX_MESSAGE_BYTES) throw new ProtocolError('too-large', 'message trop long');
   let body;
   try {
@@ -3125,7 +3217,7 @@ function createChunkAssembler(opts = {}) {
     },
   };
 }
-  return { FRAME_VERSION, FRAME_KIND, IV_BYTES, TAG_BYTES, MAX_MESSAGE_BYTES, MAX_CHUNK_BYTES, MAX_CHUNKS, MAX_SEQ, MAX_TS, DEFAULT_REPLAY_WINDOW, DEFAULT_MAX_SKEW_MS, DEFAULT_MAX_SENDERS, SENDER_RE, TYPE_RE, MAX_FRAME_CHARS, deriveSession, newSenderTag, peekFrame, ReplayState, createReplayState, seal, open, sealChunk, openChunk, splitIntoChunks, createChunkAssembler };
+  return { FRAME_VERSION, FRAME_KIND, IV_BYTES, TAG_BYTES, MAX_MESSAGE_BYTES, MAX_CHUNK_BYTES, MAX_CHUNKS, MAX_SEQ, MAX_TS, DEFAULT_REPLAY_WINDOW, DEFAULT_MAX_SKEW_MS, DEFAULT_MAX_SENDERS, SENDER_RE, TYPE_RE, MAX_FRAME_CHARS, deriveSession, newSenderTag, peekFrame, ReplayState, createReplayState, seal, sealPairwise, open, openPairwise, sealChunk, openChunk, splitIntoChunks, createChunkAssembler };
 })();
 // ── pairing.js ──
 __m["pairing.js"] = (function () {
@@ -3386,7 +3478,7 @@ __m["channel.js"] = (function () {
   const { ProtocolError } = __m["lib/errors.js"];
   const { randomBytes } = __m["lib/env.js"];
   const { bytesToB64u } = __m["lib/encoding.js"];
-  const { FRAME_KIND, MAX_SEQ, createReplayState, deriveSession, newSenderTag, open, openChunk, peekFrame, seal, sealChunk } = __m["crypto.js"];
+  const { FRAME_KIND, MAX_SEQ, createReplayState, deriveSession, newSenderTag, open, openChunk, openPairwise, peekFrame, seal, sealChunk, sealPairwise } = __m["crypto.js"];
   const { GROUP_ID_RE, SCREEN_ID_RE, explainInvalid, isAddressedTo } = __m["schema.js"];
 const SESSION_TOPIC_PREFIX = 'setremote/v2/s/';
 const RENDEZVOUS_TOPIC_PREFIX = 'setremote/v2/rdv/';
@@ -3419,6 +3511,7 @@ async function createSecureChannel(opts) {
   const sendDir = isRemote ? 'r2s' : 's2r';
   const recvDir = isRemote ? 's2r' : 'r2s';
   const replay = createReplayState(opts.replay);
+  const pairwiseReplay = createReplayState(opts.replay); // trames pairwise : fenêtre distincte
   let seq = 0;
   const nextSeq = () => {
     if (seq > MAX_SEQ) throw new ProtocolError('too-large', 'compteur de séquence épuisé : recréer le canal');
@@ -3441,25 +3534,44 @@ async function createSecureChannel(opts) {
     },
 
     async seal(msg) {
-      const why = explainInvalid(msg, { direction: sendDir });
+      const why = explainInvalid(msg, { direction: sendDir, channel: 'session' });
       if (why) throw new ProtocolError('invalid-message', why);
       return seal(msg, sendKey, { sender, seq: nextSeq() });
+    },
+
+    async sealPairwise(msg, keys) {
+      const why = explainInvalid(msg, { direction: sendDir, channel: 'pairwise' });
+      if (why) throw new ProtocolError('invalid-message', why);
+      if (!keys || !keys[sendDir]) throw new ProtocolError('bad-argument', 'clés pairwise attendues');
+      return sealPairwise(msg, keys[sendDir], { sender, seq: nextSeq() });
     },
 
     async sealChunk(data, meta) {
       return sealChunk(data, sendKey, { sender, seq: nextSeq(), mediaId: meta.mediaId, index: meta.index, total: meta.total });
     },
 
-    async receive(str) {
+    async receive(str, ropts) {
       const h = peekFrame(str);
       if (h.sender === sender) return null;
       if (h.sender[0] !== peerPrefix) return null;
+      if (h.kind === FRAME_KIND.PAIRWISE) {
+        const cands = ropts && typeof ropts.pairwise === 'function' ? await ropts.pairwise(h.sender) : null;
+        for (const c of Array.isArray(cands) ? cands : []) {
+          let message;
+          try { message = await openPairwise(str, c.keys[recvDir], pairwiseReplay); }
+          catch (_) { continue; } // autre clé : trame destinée à un autre écran (ou forgée)
+          const why = explainInvalid(message, { direction: recvDir, channel: 'pairwise' });
+          if (why) throw new ProtocolError('invalid-message', why);
+          return { kind: 'pairwise', message, sender: h.sender, tag: c.tag };
+        }
+        return null;
+      }
       if (h.kind === FRAME_KIND.CHUNK) {
         const chunk = await openChunk(str, recvKey, replay);
         return { kind: 'chunk', chunk, sender: chunk.sender };
       }
       const message = await open(str, recvKey, replay);
-      const why = explainInvalid(message, { direction: recvDir });
+      const why = explainInvalid(message, { direction: recvDir, channel: 'session' });
       if (why) throw new ProtocolError('invalid-message', why);
       if (role === 'screen' && !isAddressedTo(message, { screenId: /** @type {string} */ (screenId), groups })) return null;
       return { kind: 'message', message, sender: h.sender };
@@ -3468,10 +3580,109 @@ async function createSecureChannel(opts) {
 }
   return { SESSION_TOPIC_PREFIX, RENDEZVOUS_TOPIC_PREFIX, createScreenId, createSecureChannel };
 })();
+// ── pairwise.js ──
+__m["pairwise.js"] = (function () {
+  const { ProtocolError } = __m["lib/errors.js"];
+  const { randomBytes, subtle } = __m["lib/env.js"];
+  const { asciiBytes, b64uToBytes, bytesToB64u, concatBytes, timingSafeEqual, utf8Encode } = __m["lib/encoding.js"];
+  const { hkdfBits, lengthPrefixed, sha256 } = __m["lib/kdf.js"];
+  const { sanitizePublicJwk } = __m["pairing.js"];
+  const { SCREEN_ID_RE } = __m["schema.js"];
+const PAIRWISE_SECRET_RE = /^[A-Za-z0-9_-]{43}$/;
+const KEY_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+const EXCHANGE_ID_RE = /^[A-Za-z0-9_-]{16}$/;
+const CHANNEL_ID_RE = /^[A-Za-z0-9_-]{22}$/;
+
+function createRemoteId() {
+  return bytesToB64u(randomBytes(12));
+}
+
+function createExchangeId() {
+  return bytesToB64u(randomBytes(12));
+}
+
+function point(/** @type {unknown} */ jwk) {
+  const j = sanitizePublicJwk(jwk);
+  return concatBytes(Uint8Array.of(4), b64uToBytes(j.x), b64uToBytes(j.y));
+}
+
+function checkId(v, re, what) {
+  if (typeof v !== 'string' || !re.test(v)) throw new ProtocolError('bad-argument', `${what} invalide`);
+  return v;
+}
+
+async function idsSalt(remoteId, screenId) {
+  return sha256(concatBytes(asciiBytes('setremote/v1/pairwise/ids'), lengthPrefixed(asciiBytes(remoteId)), lengthPrefixed(asciiBytes(screenId))));
+}
+
+async function derivePairwiseSecret(myKeyPair, t) {
+  if (!myKeyPair || typeof myKeyPair !== 'object' || !myKeyPair.privateKey) {
+    throw new ProtocolError('bad-argument', 'paire de clés ECDH attendue');
+  }
+  if (!t || typeof t !== 'object') throw new ProtocolError('bad-argument', 'transcription attendue');
+  const channelId = checkId(t.channelId, CHANNEL_ID_RE, 'channelId');
+  const remoteId = checkId(t.remoteId, SCREEN_ID_RE, 'remoteId');
+  const screenId = checkId(t.screenId, SCREEN_ID_RE, 'screenId');
+  const exchangeId = checkId(t.exchangeId, EXCHANGE_ID_RE, 'exchangeId');
+  if (remoteId === screenId) throw new ProtocolError('bad-argument', 'remoteId et screenId identiques');
+  const offer = point(t.offerJwk);
+  const answer = point(t.answerJwk);
+  if (timingSafeEqual(offer, answer)) throw new ProtocolError('bad-key', 'clé réfléchie (offre = réponse)');
+  const mine = point(myKeyPair.publicJwk);
+  const peerJwk = timingSafeEqual(mine, offer) ? t.answerJwk : timingSafeEqual(mine, answer) ? t.offerJwk : null;
+  if (!peerJwk) throw new ProtocolError('bad-argument', 'notre clé publique ne figure pas dans l’échange');
+
+  const s = subtle();
+  let peerKey;
+  try {
+    peerKey = await s.importKey('jwk', { ...sanitizePublicJwk(peerJwk), ext: true }, { name: 'ECDH', namedCurve: 'P-256' }, true, []);
+  } catch (_) {
+    throw new ProtocolError('bad-key', 'point invalide (hors courbe)');
+  }
+  const z = new Uint8Array(await s.deriveBits({ name: 'ECDH', public: peerKey }, myKeyPair.privateKey, 256));
+  const th = await sha256(concatBytes(
+    utf8Encode('setremote/v1/pairwise/transcript'),
+    lengthPrefixed(asciiBytes(channelId)),
+    lengthPrefixed(asciiBytes(remoteId)),
+    lengthPrefixed(asciiBytes(screenId)),
+    lengthPrefixed(asciiBytes(exchangeId)),
+    lengthPrefixed(offer),
+    lengthPrefixed(answer),
+  ));
+  const raw = await hkdfBits(z, th, 'setremote/v1/pairwise/secret', 256);
+  z.fill(0);
+  const secret = bytesToB64u(raw);
+  raw.fill(0);
+  const { kid } = await pairwiseKeys(secret, { remoteId, screenId });
+  return { secret, kid };
+}
+
+async function pairwiseKeys(secret, ids) {
+  checkId(secret, PAIRWISE_SECRET_RE, 'secret pairwise');
+  const remoteId = checkId(ids && ids.remoteId, SCREEN_ID_RE, 'remoteId');
+  const screenId = checkId(ids && ids.screenId, SCREEN_ID_RE, 'screenId');
+  const ikm = b64uToBytes(secret);
+  const salt = await idsSalt(remoteId, screenId);
+  const [r2sRaw, s2rRaw, kidRaw] = await Promise.all([
+    hkdfBits(ikm, salt, 'setremote/v1/pairwise/key/remote-to-screen', 256),
+    hkdfBits(ikm, salt, 'setremote/v1/pairwise/key/screen-to-remote', 256),
+    hkdfBits(ikm, salt, 'setremote/v1/pairwise/kid', 64),
+  ]);
+  const s = subtle();
+  const alg = { name: 'AES-GCM' };
+  const [r2s, s2r] = await Promise.all([
+    s.importKey('raw', r2sRaw, alg, false, ['encrypt', 'decrypt']),
+    s.importKey('raw', s2rRaw, alg, false, ['encrypt', 'decrypt']),
+  ]);
+  ikm.fill(0); r2sRaw.fill(0); s2rRaw.fill(0);
+  return { r2s, s2r, kid: bytesToB64u(kidRaw) };
+}
+  return { PAIRWISE_SECRET_RE, KEY_ID_RE, EXCHANGE_ID_RE, createRemoteId, createExchangeId, derivePairwiseSecret, pairwiseKeys };
+})();
 // ── index.js ──
 __m["index.js"] = (function () {
 
-  return { ...__star(__m["pairing.js"]), ...__star(__m["crypto.js"]), ...__star(__m["schema.js"]), ...__star(__m["channel.js"]), setCrypto: __m["lib/env.js"].setCrypto, getCrypto: __m["lib/env.js"].getCrypto, ProtocolError: __m["lib/errors.js"].ProtocolError, bytesToB64u: __m["lib/encoding.js"].bytesToB64u, b64uToBytes: __m["lib/encoding.js"].b64uToBytes, utf8Encode: __m["lib/encoding.js"].utf8Encode, utf8Decode: __m["lib/encoding.js"].utf8Decode };
+  return { ...__star(__m["pairing.js"]), ...__star(__m["crypto.js"]), ...__star(__m["schema.js"]), ...__star(__m["channel.js"]), ...__star(__m["pairwise.js"]), setCrypto: __m["lib/env.js"].setCrypto, getCrypto: __m["lib/env.js"].getCrypto, ProtocolError: __m["lib/errors.js"].ProtocolError, bytesToB64u: __m["lib/encoding.js"].bytesToB64u, b64uToBytes: __m["lib/encoding.js"].b64uToBytes, utf8Encode: __m["lib/encoding.js"].utf8Encode, utf8Decode: __m["lib/encoding.js"].utf8Decode };
 })();
 return Object.freeze(__m["index.js"]);
 })();

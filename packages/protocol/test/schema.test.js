@@ -10,9 +10,9 @@ import { utf8Encode } from '../lib/encoding.js';
 import { REAL_MESSAGES, ATTACKS } from './fixtures.js';
 
 test('accepte tous les messages réels (avec et sans contrôle du sens)', () => {
-  for (const { direction, where, msg } of REAL_MESSAGES) {
-    assert.equal(explainInvalid(msg), null, `${where} : ${explainInvalid(msg)}`);
-    assert.equal(validate(msg, { direction }), true, `${where} (sens ${direction}) : ${explainInvalid(msg, { direction })}`);
+  for (const { direction, channel, where, msg } of REAL_MESSAGES) {
+    assert.equal(explainInvalid(msg, { channel }), null, `${where} : ${explainInvalid(msg, { channel })}`);
+    assert.equal(validate(msg, { direction, channel }), true, `${where} (sens ${direction}) : ${explainInvalid(msg, { direction, channel })}`);
   }
 });
 
@@ -171,12 +171,16 @@ test('ciblage PWA : tout message r2s accepte target.screens (1 à 64 écrans), j
   // target ; groupe résolu en liste d’écrans ; un écran) : tous les messages
   // réels r2s doivent rester valides une fois adressés.
   const ids = (/** @type {number} */ n) => Array.from({ length: n }, (_, i) => ('S' + String(i).padStart(3, '0')).padEnd(16, 'x'));
-  for (const { direction, where, msg } of REAL_MESSAGES) {
+  for (const { direction, channel, where, msg } of REAL_MESSAGES) {
+    if (channel === 'pairwise') continue; // adressés par leur clé (pairwise.test.js)
     if (direction !== 'r2s') {
       assert.equal(validate({ ...msg, target: { screens: ids(1) } }), false, `${where} : target interdit en s2r`);
       continue;
     }
-    for (const n of [1, 2, LIMITS.targetScreens]) {
+    // Échange de clés et retrait : UN seul écran, jamais plusieurs
+    const one = ['key:offer', 'screen:revoked'].includes(msg.type);
+    if (one) assert.equal(validate({ ...msg, target: { screens: ids(2) } }), false, `${where} : un seul écran`);
+    for (const n of one ? [1] : [1, 2, LIMITS.targetScreens]) {
       const m = { ...msg, target: { screens: ids(n) } };
       assert.equal(explainInvalid(m, { direction: 'r2s' }), null, `${where} adressé à ${n} écran(s)`);
     }
