@@ -157,8 +157,9 @@ test('patch : chevauchement signalé, auto-adressage consécutif, mémorisé par
   assert.ok(await patch(page, ids[2], { universe: 1, address: 21, personality: 'extended16' }));
   assert.equal(await patch(page, ids[2], { address: 600 }), false, 'adresse invalide refusée');
   const rows = await page.evaluate(() => [...document.querySelectorAll('#gwPatchRows .gw-prow')].map((r) => ({ warn: r.classList.contains('warn'), text: r.innerText.replace(/\s+/g, ' ') })));
-  assert.deepEqual(rows.map((r) => r.warn), [false, true, true]);
+  assert.deepEqual(rows.map((r) => r.warn), [false, false, true], 'seul l\'écran qui recouvre est marqué');
   assert.match(rows[0].text, /Écran 1 1–16 · OK 1 1 Étendu 16/);
+  assert.match(rows[1].text, /Écran 2 17–32 · OK 1 17 Étendu 16/);
   assert.match(rows[2].text, /Écran 3 21–36 · chevauchement 1 21 Étendu 16/);
   assert.equal(await page.textContent('#gwPatchWarn'),
     'Chevauchement : « Écran 3 » (21–36) recouvre « Écran 2 » (17–32). Utilisez l\'auto-adressage ou changez l\'adresse.');

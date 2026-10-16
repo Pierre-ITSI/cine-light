@@ -11442,10 +11442,16 @@ function renderGwUniverses() {
 }
 
 // ── 15 · Patch ──
+// Problème affiché sur une ligne : comme la maquette 15, seul l'écran qui
+// recouvre (adresse la plus haute de la paire) est marqué « chevauchement » ;
+// celui qu'il recouvre reste « OK ».
 function _gwIssuesByScreen() {
   const res = gwState.patch.check();
   const by = new Map();
-  for (const is of [...res.errors, ...res.warnings, ...res.infos]) for (const id of is.screens) {
+  const order = gwPatchOrder();
+  for (const is of [...res.errors, ...res.warnings, ...res.infos]) {
+    const ids = is.screens.slice().sort((a, b) => gwState.patch.get(a).address - gwState.patch.get(b).address || order.indexOf(a) - order.indexOf(b));
+    const id = ids[ids.length - 1];
     if (!by.has(id)) by.set(id, is);
   }
   return { res, by };
