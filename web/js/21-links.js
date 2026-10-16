@@ -35,7 +35,7 @@ const LINK_PREFS = ['auto', 'internet', 'lan', 'ble'];
 const LINK_MODES = ['lan', 'ble'];
 const LINK_FRAME_MAX = Object.freeze({ lan: 64 * 1024, ble: 4 * 1024 });
 const LINK_RX_BATCH_MAX = 512;   // trames traitées au plus par link:frames
-const LINK_PEERS_MAX = 64;
+const LINK_PEERS_MAX = 128; // 64 en Wi-Fi local + 8 en Bluetooth au plus, avec de la marge
 const LINK_CAPS_BLE_MAX = 2800; // caractères JSON : une annonce « caps » plus longue dépasserait 4 Kio une fois scellée
 const LINK_LABELS = Object.freeze({ internet: 'Internet', lan: 'Wi-Fi local', ble: 'Bluetooth', off: 'Hors ligne' });
 // Médias et leur signalisation : Internet ou Wi-Fi local seulement

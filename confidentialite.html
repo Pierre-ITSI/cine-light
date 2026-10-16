@@ -117,6 +117,7 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
 </ul>
 <p>Vous les effacez en supprimant les éléments dans l'application, en effaçant les données du site dans le navigateur ou en désinstallant l'application. La version web installée garde aussi une copie de ses propres fichiers pour fonctionner hors ligne.</p>
 <p><strong>Passerelle DMX</strong> (applications iPhone, iPad et Android)&nbsp;: les données DMX que la console envoie sur le réseau local (sACN, Art-Net) sont traitées sur l'appareil&nbsp;; seuls les réglages qui en découlent partent, chiffrés de bout en bout, vers vos écrans de jeu.</p>
+<p><strong>Tourner sans réseau</strong> (applications iPhone, iPad et Android)&nbsp;: en Wi-Fi local ou en Bluetooth, la télécommande et les écrans de jeu échangent directement entre eux, sans aucun serveur. Les messages restent chiffrés de bout en bout. Pour se reconnaître, les appareils diffusent seulement un identifiant court et aléatoire, tiré de la session, qui ne permet pas de lire les échanges&nbsp;; un appareil à proximité peut toutefois remarquer que plusieurs appareils appartiennent à la même session.</p>
 
 <h3 id="web">3.6 La version web</h3>
 <p>La version web de SetRemote est hébergée par <strong>GitHub Pages</strong> (GitHub, Inc., États-Unis). Comme tout hébergeur, GitHub reçoit les données techniques de chaque visite (adresse IP, navigateur, page demandée), selon sa propre politique de confidentialité. La version web ne dépose aucun cookie et ne charge que ses propres fichiers, polices comprises. Les applications iPhone, iPad et Android embarquent leur interface et ne la téléchargent pas. Un QR code d'appairage scanné avec l'appareil photo du système, plutôt que dans SetRemote, ouvre la version web&nbsp;: GitHub reçoit alors cette visite, mais pas le secret de la session (§&nbsp;2).</p>
@@ -170,8 +171,8 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
   <li><strong>Appareil photo</strong>&nbsp;: scanner le QR code d'appairage (écran de jeu)&nbsp;; piloter la torche LED de l'écran de jeu, car le système passe par l'appareil photo&nbsp;; prendre une photo ou filmer une vidéo à diffuser. Aucune capture en arrière-plan.</li>
   <li><strong>Photos et vidéos</strong>&nbsp;: choisir, avec le sélecteur du système, les médias à diffuser, la photo d'un appelant fictif ou un fond d'écran fictif.</li>
   <li><strong>Micro</strong>&nbsp;: uniquement quand vous filmez une vidéo à diffuser.</li>
-  <li><strong>Réseau local</strong> (applications)&nbsp;: recevoir le DMX de la console (sACN, Art-Net) avec la passerelle DMX. Aucune collecte d'informations sur les autres appareils du réseau.</li>
-  <li><strong>Bluetooth</strong>&nbsp;: la version actuelle ne l'utilise pas.</li>
+  <li><strong>Réseau local</strong> (applications)&nbsp;: recevoir le DMX de la console (sACN, Art-Net) avec la passerelle DMX, et relier la télécommande et les écrans en Wi-Fi local quand vous tournez sans réseau. Aucune collecte d'informations sur les autres appareils du réseau.</li>
+  <li><strong>Bluetooth</strong> (applications)&nbsp;: relier la télécommande et les écrans de jeu quand vous tournez sans réseau, uniquement pendant que l'application est ouverte. Le Bluetooth ne sert pas à vous localiser.</li>
 </ul>
 <p>La luminosité de l'écran, le maintien de l'écran allumé et la vibration ne demandent aucune donnée personnelle.</p>
 
