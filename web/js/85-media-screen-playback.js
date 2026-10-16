@@ -21,7 +21,7 @@ async function screenHandleOffer(sdp) {
   _vidParts = []; _vidMeta = null;
   const oldVid = document.getElementById('screen-media-video'); // stoppe la vidéo précédente pendant le transfert
   if (oldVid && !screenDmxLive()) { try { oldVid.pause(); } catch (_) {} }
-  _screenPc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+  _screenPc = new RTCPeerConnection({ iceServers: [{ urls: STUN_URLS }] });
   _screenPc.onicecandidate = e => { if (e.candidate) sendMsg({ type: 'rtc-ice', from: 'screen', candidate: e.candidate }); };
   _screenPc.ondatachannel = e => setupScreenFileChannel(e.channel);
   try {

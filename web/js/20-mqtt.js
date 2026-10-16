@@ -42,7 +42,8 @@ async function connectSession(pairing, onConnected) {
   resetClockSkew();
   initBCFallback(ch);
 
-  const client = mqtt.connect(BROKER, {
+  // Broker public, ou relais privé si RELAY_URL est configuré (19-relay.js)
+  const client = transportConnect(ch.mqttTopic, ch.relayAuth, {
     clientId: _newClientId('cl'),
     clean: true,
     connectTimeout: 8000,

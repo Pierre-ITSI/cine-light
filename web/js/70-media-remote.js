@@ -587,7 +587,7 @@ let _rtcBroken = false; // pair-à-pair constaté bloqué sur ce réseau (sessio
 async function startFileTransfer(file, mediaId) {
   _remotePendingIce = [];
   _rtcTransferDone = false;
-  const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+  const pc = new RTCPeerConnection({ iceServers: [{ urls: STUN_URLS }] });
   _rtcPc = pc;
   pc.onicecandidate = e => { if (e.candidate) sendMsg({ type: 'rtc-ice', from: 'remote', candidate: e.candidate }); };
   pc.onconnectionstatechange = () => {

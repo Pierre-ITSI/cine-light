@@ -21,7 +21,7 @@ const _rdvBackground = new Set(); // télécommande : remises qui se terminent e
 
 // — Transport du rendez-vous : client MQTT dédié, messages JSON validés —
 function _rdvOpen(r) {
-  const client = mqtt.connect(BROKER, { clientId: _newClientId('rdv'), clean: true, connectTimeout: 8000, reconnectPeriod: 3000 });
+  const client = transportConnect(r.mqttTopic, null, { clientId: _newClientId('rdv'), clean: true, connectTimeout: 8000, reconnectPeriod: 3000 });
   r.client = client;
   client.on('connect', () => {
     if (r.closed) return;
