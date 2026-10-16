@@ -89,7 +89,7 @@ La fiche affichera « Aucune donnée collectée » et « Aucune donnée partagé
   - Prévoir 15 à 20 testeurs. Plusieurs sources indiquent que le compteur repart de zéro si le nombre passe sous 12 pendant la période.
   - Les testeurs doivent installer l'app et l'utiliser réellement. Google pose ensuite des questions sur le test lors de la demande d'accès à la production.
 - **Comptes organisation** : d'après les sources tierces consultées, ils ne sont pas soumis à cette règle. Je ne l'ai pas confirmé sur la page Google : à vérifier dans la Play Console.
-  - **Recommandation** : publier sous un **compte organisation** au nom de [RAISON SOCIALE]. Cela demande un numéro D-U-N-S. On évite ainsi les 14 jours de test, et l'éditeur affiché correspond au responsable de traitement de la politique de confidentialité.
+  - **Recommandation** : publier sous un **compte organisation** au nom de itsi app. Cela demande un numéro D-U-N-S. On évite ainsi les 14 jours de test, et l'éditeur affiché correspond au responsable de traitement de la politique de confidentialité.
 - **Vérification des développeurs Android** : appliquée à partir du **30 septembre 2026** au Brésil, en Indonésie, à Singapour et en Thaïlande, puis étendue mondialement en 2027. Les comptes Play Console déjà vérifiés sont en règle dans la quasi-totalité des cas. Il suffit de vérifier que l'identité et le package sont enregistrés.
 
 ### C.2 Niveau d'API cible

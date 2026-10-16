@@ -261,7 +261,7 @@ Reprendre `desc.fr` / `desc.en` (section 1.5) à l'identique. Les puces « • �
 | Tags (choisis dans la liste Play) | Photographie, Production vidéo et cinéma, ou les tags les plus proches proposés par la console |
 | Classification | PEGI 3 / ESRB Everyone, élément interactif « Interaction entre utilisateurs » (voir `google-data-safety.md`, C.6) |
 | Public cible | 18 ans et plus |
-| Coordonnées | `[EMAIL DE CONTACT]`, `[SITE WEB]`, adresse [ADRESSE] (obligatoire si l'app est monétisée, sinon recommandée) |
+| Coordonnées | `pierre@itsi-app.com`, `[SITE WEB]`, adresse 64 résidence Les Jardins de Saint-Colomban, 35350 Saint-Coulomb (obligatoire si l'app est monétisée, sinon recommandée) |
 
 ---
 

@@ -64,7 +64,7 @@ Bluetooth is not used.
 PRIVACY
 No account, no analytics, no ads, no tracking. Encryption uses only the cryptography built into the operating system (Web Crypto API in WKWebView).
 
-Contact: [NAME], [PHONE], [EMAIL]
+Contact: [NAME], [PHONE], pierre@itsi-app.com
 ```
 
 ---

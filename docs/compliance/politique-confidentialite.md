@@ -27,12 +27,12 @@ Dernière mise à jour : [DATE DE PUBLICATION]
 
 Le responsable du traitement est :
 
-**[RAISON SOCIALE]**, [FORME JURIDIQUE] au capital de [CAPITAL] €, immatriculée au RCS de [VILLE] sous le numéro [SIREN]
-Siège social : [ADRESSE]
-E-mail : [EMAIL DE CONTACT]
+**itsi app**, [FORME JURIDIQUE] au capital de [CAPITAL] €, immatriculée au RCS de [VILLE] sous le numéro [SIREN]
+Siège social : 64 résidence Les Jardins de Saint-Colomban, 35350 Saint-Coulomb
+E-mail : pierre@itsi-app.com
 Site web : [SITE WEB]
 
-[Si un délégué à la protection des données (DPO) est désigné : « Délégué à la protection des données : [NOM / CONTACT DPO] ». Sinon : « Nous n'avons pas désigné de délégué à la protection des données ; pour toute question, écrivez à [EMAIL DE CONTACT]. »]
+[Si un délégué à la protection des données (DPO) est désigné : « Délégué à la protection des données : [NOM / CONTACT DPO] ». Sinon : « Nous n'avons pas désigné de délégué à la protection des données ; pour toute question, écrivez à pierre@itsi-app.com. »]
 
 ## 2. Comment fonctionne SetRemote
 
@@ -138,13 +138,13 @@ Nos sous-traitants sont liés par un contrat conforme à l'article 28 du RGPD. I
 
 Nous hébergeons le relais et le site **dans l'Union européenne** [À CONFIRMER selon l'hébergeur choisi]. Nous ne transférons pas vos données hors de l'UE. Apple et Google peuvent transférer des données hors de l'UE, notamment vers les États-Unis, dans le cadre de leurs propres politiques (EU-US Data Privacy Framework ou clauses contractuelles types de la Commission européenne).
 
-[Si un prestataire est situé hors UE : « [PRESTATAIRE] est situé en [PAYS] ; le transfert est encadré par [décision d'adéquation / Data Privacy Framework / clauses contractuelles types], dont vous pouvez obtenir une copie à [EMAIL DE CONTACT]. »]
+[Si un prestataire est situé hors UE : « [PRESTATAIRE] est situé en [PAYS] ; le transfert est encadré par [décision d'adéquation / Data Privacy Framework / clauses contractuelles types], dont vous pouvez obtenir une copie à pierre@itsi-app.com. »]
 
 ## 8. Vos droits
 
 Vous disposez des droits d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité de vos données. Vous pouvez aussi définir des directives sur leur sort après votre décès (article 85 de la loi Informatique et Libertés).
 
-Pour les exercer, écrivez à **[EMAIL DE CONTACT]** ou à [ADRESSE]. Nous répondons dans un délai d'un mois.
+Pour les exercer, écrivez à **pierre@itsi-app.com** ou à 64 résidence Les Jardins de Saint-Colomban, 35350 Saint-Coulomb. Nous répondons dans un délai d'un mois.
 
 Nous ne détenons ni vos contenus ni de compte à votre nom, et ne pouvons donc généralement pas vous identifier (article 11 du RGPD). Vous gardez la main directement sur votre appareil :
 
@@ -197,4 +197,4 @@ Nous pouvons mettre à jour cette politique, par exemple si une fonction change.
 
 ## 14. Contact
 
-[RAISON SOCIALE] — [ADRESSE] — [EMAIL DE CONTACT] — [SITE WEB]
+itsi app — 64 résidence Les Jardins de Saint-Colomban, 35350 Saint-Coulomb — pierre@itsi-app.com — [SITE WEB]
