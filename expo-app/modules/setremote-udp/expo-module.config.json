@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["SetRemoteUdpModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.setremoteudp.SetRemoteUdpModule"]
+  }
+}
