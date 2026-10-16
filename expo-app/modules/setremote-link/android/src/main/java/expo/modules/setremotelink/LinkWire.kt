@@ -452,16 +452,4 @@ internal class Inbox(private val maxFrames: Int, private val maxBytes: Int) {
     bytes = 0
     overflowed = false
   }
-
-  @Synchronized
-  fun removePeer(peer: String) {
-    val it = items.iterator()
-    while (it.hasNext()) {
-      val f = it.next()
-      if (f.peer == peer) {
-        bytes -= f.bytes
-        it.remove()
-      }
-    }
-  }
 }
