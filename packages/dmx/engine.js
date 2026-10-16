@@ -199,7 +199,12 @@ export class GatewayEngine {
   }
 
   stopTimer() {
-    if (this._timer) { this._timer.ci(this._timer.id); this._timer = null; }
+    if (!this._timer) return;
+    // Appel en fonction simple : dans un navigateur, clearInterval appelé comme
+    // méthode d'un autre objet lève « Illegal invocation ».
+    const { id, ci } = this._timer;
+    this._timer = null;
+    ci(id);
   }
 
   /** Stop the gateway: every live screen gets its look with live: false (remote may take over). */

@@ -243,3 +243,13 @@ test('start()/stopTimer() avec minuteries injectées', () => {
   assert.deepEqual(calls, [['set', 20], ['clear', 7]]);
   assert.throws(() => new GatewayEngine(/** @type {any} */ ({})), TypeError);
 });
+
+test('stopTimer() appelle clearInterval comme une fonction (navigateur : sinon « Illegal invocation »)', () => {
+  const { engine } = rig({ [A]: S8() });
+  // Comme le clearInterval d'un navigateur : refuse tout « this » autre que le global
+  const strictClear = function (id) { 'use strict'; if (this !== undefined && this !== globalThis) throw new TypeError('Illegal invocation'); strictClear.id = id; };
+  engine.start({ setInterval: () => 9, clearInterval: strictClear });
+  engine.stop();
+  assert.equal(strictClear.id, 9);
+  engine.stopTimer(); // déjà arrêté : sans effet
+});
