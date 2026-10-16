@@ -1,0 +1,19 @@
+{
+  "name": "@setremote/relay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SetRemote : relais WebSocket auto-hébergé (salles par topic opaque, trames chiffrées de bout en bout relayées telles quelles, aucun journal). Voir docs/BROKER.md et relay/deploy/README.md.",
+  "type": "module",
+  "main": "./server.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "dependencies": {
+    "ws": "8.22.0"
+  },
+  "license": "UNLICENSED"
+}

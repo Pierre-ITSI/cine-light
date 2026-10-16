@@ -12,9 +12,11 @@
     "check:equivalence": "node web/check-equivalence.mjs --ref 28ccb1d",
     "test": "node web/build.mjs --check && node --test --test-concurrency=2 \"tests/*.test.mjs\"",
     "test:update-snapshots": "UPDATE_SNAPSHOTS=1 node --test tests/visual.test.mjs",
-    "test:dmx": "node --test \"packages/dmx/test/*.test.js\""
+    "test:dmx": "node --test \"packages/dmx/test/*.test.js\"",
+    "test:relay": "node --test \"relay/test/*.test.js\""
   },
   "devDependencies": {
-    "playwright": "1.56.1"
+    "playwright": "1.56.1",
+    "ws": "8.22.0"
   }
 }
