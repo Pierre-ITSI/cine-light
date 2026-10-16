@@ -34,10 +34,10 @@ const screenCall = (m, after) => async (page) => {
   await page.clock.runFor(1200);
   if (after) { await after(page); await page.clock.runFor(1200); }
 };
-const scrollTo = (id) => (page) => page.evaluate((id) => {
+const scrollTo = (id, top = 120) => (page) => page.evaluate(([id, top]) => {
   const el = document.getElementById(id);
-  document.getElementById('remote-mode').scrollTop += el.getBoundingClientRect().top - 120;
-}, id);
+  document.getElementById('remote-mode').scrollTop += el.getBoundingClientRect().top - top;
+}, [id, top]);
 
 // ── Sonneries importées (maquette 12) ──
 // Vrais sons WAV (sinusoïdes) importés par le chemin de l'app (type, décodage,
@@ -215,6 +215,11 @@ export const SCENES = {
       setCallListKind('call');
     });
     await scrollTo('callListPanel')(page);
+  }),
+  // 11 · Avertissement stroboscope : interrupteur ouvert derrière la boîte
+  'remote-strobe-warning': remote(null, async (page) => {
+    await scrollTo('strobeToggle', 96)(page);
+    await page.evaluate(() => { document.getElementById('strobeToggle').checked = true; onStrobeToggle(); });
   }),
   'screen-effect-police': async (page) => {
     await joinScreen(page);

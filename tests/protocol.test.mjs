@@ -323,6 +323,7 @@ describe('resynchronisation télécommande → écran', () => {
       toggleBlackout();
       const b = document.getElementById('screenBrightnessSlider'); b.value = 40; onScreenBrightnessChange();
       selectEffect('chaser');
+      setFlashWarningSkipped(true); // avertissement photosensibilité déjà accepté pour la session
       document.getElementById('strobeToggle').checked = true; onStrobeToggle();
       setAutoAdvance(true); setVideoEndMode('pause');
       const mk = (col) => new Promise((res) => { const c = document.createElement('canvas'); c.width = 64; c.height = 40; const g = c.getContext('2d'); g.fillStyle = col; g.fillRect(0, 0, 64, 40); c.toBlob((bl) => res(new File([bl], col.slice(1) + '.png', { type: 'image/png' })), 'image/png'); });

@@ -163,9 +163,11 @@ test('émission : valeurs bornées aux plages du schéma, curseurs inchangés, a
   const page = (await openPage(browser, { autoConnect: true })).page;
   await page.evaluate(() => startMode('remote'));
   await connected(page);
-  // Curseurs d'origine conservés (flash dès 5 ms)
-  assert.deepEqual(await page.evaluate(() => ['flashDurSlider', 'flashDurMaxSlider'].map((id) => document.getElementById(id).min)), ['5', '5']);
+  // Curseurs alignés sur les plafonds (flash ≥ 15 ms, ≤ 30 Hz) ; le bornage à
+  // l'émission reste le filet de sécurité (valeurs forgées, anciennes mémoires)
+  assert.deepEqual(await page.evaluate(() => ['flashDurSlider', 'flashDurMaxSlider'].map((id) => document.getElementById(id).min)), ['15', '15']);
   await page.evaluate(() => {
+    setFlashWarningSkipped(true); // avertissement photosensibilité déjà accepté pour la session
     mqttClient.published.length = 0;
     strobeMode = 'random'; strobeFreq = 50; strobeFlashDur = 5; strobeFreqMax = 0.01; strobeFlashDurMax = 9000;
     document.getElementById('strobeToggle').checked = true; onStrobeToggle();

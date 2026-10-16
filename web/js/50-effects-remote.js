@@ -174,8 +174,10 @@ function _setupEffectOpt(blockId, show) {
   return !!show;
 }
 
-function selectEffect(name) {
+function selectEffect(name, acked) {
   if (activeScreenEffect === name) { stopAllEffects(); return; }
+  // Effet à flashs rapides : avertissement photosensibilité d'abord (46-strobe-warning.js)
+  if (!acked && needsFlashWarning('effect', name)) { openFlashWarning(() => selectEffect(name, true)); return; }
   activeScreenEffect = name;
   document.querySelectorAll('.effect-card').forEach(b => b.classList.remove('active'));
   const card = document.getElementById('efxcard-' + name);

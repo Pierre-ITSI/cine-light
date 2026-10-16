@@ -126,7 +126,9 @@ function onTorchDimChange() {
   sendMsg({ type:'torch-dim', level });
 }
 
-function sendTorchEffect(effect) {
+function sendTorchEffect(effect, acked) {
+  // Clignotement rapide de la torche : avertissement photosensibilité d'abord (46-strobe-warning.js)
+  if (!acked && needsFlashWarning('torch', effect)) { openFlashWarning(() => sendTorchEffect(effect, true)); return; }
   stopActiveEffect();
   if (effect === 'stop') { sendMsg({ type:'torch-effect', effect:'stop' }); return; }
   activeEffect = effect;

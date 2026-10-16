@@ -283,7 +283,7 @@
       </div>
       <div class="slider-block">
         <div class="slider-header"><label id="durLabel">Durée du flash</label><div class="slider-val" id="flashDurVal">50<span> ms</span></div></div>
-        <input type="range" id="flashDurSlider" min="5" max="500" step="5" value="50" oninput="onStrobeParamChange()">
+        <input type="range" id="flashDurSlider" min="15" max="500" step="5" value="50" oninput="onStrobeParamChange()">
       </div>
       <div id="randomOptions" style="display:none">
         <div style="height:1px;background:var(--border);margin:4px 0 14px"></div>
@@ -294,7 +294,7 @@
         </div>
         <div class="slider-block">
           <div class="slider-header"><label>Durée flash max</label><div class="slider-val" id="flashDurMaxVal">200<span> ms</span></div></div>
-          <input type="range" id="flashDurMaxSlider" min="5" max="500" step="5" value="200" oninput="onStrobeParamChange()">
+          <input type="range" id="flashDurMaxSlider" min="15" max="500" step="5" value="200" oninput="onStrobeParamChange()">
         </div>
       </div>
       <div class="strobe-preview">Aperçu local<div class="strobe-flash" id="strobeFlashPreview"></div></div>
@@ -890,6 +890,23 @@
     <div class="gw-ctable" id="gwChRows"></div>
     <div class="gw-rule" id="gwChNote">Effet, média, appel, SMS : n × 10 à n × 10 + 9 choisit le n°. 1–9 et valeurs hors liste : sans effet. Appel et SMS se déclenchent une fois, à l'entrée dans la plage.</div>
   </section>
+</div>
+
+<!-- Avertissement photosensibilité avant le stroboscope et les effets à flashs rapides (maquette 11) -->
+<div id="strobe-warn">
+  <div class="sw-dialog" role="alertdialog" aria-modal="true" aria-labelledby="swTitle" aria-describedby="swDesc">
+    <div class="sw-head">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ffc440" stroke-width="1.8" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5"/><circle cx="12" cy="18" r="0.6" fill="#ffc440"/></svg>
+      <h2 id="swTitle">Lumière stroboscopique</h2>
+    </div>
+    <p class="sw-text" id="swDesc">Les flashs rapides peuvent déclencher des crises chez les personnes photosensibles. Prévenez l'équipe et les comédiens avant de lancer l'effet.</p>
+    <div class="sw-limits" id="swLimits">Fréquence limitée à <b>30&nbsp;Hz</b> · flash de <b>15&nbsp;ms</b> minimum.</div>
+    <label class="sw-skip"><input type="checkbox" id="swSkip">Ne plus demander pour ce projet</label>
+    <div class="sw-actions">
+      <button type="button" class="sw-cancel" id="swCancel" onclick="flashWarningAnswer(false)">Annuler</button>
+      <button type="button" class="sw-ok" id="swOk" onclick="flashWarningAnswer(true)">Activer</button>
+    </div>
+  </div>
 </div>
 
 <!-- Vérification du nombre (appairage par code), sur la télécommande comme sur l'écran -->

@@ -292,6 +292,23 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .torch-level-bar{height:8px;border-radius:4px;background:linear-gradient(to right,#333,#ffe664);margin-bottom:14px;overflow:hidden;position:relative}
 .torch-level-fill{height:100%;background:#ffe664;border-radius:4px;transition:width .1s;box-shadow:0 0 8px rgba(255,230,100,.5)}
 
+/* ══ Avertissement stroboscope (maquette validée 11) ══
+   Préfixe sw- propre à la boîte ; au-dessus de toutes les vues de la télécommande. */
+#strobe-warn{display:none;position:fixed;inset:0;z-index:650;background:rgba(0,0,0,.62);font-family:'DM Mono',monospace;color:var(--text)}
+.sw-dialog{position:absolute;left:18px;right:18px;top:140px;max-width:420px;margin:0 auto;background:var(--mid);border:1px solid rgba(255,196,64,.45);border-radius:16px;padding:24px 20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.sw-head{display:flex;align-items:center;gap:12px}
+.sw-head svg{flex-shrink:0}
+.sw-head h2{margin:0;font-family:'Lato',sans-serif;font-weight:600;font-size:1.25rem}
+.sw-text{margin:0;font-size:.75rem;color:#d0d0d0;line-height:1.65}
+.sw-limits{background:var(--mid2);border-radius:8px;padding:10px 12px;font-size:.6875rem;color:#c4c4c4;line-height:1.6}
+.sw-limits b{color:var(--text)}
+.sw-skip{display:flex;align-items:center;gap:10px;min-height:44px;font-size:.75rem;cursor:pointer}
+.sw-skip input{width:20px;height:20px;margin:0;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
+.sw-actions{display:flex;gap:10px}
+.sw-cancel,.sw-ok{height:50px;border-radius:8px;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.sw-cancel{flex:1;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text)}
+.sw-ok{flex:1.3;border:none;background:var(--accent);color:#000;font-weight:500}
+@media (max-height:640px){.sw-dialog{top:24px}}
 /* EFFECTS TAB */
 .fx-family{font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
 .fx-family:first-of-type{margin-top:0}
@@ -962,7 +979,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       </div>
       <div class="slider-block">
         <div class="slider-header"><label id="durLabel">Durée du flash</label><div class="slider-val" id="flashDurVal">50<span> ms</span></div></div>
-        <input type="range" id="flashDurSlider" min="5" max="500" step="5" value="50" oninput="onStrobeParamChange()">
+        <input type="range" id="flashDurSlider" min="15" max="500" step="5" value="50" oninput="onStrobeParamChange()">
       </div>
       <div id="randomOptions" style="display:none">
         <div style="height:1px;background:var(--border);margin:4px 0 14px"></div>
@@ -973,7 +990,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
         </div>
         <div class="slider-block">
           <div class="slider-header"><label>Durée flash max</label><div class="slider-val" id="flashDurMaxVal">200<span> ms</span></div></div>
-          <input type="range" id="flashDurMaxSlider" min="5" max="500" step="5" value="200" oninput="onStrobeParamChange()">
+          <input type="range" id="flashDurMaxSlider" min="15" max="500" step="5" value="200" oninput="onStrobeParamChange()">
         </div>
       </div>
       <div class="strobe-preview">Aperçu local<div class="strobe-flash" id="strobeFlashPreview"></div></div>
@@ -1569,6 +1586,23 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
     <div class="gw-ctable" id="gwChRows"></div>
     <div class="gw-rule" id="gwChNote">Effet, média, appel, SMS : n × 10 à n × 10 + 9 choisit le n°. 1–9 et valeurs hors liste : sans effet. Appel et SMS se déclenchent une fois, à l'entrée dans la plage.</div>
   </section>
+</div>
+
+<!-- Avertissement photosensibilité avant le stroboscope et les effets à flashs rapides (maquette 11) -->
+<div id="strobe-warn">
+  <div class="sw-dialog" role="alertdialog" aria-modal="true" aria-labelledby="swTitle" aria-describedby="swDesc">
+    <div class="sw-head">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ffc440" stroke-width="1.8" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5"/><circle cx="12" cy="18" r="0.6" fill="#ffc440"/></svg>
+      <h2 id="swTitle">Lumière stroboscopique</h2>
+    </div>
+    <p class="sw-text" id="swDesc">Les flashs rapides peuvent déclencher des crises chez les personnes photosensibles. Prévenez l'équipe et les comédiens avant de lancer l'effet.</p>
+    <div class="sw-limits" id="swLimits">Fréquence limitée à <b>30&nbsp;Hz</b> · flash de <b>15&nbsp;ms</b> minimum.</div>
+    <label class="sw-skip"><input type="checkbox" id="swSkip">Ne plus demander pour ce projet</label>
+    <div class="sw-actions">
+      <button type="button" class="sw-cancel" id="swCancel" onclick="flashWarningAnswer(false)">Annuler</button>
+      <button type="button" class="sw-ok" id="swOk" onclick="flashWarningAnswer(true)">Activer</button>
+    </div>
+  </div>
 </div>
 
 <!-- Vérification du nombre (appairage par code), sur la télécommande comme sur l'écran -->
@@ -5765,8 +5799,9 @@ function dispatchMessage(msg) {
 
 // ── Émission : bornage aux plages du schéma AVANT scellement ──
 // Le schéma du paquet protocole REJETTE une valeur hors plage (ex. flash de
-// 5 ms) là où le récepteur la bornait : l'émetteur borne donc lui-même, sans
-// toucher aux curseurs de l'interface (flash ≥ 15 ms, strobe ≤ 30 Hz…).
+// 5 ms) là où le récepteur la bornait : l'émetteur borne donc lui-même (flash
+// ≥ 15 ms, strobe ≤ 30 Hz…). Les curseurs du strobe suivent ces plafonds ;
+// ce bornage reste le filet de sécurité (anciennes mémoires, valeurs forgées).
 const _OUT_EFFECT_INT = { intensity: [0, 100], chaos: [0, 100], drift: [0, 100], smooth: [0, 100],
   count: [1, 32], width: [1, 100], wing: [1, 4], rot: [0, 360], lead: [0, 1000], fade: [0, 1000] };
 function clampOutgoing(m) {
@@ -7124,8 +7159,15 @@ function setStrobeMode(m) {
   document.getElementById('durLabel').textContent=m==='random'?'Durée flash min':'Durée du flash';
   if(strobeActive){sendMsg(buildStrobePayload());runLocalStrobePreview();}
 }
-function onStrobeToggle() {
-  strobeActive=document.getElementById('strobeToggle').checked;
+function onStrobeToggle(acked) {
+  const tog=document.getElementById('strobeToggle');
+  // Activation : avertissement photosensibilité d'abord (46-strobe-warning.js),
+  // l'interrupteur reste ouvert derrière la boîte (maquette 11)
+  if(tog.checked&&!strobeActive&&!acked&&needsFlashWarning('strobe')){
+    openFlashWarning(()=>{tog.checked=true;onStrobeToggle(true);},()=>{tog.checked=false;});
+    return;
+  }
+  strobeActive=tog.checked;
   document.getElementById('strobeActiveBadge').style.display=strobeActive?'block':'none';
   if(strobeActive){sendMsg(buildStrobePayload());runLocalStrobePreview();}else stopStrobe();
 }
@@ -7176,6 +7218,83 @@ function stopLocalStrobePreview(){
   refreshPreviewFx(); // aperçu : reprend l'effet en cours ou la couleur de base
 }
 
+// ══════════════════════════ AVERTISSEMENT STROBOSCOPE (maquette 11) ══════════════════════════
+// Avertissement photosensibilité affiché AVANT d'activer, depuis la
+// télécommande, le stroboscope ou un effet à flashs rapides : « Annuler »
+// n'envoie rien, « Activer » lance l'action demandée. Points d'entrée :
+// interrupteur Stroboscope (45-strobe.js), cartes d'effets (50-effects-remote.js),
+// mémoires de couleur avec strobe et mémoires d'effets (62-memories.js),
+// effets de la torche (66-torch-flash.js).
+//
+// Effets concernés : ceux dont le rendu (55-effects-engine.js) enchaîne, dès
+// leurs réglages par défaut, des flashs d'ensemble à plus de 3 par seconde
+// (seuil « trois flashs » des WCAG 2.3.1 et de la recommandation UIT-R BT.1702) :
+//   police     moitiés d'écran alternant rouge saturé / bleu, 2 × vitesse
+//              changements par seconde (6/s par défaut, jusqu'à 16/s)
+//   lightning  « Éclair » : pendant chaque coup, scintillement ≈ 10 Hz
+//              (sin 60 t) et tirage à chaque image, blanc sur quasi-noir
+//   paparazzi  rafales de 1 à 10 flashs blancs de 30 à 80 ms espacés de
+//              90 à 220 ms (≈ 5 à 8 flashs/s dans la rafale)
+//   weld       « Soudure » : arc allumé ou éteint au hasard à chaque image
+//              pendant 0,3 à 1,5 s (jusqu'à la moitié de la cadence d'image)
+//   neon       « Néon HS » : bégaiement ≈ 9 Hz (sin 55 t), extinctions brusques
+// Non concernés : variations lentes ou fondues (Bougie, Feu, Aurora,
+// Caustiques, Phares), motifs locaux sans flash d'ensemble (Chaser, Noise),
+// TV (palette et lissage choisis par l'opérateur ; par défaut deux teintes de
+// luminance voisine, fondues), Pulse BPM (sinusoïde, 1 Hz par défaut ; plus de
+// 3 cycles/s seulement au-delà de 180 BPM : limite connue, non bloquante).
+// Torche LED de l'écran de jeu (onglet Flash) : « Clignotement rapide »
+// (80/80 ms ≈ 6 flashs/s) et « Police » (rafales à 10 Hz) ; SOS, lent et
+// battement restent à 3 flashs/s au plus.
+//
+// Passerelle DMX : JAMAIS d'avertissement. La console pilote les écrans par
+// dmx:look sans passer par ces fonctions ; le pupitreur en est responsable
+// (docs/DMX.md § 3).
+//
+// « Ne plus demander pour ce projet » : les projets n'existent pas encore. Le
+// choix vaut pour la SESSION APPAIRÉE de la télécommande (son channelId) :
+// « Nouvelle session » ou « Oublier tous les écrans appairés » le remet à
+// zéro ; il deviendra un réglage du projet. Réglages › « Avertissement
+// stroboscope » le montre et le réactive. Coché puis « Annuler » : sans effet.
+const FLASH_RISK = Object.freeze({
+  effect: Object.freeze(['police', 'lightning', 'paparazzi', 'weld', 'neon']),
+  torch: Object.freeze(['blink-fast', 'police']),
+});
+const FLASH_WARN_KEY = 'setremote-strobe-warning-v1'; // { skip: channelId de la session }
+let _flashWarn = null; // { ok, cancel } tant que la boîte est affichée
+
+function _flashWarnSessionId() { return mode === 'remote' && _session ? _session.channelId : null; }
+// « Ne plus demander » coché pour la session appairée en cours ?
+function flashWarningSkipped() {
+  const id = _flashWarnSessionId();
+  if (!id) return false;
+  try { const o = JSON.parse(_lsGet(FLASH_WARN_KEY)); return !!o && o.skip === id; } catch (_) { return false; }
+}
+function setFlashWarningSkipped(on) {
+  const id = _flashWarnSessionId();
+  _lsSet(FLASH_WARN_KEY, on && id ? JSON.stringify({ skip: id }) : null);
+}
+// L'action doit-elle passer par l'avertissement ?
+//   'strobe' · 'effect', nom (EFFECT_CONFIG) · 'torch', effet de torche
+function needsFlashWarning(kind, name) {
+  if (kind !== 'strobe' && !(FLASH_RISK[kind] || []).includes(name)) return false;
+  return !flashWarningSkipped();
+}
+function openFlashWarning(onOk, onCancel) {
+  _flashWarn = { ok: onOk, cancel: onCancel || null };
+  document.getElementById('swSkip').checked = false;
+  document.getElementById('strobe-warn').style.display = 'block';
+}
+function flashWarningAnswer(ok) {
+  const w = _flashWarn;
+  _flashWarn = null;
+  const skip = document.getElementById('swSkip').checked;
+  document.getElementById('strobe-warn').style.display = 'none';
+  if (!w) return;
+  if (!ok) { if (w.cancel) w.cancel(); return; }
+  if (skip) setFlashWarningSkipped(true);
+  w.ok();
+}
 // ══════════════════════════ EFFECTS TAB — TÉLÉCOMMANDE ══════════════════════════
 let activeScreenEffect = null, effectSendTimer = null;
 let fxDir = 'h'; // direction du chaser
@@ -7352,8 +7471,10 @@ function _setupEffectOpt(blockId, show) {
   return !!show;
 }
 
-function selectEffect(name) {
+function selectEffect(name, acked) {
   if (activeScreenEffect === name) { stopAllEffects(); return; }
+  // Effet à flashs rapides : avertissement photosensibilité d'abord (46-strobe-warning.js)
+  if (!acked && needsFlashWarning('effect', name)) { openFlashWarning(() => selectEffect(name, true)); return; }
   activeScreenEffect = name;
   document.querySelectorAll('.effect-card').forEach(b => b.classList.remove('active'));
   const card = document.getElementById('efxcard-' + name);
@@ -8239,11 +8360,16 @@ function updateFxMemory() {
   persistFxMemories();
   renderFxMemories();
 }
-function applyFxMemory(id) {
+function applyFxMemory(id, acked) {
   const m = fxMemories.find(x => x.id === id);
   if (!m || !EFFECT_CONFIG[m.effect]) return;
+  // Rappel d'un effet à flashs rapides : avertissement d'abord (46-strobe-warning.js)
+  if (!acked && activeScreenEffect !== m.effect && needsFlashWarning('effect', m.effect)) {
+    openFlashWarning(() => applyFxMemory(id, true));
+    return;
+  }
   selectedFxMemId = id;
-  if (activeScreenEffect !== m.effect) { activeScreenEffect = null; selectEffect(m.effect); }
+  if (activeScreenEffect !== m.effect) { activeScreenEffect = null; selectEffect(m.effect, true); }
   loadEffectParamsToUI(m.effect, m.params || {}, m.dir);
   renderFxMemories();
 }
@@ -8305,16 +8431,13 @@ function applyStrobeState(s){
   if(!s) return;
   // Couper d'abord pour neutraliser l'envoi interne de setStrobeMode.
   strobeActive=false;
-  strobeFreq=s.freq; strobeFlashDur=s.dur; strobeFreqMax=s.freqMax; strobeFlashDurMax=s.durMax;
-  let el;
-  el=document.getElementById('freqSlider');       if(el) el.value=strobeFreq;
-  el=document.getElementById('flashDurSlider');    if(el) el.value=strobeFlashDur;
-  el=document.getElementById('freqMaxSlider');     if(el) el.value=strobeFreqMax;
-  el=document.getElementById('flashDurMaxSlider'); if(el) el.value=strobeFlashDurMax;
-  el=document.getElementById('freqVal');        if(el) el.innerHTML=strobeFreq.toFixed(1)+'<span> Hz</span>';
-  el=document.getElementById('flashDurVal');    if(el) el.innerHTML=strobeFlashDur+'<span> ms</span>';
-  el=document.getElementById('freqMaxVal');     if(el) el.innerHTML=strobeFreqMax.toFixed(1)+'<span> Hz</span>';
-  el=document.getElementById('flashDurMaxVal'); if(el) el.innerHTML=strobeFlashDurMax+'<span> ms</span>';
+  document.getElementById('freqSlider').value=s.freq;
+  document.getElementById('flashDurSlider').value=s.dur;
+  document.getElementById('freqMaxSlider').value=s.freqMax;
+  document.getElementById('flashDurMaxSlider').value=s.durMax;
+  // Valeurs relues sur les curseurs, donc bornées à leurs plages : une
+  // mémoire d'avant le plancher de 15 ms (flash de 5 ms) revient à 15 ms.
+  onStrobeParamChange();
   const ts=document.getElementById('torchSyncToggle'); if(ts) ts.checked=!!s.torch;
   setStrobeMode(s.random?'random':'regular');
   // Appliquer l'état actif/inactif réel et (re)diffuser.
@@ -8360,8 +8483,13 @@ function updateColorMemory(){
   m.spec=currentColorSpec(); m.strobe=currentStrobeState();
   persistColorMemories(); renderColorMemories();
 }
-function applyColorMemory(id){
+function applyColorMemory(id,acked){
   const m=colorMemories.find(x=>x.id===id); if(!m) return;
+  // Mémoire qui allume le strobe : avertissement d'abord (46-strobe-warning.js)
+  if(!acked&&m.strobe&&m.strobe.active&&!strobeActive&&needsFlashWarning('strobe')){
+    openFlashWarning(()=>applyColorMemory(id,true));
+    return;
+  }
   selectedMemoryId=id; applyColorState(m.spec); applyStrobeState(m.strobe); renderColorMemories();
 }
 function deleteColorMemory(id){
@@ -8577,7 +8705,9 @@ function onTorchDimChange() {
   sendMsg({ type:'torch-dim', level });
 }
 
-function sendTorchEffect(effect) {
+function sendTorchEffect(effect, acked) {
+  // Clignotement rapide de la torche : avertissement photosensibilité d'abord (46-strobe-warning.js)
+  if (!acked && needsFlashWarning('torch', effect)) { openFlashWarning(() => sendTorchEffect(effect, true)); return; }
   stopActiveEffect();
   if (effect === 'stop') { sendMsg({ type:'torch-effect', effect:'stop' }); return; }
   activeEffect = effect;

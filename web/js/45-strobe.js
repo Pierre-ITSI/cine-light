@@ -8,8 +8,15 @@ function setStrobeMode(m) {
   document.getElementById('durLabel').textContent=m==='random'?'Durée flash min':'Durée du flash';
   if(strobeActive){sendMsg(buildStrobePayload());runLocalStrobePreview();}
 }
-function onStrobeToggle() {
-  strobeActive=document.getElementById('strobeToggle').checked;
+function onStrobeToggle(acked) {
+  const tog=document.getElementById('strobeToggle');
+  // Activation : avertissement photosensibilité d'abord (46-strobe-warning.js),
+  // l'interrupteur reste ouvert derrière la boîte (maquette 11)
+  if(tog.checked&&!strobeActive&&!acked&&needsFlashWarning('strobe')){
+    openFlashWarning(()=>{tog.checked=true;onStrobeToggle(true);},()=>{tog.checked=false;});
+    return;
+  }
+  strobeActive=tog.checked;
   document.getElementById('strobeActiveBadge').style.display=strobeActive?'block':'none';
   if(strobeActive){sendMsg(buildStrobePayload());runLocalStrobePreview();}else stopStrobe();
 }

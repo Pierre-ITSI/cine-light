@@ -37,6 +37,16 @@ Règles communes à toutes les personnalités :
   flash est automatique : la moitié de la période, entre 15 et 50 ms. ⚠️
   Prévenir l'équipe et le public : les stroboscopes entre 3 et 30 Hz peuvent
   déclencher des crises chez les personnes photosensibles.
+- **Avertissement photosensibilité : jamais sur le chemin console.** Sur la
+  télécommande, une boîte d'avertissement précède l'activation du strobe et
+  des effets à flashs rapides (Police, Éclair, Paparazzi, Soudure, Néon HS,
+  clignotements rapides de la torche ; maquette 11, `web/js/46-strobe-warning.js`).
+  La passerelle, elle, n'affiche **rien** : un strobe ou un effet demandé par
+  la console (canal Strobe, canal Effet de l'Étendu 16) part aussitôt vers les
+  écrans patchés, sans confirmation, comme sur n'importe quel projecteur. Le
+  **pupitreur** en est responsable : il prévient l'équipe et le public avant
+  de programmer un strobe ou un effet clignotant. Le choix « Ne plus demander »
+  de la télécommande n'a aucun effet sur la console, et inversement.
 - **CCT** : 0 → 255 sur la plage de l'app, **1700 → 20000 K**
   (`K = round(1700 + v/255 × 18300)`) ; 21 ≈ 3200 K, 54 ≈ 5600 K.
 - **Tint** : 0 = magenta maximal (−100), **128 = neutre**, 255 = vert

@@ -40,8 +40,13 @@ test('chaque effet : sélection, réglages, aperçu et rendu canvas sans erreur'
   await page.evaluate(() => { startMode('remote'); switchTab('effects'); });
   const keys = await page.evaluate(() => Object.keys(EFFECT_CONFIG));
   assert.equal(keys.length, 14);
+  const flashing = await page.evaluate(() => [...FLASH_RISK.effect]);
   for (const key of keys) {
     await page.click('#efxcard-' + key);
+    // Effets à flashs rapides : avertissement photosensibilité, puis « Activer »
+    const warned = await page.evaluate(() => getComputedStyle(document.getElementById('strobe-warn')).display === 'block');
+    assert.equal(warned, flashing.includes(key), 'avertissement pour ' + key);
+    if (warned) await page.click('#swOk');
     const ui = await page.evaluate((key) => {
       const cfg = EFFECT_CONFIG[key], sl = document.getElementById('effectSpeedSlider');
       return {

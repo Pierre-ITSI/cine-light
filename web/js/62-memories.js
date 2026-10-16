@@ -30,11 +30,16 @@ function updateFxMemory() {
   persistFxMemories();
   renderFxMemories();
 }
-function applyFxMemory(id) {
+function applyFxMemory(id, acked) {
   const m = fxMemories.find(x => x.id === id);
   if (!m || !EFFECT_CONFIG[m.effect]) return;
+  // Rappel d'un effet à flashs rapides : avertissement d'abord (46-strobe-warning.js)
+  if (!acked && activeScreenEffect !== m.effect && needsFlashWarning('effect', m.effect)) {
+    openFlashWarning(() => applyFxMemory(id, true));
+    return;
+  }
   selectedFxMemId = id;
-  if (activeScreenEffect !== m.effect) { activeScreenEffect = null; selectEffect(m.effect); }
+  if (activeScreenEffect !== m.effect) { activeScreenEffect = null; selectEffect(m.effect, true); }
   loadEffectParamsToUI(m.effect, m.params || {}, m.dir);
   renderFxMemories();
 }
@@ -96,16 +101,13 @@ function applyStrobeState(s){
   if(!s) return;
   // Couper d'abord pour neutraliser l'envoi interne de setStrobeMode.
   strobeActive=false;
-  strobeFreq=s.freq; strobeFlashDur=s.dur; strobeFreqMax=s.freqMax; strobeFlashDurMax=s.durMax;
-  let el;
-  el=document.getElementById('freqSlider');       if(el) el.value=strobeFreq;
-  el=document.getElementById('flashDurSlider');    if(el) el.value=strobeFlashDur;
-  el=document.getElementById('freqMaxSlider');     if(el) el.value=strobeFreqMax;
-  el=document.getElementById('flashDurMaxSlider'); if(el) el.value=strobeFlashDurMax;
-  el=document.getElementById('freqVal');        if(el) el.innerHTML=strobeFreq.toFixed(1)+'<span> Hz</span>';
-  el=document.getElementById('flashDurVal');    if(el) el.innerHTML=strobeFlashDur+'<span> ms</span>';
-  el=document.getElementById('freqMaxVal');     if(el) el.innerHTML=strobeFreqMax.toFixed(1)+'<span> Hz</span>';
-  el=document.getElementById('flashDurMaxVal'); if(el) el.innerHTML=strobeFlashDurMax+'<span> ms</span>';
+  document.getElementById('freqSlider').value=s.freq;
+  document.getElementById('flashDurSlider').value=s.dur;
+  document.getElementById('freqMaxSlider').value=s.freqMax;
+  document.getElementById('flashDurMaxSlider').value=s.durMax;
+  // Valeurs relues sur les curseurs, donc bornées à leurs plages : une
+  // mémoire d'avant le plancher de 15 ms (flash de 5 ms) revient à 15 ms.
+  onStrobeParamChange();
   const ts=document.getElementById('torchSyncToggle'); if(ts) ts.checked=!!s.torch;
   setStrobeMode(s.random?'random':'regular');
   // Appliquer l'état actif/inactif réel et (re)diffuser.
@@ -151,8 +153,13 @@ function updateColorMemory(){
   m.spec=currentColorSpec(); m.strobe=currentStrobeState();
   persistColorMemories(); renderColorMemories();
 }
-function applyColorMemory(id){
+function applyColorMemory(id,acked){
   const m=colorMemories.find(x=>x.id===id); if(!m) return;
+  // Mémoire qui allume le strobe : avertissement d'abord (46-strobe-warning.js)
+  if(!acked&&m.strobe&&m.strobe.active&&!strobeActive&&needsFlashWarning('strobe')){
+    openFlashWarning(()=>applyColorMemory(id,true));
+    return;
+  }
   selectedMemoryId=id; applyColorState(m.spec); applyStrobeState(m.strobe); renderColorMemories();
 }
 function deleteColorMemory(id){

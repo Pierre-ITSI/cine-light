@@ -261,8 +261,9 @@ function dispatchMessage(msg) {
 
 // ── Émission : bornage aux plages du schéma AVANT scellement ──
 // Le schéma du paquet protocole REJETTE une valeur hors plage (ex. flash de
-// 5 ms) là où le récepteur la bornait : l'émetteur borne donc lui-même, sans
-// toucher aux curseurs de l'interface (flash ≥ 15 ms, strobe ≤ 30 Hz…).
+// 5 ms) là où le récepteur la bornait : l'émetteur borne donc lui-même (flash
+// ≥ 15 ms, strobe ≤ 30 Hz…). Les curseurs du strobe suivent ces plafonds ;
+// ce bornage reste le filet de sécurité (anciennes mémoires, valeurs forgées).
 const _OUT_EFFECT_INT = { intensity: [0, 100], chaos: [0, 100], drift: [0, 100], smooth: [0, 100],
   count: [1, 32], width: [1, 100], wing: [1, 4], rot: [0, 360], lead: [0, 1000], fade: [0, 1000] };
 function clampOutgoing(m) {
