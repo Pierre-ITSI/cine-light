@@ -12336,7 +12336,7 @@ function ringGatewayIds() {
 // Passerelle DMX : sons des entrées 1 à 20 envoyés d'avance (au démarrage, à chaque modification de liste)
 function ringPreloadGatewayEntries() {
   const ids = ringGatewayIds();
-  if (ids.length) ensureCallAssets(null, null, ids);
+  if (ids.length) ensureCallAssets(null, null, ids, scrList()); // tous les écrans : la console peut viser chacun
 }
 // Un écran a reçu un appel avec un son qu'il n'a pas (rechargé, transfert perdu) :
 // renvoyé à lui seul (sid inconnu : aux écrans de la cible)
@@ -12548,7 +12548,10 @@ function callEntryMessage(e, assets) {
 async function sendCallEntry(e, targets) {
   const assets = await callEntryAssets(e);
   const base = callEntryMessage(e, assets);
-  await ensureCallAssets(assets.photo, assets.audio, base.ringId ? [base.ringId] : null);
+  // Photo, bande son, son importé : vers les écrans de l'appel (console : écrans
+  // patchés concernés ; bouton : cible de la télécommande)
+  const screens = targets ? [...new Set(targets.flatMap((t) => (t && Array.isArray(t.screens) ? t.screens : [])))] : undefined;
+  await ensureCallAssets(assets.photo, assets.audio, base.ringId ? [base.ringId] : null, screens);
   if (!targets) { sendMsg(base); return; }
   for (const t of targets) sendMsg(Object.assign({}, base, { target: t }));
 }

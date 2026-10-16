@@ -355,7 +355,7 @@ function ringGatewayIds() {
 // Passerelle DMX : sons des entrées 1 à 20 envoyés d'avance (au démarrage, à chaque modification de liste)
 function ringPreloadGatewayEntries() {
   const ids = ringGatewayIds();
-  if (ids.length) ensureCallAssets(null, null, ids);
+  if (ids.length) ensureCallAssets(null, null, ids, scrList()); // tous les écrans : la console peut viser chacun
 }
 // Un écran a reçu un appel avec un son qu'il n'a pas (rechargé, transfert perdu) :
 // renvoyé à lui seul (sid inconnu : aux écrans de la cible)

@@ -103,6 +103,9 @@ test('relais : appairage par code (rendez-vous), session commune, vidéo pair-à
   assert.deepEqual(await rp.evaluate(() => [_rtcTransferDone, _rtcBroken]), [true, false]);
   for (const p of [rp, sp]) assert.deepEqual(await p.evaluate(() => window.__ice), [{ urls: ['stun:127.0.0.1:3478'] }]);
   await waitFor(rp, () => !_rdvBackground.size, null, { timeout: 25000 }); // remise du secret terminée
+  // Le relais libère la salle à la fin de la fermeture WebSocket (asynchrone) :
+  // seule reste celle du code suivant
+  for (let i = 0; i < 100 && relay.stats().rdv_rooms > 1; i++) await sleep(20);
   assert.equal(relay.stats().rdv_rooms <= 1, true);
   assert.deepEqual(remote.errors, []); assert.deepEqual(screen.errors, []);
   await screen.close(); await remote.close();

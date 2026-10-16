@@ -125,7 +125,10 @@ function callEntryMessage(e, assets) {
 async function sendCallEntry(e, targets) {
   const assets = await callEntryAssets(e);
   const base = callEntryMessage(e, assets);
-  await ensureCallAssets(assets.photo, assets.audio, base.ringId ? [base.ringId] : null);
+  // Photo, bande son, son importé : vers les écrans de l'appel (console : écrans
+  // patchés concernés ; bouton : cible de la télécommande)
+  const screens = targets ? [...new Set(targets.flatMap((t) => (t && Array.isArray(t.screens) ? t.screens : [])))] : undefined;
+  await ensureCallAssets(assets.photo, assets.audio, base.ringId ? [base.ringId] : null, screens);
   if (!targets) { sendMsg(base); return; }
   for (const t of targets) sendMsg(Object.assign({}, base, { target: t }));
 }

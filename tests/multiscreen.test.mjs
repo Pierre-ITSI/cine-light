@@ -431,6 +431,23 @@ test('passerelle DMX : chaque look n\'atteint que son écran, la cible de la té
   // « Écrans connectés » : A et B sous la console
   await rp.evaluate(() => { closeDmxGateway(); openScreensView(); });
   assert.deepEqual(await rp.$$eval('#svList .sv-now', (els) => els.map((e) => e.textContent)).then((t) => t.slice(0, 2)), ['Console DMX', 'Console DMX']);
+  // Appel n° 1 déclenché pour A (comme par la console) alors que la cible est C :
+  // sa photo part vers A seul, avant l'appel
+  await rp.evaluate(async (c) => {
+    closeScreensView(); scrSetTarget({ k: 'screen', id: c });
+    switchTab('call'); setCallRing('silent');
+    const k = document.createElement('canvas'); k.width = k.height = 8; k.getContext('2d').fillRect(0, 0, 8, 8);
+    _callPhoto = k.toDataURL('image/jpeg', 0.7);
+    document.getElementById('callName').value = 'Régie';
+    await saveCurrentCall();
+  }, C.id);
+  r.broker.clear();
+  await rp.evaluate((a) => sendCallEntry(callList.call[0], [{ screens: [a] }]), A.id);
+  await waitFor(A.page, () => _callState === 'ringing' && _mediaCache.has('__callphoto'));
+  await r.broker.flush();
+  assert.deepEqual((await sentBy(r, 'media-img-start')).map((m) => [m.mediaId, m.target]), [['__callphoto', { screens: [A.id] }]]);
+  assert.deepEqual((await sentBy(r, 'call:start')).map((m) => m.target), [{ screens: [A.id] }]);
+  for (const s of [B, C]) assert.deepEqual(await s.page.evaluate(() => [_callState, _mediaCache.has('__callphoto')]), ['idle', false]);
   await rp.evaluate(() => gwStop());
   await waitFor(A.page, () => !screenDmxLive());
   noErrors(r);
