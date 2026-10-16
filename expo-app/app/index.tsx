@@ -9,6 +9,7 @@ import type { ShouldStartLoadRequest, WebViewNavigationEvent } from 'react-nativ
 import SetRemoteLink, { createLinkBridge, type LinkBridge } from '../modules/setremote-link';
 import SetRemoteUdp, { createDmxBridge, type DmxBridge } from '../modules/setremote-udp';
 import { createPdfPreviewer, type PdfPrintFn } from '../src/lib/pdfPreview';
+import { nativeBootstrapScript } from '../src/config';
 
 // Coque native de SetRemote : la PWA (fonctionnalités de référence) tourne dans
 // une vue web plein écran ; le natif apporte ce que le web ne sait pas faire :
@@ -39,12 +40,6 @@ const DEV_WEB_URL = __DEV__ ? (process.env.EXPO_PUBLIC_WEB_URL ?? '').trim() : '
 const LOCAL = DEV_WEB_URL === '';
 const DEV_ORIGIN = /^[a-z][a-z0-9+.-]*:\/\/[^/?#]*/i.exec(DEV_WEB_URL)?.[0] ?? '';
 
-// Adresse publique de la PWA, à destination des AUTRES appareils (QR code et
-// lien d'appairage ouverts dans un navigateur) : l'app ne la charge jamais.
-// L'interface embarquée ayant une URL file://, elle ne peut pas la déduire de
-// location ; elle la lit dans window.SETREMOTE_NATIVE.publicUrl.
-const PUBLIC_WEB_URL = 'https://pierre-itsi.github.io/cine-light/';
-
 function embeddedWeb(): { uri: string; readAccess?: string } {
   if (Platform.OS === 'android') return { uri: 'file:///android_asset/web/index.html' };
   // iOS : dossier du bundle .app, normalisé en URL file:// terminée par « / »
@@ -60,11 +55,8 @@ const SOURCE = { uri: WEB.uri };
 const ORIGIN_WHITELIST = ['file://*', 'http://*', 'https://*', 'about:*', 'blob:*', 'data:*'];
 
 // Exécuté avant le chargement de la page : la PWA sait qu'elle tourne dans
-// l'app (masque l'installation PWA, délègue la luminosité au natif).
-const INJECT_BEFORE = `
-  window.SETREMOTE_NATIVE = { platform: '${Platform.OS}', bridge: 1, publicUrl: '${PUBLIC_WEB_URL}' };
-  true;
-`;
+// l'app et connaît son adresse publique (PUBLIC_WEB_URL, src/config.ts).
+const INJECT_BEFORE = nativeBootstrapScript(Platform.OS);
 
 export default function AppShell() {
   useKeepAwake(); // l'écran de jeu comme la télécommande ne doivent jamais se mettre en veille

@@ -241,6 +241,39 @@ test('lien d\'appairage : adresse publique de la coque native, http(s) = origin 
   await context.close();
 });
 
+test('lien d\'appairage : PUBLIC_URL (01-config.js) remplace location, la coque native reste prioritaire', async () => {
+  const pairing = SRP.createPairing();
+  const NEW = 'https://set-remote.itsi-app.com/';
+  const cfg = (c, native) => ({
+    fn: ([c, n]) => { window.SETREMOTE_CONFIG = c; if (n) window.SETREMOTE_NATIVE = { platform: 'ios', bridge: 1, publicUrl: n }; },
+    arg: [c, native],
+  });
+  const linkOf = async (init) => {
+    const p = await openPage(browser, { init });
+    const r = await p.page.evaluate((x) => ({ cfg: PUBLIC_URL, base: pairingBaseUrl(), link: pairingLink(x) }), pairing);
+    assert.deepEqual(p.errors, []);
+    await p.close();
+    return r;
+  };
+  // Défaut : vide (comportement historique ; ici file:// → pas de lien)
+  assert.equal(defaultPublicUrl(), '', 'PUBLIC_URL vide par défaut dans 01-config.js');
+  assert.deepEqual(await linkOf(null), { cfg: '', base: null, link: null });
+  // Renseignée : base des liens même hors http(s)
+  const set = await linkOf(cfg({ PUBLIC_URL: NEW }));
+  assert.deepEqual([set.cfg, set.base, set.link], [NEW, NEW, SRP.pairingUrl(NEW, pairing)]);
+  // Coque native : son adresse l'emporte
+  const nat = await linkOf(cfg({ PUBLIC_URL: NEW }, PUBLIC_URL));
+  assert.equal(nat.base, PUBLIC_URL);
+  // Valeurs invalides ignorées (http, fragment, requête, identifiants, non-chaîne)
+  for (const bad of ['http://set-remote.itsi-app.com/', NEW + '#p=x', NEW + '?a=1', 'https://u@h.fr/', 'https://', 42]) {
+    assert.equal((await linkOf(cfg({ PUBLIC_URL: bad }))).cfg, '', String(bad));
+  }
+});
+
+function defaultPublicUrl() {
+  return /PUBLIC_URL:\s*'([^']*)'/.exec(readFileSync(path.join(ROOT, 'web/js/01-config.js'), 'utf8'))[1];
+}
+
 // Caméra simulée : flux vidéo d'un canvas où l'on dessine une image
 async function fakeCamera(page, link) {
   await page.evaluate((link) => {

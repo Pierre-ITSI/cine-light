@@ -95,13 +95,15 @@ function screenId() {
 
 // Adresse PUBLIQUE de l'app, base du lien d'appairage ouvert par les AUTRES
 // appareils. Dans l'app native, la page tourne en file:// : l'adresse vient
-// de la coque (window.SETREMOTE_NATIVE.publicUrl), jamais de location. Hors de
-// l'app, location n'est utilisable qu'en http(s). Sinon : null (pas de QR ;
-// l'appairage par code reste possible).
+// de la coque (window.SETREMOTE_NATIVE.publicUrl), jamais de location. Sinon
+// PUBLIC_URL (01-config.js) si elle est renseignée. Hors de l'app, location
+// n'est utilisable qu'en http(s). Sinon : null (pas de QR ; l'appairage par
+// code reste possible).
 function pairingBaseUrl() {
   const n = window.SETREMOTE_NATIVE;
   const pub = n && typeof n.publicUrl === 'string' ? n.publicUrl.trim() : '';
   if (/^https?:\/\/[^\s#]+$/i.test(pub)) return pub;
+  if (PUBLIC_URL) return PUBLIC_URL;
   if (location.protocol === 'https:' || location.protocol === 'http:') return location.origin + location.pathname;
   return null;
 }
