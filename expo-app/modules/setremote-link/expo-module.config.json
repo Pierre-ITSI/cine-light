@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["SetRemoteLinkModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.setremotelink.SetRemoteLinkModule"]
+  }
+}
