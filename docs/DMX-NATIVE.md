@@ -216,7 +216,8 @@ simple.
    maquette 18) à chaque modification (`setTriggerEntries`) ; une entrée
    déclenchée envoie d'abord sa photo / sa bande son (`__callphoto`,
    `__callaudio`) si elles diffèrent de celles en cache sur les écrans, puis
-   `call:start`.
+   `call:start`. Les sons importés des entrées 1 à 20 (`__ring_…`) sont
+   envoyés d'avance, au démarrage de la passerelle.
 8. **Liaison locale passerelle → écrans** pour les plateaux de plus de
    quelques écrans (§ 6).
 9. **Retirer l'ancien mode DMX** (3CH/9CH, pont WebSocket, plugin Capacitor

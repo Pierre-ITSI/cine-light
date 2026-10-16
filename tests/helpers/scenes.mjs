@@ -39,6 +39,37 @@ const scrollTo = (id) => (page) => page.evaluate((id) => {
   document.getElementById('remote-mode').scrollTop += el.getBoundingClientRect().top - 120;
 }, id);
 
+// ── Sonneries importées (maquette 12) ──
+// Vrais sons WAV (sinusoïdes) importés par le chemin de l'app (type, décodage,
+// IndexedDB) ; aucune minuterie en jeu : compatible avec l'horloge figée.
+function wavB64(sec, freq, rate = 8000) {
+  const n = Math.round(sec * rate), b = Buffer.alloc(44 + n * 2);
+  b.write('RIFF', 0); b.writeUInt32LE(36 + n * 2, 4); b.write('WAVE', 8); b.write('fmt ', 12);
+  b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22); b.writeUInt32LE(rate, 24);
+  b.writeUInt32LE(rate * 2, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34); b.write('data', 36); b.writeUInt32LE(n * 2, 40);
+  for (let i = 0; i < n; i++) b.writeInt16LE(Math.round(8000 * Math.sin(2 * Math.PI * freq * i / rate)), 44 + i * 2);
+  return b.toString('base64');
+}
+const importTones = (page) => page.evaluate(async (tones) => {
+  for (const [name, b64] of tones) {
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    await onRingImport([new File([bytes], name, { type: 'audio/wav' })]);
+  }
+}, [['sonnerie-prod.m4a', wavB64(12, 440)], ['vieux-telephone.mp3', wavB64(8, 660)]]);
+const ringScene = (kind) => remote('call', async (page) => {
+  await importTones(page);
+  await page.evaluate((kind) => {
+    setCallKind(kind);
+    selectRingTone(ringLib[kind === 'call' ? 0 : 1].id);
+    document.getElementById('ringVolSlider').value = kind === 'call' ? '80' : '60'; onRingVolume();
+    // Bande son du décroché arrivée sur l'écran (accusé media:cached)
+    _callAudioData = 'data:audio/mpeg;base64,AAAA'; _callAudioName = 'voix-maman.m4a'; _callAudioDur = 34;
+    _screenCached.add('__callaudio'); renderCallAudioRow();
+    _ringSetStatus('');
+  }, kind);
+  await scrollTo('callRingPanel')(page);
+});
+
 // ── Passerelle DMX (maquettes 14 à 18) ──
 // Scènes rendues « dans l'app native » : pont simulé (la passerelle exige l'UDP de la coque)
 const NATIVE_INIT = { fn: () => { window.SETREMOTE_NATIVE = { platform: 'ios', bridge: 1 }; window.ReactNativeWebView = { postMessage: () => {} }; } };
@@ -91,6 +122,10 @@ export const SCENES = {
   'remote-media': remote('media'),
   'remote-call': remote('call'),
   'remote-call-sms': remote('call', (page) => page.evaluate(() => { setCallKind('sms'); setCallStyle('tonal'); })),
+  // 12 · Sonnerie de l'appel : sons intégrés, « Vos sonneries », volume, bande son au décroché
+  'remote-call-ring': ringScene('call'),
+  // Son de notification d'un SMS (même bibliothèque, choix propre au type, sans décroché)
+  'remote-call-ring-sms': ringScene('sms'),
   'remote-qr': remote('qr'),
   // Liaison établie, deux écrans appairés dont un muet depuis plus de 40 s
   'remote-qr-screens': remote('qr', async (page) => {

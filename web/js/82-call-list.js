@@ -9,6 +9,9 @@
 //
 // Stockage : réglages en localStorage ; photos et bandes son (trop lourdes pour
 // localStorage) dans IndexedDB, à défaut en mémoire le temps de la session.
+// Son de l'entrée : choix du type au moment de l'enregistrement (son intégré
+// ring, ou son importé ringId de la bibliothèque commune 81-ringtones.js) et
+// son volume ringVolume ; un son importé supprimé depuis → son Classique.
 const CALL_LIST_KEY = 'setremote-call-list-v1';
 const CALL_LIST_MAX = 99;           // par liste
 const CALL_LIST_DMX_ITEMS = 20;     // entrées accessibles depuis la console
@@ -18,7 +21,7 @@ let callListKind = 'call';
 const _callListSel = { call: null, sms: null };
 
 const _CALL_STYLE_NAMES = { glass: 'Verre', tonal: 'Tonal', minimal: 'Épuré' };
-const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio'];
+const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio'];
 
 // ── Persistance ──
 function _clListOf(kind) { return kind === 'call' ? 'call' : 'sms'; }
@@ -27,6 +30,16 @@ function _clSanitize(e) {
   if (!['call', 'sms', 'chat'].includes(e.kind)) return null;
   const out = { id: e.id };
   for (const k of _CALL_ENTRY_FIELDS) if (e[k] !== undefined) out[k] = e[k];
+  // Son : valeurs reconnues seulement. Un SMS enregistré avant les sons par
+  // type (sans ringVolume) portait la sonnerie de l'appel, que l'écran
+  // ignorait : il garde son son d'origine (Classique).
+  if (out.kind !== 'call' && out.ringVolume === undefined) out.ring = 'classic';
+  if (out.ring !== undefined && !RING_BUILTINS.includes(out.ring)) out.ring = 'classic';
+  if (out.ringId !== undefined && !(typeof out.ringId === 'string' && SRP.RING_ID_RE.test(out.ringId))) delete out.ringId;
+  if (out.ringVolume !== undefined) {
+    if (typeof out.ringVolume === 'number' && Number.isFinite(out.ringVolume)) out.ringVolume = Math.min(1, Math.max(0, out.ringVolume));
+    else delete out.ringVolume;
+  }
   return out;
 }
 function loadCallList() {
@@ -97,20 +110,22 @@ async function callEntryAssets(e) {
 // Message call:start d'une entrée (mêmes champs que le formulaire)
 function callEntryMessage(e, assets) {
   const m = { type: 'call:start' };
-  for (const k of _CALL_ENTRY_FIELDS) if (e[k] !== undefined) m[k] = e[k];
+  for (const k of _CALL_ENTRY_FIELDS) if (e[k] !== undefined && k !== 'ring' && k !== 'ringId' && k !== 'ringVolume') m[k] = e[k];
+  // Son enregistré (un son importé supprimé depuis → son Classique)
+  Object.assign(m, ringMsgFields(e.ringId || e.ring, e.ringVolume));
   m.hasPhoto = !!(assets && assets.photo);
   m.hasAudio = !!(assets && assets.audio);
   if (m.kind !== 'call' && m.lock === undefined) m.lock = null;
   return m;
 }
 
-// Déclenche une entrée : photo / son d'abord (s'ils diffèrent de ceux déjà
-// en cache sur les écrans), puis l'appel. target : écrans visés (console),
-// absent = tous les écrans (bouton « Appeler n° X »).
+// Déclenche une entrée : photo / bande son / son importé d'abord (s'ils ne
+// sont pas déjà en cache sur les écrans), puis l'appel. target : écrans visés
+// (console), absent = tous les écrans (bouton « Appeler n° X »).
 async function sendCallEntry(e, targets) {
   const assets = await callEntryAssets(e);
-  await ensureCallAssets(assets.photo, assets.audio);
   const base = callEntryMessage(e, assets);
+  await ensureCallAssets(assets.photo, assets.audio, base.ringId ? [base.ringId] : null);
   if (!targets) { sendMsg(base); return; }
   for (const t of targets) sendMsg(Object.assign({}, base, { target: t }));
 }
@@ -125,6 +140,8 @@ function _clMeta(e) {
   if (e.kind === 'chat') parts.push('messagerie');
   if (e.hasPhoto) parts.push('photo');
   if (e.hasAudio) parts.push('bande son');
+  const tone = e.ringId ? ringName(e.ringId) : null; // son importé (s'il est encore dans la bibliothèque)
+  if (tone) parts.push('♪ ' + tone);
   if (e.kind === 'call' && e.autoAnswer > 0) parts.push('décroché auto ' + e.autoAnswer + ' s');
   if (e.lock) parts.push('écran verrouillé');
   if (e.kind === 'call' && e.present === 'banner') parts.push('bandeau');
@@ -182,7 +199,9 @@ async function saveCurrentCall() {
   const list = _clListOf(fields.kind);
   if (callList[list].length >= CALL_LIST_MAX) return null;
   const e = Object.assign({ id: 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }, fields);
-  // Réglages masqués pour ce type : non enregistrés (sonnerie et bande son
+  // Son du type au moment de l'enregistrement : volume toujours noté (100 % compris)
+  e.ringVolume = ringSettings[_ringKind(e.kind)].vol;
+  // Réglages masqués pour ce type : non enregistrés (bande son et décroché
   // n'existent que pour un appel, l'écran verrouillé que pour un message)
   if (e.kind === 'call') delete e.lock;
   else { e.autoAnswer = 0; e.hasAudio = false; delete e.present; delete e.photoMode; }
@@ -219,7 +238,7 @@ async function loadCallEntryIntoForm(e) {
   setCallStyle(_CALL_STYLE_NAMES[e.style] ? e.style : 'glass');
   setCallPresent(e.present === 'banner' ? 'banner' : 'full');
   setCallPhotoMode(e.photoMode === 'full' ? 'full' : 'avatar');
-  setCallRing(['classic', 'digital', 'soft', 'silent'].includes(e.ring) ? e.ring : 'classic');
+  ringApplyEntry(e); // son et volume de l'entrée pour son type
   val('callName', e.name || ''); val('callLabel', e.label || ''); val('callMsgText', e.msg || '');
   if (e.kind !== 'call') {
     val('callAppName', e.appName || ''); val('callAppColor', safeHexColor(e.appColor, '#2f8cf0'));
@@ -235,11 +254,15 @@ async function loadCallEntryIntoForm(e) {
   const pv = document.getElementById('callPhotoPreview');
   if (pv) pv.style.backgroundImage = _callPhoto ? 'url(' + _callPhoto + ')' : '';
   _callPhotoSending = _callPhoto ? ensureCallAssets(_callPhoto, null) : null;
-  _callAudioData = assets.audio;
-  const st = document.getElementById('callAudioStatus');
-  if (st) st.textContent = _callAudioData ? '✓ Bande son de l\'entrée prête — jouée au décroché.' : 'Aucune bande son — le décroché reste silencieux.';
-  const c = document.getElementById('callAudioClear');
-  if (c) c.style.display = _callAudioData ? 'inline-block' : 'none';
+  // Bande son : nom et durée gardés si c'est déjà celle du formulaire
+  const sameAudio = !!assets.audio && assets.audio === _callAudioData;
+  if (!sameAudio) {
+    _callAudioSeq++;
+    _callAudioData = assets.audio;
+    _callAudioName = _callAudioData ? 'Bande son de l\'entrée' : ''; _callAudioDur = 0;
+    if (_callAudioData) _measureCallAudio(_callAudioSeq);
+  }
+  renderCallAudioRow();
   if (_callAudioData) ensureCallAssets(null, _callAudioData);
 }
 

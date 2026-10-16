@@ -3,8 +3,10 @@ buildEffectCards();
 loadFxMemories();
 renderFxMemories();
 
-// ── Onglet Appel : état initial des options, appels et SMS enregistrés ──
+// ── Onglet Appel : état initial des options, sons par type (bibliothèque en
+// IndexedDB, chargée en arrière-plan), appels et SMS enregistrés ──
 _syncCallPhotoRow();
+ringInit();
 loadCallList();
 renderCallList();
 

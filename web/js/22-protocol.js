@@ -27,6 +27,8 @@ const _P = {
   hex: (v) => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v),
   // Identifiant de transfert / de média : [A-Za-z0-9_-], 1 à 64 caractères
   id: (v) => typeof v === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(v),
+  // Son importé : « __ring_ » + 16 hex (id dérivé du contenu, schéma du paquet protocole)
+  ringId: (v) => typeof v === 'string' && SRP.RING_ID_RE.test(v),
   bool: (v) => !!v,
 };
 
@@ -80,6 +82,9 @@ function _validCallStart(m) {
   // Sonnerie inconnue → classique (une clé comme « __proto__ » ne doit pas
   // fausser la cadence de répétition)
   if (!_P.oneOf(m.ring, PROTO.CALL_RINGS)) m.ring = 'classic';
+  // Son importé (__ring_…, préchargé en fragments) et volume du son
+  if (!_P.ringId(m.ringId)) m.ringId = null;
+  m.ringVolume = _P.num(m.ringVolume, 0, 1) ?? 1;
   m.lock = _P.isObj(m.lock)
     ? { time: _P.text(m.lock.time, PROTO.LOCK_TIME_MAX), date: _P.text(m.lock.date, PROTO.LOCK_DATE_MAX) }
     : null;
@@ -210,7 +215,7 @@ const MSG_ROUTES = {
     },
     handle: (m) => advancePool(m.dir),
   },
-  'media:cached':      { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => { _screenCached.add(m.id); _preloadInflight.delete(m.id); } },
+  'media:cached':      { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => { _screenCached.add(m.id); _preloadInflight.delete(m.id); remoteOnCallAssetCached(m.id); } },
   'media:chunkack': {
     roles: ['remote'],
     validate: (m) => _P.id(m.mediaId) && (m.got = _P.int(m.got, 0, PROTO.VID_MAX_CHUNKS) ?? 0, true),
@@ -303,6 +308,8 @@ function clampOutgoing(m) {
       if (_P.isObj(m.lock)) m.lock = { time: line(m.lock.time, PROTO.LOCK_TIME_MAX), date: line(m.lock.date, PROTO.LOCK_DATE_MAX) };
       if (m.appColor !== undefined && !_P.hex(m.appColor)) delete m.appColor;
       clampKeys(m, ['autoAnswer'], 0, 60, true);
+      clampKeys(m, ['ringVolume'], 0, 1);
+      if (m.ringId !== undefined && !_P.ringId(m.ringId)) delete m.ringId;
       break;
     }
   }

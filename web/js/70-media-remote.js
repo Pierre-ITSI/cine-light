@@ -369,7 +369,9 @@ function remoteOnScreenAdvanced(id) {
 }
 
 // L'écran ne possède pas ce média en cache : repli sur le transfert complet
+// (son importé d'un appel : renvoyé par 81-ringtones.js)
 function remoteOnScreenNeeds(id) {
+  if (SRP.RING_ID_RE.test(id)) { ringOnScreenNeeds(id); return; }
   _screenCached.delete(id);
   const it = _mediaPool.find(m => m.id === id);
   if (!it) return;

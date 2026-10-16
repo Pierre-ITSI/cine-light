@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { MESSAGE_TYPES, LIMITS, validate, explainInvalid, isAddressedTo } from '../schema.js';
+import { MESSAGE_TYPES, LIMITS, RING_ID_RE, validate, explainInvalid, isAddressedTo } from '../schema.js';
 import { MAX_MESSAGE_BYTES } from '../crypto.js';
 import { RENDEZVOUS_MESSAGE_TYPES } from '../pairing.js';
 import { utf8Encode } from '../lib/encoding.js';
@@ -56,6 +56,28 @@ test('plafonds strobe : ≤ 30 Hz et flash ≥ 15 ms (alignés sur PROTO de l’
   assert.equal(s({ random: true, freqMin: 1, freqMax: 31, durMin: 15, durMax: 20 }), false);
 });
 
+test('call:start : son intégré, son importé (ringId) et volume, champs facultatifs et stricts', () => {
+  const c = (/** @type {object} */ o) => validate({ type: 'call:start', kind: 'call', ...o }, { direction: 'r2s' });
+  assert.equal(c({}), true, 'sans champ de son : son intégré classique à 100 % (comportement d’avant)');
+  for (const ring of ['classic', 'digital', 'soft', 'silent']) assert.equal(c({ ring }), true, ring);
+  assert.equal(c({ ring: 'classic', ringId: '__ring_0123456789abcdef', ringVolume: 1 }), true);
+  assert.equal(c({ ringVolume: 0 }), true, 'volume 0 accepté (muet)');
+  assert.equal(c({ ringVolume: 1.0000001 }), false);
+  assert.equal(c({ ringVolume: null }), false, 'pas de null : champ absent = 100 %');
+  assert.equal(c({ ringId: null }), false, 'pas de null : champ absent = son intégré');
+  assert.equal(c({ ringId: '' }), false);
+  assert.equal(validate({ type: 'call:start', kind: 'sms', ring: 'soft', ringId: '__ring_ffffffffffffffff', ringVolume: 0.35 }), true, 'SMS : son de notification');
+  assert.ok(RING_ID_RE.test('__ring_0123456789abcdef'));
+  for (const bad of ['__ring_0123456789abcde', '__ring_0123456789abcdeg', '__RING_0123456789abcdef', 'x__ring_0123456789abcdef', '__ring_0123456789abcdef\n']) {
+    assert.equal(RING_ID_RE.test(bad), false, bad);
+    assert.equal(c({ ringId: bad }), false, bad);
+  }
+  // L'id d'un son importé est un id de média valide (cache, media:need, media:evict)
+  assert.equal(validate({ type: 'media:need', id: '__ring_0123456789abcdef' }, { direction: 's2r' }), true);
+  assert.equal(MESSAGE_TYPES['call:start'].fields.ringId.required, false);
+  assert.equal(MESSAGE_TYPES['call:start'].fields.ringVolume.required, false);
+});
+
 test('dmx:look (passerelle DMX) : sens r2s, look strict, target facultatif', () => {
   const look = { color: '#ff8800', strobe: { freq: 0.5, dur: 50 }, effect: { name: 'fire', speed: 3, intensity: 40 }, media: { index: 3, playback: 'pause' } };
   const ok = { type: 'dmx:look', seq: 42, live: true, look };
@@ -105,7 +127,7 @@ test('tout message valide pour le schéma tient dans MAX_MESSAGE_BYTES (pires ca
     },
     {
       type: 'call:start', kind: 'whatsapp', style: 'generic', name: lone(40), label: lone(40), msg: lone(200), appName: lone(24), appColor: '#ffffff',
-      hasPhoto: true, ring: 'classic', present: 'banner', photoMode: 'avatar', hasAudio: false, autoAnswer: 60, lock: { time: lone(8), date: lone(30) }, target,
+      hasPhoto: true, ring: 'classic', ringId: '__ring_ffffffffffffffff', ringVolume: 0.123456789012345, present: 'banner', photoMode: 'avatar', hasAudio: false, autoAnswer: 60, lock: { time: lone(8), date: lone(30) }, target,
     },
   ];
   for (const m of worst) {

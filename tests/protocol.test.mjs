@@ -178,6 +178,28 @@ describe('écran : validation des messages reçus', () => {
     assert.equal(await page.evaluate(() => _callState), 'idle');
   });
 
+  test('son importé : id hors format ignoré, volume borné, absent du cache → son intégré', async () => {
+    const { page } = ctx;
+    const cfgOf = async (m) => {
+      await deliver(page, { type: 'call:start', kind: 'sms', style: 'glass', name: 'A', ring: 'silent', ...m });
+      const c = await page.evaluate(() => ({ ringId: _callCfg.ringId, ringVolume: _callCfg.ringVolume, player: !!_ringPlayer }));
+      await deliver(page, { type: 'call:end' });
+      return c;
+    };
+    for (const ringId of ['__callaudio', '../../x', '__ring_0123456789ABCDEF', 'data:audio/mpeg;base64,SUQz', 42, { id: 'x' }]) {
+      assert.deepEqual(await cfgOf({ ringId }), { ringId: null, ringVolume: 1, player: false }, JSON.stringify(ringId));
+    }
+    assert.equal((await cfgOf({ ringVolume: 7 })).ringVolume, 1);
+    assert.equal((await cfgOf({ ringVolume: -3 })).ringVolume, 0);
+    assert.equal((await cfgOf({ ringVolume: 'fort' })).ringVolume, 1);
+    assert.equal((await cfgOf({ ringVolume: 0.25 })).ringVolume, 0.25);
+    // Id valide mais absent du cache : pas de lecture importée (repli intégré, ici silencieux)
+    assert.deepEqual(await cfgOf({ ringId: '__ring_0123456789abcdef' }), { ringId: '__ring_0123456789abcdef', ringVolume: 1, player: false });
+    // Émission : bornage avant scellement (le schéma refuserait)
+    const out = await page.evaluate(() => clampOutgoing({ type: 'call:start', kind: 'call', ringVolume: 4, ringId: '__ring_../x' }));
+    assert.deepEqual([out.ringVolume, 'ringId' in out], [1, false]);
+  });
+
   test('médias : identifiants, ordre, contrôle, fragments vidéo', async () => {
     const { page } = ctx;
     await deliver(page, { type: 'media:order', ids: 'm1,m2' });

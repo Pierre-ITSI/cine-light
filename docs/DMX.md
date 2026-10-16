@@ -371,7 +371,10 @@ La passerelle envoie aux écrans, dans la session chiffrée :
   apparaît dès qu'il arrive en cache.
 - **Appels / SMS** : entrée *n* = n-ième entrée des listes « Appels » / « SMS »
   de l'onglet Appel (maquette 18) ; sa photo et sa bande son partent avant
-  `call:start` si elles diffèrent de celles en cache sur les écrans.
+  `call:start` si elles diffèrent de celles en cache sur les écrans. Son
+  importé de l'entrée (sonnerie, son de notification : `ringId`, maquette
+  12) : envoyé aux écrans dès le démarrage de la passerelle (et à chaque
+  modification des entrées 1 à 20), l'appel console sonne donc sans transfert.
 - **Identifier** (moniteur) : message `screen:identify` ciblé ; l'écran
   clignote 3 s à 2 Hz sans changer d'état.
 

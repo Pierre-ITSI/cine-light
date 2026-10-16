@@ -281,7 +281,9 @@ function gwOnTrigger(t) {
   }).catch(() => {});
 }
 
-// Entrées 1 à 20 des listes enregistrées → canaux Appel et SMS
+// Entrées 1 à 20 des listes enregistrées → canaux Appel et SMS. Leurs sons
+// importés partent d'avance vers les écrans : un appel déclenché par la
+// console sonne aussitôt, sans transfert.
 function gwSyncTriggerEntries() {
   if (!_gw) return;
   const conv = (e) => ({ kind: e.kind, style: e.style, name: e.name });
@@ -289,6 +291,7 @@ function gwSyncTriggerEntries() {
     call: callList.call.slice(0, CALL_LIST_DMX_ITEMS).map(conv),
     sms: callList.sms.slice(0, CALL_LIST_DMX_ITEMS).map(conv),
   });
+  ringPreloadGatewayEntries();
 }
 
 // ── Patch ──

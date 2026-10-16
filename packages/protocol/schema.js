@@ -103,6 +103,8 @@ export const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 export const MEDIA_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 export const SCREEN_ID_RE = /^[A-Za-z0-9_-]{8,32}$/;
 export const GROUP_ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
+/** Son importé (sonnerie / notification) : id dérivé du contenu, « __ring_ » + 16 hex (SHA-256 tronqué). */
+export const RING_ID_RE = /^__ring_[0-9a-f]{16}$/;
 /** Fragment de data-URL (images/sons) : aucun guillemet, parenthèse ni chevron possible. */
 const DATAURL_SLICE_RE = /^[A-Za-z0-9+/=:;,.-]*$/;
 const BASE64_RE = /^[A-Za-z0-9+/]*={0,2}$/;
@@ -330,7 +332,7 @@ const SPECS = {
     fields: {
       id: req(MEDIA_ID, 'identifiant du transfert'),
       total: req(int(1, LIMITS.imgChunks), 'nombre de fragments'),
-      mediaId: opt(nullable(MEDIA_ID), 'id du média en cache (__lockwall, __callaudio, __callphoto, m12…)'),
+      mediaId: opt(nullable(MEDIA_ID), 'id du média en cache (__lockwall, __callaudio, __callphoto, __ring_…, m12…)'),
       show: opt(bool, 'afficher à réception (false = préchargement)'),
     },
   },
@@ -422,7 +424,9 @@ const SPECS = {
   'call:start': {
     dir: 'r2s', src: ['web'],
     doc: 'Faux appel entrant ou notification (SMS / messagerie) affiché par l’écran. La photo n’y voyage plus : '
-      + 'elle est envoyée avant, en fragments media-img-* sous l’id __callphoto (comme __lockwall).',
+      + 'elle est envoyée avant, en fragments media-img-* sous l’id __callphoto (comme __lockwall). Un son importé '
+      + '(sonnerie d’appel, son de notification) voyage de même, sous un id dérivé de son contenu (ringId, __ring_…) ; '
+      + 'absent du cache de l’écran, celui-ci joue le son intégré `ring` et le redemande (media:need).',
     fields: {
       kind: req(oneOf('call', 'sms', 'chat', 'whatsapp'), 'appel / sms / messagerie (whatsapp = ancien nom)'),
       style: opt(oneOf('glass', 'tonal', 'minimal', 'ios', 'android', 'generic'), 'style visuel (ios/android/generic = anciens noms)'),
@@ -432,7 +436,10 @@ const SPECS = {
       appName: opt(line(24), 'nom de l’application fictive'),
       appColor: opt(HEX, 'couleur de l’application fictive'),
       hasPhoto: opt(bool, 'photo de l’appelant préchargée en fragments (media-img-*, mediaId __callphoto) ; plus jamais en ligne'),
-      ring: opt(oneOf('classic', 'digital', 'soft', 'silent'), 'sonnerie'),
+      ring: opt(oneOf('classic', 'digital', 'soft', 'silent'), 'son intégré : sonnerie (appel, en boucle) ou son de notification '
+        + '(SMS / messagerie, une fois) ; repli quand le son importé ringId manque à l’écran'),
+      ringId: opt(str(23, RING_ID_RE), 'son importé préchargé en fragments (media-img-*, mediaId = cet id) ; absent = son intégré'),
+      ringVolume: opt(num(0, 1), 'volume du son 0..1 (absent = 1)'),
       present: opt(oneOf('full', 'banner'), 'plein écran ou bandeau'),
       photoMode: opt(oneOf('avatar', 'full'), 'photo en avatar ou plein écran'),
       hasAudio: opt(bool, 'bande son préchargée (__callaudio) à jouer au décroché'),

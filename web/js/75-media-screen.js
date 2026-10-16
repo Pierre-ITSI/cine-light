@@ -31,6 +31,7 @@ function screenEvictCached(id) {
   const c = _mediaCache.get(id);
   if (c && c.url && c.url !== _screenVidUrl) { try { URL.revokeObjectURL(c.url); } catch (_) {} }
   _mediaCache.delete(id);
+  screenRingForget(id);
 }
 
 function showScreenMedia(kind) {
@@ -89,15 +90,21 @@ function mediaImgChunk(msg) {
   if (b.got !== b.total) return;
   _imgBufs.delete(msg.id);
   const raw = b.parts.join('');
-  // La bande son du décroché passe par ce même canal : on valide selon le type attendu
-  const isAudio = b.mediaId === '__callaudio';
+  // La bande son du décroché et les sons importés (sonneries, notifications :
+  // __ring_…) passent par ce même canal : on valide selon le type attendu
+  const isRing = b.mediaId !== null && SRP.RING_ID_RE.test(b.mediaId);
+  const isAudio = b.mediaId === '__callaudio' || isRing;
   const dataUrl = isAudio ? safeAudioData(raw) : safeImageData(raw);
   if (!dataUrl) return; // contenu non conforme : ignoré
   // Mise en cache pour affichage instantané ultérieur + accusé de réception
   if (b.mediaId) {
-    _mediaCache.set(b.mediaId, { kind: isAudio ? 'audio' : 'img', data: dataUrl });
+    // Même contenu renvoyé (resynchronisation) : l'entrée et son décodage sont gardés
+    const prev = _mediaCache.get(b.mediaId);
+    if (!prev || prev.data !== dataUrl) _mediaCache.set(b.mediaId, { kind: isAudio ? 'audio' : 'img', data: dataUrl });
     sendMsg({ type: 'media:cached', id: b.mediaId });
     screenDmxOnCached(b.mediaId);
+    // Décodé dès réception : la sonnerie part sans délai au prochain appel
+    if (isRing) screenRingWarm(b.mediaId);
   }
   if (b.show && !isAudio) {
     const im = document.getElementById('screen-media-img');

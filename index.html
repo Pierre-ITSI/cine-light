@@ -647,6 +647,34 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .sc-lock.tonal .sc-lock-home{width:110px;height:4px}
 .sc-lock.minimal .sc-lock-home{display:none}
 
+/* ══ Onglet Appel : sonnerie / son de notification, sons importés (maquette validée 12) ══
+   Lignes « Vos sonneries » et « Bande son au décroché » : mêmes surfaces que
+   les appels enregistrés (85-call-list.css). */
+.rt-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.rt-list:empty{display:none}
+.rt-row{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 10px;border-radius:8px;background:var(--mid2);border:1px solid rgba(255,255,255,.06);cursor:pointer;user-select:none;-webkit-user-select:none}
+.rt-row.selected{background:rgba(255,107,44,.1);border-color:var(--accent)}
+.rt-play{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--mid2);color:var(--text);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;padding:0}
+.rt-play.playing{color:var(--accent);border-color:var(--accent)}
+.rt-main{flex:1;min-width:0}
+.rt-name,.rt-meta{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt-name{font-size:.75rem;color:var(--text)}
+.rt-row.selected .rt-name{color:#FF8a55}
+.rt-meta{font-size:.625rem;color:#a8a8a8;margin-top:2px}
+.rt-del{width:36px;height:36px;border-radius:6px;border:none;background:transparent;color:#a8a8a8;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;padding:0}
+.rt-import{display:block;width:100%;min-height:46px;padding:8px 10px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:transparent;color:#d0d0d0;font-family:'DM Mono',monospace;font-size:.6875rem;letter-spacing:0;line-height:1.4;cursor:pointer}
+.rt-status{text-align:left;margin-top:8px}
+.media-status.rt-warn{color:#ff7a70}
+.rt-vol{margin:14px 0 0}
+.rt-sub{margin-top:18px}
+.rt-answer{cursor:default;gap:8px}
+.rt-answer .rt-del{width:30px}
+.rt-wave{flex-shrink:0;color:#c8c8c8}
+.rt-dim{color:#a8a8a8}
+.rt-onscreen{font-size:.625rem;color:#a8a8a8;flex-shrink:0;white-space:nowrap}
+.rt-onscreen.on{color:var(--green)}
+.rt-auto{margin:14px 0 0}
+.rt-note{margin-top:16px;font-size:.6875rem;color:#a8a8a8;line-height:1.6;text-align:center}
 /* ══ Onglet Appel : appels et SMS enregistrés, numérotés (maquette validée 18) ══
    Les 20 premiers de chaque liste sont les cibles des canaux Appel et SMS de
    la passerelle DMX (mode Étendu 16). */
@@ -1345,24 +1373,41 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
       </div>
       <div class="media-status" id="lockWallStatus">Sans fond : dégradé sombre. Heure/date vides : celles de l'écran.</div>
     </div>
+    <!-- Sonnerie (appel) / son de notification (SMS, messagerie) : sons intégrés ou importés (maquette 12) -->
     <div class="panel" id="callRingPanel">
-      <div class="panel-label">Sonnerie</div>
+      <div class="panel-label" id="ringPanelLabel">Sonnerie</div>
       <div class="chips-wrap" style="margin-bottom:14px">
         <button class="chip active" id="callring-classic" onclick="setCallRing('classic')">Classique</button>
         <button class="chip" id="callring-digital" onclick="setCallRing('digital')">Digitale</button>
         <button class="chip" id="callring-soft" onclick="setCallRing('soft')">Douce</button>
         <button class="chip" id="callring-silent" onclick="setCallRing('silent')">Silencieux</button>
       </div>
-      <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
-        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callAudioInput').click()">🎙 Bande son au décroché</button>
-        <button class="chip" id="callAudioClear" style="display:none" onclick="clearCallAudio()">✕</button>
-        <input type="file" id="callAudioInput" accept="audio/*" style="display:none" onchange="onCallAudio(this.files);this.value=''">
+      <div class="panel-label" id="ringLibLabel" style="display:none">Vos sonneries</div>
+      <div class="rt-list" id="ringLibRows"></div>
+      <button type="button" class="rt-import" id="ringImportBtn" onclick="document.getElementById('ringImportInput').click()">+ Importer une sonnerie (MP3, M4A, WAV · 5 Mo)</button>
+      <input type="file" id="ringImportInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onRingImport(this.files);this.value=''">
+      <div class="media-status rt-status" id="ringStatus" style="display:none"></div>
+      <div class="slider-block rt-vol">
+        <div class="slider-header"><label id="ringVolLabel">Volume de la sonnerie</label><div class="slider-val" id="ringVolVal">100<span> %</span></div></div>
+        <input type="range" id="ringVolSlider" min="0" max="100" step="5" value="100" oninput="onRingVolume()">
       </div>
-      <div class="media-status" id="callAudioStatus" style="margin-bottom:12px;text-align:left">Aucune bande son — le décroché reste silencieux.</div>
-      <div class="slider-block" style="margin-bottom:0">
-        <div class="slider-header"><label>Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
-        <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
+      <div id="callAnswerBlock">
+        <div class="panel-label rt-sub">Bande son au décroché</div>
+        <div class="rt-row rt-answer" id="callAudioRow" style="display:none">
+          <svg class="rt-wave" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 10v4"/></svg>
+          <span class="rt-main"><span class="rt-name"><span id="callAudioName"></span><span class="rt-dim" id="callAudioDur"></span></span></span>
+          <span class="rt-onscreen" id="callAudioState"></span>
+          <button type="button" class="rt-del" id="callAudioClear" aria-label="Retirer la bande son" onclick="clearCallAudio()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        </div>
+        <button type="button" class="rt-import" id="callAudioPick" onclick="document.getElementById('callAudioInput').click()">+ Choisir la voix du correspondant (8 Mo)</button>
+        <input type="file" id="callAudioInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onCallAudio(this.files);this.value=''">
+        <div class="media-status rt-status" id="callAudioStatus">Aucune bande son — le décroché reste silencieux.</div>
+        <div class="slider-block rt-auto">
+          <div class="slider-header"><label>Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
+          <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
+        </div>
       </div>
+      <div class="rt-note">Les sonneries importées sont envoyées et gardées sur l'écran de jeu : elles sonnent même sans réseau.</div>
     </div>
     <div class="panel">
       <button class="media-btn" id="callTriggerBtn" onclick="triggerCall()"><span class="media-icon">📞</span> Faire sonner</button>
@@ -1906,6 +1951,7 @@ const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 const MEDIA_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const SCREEN_ID_RE = /^[A-Za-z0-9_-]{8,32}$/;
 const GROUP_ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
+const RING_ID_RE = /^__ring_[0-9a-f]{16}$/;
 const DATAURL_SLICE_RE = /^[A-Za-z0-9+/=:;,.-]*$/;
 const BASE64_RE = /^[A-Za-z0-9+/]*={0,2}$/;
 const MIME_RE = /^[a-z]+\/[a-z0-9.+-]{1,40}$/i;
@@ -2124,7 +2170,7 @@ const SPECS = {
     fields: {
       id: req(MEDIA_ID, 'identifiant du transfert'),
       total: req(int(1, LIMITS.imgChunks), 'nombre de fragments'),
-      mediaId: opt(nullable(MEDIA_ID), 'id du média en cache (__lockwall, __callaudio, __callphoto, m12…)'),
+      mediaId: opt(nullable(MEDIA_ID), 'id du média en cache (__lockwall, __callaudio, __callphoto, __ring_…, m12…)'),
       show: opt(bool, 'afficher à réception (false = préchargement)'),
     },
   },
@@ -2215,7 +2261,9 @@ const SPECS = {
   'call:start': {
     dir: 'r2s', src: ['web'],
     doc: 'Faux appel entrant ou notification (SMS / messagerie) affiché par l’écran. La photo n’y voyage plus : '
-      + 'elle est envoyée avant, en fragments media-img-* sous l’id __callphoto (comme __lockwall).',
+      + 'elle est envoyée avant, en fragments media-img-* sous l’id __callphoto (comme __lockwall). Un son importé '
+      + '(sonnerie d’appel, son de notification) voyage de même, sous un id dérivé de son contenu (ringId, __ring_…) ; '
+      + 'absent du cache de l’écran, celui-ci joue le son intégré `ring` et le redemande (media:need).',
     fields: {
       kind: req(oneOf('call', 'sms', 'chat', 'whatsapp'), 'appel / sms / messagerie (whatsapp = ancien nom)'),
       style: opt(oneOf('glass', 'tonal', 'minimal', 'ios', 'android', 'generic'), 'style visuel (ios/android/generic = anciens noms)'),
@@ -2225,7 +2273,10 @@ const SPECS = {
       appName: opt(line(24), 'nom de l’application fictive'),
       appColor: opt(HEX, 'couleur de l’application fictive'),
       hasPhoto: opt(bool, 'photo de l’appelant préchargée en fragments (media-img-*, mediaId __callphoto) ; plus jamais en ligne'),
-      ring: opt(oneOf('classic', 'digital', 'soft', 'silent'), 'sonnerie'),
+      ring: opt(oneOf('classic', 'digital', 'soft', 'silent'), 'son intégré : sonnerie (appel, en boucle) ou son de notification '
+        + '(SMS / messagerie, une fois) ; repli quand le son importé ringId manque à l’écran'),
+      ringId: opt(str(23, RING_ID_RE), 'son importé préchargé en fragments (media-img-*, mediaId = cet id) ; absent = son intégré'),
+      ringVolume: opt(num(0, 1), 'volume du son 0..1 (absent = 1)'),
       present: opt(oneOf('full', 'banner'), 'plein écran ou bandeau'),
       photoMode: opt(oneOf('avatar', 'full'), 'photo en avatar ou plein écran'),
       hasAudio: opt(bool, 'bande son préchargée (__callaudio) à jouer au décroché'),
@@ -2438,7 +2489,7 @@ const COMMON_FIELDS = Object.freeze({
   _id: 'identifiant d’écho de l’ancien protocole en clair (toléré, inutile en v2)',
   target: "adressage (r2s uniquement) : { screens: [screenId…] } ou { group: 'id' } ; absent = tous",
 });
-  return { HEX_COLOR_RE, MEDIA_ID_RE, SCREEN_ID_RE, GROUP_ID_RE, LIMITS, explainInvalid, validate, isAddressedTo, MESSAGE_TYPES, COMMON_FIELDS };
+  return { HEX_COLOR_RE, MEDIA_ID_RE, SCREEN_ID_RE, GROUP_ID_RE, RING_ID_RE, LIMITS, explainInvalid, validate, isAddressedTo, MESSAGE_TYPES, COMMON_FIELDS };
 })();
 // ── crypto.js ──
 __m["crypto.js"] = (function () {
@@ -5480,6 +5531,8 @@ const _P = {
   hex: (v) => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v),
   // Identifiant de transfert / de média : [A-Za-z0-9_-], 1 à 64 caractères
   id: (v) => typeof v === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(v),
+  // Son importé : « __ring_ » + 16 hex (id dérivé du contenu, schéma du paquet protocole)
+  ringId: (v) => typeof v === 'string' && SRP.RING_ID_RE.test(v),
   bool: (v) => !!v,
 };
 
@@ -5533,6 +5586,9 @@ function _validCallStart(m) {
   // Sonnerie inconnue → classique (une clé comme « __proto__ » ne doit pas
   // fausser la cadence de répétition)
   if (!_P.oneOf(m.ring, PROTO.CALL_RINGS)) m.ring = 'classic';
+  // Son importé (__ring_…, préchargé en fragments) et volume du son
+  if (!_P.ringId(m.ringId)) m.ringId = null;
+  m.ringVolume = _P.num(m.ringVolume, 0, 1) ?? 1;
   m.lock = _P.isObj(m.lock)
     ? { time: _P.text(m.lock.time, PROTO.LOCK_TIME_MAX), date: _P.text(m.lock.date, PROTO.LOCK_DATE_MAX) }
     : null;
@@ -5663,7 +5719,7 @@ const MSG_ROUTES = {
     },
     handle: (m) => advancePool(m.dir),
   },
-  'media:cached':      { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => { _screenCached.add(m.id); _preloadInflight.delete(m.id); } },
+  'media:cached':      { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => { _screenCached.add(m.id); _preloadInflight.delete(m.id); remoteOnCallAssetCached(m.id); } },
   'media:chunkack': {
     roles: ['remote'],
     validate: (m) => _P.id(m.mediaId) && (m.got = _P.int(m.got, 0, PROTO.VID_MAX_CHUNKS) ?? 0, true),
@@ -5756,6 +5812,8 @@ function clampOutgoing(m) {
       if (_P.isObj(m.lock)) m.lock = { time: line(m.lock.time, PROTO.LOCK_TIME_MAX), date: line(m.lock.date, PROTO.LOCK_DATE_MAX) };
       if (m.appColor !== undefined && !_P.hex(m.appColor)) delete m.appColor;
       clampKeys(m, ['autoAnswer'], 0, 60, true);
+      clampKeys(m, ['ringVolume'], 0, 1);
+      if (m.ringId !== undefined && !_P.ringId(m.ringId)) delete m.ringId;
       break;
     }
   }
@@ -5767,7 +5825,8 @@ function clampOutgoing(m) {
 // celle-ci). La télécommande renvoie alors un instantané complet de l'état :
 // un écran rechargé ou revenu d'une coupure retrouve exactement ce que la
 // télécommande affiche. Les médias lourds (fond d'écran verrouillé, bande son,
-// photo d'appel, média actif) ne sont renvoyés que si l'écran ne les a pas.
+// photo d'appel, sons importés utiles, média actif) ne sont renvoyés que si
+// l'écran ne les a pas.
 // Plusieurs « caps » rapprochés (plusieurs écrans) → un seul envoi groupé.
 let _resyncTimer = null, _resyncNeed = null;
 const RESYNC_DELAY_MS = 250;
@@ -5776,15 +5835,21 @@ const _RESYNC_ASSETS = ['__lockwall', '__callaudio', '__callphoto'];
 function remoteScheduleResync(caps) {
   if (mode !== 'remote') return;
   const need = _resyncNeed || (_resyncNeed = { lacks: new Set(), mediaMissing: false });
+  // Sons importés qui doivent être sur les écrans (81-ringtones.js)
+  const rings = ringNeededIds();
   if (Array.isArray(caps.cached)) {
     // Écran récent : liste exacte de son cache. Ce qu'il a perdu (rechargement)
     // n'est plus considéré « en cache écran » → préchargement / renvoi.
     const has = new Set(caps.cached);
     for (const id of [..._screenCached]) if (!has.has(id)) _screenCached.delete(id);
     for (const id of _RESYNC_ASSETS) if (!has.has(id)) need.lacks.add(id);
+    for (const id of [...rings, ..._ringOnScreens]) if (!has.has(id)) need.lacks.add(id);
+    // Déjà là (télécommande relancée, autre écran) : rien à renvoyer
+    for (const id of rings) if (has.has(id) && !need.lacks.has(id)) _ringOnScreens.add(id);
   } else {
     // Ancien écran / écran natif : on s'en tient à ce qu'il a déjà accusé
     for (const id of _RESYNC_ASSETS) if (!_screenCached.has(id)) need.lacks.add(id);
+    for (const id of rings) if (!_screenCached.has(id)) need.lacks.add(id);
   }
   // « active » n'est envoyé que par les écrans récents (absent = inconnu)
   if (typeof caps.blackout === 'boolean') remoteAdoptScreenBlackout(caps.blackout);
@@ -5810,8 +5875,14 @@ function remoteResync() {
   sendPoolOrder();
   if (_lockWallData && need.lacks.has('__lockwall')) sendImageChunks(_lockWallData, { mediaId: '__lockwall', show: false });
   // Photo / bande son : celles du formulaire (un appel de la liste renverra les siennes)
-  if (need.lacks.has('__callaudio')) { _callAudioOnScreens = null; if (_callAudioData) ensureCallAssets(null, _callAudioData); }
+  if (need.lacks.has('__callaudio')) { _callAudioOnScreens = null; if (_callAudioData) ensureCallAssets(null, _callAudioData); else renderCallAudioRow(); }
   if (need.lacks.has('__callphoto')) { _callPhotoOnScreens = null; if (_callPhoto) ensureCallAssets(_callPhoto, null); }
+  // Sons importés absents d'un écran : renvoyés s'ils servent encore (choix d'un
+  // type, entrées 1 à 20 sous la passerelle), sinon simplement oubliés
+  const ringLacks = [...need.lacks].filter((id) => SRP.RING_ID_RE.test(id));
+  for (const id of ringLacks) _ringOnScreens.delete(id);
+  const ringResend = ringNeededIds().filter((id) => ringLacks.includes(id));
+  if (ringResend.length) ensureCallAssets(null, null, ringResend);
   // Média diffusé absent de l'écran : media:show s'il est en cache écran,
   // sinon re-diffusion complète (même chemin qu'une sélection dans le pool)
   if (_activeMediaId && need.mediaMissing && _mediaPool.some((m) => m.id === _activeMediaId)) selectMedia(_activeMediaId);
@@ -9087,7 +9158,9 @@ function remoteOnScreenAdvanced(id) {
 }
 
 // L'écran ne possède pas ce média en cache : repli sur le transfert complet
+// (son importé d'un appel : renvoyé par 81-ringtones.js)
 function remoteOnScreenNeeds(id) {
+  if (SRP.RING_ID_RE.test(id)) { ringOnScreenNeeds(id); return; }
   _screenCached.delete(id);
   const it = _mediaPool.find(m => m.id === id);
   if (!it) return;
@@ -9426,6 +9499,7 @@ function screenEvictCached(id) {
   const c = _mediaCache.get(id);
   if (c && c.url && c.url !== _screenVidUrl) { try { URL.revokeObjectURL(c.url); } catch (_) {} }
   _mediaCache.delete(id);
+  screenRingForget(id);
 }
 
 function showScreenMedia(kind) {
@@ -9484,15 +9558,21 @@ function mediaImgChunk(msg) {
   if (b.got !== b.total) return;
   _imgBufs.delete(msg.id);
   const raw = b.parts.join('');
-  // La bande son du décroché passe par ce même canal : on valide selon le type attendu
-  const isAudio = b.mediaId === '__callaudio';
+  // La bande son du décroché et les sons importés (sonneries, notifications :
+  // __ring_…) passent par ce même canal : on valide selon le type attendu
+  const isRing = b.mediaId !== null && SRP.RING_ID_RE.test(b.mediaId);
+  const isAudio = b.mediaId === '__callaudio' || isRing;
   const dataUrl = isAudio ? safeAudioData(raw) : safeImageData(raw);
   if (!dataUrl) return; // contenu non conforme : ignoré
   // Mise en cache pour affichage instantané ultérieur + accusé de réception
   if (b.mediaId) {
-    _mediaCache.set(b.mediaId, { kind: isAudio ? 'audio' : 'img', data: dataUrl });
+    // Même contenu renvoyé (resynchronisation) : l'entrée et son décodage sont gardés
+    const prev = _mediaCache.get(b.mediaId);
+    if (!prev || prev.data !== dataUrl) _mediaCache.set(b.mediaId, { kind: isAudio ? 'audio' : 'img', data: dataUrl });
     sendMsg({ type: 'media:cached', id: b.mediaId });
     screenDmxOnCached(b.mediaId);
+    // Décodé dès réception : la sonnerie part sans délai au prochain appel
+    if (isRing) screenRingWarm(b.mediaId);
   }
   if (b.show && !isAudio) {
     const im = document.getElementById('screen-media-img');
@@ -9575,12 +9655,13 @@ function screenVidUploadPlay(msg) {
 }
 
 // ══════════════════════════ SIMULATEUR D'APPEL ══════════════════════════
-// Télécommande : configure et déclenche. Écran : affiche l'overlay (appel
-// générique/iOS/Android, SMS, WhatsApp), sonne (WebAudio, sans fichiers),
-// vibre (Android) et renvoie son état (ringing/incall/declined/ended).
+// Télécommande : configure et déclenche. Écran : affiche l'overlay (appel,
+// SMS, messagerie ; styles Verre / Tonal / Épuré), sonne (WebAudio : sons
+// intégrés synthétisés, ou son importé mis en cache — 81-ringtones.js), vibre
+// (Android) et renvoie son état (ringing/incall/declined/ended).
 
 // — Télécommande —
-let callKind = 'call', callStyle = 'glass', callRing = 'classic', _callPhoto = null;
+let callKind = 'call', callStyle = 'glass', _callPhoto = null;
 let _callUiTimer = null, _callUiT0 = 0;
 
 // Application fictive par défaut selon le type de message (modifiable)
@@ -9606,7 +9687,7 @@ function setCallKind(k) {
   document.getElementById('callPresentRow').style.display = k === 'call' ? 'block' : 'none';
   document.getElementById('callMsgPanel').style.display = k === 'call' ? 'none' : 'block';
   document.getElementById('callLockPanel').style.display = k === 'call' ? 'none' : 'block';
-  document.getElementById('callRingPanel').style.display = k === 'call' ? 'block' : 'none';
+  renderRingPanel(); // « Sonnerie » (appel) ou « Son de notification » : choix propre au type
   _syncCallPhotoRow();
   const btn = document.getElementById('callTriggerBtn');
   if (btn) btn.innerHTML = k === 'call'
@@ -9649,42 +9730,73 @@ function _syncCallPhotoRow() {
 
 // Bande son jouée par l'écran quand le comédien décroche (voix du correspondant).
 // Envoyée en fragments fiables et mise en cache sur l'écran sous '__callaudio'.
-let _callAudioData = null;
-function onCallAudio(files) {
+// Bloc « Bande son au décroché » (maquette 12) : nom, durée, « sur l'écran ✓ »
+// dès que l'écran a accusé réception (media:cached).
+let _callAudioData = null, _callAudioName = '', _callAudioDur = 0, _callAudioSeq = 0;
+const CALL_AUDIO_MAX_BYTES = 8 * 1024 * 1024;
+const _CALL_AUDIO_NONE = 'Aucune bande son — le décroché reste silencieux.';
+async function onCallAudio(files) {
   if (!files || !files[0]) return;
   const f = files[0];
-  const st = document.getElementById('callAudioStatus');
-  if (f.size > 8 * 1024 * 1024) {
-    if (st) st.textContent = '⚠ Fichier trop lourd (max ~8 Mo) — coupez un extrait plus court.';
+  if (f.size > CALL_AUDIO_MAX_BYTES) {
+    renderCallAudioRow('⚠ Fichier trop lourd (max ~8 Mo) — coupez un extrait plus court.');
     return;
   }
-  const r = new FileReader();
-  r.onload = async () => {
-    _callAudioData = String(r.result);
-    if (st) st.textContent = '📤 Envoi de la bande son…';
-    await ensureCallAssets(null, _callAudioData);
-    if (st) st.textContent = '✓ « ' + (f.name || 'audio') + ' » prête — jouée au décroché.';
-    const c = document.getElementById('callAudioClear');
-    if (c) c.style.display = 'inline-block';
-  };
-  r.onerror = () => { if (st) st.textContent = '⚠ Lecture du fichier impossible'; };
-  r.readAsDataURL(f);
+  const mime = ringFileMime(f);
+  if (!mime) { renderCallAudioRow('⚠ « ' + (f.name || 'fichier') + ' » n\'est pas un fichier son.'); return; }
+  let data;
+  try { data = await ringFileDataUrl(f, mime); } catch (_) { data = null; }
+  if (!safeAudioData(data)) { renderCallAudioRow('⚠ Lecture du fichier impossible'); return; }
+  const seq = ++_callAudioSeq;
+  _callAudioData = data;
+  _callAudioName = String(f.name || 'bande son').slice(0, 80);
+  _callAudioDur = 0;
+  renderCallAudioRow();
+  _measureCallAudio(seq);
+  await ensureCallAssets(null, _callAudioData);
+}
+// Durée affichée (WebAudio) ; un fichier que ce téléphone ne sait pas décoder
+// part quand même : l'écran le lit avec son propre décodeur.
+async function _measureCallAudio(seq) {
+  const data = _callAudioData;
+  if (!data) return;
+  try {
+    const buf = await ringDecode(_dataUrlBytes(data).buffer);
+    if (seq === _callAudioSeq && data === _callAudioData) { _callAudioDur = buf.duration; renderCallAudioRow(); }
+  } catch (_) {}
 }
 function clearCallAudio() {
-  _callAudioData = null;
+  _callAudioSeq++;
+  _callAudioData = null; _callAudioName = ''; _callAudioDur = 0;
   _callAudioOnScreens = null;
-  const st = document.getElementById('callAudioStatus');
-  if (st) st.textContent = 'Aucune bande son — le décroché reste silencieux.';
-  const c = document.getElementById('callAudioClear');
-  if (c) c.style.display = 'none';
+  _screenCached.delete('__callaudio');
+  renderCallAudioRow();
   sendMsg({ type: 'media:evict', id: '__callaudio' });
 }
-function setCallRing(r) {
-  callRing = r;
-  ['classic','digital','soft','silent'].forEach(x => {
-    const b = document.getElementById('callring-' + x);
-    if (b) b.classList.toggle('active', x === r);
-  });
+// Fichier choisi → ligne « nom · durée · sur l'écran ✓ » ; sinon bouton de choix
+function renderCallAudioRow(message) {
+  const has = !!_callAudioData;
+  const row = document.getElementById('callAudioRow');
+  if (row) row.style.display = has ? 'flex' : 'none';
+  const pick = document.getElementById('callAudioPick');
+  if (pick) pick.style.display = has ? 'none' : 'block';
+  const name = document.getElementById('callAudioName');
+  if (name) name.textContent = _callAudioName || 'Bande son';
+  const dur = document.getElementById('callAudioDur');
+  if (dur) dur.textContent = _callAudioDur > 0 ? ' · ' + ringFmtDur(_callAudioDur) : '';
+  const state = document.getElementById('callAudioState');
+  if (state) {
+    const on = has && _screenCached.has('__callaudio');
+    state.textContent = on ? 'sur l\'écran ✓' : 'en attente de l\'écran';
+    state.classList.toggle('on', on);
+  }
+  const st = document.getElementById('callAudioStatus');
+  if (st) {
+    const t = message || (has ? '' : _CALL_AUDIO_NONE);
+    st.textContent = t;
+    st.style.display = t ? 'block' : 'none';
+    st.classList.toggle('rt-warn', !!message);
+  }
 }
 function onCallAutoChange() {
   const v = parseInt(document.getElementById('callAutoSlider').value) || 0;
@@ -9741,11 +9853,12 @@ function onLockWall(files) {
   img.src = URL.createObjectURL(files[0]);
 }
 // Réglages de l'appel du formulaire (champs de call:start, sans photo ni son :
-// hasPhoto / hasAudio disent s'ils accompagnent l'appel). Aussi la forme d'une
-// entrée de la liste enregistrée (82-call-list.js).
+// hasPhoto / hasAudio disent s'ils accompagnent l'appel ; ringId désigne un son
+// importé préchargé). Aussi la forme d'une entrée de la liste enregistrée
+// (82-call-list.js).
 function callFormFields() {
   const lockOn = callKind !== 'call' && document.getElementById('lockToggle').checked;
-  return {
+  return Object.assign({
     kind: callKind,
     style: callStyle,
     name: (document.getElementById('callName').value || 'Inconnu').slice(0, 40),
@@ -9754,7 +9867,7 @@ function callFormFields() {
     appName: (document.getElementById('callAppName').value || '').slice(0, 24),
     appColor: document.getElementById('callAppColor').value,
     hasPhoto: !!_callPhoto,
-    ring: callRing,
+  }, ringFormFields(callKind), {
     present: callPresent,
     photoMode: (callStyle !== 'minimal') ? callPhotoMode : 'avatar',
     hasAudio: !!_callAudioData,
@@ -9763,15 +9876,17 @@ function callFormFields() {
       time: (document.getElementById('lockTime').value || '').slice(0, 8),
       date: (document.getElementById('lockDate').value || '').slice(0, 30),
     } : null,
-  };
+  });
 }
 
 // Photo et bande son d'un appel : un seul exemplaire en cache sur les écrans
 // (__callphoto, __callaudio). Avant chaque appel, on (re)envoie ceux de cet
 // appel s'ils diffèrent de ceux déjà envoyés (appel du formulaire, entrée de
-// la liste, déclenchement par la console). Envois et appels restent dans l'ordre.
+// la liste, déclenchement par la console). Sons importés (rings : ids
+// __ring_…) : chacun garde sa place en cache, envoyé une fois puis seulement
+// s'il manque (81-ringtones.js). Envois et appels restent dans l'ordre.
 let _callPhotoOnScreens = null, _callAudioOnScreens = null, _callAssetChain = Promise.resolve();
-function ensureCallAssets(photo, audio) {
+function ensureCallAssets(photo, audio, rings) {
   _callAssetChain = _callAssetChain.then(async () => {
     if (photo && photo !== _callPhotoOnScreens) {
       _callPhotoOnScreens = photo;
@@ -9779,16 +9894,19 @@ function ensureCallAssets(photo, audio) {
     }
     if (audio && audio !== _callAudioOnScreens) {
       _callAudioOnScreens = audio;
+      _screenCached.delete('__callaudio'); // « sur l'écran ✓ » au prochain accusé
+      renderCallAudioRow();
       await sendImageChunks(audio, { mediaId: '__callaudio', show: false });
     }
+    for (const id of rings || []) await ringSendIfMissing(id);
   }).catch(() => {});
   return _callAssetChain;
 }
 
 async function triggerCall() {
   const fields = callFormFields();
-  // La photo et la bande son (fragments) partent avant l'appel qui les utilise
-  await ensureCallAssets(_callPhoto, _callAudioData);
+  // La photo, la bande son et le son importé (fragments) partent avant l'appel qui les utilise
+  await ensureCallAssets(_callPhoto, _callAudioData, fields.ringId ? [fields.ringId] : null);
   sendMsg(Object.assign({ type: 'call:start' }, fields));
   _setCallStatusUI(fields.kind === 'call' ? '📞 Sonnerie envoyée…' : '💬 Notification envoyée');
 }
@@ -9811,7 +9929,12 @@ function remoteOnCallState(m) {
   else if (m.state === 'ended') _setCallStatusUI('⏹ Terminé');
 }
 
-// — Écran : sons synthétisés (WebAudio, aucun fichier) —
+// — Écran : sons (WebAudio) —
+// Sons intégrés synthétisés (aucun fichier), ou son importé reçu en fragments
+// et gardé en cache (__ring_…) : en boucle pour un appel qui sonne, une fois
+// pour une notification. Volume = ringVolume (1 = niveau des sons intégrés
+// d'origine). Son importé absent du cache ou illisible : son intégré « ring »,
+// et l'écran le redemande à la télécommande (media:need).
 let _audioCtx = null, _callRingTimer = null, _callVibTimer = null;
 let _callClockTimer = null, _callAutoTimer = null, _callT0Scr = 0;
 let _callState = 'idle', _callCfg = null;
@@ -9822,6 +9945,22 @@ function _ac() {
     if (_audioCtx.state === 'suspended') _audioCtx.resume().catch(() => {});
     return _audioCtx;
   } catch (_) { return null; }
+}
+// data-URL base64 → octets
+function _dataUrlBytes(data) {
+  const bin = atob(String(data).slice(String(data).indexOf(',') + 1));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+// decodeAudioData en promesse (les anciens Safari n'ont que les rappels)
+function _decodeAudio(ctx, arrayBuffer) {
+  return new Promise((resolve, reject) => {
+    try {
+      const p = ctx.decodeAudioData(arrayBuffer, resolve, reject);
+      if (p && typeof p.then === 'function') p.then(resolve, reject);
+    } catch (e) { reject(e); }
+  });
 }
 function _tone(freq, t0, dur, vol, type) {
   const ctx = _ac(); if (!ctx) return;
@@ -9834,20 +9973,113 @@ function _tone(freq, t0, dur, vol, type) {
   o.start(ctx.currentTime + t0);
   o.stop(ctx.currentTime + t0 + dur + 0.3);
 }
-function _ringBurst(kind) {
-  if (kind === 'digital') { for (let i = 0; i < 4; i++) _tone(950, i * 0.18, 0.12, 0.14, 'square'); }
-  else if (kind === 'soft') { [523, 659, 784, 1047].forEach((f, i) => _tone(f, i * 0.16, 0.3, 0.14, 'sine')); }
-  else { _tone(440, 0, 1.2, 0.12, 'sine'); _tone(480, 0, 1.2, 0.12, 'sine'); } // classique
+function _ringBurst(kind, vol) {
+  const v = typeof vol === 'number' ? vol : 1;
+  if (kind === 'digital') { for (let i = 0; i < 4; i++) _tone(950, i * 0.18, 0.12, 0.14 * v, 'square'); }
+  else if (kind === 'soft') { [523, 659, 784, 1047].forEach((f, i) => _tone(f, i * 0.16, 0.3, 0.14 * v, 'sine')); }
+  else { _tone(440, 0, 1.2, 0.12 * v, 'sine'); _tone(480, 0, 1.2, 0.12 * v, 'sine'); } // classique
 }
-function _startRinging(kind) {
+function _startBuiltinRing(kind, vol) {
   if (kind === 'silent') return;
-  _ringBurst(kind);
+  _ringBurst(kind, vol);
   const IV = { digital: 1600, soft: 2300 };
-  _callRingTimer = setInterval(() => _ringBurst(kind), IV[kind] || 3000);
+  _callRingTimer = setInterval(() => _ringBurst(kind, vol), IV[kind] || 3000);
 }
-function _playNotifSound(kind) {
-  if (kind === 'chat') { _tone(880, 0, 0.09, 0.16, 'sine'); _tone(1174, 0.12, 0.12, 0.16, 'sine'); }
-  else { [1318, 1046, 784].forEach((f, i) => _tone(f, i * 0.13, 0.18, 0.15, 'sine')); }
+// Appel qui sonne : son importé en boucle, sinon son intégré répété
+function _startRinging(cfg) {
+  const vol = cfg.ringVolume;
+  if (cfg.ringId) {
+    const ok = _ringPlayImported(cfg.ringId, true, vol, () => {
+      if (_callState === 'ringing' && !_callRingTimer) _startBuiltinRing(cfg.ring, vol);
+    });
+    if (ok) return;
+    sendMsg({ type: 'media:need', id: cfg.ringId });
+  }
+  _startBuiltinRing(cfg.ring, vol);
+}
+// Notification (SMS / messagerie, bannière ou écran verrouillé) : une fois
+function _playNotifSound(cfg) {
+  const vol = cfg.ringVolume;
+  if (cfg.ringId) {
+    if (_ringPlayImported(cfg.ringId, false, vol, () => _notifBuiltin(cfg.kind, cfg.ring, vol))) return;
+    sendMsg({ type: 'media:need', id: cfg.ringId });
+  }
+  _notifBuiltin(cfg.kind, cfg.ring, vol);
+}
+// Sons de notification intégrés : « Classique » = son d'origine du type
+function _notifBuiltin(kind, ring, vol) {
+  const v = typeof vol === 'number' ? vol : 1;
+  if (ring === 'silent') return;
+  if (ring === 'digital') { _tone(1250, 0, 0.07, 0.13 * v, 'square'); _tone(1250, 0.13, 0.07, 0.13 * v, 'square'); }
+  else if (ring === 'soft') { [659, 988].forEach((f, i) => _tone(f, i * 0.2, 0.4, 0.13 * v, 'sine')); }
+  else if (kind === 'chat') { _tone(880, 0, 0.09, 0.16 * v, 'sine'); _tone(1174, 0.12, 0.12, 0.16 * v, 'sine'); }
+  else { [1318, 1046, 784].forEach((f, i) => _tone(f, i * 0.13, 0.18, 0.15 * v, 'sine')); }
+}
+
+// Sons importés en cache : AudioBuffer décodé à la réception (screenRingWarm)
+// et gardé pour les derniers utilisés (un son long décodé pèse lourd).
+const _RING_DECODED_MAX = 4;
+const _ringDecoded = [];         // ids dont l'AudioBuffer est gardé (le plus récent en dernier)
+let _ringPlayer = null;          // son importé en cours : { id, src, gain, loop }
+let _ringPlaySeq = 0;            // jeton : un arrêt annule une lecture encore en décodage
+function _ringBuffer(id) {
+  const c = _mediaCache.get(id);
+  if (!c || c.kind !== 'audio' || !c.data) return Promise.reject(new Error('absent'));
+  if (c._buf) { _ringKeep(id); return Promise.resolve(c._buf); }
+  if (!c._decoding) {
+    const ctx = _ac();
+    if (!ctx) return Promise.reject(new Error('webaudio'));
+    c._decoding = _decodeAudio(ctx, _dataUrlBytes(c.data).buffer).then((buf) => {
+      c._decoding = null;
+      if (_mediaCache.get(id) === c) { c._buf = buf; _ringKeep(id); }
+      return buf;
+    }, (e) => { c._decoding = null; throw e; });
+  }
+  return c._decoding;
+}
+function _ringKeep(id) {
+  const i = _ringDecoded.indexOf(id);
+  if (i >= 0) _ringDecoded.splice(i, 1);
+  _ringDecoded.push(id);
+  while (_ringDecoded.length > _RING_DECODED_MAX) {
+    const old = _ringDecoded.shift(), c = _mediaCache.get(old);
+    if (c && !(_ringPlayer && _ringPlayer.id === old)) delete c._buf;
+  }
+}
+function screenRingWarm(id) { _ringBuffer(id).catch(() => {}); }
+function screenRingForget(id) {
+  const i = _ringDecoded.indexOf(id);
+  if (i >= 0) _ringDecoded.splice(i, 1);
+  if (_ringPlayer && _ringPlayer.id === id) _ringStopImported();
+}
+// Joue un son importé (boucle ou une fois) ; false s'il n'est pas en cache.
+// onFail : son illisible sur cet appareil → l'appelant joue le son intégré.
+function _ringPlayImported(id, loop, vol, onFail) {
+  const c = _mediaCache.get(id);
+  if (!c || c.kind !== 'audio') return false;
+  _ringStopImported();
+  const seq = _ringPlaySeq;
+  _ringBuffer(id).then((buf) => {
+    if (seq !== _ringPlaySeq) return; // arrêté (décroché, refus, fin) pendant le décodage
+    const ctx = _ac();
+    if (!ctx) throw new Error('webaudio');
+    const src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = buf; src.loop = !!loop;
+    g.gain.value = typeof vol === 'number' ? vol : 1;
+    src.connect(g); g.connect(ctx.destination);
+    src.onended = () => { if (_ringPlayer && _ringPlayer.src === src) _ringPlayer = null; };
+    _ringPlayer = { id, src, gain: g, loop: !!loop };
+    src.start();
+  }).catch(() => { if (seq === _ringPlaySeq) { _ringPlayer = null; onFail(); } });
+  return true;
+}
+function _ringStopImported() {
+  _ringPlaySeq++;
+  const p = _ringPlayer;
+  _ringPlayer = null;
+  if (!p) return;
+  try { p.src.stop(); } catch (_) {}
+  try { p.src.disconnect(); p.gain.disconnect(); } catch (_) {}
 }
 
 // — Écran : overlay —
@@ -9908,6 +10140,9 @@ function screenCallStart(m) {
     photoMode: m.photoMode === 'full' ? 'full' : 'avatar',
     present: m.present === 'banner' ? 'banner' : 'full',
     ring: m.ring,
+    // Son importé (cache __ring_…) et volume du son (1 = niveau d'origine)
+    ringId: (typeof m.ringId === 'string' && SRP.RING_ID_RE.test(m.ringId)) ? m.ringId : null,
+    ringVolume: (typeof m.ringVolume === 'number' && Number.isFinite(m.ringVolume)) ? Math.min(1, Math.max(0, m.ringVolume)) : 1,
     hasAudio: !!m.hasAudio,
     autoAnswer: Math.max(0, Math.min(60, Number(m.autoAnswer) || 0)),
     lock: m.lock ? { time: String(m.lock.time || '').slice(0, 8), date: String(m.lock.date || '').slice(0, 30) } : null,
@@ -9919,7 +10154,7 @@ function screenCallStart(m) {
     // Présentation « bandeau haut » (téléphone en cours d'utilisation) ou plein écran
     if (_callCfg.present === 'banner') { el.classList.add('notif'); _scRenderCallBar(); }
     else { el.classList.remove('notif'); _scRenderIncoming(); }
-    _startRinging(_callCfg.ring || 'classic');
+    _startRinging(_callCfg);
     if (navigator.vibrate) {
       navigator.vibrate([700, 300, 700]);
       _callVibTimer = setInterval(() => navigator.vibrate([700, 300, 700]), 2200);
@@ -9938,7 +10173,7 @@ function screenCallStart(m) {
       el.classList.add('notif');
       el.innerHTML = _scNotifCard(_callCfg, '');
     }
-    _playNotifSound(_callCfg.kind);
+    _playNotifSound(_callCfg);
     if (navigator.vibrate) navigator.vibrate([200, 120, 200]);
   }
 }
@@ -10147,13 +10382,7 @@ async function _playCallAudio() {
   const ctx = _ac();
   try {
     if (ctx) {
-      if (!c._buf) {
-        const b64 = c.data.slice(c.data.indexOf(',') + 1);
-        const bin = atob(b64);
-        const bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        c._buf = await ctx.decodeAudioData(bytes.buffer);
-      }
+      if (!c._buf) c._buf = await _decodeAudio(ctx, _dataUrlBytes(c.data).buffer);
       if (_callState !== 'incall') return; // raccroché pendant le décodage
       const src = ctx.createBufferSource();
       src.buffer = c._buf;
@@ -10218,7 +10447,10 @@ function screenCallHide() {
   else done();
 }
 let _callHideSeq = 0;
+// Arrêt de la sonnerie (décroché, refus, fin, fermeture, nouvel appel) ; coupe
+// aussi un son de notification importé encore en cours
 function _scStopRing() {
+  _ringStopImported();
   if (_callRingTimer) { clearInterval(_callRingTimer); _callRingTimer = null; }
   if (_callVibTimer) { clearInterval(_callVibTimer); _callVibTimer = null; }
   if (_callAutoTimer) { clearTimeout(_callAutoTimer); _callAutoTimer = null; }
@@ -10229,6 +10461,437 @@ function screenCallStopTimers() {
   if (_callClockTimer) { clearInterval(_callClockTimer); _callClockTimer = null; }
 }
 
+// ══════════════════════════ SONNERIES ET SONS DE NOTIFICATION (télécommande) ══════════════════════════
+// Onglet Appel, panneau « Sonnerie » (appel) / « Son de notification » (SMS,
+// messagerie) — maquette validée 12 : sons intégrés (Classique, Digitale,
+// Douce, Silencieux) ou sons importés par l'utilisateur (MP3, M4A, WAV… ≤ 5 Mo,
+// vérifiés par WebAudio). Chaque type garde son choix et son volume ; la
+// bibliothèque « Vos sonneries » est commune aux trois types. Par défaut :
+// Classique à 100 %, c.-à-d. les sons d'avant (sonnerie classique, son SMS,
+// son messagerie).
+//
+// Stockage : bibliothèque en IndexedDB (base setremote-ringtones : « meta »
+// = nom, durée… ; « data » = data-URL du son), à défaut en mémoire le temps
+// de la session ; choix par type en localStorage (setremote-ring-v1).
+//
+// Écrans : chaque son importé a un id dérivé de son contenu (« __ring_ » + 16
+// hex de SHA-256). Il part en fragments chiffrés (media-img-*) et reste en
+// cache sur l'écran ; call:start n'en porte que l'id (ringId) et le volume
+// (ringVolume) : il sonne même si le réseau flanche ensuite. Envoyé au choix
+// du son, avant un appel qui l'utilise, à la resynchronisation s'il manque à
+// l'écran (24-resync.js), sur demande de l'écran (media:need) et, passerelle
+// DMX en marche, pour les entrées 1 à 20 des listes (déclenchement instantané
+// depuis la console).
+const RING_KINDS = ['call', 'sms', 'chat'];
+const RING_BUILTINS = ['classic', 'digital', 'soft', 'silent'];
+const RING_MAX_BYTES = 5 * 1024 * 1024;
+const RING_SETTINGS_KEY = 'setremote-ring-v1';
+const RING_DB = 'setremote-ringtones';
+const RING_NAME_MAX = 80;
+
+// ── Choix par type : { sound: son intégré ou id importé, vol: 0..1 } ──
+const ringSettings = { call: { sound: 'classic', vol: 1 }, sms: { sound: 'classic', vol: 1 }, chat: { sound: 'classic', vol: 1 } };
+function _ringKind(k) { return RING_KINDS.includes(k) ? k : 'call'; }
+function _ringIsId(s) { return typeof s === 'string' && SRP.RING_ID_RE.test(s); }
+function _ringVol(v) {
+  return (typeof v === 'number' && Number.isFinite(v)) ? Math.min(1, Math.max(0, Math.round(v * 100) / 100)) : 1;
+}
+function loadRingSettings() {
+  let o = null;
+  try { o = JSON.parse(_lsGet(RING_SETTINGS_KEY)); } catch (_) { o = null; }
+  for (const k of RING_KINDS) {
+    const s = o && typeof o === 'object' ? o[k] : null;
+    const ok = s && typeof s === 'object' && (RING_BUILTINS.includes(s.sound) || _ringIsId(s.sound));
+    ringSettings[k] = { sound: ok ? s.sound : 'classic', vol: s && typeof s === 'object' ? _ringVol(s.vol) : 1 };
+  }
+}
+function persistRingSettings() {
+  _lsSet(RING_SETTINGS_KEY, JSON.stringify({ v: 1, call: ringSettings.call, sms: ringSettings.sms, chat: ringSettings.chat }));
+}
+
+// Champs « son » d'un call:start pour un choix { sound, vol } :
+//   ring       son intégré (et repli de l'écran si le son importé lui manque)
+//   ringId     son importé (absent : son intégré seul)
+//   ringVolume volume 0..1 (absent : 100 %, comme les versions précédentes)
+function ringMsgFields(sound, vol) {
+  const out = {};
+  if (_ringIsId(sound) && ringLibHas(sound)) { out.ring = 'classic'; out.ringId = sound; }
+  else out.ring = RING_BUILTINS.includes(sound) ? sound : 'classic';
+  const v = _ringVol(vol);
+  if (v < 1) out.ringVolume = v;
+  return out;
+}
+function ringFormFields(kind) {
+  const s = ringSettings[_ringKind(kind)];
+  return ringMsgFields(s.sound, s.vol);
+}
+
+// ── Bibliothèque : IndexedDB, repli en mémoire ──
+let ringLib = [];                // [{ id, name, mime, size, dur, at }] par ordre d'import (sans les données)
+let _ringLibLoaded = false;
+const _ringMem = new Map();      // sans IndexedDB : id → { meta, data }
+let _ringDbP = null;
+function _ringDb() {
+  if (_ringDbP) return _ringDbP;
+  _ringDbP = new Promise((resolve) => {
+    try {
+      if (typeof indexedDB === 'undefined' || !indexedDB) { resolve(null); return; }
+      const req = indexedDB.open(RING_DB, 1);
+      req.onupgradeneeded = () => {
+        try { req.result.createObjectStore('meta', { keyPath: 'id' }); req.result.createObjectStore('data'); } catch (_) {}
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+      req.onblocked = () => resolve(null);
+    } catch (_) { resolve(null); }
+  });
+  return _ringDbP;
+}
+// Transaction sur les deux magasins ; résultat de la requête renvoyée par fn, null en cas d'échec
+function _ringTx(mode, fn) {
+  return _ringDb().then((db) => new Promise((resolve) => {
+    if (!db) { resolve(null); return; }
+    try {
+      const tx = db.transaction(['meta', 'data'], mode);
+      const r = fn(tx.objectStore('meta'), tx.objectStore('data'));
+      tx.oncomplete = () => resolve(r && 'result' in r ? (r.result === undefined ? null : r.result) : true);
+      tx.onerror = tx.onabort = () => resolve(null);
+    } catch (_) { resolve(null); }
+  }));
+}
+function _ringSanitizeMeta(o) {
+  if (!o || typeof o !== 'object' || !_ringIsId(o.id)) return null;
+  const n = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
+  return {
+    id: o.id,
+    name: typeof o.name === 'string' && o.name ? o.name.slice(0, RING_NAME_MAX) : 'son',
+    mime: typeof o.mime === 'string' ? o.mime.slice(0, 60) : '',
+    size: n(o.size), dur: n(o.dur), at: n(o.at),
+  };
+}
+function ringLibHas(id) { return _ringIsId(id) && ringLib.some((t) => t.id === id); }
+function ringName(id) { const t = ringLib.find((x) => x.id === id); return t ? t.name : null; }
+
+async function ringLibLoad() {
+  const metas = await _ringTx('readonly', (m) => m.getAll());
+  const all = (Array.isArray(metas) ? metas : []).concat([..._ringMem.values()].map((x) => x.meta));
+  const seen = new Set();
+  ringLib = all.map(_ringSanitizeMeta).filter((t) => t && !seen.has(t.id) && seen.add(t.id))
+    .sort((a, b) => a.at - b.at || (a.id < b.id ? -1 : 1));
+  _ringLibLoaded = true;
+  // Un choix vers un son disparu revient au son par défaut du type
+  let changed = false;
+  for (const k of RING_KINDS) {
+    if (_ringIsId(ringSettings[k].sound) && !ringLibHas(ringSettings[k].sound)) { ringSettings[k].sound = 'classic'; changed = true; }
+  }
+  if (changed) persistRingSettings();
+  renderRingPanel();
+  if (typeof renderCallList === 'function') renderCallList();
+}
+async function ringLibData(id) {
+  if (_ringMem.has(id)) return _ringMem.get(id).data;
+  return safeAudioData(await _ringTx('readonly', (m, d) => d.get(id)));
+}
+// true : conservé (IndexedDB) ; false : en mémoire pour cette session seulement
+async function _ringLibPut(meta, data) {
+  const ok = await _ringTx('readwrite', (m, d) => { m.put(meta); return d.put(data, meta.id); });
+  if (ok) return true;
+  _ringMem.set(meta.id, { meta, data });
+  return false;
+}
+function _ringLibDelete(id) {
+  _ringMem.delete(id);
+  return _ringTx('readwrite', (m, d) => { m.delete(id); return d.delete(id); });
+}
+
+// ── Import : type, taille, décodage réel ──
+const _RING_EXT_MIME = {
+  mp3: 'audio/mpeg', m4a: 'audio/mp4', mp4: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav', wave: 'audio/wav',
+  ogg: 'audio/ogg', oga: 'audio/ogg', opus: 'audio/ogg', flac: 'audio/flac', aif: 'audio/aiff', aiff: 'audio/aiff',
+  caf: 'audio/x-caf', webm: 'audio/webm',
+};
+// Type MIME audio d'un fichier (type annoncé, sinon extension) ; null si ce n'est pas un son
+function ringFileMime(f) {
+  const t = String((f && f.type) || '').toLowerCase();
+  const ext = ((/\.([a-z0-9]{2,5})$/i.exec((f && f.name) || '') || [])[1] || '').toLowerCase();
+  if (/^audio\/[a-z0-9.+-]{1,40}$/.test(t)) return t;
+  if (!t || t === 'application/octet-stream' || (t === 'video/mp4' && ext === 'm4a')) return _RING_EXT_MIME[ext] || null;
+  return null;
+}
+function ringFileDataUrl(f, mime) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error || new Error('lecture'));
+    r.readAsDataURL(new Blob([f], { type: mime }));
+  });
+}
+// Décodage WebAudio hors lecture (OfflineAudioContext : aucun son, aucun geste requis)
+function ringDecode(arrayBuffer) {
+  const Off = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  let ctx = null;
+  try { ctx = Off ? new Off(1, 1, 44100) : _ac(); } catch (_) { ctx = null; }
+  return ctx ? _decodeAudio(ctx, arrayBuffer) : Promise.reject(new Error('webaudio'));
+}
+function ringFmtDur(d) { return fmtTime(Math.max(1, Math.round(d || 0))); }
+// Id dérivé du contenu envoyé : même son = même id (pas de doublon, cache partagé)
+async function _ringHashId(data) {
+  const h = new Uint8Array(await SRP.getCrypto().subtle.digest('SHA-256', new TextEncoder().encode(data)));
+  let s = '';
+  for (let i = 0; i < 8; i++) s += h[i].toString(16).padStart(2, '0');
+  return '__ring_' + s;
+}
+let _ringLastAt = 0;
+// Ajoute un fichier à la bibliothèque → { id, name, dup?, persisted? } ou { error, name }
+async function ringImportFile(f) {
+  const name = String((f && f.name) || 'son').slice(0, RING_NAME_MAX);
+  if (!f) return { error: 'none', name };
+  if (f.size > RING_MAX_BYTES) return { error: 'big', name };
+  const mime = ringFileMime(f);
+  if (!mime) return { error: 'type', name };
+  let buf, audio;
+  try { buf = await f.arrayBuffer(); } catch (_) { return { error: 'read', name }; }
+  try { audio = await ringDecode(buf); } catch (_) { return { error: 'decode', name }; }
+  if (!audio || !(audio.duration > 0)) return { error: 'decode', name };
+  let data;
+  try { data = await ringFileDataUrl(f, mime); } catch (_) { return { error: 'read', name }; }
+  if (!safeAudioData(data)) return { error: 'type', name };
+  const id = await _ringHashId(data);
+  const known = ringLib.find((t) => t.id === id);
+  if (known) return { id, name: known.name, dup: true };
+  _ringLastAt = Math.max(Date.now(), _ringLastAt + 1);
+  const meta = { id, name, mime, size: f.size, dur: Math.round(audio.duration * 100) / 100, at: _ringLastAt };
+  const persisted = await _ringLibPut(meta, data);
+  ringLib.push(meta);
+  return { id, name, persisted };
+}
+const _RING_ERRORS = {
+  big: (n) => '⚠ « ' + n + ' » dépasse 5 Mo — coupez un extrait plus court.',
+  type: (n) => '⚠ « ' + n + ' » n\'est pas un fichier son (MP3, M4A, WAV…).',
+  decode: (n) => '⚠ « ' + n + ' » est illisible : ce n\'est pas un son valide.',
+  read: () => '⚠ Lecture du fichier impossible.',
+  none: () => '',
+};
+async function onRingImport(files) {
+  const f = files && files[0];
+  if (!f) return null;
+  _ringSetStatus('⏳ Vérification de « ' + String(f.name || 'son').slice(0, RING_NAME_MAX) + ' »…');
+  const r = await ringImportFile(f);
+  if (r.error) { _ringSetStatus((_RING_ERRORS[r.error] || _RING_ERRORS.read)(r.name), 'warn'); return r; }
+  _ringSelect(r.id);
+  const what = r.dup ? '« ' + r.name + ' » est déjà dans vos sonneries'
+    : '✓ « ' + r.name + ' » importée' + (r.persisted ? '' : ' (pour cette session : stockage indisponible)');
+  _ringStatusSending(r.id, what);
+  return r;
+}
+
+// ── Choix du son du type affiché ──
+function setCallRing(r) {
+  ringSettings[_ringKind(callKind)].sound = RING_BUILTINS.includes(r) ? r : 'classic';
+  persistRingSettings();
+  _ringSetStatus('');
+  renderRingPanel();
+}
+function selectRingTone(id) {
+  if (!ringLibHas(id)) return;
+  _ringSelect(id);
+  _ringStatusSending(id, '« ' + ringName(id) + ' »');
+}
+function _ringSelect(id) {
+  ringSettings[_ringKind(callKind)].sound = id;
+  persistRingSettings();
+  renderRingPanel();
+  ensureCallAssets(null, null, [id]); // envoyé dès le choix, comme la photo
+}
+function onRingVolume() {
+  const sl = document.getElementById('ringVolSlider');
+  if (!sl) return;
+  const v = _ringVol((parseInt(sl.value, 10) || 0) / 100);
+  ringSettings[_ringKind(callKind)].vol = v;
+  persistRingSettings();
+  _ringRenderVol();
+  if (_ringPrev && _ringPrev.gain) { try { _ringPrev.gain.gain.value = v; } catch (_) {} }
+}
+// Entrée de la liste rechargée dans le formulaire : son et volume enregistrés
+function ringApplyEntry(e) {
+  const k = _ringKind(e && e.kind);
+  const sound = e && ringLibHas(e.ringId) ? e.ringId : (e && RING_BUILTINS.includes(e.ring) ? e.ring : 'classic');
+  ringSettings[k] = { sound, vol: e && e.ringVolume !== undefined ? _ringVol(e.ringVolume) : 1 };
+  persistRingSettings();
+  _ringSetStatus('');
+  renderRingPanel();
+  if (ringLibHas(sound)) ensureCallAssets(null, null, [sound]);
+}
+
+async function deleteRingTone(id) {
+  const t = ringLib.find((x) => x.id === id);
+  if (!t) return false;
+  if (!confirm('Supprimer « ' + t.name + ' » ? Les appels et SMS qui l\'utilisent reviennent au son Classique.')) return false;
+  if (_ringPrev && _ringPrev.id === id) _ringPrevStop();
+  ringLib = ringLib.filter((x) => x.id !== id);
+  for (const k of RING_KINDS) if (ringSettings[k].sound === id) ringSettings[k].sound = 'classic';
+  persistRingSettings();
+  _ringOnScreens.delete(id);
+  _screenCached.delete(id);
+  sendMsg({ type: 'media:evict', id });
+  _ringSetStatus('« ' + t.name + ' » supprimée.');
+  renderRingPanel();
+  if (typeof renderCallList === 'function') renderCallList();
+  await _ringLibDelete(id);
+  return true;
+}
+
+// ── Écoute sur la télécommande (bouton ▶ de la ligne) ──
+let _ringPrev = null, _ringPrevSeq = 0; // { id, src, gain }
+function _ringPrevStop() {
+  _ringPrevSeq++;
+  const p = _ringPrev;
+  _ringPrev = null;
+  if (p && p.src) { try { p.src.stop(); } catch (_) {} }
+}
+async function previewRingTone(id) {
+  if (_ringPrev && _ringPrev.id === id) { _ringPrevStop(); renderRingPanel(); return; }
+  _ringPrevStop();
+  const seq = _ringPrevSeq;
+  const ctx = _ac();
+  if (!ctx || !ringLibHas(id)) return;
+  _ringPrev = { id, src: null, gain: null };
+  renderRingPanel();
+  try {
+    const data = await ringLibData(id);
+    if (!data) throw new Error('absent');
+    const buf = await _decodeAudio(ctx, _dataUrlBytes(data).buffer);
+    if (seq !== _ringPrevSeq) return;
+    const src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = buf;
+    g.gain.value = ringSettings[_ringKind(callKind)].vol;
+    src.connect(g); g.connect(ctx.destination);
+    src.onended = () => { if (_ringPrev && _ringPrev.src === src) { _ringPrev = null; renderRingPanel(); } };
+    _ringPrev.src = src; _ringPrev.gain = g;
+    src.start();
+  } catch (_) {
+    if (seq !== _ringPrevSeq) return;
+    _ringPrev = null;
+    _ringSetStatus('⚠ Écoute impossible sur ce téléphone.', 'warn');
+    renderRingPanel();
+  }
+}
+
+// ── Envoi aux écrans ──
+const _ringOnScreens = new Set(); // sons envoyés aux écrans (et non perdus depuis)
+const _ringSentAt = new Map();
+// Appelé dans la file des envois (ensureCallAssets) : fragments du son s'il n'est pas déjà parti
+async function ringSendIfMissing(id) {
+  if (_ringOnScreens.has(id) || !ringLibHas(id)) return;
+  if (!mqttClient || !mqttClient.connected) return; // renvoyé à la resynchronisation
+  const data = await ringLibData(id);
+  if (!data || _ringOnScreens.has(id)) return;
+  _ringOnScreens.add(id);
+  _ringSentAt.set(id, Date.now());
+  _screenCached.delete(id);
+  await sendImageChunks(data, { mediaId: id, show: false });
+}
+// Sons qui doivent être sur les écrans : ceux choisis pour chaque type et,
+// passerelle en marche, ceux des entrées 1 à 20 des listes
+function ringNeededIds() {
+  const ids = new Set();
+  for (const k of RING_KINDS) if (ringLibHas(ringSettings[k].sound)) ids.add(ringSettings[k].sound);
+  if (typeof gwRunning === 'function' && gwRunning()) for (const id of ringGatewayIds()) ids.add(id);
+  return [...ids];
+}
+function ringGatewayIds() {
+  const ids = new Set();
+  for (const list of [callList.call, callList.sms]) {
+    for (const e of list.slice(0, CALL_LIST_DMX_ITEMS)) if (ringLibHas(e.ringId)) ids.add(e.ringId);
+  }
+  return [...ids];
+}
+// Passerelle DMX : sons des entrées 1 à 20 envoyés d'avance (au démarrage, à chaque modification de liste)
+function ringPreloadGatewayEntries() {
+  const ids = ringGatewayIds();
+  if (ids.length) ensureCallAssets(null, null, ids);
+}
+// L'écran a reçu un appel avec un son qu'il n'a pas (rechargé, transfert perdu)
+function ringOnScreenNeeds(id) {
+  _screenCached.delete(id);
+  if (!ringLibHas(id)) return;
+  if (Date.now() - (_ringSentAt.get(id) || 0) < 3000) return; // envoi tout récent : déjà en route
+  _ringOnScreens.delete(id);
+  ensureCallAssets(null, null, [id]);
+}
+// Accusé « en cache » d'un écran : bande son du décroché, son importé
+function remoteOnCallAssetCached(id) {
+  if (id === '__callaudio') renderCallAudioRow();
+  else if (_ringIsId(id) && id === _ringStatusWait) _ringSetStatus('✓ « ' + (ringName(id) || 'son') + ' » sur l\'écran', 'live');
+}
+
+// ── Rendu du panneau ──
+let _ringStatusWait = null; // son dont le message attend l'accusé de l'écran
+function _ringSetStatus(text, tone, waitId) {
+  _ringStatusWait = waitId || null;
+  const st = document.getElementById('ringStatus');
+  if (!st) return;
+  st.textContent = text || '';
+  st.style.display = text ? 'block' : 'none';
+  st.classList.toggle('live', tone === 'live');
+  st.classList.toggle('rt-warn', tone === 'warn');
+}
+function _ringStatusSending(id, what) {
+  if (_screenCached.has(id)) _ringSetStatus(what + ' · sur l\'écran ✓', 'live');
+  else _ringSetStatus(what + ' · envoi à l\'écran…', null, id);
+}
+function _ringRenderVol() {
+  const v = ringSettings[_ringKind(callKind)].vol;
+  const sl = document.getElementById('ringVolSlider');
+  if (sl && String(sl.value) !== String(Math.round(v * 100))) sl.value = String(Math.round(v * 100));
+  const lb = document.getElementById('ringVolVal');
+  if (lb) lb.innerHTML = Math.round(v * 100) + '<span> %</span>';
+}
+const _RING_ICON = {
+  play: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>',
+  stop: '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>',
+  del: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+};
+let _ringRenderedKind = null;
+function renderRingPanel() {
+  const k = _ringKind(callKind), s = ringSettings[k], isCall = k === 'call';
+  // Autre type affiché : le message du type précédent n'a plus de sens
+  if (_ringRenderedKind !== null && _ringRenderedKind !== k) _ringSetStatus('');
+  _ringRenderedKind = k;
+  const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+  set('ringPanelLabel', isCall ? 'Sonnerie' : 'Son de notification');
+  set('ringVolLabel', isCall ? 'Volume de la sonnerie' : 'Volume de la notification');
+  RING_BUILTINS.forEach((x) => {
+    const b = document.getElementById('callring-' + x);
+    if (b) b.classList.toggle('active', s.sound === x);
+  });
+  const lbl = document.getElementById('ringLibLabel');
+  if (lbl) lbl.style.display = ringLib.length ? 'block' : 'none';
+  const rows = document.getElementById('ringLibRows');
+  if (rows) {
+    rows.innerHTML = ringLib.map((t) => {
+      const sel = t.id === s.sound, playing = !!(_ringPrev && _ringPrev.id === t.id);
+      return '<div class="rt-row' + (sel ? ' selected' : '') + '" data-id="' + t.id + '" onclick="selectRingTone(\'' + t.id + '\')">'
+        + '<button type="button" class="rt-play' + (playing ? ' playing' : '') + '" aria-label="' + (playing ? 'Arrêter' : 'Écouter') + '"'
+        + ' onclick="event.stopPropagation();previewRingTone(\'' + t.id + '\')">' + (playing ? _RING_ICON.stop : _RING_ICON.play) + '</button>'
+        + '<span class="rt-main"><span class="rt-name">' + escapeHtml(t.name) + '</span>'
+        + '<span class="rt-meta">' + ringFmtDur(t.dur) + (sel ? ' · sélectionnée' : '') + '</span></span>'
+        + '<button type="button" class="rt-del" aria-label="Supprimer" onclick="event.stopPropagation();deleteRingTone(\'' + t.id + '\')">' + _RING_ICON.del + '</button>'
+        + '</div>';
+    }).join('');
+  }
+  _ringRenderVol();
+  // Décroché (bande son, décroché automatique) : appel seulement
+  const ans = document.getElementById('callAnswerBlock');
+  if (ans) ans.style.display = isCall ? 'block' : 'none';
+}
+
+function ringInit() {
+  loadRingSettings();
+  renderRingPanel();
+  renderCallAudioRow();
+  return ringLibLoad();
+}
 // ══════════════════════════ APPELS ET SMS ENREGISTRÉS (télécommande) ══════════════════════════
 // Onglet Appel (maquette 18) : deux listes numérotées, « Appels » et « SMS »
 // (SMS et messagerie). « + Enregistrer l'appel actuel » ajoute le formulaire
@@ -10240,6 +10903,9 @@ function screenCallStopTimers() {
 //
 // Stockage : réglages en localStorage ; photos et bandes son (trop lourdes pour
 // localStorage) dans IndexedDB, à défaut en mémoire le temps de la session.
+// Son de l'entrée : choix du type au moment de l'enregistrement (son intégré
+// ring, ou son importé ringId de la bibliothèque commune 81-ringtones.js) et
+// son volume ringVolume ; un son importé supprimé depuis → son Classique.
 const CALL_LIST_KEY = 'setremote-call-list-v1';
 const CALL_LIST_MAX = 99;           // par liste
 const CALL_LIST_DMX_ITEMS = 20;     // entrées accessibles depuis la console
@@ -10249,7 +10915,7 @@ let callListKind = 'call';
 const _callListSel = { call: null, sms: null };
 
 const _CALL_STYLE_NAMES = { glass: 'Verre', tonal: 'Tonal', minimal: 'Épuré' };
-const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio'];
+const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio'];
 
 // ── Persistance ──
 function _clListOf(kind) { return kind === 'call' ? 'call' : 'sms'; }
@@ -10258,6 +10924,16 @@ function _clSanitize(e) {
   if (!['call', 'sms', 'chat'].includes(e.kind)) return null;
   const out = { id: e.id };
   for (const k of _CALL_ENTRY_FIELDS) if (e[k] !== undefined) out[k] = e[k];
+  // Son : valeurs reconnues seulement. Un SMS enregistré avant les sons par
+  // type (sans ringVolume) portait la sonnerie de l'appel, que l'écran
+  // ignorait : il garde son son d'origine (Classique).
+  if (out.kind !== 'call' && out.ringVolume === undefined) out.ring = 'classic';
+  if (out.ring !== undefined && !RING_BUILTINS.includes(out.ring)) out.ring = 'classic';
+  if (out.ringId !== undefined && !(typeof out.ringId === 'string' && SRP.RING_ID_RE.test(out.ringId))) delete out.ringId;
+  if (out.ringVolume !== undefined) {
+    if (typeof out.ringVolume === 'number' && Number.isFinite(out.ringVolume)) out.ringVolume = Math.min(1, Math.max(0, out.ringVolume));
+    else delete out.ringVolume;
+  }
   return out;
 }
 function loadCallList() {
@@ -10328,20 +11004,22 @@ async function callEntryAssets(e) {
 // Message call:start d'une entrée (mêmes champs que le formulaire)
 function callEntryMessage(e, assets) {
   const m = { type: 'call:start' };
-  for (const k of _CALL_ENTRY_FIELDS) if (e[k] !== undefined) m[k] = e[k];
+  for (const k of _CALL_ENTRY_FIELDS) if (e[k] !== undefined && k !== 'ring' && k !== 'ringId' && k !== 'ringVolume') m[k] = e[k];
+  // Son enregistré (un son importé supprimé depuis → son Classique)
+  Object.assign(m, ringMsgFields(e.ringId || e.ring, e.ringVolume));
   m.hasPhoto = !!(assets && assets.photo);
   m.hasAudio = !!(assets && assets.audio);
   if (m.kind !== 'call' && m.lock === undefined) m.lock = null;
   return m;
 }
 
-// Déclenche une entrée : photo / son d'abord (s'ils diffèrent de ceux déjà
-// en cache sur les écrans), puis l'appel. target : écrans visés (console),
-// absent = tous les écrans (bouton « Appeler n° X »).
+// Déclenche une entrée : photo / bande son / son importé d'abord (s'ils ne
+// sont pas déjà en cache sur les écrans), puis l'appel. target : écrans visés
+// (console), absent = tous les écrans (bouton « Appeler n° X »).
 async function sendCallEntry(e, targets) {
   const assets = await callEntryAssets(e);
-  await ensureCallAssets(assets.photo, assets.audio);
   const base = callEntryMessage(e, assets);
+  await ensureCallAssets(assets.photo, assets.audio, base.ringId ? [base.ringId] : null);
   if (!targets) { sendMsg(base); return; }
   for (const t of targets) sendMsg(Object.assign({}, base, { target: t }));
 }
@@ -10356,6 +11034,8 @@ function _clMeta(e) {
   if (e.kind === 'chat') parts.push('messagerie');
   if (e.hasPhoto) parts.push('photo');
   if (e.hasAudio) parts.push('bande son');
+  const tone = e.ringId ? ringName(e.ringId) : null; // son importé (s'il est encore dans la bibliothèque)
+  if (tone) parts.push('♪ ' + tone);
   if (e.kind === 'call' && e.autoAnswer > 0) parts.push('décroché auto ' + e.autoAnswer + ' s');
   if (e.lock) parts.push('écran verrouillé');
   if (e.kind === 'call' && e.present === 'banner') parts.push('bandeau');
@@ -10413,7 +11093,9 @@ async function saveCurrentCall() {
   const list = _clListOf(fields.kind);
   if (callList[list].length >= CALL_LIST_MAX) return null;
   const e = Object.assign({ id: 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }, fields);
-  // Réglages masqués pour ce type : non enregistrés (sonnerie et bande son
+  // Son du type au moment de l'enregistrement : volume toujours noté (100 % compris)
+  e.ringVolume = ringSettings[_ringKind(e.kind)].vol;
+  // Réglages masqués pour ce type : non enregistrés (bande son et décroché
   // n'existent que pour un appel, l'écran verrouillé que pour un message)
   if (e.kind === 'call') delete e.lock;
   else { e.autoAnswer = 0; e.hasAudio = false; delete e.present; delete e.photoMode; }
@@ -10450,7 +11132,7 @@ async function loadCallEntryIntoForm(e) {
   setCallStyle(_CALL_STYLE_NAMES[e.style] ? e.style : 'glass');
   setCallPresent(e.present === 'banner' ? 'banner' : 'full');
   setCallPhotoMode(e.photoMode === 'full' ? 'full' : 'avatar');
-  setCallRing(['classic', 'digital', 'soft', 'silent'].includes(e.ring) ? e.ring : 'classic');
+  ringApplyEntry(e); // son et volume de l'entrée pour son type
   val('callName', e.name || ''); val('callLabel', e.label || ''); val('callMsgText', e.msg || '');
   if (e.kind !== 'call') {
     val('callAppName', e.appName || ''); val('callAppColor', safeHexColor(e.appColor, '#2f8cf0'));
@@ -10466,11 +11148,15 @@ async function loadCallEntryIntoForm(e) {
   const pv = document.getElementById('callPhotoPreview');
   if (pv) pv.style.backgroundImage = _callPhoto ? 'url(' + _callPhoto + ')' : '';
   _callPhotoSending = _callPhoto ? ensureCallAssets(_callPhoto, null) : null;
-  _callAudioData = assets.audio;
-  const st = document.getElementById('callAudioStatus');
-  if (st) st.textContent = _callAudioData ? '✓ Bande son de l\'entrée prête — jouée au décroché.' : 'Aucune bande son — le décroché reste silencieux.';
-  const c = document.getElementById('callAudioClear');
-  if (c) c.style.display = _callAudioData ? 'inline-block' : 'none';
+  // Bande son : nom et durée gardés si c'est déjà celle du formulaire
+  const sameAudio = !!assets.audio && assets.audio === _callAudioData;
+  if (!sameAudio) {
+    _callAudioSeq++;
+    _callAudioData = assets.audio;
+    _callAudioName = _callAudioData ? 'Bande son de l\'entrée' : ''; _callAudioDur = 0;
+    if (_callAudioData) _measureCallAudio(_callAudioSeq);
+  }
+  renderCallAudioRow();
   if (_callAudioData) ensureCallAssets(null, _callAudioData);
 }
 
@@ -10962,7 +11648,9 @@ function gwOnTrigger(t) {
   }).catch(() => {});
 }
 
-// Entrées 1 à 20 des listes enregistrées → canaux Appel et SMS
+// Entrées 1 à 20 des listes enregistrées → canaux Appel et SMS. Leurs sons
+// importés partent d'avance vers les écrans : un appel déclenché par la
+// console sonne aussitôt, sans transfert.
 function gwSyncTriggerEntries() {
   if (!_gw) return;
   const conv = (e) => ({ kind: e.kind, style: e.style, name: e.name });
@@ -10970,6 +11658,7 @@ function gwSyncTriggerEntries() {
     call: callList.call.slice(0, CALL_LIST_DMX_ITEMS).map(conv),
     sms: callList.sms.slice(0, CALL_LIST_DMX_ITEMS).map(conv),
   });
+  ringPreloadGatewayEntries();
 }
 
 // ── Patch ──
@@ -11698,8 +12387,10 @@ buildEffectCards();
 loadFxMemories();
 renderFxMemories();
 
-// ── Onglet Appel : état initial des options, appels et SMS enregistrés ──
+// ── Onglet Appel : état initial des options, sons par type (bibliothèque en
+// IndexedDB, chargée en arrière-plan), appels et SMS enregistrés ──
 _syncCallPhotoRow();
+ringInit();
 loadCallList();
 renderCallList();
 
