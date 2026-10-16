@@ -11,8 +11,9 @@ L'interface web est **embarquée dans le binaire** et chargée en `file://`
 confidentialité). Conséquence : une mise à jour de la PWA n'apparaît dans
 l'app **qu'avec un nouveau build**. Voir « Interface embarquée » plus bas.
 
-Les anciens écrans 100 % natifs restent accessibles via `setremote:///native`
-(développement uniquement).
+Les anciens écrans 100 % natifs (`/native`, `/remote`, `/screen`) et leurs
+transports en clair (`react-native-ble-plx`, `react-native-tcp-socket`) ont
+été retirés : la vue web est la seule interface.
 
 ## Préparation (une seule fois)
 

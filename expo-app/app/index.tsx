@@ -15,7 +15,8 @@ import { createPdfPreviewer, type PdfPrintFn } from '../src/lib/pdfPreview';
 // matérielle, et réception UDP pour la passerelle DMX (sACN, Art-Net ; module
 // local modules/setremote-udp, contrat du pont dans docs/DMX-NATIVE.md § 9),
 // aperçu PDF in-app de la table des canaux DMX (expo-print, src/lib/pdfPreview.ts).
-// Les anciens écrans 100 % natifs restent accessibles sur /native.
+// Les anciens écrans 100 % natifs (/native, /remote, /screen) et leurs
+// transports en clair ont été retirés : la vue web est la seule interface.
 //
 // ── D'où vient l'interface ──
 // Par défaut elle est EMBARQUÉE dans le binaire (plugins/with-embedded-web.js,

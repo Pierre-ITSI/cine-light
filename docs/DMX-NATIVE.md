@@ -47,9 +47,10 @@ engine.start();                                                 // tick() toutes
   depuis juin 2025 ([Expo, New Architecture](https://docs.expo.dev/guides/new-architecture/)).
   Une bibliothèque sans TurboModule ne fonctionne que via la couche de
   compatibilité (interop) : à tester, sans garantie à long terme.
-- Le projet utilise déjà un **dev client** (`react-native-tcp-socket`,
-  `react-native-ble-plx`) : un module natif de plus ne change pas la chaîne de
-  build (`expo prebuild`, EAS).
+- Le projet utilise déjà un **dev client** (à l'époque pour
+  `react-native-tcp-socket` et `react-native-ble-plx`, retirés depuis au profit
+  du module local `setremote-link`, `docs/OFFLINE-NATIVE.md`) : un module
+  natif de plus ne change pas la chaîne de build (`expo prebuild`, EAS).
 - iOS : `NSLocalNetworkUsageDescription` est déjà déclaré dans
   `expo-app/app.json` (invite « réseau local »).
 - La passerelle doit rester **au premier plan, écran allumé**
