@@ -159,7 +159,10 @@ final class LinkManager {
     let s = snapshot
     stateLock.unlock()
     if ready { return s }
-    return queue.sync { refreshState(); return currentSnapshot() }
+    return queue.sync { () -> [String: Any] in
+      self.refreshState()
+      return self.currentSnapshot()
+    }
   }
 
   /// Arrière-plan : iOS suspendrait les sockets et le Bluetooth ; on ferme tout et on garde la demande.
