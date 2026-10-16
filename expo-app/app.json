@@ -89,7 +89,13 @@
         }
       ],
       "./plugins/with-embedded-web",
-      "./modules/setremote-udp/app.plugin.js"
+      "./modules/setremote-udp/app.plugin.js",
+      [
+        "./modules/setremote-link/app.plugin.js",
+        {
+          "bluetoothPermission": "SetRemote utilise le Bluetooth pour relier la télécommande et l'écran sans Wi-Fi ni Internet."
+        }
+      ]
     ],
     "androidStatusBar": {
       "hidden": true,

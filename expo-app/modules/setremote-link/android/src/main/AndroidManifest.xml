@@ -1,0 +1,25 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools">
+  <!-- Liaisons hors ligne (docs/OFFLINE-NATIVE.md). Aussi ajoutées par app.plugin.js,
+       avec exactement les mêmes attributs. -->
+
+  <!-- Wi-Fi local : TCP + NSD (Bonjour), réseau Wi-Fi / Ethernet même sans Internet -->
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+  <!-- Bluetooth LE, Android 11 et avant : permissions d'installation + localisation
+       (exigée par le système pour scanner ; aucune position n'est lue) -->
+  <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+  <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
+
+  <!-- Bluetooth LE, Android 12+ : « appareils à proximité », demandées au démarrage du Bluetooth -->
+  <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+    android:usesPermissionFlags="neverForLocation"
+    tools:targetApi="s" />
+  <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+  <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+
+  <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
+</manifest>
