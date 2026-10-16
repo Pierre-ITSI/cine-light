@@ -157,7 +157,10 @@ describe('trois écrans : noms, groupes, cible', () => {
     const warm = await rp.evaluate(() => currentColor);
     await waitFor(A.page, (c) => screenBaseColor === c, warm);
     await waitFor(B.page, (c) => screenBaseColor === c, warm);
+    // Effet à flashs rapides : l'avertissement photosensibilité passe d'abord
     await rp.evaluate(() => selectEffect('police'));
+    await waitFor(rp, () => getComputedStyle(document.getElementById('strobe-warn')).display === 'block');
+    await rp.click('#swOk');
     await waitFor(B.page, () => _screenEffect === 'police');
     await sleep(200); await r.broker.flush();
     assert.equal(await base(C), c0, 'C non concerné');
@@ -180,6 +183,8 @@ describe('trois écrans : noms, groupes, cible', () => {
     await rp.evaluate((g) => scrSetTarget({ k: 'group', id: g }), salon);
     assert.deepEqual(await rp.evaluate(() => [currentColor, kelvinK, document.getElementById('kelvinSlider').value, activeScreenEffect,
       document.getElementById('previewHex').textContent]), [warm, 2700, '2700', 'police', warm.toUpperCase()]);
+    assert.equal(await rp.evaluate(() => getComputedStyle(document.getElementById('strobe-warn')).display), 'none',
+      'montrer l\'effet en cours sur la cible n\'est pas une activation : pas d\'avertissement');
     await sleep(200); await r.broker.flush();
     assert.deepEqual((await sentBy(r, null)).map((m) => m.type), ['color'], 'changer de cible n\'envoie rien');
     // « Écrans connectés » : ce que montre chaque écran
