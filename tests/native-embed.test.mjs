@@ -12,7 +12,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { launchBrowser, openPage, fileUrl, sleep } from './helpers/harness.mjs';
-import { assertIndexUpToDate, embedWeb, checkEmbed, FILES } from '../expo-app/scripts/embed-web.mjs';
+import { assertIndexUpToDate, embedWeb, checkEmbed, FILES, PAGES } from '../expo-app/scripts/embed-web.mjs';
 
 let browser, dir;
 before(async () => {
@@ -52,6 +52,23 @@ test('paquet complet : toute ressource relative citée est embarquée', () => {
   assert.ok(!r.files.includes('sw.js'), 'pas de service worker dans l\'app');
   assert.ok(!r.files.some((f) => f.startsWith('splash-')), 'pas d\'écrans de lancement PWA');
   assert.ok(!r.files.includes('screen.html') && !r.local.includes('screen.html'), 'ancien mode DMX retiré : plus de screen.html');
+  // Politique de confidentialité embarquée (Apple 5.1.1, Google Play) : ses
+  // références sont vérifiées comme celles de l'app
+  for (const f of ['confidentialite.html', 'privacy.html']) {
+    assert.ok(FILES.includes(f) && PAGES.includes(f) && r.files.includes(f), f);
+  }
+  assert.ok(r.local.includes('confidentialite.html') && r.local.includes('privacy.html'), 'liens vers la politique (FR ↔ EN, Réglages) présents dans le paquet');
+});
+
+test('politique de confidentialité embarquée : pages en file://, polices du paquet, sans réseau', async () => {
+  for (const file of ['confidentialite.html', 'privacy.html']) {
+    const { page, errors, requests, close } = await openEmbedded(file);
+    await page.evaluate(() => document.fonts.ready);
+    assert.deepEqual(errors, []);
+    assert.deepEqual(requests.filter((u) => !u.startsWith('file:') && !u.startsWith('data:')), [], file + ' : aucune requête hors du paquet');
+    assert.ok(requests.some((u) => /\/vendor\/fonts\/lato-latin-400-normal\.woff2$/.test(u)), file + ' : polices du paquet');
+    await close();
+  }
 });
 
 test('chargement en file:// : aucune requête réseau, polices locales, contexte sécurisé', async () => {

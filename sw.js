@@ -1,5 +1,5 @@
 /* Service Worker — SetRemote PWA */
-const CACHE = 'setremote-v58';
+const CACHE = 'setremote-v60';
 const SHELL = [
   './',
   './index.html',
@@ -7,6 +7,10 @@ const SHELL = [
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',
+  // Politique de confidentialité (Réglages) : lisible hors ligne ; sans copie, le repli
+  // des navigations (index.html) afficherait l'app elle-même dans le cadre de la politique
+  './confidentialite.html',
+  './privacy.html',
   './vendor/mqtt-5.16.1.min.js', // version figée, servie depuis notre origine
   // QR d'appairage généré sur l'appareil (qrcode-generator, MIT, figé)
   './vendor/qrcode-generator-2.0.4.js',

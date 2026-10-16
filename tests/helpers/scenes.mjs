@@ -221,6 +221,12 @@ export const SCENES = {
     await scrollTo('strobeToggle', 96)(page);
     await page.evaluate(() => { document.getElementById('strobeToggle').checked = true; onStrobeToggle(); });
   }),
+  // Page publique de la politique, thème clair du système
+  'privacy-light': async (page) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto(new URL('confidentialite.html', page.url()).href);
+    await page.evaluate(() => document.fonts.ready);
+  },
   'screen-effect-police': async (page) => {
     await joinScreen(page);
     await page.evaluate(() => receiveEffect({ name: 'police', active: true, params: { speed: 3, intensity: 100, chaos: 0, drift: 0 } }));

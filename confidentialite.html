@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>Politique de confidentialité — SetRemote</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="alternate" hreflang="en" href="privacy.html">
+<!--
+  Politique de confidentialité de SetRemote, version FRANÇAISE (version anglaise : privacy.html).
+  Page statique, sans aucune requête externe : polices auto-hébergées (vendor/fonts/), aucun script tiers.
+  Servie par GitHub Pages et embarquée dans l'app (expo-app/scripts/embed-web.mjs), ouverte depuis
+  Réglages › Politique de confidentialité. Décrit l'état RÉEL de la production (pas l'architecture cible
+  de docs/compliance/politique-confidentialite.md). Le <style> est identique dans les deux langues (test).
+  À compléter avant publication : [RAISON SOCIALE], [ADRESSE POSTALE], [E-MAIL DE CONTACT].
+-->
+<style>
+@font-face{font-family:'DM Mono';font-style:normal;font-weight:400;font-display:swap;src:url(vendor/fonts/dm-mono-latin-ext-400-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'DM Mono';font-style:normal;font-weight:400;font-display:swap;src:url(vendor/fonts/dm-mono-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Lato';font-style:normal;font-weight:400;font-display:swap;src:url(vendor/fonts/lato-latin-ext-400-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Lato';font-style:normal;font-weight:400;font-display:swap;src:url(vendor/fonts/lato-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Lato';font-style:normal;font-weight:700;font-display:swap;src:url(vendor/fonts/lato-latin-ext-700-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Lato';font-style:normal;font-weight:700;font-display:swap;src:url(vendor/fonts/lato-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+/* Couleurs de l'app (sombre, par défaut et dans l'app) ; clair si le système le demande */
+:root{color-scheme:dark;--bg:#1a2a3a;--grad:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);--card:#1c1c1f;--chip:#252528;--line:rgba(255,255,255,.1);--text:#F5F2EC;--muted:#a8a8a8;--accent:#FF6B2C;--link:#FF8a55;--warn:rgba(255,196,64,.45)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){color-scheme:light;--bg:#F5F2EC;--grad:linear-gradient(135deg,#F5F2EC 0%,#ebe5db 100%);--card:#ffffff;--chip:#ece7df;--line:rgba(0,0,0,.12);--text:#1c1c1f;--muted:#5c5c5c;--link:#b3470f;--warn:#d9a43c}}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;min-height:100vh;background:var(--grad),var(--bg);background-color:var(--bg);color:var(--text);font-family:'Lato',system-ui,sans-serif;font-size:1rem;line-height:1.65;overflow-wrap:break-word}
+.wrap{max-width:720px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(36px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.brand{font-weight:700;font-size:1.25rem;color:var(--text)}
+.brand span{color:var(--accent)}
+.lang{font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.06em;color:var(--link)}
+h1{font-size:1.75rem;line-height:1.25;margin:28px 0 4px}
+.meta{margin:0 0 22px;font-family:'DM Mono',monospace;font-size:.75rem;color:var(--muted)}
+h2{font-size:1.25rem;line-height:1.3;margin:34px 0 8px}
+h3{font-size:1.0625rem;line-height:1.35;margin:24px 0 6px}
+p,ul{margin:0 0 12px}
+ul{padding-left:1.25em}
+li{margin-bottom:6px}
+li::marker{color:var(--accent)}
+a{color:var(--link);text-underline-offset:2px}
+strong{font-weight:700}
+code{font-family:'DM Mono',monospace;font-size:.875em;background:var(--chip);border-radius:4px;padding:1px 5px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px 6px;margin:0 0 8px}
+.card.warn{border-color:var(--warn)}
+.label{display:block;margin:0 0 10px;font-family:'DM Mono',monospace;font-size:.6875rem;font-weight:400;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.foot{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);font-family:'DM Mono',monospace;font-size:.6875rem;color:var(--muted);text-align:center}
+</style>
+<script>
+// Dans l'app (page affichée dans un cadre), couleurs sombres de l'app quel que soit le thème du système
+try { if (window.top !== window.self) document.documentElement.setAttribute('data-theme', 'dark'); } catch (_) { document.documentElement.setAttribute('data-theme', 'dark'); }
+</script>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <span class="brand">Set<span>Remote</span></span>
+  <a class="lang" href="privacy.html" hreflang="en" lang="en">English</a>
+</header>
+<main>
+<h1>Politique de confidentialité</h1>
+<p class="meta">Dernière mise à jour&nbsp;: 16&nbsp;octobre&nbsp;2026</p>
+
+<section class="card" aria-labelledby="bref">
+  <h2 class="label" id="bref">En bref</h2>
+  <ul>
+    <li><strong>Pas de compte</strong>, pas de publicité, pas de mesure d'audience, pas de traceur. Nous ne vendons aucune donnée.</li>
+    <li>Tout ce que la télécommande et les écrans de jeu s'échangent (couleurs, effets, photos, vidéos, sons, textes) est <strong>chiffré de bout en bout</strong> sur l'appareil qui l'envoie (AES-256-GCM). Nous n'avons pas les clés&nbsp;: <strong>nous ne pouvons pas lire vos contenus.</strong></li>
+    <li>Ces messages chiffrés transitent par un serveur relais, décrit au §&nbsp;3.2, qui ne peut pas les lire.</li>
+    <li>Vos réglages, mémoires, appels enregistrés et sonneries <strong>restent sur votre appareil</strong>.</li>
+  </ul>
+</section>
+
+<h2 id="responsable">1. Qui est responsable de vos données&nbsp;?</h2>
+<p>SetRemote est édité par <strong>[RAISON SOCIALE]</strong>, [ADRESSE POSTALE], responsable du traitement. Pour toute question sur vos données, écrivez à [E-MAIL DE CONTACT].</p>
+
+<h2 id="fonctionnement">2. Comment fonctionne SetRemote</h2>
+<p>SetRemote relie deux sortes d'appareils&nbsp;:</p>
+<ul>
+  <li>la <strong>télécommande</strong>, qui règle la couleur, les effets, les médias et les écrans d'accessoire&nbsp;;</li>
+  <li>un ou plusieurs <strong>écrans de jeu</strong>, qui affichent ce que la télécommande leur envoie.</li>
+</ul>
+<p>Pour les relier, l'écran de jeu scanne le <strong>QR code</strong> affiché par la télécommande, ou l'on saisit un <strong>code court</strong> puis l'on vérifie qu'un nombre à 6&nbsp;chiffres est identique sur les deux appareils. Le QR code est dessiné par l'appareil lui-même, sans service en ligne. Il contient l'adresse de la version web suivie, après le signe «&nbsp;#&nbsp;», du secret de la session&nbsp;: les navigateurs n'envoient jamais cette partie de l'adresse au serveur.</p>
+
+<h2 id="donnees">3. Quelles données sont traitées, et où&nbsp;?</h2>
+
+<h3 id="contenus">3.1 Ce que vous diffusez</h3>
+<p>Photos, vidéos, sons (sonneries importées, bande son du décroché), nom et photo d'un appelant fictif, textes de messages fictifs, fond d'écran fictif, ainsi que les commandes (couleur, effets, stroboscope, torche, vibration).</p>
+<ul>
+  <li>Ils sont chiffrés sur l'appareil qui les envoie et déchiffrés uniquement par vos appareils appairés.</li>
+  <li>Sur l'écran de jeu, les médias reçus restent en mémoire le temps de la session&nbsp;: ils disparaissent quand on ferme l'application ou la page.</li>
+  <li>Ni nous ni les prestataires cités ci-dessous ne pouvons les lire.</li>
+</ul>
+<p>Si vous diffusez l'image ou la voix d'une personne, ou une œuvre protégée, c'est à vous d'obtenir les autorisations nécessaires.</p>
+
+<h3 id="relais">3.2 Le relais des messages</h3>
+<!-- RELAIS : DÉBUT. Seul paragraphe à remplacer lors du passage au relais SetRemote auto-hébergé
+     (docs/BROKER.md § 5) : y décrire alors le relais, son hébergeur, son pays et ce qu'il conserve.
+     Le reste de la page renvoie à ce paragraphe sans nommer le service. Même repère dans privacy.html. -->
+<p id="relais-actuel">Aujourd'hui, les messages chiffrés transitent par le <strong>broker MQTT public de HiveMQ</strong> (<code>broker.hivemq.com</code>), un service gratuit et ouvert à tous, exploité par HiveMQ GmbH (Allemagne). Ce broker ne peut pas lire les messages, mais il voit, comme tout serveur, l'adresse IP de vos appareils, l'heure et la durée des connexions, la taille et le rythme des messages, et les identifiants aléatoires de votre session et de vos connexions. Comme il est public, d'autres personnes peuvent s'y abonner et voir passer les messages chiffrés des sessions SetRemote avec leur identifiant, leur taille et leur heure (mais pas les adresses IP)&nbsp;; sans la clé, elles ne peuvent ni les lire ni les falsifier. Ce broker n'est pas un prestataire sous contrat&nbsp;: nous ne maîtrisons ni l'emplacement de ses serveurs ni ses éventuels journaux, qui relèvent de la politique de confidentialité de HiveMQ.</p>
+<!-- RELAIS : FIN -->
+
+<h3 id="stun">3.3 Les vidéos et le serveur STUN</h3>
+<p>Pour envoyer une vidéo, la télécommande et l'écran de jeu tentent une connexion directe (WebRTC, chiffrée, négociée par le canal chiffré de bout en bout). Pour la trouver, chaque appareil interroge le <strong>serveur STUN public de Google</strong> (<code>stun.l.google.com</code>), qui voit alors son adresse IP publique&nbsp;; il ne reçoit aucun contenu. Les deux appareils apprennent aussi l'adresse IP l'un de l'autre. Si la connexion directe échoue, la vidéo passe par le relais (§&nbsp;3.2), chiffrée de bout en bout comme le reste.</p>
+
+<h3 id="cles">3.4 Les clés de chiffrement</h3>
+<p>Le secret de la session est créé sur la télécommande et ne la quitte que vers vos écrans de jeu&nbsp;: dans le QR code, ou, avec le code court, chiffré pour l'écran après un échange de clés publiques temporaires (sans aucune donnée personnelle) que vous validez en comparant le nombre à 6&nbsp;chiffres. Il reste sur vos appareils jusqu'à «&nbsp;Nouvelle session&nbsp;» ou «&nbsp;Oublier tous les écrans appairés&nbsp;», qui le remplace et déconnecte tous les écrans. Nous ne le recevons jamais.</p>
+
+<h3 id="local">3.5 Ce qui reste sur votre appareil</h3>
+<p>Dans le stockage local de l'application ou du navigateur, sans jamais être envoyé ailleurs&nbsp;:</p>
+<ul>
+  <li><strong>télécommande</strong>&nbsp;: secret de session, mémoires de couleur et d'effets, appels et SMS enregistrés (avec leur photo et leur bande son), sonneries importées, réglages (sons, langue, avertissement stroboscope, patch de la passerelle DMX)&nbsp;;</li>
+  <li><strong>écran de jeu</strong>&nbsp;: identifiant aléatoire de l'écran et dernière session rejointe.</li>
+</ul>
+<p>Vous les effacez en supprimant les éléments dans l'application, en effaçant les données du site dans le navigateur ou en désinstallant l'application. La version web installée garde aussi une copie de ses propres fichiers pour fonctionner hors ligne.</p>
+<p><strong>Passerelle DMX</strong> (applications iPhone, iPad et Android)&nbsp;: les données DMX que la console envoie sur le réseau local (sACN, Art-Net) sont traitées sur l'appareil&nbsp;; seuls les réglages qui en découlent partent, chiffrés de bout en bout, vers vos écrans de jeu.</p>
+
+<h3 id="web">3.6 La version web</h3>
+<p>La version web de SetRemote est hébergée par <strong>GitHub Pages</strong> (GitHub, Inc., États-Unis). Comme tout hébergeur, GitHub reçoit les données techniques de chaque visite (adresse IP, navigateur, page demandée), selon sa propre politique de confidentialité. La version web ne dépose aucun cookie et ne charge que ses propres fichiers, polices comprises. Les applications iPhone, iPad et Android embarquent leur interface et ne la téléchargent pas. Un QR code d'appairage scanné avec l'appareil photo du système, plutôt que dans SetRemote, ouvre la version web&nbsp;: GitHub reçoit alors cette visite, mais pas le secret de la session (§&nbsp;2).</p>
+
+<h3 id="stores">3.7 Apple et Google</h3>
+<p>Quand vous téléchargez SetRemote sur l'App Store ou Google Play, Apple ou Google traitent des données (compte, téléchargement, appareil) en tant que responsables de traitement indépendants, selon leurs propres politiques&nbsp;: <a href="https://www.apple.com/fr/legal/privacy/" target="_blank" rel="noopener noreferrer">Apple</a>, <a href="https://policies.google.com/privacy?hl=fr" target="_blank" rel="noopener noreferrer">Google</a>. Ils nous fournissent des statistiques agrégées (téléchargements, versions installées) et, si vous l'avez accepté dans les réglages de votre appareil, des rapports de plantage anonymisés, qui ne contiennent pas vos contenus.</p>
+
+<h3 id="contact-donnees">3.8 Si vous nous écrivez</h3>
+<p>Nous utilisons votre adresse e-mail et votre message uniquement pour vous répondre.</p>
+
+<h3 id="jamais">3.9 Ce que nous ne faisons pas</h3>
+<p>Pas de compte, pas de mesure d'audience, pas de publicité, pas de suivi d'une application à l'autre, pas de revente de données, pas de profilage. SetRemote n'accède <strong>pas</strong> à vos contacts, à votre localisation, à votre journal d'appels ni à vos SMS. Ses écrans d'appel et de message sont <strong>entièrement fictifs</strong>&nbsp;: aucun appel, SMS ou notification système réel n'est émis.</p>
+
+<h2 id="bases">4. Pourquoi, et sur quelle base légale&nbsp;?</h2>
+<ul>
+  <li><strong>Acheminer vos messages chiffrés</strong> entre vos appareils (données techniques de connexion, §&nbsp;3.2 et 3.3)&nbsp;: exécution du service que vous demandez (RGPD, art.&nbsp;6.1.b).</li>
+  <li><strong>Garder vos réglages sur votre appareil</strong> (§&nbsp;3.5)&nbsp;: stockage strictement nécessaire au service demandé (art.&nbsp;82 de la loi Informatique et Libertés), sans transmission.</li>
+  <li><strong>Vous répondre</strong> (§&nbsp;3.8) et <strong>suivre la stabilité de l'application</strong> (§&nbsp;3.7)&nbsp;: intérêt légitime (art.&nbsp;6.1.f).</li>
+</ul>
+<p>Aucune décision automatisée produisant des effets juridiques n'est prise à votre sujet.</p>
+
+<h2 id="durees">5. Combien de temps&nbsp;?</h2>
+<ul>
+  <li><strong>Contenus diffusés</strong>&nbsp;: jamais conservés par nous&nbsp;; en mémoire sur l'écran de jeu le temps de la session.</li>
+  <li><strong>Données techniques chez les prestataires</strong> (relais, serveur STUN, hébergeur de la version web)&nbsp;: selon leurs propres politiques, que nous ne maîtrisons pas (§&nbsp;3.2, 3.3 et 3.6).</li>
+  <li><strong>Données sur votre appareil</strong>&nbsp;: jusqu'à ce que vous les effaciez.</li>
+  <li><strong>E-mails</strong>&nbsp;: 3&nbsp;ans après le dernier échange.</li>
+</ul>
+
+<h2 id="destinataires">6. Qui reçoit des données&nbsp;?</h2>
+<p>Nous ne vendons ni ne louons aucune donnée. Interviennent seulement&nbsp;:</p>
+<ul>
+  <li><strong>le relais des messages</strong> (§&nbsp;3.2)&nbsp;: messages chiffrés, adresses IP et métadonnées de connexion&nbsp;;</li>
+  <li><strong>Google LLC</strong> (États-Unis), serveur STUN&nbsp;: adresse IP publique de vos appareils lors de l'envoi d'une vidéo (§&nbsp;3.3)&nbsp;;</li>
+  <li><strong>GitHub, Inc.</strong> (États-Unis), hébergeur de la version web&nbsp;: données techniques des visites (§&nbsp;3.6)&nbsp;;</li>
+  <li><strong>Apple et Google</strong>, pour la distribution des applications, en responsables indépendants (§&nbsp;3.7)&nbsp;;</li>
+  <li>les <strong>autorités</strong>, sur réquisition légale uniquement&nbsp;: nous ne détenons presque rien, et aucun contenu.</li>
+</ul>
+
+<h2 id="transferts">7. Transferts hors de l'Union européenne</h2>
+<p>Google (serveur STUN) et GitHub (version web) sont situés aux États-Unis&nbsp;: les données techniques qu'ils reçoivent peuvent y être traitées, dans le cadre de leurs propres engagements (par exemple le Data Privacy Framework UE–États-Unis ou les clauses contractuelles types de la Commission européenne). Pour le relais des messages, voir le §&nbsp;3.2. Apple et Google peuvent aussi transférer des données hors de l'Union européenne selon leurs politiques.</p>
+
+<h2 id="droits">8. Vos droits</h2>
+<p>Vous disposez des droits d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité de vos données, et pouvez définir des directives sur leur sort après votre décès (article&nbsp;85 de la loi Informatique et Libertés). Pour les exercer, écrivez à [E-MAIL DE CONTACT] ou à [ADRESSE POSTALE]&nbsp;; nous répondons dans un délai d'un mois. Pour les données techniques traitées par les prestataires des §&nbsp;3.2, 3.3 et 3.6, vous pouvez aussi vous adresser directement à eux.</p>
+<p>Nous ne détenons ni vos contenus ni de compte à votre nom, et ne pouvons donc généralement pas vous identifier (article&nbsp;11 du RGPD). Vous gardez la main sur votre appareil&nbsp;: supprimer vos mémoires et vos appels enregistrés, désinstaller l'application (ce qui efface son stockage local), retirer à tout moment les autorisations dans les réglages du système.</p>
+<p>Si vous estimez que vos droits ne sont pas respectés, vous pouvez introduire une réclamation auprès de la <strong>CNIL</strong>, 3&nbsp;place de Fontenoy, TSA&nbsp;80715, 75334&nbsp;Paris Cedex&nbsp;07, <a href="https://www.cnil.fr/fr/plaintes" target="_blank" rel="noopener noreferrer">cnil.fr/fr/plaintes</a>.</p>
+
+<h2 id="autorisations">9. Autorisations demandées sur votre appareil</h2>
+<p>SetRemote ne demande une autorisation qu'au moment où vous utilisez la fonction concernée. Vous pouvez la refuser ou la retirer à tout moment&nbsp;: seule cette fonction devient indisponible.</p>
+<ul>
+  <li><strong>Appareil photo</strong>&nbsp;: scanner le QR code d'appairage (écran de jeu)&nbsp;; piloter la torche LED de l'écran de jeu, car le système passe par l'appareil photo&nbsp;; prendre une photo ou filmer une vidéo à diffuser. Aucune capture en arrière-plan.</li>
+  <li><strong>Photos et vidéos</strong>&nbsp;: choisir, avec le sélecteur du système, les médias à diffuser, la photo d'un appelant fictif ou un fond d'écran fictif.</li>
+  <li><strong>Micro</strong>&nbsp;: uniquement quand vous filmez une vidéo à diffuser.</li>
+  <li><strong>Réseau local</strong> (applications)&nbsp;: recevoir le DMX de la console (sACN, Art-Net) avec la passerelle DMX. Aucune collecte d'informations sur les autres appareils du réseau.</li>
+  <li><strong>Bluetooth</strong>&nbsp;: la version actuelle ne l'utilise pas.</li>
+</ul>
+<p>La luminosité de l'écran, le maintien de l'écran allumé et la vibration ne demandent aucune donnée personnelle.</p>
+
+<h2 id="enfants">10. Enfants</h2>
+<p>SetRemote est un outil professionnel destiné aux équipes de tournage. Il ne s'adresse pas aux enfants de moins de 15&nbsp;ans et ne collecte aucune donnée personnelle pour notre compte.</p>
+
+<h2 id="securite">11. Sécurité</h2>
+<ul>
+  <li><strong>Chiffrement de bout en bout</strong> de tous les messages et médias entre la télécommande et les écrans de jeu (AES-256-GCM)&nbsp;; chaque message est authentifié, et un message rejoué ou modifié est rejeté.</li>
+  <li>Appairage par code protégé contre l'interposition par la comparaison du nombre à 6&nbsp;chiffres.</li>
+  <li>Connexions chiffrées en transit&nbsp;: TLS vers le relais, DTLS pour la connexion directe.</li>
+  <li>Aucun compte, donc aucun mot de passe à protéger chez nous.</li>
+</ul>
+<p>Pour garder le contrôle&nbsp;: ne montrez le QR code ou le code d'appairage qu'à des personnes de confiance, utilisez «&nbsp;Nouvelle session&nbsp;» pour déconnecter tous les écrans, et protégez vos appareils par un code de verrouillage.</p>
+
+<h2 id="photosensibilite">12. Avertissement photosensibilité</h2>
+<div class="card warn">
+  <p>Ce point ne relève pas des données personnelles, mais de votre sécurité. Le stroboscope (jusqu'à 30&nbsp;Hz, flash de 15&nbsp;ms minimum) et certains effets (Police, Éclair, Paparazzi, Soudure, Néon HS, clignotements rapides de la torche) produisent des lumières clignotantes qui peuvent déclencher des crises chez les personnes photosensibles. La télécommande affiche un avertissement avant de les lancer. Prévenez l'équipe et les comédiens présents sur le plateau.</p>
+</div>
+
+<h2 id="modifications">13. Modifications</h2>
+<p>Nous mettons cette politique à jour quand une fonction change. La date en haut de page indique la dernière version&nbsp;; en cas de changement important, nous vous en informerons dans l'application avant son entrée en vigueur.</p>
+
+<h2 id="contact">14. Contact</h2>
+<p>[RAISON SOCIALE], [ADRESSE POSTALE], [E-MAIL DE CONTACT].</p>
+</main>
+<footer class="foot">SetRemote · by Pikoo</footer>
+</div>
+</body>
+</html>
