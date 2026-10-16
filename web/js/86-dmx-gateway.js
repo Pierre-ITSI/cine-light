@@ -2,11 +2,15 @@
 // La télécommande, dans l'app native, reçoit le sACN ou l'Art-Net de la
 // console (UDP, impossible dans un navigateur) et pilote chaque écran patché
 // comme une fixture. Le moteur est packages/dmx (globale SRDMX) ; le natif ne
-// fait que l'UDP. Contrat du pont (docs/DMX-NATIVE.md) :
+// fait que l'UDP (expo-app/modules/setremote-udp). Contrat du pont
+// (docs/DMX-NATIVE.md § 9, côté page : § 10) :
 //   PWA → coque (nativePost)  dmx:listen { protocol, universes, multicast } · dmx:stop
 //                              udp:send { host, port, data (base64) } · net:info
 //   coque → PWA (window.SRNative.receive, 00-native-bridge.js)
 //                              dmx:packets { packets: [{ src, port, data }] } · net:info { interfaces } · dmx:error { reason }
+// La coque n'envoie pas net:info d'elle-même au démarrage : la page le demande
+// à chaque ouverture de la passerelle. Les lots de dmx:packets arrivent toutes
+// les 20 ms sans accusé de réception : chacun est traité aussitôt.
 // Le moteur envoie, dans la session chiffrée, un « dmx:look » par écran (au
 // changement, ≤ 30/s, maintien chaque seconde, live:false une fois à la perte
 // du signal), et déclenche les entrées n° n des listes d'appels / SMS
@@ -20,11 +24,13 @@ const DMX_LED_MS = 80;           // durée d'un éclat du voyant de réception
 const DMX_SIGNAL_MS = 1000;      // « Signal reçu » : un paquet dans la dernière seconde
 const DMX_MAX_PACKETS = 2000;    // par lot remonté par la coque
 const DMX_MAX_B64 = 4096;        // plus grand datagramme utile (découverte sACN) ≈ 1,5 Ko en base64
+const DMX_MAX_UNIVERSES = 64;    // par dmx:listen (contrat du pont)
 
 let _gw = null; // passerelle en marche : { engine, statsTimer, pendingTrig, trigChain }
 const gwState = {
   protocol: 'sacn',
-  multicast: true,               // sACN : rejoindre 239.255.x.y (abandonné après un refus du système)
+  multicast: true,               // sACN : groupes 239.255.x.y ; Art-Net : ArtPoll en broadcast (abandonné après un refus)
+  multicastRefused: null,        // 'multicast-not-permitted' | 'multicast-failed' : l'unicast continue (conseil affiché)
   patch: new SRDMX.Patch(),
   patchSession: null,            // channelId de la session dont le patch est chargé
   ifaces: [], iface: null,       // interfaces annoncées par la coque (net:info)
@@ -93,7 +99,6 @@ function gwStart() {
   gwLoadPatch();
   gwState.rx.clear();
   gwState.error = null;
-  gwState.multicast = true;
   const engine = new SRDMX.GatewayEngine({
     patch: new SRDMX.Patch(gwState.patch.toJSON()),
     send: gwSendToScreens,
@@ -105,19 +110,19 @@ function gwStart() {
   gwSyncTriggerEntries();
   engine.start();
   gwListen();
-  nativePost({ type: 'net:info' });
   gwRender();
   return true;
 }
 
-// Arrêt : chaque écran garde son look (live:false) et la télécommande reprend la main
-function gwStop() {
+// Arrêt : chaque écran garde son look (live:false) et la télécommande reprend
+// la main. nativeStopped : la coque a déjà arrêté l'écoute (erreur fatale).
+function gwStop(nativeStopped) {
   if (!_gw) return;
   const g = _gw;
   _gw = null;
   clearInterval(g.statsTimer);
   g.engine.stop();
-  nativePost({ type: 'dmx:stop' });
+  if (!nativeStopped) nativePost({ type: 'dmx:stop' });
   gwState.rx.clear();
   gwState.lastPacketAt = -Infinity;
   gwRender();
@@ -125,13 +130,15 @@ function gwStop() {
 
 function gwToggleRun() { if (_gw) gwStop(); else gwStart(); }
 
-// Écoute UDP (remplace la précédente) : univers du patch, sinon le premier
+// Écoute UDP (remplace la précédente) : univers du patch, sinon le premier.
+// multicast : sACN = groupes 239.255.x.y, Art-Net = ArtPoll en broadcast
+// (Android : MulticastLock) ; abandonné après un refus, l'unicast suffit.
 function gwListen() {
   if (!_gw) return;
   const p = gwState.protocol;
-  let universes = gwState.patch.universes(p);
+  let universes = gwState.patch.universes(p).slice(0, DMX_MAX_UNIVERSES);
   if (!universes.length) universes = [p === 'sacn' ? 1 : 0];
-  nativePost({ type: 'dmx:listen', protocol: p, universes, multicast: p === 'sacn' && gwState.multicast });
+  nativePost({ type: 'dmx:listen', protocol: p, universes, multicast: gwState.multicast });
 }
 
 // Nouvelle session (« Nouvelle session ») : le patch de cette session s'applique
@@ -232,13 +239,22 @@ function gwArtPollIdentity() {
   return ip ? { ip, shortName: 'SetRemote GW', longName: 'SetRemote passerelle DMX' } : null;
 }
 
+// dmx:error : raisons de la coque (expo-app/modules/setremote-udp/src/bridge.ts,
+// docs/DMX-NATIVE.md § 9.2).
+//   multicast-not-permitted / multicast-failed : l'unicast continue → conseil
+//     « unicast » affiché, plus de multicast demandé ensuite (pas de réécoute) ;
+//   bind-failed / socket-failed / listen-failed : la coque a arrêté l'écoute →
+//     passerelle arrêtée (les écrans gardent leur look), « Démarrer » relance ;
+//   native-unavailable : binaire sans le module → passerelle arrêtée.
+const GW_FATAL_REASONS = ['bind-failed', 'socket-failed', 'listen-failed', 'native-unavailable'];
 function gwOnNativeError(reason) {
-  const r = typeof reason === 'string' && reason ? reason.slice(0, 200) : 'erreur inconnue';
-  gwState.error = r;
-  // Multicast refusé (iOS sans l'autorisation d'Apple) : réécoute en unicast seul
-  if (_gw && gwState.protocol === 'sacn' && gwState.multicast && /multicast/i.test(r)) {
+  const r = typeof reason === 'string' && /^[a-z0-9-]{1,40}$/.test(reason) ? reason : 'unknown';
+  if (r === 'multicast-not-permitted' || r === 'multicast-failed') {
     gwState.multicast = false;
-    gwListen();
+    gwState.multicastRefused = r;
+  } else {
+    gwState.error = r;
+    if (GW_FATAL_REASONS.includes(r)) gwStop(true);
   }
   gwRender();
   return true;
@@ -360,7 +376,7 @@ function gwSetProtocol(p) {
   if (!gwState.patchSession) gwLoadPatch();
   if (_gw) _gw.engine.releaseAll();
   gwState.protocol = p;
-  gwState.multicast = true;
+  gwState.error = null;
   const [uMin, uMax] = SRDMX.UNIVERSE_RANGE[p];
   const next = new SRDMX.Patch();
   for (const [id, e] of gwState.patch.entries()) {

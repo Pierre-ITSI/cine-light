@@ -456,18 +456,40 @@ l'app). Le contrat du pont est celui du § 9.1, inchangé.
 
 Ce que la page envoie, et quand :
 
+- `net:info` **à chaque ouverture** de l'écran de la passerelle : la coque ne
+  l'envoie pas d'elle-même au démarrage (seulement en réponse, à un changement
+  de réseau ou au retour au premier plan).
 - `dmx:listen` au démarrage de la passerelle, puis **à chaque changement** de
   patch ou de protocole (il remplace l'écoute en cours) : univers patchés du
-  protocole, ou `[1]` (sACN) / `[0]` (Art-Net) tant que rien n'est patché.
-- `dmx:stop` à l'arrêt de la passerelle et en quittant la télécommande.
+  protocole (64 au plus), ou `[1]` (sACN) / `[0]` (Art-Net) tant que rien
+  n'est patché. `multicast: true` au départ, pour les deux protocoles (sACN :
+  groupes 239.255.x.y ; Art-Net : ArtPoll en broadcast) ; `false` dès que la
+  coque l'a refusé une fois, jusqu'au prochain lancement de l'app.
+- `dmx:stop` à l'arrêt de la passerelle et en quittant la télécommande (pas
+  après une erreur fatale : la coque a déjà arrêté l'écoute).
 - `udp:send` pour chaque ArtPollReply construit par le moteur, vers l'IP de
   la console qui a envoyé l'ArtPoll, port 6454.
 
-Traitement des `dmx:packets` : chaque lot est traité **aussitôt et
-entièrement** (base64 → octets, `engine.handlePacket`, statistiques), sans
-attente ; le rendu des écrans de la passerelle est regroupé à part (au plus
-5 fois par seconde), le voyant ne fait que basculer une classe. Bornes côté
-page : 2 000 datagrammes par lot, 4 096 caractères base64 par datagramme.
+Réponse de la page à `dmx:error` (raisons du § 9.2) :
+
+| `reason` | Passerelle | Affichage (écran 14) |
+|---|---|---|
+| `multicast-not-permitted`, `multicast-failed` | continue (l'unicast continue côté natif) ; plus de multicast demandé, **pas de réécoute** | conseil ambre : sACN « envoyez les univers en unicast vers *IP* » ; Art-Net « la console ne verra pas la passerelle (ArtPoll) : saisissez *IP* comme destination unicast » |
+| `bind-failed` | **arrêtée** (les écrans gardent leur look, la télécommande reprend la main) | « Port 5568 / 6454 déjà utilisé par une autre app… », bouton « Démarrer la passerelle » pour relancer |
+| `socket-failed`, `listen-failed` | **arrêtée** | « Réception interrompue… » / « La réception n'a pas pu démarrer… » |
+| `native-unavailable` | **arrêtée** | « Cette version de l'app ne sait pas encore recevoir le DMX : mettez SetRemote à jour. » |
+| `send-failed`, `not-listening` | continue | ArtPollReply non envoyée (iOS : autoriser le réseau local) |
+| `invalid-…`, autre | continue | « Commande refusée par l'app (…) » / « Erreur de réception (…) » ; une raison hors `[a-z0-9-]` n'est jamais affichée telle quelle |
+
+Traitement des `dmx:packets` (pas d'accusé de réception ni de régulation) :
+chaque lot est traité **aussitôt, de façon synchrone et entièrement**
+(base64 → octets, `engine.handlePacket`, statistiques) ; le rendu des écrans
+de la passerelle est regroupé à part (au plus 5 fois par seconde) et le
+voyant ne fait que basculer une classe. Un lot de 128 datagrammes injecté
+exactement comme par la coque est vérifié par les tests. Bornes côté page :
+2 000 datagrammes par lot, 4 096 caractères base64 par datagramme. `src` sert
+d'identité de source (Art-Net, réponse aux ArtPoll, affichage) ; `port`
+(port de l'émetteur) n'est pas utilisé.
 
 Tests : `tests/dmx-gateway.test.mjs` simule la coque (paquets construits avec
 `packages/dmx`, messages postés relevés) ; `tests/call-list.test.mjs` couvre

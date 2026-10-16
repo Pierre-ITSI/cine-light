@@ -136,15 +136,70 @@ test('app native : écoute UDP, IP / masque / interface en lecture seule, voyant
   await waitFor(page, () => /Hz/.test(document.getElementById('gwUniverses').textContent), null, { timeout: 3000 });
   const uni = await page.textContent('#gwUniverses');
   assert.match(uni, /Univers 1Console Eos · 10\.0\.0\.10 · \d+ Hz/);
-  // Refus du multicast (iOS sans autorisation) : réécoute en unicast, erreur affichée
-  await page.evaluate(() => window.SRNative.receive({ type: 'dmx:error', reason: 'multicast not permitted' }));
-  const listens = await fc.posted('dmx:listen');
-  assert.deepEqual(listens.at(-1), { type: 'dmx:listen', protocol: 'sacn', universes: [1], multicast: false });
-  assert.match(await page.textContent('#gwError'), /multicast not permitted — écoute en unicast seulement/);
+  // Multicast refusé (iOS sans l'entitlement) : la coque continue en unicast →
+  // conseil « unicast », pas de réécoute, plus de multicast demandé ensuite
+  const nListen = (await fc.posted('dmx:listen')).length;
+  await page.evaluate(() => window.SRNative.receive({ type: 'dmx:error', reason: 'multicast-not-permitted' }));
+  assert.equal((await fc.posted('dmx:listen')).length, nListen, 'pas de réécoute');
+  assert.equal(await page.textContent('#gwUnicastAdvice'),
+    'Multicast non autorisé sur cet appareil : la réception continue en unicast. Sur la console, envoyez les univers en unicast vers 10.0.0.42 (le multicast 239.255.x.y n\'arrivera pas).');
+  assert.equal(await page.evaluate(() => document.getElementById('gwError').style.display), 'none');
+  assert.equal(await page.evaluate(() => gwRunning()), true);
+  await page.evaluate(() => gwListen());
+  assert.deepEqual((await fc.posted('dmx:listen')).at(-1), { type: 'dmx:listen', protocol: 'sacn', universes: [1], multicast: false });
+  // La coque n'annonce pas les interfaces d'elle-même : redemandées à chaque ouverture
+  const nNet = (await fc.posted('net:info')).length;
+  await page.evaluate(() => { closeDmxGateway(); openDmxGateway(); });
+  assert.equal((await fc.posted('net:info')).length, nNet + 1);
+  assert.equal((await fc.posted('dmx:listen')).length, nListen + 1, 'passerelle déjà en marche : pas de nouvelle écoute');
+  // Port occupé : la coque a arrêté l'écoute → passerelle arrêtée (sans dmx:stop), « Démarrer » relance
+  const nStop = (await fc.posted('dmx:stop')).length;
+  await page.evaluate(() => window.SRNative.receive({ type: 'dmx:error', reason: 'bind-failed' }));
+  assert.equal(await page.evaluate(() => gwRunning()), false);
+  assert.equal((await fc.posted('dmx:stop')).length, nStop);
+  assert.equal(await page.textContent('#gwError'), 'Port 5568 déjà utilisé par une autre app : réception arrêtée. Fermez cette app, puis touchez « Démarrer la passerelle ».');
+  assert.equal(await page.textContent('#gwRunBtn'), 'Démarrer la passerelle');
+  assert.equal(await page.textContent('#gwSig'), 'Arrêtée');
+  await page.click('#gwRunBtn');
+  assert.equal(await page.evaluate(() => gwRunning()), true);
+  assert.deepEqual((await fc.posted('dmx:listen')).at(-1), { type: 'dmx:listen', protocol: 'sacn', universes: [1], multicast: false });
+  assert.equal(await page.evaluate(() => document.getElementById('gwError').style.display), 'none');
   // Arrêt : dmx:stop, voyant éteint
   await page.evaluate(() => gwToggleRun());
   assert.deepEqual((await fc.posted()).at(-1), { type: 'dmx:stop' });
   assert.equal(await page.textContent('#gwSig'), 'Arrêtée');
+  assert.deepEqual(errors, []);
+  await close();
+});
+
+test('dmx:error : chaque raison de la coque a un message ; seules les erreurs fatales arrêtent la passerelle', async () => {
+  const { page, errors, close } = await openPage(browser, { init: NATIVE });
+  await page.evaluate(() => { startMode('remote'); openDmxGateway(); gwSetProtocol('artnet'); });
+  const fc = new FakeConsole(page);
+  const err = (reason) => page.evaluate((r) => {
+    window.SRNative.receive({ type: 'dmx:error', reason: r });
+    const el = document.getElementById('gwError');
+    return { running: gwRunning(), shown: el.style.display !== 'none', text: el.textContent };
+  }, reason);
+  for (const r of ['send-failed', 'not-listening', 'invalid-universes']) {
+    const e = await err(r);
+    assert.equal(e.running, true, r + ' : la passerelle continue');
+    assert.ok(e.shown && e.text.length > 20, r);
+  }
+  assert.match((await err('send-failed')).text, /ArtPollReply\) non envoyée\. Sur iPhone et iPad, autorisez SetRemote dans Réglages › Confidentialité › Réseau local/);
+  assert.match((await err('invalid-universes')).text, /\(invalid-universes\) : la réception continue/);
+  // Art-Net : broadcast (ArtPoll) refusé → conseil de destination unicast
+  await page.evaluate(() => window.SRNative.receive({ type: 'net:info', interfaces: [{ name: 'en0', kind: 'wifi', ip: '2.0.0.42', mask: '255.0.0.0' }] }));
+  await page.evaluate(() => window.SRNative.receive({ type: 'dmx:error', reason: 'multicast-failed' }));
+  assert.match(await page.textContent('#gwUnicastAdvice'), /^Broadcast refusé par le réseau : la réception continue en unicast, mais la console ne verra pas la passerelle \(ArtPoll\)\. Saisissez 2\.0\.0\.42 comme destination unicast\.$/);
+  for (const [r, re] of [['socket-failed', /interrompue par le système/], ['listen-failed', /n'a pas pu démarrer/], ['native-unavailable', /mettez SetRemote à jour/]]) {
+    await page.evaluate(() => gwStart());
+    const e = await err(r);
+    assert.equal(e.running, false, r + ' : passerelle arrêtée');
+    assert.match(e.text, re);
+  }
+  assert.deepEqual((await err('<script>')).text, 'Erreur de réception (unknown).', 'raison inconnue : jamais injectée');
+  assert.equal((await fc.posted('dmx:stop')).length, 0, 'la coque a déjà arrêté l\'écoute');
   assert.deepEqual(errors, []);
   await close();
 });
@@ -361,7 +416,8 @@ test('Art-Net : ArtDmx vers l\'écran patché, ArtPoll → ArtPollReply unicast 
   await r.rp.evaluate(() => window.SRNative.receive({ type: 'net:info', interfaces: [{ name: 'en1', kind: 'ethernet', ip: '2.0.0.42', mask: '255.0.0.0' }] }));
   await r.rp.evaluate(() => gwSetProtocol('artnet'));
   await patch(r.rp, a.id, { universe: 0, address: 4, personality: 'simple3' });
-  assert.deepEqual((await r.console.posted('dmx:listen')).at(-1), { type: 'dmx:listen', protocol: 'artnet', universes: [0], multicast: false });
+  // multicast en Art-Net : recevoir aussi l'ArtPoll en broadcast (docs/DMX-NATIVE.md § 9.1)
+  assert.deepEqual((await r.console.posted('dmx:listen')).at(-1), { type: 'dmx:listen', protocol: 'artnet', universes: [0], multicast: true });
   await r.console.artnet(0, [0, 0, 0, 12, 34, 56]);
   await waitFor(a.page, () => screenBaseColor === '#0c2238' && screenDmxLive());
   // ArtPoll reçu de la console : réponse unicast vers elle, port 6454
@@ -442,4 +498,27 @@ test('débit : au plus 30 looks par seconde et par écran, la dernière valeur a
   assert.ok(looks.length <= Math.ceil((elapsed + 100) / 1000 * 30) + 1, looks.length + ' looks en ' + elapsed + ' ms');
   assert.equal(looks.at(-1).look.color, '#3b0000');
   await r.close();
+});
+
+test('lot de 128 datagrammes injecté comme par la coque : traité aussitôt et entièrement (pas d\'accusé de réception)', async () => {
+  const { page, errors, close } = await openPage(browser, { init: NATIVE });
+  await page.evaluate(() => { startMode('remote'); remoteNoteScreen('sAAAAAAAA', { type: 'caps', screenId: 'ScreenOne0000001' }); openDmxGateway(); });
+  await patch(page, 'ScreenOne0000001', { universe: 2, address: 1, personality: 'standard8' });
+  const fc = new FakeConsole(page);
+  const packets = [];
+  for (let i = 0; i < 128; i++) packets.push(fc.sacnPacket(1 + (i % 4), [i, 255, 0, 0, 0, 128, 0, 0]));
+  // Script exact de la coque (expo-app/modules/setremote-udp/src/bridge.ts, nativeScript)
+  const script = 'window.SRNative&&window.SRNative.receive(' + JSON.stringify({ type: 'dmx:packets', packets }) + ');true;';
+  const r = await page.evaluate((script) => {
+    const t0 = performance.now();
+    const ok = (0, eval)(script);
+    return { ok, ms: performance.now() - t0, n: gwSnapshot().counters.packets.sacn, rejected: gwSnapshot().counters.rejected };
+  }, script);
+  assert.equal(r.ok, true);
+  assert.equal(r.n, 128, 'tous les datagrammes analysés dans l\'appel');
+  assert.deepEqual(r.rejected, {});
+  assert.ok(r.ms < 250, 'lot traité en ' + r.ms.toFixed(1) + ' ms');
+  assert.equal(await page.evaluate(() => gwSnapshot().screens[0].look.color), '#7d0000', 'dernier état de l\'univers 2');
+  assert.deepEqual(errors, []);
+  await close();
 });

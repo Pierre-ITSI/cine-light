@@ -37,7 +37,11 @@ function openDmxGateway() {
   gwLoadSettings();
   if (!gwState.patchSession || (_session && gwState.patchSession !== _session.channelId)) gwLoadPatch();
   document.getElementById('dmx-gateway').style.display = 'block';
-  if (IN_NATIVE_APP) gwStart();
+  if (IN_NATIVE_APP) {
+    gwStart();
+    // La coque n'annonce pas les interfaces d'elle-même : on les demande à chaque ouverture
+    nativePost({ type: 'net:info' });
+  }
   gwShowView('gateway');
 }
 // Retour à la télécommande : la passerelle continue de tourner
@@ -113,11 +117,11 @@ function renderGwGateway() {
     warn.style.display = 'block';
   } else warn.style.display = 'none';
   const err = document.getElementById('gwError');
-  if (gwState.error) {
-    err.textContent = 'Réception impossible : ' + gwState.error
-      + (gwState.protocol === 'sacn' && !gwState.multicast ? ' — écoute en unicast seulement.' : '');
-    err.style.display = 'block';
-  } else err.style.display = 'none';
+  err.textContent = gwState.error ? gwErrorText(gwState.error) : '';
+  err.style.display = gwState.error ? 'block' : 'none';
+  const adv = document.getElementById('gwUnicastAdvice');
+  adv.innerHTML = gwState.multicastRefused ? gwUnicastAdvice(gwState.multicastRefused, it) : '';
+  adv.style.display = gwState.multicastRefused ? 'block' : 'none';
   // Voyant et état du signal
   const sig = _gw && Date.now() - gwState.lastPacketAt < DMX_SIGNAL_MS;
   const led = document.getElementById('gwLed');
@@ -169,6 +173,29 @@ function renderGwUniverses() {
     ? rows.map((r) => '<div class="gw-uni' + (r.lost ? ' lost' : '') + '"><span class="gw-uni-dot"></span>'
       + '<span class="gw-uni-name">Univers ' + r.universe + '</span><span class="gw-uni-meta">' + escapeHtml(r.meta) + '</span></div>').join('')
     : '<div class="gw-uni-empty">Aucun univers reçu pour l\'instant.</div>';
+}
+
+// Messages des erreurs de la coque (raisons : docs/DMX-NATIVE.md § 9.2)
+function gwErrorText(r) {
+  const port = gwState.protocol === 'sacn' ? 5568 : 6454;
+  switch (r) {
+    case 'bind-failed': return 'Port ' + port + ' déjà utilisé par une autre app : réception arrêtée. Fermez cette app, puis touchez « Démarrer la passerelle ».';
+    case 'socket-failed': return 'Réception interrompue par le système : touchez « Démarrer la passerelle ».';
+    case 'listen-failed': return 'La réception n\'a pas pu démarrer : touchez « Démarrer la passerelle ».';
+    case 'native-unavailable': return 'Cette version de l\'app ne sait pas encore recevoir le DMX : mettez SetRemote à jour.';
+    case 'not-listening': return 'Réponse à la console (ArtPollReply) non envoyée : la réception n\'est pas active.';
+    case 'send-failed': return 'Réponse à la console (ArtPollReply) non envoyée. Sur iPhone et iPad, autorisez SetRemote dans Réglages › Confidentialité › Réseau local.';
+  }
+  if (/^invalid-/.test(r)) return 'Commande refusée par l\'app (' + r + ') : la réception continue comme avant.';
+  return 'Erreur de réception (' + r + ').';
+}
+// Multicast / broadcast refusé : l'unicast continue, il faut le régler sur la console
+function gwUnicastAdvice(r, it) {
+  const ip = it ? '<b>' + escapeHtml(it.ip) + '</b>' : 'l\'IP de cet appareil';
+  const why = r === 'multicast-not-permitted' ? 'non autorisé sur cet appareil' : 'refusé par le réseau';
+  return gwState.protocol === 'sacn'
+    ? '<b>Multicast ' + why + '</b> : la réception continue en unicast. Sur la console, envoyez les univers en unicast vers ' + ip + ' (le multicast 239.255.x.y n\'arrivera pas).'
+    : '<b>Broadcast ' + why + '</b> : la réception continue en unicast, mais la console ne verra pas la passerelle (ArtPoll). Saisissez ' + ip + ' comme destination unicast.';
 }
 
 // ── 15 · Patch ──
