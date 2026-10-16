@@ -1,0 +1,98 @@
+# SetRemote : relais auto-hébergé sur UN VPS. Mode d'emploi : README.md (en français).
+#   cp .env.example .env      # puis renseigner RELAY_DOMAIN
+#   docker compose up -d --build
+#
+# relay : relais WebSocket (Node 22, non root, système de fichiers en lecture seule),
+#         joignable seulement depuis la machine (127.0.0.1), derrière le proxy TLS
+# caddy : certificat Let's Encrypt automatique pour RELAY_DOMAIN, proxy WebSocket,
+#         aucun journal d'accès (profil « caddy » : à retirer si un proxy occupe déjà 443)
+# stun  : coturn en STUN seul, 3478 UDP + TCP, sans relais TURN ni authentification
+name: setremote-relay
+
+x-logging: &logging
+  driver: local
+  options: { max-size: "1m", max-file: "2" }
+
+services:
+  relay:
+    build: ..
+    image: setremote-relay:local
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    pids_limit: 64
+    environment:
+      # Le proxy (Caddy, nginx… sur l'hôte) arrive par la passerelle de ce réseau
+      RELAY_TRUST_PROXY: ${RELAY_SUBNET:-172.30.53.0/24}
+      RELAY_REQUIRE_AUTH: ${RELAY_REQUIRE_AUTH:-1}
+      RELAY_AUTH_FILE: ${RELAY_AUTH_FILE-/data/tofu.json}
+      RELAY_ORIGINS: ${RELAY_ORIGINS:-}
+      RELAY_MAX_SOCKETS: ${RELAY_MAX_SOCKETS:-4000}
+      RELAY_MAX_ROOMS: ${RELAY_MAX_ROOMS:-2000}
+      RELAY_MEM_LIMIT_MB: ${RELAY_MEM_LIMIT_MB:-384}
+      RELAY_IP_MAX_SOCKETS: ${RELAY_IP_MAX_SOCKETS:-64}
+    volumes:
+      - relay-data:/data
+    ports:
+      - "127.0.0.1:${RELAY_LOCAL_PORT:-8080}:8080"
+    networks: [relaynet]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/healthz').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    logging: *logging
+
+  caddy:
+    image: caddy:2.11-alpine
+    profiles: [caddy]
+    restart: unless-stopped
+    network_mode: host # voit les vraies adresses des clients (IPv4 et IPv6)
+    depends_on:
+      relay: { condition: service_healthy }
+    environment:
+      RELAY_DOMAIN: ${RELAY_DOMAIN:?RELAY_DOMAIN manquant dans .env}
+      RELAY_LOCAL_PORT: ${RELAY_LOCAL_PORT:-8080}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    logging: *logging
+
+  stun:
+    image: coturn/coturn:4.18-alpine
+    profiles: [stun]
+    restart: unless-stopped
+    network_mode: host # STUN doit voir l'adresse publique réelle de chaque appareil
+    command: ["-c", "/etc/coturn/turnserver.conf"]
+    volumes:
+      - ./turnserver.conf:/etc/coturn/turnserver.conf:ro
+    read_only: true
+    tmpfs: [/var/tmp, /var/lib/coturn, /tmp]
+    cap_drop: [ALL]
+    # Le binaire turnserver de l'image porte cette capacité de fichier : sans
+    # elle, son lancement est refusé (« Operation not permitted »)
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 128m
+    logging: *logging
+
+networks:
+  relaynet:
+    ipam:
+      config:
+        - subnet: ${RELAY_SUBNET:-172.30.53.0/24}
+
+volumes:
+  relay-data:
+  caddy-data:
+  caddy-config:

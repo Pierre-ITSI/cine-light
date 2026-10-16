@@ -1,0 +1,27 @@
+# SetRemote : proxy TLS du relais. Certificat Let's Encrypt automatique pour
+# RELAY_DOMAIN (enregistrement DNS en place, ports 80 et 443 ouverts).
+{
+	# Pas d'API d'administration (Caddy partage le réseau de l'hôte) :
+	# pour recharger cette configuration, « docker compose restart caddy ».
+	admin off
+	# HTTP/1.1 et HTTP/2 seulement : le port 443/udp (HTTP/3) n'est pas ouvert
+	servers {
+		protocols h1 h2
+	}
+	# Journaux du serveur (certificats, erreurs de démarrage) à partir de WARN,
+	# SANS les journaux d'erreurs de requêtes : ils contiendraient l'IP du
+	# client et le chemin, c'est-à-dire le topic de la session.
+	log default {
+		output stderr
+		level WARN
+		exclude http.log.error http.handlers.reverse_proxy http.stdlib
+	}
+}
+
+{$RELAY_DOMAIN} {
+	# Aucune directive « log » ici : aucun journal d'accès.
+	header -Server
+	# WebSocket pris en charge d'office. X-Forwarded-For = adresse vue par Caddy
+	# (un en-tête X-Forwarded-For envoyé par le client est ignoré).
+	reverse_proxy 127.0.0.1:{$RELAY_LOCAL_PORT:8080}
+}

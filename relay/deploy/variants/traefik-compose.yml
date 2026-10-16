@@ -1,0 +1,26 @@
+# SetRemote : relais derrière un Traefik DÉJÀ en conteneur (fournisseur « docker »).
+# 1. relay/deploy/.env : COMPOSE_PROFILES=stun (pas de Caddy), et ajouter :
+#      TRAEFIK_NETWORK=<réseau Docker de Traefik, ex. traefik>
+#      TRAEFIK_SUBNET=<son sous-réseau : docker network inspect traefik | grep Subnet>
+# 2. Depuis relay/deploy :
+#      docker compose -f docker-compose.yml -f variants/traefik-compose.yml up -d --build
+# Adapter le point d'entrée (websecure) et le résolveur (letsencrypt) aux vôtres.
+# X-Forwarded-For n'est cru que depuis TRAEFIK_SUBNET : tout conteneur de ce réseau
+# pourrait donc choisir l'adresse vue par le relais (n'y mettre que des services sûrs).
+services:
+  relay:
+    networks: [relaynet, traefik]
+    environment:
+      RELAY_TRUST_PROXY: ${TRAEFIK_SUBNET:?TRAEFIK_SUBNET manquant dans .env}
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik}
+      traefik.http.routers.setremote-relay.rule: Host(`${RELAY_DOMAIN}`)
+      traefik.http.routers.setremote-relay.entrypoints: websecure
+      traefik.http.routers.setremote-relay.tls.certresolver: letsencrypt
+      traefik.http.services.setremote-relay.loadbalancer.server.port: "8080"
+
+networks:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik}

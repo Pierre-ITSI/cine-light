@@ -1,0 +1,25 @@
+# SetRemote : relais derrière un Traefik DÉJÀ installé SUR L'HÔTE (port 443 occupé),
+# fournisseur « file » (configuration dynamique).
+# 1. relay/deploy/.env : COMPOSE_PROFILES=stun (pas de Caddy), puis
+#    « docker compose up -d --build » : le relais écoute sur 127.0.0.1:8080.
+# 2. Copier ce fichier dans le dossier de configuration dynamique de Traefik,
+#    remplacer relais.exemple.fr, le point d'entrée (websecure) et le résolveur
+#    de certificats (letsencrypt) par les vôtres. Traefik le recharge seul.
+# WebSocket pris en charge d'office. Pas de journal d'accès tant que
+# « accessLog » n'est pas activé dans la configuration statique de Traefik.
+# Traefik REMPLACE l'en-tête X-Forwarded-For reçu d'un client (sauf
+# forwardedHeaders.trustedIPs) : le relais voit la vraie adresse.
+# Traefik lui-même en conteneur : utiliser plutôt traefik-compose.yml.
+http:
+  routers:
+    setremote-relay:
+      rule: Host(`relais.exemple.fr`)
+      entryPoints: [websecure]
+      service: setremote-relay
+      tls:
+        certResolver: letsencrypt
+  services:
+    setremote-relay:
+      loadBalancer:
+        servers:
+          - url: http://127.0.0.1:8080
