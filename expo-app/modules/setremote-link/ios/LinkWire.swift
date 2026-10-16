@@ -64,7 +64,9 @@ enum LinkMode: String, CaseIterable {
   case lan
   case ble
 
-  var prefix: String { self == .lan ? "l" : "b" }
+  /// Début des identifiants de pair (« lan-… », « ble-… ») : un même appareil
+  /// joint par les deux liaisons a toujours deux identifiants distincts.
+  var prefix: String { rawValue }
   var maxFrame: Int { self == .lan ? LinkLimits.lanMaxFrame : LinkLimits.bleMaxFrame }
 }
 

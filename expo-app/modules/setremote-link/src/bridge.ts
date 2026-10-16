@@ -12,7 +12,7 @@
 //
 //   natif → web, par webView.injectJavaScript(nativeScript(message))
 //     { type: 'link:frames', frames: [{ peer, mode, data }] }     par lots (≈ 20 ms)
-//     { type: 'link:peers', peers: [{ peer, mode, name? }] }      à chaque changement
+//     { type: 'link:peers', peers: [{ peer, mode, name? }] }      après chaque link:start, puis à chaque changement
 //     { type: 'link:state', lan: { available, active, error? }, ble: { … } }
 //     { type: 'link:error', mode: 'lan' | 'ble' | null, reason }
 //
@@ -56,7 +56,11 @@ export const FLUSH_MS = 20;
 export const MAX_BATCH_FRAMES = 256;
 export const MAX_BATCH_BYTES = 1024 * 1024;
 
-/** Identifiant de pair attribué par le natif (opaque, ex. « l-3fa9c2e1b07d »). */
+/**
+ * Identifiant de pair attribué par le natif : opaque, tiré à chaque connexion,
+ * préfixé par la liaison (« lan-3fa9c2e1b07d », « ble-… ») : un même appareil
+ * joint par les deux liaisons a deux identifiants distincts.
+ */
 export const PEER_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 const ROOM_PATTERN = /^[A-Za-z0-9_-]{22}$/;
 const REASON_PATTERN = /^[a-z0-9-]{1,40}$/;
@@ -426,6 +430,7 @@ export function createLinkBridge(opts: LinkBridgeOptions): LinkBridge {
         if (!native) {
           for (const m of c.modes) fail(m, 'native-unavailable');
           post({ type: 'link:state', ...UNAVAILABLE_STATE });
+          post({ type: 'link:peers', peers: [] }); // contrat : link:peers après chaque link:start
           break;
         }
         const k = deriveKeys(c.room);
@@ -438,6 +443,7 @@ export function createLinkBridge(opts: LinkBridgeOptions): LinkBridge {
           active.clear();
           stopPump();
           for (const m of c.modes) fail(m, 'start-failed');
+          post({ type: 'link:peers', peers: [] });
         }
         break;
       }

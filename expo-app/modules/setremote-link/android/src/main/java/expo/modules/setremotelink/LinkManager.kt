@@ -16,9 +16,13 @@ import java.util.concurrent.TimeUnit
 // Contrat : docs/OFFLINE-NATIVE.md § 2 ; choix techniques : § 5.
 // ════════════════════════════════════════════════════════════════════════════
 
+/**
+ * `prefix` : début des identifiants de pair (« lan-… », « ble-… ») : un même
+ * appareil joint par les deux liaisons a toujours deux identifiants distincts.
+ */
 internal enum class LinkMode(val id: String, val prefix: String, val maxFrame: Int) {
-  LAN("lan", "l", LinkLimits.LAN_MAX_FRAME),
-  BLE("ble", "b", LinkLimits.BLE_MAX_FRAME);
+  LAN("lan", "lan", LinkLimits.LAN_MAX_FRAME),
+  BLE("ble", "ble", LinkLimits.BLE_MAX_FRAME);
 
   companion object {
     fun from(id: String): LinkMode? = values().firstOrNull { it.id == id }
@@ -66,6 +70,46 @@ internal interface LinkPeer {
   fun enqueueData(messages: List<ByteArray>)
 
   fun close()
+}
+
+/** Résultat du routage d'un link:send. */
+internal class Routing(
+  /** Pairs destinataires et messages DATA qu'ils peuvent porter, dans l'ordre. */
+  val deliveries: List<Pair<LinkPeer, List<ByteArray>>>,
+  /** Liaisons pour lesquelles au moins une trame a été refusée (plafond). */
+  val tooLarge: Set<LinkMode>,
+  /** Un identifiant de `to` n'est pas (ou plus) connecté. */
+  val unknownPeer: Boolean,
+)
+
+/**
+ * Routage d'un link:send, identique pour la télécommande et pour l'écran :
+ * `to` vide = tous les pairs, sinon seulement ceux listés (un écran l'utilise
+ * pour réserver une trame au Wi-Fi local). Chaque trame est refusée pour les
+ * pairs dont la liaison ne peut pas la porter (plus de 4 Kio en Bluetooth).
+ * `messages` : messages DATA ([3] + UTF-8), un par trame.
+ */
+internal fun routeFrames(messages: List<ByteArray>, to: List<String>, peers: Map<String, LinkPeer>): Routing {
+  val targets: List<LinkPeer>
+  var unknown = false
+  if (to.isEmpty()) {
+    targets = peers.values.toList()
+  } else {
+    val ids = to.distinct()
+    targets = ids.mapNotNull { peers[it] }
+    unknown = targets.size < ids.size
+  }
+  val tooLarge = LinkedHashSet<LinkMode>()
+  val deliveries = ArrayList<Pair<LinkPeer, List<ByteArray>>>()
+  for (p in targets) {
+    val list = ArrayList<ByteArray>(messages.size)
+    for (m in messages) {
+      if (m.size - 1 > p.mode.maxFrame) tooLarge.add(p.mode)
+      else if (m.size > 1) list.add(m)
+    }
+    if (list.isNotEmpty()) deliveries.add(p to list)
+  }
+  return Routing(deliveries, tooLarge, unknown)
 }
 
 /** Une liaison (Wi-Fi ou Bluetooth). Méthodes appelées sur le worker. */
@@ -134,7 +178,10 @@ internal class LinkManager(
       if (!next.sameAs(t.config)) t.stop()
       if (!suspended) t.start(next)
     }
-    refreshState()
+    // Contrat : link:peers après CHAQUE link:start (liste vide si la salle a
+    // changé), et link:state en réponse, même inchangés.
+    publishPeers()
+    refreshState(force = true)
   }
 
   fun stop(modes: List<String>) = post {
@@ -147,33 +194,18 @@ internal class LinkManager(
       config = null
       inbox.clear()
     }
-    refreshState()
+    refreshState(force = true) // contrat : link:state en réponse à link:stop
   }
 
   fun send(frames: List<String>, to: List<String>) = post {
     if (requested.isEmpty()) return@post error(null, "not-started")
     if (frames.isEmpty() || frames.size > 256 || to.size > 64) return@post error(null, "invalid-frames")
-    val targets: Collection<LinkPeer>
-    if (to.isEmpty()) {
-      targets = peers.values.toList()
-    } else {
-      val ids = to.distinct()
-      targets = ids.mapNotNull { peers[it] }
-      if (targets.size < ids.size) error(null, "unknown-peer")
-    }
-    if (targets.isEmpty()) return@post
     // Un seul encodage par trame, partagé entre les pairs
     val messages = frames.map { LinkWire.encodeData(it.toByteArray(Charsets.UTF_8)) }
-    val tooLarge = LinkedHashSet<LinkMode>()
-    for (p in targets) {
-      val list = ArrayList<ByteArray>(messages.size)
-      for (m in messages) {
-        if (m.size - 1 > p.mode.maxFrame) tooLarge.add(p.mode)
-        else if (m.size > 1) list.add(m)
-      }
-      if (list.isNotEmpty()) p.enqueueData(list)
-    }
-    for (m in tooLarge) error(m, "too-large")
+    val r = routeFrames(messages, to, peers)
+    if (r.unknownPeer) error(null, "unknown-peer")
+    for ((p, list) in r.deliveries) p.enqueueData(list)
+    for (m in r.tooLarge) error(m, "too-large")
   }
 
   /** Synchrone (thread JS) : au plus maxFrames trames et maxBytes octets ; le reste attend. */
@@ -261,6 +293,7 @@ internal class LinkManager(
       error(peer.mode, "too-many-peers")
       return false
     }
+    if (peers.containsKey(peer.id)) return false // collision d'identifiant (48 bits aléatoires) : jamais en pratique
     peers[peer.id] = peer
     publishPeers()
     return true
@@ -282,13 +315,13 @@ internal class LinkManager(
     emit(ERROR_EVENT, mapOf("mode" to mode?.id, "reason" to reason))
   }
 
-  /** Worker : recalcule l'état et le publie s'il a changé. */
-  fun refreshState() {
+  /** Worker : recalcule l'état et le publie s'il a changé (toujours si `force`). */
+  fun refreshState(force: Boolean = false) {
     val lan = transports[0].state()
     val ble = transports[1].state()
     snapshot = mapOf("lan" to lan.toMap(), "ble" to ble.toMap())
     val sig = lan.signature + ";" + ble.signature
-    if (sig == lastStateSignature) return
+    if (sig == lastStateSignature && !force) return
     lastStateSignature = sig
     emit(STATE_EVENT, snapshot)
   }

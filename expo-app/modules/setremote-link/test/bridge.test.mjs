@@ -269,9 +269,19 @@ test('link:send : transmis tel quel ; `to` absent = tous les pairs ([] côté na
   const { bridge, native, page } = setup();
   bridge.handle(start());
   bridge.handle({ type: 'link:send', frames: ['a', 'b'] });
-  bridge.handle({ type: 'link:send', frames: ['c'], to: ['l-1'] });
-  assert.deepEqual(native.calls.slice(1), [['send', ['a', 'b'], []], ['send', ['c'], ['l-1']]]);
+  bridge.handle({ type: 'link:send', frames: ['c'], to: ['lan-0a1b2c3d4e5f'] });
+  assert.deepEqual(native.calls.slice(1), [['send', ['a', 'b'], []], ['send', ['c'], ['lan-0a1b2c3d4e5f']]]);
   assert.deepEqual(page(), []);
+});
+
+test('écran : `to` honoré aussi (trame réservée au Wi-Fi local), même routage que la télécommande', () => {
+  const { bridge, native } = setup();
+  bridge.handle(start({ role: 'screen', name: undefined }));
+  const caps = 'c'.repeat(MAX_FRAME_BYTES.ble + 500); // trop grand pour le Bluetooth
+  bridge.handle({ type: 'link:send', frames: [caps], to: ['lan-7e57c0ffee00'] });
+  bridge.handle({ type: 'link:send', frames: ['vie'] });
+  assert.deepEqual(native.calls[0].slice(0, 3), ['start', ['lan', 'ble'], 'screen']);
+  assert.deepEqual(native.calls.slice(1), [['send', [caps], ['lan-7e57c0ffee00']], ['send', ['vie'], []]]);
 });
 
 test('link:send : trame de plus de 64 Kio refusée ici (too-large pour chaque liaison active), les autres partent', () => {
@@ -361,7 +371,10 @@ test('échec inattendu du natif au démarrage : start-failed par liaison, relev�
   const { bridge, page } = setup({ native });
   bridge.handle(start({ modes: ['lan'] }));
   assert.equal(bridge.pumping, false);
-  assert.deepEqual(page(), [{ type: 'link:error', mode: 'lan', reason: 'start-failed' }]);
+  assert.deepEqual(page(), [
+    { type: 'link:error', mode: 'lan', reason: 'start-failed' },
+    { type: 'link:peers', peers: [] },
+  ]);
 });
 
 test('binaire sans module natif : native-unavailable, état indisponible', () => {
@@ -375,6 +388,7 @@ test('binaire sans module natif : native-unavailable, état indisponible', () =>
     { type: 'link:error', mode: 'lan', reason: 'native-unavailable' },
     { type: 'link:error', mode: 'ble', reason: 'native-unavailable' },
     { type: 'link:state', ...UNAVAILABLE_STATE },
+    { type: 'link:peers', peers: [] },
     { type: 'link:error', mode: null, reason: 'native-unavailable' },
     { type: 'link:state', ...UNAVAILABLE_STATE },
   ]);

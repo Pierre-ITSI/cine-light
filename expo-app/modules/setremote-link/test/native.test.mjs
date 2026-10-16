@@ -126,6 +126,32 @@ test('UUID Bluetooth identiques (service, RX écrit par la télécommande, TX no
   assert.ok(kotlin.wire.includes('"00002902-0000-1000-8000-00805f9b34fb"'), 'CCCD (Android le déclare lui-même)');
 });
 
+test('attentes de la page (docs/OFFLINE.md § 2.2) : pairs distincts par liaison, `to` dans les deux rôles, link:peers après link:start', () => {
+  // 1. Identifiants préfixés par la liaison : « lan-… » / « ble-… »
+  assert.match(kotlin.manager, /LAN\("lan", "lan", /);
+  assert.match(kotlin.manager, /BLE\("ble", "ble", /);
+  assert.match(swift.wire, /var prefix: String \{ rawValue \}/);
+  assert.match(swift.wire, /case lan\b/);
+  assert.match(swift.wire, /case ble\b/);
+  for (const src of [kotlin.lan, swift.lan]) assert.match(src, /newPeerId\(LinkMode\.lan\.prefix\)|newPeerId\(LinkMode\.LAN\.prefix\)/);
+  for (const src of [kotlin.ble, swift.ble]) assert.match(src, /newPeerId\(LinkMode\.ble\.prefix\)|newPeerId\(LinkMode\.BLE\.prefix\)/);
+  // 2. Routage commun aux deux rôles : la fonction ne connaît pas le rôle
+  const ktRoute = /internal fun routeFrames[\s\S]*?\n\}\n/.exec(kotlin.manager)[0];
+  const swRoute = /func routeFrames[\s\S]*?\n\}\n/.exec(swift.manager)[0];
+  for (const r of [ktRoute, swRoute]) assert.doesNotMatch(r, /role|REMOTE|SCREEN|remote|screen/i);
+  assert.match(kotlin.manager, /val r = routeFrames\(messages, to, peers\)/);
+  assert.match(swift.manager, /let r = routeFrames\(messages, to: to, peers: peers, order: peerOrder\)/);
+  // 3. link:peers après chaque link:start, link:state en réponse à link:start et link:stop
+  const ktStart = /fun start\(modes[\s\S]*?\n {2}\}\n/.exec(kotlin.manager)[0];
+  const swStart = /func start\(modes[\s\S]*?\n {2}\}\n/.exec(swift.manager)[0];
+  assert.match(ktStart, /publishPeers\(\)\s*\n\s*refreshState\(force = true\)/);
+  assert.match(swStart, /publishPeers\(\)\s*\n\s*refreshState\(force: true\)/);
+  assert.match(/fun stop\(modes[\s\S]*?\n {2}\}\n/.exec(kotlin.manager)[0], /refreshState\(force = true\)/);
+  assert.match(/func stop\(modes[\s\S]*?\n {2}\}\n/.exec(swift.manager)[0], /refreshState\(force: true\)/);
+  // Topologie en étoile : un écran n'admet que des télécommandes (rôle opposé exigé)
+  for (const src of [kotlin.wire, swift.wire]) assert.match(src, /fail\("role"\)/);
+});
+
 test('natif : aucune trace du contenu (ni trame, ni nom, ni clé)', () => {
   for (const [name, src] of Object.entries({ ...swift, ...Object.fromEntries(Object.entries(kotlin).map(([k, v]) => ['kt-' + k, v])) })) {
     assert.doesNotMatch(src, /\b(print|NSLog|os_log|debugPrint|Log\.[dviwe]|println|Logger)\(/, name);

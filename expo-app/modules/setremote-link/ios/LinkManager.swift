@@ -32,6 +32,46 @@ protocol LinkPeer: AnyObject {
   func enqueueData(_ messages: [Data])
 }
 
+/// Résultat du routage d'un link:send.
+struct Routing {
+  /// Pairs destinataires et messages DATA qu'ils peuvent porter, dans l'ordre.
+  var deliveries: [(LinkPeer, [Data])] = []
+  /// Liaisons pour lesquelles au moins une trame a été refusée (plafond).
+  var tooLarge: [LinkMode] = []
+  /// Un identifiant de `to` n'est pas (ou plus) connecté.
+  var unknownPeer = false
+}
+
+/// Routage d'un link:send, identique pour la télécommande et pour l'écran :
+/// `to` vide = tous les pairs, sinon seulement ceux listés (un écran l'utilise
+/// pour réserver une trame au Wi-Fi local). Chaque trame est refusée pour les
+/// pairs dont la liaison ne peut pas la porter (plus de 4 Kio en Bluetooth).
+/// Même logique que routeFrames (LinkManager.kt), testée sur JVM.
+func routeFrames(_ messages: [Data], to: [String], peers: [String: LinkPeer], order: [String]) -> Routing {
+  var r = Routing()
+  var targets: [LinkPeer] = []
+  if to.isEmpty {
+    targets = order.compactMap { peers[$0] }
+  } else {
+    var seen = Set<String>()
+    for id in to where seen.insert(id).inserted {
+      if let p = peers[id] { targets.append(p) } else { r.unknownPeer = true }
+    }
+  }
+  for p in targets {
+    var list: [Data] = []
+    for m in messages {
+      if m.count - 1 > p.mode.maxFrame {
+        if !r.tooLarge.contains(p.mode) { r.tooLarge.append(p.mode) }
+      } else if m.count > 1 {
+        list.append(m)
+      }
+    }
+    if !list.isEmpty { r.deliveries.append((p, list)) }
+  }
+  return r
+}
+
 /// Une liaison (Wi-Fi ou Bluetooth). Méthodes appelées sur la file interne.
 protocol LinkTransport: AnyObject {
   var mode: LinkMode { get }
@@ -92,7 +132,10 @@ final class LinkManager {
         if !next.same(t.config) { t.stop() }
         if !suspended { t.start(next) }
       }
-      refreshState()
+      // Contrat : link:peers après CHAQUE link:start (liste vide si la salle a
+      // changé), et link:state en réponse, même inchangés.
+      publishPeers()
+      refreshState(force: true)
     }
   }
 
@@ -107,7 +150,7 @@ final class LinkManager {
         config = nil
         inbox.clear()
       }
-      refreshState()
+      refreshState(force: true) // contrat : link:state en réponse à link:stop
     }
   }
 
@@ -115,33 +158,12 @@ final class LinkManager {
     queue.async { [self] in
       if requested.isEmpty { return error(nil, "not-started") }
       guard !frames.isEmpty, frames.count <= 256, to.count <= 64 else { return error(nil, "invalid-frames") }
-      var targets: [LinkPeer] = []
-      if to.isEmpty {
-        targets = peerOrder.compactMap { peers[$0] }
-      } else {
-        var seen = Set<String>()
-        var unknown = false
-        for id in to where seen.insert(id).inserted {
-          if let p = peers[id] { targets.append(p) } else { unknown = true }
-        }
-        if unknown { error(nil, "unknown-peer") }
-      }
-      if targets.isEmpty { return }
       // Un seul encodage par trame, partagé entre les pairs
       let messages = frames.map { LinkWire.encodeData(Data($0.utf8)) }
-      var tooLarge: [LinkMode] = []
-      for p in targets {
-        var list: [Data] = []
-        for m in messages {
-          if m.count - 1 > p.mode.maxFrame {
-            if !tooLarge.contains(p.mode) { tooLarge.append(p.mode) }
-          } else if m.count > 1 {
-            list.append(m)
-          }
-        }
-        if !list.isEmpty { p.enqueueData(list) }
-      }
-      for m in tooLarge { error(m, "too-large") }
+      let r = routeFrames(messages, to: to, peers: peers, order: peerOrder)
+      if r.unknownPeer { error(nil, "unknown-peer") }
+      for (p, list) in r.deliveries { p.enqueueData(list) }
+      for m in r.tooLarge { error(m, "too-large") }
     }
   }
 
@@ -203,6 +225,7 @@ final class LinkManager {
       error(peer.mode, "too-many-peers")
       return false
     }
+    if peers[peer.id] != nil { return false } // collision d'identifiant (48 bits aléatoires) : jamais en pratique
     peers[peer.id] = peer
     peerOrder.append(peer.id)
     publishPeers()
@@ -229,8 +252,8 @@ final class LinkManager {
     emit?(LinkManager.errorEvent, body)
   }
 
-  /// Recalcule l'état et le publie s'il a changé.
-  func refreshState() {
+  /// Recalcule l'état et le publie s'il a changé (toujours si `force`).
+  func refreshState(force: Bool = false) {
     let lan = transports[0].state()
     let ble = transports[1].state()
     let s: [String: Any] = ["lan": lan.dictionary, "ble": ble.dictionary]
@@ -240,7 +263,7 @@ final class LinkManager {
     let changed = sig != lastStateSignature
     lastStateSignature = sig
     stateLock.unlock()
-    if changed { emit?(LinkManager.stateEvent, s.mapValues { $0 as Any? }) }
+    if changed || force { emit?(LinkManager.stateEvent, s.mapValues { $0 as Any? }) }
   }
 
   private func currentSnapshot() -> [String: Any] {
