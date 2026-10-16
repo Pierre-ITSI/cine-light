@@ -57,6 +57,7 @@ function enterScreenSession(p) {
   if (mode === 'screen' && _session && _session.channelId === p.channelId && _session.key === p.key && mqttClient) return; // déjà connecté
   document.getElementById('splash').style.display = 'none';
   mode = 'screen'; _session = { channelId: p.channelId, key: p.key };
+  screenLoadConfig(_session); // nom et groupes donnés par la télécommande (28-screens.js)
   const el = document.getElementById('screen-mode');
   el.style.display = 'flex';
   el.style.backgroundColor = '#1a1a1a';
@@ -67,7 +68,7 @@ function enterScreenSession(p) {
   if (!navigator.vibrate) { const b=document.getElementById('vibrateBtn'); if(b){b.classList.add('unavail');b.textContent='📳 Indispo (iPhone)';b.classList.remove('on');} vibrateEnabled=false; }
   let firstConnect = true;
   connectSession(_session, () => {
-    setScreenStatus('✓ En écoute — liaison chiffrée');
+    setScreenStatus(_screenCfg.name ? '✓ ' + _screenCfg.name + ' — liaison chiffrée' : '✓ En écoute — liaison chiffrée');
     // Confirmation visible uniquement à la 1re connexion : les reconnexions
     // automatiques ne doivent rien afficher (l'écran est peut-être dans le champ)
     if (firstConnect && !screenBlackoutOn) flashScreenNotice('Relié à la télécommande');
@@ -84,27 +85,21 @@ function connectRemote(p) {
   _session = { channelId: p.channelId, key: p.key };
   _linkEverConnected = false;
   setConnStatus('connecting');
+  // État « Tous les écrans » = réglages affichés ; noms, groupes et cible de
+  // cette session (28-screens.js) ; une cible retenue (groupe, écran) montre
+  // son propre état
+  _scrAllState = null; scrInitAll();
+  scrLoad();
+  if (scrTarget().k !== 'all') scrLoadView();
   if (document.getElementById('content-qr').classList.contains('active')) renderPairPanel();
   gwOnSessionChanged(); // passerelle DMX : patch de cette session
   connectSession(_session, () => {
     setConnStatus('connected');
-    // Envoyer la couleur courante dès la connexion
-    sendMsg({ type: 'color', color: currentColor });
-    // Demander aux écrans leurs capacités (torche / vibreur / cache)
+    // Demander aux écrans leurs capacités (torche / vibreur / cache). Chaque
+    // « caps » déclenche la resynchronisation de CET écran avec SON état
+    // (24-resync.js) : plus d'envoi global de la couleur ni des réglages à la
+    // (re)connexion, qui écraserait l'état propre de chaque écran ciblé.
     sendMsg({ type: 'hello' });
-    // Resynchroniser l'option « avancer au clic » côté écran de jeu
-    sendMsg({ type: 'media:autoadvance', on: _autoAdvance });
-    // Resynchroniser la luminosité de l'écran de jeu
-    sendMsg({ type: 'screen:brightness', value: screenBrightnessPct / 100 });
-    // Resynchroniser le comportement de fin de lecture vidéo
-    sendMsg({ type: 'media:endmode', mode: _videoEndMode });
-    // Fond d'écran verrouillé, bande son, photo d'appel : plus de renvoi
-    // systématique à chaque (re)connexion — la réponse « caps » au hello
-    // déclenche une resynchronisation complète qui ne les renvoie que si
-    // l'écran ne les a pas (24-resync.js).
-    // Synchroniser l'ordre du pool et précharger les médias sur l'écran
-    sendPoolOrder();
-    schedulePreload();
   });
 }
 
@@ -115,6 +110,7 @@ function confirmNewSession() {
 }
 function newRemoteSession() {
   remoteStopAllPairing();
+  _vidStopJobs(null); // transferts vidéo vers les écrans révoqués
   clearPairedScreens();
   connectRemote(renewRemoteSession());
 }
@@ -223,8 +219,9 @@ function goBackToSplash() {
 }
 
 function goBack() {
+  closeScreensUi(); // vue « Écrans connectés », choix de la cible (39-screens-ui.js)
   stopStrobe();
-  stopMediaBroadcast(true);
+  stopMediaBroadcast(true, true);
   gwStop(); // passerelle DMX : les écrans gardent leur look et sont rendus à la télécommande
   closeDmxGateway();
   remoteStopAllPairing();

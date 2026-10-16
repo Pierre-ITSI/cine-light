@@ -268,9 +268,8 @@ async function deleteRingTone(id) {
   ringLib = ringLib.filter((x) => x.id !== id);
   for (const k of RING_KINDS) if (ringSettings[k].sound === id) ringSettings[k].sound = 'classic';
   persistRingSettings();
-  _ringOnScreens.delete(id);
   _screenCached.delete(id);
-  sendMsg({ type: 'media:evict', id });
+  sendMsg({ type: 'media:evict', id }); // tous les écrans (oublié de leur état : 28-screens.js)
   _ringSetStatus('« ' + t.name + ' » supprimée.');
   renderRingPanel();
   if (typeof renderCallList === 'function') renderCallList();
@@ -315,18 +314,28 @@ async function previewRingTone(id) {
 }
 
 // ── Envoi aux écrans ──
-const _ringOnScreens = new Set(); // sons envoyés aux écrans (et non perdus depuis)
+// Chaque écran a ses sons (scrState(id).sent / .cached, 28-screens.js) : un
+// son part vers les seuls écrans visés qui ne l'ont pas.
 const _ringSentAt = new Map();
-// Appelé dans la file des envois (ensureCallAssets) : fragments du son s'il n'est pas déjà parti
-async function ringSendIfMissing(id) {
-  if (_ringOnScreens.has(id) || !ringLibHas(id)) return;
+const _ringOn = (id, s) => scrState(s).sent.has(id) || scrState(s).cached.has(id);
+// Son présent (envoyé ou accusé) sur tous les écrans en ligne
+const _ringOnScreens = {
+  has(id) { const ids = scrList().filter(scrOnline); return ids.length > 0 && ids.every((s) => _ringOn(id, s)); },
+};
+// Appelé dans la file des envois (ensureCallAssets) : fragments du son vers
+// les écrans donnés (défaut : la cible) qui ne l'ont pas déjà
+async function ringSendIfMissing(id, screens) {
+  if (!ringLibHas(id)) return;
   if (!mqttClient || !mqttClient.connected) return; // renvoyé à la resynchronisation
+  const lack = () => (screens || scrTargetIds()).filter((s) => scrKnown(s) && !_ringOn(id, s));
+  if (!lack().length) return;
   const data = await ringLibData(id);
-  if (!data || _ringOnScreens.has(id)) return;
-  _ringOnScreens.add(id);
+  const ids = lack();
+  if (!data || !ids.length) return;
+  for (const s of ids) scrState(s).sent.set(id, true);
   _ringSentAt.set(id, Date.now());
   _screenCached.delete(id);
-  await sendImageChunks(data, { mediaId: id, show: false });
+  await sendImageChunks(data, { mediaId: id, show: false, screens: ids });
 }
 // Sons qui doivent être sur les écrans : ceux choisis pour chaque type et,
 // passerelle en marche, ceux des entrées 1 à 20 des listes
@@ -348,13 +357,15 @@ function ringPreloadGatewayEntries() {
   const ids = ringGatewayIds();
   if (ids.length) ensureCallAssets(null, null, ids);
 }
-// L'écran a reçu un appel avec un son qu'il n'a pas (rechargé, transfert perdu)
-function ringOnScreenNeeds(id) {
+// Un écran a reçu un appel avec un son qu'il n'a pas (rechargé, transfert perdu) :
+// renvoyé à lui seul (sid inconnu : aux écrans de la cible)
+function ringOnScreenNeeds(id, sid) {
   _screenCached.delete(id);
   if (!ringLibHas(id)) return;
   if (Date.now() - (_ringSentAt.get(id) || 0) < 3000) return; // envoi tout récent : déjà en route
-  _ringOnScreens.delete(id);
-  ensureCallAssets(null, null, [id]);
+  const ids = sid ? [sid] : scrTargetIds();
+  for (const s of ids) { scrState(s).sent.delete(id); scrState(s).cached.delete(id); }
+  ensureCallAssets(null, null, [id], ids);
 }
 // Accusé « en cache » d'un écran : bande son du décroché, son importé
 function remoteOnCallAssetCached(id) {

@@ -232,6 +232,76 @@ input[type="range"]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;b
 .pv-ok:disabled{opacity:.55;cursor:default}
 .pv-foot{position:absolute;left:18px;right:18px;bottom:40px;font-size:.6875rem;color:#a8a8a8;text-align:center;line-height:1.6}
 @media (max-height:640px){.pv-dialog{top:24px}.pv-foot{display:none}}
+/* ══ Plusieurs écrans : cible des commandes (maquette 6), écrans connectés & groupes (maquette 5) ══ */
+
+/* — Télécommande : « Cible : … » sous l'aperçu — */
+.target-btn{width:100%;height:48px;display:flex;align-items:center;gap:10px;padding:0 14px;margin-bottom:12px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:.75rem;text-align:left;cursor:pointer}
+.target-btn.subset{border-color:var(--accent);background:rgba(255,107,44,.08)}
+.target-btn .tb-icon{flex-shrink:0;color:var(--accent)}
+.tb-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* — Onglet QR : « Écrans appairés (n) » + « Gérer » (maquette 1) — */
+.pair-screens-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pair-manage{background:none;border:none;padding:10px 0 10px 16px;margin:-10px 0;font-family:'DM Mono',monospace;font-size:.6875rem;line-height:1;color:var(--accent);cursor:pointer}
+
+/* — Écran de jeu : son nom dans le menu (sur deux lignes si long) — */
+.screen-menu-info{max-width:300px;text-align:center;line-height:1.5}
+
+/* — Feuille du bas : cible, renommer, groupes — */
+#sr-sheet{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.55);font-family:'DM Mono',monospace;color:var(--text)}
+#sr-sheet.open{display:block}
+.sr-sheet{position:absolute;left:0;right:0;bottom:0;max-height:88vh;overflow-y:auto;background:var(--mid);border-top:1px solid rgba(255,255,255,.12);border-radius:20px 20px 0 0;padding:12px 18px calc(26px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px}
+.sr-sheet-grip{align-self:center;width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.25);margin-bottom:8px;flex-shrink:0}
+.sr-sheet h2{margin:0 0 6px;font-family:'Lato',sans-serif;font-weight:600;font-size:1.1875rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr-sheet-body,.sr-form{display:flex;flex-direction:column}
+.sr-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 4px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
+.sr-row input{width:20px;height:20px;margin:0;flex-shrink:0;accent-color:var(--accent);cursor:pointer}
+.sr-row-label{flex:1;min-width:0;font-size:.8125rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr-row.on .sr-row-label{color:#FF8a55}
+.sr-row-meta{font-size:.6875rem;color:#a8a8a8;flex-shrink:0}
+.sr-row.disabled{opacity:.45;cursor:default}
+.sr-sublabel{margin:10px 0 8px;font-size:.625rem;letter-spacing:.2em;text-transform:uppercase;color:#a8a8a8}
+.sr-input{width:100%}
+.sr-sheet-note{margin:8px 0 0;font-size:.6875rem;color:#a8a8a8;line-height:1.6}
+.sr-add{margin-top:10px;min-height:46px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:transparent;color:#d0d0d0;font-family:'DM Mono',monospace;font-size:.6875rem;cursor:pointer}
+.sr-actions{display:flex;gap:10px;margin-top:14px}
+.sr-cancel,.sr-ok,.sr-del{height:50px;border-radius:8px;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.sr-cancel{flex:1;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text)}
+.sr-ok{flex:1.4;border:none;background:var(--accent);color:#000;font-weight:500}
+.sr-del{padding:0 14px;border:1px solid rgba(255,90,79,.5);background:transparent;color:#ff7a70;font-size:.6875rem}
+
+/* — Écrans connectés & groupes (maquette 5) — */
+#screens-view{display:none;position:fixed;inset:0;z-index:300;overflow-y:auto;overflow-x:hidden;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);color:var(--text);font-family:'DM Mono',monospace;padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));flex-direction:column;gap:12px}
+#screens-view.open{display:flex}
+.sv-head{display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.sv-back{width:36px;height:36px;margin-left:-8px;border:none;background:none;color:#c8c8c8;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0}
+.sv-title{flex:1;min-width:0;font-family:'Lato',sans-serif;font-weight:600;font-size:1.25rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sv-pair{display:flex;align-items:center;height:36px;padding:0 12px;border:1px solid rgba(255,255,255,.14);border-radius:6px;background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:.6875rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;flex-shrink:0}
+.sv-list{display:flex;flex-direction:column;gap:12px}
+.sv-card{background:var(--mid);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.sv-row{display:flex;align-items:center;gap:10px}
+.sv-card .sv-row+.sv-row{gap:8px}
+.sv-swatch{width:40px;height:40px;border-radius:8px;flex-shrink:0;border:1px solid rgba(255,255,255,.14)}
+.sv-main{flex:1;min-width:0}
+.sv-name,.sv-now{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sv-name{font-size:.875rem;color:var(--text)}
+.sv-now{font-size:.6875rem;color:#a8a8a8;margin-top:2px}
+.sv-link{display:flex;align-items:center;gap:6px;font-size:.625rem;color:var(--green);flex-shrink:0}
+.sv-link::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.sv-link.off{color:#ff7a70}
+.sv-group{height:28px;max-width:46%;padding:0 10px;border-radius:14px;border:1px solid rgba(255,107,44,.5);background:transparent;color:#FF8a55;font-family:'DM Mono',monospace;font-size:.625rem;letter-spacing:.06em;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sv-group.none{border-style:dashed;border-color:rgba(255,255,255,.25);color:#c8c8c8}
+.sv-flex{flex:1}
+.sv-btn{height:36px;padding:0 12px;border-radius:6px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:.6875rem;cursor:pointer;flex-shrink:0}
+.sv-icon{width:36px;height:36px;border-radius:6px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:#c8c8c8;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0}
+.sv-empty{font-size:.6875rem;color:#a8a8a8;line-height:1.55;text-align:center;padding:14px 6px;border:1px dashed var(--border);border-radius:10px}
+.sv-groups{background:var(--mid);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.sv-label{font-size:.625rem;letter-spacing:.2em;text-transform:uppercase;color:#a8a8a8}
+.sv-chips{display:flex;flex-wrap:wrap;gap:8px}
+.sv-chip{height:36px;max-width:100%;padding:0 14px;border-radius:18px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:#d0d0d0;font-family:'DM Mono',monospace;font-size:.6875rem;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sv-chip.on{border-color:var(--accent);background:rgba(255,107,44,.1);color:#FF8a55}
+.sv-chip.add{border:1px dashed rgba(255,255,255,.25);background:transparent;color:#c8c8c8}
+.sv-note{font-size:.6875rem;color:#a8a8a8;line-height:1.6;text-align:center}
 /* Gradients de couleur pour les sliders */
 #dimmerSlider{background:linear-gradient(to right,#333,#fff) !important}
 #kelvinSlider{background:linear-gradient(to right,#ff9b4a,#ffd2a0,#fff,#c9dfff,#a0c8ff) !important}
@@ -886,6 +956,12 @@ button.st-row{cursor:pointer}
       <div class="autosend-badge" id="autosendBadge">↗ envoyé</div>
     </div>
   </div>
+  <!-- Cible des commandes (maquette 6) : visible dès deux écrans appairés -->
+  <button type="button" class="target-btn" id="targetBtn" style="display:none" onclick="openTargetSheet()" aria-haspopup="dialog">
+    <svg class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>
+    <span class="tb-label" id="targetBtnLabel">Cible : <b>Tous les écrans</b></span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+  </button>
   <button class="screen-toggle-btn" id="blackoutBtn" onclick="toggleBlackout()">
     <span id="blackoutIcon">⚫</span><span id="blackoutLabel">Écran ON — appuyer pour éteindre</span>
   </button>
@@ -1515,7 +1591,7 @@ button.st-row{cursor:pointer}
       <div class="pair-wait"><span class="pair-wait-dot"></span>En attente d'un écran…</div>
     </div>
     <div class="panel pair-screens" id="pairScreens" style="display:none">
-      <div class="panel-label">Écrans appairés (<span id="pairScreensCount">0</span>)</div>
+      <div class="pair-screens-head"><div class="panel-label">Écrans appairés (<span id="pairScreensCount">0</span>)</div><button type="button" class="pair-manage" onclick="openScreensView()">Gérer</button></div>
       <div id="pairScreensList" class="pair-screens-list"></div>
     </div>
     <!-- Passerelle DMX : visible partout ; hors de l'app native, la vue explique qu'il faut l'app (validé) -->
@@ -1525,6 +1601,30 @@ button.st-row{cursor:pointer}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
       Chiffré de bout en bout : seuls vos appareils lisent les messages et les médias
     </div>
+  </div>
+</div>
+
+<!-- Écrans connectés & groupes (maquette 5) -->
+<div id="screens-view" role="dialog" aria-labelledby="svTitle">
+  <div class="sv-head">
+    <button type="button" class="sv-back" aria-label="Retour à la télécommande" onclick="closeScreensView()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <span class="sv-title" id="svTitle">Écrans connectés</span>
+    <button type="button" class="sv-pair" onclick="screensViewPair()">+ Appairer</button>
+  </div>
+  <div class="sv-list" id="svList"></div>
+  <div class="sv-groups">
+    <div class="sv-label">Groupes</div>
+    <div class="sv-chips" id="svGroups"></div>
+  </div>
+  <div class="sv-note">« Identifier » fait clignoter l'écran concerné pour le reconnaître sur le décor.</div>
+</div>
+
+<!-- Feuille : cible des commandes (maquette 6), renommer, groupes -->
+<div id="sr-sheet" onclick="if(event.target===this)closeSheet()">
+  <div class="sr-sheet" role="dialog" aria-modal="true" aria-labelledby="srSheetTitle">
+    <span class="sr-sheet-grip" aria-hidden="true"></span>
+    <h2 id="srSheetTitle">Envoyer les commandes à…</h2>
+    <div class="sr-sheet-body" id="srSheetBody"></div>
   </div>
 </div>
 
@@ -5255,6 +5355,7 @@ const _LS_KEYS = {
   remote: 'setremote-session-v1',        // secret de la télécommande
   screen: 'setremote-screen-session-v1', // dernière session rejointe par cet écran
   screenId: 'setremote-screen-id',
+  screenConfig: 'setremote-screen-config-v1', // nom et groupes de cet écran (screen:config), par session
 };
 let _session = null; // secret de la session active (télécommande ou écran)
 
@@ -5286,6 +5387,22 @@ function renewRemoteSession() {
 // Écran : dernière session rejointe (QR ou code)
 function screenStoredSession() { return _readPairing(_LS_KEYS.screen); }
 function screenSaveSession(p) { _writePairing(_LS_KEYS.screen, p); }
+
+// Écran : nom et groupes donnés par la télécommande (screen:config), gardés
+// pour la session rejointe (une autre session repart sans nom ni groupe)
+function screenStoredConfig(p) {
+  try {
+    const o = JSON.parse(_lsGet(_LS_KEYS.screenConfig));
+    if (!o || typeof o !== 'object' || !p || o.channelId !== p.channelId) return { name: '', groups: [] };
+    return {
+      name: typeof o.name === 'string' ? o.name.replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, 40) : '',
+      groups: Array.isArray(o.groups) ? o.groups.filter((g, i, a) => typeof g === 'string' && SRP.GROUP_ID_RE.test(g) && a.indexOf(g) === i).slice(0, 16) : [],
+    };
+  } catch (_) { return { name: '', groups: [] }; }
+}
+function screenSaveConfig(p, cfg) {
+  _lsSet(_LS_KEYS.screenConfig, JSON.stringify({ channelId: p.channelId, name: cfg.name, groups: cfg.groups }));
+}
 
 // Écran : identifiant stable, annoncé dans « caps »
 function screenId() {
@@ -5459,7 +5576,8 @@ async function connectSession(pairing, onConnected) {
   let ch, bc = null, recvKey = null;
   try {
     const opts = { pairing, role: mode };
-    if (mode === 'screen') opts.screenId = screenId();
+    // Écran : ordres adressés à d'autres écrans ignorés (target, 28-screens.js)
+    if (mode === 'screen') { opts.screenId = screenId(); opts.groups = _screenCfg.groups; }
     ch = await SRP.createSecureChannel(opts);
     if (mode === 'remote') bc = await SRP.createSecureChannel(opts);
     const { keys } = await SRP.deriveSession(pairing);
@@ -5523,6 +5641,10 @@ async function connectSession(pairing, onConnected) {
 // (le déchiffrement est asynchrone ; l'ordre compte : début de transfert avant
 // ses fragments, dernière couleur gagnante…).
 const _BC_TYPES = ['color', 'strobe']; // seuls types acceptés du repli même appareil
+// Télécommande : écran (screenId) qui a émis le message en cours de traitement,
+// d'après son étiquette d'émetteur authentifiée (rattachée par « caps ») ;
+// null si inconnu. Lu par les gestionnaires (réponse WebRTC, accusés, lecture…).
+let _rxFrom = null;
 function receiveFrame(ch, str, via) {
   _rxChain = _rxChain.then(async () => {
     if (ch !== _sec) return;
@@ -5537,8 +5659,12 @@ function receiveFrame(ch, str, via) {
     if (!r || r.kind !== 'message' || ch !== _sec) return; // écho, autre écran, fragment binaire
     if (via === 'bc' && !_BC_TYPES.includes(r.message.type)) return;
     secStats.received++;
-    if (mode === 'remote') remoteNoteScreen(r.sender, r.message);
+    if (mode === 'remote') {
+      remoteNoteScreen(r.sender, r.message);
+      _rxFrom = _screenOfSender.get(r.sender) || null;
+    }
     try { dispatchMessage(r.message); } catch (e) { console.warn('SetRemote : message', r.message.type, e); }
+    finally { _rxFrom = null; }
   });
   return _rxChain;
 }
@@ -5580,7 +5706,16 @@ function setClockSkewed(on) {
 
 // Envoi : forme « fil » (JSON), valeurs bornées aux plages du schéma, puis
 // scellement et publication DANS L'ORDRE des appels.
+// Télécommande : l'ordre part vers la cible courante (target, 28-screens.js)
+// et l'état attendu des écrans visés est noté, même hors ligne (la
+// resynchronisation le leur renverra).
 function sendMsg(obj) {
+  if (mode === 'remote') {
+    if (_scrMute) return; // rechargement de l'affichage (changement de cible) : rien ne part
+    obj = scrAddress(obj);
+    if (!obj) return;     // cible vide
+    scrTrack(obj);
+  }
   if (!mqttClient || !mqttClient.connected || !_sec) return;
   let msg;
   try { msg = prepareOutgoing(obj); } catch (_) { return; }
@@ -5814,6 +5949,13 @@ const MSG_ROUTES = {
     handle: (m) => screenApplyDmxLook(m),
   },
   'screen:identify':   { roles: ['screen'], validate: () => true, handle: () => screenIdentify() },
+  // Nom et groupes de cet écran (télécommande, 28-screens.js)
+  'screen:config': {
+    roles: ['screen'],
+    validate: (m) => (m.name === undefined || _P.str(m.name, PROTO.NAME_MAX))
+      && (m.groups === undefined || (Array.isArray(m.groups) && m.groups.length <= 16 && m.groups.every((g) => typeof g === 'string' && SRP.GROUP_ID_RE.test(g)))),
+    handle: (m) => screenApplyConfig(m),
+  },
   'rtc-offer':         { roles: ['screen'], validate: _validSdp('offer'), handle: (m) => screenHandleOffer(m.sdp) },
   // Candidats ICE dans les deux sens : chaque rôle n'accepte que ceux de l'autre
   'rtc-ice': {
@@ -5848,11 +5990,11 @@ const MSG_ROUTES = {
     },
     handle: (m) => advancePool(m.dir),
   },
-  'media:cached':      { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => { _screenCached.add(m.id); _preloadInflight.delete(m.id); remoteOnCallAssetCached(m.id); } },
+  'media:cached':      { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenCached(m.id) },
   'media:chunkack': {
     roles: ['remote'],
     validate: (m) => _P.id(m.mediaId) && (m.got = _P.int(m.got, 0, PROTO.VID_MAX_CHUNKS) ?? 0, true),
-    handle: (m) => { if (_b64Ack.id === m.mediaId) _b64Ack.got = Math.max(_b64Ack.got, m.got); },
+    handle: (m) => remoteOnChunkAck(m),
   },
   'media:need-chunks': {
     roles: ['remote'],
@@ -5952,71 +6094,107 @@ function clampOutgoing(m) {
 // ══════════════════════════ RESYNCHRONISATION (télécommande) ══════════════════════════
 // Un écran annonce ses capacités (« caps ») à chaque (re)connexion et en
 // réponse au « hello » de la télécommande (envoyé à chaque (re)connexion de
-// celle-ci). La télécommande renvoie alors un instantané complet de l'état :
-// un écran rechargé ou revenu d'une coupure retrouve exactement ce que la
-// télécommande affiche. Les médias lourds (fond d'écran verrouillé, bande son,
-// photo d'appel, sons importés utiles, média actif) ne sont renvoyés que si
-// l'écran ne les a pas.
-// Plusieurs « caps » rapprochés (plusieurs écrans) → un seul envoi groupé.
-let _resyncTimer = null, _resyncNeed = null;
+// celle-ci). La télécommande renvoie alors à CET écran SON état attendu
+// (28-screens.js : couleur, noir, luminosité, effet, strobe, avance au clic,
+// fin de lecture, ordre du pool), adressé à lui seul (target.screens) : les
+// autres écrans ne sont pas dérangés (une vidéo n'y redémarre plus). Ne part
+// ensuite que ce qui lui MANQUE, d'après la liste exacte de son cache
+// (caps.cached) et le média qu'il affiche (caps.active) : fond d'écran
+// verrouillé, bande son, photo d'appel, sons importés utiles, média attendu.
+// Plusieurs « caps » rapprochés (plusieurs écrans) : un seul envoi par état
+// identique, adressé à ces écrans. Un écran sans identifiant (ancien) reçoit
+// l'état « Tous », sans adresse.
+let _resyncTimer = null, _resyncPending = new Map(); // screenId ('' : sans identifiant) → caps
 const RESYNC_DELAY_MS = 250;
-const _RESYNC_ASSETS = ['__lockwall', '__callaudio', '__callphoto'];
 
 function remoteScheduleResync(caps) {
   if (mode !== 'remote') return;
-  const need = _resyncNeed || (_resyncNeed = { lacks: new Set(), mediaMissing: false });
-  // Sons importés qui doivent être sur les écrans (81-ringtones.js)
-  const rings = ringNeededIds();
-  if (Array.isArray(caps.cached)) {
-    // Écran récent : liste exacte de son cache. Ce qu'il a perdu (rechargement)
-    // n'est plus considéré « en cache écran » → préchargement / renvoi.
-    const has = new Set(caps.cached);
-    for (const id of [..._screenCached]) if (!has.has(id)) _screenCached.delete(id);
-    for (const id of _RESYNC_ASSETS) if (!has.has(id)) need.lacks.add(id);
-    for (const id of [...rings, ..._ringOnScreens]) if (!has.has(id)) need.lacks.add(id);
-    // Déjà là (télécommande relancée, autre écran) : rien à renvoyer
-    for (const id of rings) if (has.has(id) && !need.lacks.has(id)) _ringOnScreens.add(id);
-  } else {
-    // Ancien écran / écran natif : on s'en tient à ce qu'il a déjà accusé
-    for (const id of _RESYNC_ASSETS) if (!_screenCached.has(id)) need.lacks.add(id);
-    for (const id of rings) if (!_screenCached.has(id)) need.lacks.add(id);
-  }
-  // « active » n'est envoyé que par les écrans récents (absent = inconnu)
-  if (typeof caps.blackout === 'boolean') remoteAdoptScreenBlackout(caps.blackout);
-  if (Object.prototype.hasOwnProperty.call(caps, 'active') && caps.active !== _activeMediaId) need.mediaMissing = true;
+  const sid = typeof caps.screenId === 'string' && scrKnown(caps.screenId) ? caps.screenId : '';
+  if (sid) scrOnCaps(sid, caps);
+  else if (typeof caps.blackout === 'boolean') scrAdoptBlackout(null, caps.blackout);
+  _resyncPending.set(sid, caps);
   if (_resyncTimer) clearTimeout(_resyncTimer);
   _resyncTimer = setTimeout(remoteResync, RESYNC_DELAY_MS);
 }
 
+// Ce qui définit l'état « lumière et réglages » d'un écran
+function _resyncSig(st) {
+  return JSON.stringify([st.color, st.blackoutTouched ? st.blackout : null, st.brightness, st.effect && [st.effect.name, st.effect.params],
+    st.strobe, st.autoAdvance, st.endMode]);
+}
+// État connu renvoyé tel quel (non suivi : rien de nouveau)
+function _resyncLights(st, target) {
+  const t = target ? { target } : {};
+  _scrReplay = true;
+  try {
+    sendMsg(Object.assign({ type: 'color', color: st.color }, t));
+    if (st.blackoutTouched) sendMsg(Object.assign({ type: 'blackout', on: st.blackout }, t));
+    sendMsg(Object.assign({ type: 'screen:brightness', value: st.brightness / 100 }, t));
+    if (st.effect) sendMsg(Object.assign({ type: 'effect', name: st.effect.name, active: true, params: st.effect.params }, t));
+    if (st.strobe) sendMsg(Object.assign({}, st.strobe, t)); // après l'effet : le strobe prime
+    sendMsg(Object.assign({ type: 'media:autoadvance', on: st.autoAdvance }, t));
+    sendMsg(Object.assign({ type: 'media:endmode', mode: st.endMode }, t));
+  } finally { _scrReplay = false; }
+}
+
 function remoteResync() {
   _resyncTimer = null;
-  const need = _resyncNeed || { lacks: new Set(), mediaMissing: false };
-  _resyncNeed = null;
+  const pending = _resyncPending;
+  _resyncPending = new Map();
   if (mode !== 'remote' || !mqttClient || !mqttClient.connected) return;
-  // Lumière
-  sendMsg({ type: 'color', color: currentColor });
-  if (_blackoutTouched) sendMsg({ type: 'blackout', on: remoteBlackout });
-  sendMsg({ type: 'screen:brightness', value: screenBrightnessPct / 100 });
-  if (activeScreenEffect) sendMsg({ type: 'effect', name: activeScreenEffect, active: true, params: buildEffectParams() });
-  if (strobeActive) sendMsg(buildStrobePayload()); // après l'effet : le strobe prime
-  // Médias
-  sendMsg({ type: 'media:autoadvance', on: _autoAdvance });
-  sendMsg({ type: 'media:endmode', mode: _videoEndMode });
-  sendPoolOrder();
-  if (_lockWallData && need.lacks.has('__lockwall')) sendImageChunks(_lockWallData, { mediaId: '__lockwall', show: false });
+  const ids = [...pending.keys()].filter((id) => id && scrKnown(id));
+  // 1) Lumière et réglages : un envoi par état identique
+  const groups = new Map();
+  for (const id of ids) {
+    const sig = _resyncSig(scrState(id));
+    if (!groups.has(sig)) groups.set(sig, { st: scrState(id), ids: [] });
+    groups.get(sig).ids.push(id);
+  }
+  if (pending.has('')) {
+    // Écran sans identifiant : impossible à adresser, il reçoit l'état « Tous »
+    // (comme les écrans connus qui ont ce même état)
+    _resyncLights(scrAll(), null);
+    groups.delete(_resyncSig(scrAll()));
+    sendPoolOrder();
+  }
+  for (const g of groups.values()) _resyncLights(g.st, { screens: g.ids });
+  if (ids.length) sendPoolOrder({ screens: ids });
+  // 2) Nom et groupes que l'écran ignore
+  for (const id of ids) {
+    const st = scrState(id);
+    if (st.needsConfig) { st.needsConfig = false; scrPushConfig(id); }
+  }
+  // 3) Médias lourds manquants (d'après son cache exact)
+  const lacking = (asset) => ids.filter((id) => !scrState(id).cached.has(asset));
+  if (_lockWallData) { const l = lacking('__lockwall'); if (l.length) ensureLockWall(l); }
   // Photo / bande son : celles du formulaire (un appel de la liste renverra les siennes)
-  if (need.lacks.has('__callaudio')) { _callAudioOnScreens = null; if (_callAudioData) ensureCallAssets(null, _callAudioData); else renderCallAudioRow(); }
-  if (need.lacks.has('__callphoto')) { _callPhotoOnScreens = null; if (_callPhoto) ensureCallAssets(_callPhoto, null); }
-  // Sons importés absents d'un écran : renvoyés s'ils servent encore (choix d'un
-  // type, entrées 1 à 20 sous la passerelle), sinon simplement oubliés
-  const ringLacks = [...need.lacks].filter((id) => SRP.RING_ID_RE.test(id));
-  for (const id of ringLacks) _ringOnScreens.delete(id);
-  const ringResend = ringNeededIds().filter((id) => ringLacks.includes(id));
-  if (ringResend.length) ensureCallAssets(null, null, ringResend);
-  // Média diffusé absent de l'écran : media:show s'il est en cache écran,
-  // sinon re-diffusion complète (même chemin qu'une sélection dans le pool)
-  if (_activeMediaId && need.mediaMissing && _mediaPool.some((m) => m.id === _activeMediaId)) selectMedia(_activeMediaId);
+  const la = lacking('__callaudio');
+  if (la.length) { if (_callAudioData) ensureCallAssets(null, _callAudioData, null, la); else renderCallAudioRow(); }
+  const lp = lacking('__callphoto');
+  if (lp.length && _callPhoto) ensureCallAssets(_callPhoto, null, null, lp);
+  // Sons importés absents : renvoyés s'ils servent encore (choix d'un type,
+  // entrées 1 à 20 sous la passerelle), sinon simplement oubliés
+  const rings = ringNeededIds();
+  if (rings.length && ids.length) ensureCallAssets(null, null, rings, ids);
+  // 4) Média attendu que l'écran n'affiche pas : media:show s'il l'a en cache,
+  // sinon transfert complet (à lui seul)
+  const toShow = new Map();
+  for (const id of ids) {
+    const st = scrState(id);
+    if (st.reportedActive === undefined || st.media === st.reportedActive) continue; // inconnu (ancien écran) ou déjà affiché
+    if (st.media) {
+      if (!toShow.has(st.media)) toShow.set(st.media, []);
+      toShow.get(st.media).push(id);
+    } else if (st.reportedActive && _mediaPool.some((m) => m.id === st.reportedActive)) {
+      st.media = st.reportedActive; // la télécommande ne lui demande rien : elle reprend ce qu'il affiche
+    }
+  }
+  for (const [mid, sids] of toShow) {
+    const it = _mediaPool.find((m) => m.id === mid);
+    if (it) mediaShowOn(it, sids);
+  }
   schedulePreload();
+  scrChanged();
 }
 // ══════════════════════════ APPAIRAGE PAR CODE (sans caméra) ══════════════════════════
 // Un code court par écran (6 caractères sans I/L/O/0/1, valable 2 min). Les
@@ -6380,6 +6558,550 @@ function stopPairScan() {
   const box = document.getElementById('pairScanBox');
   if (box) box.classList.remove('live');
 }
+// ══════════════════════════ ÉCRANS : NOMS, GROUPES, CIBLE ══════════════════════════
+// Maquettes validées 5 (écrans connectés & groupes) et 6 (choisir la cible).
+//
+// ── Télécommande ──
+// Registre par session (localStorage, 8 sessions les plus récentes) :
+//   écrans  screenId → { n (« Écran n » par défaut), name (null : jamais
+//           nommé ; '' : nom effacé), groups: [ids] }
+//   groupes [{ id, name }]
+//   cible   { k: 'all' } | { k: 'group', id } | { k: 'screen', id }
+// Chaque ordre émis (sendMsg) porte la cible courante : rien (= tous les
+// écrans, comportement historique) ou target: { screens: [...] }. Un groupe
+// est RÉSOLU en liste d'écrans au moment de l'envoi : un écran qui aurait
+// manqué son screen:config reçoit quand même les ordres de son groupe. Les
+// écrans apprennent tout de même leur nom et leurs groupes (screen:config) :
+// nom affiché dans leur menu, adressage { group } possible pour d'autres
+// émetteurs. Toujours adressés à tous : hello, media:order, media:evict (le
+// pool est commun à tous les écrans).
+//
+// État attendu de chaque écran (en mémoire, par session) : ce que la
+// télécommande lui a demandé (couleur, effet, strobe, noir, luminosité, média,
+// fin de lecture, avance au clic, appel), son cache (accusés media:cached,
+// liste exacte de caps), ses retours (lecture, appel). Tenu à jour par
+// scrTrack() sur CHAQUE ordre émis, même hors ligne : la resynchronisation
+// (24-resync.js) renvoie à un écran revenu SON état, et seulement ce qui lui
+// manque. _scrAllState : dernier état adressé à tous, point de départ d'un
+// écran qui apparaît.
+//
+// Affichage : les variables de l'interface (currentColor, activeScreenEffect,
+// strobeActive, remoteBlackout, _activeMediaId…) montrent l'état de la CIBLE
+// (tous : _scrAllState ; groupe : son premier écran ; écran : le sien).
+// Changer de cible recharge ces variables et les contrôles SANS rien envoyer
+// (scrLoadView), puis chaque geste part vers la nouvelle cible.
+const SCR_LS_KEY = 'setremote-screens-v1';
+const SCR_SESSIONS_MAX = 8;
+const SCR_MAX = 64;           // = LIMITS.targetScreens (packages/protocol/schema.js)
+const SCR_GROUPS_MAX = 16;    // = LIMITS.screenGroups
+const SCR_NAME_MAX = 40;      // = LIMITS.screenNameChars
+const SCR_GLOBAL_TYPES = ['hello', 'media:order', 'media:evict'];
+// Ordres qui modifient l'état attendu d'un écran
+const SCR_TRACKED = new Set(['color', 'effect', 'strobe', 'blackout', 'screen:brightness', 'media:autoadvance',
+  'media:endmode', 'media:show', 'media-stop', 'media-img-start', 'media:evict', 'call:start', 'call:end', 'dmx:look']);
+
+let _scrReg = _scrEmptyReg(null);
+const _scrStates = new Map();  // screenId → état attendu
+let _scrAllState = null;       // état « Tous les écrans »
+let _scrMute = 0;              // > 0 : rechargement de l'affichage, aucun envoi
+let _scrReplay = false;        // renvoi d'un état déjà connu (resynchronisation) : pas de suivi
+
+function _scrEmptyReg(sid) { return { sid, seq: 0, screens: new Map(), groups: [], target: { k: 'all' } }; }
+
+// Nom saisi : une ligne, sans caractère de contrôle, 40 caractères au plus
+function scrCleanName(v) {
+  return String(v == null ? '' : v).replace(/[\u0000-\u001F\u007F]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, SCR_NAME_MAX);
+}
+
+// ── Persistance (par session) ──
+function _scrStore() {
+  try {
+    const o = JSON.parse(_lsGet(SCR_LS_KEY));
+    return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+  } catch (_) { return {}; }
+}
+function scrLoad() {
+  const sid = (_session && _session.channelId) || null;
+  const reg = _scrEmptyReg(sid);
+  const all = _scrStore().sessions;
+  const rec = sid && all && typeof all === 'object' ? all[sid] : null;
+  if (rec && typeof rec === 'object') {
+    const gids = new Set();
+    for (const g of Array.isArray(rec.groups) ? rec.groups : []) {
+      if (!g || typeof g !== 'object' || !SRP.GROUP_ID_RE.test(g.id) || gids.has(g.id) || reg.groups.length >= SCR_GROUPS_MAX) continue;
+      gids.add(g.id);
+      reg.groups.push({ id: g.id, name: scrCleanName(g.name) || 'Groupe' });
+    }
+    const screens = rec.screens && typeof rec.screens === 'object' ? rec.screens : {};
+    for (const [id, e] of Object.entries(screens)) {
+      if (!SRP.SCREEN_ID_RE.test(id) || !e || typeof e !== 'object' || reg.screens.size >= SCR_MAX) continue;
+      const n = Number.isInteger(e.n) && e.n > 0 && e.n < 1e6 ? e.n : ++reg.seq;
+      reg.screens.set(id, {
+        n,
+        name: typeof e.name === 'string' ? scrCleanName(e.name) : null,
+        groups: (Array.isArray(e.groups) ? e.groups : []).filter((g, i, a) => gids.has(g) && a.indexOf(g) === i),
+        at: typeof e.at === 'number' && Number.isFinite(e.at) ? e.at : 0,
+      });
+      reg.seq = Math.max(reg.seq, n);
+    }
+    if (Number.isInteger(rec.seq)) reg.seq = Math.max(reg.seq, Math.min(rec.seq, 1e6));
+    reg.target = rec.target;
+  }
+  _scrReg = reg;
+  _scrReg.target = _scrValidTarget(reg.target);
+  _scrStates.clear();
+  scrChanged();
+}
+function scrSave() {
+  const sid = _scrReg.sid;
+  if (!sid) return;
+  const o = _scrStore();
+  const sessions = o.sessions && typeof o.sessions === 'object' && !Array.isArray(o.sessions) ? o.sessions : {};
+  const screens = {};
+  for (const [id, e] of _scrReg.screens) screens[id] = { n: e.n, name: e.name, groups: e.groups, at: e.at };
+  sessions[sid] = { at: Date.now(), seq: _scrReg.seq, screens, groups: _scrReg.groups, target: _scrReg.target };
+  const ids = Object.keys(sessions).sort((a, b) => ((sessions[b] && sessions[b].at) || 0) - ((sessions[a] && sessions[a].at) || 0));
+  for (const id of ids.slice(SCR_SESSIONS_MAX)) delete sessions[id];
+  _lsSet(SCR_LS_KEY, JSON.stringify({ v: 1, sessions }));
+}
+
+// ── Écrans ──
+function scrKnown(id) { return _scrReg.screens.has(id); }
+function scrName(id) {
+  const e = _scrReg.screens.get(id);
+  if (e) return e.name || 'Écran ' + e.n;
+  const sc = typeof _pairedScreens !== 'undefined' ? _pairedScreens.get(id) : null;
+  return 'Écran ' + (sc ? sc.n : String(id).slice(0, 4));
+}
+function scrOnline(id) {
+  const sc = _pairedScreens.get(id);
+  return !!sc && Date.now() - sc.lastSeen <= SCREEN_OFFLINE_MS;
+}
+// Premier « caps » d'un écran : il entre au registre (« Écran n »)
+function scrRegister(id) {
+  if (!SRP.SCREEN_ID_RE.test(id)) return null;
+  let e = _scrReg.screens.get(id);
+  if (!e) {
+    if (_scrReg.screens.size >= SCR_MAX && !_scrEvictOne()) return null;
+    e = { n: ++_scrReg.seq, name: null, groups: [], at: Date.now() };
+    _scrReg.screens.set(id, e);
+    scrSave();
+    scrChanged();
+  }
+  return e;
+}
+// Registre plein : on oublie l'écran le plus ancien, ni nommé, ni groupé, ni visé, hors ligne
+function _scrEvictOne() {
+  const t = _scrReg.target;
+  const cands = [..._scrReg.screens].filter(([id, e]) => !e.name && !e.groups.length && !(t.k === 'screen' && t.id === id) && !scrOnline(id))
+    .sort((a, b) => a[1].at - b[1].at);
+  if (!cands.length) return false;
+  _scrReg.screens.delete(cands[0][0]);
+  _scrStates.delete(cands[0][0]);
+  return true;
+}
+// Écrans listés (maquettes 5 et 6) : vus depuis le lancement, ou nommés / groupés
+function scrList() {
+  return [..._scrReg.screens].filter(([id, e]) => _pairedScreens.has(id) || e.name || e.groups.length)
+    .sort((a, b) => a[1].n - b[1].n).map(([id]) => id);
+}
+function scrRenameScreen(id, name) {
+  const e = _scrReg.screens.get(id);
+  if (!e) return false;
+  e.name = scrCleanName(name); // '' : retour au nom par défaut « Écran n »
+  scrSave();
+  scrPushConfig(id);
+  scrChanged();
+  return true;
+}
+function scrSetScreenGroups(id, gids) {
+  const e = _scrReg.screens.get(id);
+  if (!e) return false;
+  const known = new Set(_scrReg.groups.map((g) => g.id));
+  e.groups = [...new Set(gids)].filter((g) => known.has(g)).slice(0, SCR_GROUPS_MAX);
+  scrSave();
+  scrPushConfig(id);
+  _scrMembershipChanged();
+  return true;
+}
+// L'écran apprend son nom et ses groupes (affichage, adressage { group })
+function scrPushConfig(id) {
+  const e = _scrReg.screens.get(id);
+  if (!e) return;
+  sendMsg({ type: 'screen:config', target: { screens: [id] }, name: e.name || '', groups: e.groups.slice() });
+}
+function scrIdentify(id) {
+  if (scrKnown(id)) sendMsg({ type: 'screen:identify', target: { screens: [id] } });
+}
+
+// ── Groupes ──
+function scrGroup(gid) { return _scrReg.groups.find((g) => g.id === gid) || null; }
+function scrGroupMembers(gid) {
+  return [..._scrReg.screens].filter(([, e]) => e.groups.includes(gid)).sort((a, b) => a[1].n - b[1].n).map(([id]) => id);
+}
+function _scrNewGroupId() {
+  for (;;) {
+    const id = 'g' + Math.random().toString(36).slice(2, 8).padEnd(6, '0');
+    if (!scrGroup(id)) return id;
+  }
+}
+// Nouveau groupe (nom + écrans membres) ; null si la limite est atteinte
+function scrCreateGroup(name, members) {
+  if (_scrReg.groups.length >= SCR_GROUPS_MAX) return null;
+  const g = { id: _scrNewGroupId(), name: scrCleanName(name) || 'Groupe ' + (_scrReg.groups.length + 1) };
+  _scrReg.groups.push(g);
+  scrSetGroupMembers(g.id, members || []);
+  return g.id;
+}
+function scrRenameGroup(gid, name) {
+  const g = scrGroup(gid);
+  if (!g) return false;
+  g.name = scrCleanName(name) || g.name;
+  scrSave();
+  scrChanged();
+  return true;
+}
+// Membres d'un groupe : chaque écran ajouté / retiré reçoit sa nouvelle liste
+function scrSetGroupMembers(gid, members) {
+  if (!scrGroup(gid)) return false;
+  const want = new Set(members);
+  for (const [id, e] of _scrReg.screens) {
+    const has = e.groups.includes(gid);
+    if (want.has(id) === has) continue;
+    if (want.has(id)) { if (e.groups.length >= SCR_GROUPS_MAX) continue; e.groups.push(gid); }
+    else e.groups = e.groups.filter((x) => x !== gid);
+    scrPushConfig(id);
+  }
+  scrSave();
+  _scrMembershipChanged();
+  return true;
+}
+function scrDeleteGroup(gid) {
+  if (!scrGroup(gid)) return false;
+  for (const [id, e] of _scrReg.screens) {
+    if (!e.groups.includes(gid)) continue;
+    e.groups = e.groups.filter((x) => x !== gid);
+    scrPushConfig(id);
+  }
+  _scrReg.groups = _scrReg.groups.filter((g) => g.id !== gid);
+  scrSave();
+  _scrMembershipChanged();
+  return true;
+}
+// Membres changés : cible vidée → « Tous » ; premier écran changé → affichage rechargé
+function _scrMembershipChanged() {
+  const t = _scrReg.target;
+  if (t.k === 'group') {
+    const ok = _scrValidTarget(t);
+    if (ok.k !== 'group') { scrSetTarget(ok); return; }
+    scrLoadView();
+  }
+  scrRefreshCachedView();
+  scrChanged();
+}
+
+// ── Cible ──
+function _scrValidTarget(t) {
+  if (t && typeof t === 'object') {
+    if (t.k === 'screen' && typeof t.id === 'string' && scrKnown(t.id)) return { k: 'screen', id: t.id };
+    if (t.k === 'group' && typeof t.id === 'string' && scrGroup(t.id) && scrGroupMembers(t.id).length) return { k: 'group', id: t.id };
+  }
+  return { k: 'all' };
+}
+function scrTarget() { return _scrReg.target; }
+// Écrans connus de la cible (tous : écrans listés)
+function scrTargetIds() {
+  const t = _scrReg.target;
+  if (t.k === 'screen') return scrKnown(t.id) ? [t.id] : [];
+  if (t.k === 'group') return scrGroupMembers(t.id);
+  return scrList();
+}
+function scrInTarget(id) {
+  const t = _scrReg.target;
+  if (t.k === 'all') return true;
+  if (t.k === 'screen') return t.id === id;
+  const e = _scrReg.screens.get(id);
+  return !!e && e.groups.includes(t.id);
+}
+function scrSetTarget(t) {
+  _scrReg.target = _scrValidTarget(t);
+  scrSave();
+  scrLoadView();
+  scrRefreshCachedView();
+  if (typeof renderScreensUi === 'function') renderScreensUi(); // geste de l'utilisateur : bouton « Cible » à jour tout de suite
+}
+// Adresse d'un ordre de la télécommande : cible courante, sauf adresse
+// explicite (passerelle DMX, transferts, resynchronisation) ou ordre global.
+// null : cible vide, rien à envoyer.
+function scrAddress(m) {
+  if (!m || typeof m !== 'object') return m;
+  if (m.target !== undefined && m.target !== null) {
+    return Array.isArray(m.target.screens) && !m.target.screens.length ? null : m;
+  }
+  if (SCR_GLOBAL_TYPES.includes(m.type) || _scrReg.target.k === 'all') return m;
+  const ids = scrTargetIds();
+  return ids.length ? Object.assign({}, m, { target: { screens: ids } }) : null;
+}
+
+// ── État attendu de chaque écran ──
+const _scrClone = (v) => (v == null ? v : JSON.parse(JSON.stringify(v)));
+// État des contrôles de l'interface (ce que montre la télécommande)
+function scrSnapshotView() {
+  const meta = document.getElementById('previewMeta');
+  return {
+    color: currentColor, colorSpec: currentColorSpec(), colorMeta: meta ? meta.textContent : null,
+    effect: activeScreenEffect ? { name: activeScreenEffect, params: buildEffectParams(), tvBlocks: activeScreenEffect === 'tv' ? _scrClone(tvBlocks) : null } : null,
+    strobe: strobeActive ? buildStrobePayload() : null,
+    blackout: !!remoteBlackout, blackoutTouched: !!_blackoutTouched,
+    brightness: screenBrightnessPct, endMode: _videoEndMode, autoAdvance: !!_autoAdvance,
+    media: _activeMediaId || null,
+  };
+}
+function scrInitAll() { if (!_scrAllState) _scrAllState = scrSnapshotView(); }
+function scrAll() { scrInitAll(); return _scrAllState; }
+function _scrLook(s) {
+  return {
+    color: s.color, colorSpec: _scrClone(s.colorSpec), colorMeta: s.colorMeta, effect: _scrClone(s.effect), strobe: _scrClone(s.strobe),
+    blackout: s.blackout, blackoutTouched: s.blackoutTouched, brightness: s.brightness, endMode: s.endMode, autoAdvance: s.autoAdvance, media: s.media,
+  };
+}
+// État d'un écran connu (créé à partir de l'état « Tous » à sa première apparition)
+function scrState(id) {
+  let s = _scrStates.get(id);
+  if (!s) {
+    s = Object.assign(_scrLook(scrAll()), {
+      cached: new Set(),  // médias accusés en cache par l'écran
+      sent: new Map(),    // fragments envoyés (photo, bande son, fond, sons importés) → contenu
+      caps: null, rtcBroken: false, progress: null, call: null, dmxLive: false, dmxColor: null,
+      reportedActive: undefined, needsConfig: false,
+    });
+    _scrStates.set(id, s);
+  }
+  return s;
+}
+// État montré par l'interface
+function scrViewState() {
+  const t = _scrReg.target;
+  if (t.k === 'screen' && scrKnown(t.id)) return scrState(t.id);
+  if (t.k === 'group') { const m = scrGroupMembers(t.id); if (m.length) return scrState(m[0]); }
+  return scrAll();
+}
+
+// Suivi des ordres émis (appelé par sendMsg, même hors ligne)
+function scrTrack(m) {
+  if (_scrReplay || !m || typeof m !== 'object' || !SCR_TRACKED.has(m.type)) return;
+  let states;
+  if (m.target && Array.isArray(m.target.screens)) states = m.target.screens.filter((id) => scrKnown(id) || _scrStates.has(id)).map(scrState);
+  else if (m.target && typeof m.target.group === 'string') states = scrGroupMembers(m.target.group).map(scrState);
+  else states = [scrAll(), ..._scrStates.values()];
+  if (!states.length) return;
+  // Réglages lus dans l'interface quand l'ordre en vient (couleur, blocs TV)
+  const x = {};
+  if (m.type === 'color' && m.color === currentColor) {
+    const meta = document.getElementById('previewMeta');
+    x.spec = currentColorSpec(); x.meta = meta ? meta.textContent : null;
+  }
+  if (m.type === 'effect' && m.name === 'tv' && activeScreenEffect === 'tv') x.tvBlocks = _scrClone(tvBlocks);
+  for (const s of states) _scrApply(s, m, x);
+  scrChanged();
+}
+function _scrApply(s, m, x) {
+  switch (m.type) {
+    case 'color': s.color = m.color; s.colorSpec = x.spec ? _scrClone(x.spec) : null; s.colorMeta = x.meta || null; break;
+    case 'effect': s.effect = m.active && m.name ? { name: m.name, params: _scrClone(m.params || {}), tvBlocks: x.tvBlocks ? _scrClone(x.tvBlocks) : null } : null; break;
+    case 'strobe': { if (!m.active) { s.strobe = null; break; } const p = _scrClone(m); delete p.target; s.strobe = p; break; }
+    case 'blackout': s.blackout = !!m.on; s.blackoutTouched = true; break;
+    case 'screen:brightness': s.brightness = Math.round(Math.min(1, Math.max(0, Number(m.value) || 0)) * 100); break;
+    case 'media:autoadvance': s.autoAdvance = !!m.on; break;
+    case 'media:endmode': s.endMode = m.mode; break;
+    case 'media:show': s.media = m.id; break;
+    case 'media-stop': s.media = null; s.progress = null; break;
+    case 'media-img-start':
+      if (m.show !== false && typeof m.mediaId === 'string' && m.mediaId && !m.mediaId.startsWith('__')) s.media = m.mediaId;
+      break;
+    case 'media:evict':
+      if (s.cached) { s.cached.delete(m.id); s.sent.delete(m.id); }
+      if (s.media === m.id) s.media = null;
+      break;
+    case 'call:start': s.call = { kind: m.kind, name: m.name || '', state: null }; break;
+    case 'call:end': s.call = null; break;
+    case 'dmx:look': s.dmxLive = !!m.live; s.dmxColor = m.look && m.look.color; break;
+  }
+}
+
+// « caps » d'un écran : cache exact, média affiché, noir, nom et groupes
+function scrOnCaps(id, caps) {
+  const e = _scrReg.screens.get(id);
+  const st = scrState(id);
+  st.caps = { torch: caps.torch, vibrate: caps.vibrate, videoMode: caps.videoMode || null };
+  if (Array.isArray(caps.cached)) {
+    // Écran récent : ce qu'il a perdu (rechargement) n'est plus considéré comme présent
+    st.cached = new Set(caps.cached);
+    for (const k of [...st.sent.keys()]) if (!st.cached.has(k)) st.sent.delete(k);
+  }
+  st.reportedActive = Object.prototype.hasOwnProperty.call(caps, 'active') ? caps.active : undefined;
+  if (typeof caps.blackout === 'boolean') scrAdoptBlackout(id, caps.blackout);
+  if (e) {
+    e.at = Date.now();
+    // Nom gardé par l'écran, jamais donné ici (autre télécommande, registre oublié) : adopté
+    const cn = typeof caps.name === 'string' ? scrCleanName(caps.name) : '';
+    if (e.name === null && cn) e.name = cn;
+    const groups = Array.isArray(caps.groups) ? caps.groups : [];
+    st.needsConfig = (e.name || '') !== cn || groups.length !== e.groups.length || e.groups.some((g) => !groups.includes(g));
+    scrSave();
+  }
+  scrRefreshCachedView();
+  scrChanged();
+}
+// Noir annoncé par un écran : repris tant que l'utilisateur n'y a pas touché
+// (une télécommande rechargée ne rallume jamais un écran éteint)
+function scrAdoptBlackout(id, on) {
+  const st = id ? scrState(id) : null;
+  if (st && !st.blackoutTouched) st.blackout = !!on;
+  const all = scrAll();
+  if (_scrReg.target.k === 'all' && !all.blackoutTouched) all.blackout = !!on;
+  if (!id || scrInTarget(id)) {
+    const v = scrViewState();
+    if (!v.blackoutTouched && remoteBlackout !== v.blackout) { remoteBlackout = v.blackout; renderRemoteBlackout(); }
+  }
+}
+
+// Médias en cache sur TOUS les écrans en ligne de la cible (accusés) :
+// _screenCached (70-media-remote.js) sert aux indications « sur l'écran ✓ ».
+function scrRefreshCachedView() {
+  if (typeof _screenCached === 'undefined') return;
+  const ids = scrTargetIds();
+  if (!ids.length) return; // aucun écran connu : ensemble laissé tel quel
+  const online = ids.filter(scrOnline);
+  let inter = null;
+  for (const id of online.length ? online : ids) {
+    const c = scrState(id).cached;
+    inter = inter ? new Set([...inter].filter((x) => c.has(x))) : new Set(c);
+  }
+  _screenCached.clear();
+  for (const x of inter || []) _screenCached.add(x);
+}
+
+// ── Affichage de l'état de la cible (aucun envoi) ──
+function scrLoadView() {
+  if (mode !== 'remote') return;
+  const st = scrViewState();
+  _scrMute++;
+  try {
+    _scrViewColor(st);
+    _scrViewEffect(st.effect);
+    _scrViewStrobe(st.strobe);
+    remoteBlackout = !!st.blackout; _blackoutTouched = !!st.blackoutTouched;
+    renderRemoteBlackout();
+    screenBrightnessPct = st.brightness;
+    const bs = document.getElementById('screenBrightnessSlider'); if (bs) bs.value = st.brightness;
+    const bl = document.getElementById('screenBrightnessVal'); if (bl) bl.innerHTML = st.brightness + '<span>%</span>';
+    _videoEndMode = st.endMode;
+    ['loop', 'pause', 'off'].forEach((k) => { const b = document.getElementById('vmode-' + k); if (b) b.classList.toggle('active', k === _videoEndMode); });
+    _autoAdvance = !!st.autoAdvance;
+    const aa = document.getElementById('mediaAutoAdvToggle'); if (aa) aa.checked = _autoAdvance;
+    _scrViewMedia(st);
+  } finally {
+    _scrMute--;
+    // Envois différés programmés par les contrôles rechargés : annulés
+    if (autoSendTimer) { clearTimeout(autoSendTimer); autoSendTimer = null; }
+    if (effectSendTimer) { clearTimeout(effectSendTimer); effectSendTimer = null; }
+  }
+  refreshPreviewFx(st.effect ? st.effect.params : undefined);
+  if (strobeActive) runLocalStrobePreview();
+  updateStatusRings();
+}
+function _scrViewColor(st) {
+  const s = st.colorSpec;
+  if (!s) { applyColor(st.color, st.colorMeta || '—'); return; }
+  kelvinK = s.kelvin; colorTint = s.tint; colorDimmer = s.dimmer; colorWheelHex = s.wheelHex; colorCrossfade = s.crossfade;
+  const set = (id, prop, v) => { const el = document.getElementById(id); if (el) el[prop] = v; };
+  set('kelvinSlider', 'value', kelvinK); set('kelvinVal', 'innerHTML', kelvinK.toLocaleString('fr') + '<span> K</span>');
+  set('tintSlider', 'value', colorTint); set('tintVal', 'innerHTML', (colorTint >= 0 ? '+' : '') + colorTint + '<span> GM</span>');
+  set('dimmerSlider', 'value', colorDimmer); set('dimmerVal', 'innerHTML', colorDimmer + '<span>%</span>');
+  syncCrossfadeValues(); syncHueValue(); syncRgbValues(); updateWheelMarker(); updateCrossfadeGradient();
+  const h = document.getElementById('hueCrossfadeVal'); if (h) h.innerHTML = colorCrossfade + '<span>%</span>';
+  const r = document.getElementById('rgbCrossfadeVal'); if (r) r.innerHTML = colorCrossfade + '<span>%</span>';
+  recomputeColor(); // muet : l'envoi différé est annulé par scrLoadView
+}
+function _scrViewEffect(fx) {
+  if (!fx || !EFFECT_CONFIG[fx.name]) { if (activeScreenEffect) stopAllEffects(); return; }
+  if (fx.tvBlocks && fx.tvBlocks.length) { tvBlocks = _scrClone(fx.tvBlocks); tvSelectedBlock = 0; }
+  activeScreenEffect = null;
+  // acked : on MONTRE un effet qui tourne déjà sur la cible, rien n'est
+  // activé (pas d'avertissement stroboscope, 46-strobe-warning.js)
+  selectEffect(fx.name, true);
+  loadEffectParamsToUI(fx.name, fx.params || {}, null);
+  _lastEffectParams = _scrClone(fx.params || {});
+}
+function _scrViewStrobe(p) {
+  // Comme applyStrobeState (62-memories.js), sans envoi
+  strobeActive = false;
+  if (p) {
+    strobeFreq = p.freq; strobeFlashDur = p.dur;
+    strobeFreqMax = p.freqMax != null ? p.freqMax : p.freq; strobeFlashDurMax = p.durMax != null ? p.durMax : p.dur;
+    const set = (id, prop, v) => { const el = document.getElementById(id); if (el) el[prop] = v; };
+    set('freqSlider', 'value', strobeFreq); set('flashDurSlider', 'value', strobeFlashDur);
+    set('freqMaxSlider', 'value', strobeFreqMax); set('flashDurMaxSlider', 'value', strobeFlashDurMax);
+    set('freqVal', 'innerHTML', Number(strobeFreq).toFixed(1) + '<span> Hz</span>'); set('flashDurVal', 'innerHTML', strobeFlashDur + '<span> ms</span>');
+    set('freqMaxVal', 'innerHTML', Number(strobeFreqMax).toFixed(1) + '<span> Hz</span>'); set('flashDurMaxVal', 'innerHTML', strobeFlashDurMax + '<span> ms</span>');
+    set('torchSyncToggle', 'checked', !!p.torch);
+    setStrobeMode(p.random ? 'random' : 'regular');
+  }
+  strobeActive = !!p;
+  const tog = document.getElementById('strobeToggle'); if (tog) tog.checked = strobeActive;
+  const badge = document.getElementById('strobeActiveBadge'); if (badge) badge.style.display = strobeActive ? 'block' : 'none';
+  if (!strobeActive) stopLocalStrobePreview();
+}
+function _scrViewMedia(st) {
+  const it = st.media ? _mediaPool.find((m) => m.id === st.media) : null;
+  _activeMediaId = it ? it.id : null;
+  _mediaIsVideo = !!(it && it.kind === 'vid');
+  const p = st.progress || {};
+  _remotePlaying = _mediaIsVideo && !!p.playing; _remoteDur = p.dur || 0; _remoteCur = p.cur || 0;
+  if (_seekSendTimer) { clearTimeout(_seekSendTimer); _seekSendTimer = null; }
+  _mediaSeeking = false;
+  renderPool();
+  showMediaStop(!!it);
+  showMediaPlay(_mediaIsVideo); setPlayBtn(_remotePlaying); showMediaTimeline(_mediaIsVideo);
+  if (_mediaIsVideo) {
+    const s = document.getElementById('mediaSeek');
+    if (s) { if (_remoteDur) s.max = _remoteDur; s.value = _remoteCur; }
+    const c = document.getElementById('mediaCurTime'); if (c) c.textContent = fmtTime(_remoteCur);
+    const d = document.getElementById('mediaDurTime'); if (d) d.textContent = fmtTime(_remoteDur);
+    paintSeek(_remoteDur ? (_remoteCur / _remoteDur) * 100 : 0);
+  }
+  if (it) setMediaStatus((it.kind === 'vid' ? '🎬 ' : '🖼 ') + it.name, true);
+  else setMediaStatus('Aucun média diffusé');
+  _vidRenderStatus();
+}
+
+// ── Rafraîchissement groupé des vues (liste des écrans, cible) ──
+let _scrRenderTimer = null;
+function scrChanged() {
+  if (_scrRenderTimer || mode !== 'remote') return;
+  _scrRenderTimer = setTimeout(() => {
+    _scrRenderTimer = null;
+    if (typeof renderScreensUi === 'function') renderScreensUi();
+  }, 120);
+}
+
+// ── Écran de jeu : nom et groupes reçus (screen:config) ──
+let _screenCfg = { name: '', groups: [] };
+function screenLoadConfig(p) { _screenCfg = screenStoredConfig(p); renderScreenIdentity(); }
+function screenApplyConfig(m) {
+  if (typeof m.name === 'string') _screenCfg.name = scrCleanName(m.name);
+  if (Array.isArray(m.groups)) _screenCfg.groups = m.groups.filter((g, i, a) => typeof g === 'string' && SRP.GROUP_ID_RE.test(g) && a.indexOf(g) === i).slice(0, SCR_GROUPS_MAX);
+  if (_session) screenSaveConfig(_session, _screenCfg);
+  // Le canal chiffré filtre aussi les ordres adressés à un groupe
+  if (_sec && typeof _sec.setGroups === 'function') { try { _sec.setGroups(_screenCfg.groups); } catch (_) {} }
+  renderScreenIdentity();
+}
+// Le nom n'apparaît que dans le menu de l'écran (l'écran de jeu reste vierge)
+function renderScreenIdentity() {
+  const el = document.getElementById('screenMenuInfo');
+  if (el) el.textContent = _screenCfg.name ? '« ' + _screenCfg.name + ' » · liaison chiffrée de bout en bout' : 'Liaison chiffrée de bout en bout';
+}
 // ══════════════════════════ NAVIGATION ══════════════════════════
 function startMode(m) {
   document.getElementById('splash').style.display = 'none';
@@ -6439,6 +7161,7 @@ function enterScreenSession(p) {
   if (mode === 'screen' && _session && _session.channelId === p.channelId && _session.key === p.key && mqttClient) return; // déjà connecté
   document.getElementById('splash').style.display = 'none';
   mode = 'screen'; _session = { channelId: p.channelId, key: p.key };
+  screenLoadConfig(_session); // nom et groupes donnés par la télécommande (28-screens.js)
   const el = document.getElementById('screen-mode');
   el.style.display = 'flex';
   el.style.backgroundColor = '#1a1a1a';
@@ -6449,7 +7172,7 @@ function enterScreenSession(p) {
   if (!navigator.vibrate) { const b=document.getElementById('vibrateBtn'); if(b){b.classList.add('unavail');b.textContent='📳 Indispo (iPhone)';b.classList.remove('on');} vibrateEnabled=false; }
   let firstConnect = true;
   connectSession(_session, () => {
-    setScreenStatus('✓ En écoute — liaison chiffrée');
+    setScreenStatus(_screenCfg.name ? '✓ ' + _screenCfg.name + ' — liaison chiffrée' : '✓ En écoute — liaison chiffrée');
     // Confirmation visible uniquement à la 1re connexion : les reconnexions
     // automatiques ne doivent rien afficher (l'écran est peut-être dans le champ)
     if (firstConnect && !screenBlackoutOn) flashScreenNotice('Relié à la télécommande');
@@ -6466,27 +7189,21 @@ function connectRemote(p) {
   _session = { channelId: p.channelId, key: p.key };
   _linkEverConnected = false;
   setConnStatus('connecting');
+  // État « Tous les écrans » = réglages affichés ; noms, groupes et cible de
+  // cette session (28-screens.js) ; une cible retenue (groupe, écran) montre
+  // son propre état
+  _scrAllState = null; scrInitAll();
+  scrLoad();
+  if (scrTarget().k !== 'all') scrLoadView();
   if (document.getElementById('content-qr').classList.contains('active')) renderPairPanel();
   gwOnSessionChanged(); // passerelle DMX : patch de cette session
   connectSession(_session, () => {
     setConnStatus('connected');
-    // Envoyer la couleur courante dès la connexion
-    sendMsg({ type: 'color', color: currentColor });
-    // Demander aux écrans leurs capacités (torche / vibreur / cache)
+    // Demander aux écrans leurs capacités (torche / vibreur / cache). Chaque
+    // « caps » déclenche la resynchronisation de CET écran avec SON état
+    // (24-resync.js) : plus d'envoi global de la couleur ni des réglages à la
+    // (re)connexion, qui écraserait l'état propre de chaque écran ciblé.
     sendMsg({ type: 'hello' });
-    // Resynchroniser l'option « avancer au clic » côté écran de jeu
-    sendMsg({ type: 'media:autoadvance', on: _autoAdvance });
-    // Resynchroniser la luminosité de l'écran de jeu
-    sendMsg({ type: 'screen:brightness', value: screenBrightnessPct / 100 });
-    // Resynchroniser le comportement de fin de lecture vidéo
-    sendMsg({ type: 'media:endmode', mode: _videoEndMode });
-    // Fond d'écran verrouillé, bande son, photo d'appel : plus de renvoi
-    // systématique à chaque (re)connexion — la réponse « caps » au hello
-    // déclenche une resynchronisation complète qui ne les renvoie que si
-    // l'écran ne les a pas (24-resync.js).
-    // Synchroniser l'ordre du pool et précharger les médias sur l'écran
-    sendPoolOrder();
-    schedulePreload();
   });
 }
 
@@ -6497,6 +7214,7 @@ function confirmNewSession() {
 }
 function newRemoteSession() {
   remoteStopAllPairing();
+  _vidStopJobs(null); // transferts vidéo vers les écrans révoqués
   clearPairedScreens();
   connectRemote(renewRemoteSession());
 }
@@ -6605,8 +7323,9 @@ function goBackToSplash() {
 }
 
 function goBack() {
+  closeScreensUi(); // vue « Écrans connectés », choix de la cible (39-screens-ui.js)
   stopStrobe();
-  stopMediaBroadcast(true);
+  stopMediaBroadcast(true, true);
   gwStop(); // passerelle DMX : les écrans gardent leur look et sont rendus à la télécommande
   closeDmxGateway();
   remoteStopAllPairing();
@@ -6672,24 +7391,34 @@ function renderLinkStatus() {
   renderPairedScreens(now);
 }
 
+// Noms : ceux du registre de la session (28-screens.js, « Écran n » par défaut)
 function renderPairedScreens(now) {
   const box = document.getElementById('pairScreens'), list = document.getElementById('pairScreensList');
   if (!box || !list) return;
   box.style.display = _pairedScreens.size ? 'flex' : 'none';
   document.getElementById('pairScreensCount').textContent = String(_pairedScreens.size);
-  list.innerHTML = [..._pairedScreens.values()].sort((a, b) => a.n - b.n).map((s) => {
+  const order = (id, s) => { const e = _scrReg.screens.get(id); return e ? e.n : 1e6 + s.n; };
+  list.innerHTML = [..._pairedScreens.entries()].sort((a, b) => order(...a) - order(...b)).map(([id, s]) => {
     const off = _linkState === 'connected' && now - s.lastSeen > SCREEN_OFFLINE_MS;
     return '<div class="pair-screen' + (off ? ' off' : '') + '"><span class="ps-dot"></span>'
-      + '<span class="ps-name">Écran ' + s.n + '</span><span class="ps-link">' + (off ? 'Hors ligne' : 'Internet') + '</span></div>';
+      + '<span class="ps-name">' + escapeHtml(scrName(id)) + '</span><span class="ps-link">' + (off ? 'Hors ligne' : 'Internet') + '</span></div>';
   }).join('');
+  if (typeof renderScreensUi === 'function') renderScreensUi(); // liaison de chaque écran (maquette 5)
 }
 
 // Chaque message authentifié d'un écran prouve qu'il est en ligne ; « caps »
-// rattache son étiquette d'émetteur (une par lancement) à son screenId stable.
+// rattache son étiquette d'émetteur (une par lancement) à son screenId stable
+// et l'inscrit au registre de la session (nom, groupes : 28-screens.js).
 function remoteNoteScreen(sender, msg) {
   if (msg.type === 'caps' && typeof msg.screenId === 'string' && SRP.SCREEN_ID_RE.test(msg.screenId)) {
     for (const [snd, id] of _screenOfSender) if (id === msg.screenId && snd !== sender) _screenOfSender.delete(snd);
     _screenOfSender.set(sender, msg.screenId);
+    // Trames reçues avant son « caps » : comptées sous son étiquette, désormais sous son identifiant
+    if (_pairedScreens.has(sender) && !_pairedScreens.has(msg.screenId)) {
+      _pairedScreens.set(msg.screenId, _pairedScreens.get(sender));
+    }
+    _pairedScreens.delete(sender);
+    scrRegister(msg.screenId);
   }
   const id = _screenOfSender.get(sender) || sender;
   let sc = _pairedScreens.get(id);
@@ -6951,6 +7680,273 @@ function screenIdentify() {
   clearTimeout(_identifyTimer);
   _identifyTimer = setTimeout(() => el.classList.remove('on'), 3000);
 }
+// ══════════════════════════ ÉCRANS CONNECTÉS & CIBLE — INTERFACE ══════════════════════════
+// Maquette 5 « Écrans connectés » : pour chaque écran son nom, ce qu'il
+// montre, sa liaison, ses groupes, « Identifier » et « Renommer » ; groupes
+// (« Salon · 2 ») et « + Nouveau groupe » ; « + Appairer » mène à l'onglet QR.
+// Accès : « Gérer » du panneau « Écrans appairés » (maquette 1).
+// Maquette 6 « Envoyer les commandes à… » : Tous / un groupe / un écran,
+// ouvert par le bouton « Cible : … » placé sous l'aperçu de la télécommande.
+// Feuilles (même présentation que la maquette 6) pour renommer un écran,
+// choisir ses groupes, créer / modifier / supprimer un groupe.
+// Modèle (registre, cible, état de chaque écran) : 28-screens.js.
+let _svOpen = false;
+let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group', … }
+const _uiHtml = new Map();   // dernier HTML posé par conteneur (pas de re-rendu inutile pendant un geste)
+
+function _setHtml(el, html) {
+  if (!el || _uiHtml.get(el) === html) return;
+  _uiHtml.set(el, html);
+  el.innerHTML = html;
+}
+const _HEX_RE = /^#[0-9a-fA-F]{6}$/;
+const _plural = (n, one, many) => n + ' ' + (n > 1 ? many : one);
+
+// Rafraîchit tout ce qui montre les écrans (appelé par scrChanged, renderLinkStatus)
+function renderScreensUi() {
+  if (mode !== 'remote') return;
+  renderTargetBtn();
+  renderScreensView();
+  if (_sheet && (_sheet.kind === 'target' || _sheet.kind === 'screenGroups')) renderSheet();
+}
+function closeScreensUi() { closeSheet(); closeScreensView(); }
+
+// ── Bouton « Cible : … » (maquette 6) ──
+// Affiché dès deux écrans (ou une cible autre que « Tous »)
+function scrTargetText() {
+  const t = scrTarget();
+  if (t.k === 'group') { const g = scrGroup(t.id); return { name: g ? g.name : 'Groupe', count: ' (' + _plural(scrGroupMembers(t.id).length, 'écran', 'écrans') + ')' }; }
+  if (t.k === 'screen') return { name: scrName(t.id), count: '' };
+  return { name: 'Tous les écrans', count: ' (' + scrList().length + ')' };
+}
+function renderTargetBtn() {
+  const btn = document.getElementById('targetBtn');
+  if (!btn) return;
+  const t = scrTarget();
+  const show = scrList().length >= 2 || t.k !== 'all';
+  btn.style.display = show ? 'flex' : 'none';
+  if (!show) return;
+  btn.classList.toggle('subset', t.k !== 'all');
+  const x = scrTargetText();
+  _setHtml(document.getElementById('targetBtnLabel'), 'Cible : <b>' + escapeHtml(x.name) + '</b>' + x.count);
+}
+
+// ── Feuilles ──
+function openTargetSheet() { _sheet = { kind: 'target' }; renderSheet(); }
+function openRenameScreen(id) { if (scrKnown(id)) { _sheet = { kind: 'rename', id }; renderSheet(true); } }
+function openScreenGroups(id) { if (scrKnown(id)) { _sheet = { kind: 'screenGroups', id }; renderSheet(); } }
+function openGroupEditor(gid, preset) {
+  const g = gid ? scrGroup(gid) : null;
+  if (gid && !g) return;
+  if (!g && _scrReg.groups.length >= SCR_GROUPS_MAX) return;
+  _sheet = { kind: 'group', id: g ? g.id : null, members: new Set(g ? scrGroupMembers(g.id) : (preset || [])) };
+  renderSheet(true);
+}
+function closeSheet() {
+  _sheet = null;
+  const w = document.getElementById('sr-sheet');
+  if (w) w.classList.remove('open');
+}
+
+function _sheetRow(i, type, name, on, label, meta, extra) {
+  return '<label class="sr-row' + (on ? ' on' : '') + (extra && extra.disabled ? ' disabled' : '') + '">'
+    + '<input type="' + type + '" name="' + name + '"' + (on ? ' checked' : '') + (extra && extra.disabled ? ' disabled' : '')
+    + ' onchange="sheetPick(' + i + ',this.checked)">'
+    + '<span class="sr-row-label">' + escapeHtml(label) + '</span><span class="sr-row-meta">' + escapeHtml(meta) + '</span></label>';
+}
+
+function renderSheet(focus) {
+  const wrap = document.getElementById('sr-sheet');
+  if (!wrap) return;
+  if (!_sheet) { wrap.classList.remove('open'); return; }
+  const title = document.getElementById('srSheetTitle'), body = document.getElementById('srSheetBody');
+  const s = _sheet;
+  let t = '', h = '';
+  if (s.kind === 'target') {
+    // Maquette 6 : Tous, chaque groupe (vide : non sélectionnable), chaque écran
+    t = 'Envoyer les commandes à…';
+    const cur = scrTarget(), list = scrList();
+    s.rows = [{ t: { k: 'all' }, label: 'Tous les écrans', meta: String(list.length) }];
+    for (const g of _scrReg.groups) {
+      const n = scrGroupMembers(g.id).length;
+      s.rows.push({ t: { k: 'group', id: g.id }, label: 'Groupe ' + g.name, meta: String(n), disabled: !n });
+    }
+    for (const id of list) s.rows.push({ t: { k: 'screen', id }, label: scrName(id), meta: scrOnline(id) ? 'écran' : 'hors ligne' });
+    h = s.rows.map((r, i) => _sheetRow(i, 'radio', 'srTarget', r.t.k === cur.k && r.t.id === cur.id, r.label, r.meta, r)).join('');
+  } else if (s.kind === 'rename') {
+    const e = _scrReg.screens.get(s.id);
+    if (!e) { closeSheet(); return; }
+    t = 'Renommer l\'écran';
+    h = '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
+      + '<label class="sr-sublabel" for="srName">Nom affiché</label>'
+      + '<input type="text" id="srName" class="text-input sr-input" maxlength="' + SCR_NAME_MAX + '" autocomplete="off" placeholder="Écran ' + e.n + '" value="' + escapeHtml(e.name || '') + '">'
+      + '<p class="sr-sheet-note">Le nom s\'affiche dans la liste des écrans, la cible et la passerelle DMX. Vide : « Écran ' + e.n + ' ».</p>'
+      + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">Annuler</button><button type="submit" class="sr-ok">Enregistrer</button></div></form>';
+  } else if (s.kind === 'screenGroups') {
+    const e = _scrReg.screens.get(s.id);
+    if (!e) { closeSheet(); return; }
+    t = 'Groupes de « ' + scrName(s.id) + ' »';
+    s.rows = _scrReg.groups.map((g) => ({ gid: g.id, label: g.name, meta: String(scrGroupMembers(g.id).length) }));
+    h = s.rows.map((r, i) => _sheetRow(i, 'checkbox', 'srGroups', e.groups.includes(r.gid), r.label, r.meta)).join('')
+      || '<p class="sr-sheet-note">Aucun groupe pour l\'instant.</p>';
+    if (_scrReg.groups.length < SCR_GROUPS_MAX) h += '<button type="button" class="sr-add" onclick="openGroupEditor(null,[\'' + s.id + '\'])">+ Nouveau groupe</button>';
+    h += '<div class="sr-actions"><button type="button" class="sr-ok" onclick="closeSheet()">OK</button></div>';
+  } else if (s.kind === 'group') {
+    const g = s.id ? scrGroup(s.id) : null;
+    if (s.id && !g) { closeSheet(); return; }
+    t = g ? 'Groupe « ' + g.name + ' »' : 'Nouveau groupe';
+    s.rows = scrList().map((id) => ({ id, label: scrName(id), meta: scrOnline(id) ? 'écran' : 'hors ligne' }));
+    h = '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
+      + '<label class="sr-sublabel" for="srName">Nom du groupe</label>'
+      + '<input type="text" id="srName" class="text-input sr-input" maxlength="' + SCR_NAME_MAX + '" autocomplete="off" placeholder="Salon" value="' + escapeHtml(g ? g.name : '') + '">'
+      + '<div class="sr-sublabel">Écrans</div>'
+      + (s.rows.map((r, i) => _sheetRow(i, 'checkbox', 'srMembers', s.members.has(r.id), r.label, r.meta)).join('')
+        || '<p class="sr-sheet-note">Aucun écran appairé.</p>')
+      + '<div class="sr-actions">' + (g ? '<button type="button" class="sr-del" onclick="sheetDeleteGroup()">Supprimer</button>' : '')
+      + '<button type="button" class="sr-cancel" onclick="closeSheet()">Annuler</button>'
+      + '<button type="submit" class="sr-ok">' + (g ? 'Enregistrer' : 'Créer') + '</button></div></form>';
+  }
+  title.textContent = t;
+  // Formulaires : posés une fois (saisie en cours préservée) ; listes : mises à jour
+  if (s.kind === 'rename' || s.kind === 'group') { _uiHtml.delete(body); body.innerHTML = h; }
+  else _setHtml(body, h);
+  wrap.classList.add('open');
+  if (focus) { const inp = document.getElementById('srName'); if (inp) { try { inp.focus({ preventScroll: true }); } catch (_) {} } }
+}
+
+// Ligne touchée dans la feuille ouverte
+function sheetPick(i, checked) {
+  const s = _sheet;
+  if (!s || !s.rows || !s.rows[i]) return;
+  const r = s.rows[i];
+  if (s.kind === 'target') {
+    if (r.disabled) return;
+    scrSetTarget(r.t);
+    closeSheet();
+  } else if (s.kind === 'screenGroups') {
+    const e = _scrReg.screens.get(s.id);
+    if (!e) return;
+    scrSetScreenGroups(s.id, checked ? [...e.groups, r.gid] : e.groups.filter((g) => g !== r.gid));
+    renderSheet();
+  } else if (s.kind === 'group') {
+    if (checked) s.members.add(r.id); else s.members.delete(r.id);
+  }
+}
+function sheetSave() {
+  const s = _sheet;
+  const inp = document.getElementById('srName');
+  if (!s || !inp) return;
+  if (s.kind === 'rename') scrRenameScreen(s.id, inp.value);
+  else if (s.kind === 'group') {
+    const members = [...s.members].filter(scrKnown);
+    if (s.id) { scrRenameGroup(s.id, inp.value); scrSetGroupMembers(s.id, members); }
+    else scrCreateGroup(inp.value, members);
+  }
+  closeSheet();
+  renderScreensUi();
+}
+function sheetDeleteGroup() {
+  const s = _sheet, g = s && s.id ? scrGroup(s.id) : null;
+  if (!g) return;
+  if (!confirm('Supprimer le groupe « ' + g.name + ' » ? Ses écrans restent appairés.')) return;
+  scrDeleteGroup(g.id);
+  closeSheet();
+  renderScreensUi();
+}
+
+// ── Vue « Écrans connectés » (maquette 5) ──
+function openScreensView() {
+  const v = document.getElementById('screens-view');
+  if (!v) return;
+  _svOpen = true;
+  v.classList.add('open');
+  v.scrollTop = 0;
+  renderScreensView();
+}
+function closeScreensView() {
+  _svOpen = false;
+  const v = document.getElementById('screens-view');
+  if (v) v.classList.remove('open');
+}
+// « + Appairer » : l'appairage reste celui de l'onglet QR
+function screensViewPair() {
+  closeSheet();
+  closeScreensView();
+  switchTab('qr');
+  const rm = document.getElementById('remote-mode'), qr = document.getElementById('content-qr');
+  if (rm && qr) rm.scrollTop += qr.getBoundingClientRect().top - 80;
+}
+
+// Ce que montre un écran, d'après son état attendu et ses retours
+function scrNowText(id) {
+  const st = scrState(id);
+  if (st.call) {
+    const who = st.call.name || 'Inconnu';
+    if (st.call.kind === 'sms') return 'SMS · ' + who;
+    if (st.call.kind === 'chat' || st.call.kind === 'whatsapp') return 'Message · ' + who;
+    return (st.call.state === 'incall' ? 'En ligne · ' : 'Appel entrant · ') + who;
+  }
+  if (st.dmxLive) return 'Console DMX';
+  if (st.blackout) return 'Écran noir';
+  const it = st.media ? _mediaPool.find((m) => m.id === st.media) : null;
+  if (it) return (it.kind === 'vid' ? 'Vidéo · ' : 'Image · ') + it.name;
+  if (st.strobe) return 'Stroboscope · ' + String(Math.round(st.strobe.freq * 10) / 10).replace('.', ',') + ' Hz';
+  if (st.effect && EFFECT_CONFIG[st.effect.name]) {
+    const p = st.effect.params || {};
+    return 'Effet ' + EFFECT_CONFIG[st.effect.name].name + ' · '
+      + (st.effect.name === 'tv' && p.smooth != null ? 'lissage ' + p.smooth + ' %' : 'intensité ' + (p.intensity != null ? p.intensity : 100) + ' %');
+  }
+  const s = st.colorSpec;
+  if (!s) return String(st.color).toUpperCase();
+  if (s.crossfade < 5) return s.kelvin + ' K · ' + s.dimmer + ' %';
+  if (s.crossfade > 95) return String(st.color).toUpperCase() + ' · ' + s.dimmer + ' %';
+  return 'Mix ' + s.crossfade + ' % · ' + s.dimmer + ' %';
+}
+// Pastille : couleur, dégradé de l'effet, vignette du média
+function scrSwatchCss(id) {
+  const st = scrState(id);
+  if (st.call) return 'background:#20262f';
+  if (st.dmxLive) return 'background:' + (_HEX_RE.test(st.dmxColor) ? st.dmxColor : '#000');
+  if (st.blackout) return 'background:#000';
+  const it = st.media ? _mediaPool.find((m) => m.id === st.media) : null;
+  if (it && it.thumb) return 'background:#000 url(&quot;' + it.thumb + '&quot;) center/cover no-repeat';
+  if (st.effect) {
+    const p = st.effect.params || {};
+    const cs = (Array.isArray(p.blocks) && p.blocks.length ? p.blocks : [p.color1, p.color2]).filter((c) => _HEX_RE.test(c));
+    if (cs.length >= 2) return 'background:linear-gradient(135deg,' + cs[0] + ',' + cs[1] + ')';
+    if (cs.length) return 'background:' + cs[0];
+  }
+  return 'background:' + (_HEX_RE.test(st.color) ? st.color : '#000');
+}
+
+function renderScreensView() {
+  if (!_svOpen) return;
+  const list = scrList(), t = scrTarget();
+  _setHtml(document.getElementById('svList'), list.length ? list.map((id) => {
+    const e = _scrReg.screens.get(id);
+    const on = scrOnline(id);
+    const groups = e.groups.map((g) => (scrGroup(g) || {}).name).filter(Boolean);
+    return '<div class="sv-card" data-id="' + id + '">'
+      + '<div class="sv-row"><span class="sv-swatch" style="' + scrSwatchCss(id) + '"></span>'
+      + '<div class="sv-main"><div class="sv-name">' + escapeHtml(scrName(id)) + '</div><div class="sv-now">' + escapeHtml(scrNowText(id)) + '</div></div>'
+      + '<span class="sv-link' + (on ? '' : ' off') + '">' + (on ? 'Internet' : 'Hors ligne') + '</span></div>'
+      + '<div class="sv-row"><button type="button" class="sv-group' + (groups.length ? '' : ' none') + '" onclick="openScreenGroups(\'' + id + '\')">'
+      + escapeHtml(groups.length ? groups.join(' · ') : 'Sans groupe') + '</button><span class="sv-flex"></span>'
+      + '<button type="button" class="sv-btn" onclick="scrIdentify(\'' + id + '\')">Identifier</button>'
+      + '<button type="button" class="sv-icon" aria-label="Renommer" onclick="openRenameScreen(\'' + id + '\')">'
+      + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button></div></div>';
+  }).join('') : '<div class="sv-empty">Aucun écran appairé : touchez « + Appairer » puis scannez le QR sur chaque écran de jeu.</div>');
+  _setHtml(document.getElementById('svGroups'), _scrReg.groups.map((g) => '<button type="button" class="sv-chip' + (t.k === 'group' && t.id === g.id ? ' on' : '')
+    + '" onclick="openGroupEditor(\'' + g.id + '\')">' + escapeHtml(g.name) + ' · ' + scrGroupMembers(g.id).length + '</button>').join('')
+    + (_scrReg.groups.length < SCR_GROUPS_MAX ? '<button type="button" class="sv-chip add" onclick="openGroupEditor(null)">+ Nouveau groupe</button>' : ''));
+}
+
+// Échap : ferme la feuille, puis la vue
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (_sheet) closeSheet();
+  else if (_svOpen) closeScreensView();
+});
 // ══════════════════════════ COLOR WHEEL ══════════════════════════
 function initWheel() { _bindColorWheel('colorWheel', onWheelPick); }
 function _bindColorWheel(canvasId, onPick) {
@@ -8761,10 +9757,15 @@ function sendCaps() {
   // actuellement affiché — la télécommande ne renvoie que ce qui manque.
   const cached = [];
   _mediaCache.forEach((c, id) => { if (cached.length < 500 && /^[A-Za-z0-9_-]{1,64}$/.test(id)) cached.push(id); });
-  // screenId : identifiant stable de cet écran (liste des écrans appairés)
-  sendMsg({ type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate, videoMode: 'rtc',
+  // screenId : identifiant stable de cet écran (liste des écrans appairés) ;
+  // name / groups : ceux donnés par la télécommande (screen:config), qu'elle
+  // complète s'ils ont changé pendant que l'écran était absent
+  const caps = { type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate, videoMode: 'rtc',
             cached, active: screenMediaVisible() ? (_screenActiveId || null) : null,
-            blackout: screenBlackoutOn, screenId: screenId() });
+            blackout: screenBlackoutOn, screenId: screenId() };
+  if (_screenCfg.name) caps.name = _screenCfg.name;
+  if (_screenCfg.groups.length) caps.groups = _screenCfg.groups.slice();
+  sendMsg(caps);
 }
 
 // Capacités du récepteur connecté (mémorisées pour choisir le transport vidéo).
@@ -9013,10 +10014,15 @@ function cancelScreenAutohide() {
 }
 
 // ══════════════════════════ MÉDIA — TÉLÉCOMMANDE ══════════════════════════
-// Vidéo : transfert du FICHIER vers l'écran via DataChannel WebRTC.
-// L'ordinateur lit la vidéo localement (vraie timeline/seek/play-pause natifs),
-// piloté depuis le téléphone par messages MQTT « media-ctrl ».
-let _rtcPc = null, _remotePendingIce = [];
+// Vidéo : transfert du FICHIER vers chaque écran visé via DataChannel WebRTC
+// (une connexion pair-à-pair PAR écran, voir « Vidéo » plus bas). L'écran lit
+// la vidéo localement (vraie timeline/seek/play-pause natifs), piloté depuis
+// le téléphone par messages « media-ctrl » adressés à la cible.
+// Multi-écran (28-screens.js) : chaque écran a son cache (accusés
+// media:cached, caps.cached) ; un média n'est transféré qu'aux écrans visés
+// qui ne l'ont pas, les autres reçoivent media:show. Les retours d'un écran
+// (durée, position, fin, erreur) ne s'affichent que s'il fait partie de la
+// cible (_rxFrom : écran émetteur, 20-mqtt.js).
 let _remotePlaying = false, _remoteDur = 0, _remoteCur = 0, _mediaIsVideo = false;
 
 function setMediaStatus(txt, live) {
@@ -9077,10 +10083,25 @@ function paintSeek(pct) {
   const s = document.getElementById('mediaSeek');
   if (s) s.style.background = `linear-gradient(to right,var(--accent) ${pct}%,#333 ${pct}%)`;
 }
+// Message en cours venu d'un écran de la cible (ou d'un écran inconnu : ancien comportement)
+function _mediaFromTarget() { const sid = _rxFrom; return !sid || !scrKnown(sid) || scrInTarget(sid); }
+// Lecture vue par un écran (position, durée) : gardée dans son état
+function _mediaProgressOf(sid) {
+  if (!sid || !scrKnown(sid)) return null;
+  const st = scrState(sid);
+  return st.progress || (st.progress = { playing: false, cur: 0, dur: 0 });
+}
 // Reçoit la durée depuis l'écran (métadonnées de la vidéo lue localement par l'écran)
 function remoteOnMeta(dur) {
   // L'écran confirme la lecture : le transfert est bien arrivé
-  if (_b64VerifyTimer) { clearTimeout(_b64VerifyTimer); _b64VerifyTimer = null; }
+  const job = _rxFrom ? _vidJobs.get(_rxFrom) : null;
+  if (job) {
+    if (job.b64 && job.b64.verifyTimer) { clearTimeout(job.b64.verifyTimer); job.b64.verifyTimer = null; }
+    if (job.done) job.status = '🎬 Vidéo en diffusion';
+  }
+  const p = _mediaProgressOf(_rxFrom);
+  if (p) p.dur = dur || 0;
+  if (!_mediaFromTarget()) return;
   _remoteDur = dur || 0;
   const s = document.getElementById('mediaSeek');
   if (s && isFinite(_remoteDur)) s.max = _remoteDur;
@@ -9091,6 +10112,9 @@ function remoteOnMeta(dur) {
 }
 // Reçoit la position de lecture depuis l'écran (source de vérité = l'écran)
 function remoteOnProgress(cur, dur, playing) {
+  const p = _mediaProgressOf(_rxFrom);
+  if (p) { p.cur = cur || 0; if (dur) p.dur = dur; if (typeof playing === 'boolean') p.playing = playing; }
+  if (!_mediaFromTarget()) return;
   if (dur) { _remoteDur = dur; const d = document.getElementById('mediaDurTime'); if (d) d.textContent = fmtTime(dur); const s = document.getElementById('mediaSeek'); if (s && isFinite(dur)) s.max = dur; }
   if (typeof playing === 'boolean') { _remotePlaying = playing; setPlayBtn(playing); }
   if (playing) setMediaStatus('🎬 Vidéo en diffusion', true);
@@ -9103,10 +10127,19 @@ function remoteOnProgress(cur, dur, playing) {
   paintSeek(_remoteDur ? (_remoteCur / _remoteDur) * 100 : 0);
 }
 function remoteOnEnded(off) {
+  const sid = _rxFrom;
+  if (off && sid && scrKnown(sid)) {
+    // Mode « 1× puis off » : cet écran a coupé le média à la fin de la lecture
+    const st = scrState(sid);
+    st.media = null; st.progress = null;
+    _vidStopJobs([sid]);
+    scrChanged();
+  }
+  if (!_mediaFromTarget()) return;
   _remotePlaying = false; setPlayBtn(false);
   if (off) {
-    // Mode « 1× puis off » : l'écran a coupé le média à la fin de la lecture
-    teardownBroadcast();
+    if (scrTarget().k === 'all') scrAll().media = null;
+    _mediaViewReset();
     _activeMediaId = null;
     renderPool();
     showMediaStop(false);
@@ -9115,6 +10148,7 @@ function remoteOnEnded(off) {
 }
 // L'écran n'a pas pu lire la vidéo (codec non supporté, etc.)
 function remoteOnError(reason) {
+  if (!_mediaFromTarget()) return;
   _remotePlaying = false; setPlayBtn(false);
   if (reason === 'decode' || reason === 'src')
     setMediaStatus('⚠ Format non lisible sur l\'écran (essayez un MP4/H.264)');
@@ -9325,13 +10359,26 @@ let _poolDrag = null, _poolSuppressClick = false;
 })();
 
 // Diffuse le média suivant (+1) ou précédent (−1) selon l'ordre du pool, en boucle.
-// Déclenché par les flèches de la télécommande ET par le tap sur l'écran de jeu.
+// Déclenché par les flèches de la télécommande (pour la cible) ET par le tap
+// sur un écran de jeu (media:advance) : pour la cible s'il en fait partie,
+// sinon pour lui seul.
+function _poolNext(cur, dir) {
+  const n = _mediaPool.length;
+  const i = _mediaPool.findIndex(m => m.id === cur);
+  const base = i < 0 ? (dir > 0 ? -1 : 0) : i;
+  return (((base + dir) % n) + n) % n;
+}
 function advancePool(dir) {
   if (!_mediaPool.length) return;
-  const cur = _mediaPool.findIndex(m => m.id === _activeMediaId);
-  const base = cur < 0 ? (dir > 0 ? -1 : 0) : cur;
-  const next = (((base + dir) % _mediaPool.length) + _mediaPool.length) % _mediaPool.length;
-  selectMedia(_mediaPool[next].id);
+  const sid = _rxFrom;
+  if (sid && scrKnown(sid) && !scrInTarget(sid)) {
+    const it = _mediaPool[_poolNext(scrState(sid).media, dir)];
+    _vidStopJobs([sid]);
+    mediaShowOn(it, [sid]);
+    scrChanged();
+    return;
+  }
+  selectMedia(_mediaPool[_poolNext(_activeMediaId, dir)].id);
 }
 
 // Active/désactive « l'écran de jeu passe au média suivant d'un clic ».
@@ -9346,32 +10393,63 @@ function selectMedia(id) {
   if (_poolSuppressClick) return; // ignore le clic résiduel après un glisser-déposer
   const it = _mediaPool.find(m => m.id === id);
   if (!it) return;
-  teardownBroadcast();
+  const ids = scrTargetIds();
+  _vidStopJobs(ids); // transferts en cours vers ces écrans : remplacés
+  _mediaViewReset();
   _activeMediaId = id;
+  if (scrTarget().k === 'all') scrAll().media = id;
   renderPool();
-  // Chemin rapide : déjà en cache sur l'écran → simple message, affichage instantané
-  if (_screenCached.has(id)) {
-    sendMsg({ type: 'media:show', id });
-    showMediaStop(true);
-    if (it.kind === 'vid') {
-      _mediaIsVideo = true; _remotePlaying = true;
-      showMediaPlay(true); setPlayBtn(true); showMediaTimeline(true);
-      sendMsg({ type: 'media:endmode', mode: _videoEndMode });
-      setMediaStatus('🎬 Lecture instantanée (cache écran)', true);
-    } else {
-      setMediaStatus('🖼 Affichage instantané (cache écran)', true);
-    }
+  showMediaStop(true);
+  if (it.kind === 'vid') _mediaIsVideo = true;
+  if (!ids.length) {
+    // Aucun écran annoncé : il recevra ce média à sa connexion (24-resync.js)
+    setMediaStatus('⏳ En attente d\'un écran…');
     return;
   }
-  if (it.kind === 'img') broadcastImage(it.file, it.id);
-  else broadcastVideo(it.file, it.id);
+  mediaShowOn(it, ids, true);
 }
 
-// L'écran a avancé tout seul (avance locale) : on aligne l'interface
+// Affiche un média du pool sur ces écrans : media:show (instantané) à ceux
+// qui l'ont en cache, transfert complet aux autres seulement. fromUi : choix
+// de la télécommande (réglage de fin de lecture de la cible joint).
+function mediaShowOn(it, ids, fromUi) {
+  ids = ids.filter(scrKnown);
+  if (!ids.length) return;
+  for (const s of ids) scrState(s).media = it.id;
+  const have = ids.filter((s) => scrState(s).cached.has(it.id));
+  // Transfert : écrans en ligne seulement (un écran absent le recevra à sa
+  // resynchronisation, son état attendu étant noté ci-dessus)
+  const lack = ids.filter((s) => !scrState(s).cached.has(it.id) && scrOnline(s));
+  if (have.length) {
+    sendMsg({ type: 'media:show', id: it.id, target: { screens: have } });
+    if (fromUi && it.kind === 'vid') sendMsg({ type: 'media:endmode', mode: _videoEndMode, target: { screens: have } });
+  }
+  if (lack.length) {
+    if (it.kind === 'img') broadcastImage(it.file, it.id, lack);
+    else broadcastVideo(it.file, it.id, lack);
+  }
+  scrChanged();
+  if (lack.length || !ids.some(scrInTarget)) return;
+  if (!have.length) { setMediaStatus('⏳ En attente d\'un écran…'); return; } // écrans visés hors ligne
+  // Chemin rapide : déjà en cache sur les écrans → affichage instantané
+  if (it.kind === 'vid') {
+    _mediaIsVideo = true; _remotePlaying = true;
+    showMediaPlay(true); setPlayBtn(true); showMediaTimeline(true);
+    setMediaStatus('🎬 Lecture instantanée (cache écran)', true);
+  } else {
+    setMediaStatus('🖼 Affichage instantané (cache écran)', true);
+  }
+}
+
+// L'écran a avancé tout seul (avance locale) : son état, et l'interface s'il est dans la cible
 function remoteOnScreenAdvanced(id) {
   const it = _mediaPool.find(m => m.id === id);
   if (!it) return;
-  teardownBroadcast();
+  const sid = _rxFrom;
+  if (sid && scrKnown(sid)) { scrState(sid).media = id; _vidStopJobs([sid]); scrChanged(); }
+  if (!_mediaFromTarget()) return;
+  if (scrTarget().k === 'all') scrAll().media = id;
+  _mediaViewReset();
   _activeMediaId = id;
   renderPool();
   showMediaStop(true);
@@ -9382,15 +10460,19 @@ function remoteOnScreenAdvanced(id) {
   setMediaStatus((it.kind === 'vid' ? '🎬 ' : '🖼 ') + it.name + ' (avance écran)', true);
 }
 
-// L'écran ne possède pas ce média en cache : repli sur le transfert complet
+// Un écran ne possède pas ce média en cache : transfert complet, à lui seul
 // (son importé d'un appel : renvoyé par 81-ringtones.js)
 function remoteOnScreenNeeds(id) {
-  if (SRP.RING_ID_RE.test(id)) { ringOnScreenNeeds(id); return; }
+  const sid = _rxFrom && scrKnown(_rxFrom) ? _rxFrom : null;
+  if (SRP.RING_ID_RE.test(id)) { ringOnScreenNeeds(id, sid); return; }
+  const ids = sid ? [sid] : scrTargetIds();
+  for (const s of ids) scrState(s).cached.delete(id);
   _screenCached.delete(id);
+  scrRefreshCachedView();
   const it = _mediaPool.find(m => m.id === id);
   if (!it) return;
-  if (it.kind === 'img') broadcastImage(it.file, it.id);
-  else broadcastVideo(it.file, it.id);
+  if (it.kind === 'img') broadcastImage(it.file, it.id, sid ? ids : undefined);
+  else broadcastVideo(it.file, it.id, ids);
 }
 
 function removeMedia(id) {
@@ -9400,27 +10482,48 @@ function removeMedia(id) {
   if (it.thumb && it.thumb.indexOf('blob:') === 0) { try { URL.revokeObjectURL(it.thumb); } catch (_) {} }
   const wasActive = (_activeMediaId === id);
   _mediaPool.splice(idx, 1);
+  for (const [sid, job] of [..._vidJobs]) if (job.mediaId === id) _vidStopJobs([sid]);
   _screenCached.delete(id);
-  sendMsg({ type: 'media:evict', id });
+  sendMsg({ type: 'media:evict', id }); // tous les écrans (pool commun)
   sendPoolOrder();
   if (wasActive) stopMediaBroadcast(true); else renderPool();
 }
 
-// ── Cache écran : suivi des médias déjà transférés + préchargement ──
-// L'écran met en cache chaque média reçu (par id) et accuse réception
-// (media:cached). Les affichages suivants ne coûtent qu'un mini message
-// media:show au lieu d'un re-transfert complet → quasi instantané.
-const _screenCached = new Set();    // ids confirmés en cache sur l'écran
-const _preloadInflight = new Set(); // préchargements en cours
+// ── Cache des écrans : suivi des médias déjà transférés + préchargement ──
+// Chaque écran met en cache chaque média reçu (par id) et accuse réception
+// (media:cached) : noté dans SON état (28-screens.js). Les affichages
+// suivants ne coûtent qu'un mini message media:show au lieu d'un re-transfert
+// complet → quasi instantané.
+const _screenCached = new Set();    // médias en cache sur tous les écrans (en ligne) de la cible (scrRefreshCachedView)
+const _preloadInflight = new Map(); // média → écrans en cours de préchargement
 let _preloadRunning = false;
 
-function sendPoolOrder() {
-  if (_mediaPool.length) sendMsg({ type: 'media:order', ids: _mediaPool.map(m => m.id) });
+// Accusé « en cache » d'un écran
+function remoteOnScreenCached(id) {
+  const sid = _rxFrom;
+  if (sid && scrKnown(sid)) {
+    scrState(sid).cached.add(id);
+    const inf = _preloadInflight.get(id);
+    if (inf) inf.delete(sid);
+    scrRefreshCachedView();
+    scrChanged();
+  } else {
+    _screenCached.add(id); // écran sans identifiant (ancien)
+    _preloadInflight.delete(id);
+  }
+  remoteOnCallAssetCached(id);
+}
+
+// Ordre du pool : tous les écrans (avance locale, n° de média de la console),
+// ou ceux d'une resynchronisation
+function sendPoolOrder(target) {
+  if (_mediaPool.length) sendMsg(Object.assign({ type: 'media:order', ids: _mediaPool.map(m => m.id) }, target ? { target } : {}));
 }
 
 function schedulePreload() { setTimeout(preloadPoolToScreen, 300); }
 
-// Précharge en arrière-plan les images du pool vers l'écran (séquentiel).
+// Précharge en arrière-plan les images du pool vers les écrans en ligne qui
+// ne les ont pas (séquentiel, une image à la fois, adressée à ces écrans).
 // Les vidéos sont mises en cache par l'écran à leur première lecture.
 async function preloadPoolToScreen() {
   if (_preloadRunning || mode !== 'remote') return;
@@ -9429,30 +10532,39 @@ async function preloadPoolToScreen() {
   try {
     for (const it of [..._mediaPool]) {
       if (it.kind !== 'img') continue;
-      if (_screenCached.has(it.id) || _preloadInflight.has(it.id)) continue;
+      const lack = () => scrList().filter((s) => scrOnline(s) && !scrState(s).cached.has(it.id)
+        && !(_preloadInflight.has(it.id) && _preloadInflight.get(it.id).has(s)));
+      if (!lack().length) continue;
       // PRIORITÉ au transfert vidéo WebRTC : le préchargement se met en pause
       // pour ne pas noyer la signalisation (offre/réponse/ICE) sur le broker.
-      for (let g = 0; g < 150 && _rtcPc && !_rtcTransferDone; g++) {
+      for (let g = 0; g < 150 && _vidJobsBusy(); g++) {
         await new Promise(r => setTimeout(r, 400));
       }
       if (!mqttClient || !mqttClient.connected) return;
-      _preloadInflight.add(it.id);
+      const ids = lack();
+      if (!ids.length || !_mediaPool.includes(it)) continue;
+      if (!_preloadInflight.has(it.id)) _preloadInflight.set(it.id, new Set());
+      const inf = _preloadInflight.get(it.id);
+      for (const s of ids) inf.add(s);
       try {
         const dataUrl = await compressImageFile(it.file);
-        await sendImageChunks(dataUrl, { mediaId: it.id, show: false });
-        await _waitForCached(it.id, 5000);
+        await sendImageChunks(dataUrl, { mediaId: it.id, show: false, screens: ids });
+        await _waitForCached(it.id, 5000, ids);
       } catch (_) {}
-      _preloadInflight.delete(it.id);
+      for (const s of ids) inf.delete(s);
+      if (!inf.size) _preloadInflight.delete(it.id);
       await new Promise(r => setTimeout(r, 150)); // souffle pour le broker
     }
   } finally { _preloadRunning = false; }
 }
 
-function _waitForCached(id, ms) {
+// Attend l'accusé des écrans donnés (ou, sans liste, la vue _screenCached)
+function _waitForCached(id, ms, ids) {
   return new Promise(res => {
     const t0 = Date.now();
     (function poll() {
-      if (_screenCached.has(id) || Date.now() - t0 > ms) return res();
+      const done = ids ? ids.every((s) => !scrKnown(s) || scrState(s).cached.has(id)) : _screenCached.has(id);
+      if (done || Date.now() - t0 > ms) return res();
       setTimeout(poll, 150);
     })();
   });
@@ -9476,39 +10588,128 @@ function compressImageFile(file) {
   });
 }
 
-async function broadcastImage(file, mediaId) {
+// Image affichée sur les écrans donnés (défaut : la cible ; aucun écran
+// connu : sans adresse, comme avant)
+async function broadcastImage(file, mediaId, screens) {
   let dataUrl;
   try { dataUrl = await compressImageFile(file); }
   catch (_) { setMediaStatus('⚠ Image illisible'); return; }
-  sendImageChunks(dataUrl, { mediaId: mediaId || null, show: true });
+  const ids = screens || scrTargetIds();
+  sendImageChunks(dataUrl, { mediaId: mediaId || null, show: true, screens: ids.length ? ids : undefined });
+  if (ids.length && !ids.some(scrInTarget)) return;
   showMediaStop(true);
   setMediaStatus('🖼 Image diffusée (' + Math.round(dataUrl.length / 1024) + ' Ko)', true);
 }
 
+// Data-URL en fragments (images, photo d'appel, bande son, sons importés).
+// opts.screens : écrans destinataires (target.screens) ; absent : cible courante.
 async function sendImageChunks(dataUrl, opts) {
   const o = opts || {};
+  let t = {};
+  if (Array.isArray(o.screens)) {
+    if (!o.screens.length) return;
+    t = { target: { screens: o.screens.slice() } };
+  }
   const id = Math.random().toString(36).slice(2, 8);
   const CHUNK = 12000;
   const total = Math.ceil(dataUrl.length / CHUNK);
-  sendMsg({ type: 'media-img-start', id, total, mediaId: o.mediaId || null, show: o.show !== false });
+  sendMsg(Object.assign({ type: 'media-img-start', id, total, mediaId: o.mediaId || null, show: o.show !== false }, t));
   for (let i = 0; i < total; i++) {
-    sendMsg({ type: 'media-img-chunk', id, i, data: dataUrl.slice(i * CHUNK, (i + 1) * CHUNK) });
+    sendMsg(Object.assign({ type: 'media-img-chunk', id, i, data: dataUrl.slice(i * CHUNK, (i + 1) * CHUNK) }, t));
     if (i % 16 === 15) await new Promise(r => setTimeout(r, 8)); // laisse respirer le broker
   }
 }
 
-// — Vidéo : transfert du fichier vers l'écran via DataChannel —
-let _fileChannel = null;
-function broadcastVideo(file, mediaId) {
-  _mediaIsVideo = true;
-  _remotePlaying = false; _remoteDur = 0; _remoteCur = 0;
-  showMediaStop(true);
-  sendMsg({ type: 'media:endmode', mode: _videoEndMode }); // synchronise la fin de lecture
-  // Envoi via MQTT si : écran natif (pas de WebRTC), ou pair-à-pair déjà
-  // constaté bloqué sur ce réseau (repli mémorisé pour la session).
-  if (_rtcBroken || (_recvCaps && _recvCaps.videoMode === 'b64')) { broadcastVideoBase64(file, mediaId); return; }
-  setMediaStatus('🎬 Préparation du transfert…');
-  startFileTransfer(file, mediaId);
+// ══════════ Vidéo : un transfert par écran ══════════
+// Choix retenu : UNE connexion pair-à-pair (RTCPeerConnection + canal de
+// données « file », chiffré DTLS) PAR écran visé, et repli base64 PAR écran.
+//   • Offre, candidats ICE : adressés à cet écran seul (target.screens) ; sa
+//     réponse et ses candidats lui sont rattachés par son étiquette
+//     d'émetteur authentifiée (_rxFrom). Avant : une offre à tous, « la
+//     première réponse gagne », les autres écrans ne recevaient rien.
+//   • Chaque écran reçoit le fichier à son rythme, en parallèle ; un écran lent
+//     ou injoignable ne bloque pas les autres ; un pair-à-pair qui échoue
+//     (isolation Wi-Fi, réseaux différents) ne bascule QUE cet écran sur le
+//     relais (fragments media:chunk adressés à lui, régulés par SES accusés,
+//     fragments manquants renvoyés à lui seul).
+//   • Le relais ne transporte que la signalisation : un envoi groupé en
+//     base64 à tous les écrans ferait passer N fois moins d'octets par le
+//     relais, mais le plus lent dicterait le débit de tous et une perte
+//     obligerait à tout renvoyer. Le repli base64 reste l'exception.
+const _vidJobs = new Map(); // screenId → transfert en cours (ou terminé, jusqu'au suivant)
+let _vidBatch = 0;          // n° de la dernière diffusion (progression affichée)
+let _rtcTransferDone = false; // tous les transferts pair-à-pair de la dernière diffusion sont terminés
+let _rtcBroken = false;       // pair-à-pair constaté bloqué vers au moins un écran (session)
+
+function broadcastVideo(file, mediaId, screens) {
+  // Écrans connus et en ligne (un pair-à-pair vers un absent ne s'établirait jamais)
+  const ids = (screens || scrTargetIds()).filter((s) => scrKnown(s) && scrOnline(s));
+  const ui = !ids.length || ids.some(scrInTarget);
+  if (ui) {
+    _mediaIsVideo = true;
+    _remotePlaying = false; _remoteDur = 0; _remoteCur = 0;
+    showMediaStop(true);
+  }
+  if (!ids.length) { if (ui) setMediaStatus('⏳ En attente d\'un écran…'); return; }
+  // Fin de lecture de chaque écran, avant le fichier
+  const modes = new Map();
+  for (const s of ids) { const m = scrState(s).endMode; if (!modes.has(m)) modes.set(m, []); modes.get(m).push(s); }
+  for (const [m, s] of modes) sendMsg({ type: 'media:endmode', mode: m, target: { screens: s } });
+  const batch = ++_vidBatch;
+  _rtcTransferDone = false;
+  for (const sid of ids) {
+    const st = scrState(sid);
+    if (mediaId) st.media = mediaId;
+    const job = _vidNewJob(sid, file, mediaId, batch);
+    // Écran natif (pas de WebRTC) ou pair-à-pair déjà constaté bloqué vers lui
+    if (st.rtcBroken || (st.caps && st.caps.videoMode === 'b64')) _vidStartB64(job);
+    else _vidStartRtc(job);
+  }
+  scrChanged();
+  _vidRenderStatus();
+}
+
+function _vidNewJob(sid, file, mediaId, batch) {
+  _vidStopJobs([sid]);
+  const job = { sid, file, mediaId: mediaId || null, batch, mode: null, pc: null, ch: null, pendingIce: [],
+    done: false, failed: false, closed: false, pct: 0, status: '🎬 Préparation du transfert…', b64: null };
+  _vidJobs.set(sid, job);
+  return job;
+}
+const _vidLive = (job) => !job.closed && _vidJobs.get(job.sid) === job;
+function _vidCloseJob(job) {
+  job.closed = true;
+  if (job.ch) { try { job.ch.close(); } catch (_) {} job.ch = null; }
+  if (job.pc) { try { job.pc.close(); } catch (_) {} job.pc = null; }
+  if (job.b64 && job.b64.verifyTimer) { clearTimeout(job.b64.verifyTimer); job.b64.verifyTimer = null; }
+}
+// Arrête les transferts vers ces écrans (null : tous)
+function _vidStopJobs(ids) {
+  for (const [sid, job] of [..._vidJobs]) {
+    if (ids && !ids.includes(sid)) continue;
+    _vidCloseJob(job);
+    _vidJobs.delete(sid);
+  }
+}
+// Un transfert pair-à-pair est-il en cours ? (le préchargement d'images attend)
+function _vidJobsBusy() {
+  for (const j of _vidJobs.values()) if (j.mode === 'rtc' && !j.done && !j.failed && !j.closed) return true;
+  return false;
+}
+// Progression affichée : transferts de la dernière diffusion vers la cible
+function _vidRenderStatus() {
+  const jobs = [..._vidJobs.values()].filter((j) => j.batch === _vidBatch && scrInTarget(j.sid));
+  if (!jobs.length) return;
+  if (jobs.length === 1) { setMediaStatus(jobs[0].status, jobs[0].done && !jobs[0].failed && !/^⚠|^⏳/.test(jobs[0].status)); return; }
+  const live = jobs.filter((j) => !j.done && !j.failed);
+  if (live.length) {
+    const pct = Math.round(live.reduce((a, j) => a + j.pct, 0) / live.length);
+    setMediaStatus('📤 Transfert vers ' + live.length + ' écrans… ' + pct + ' %');
+    return;
+  }
+  const failed = jobs.filter((j) => j.failed || /^⚠/.test(j.status)).length;
+  if (failed) setMediaStatus('⚠ Transfert incomplet vers ' + failed + (failed > 1 ? ' écrans' : ' écran'));
+  else setMediaStatus('🎬 Lecture sur ' + jobs.length + ' écrans', true);
 }
 
 // Lit un fichier en base64 pur (sans le préfixe data:…;base64,).
@@ -9520,127 +10721,66 @@ function fileToBase64(file) {
     r.readAsDataURL(file);
   });
 }
-
-// Diffusion vidéo en base64 chunké via MQTT : écrans natifs (pas de WebRTC)
-// et repli universel quand le pair-à-pair est bloqué par le réseau.
-// Transfert FIABILISÉ : fenêtre d'envoi régulée par les accusés de réception
-// de l'écran (media:chunkack) + renvoi des fragments manquants
-// (media:need-chunks). Le statut « en diffusion » n'est affiché que quand
-// l'écran confirme réellement la lecture (media-meta).
-const _sleepMs = ms => new Promise(r => setTimeout(r, ms));
-let _b64Send = null;               // { id, chunks, poolId, rounds }
-let _b64Ack = { id: null, got: 0, noAck: false };
-let _b64VerifyTimer = null;
-
-async function broadcastVideoBase64(file, poolId) {
-  setMediaStatus('🎬 Préparation de l\'envoi…');
-  let b64;
-  try { b64 = await fileToBase64(file); }
-  catch (_) { setMediaStatus('⚠ Lecture du fichier impossible'); return; }
-  const id = Math.random().toString(36).slice(2, 8);
-  const mime = file.type || 'video/mp4';
-  const CHUNK = 12000;
-  const total = Math.ceil(b64.length / CHUNK);
-  const chunks = [];
-  for (let i = 0; i < total; i++) chunks.push(b64.slice(i * CHUNK, (i + 1) * CHUNK));
-  _b64Send = { id, chunks, poolId: poolId || null, rounds: 0 };
-  _b64Ack = { id, got: 0, noAck: false };
-  sendMsg({ type: 'media:upload', mediaId: id, kind: 'video', mime, totalChunks: total, poolId: poolId || null });
-  setMediaStatus('📤 Transfert… 0 %');
-  const WINDOW = 48; // fragments en vol au maximum (si l'écran accuse réception)
-  for (let i = 0; i < total; i++) {
-    if (!_b64Send || _b64Send.id !== id) return; // remplacé par un autre envoi
-    let waited = 0;
-    while (!_b64Ack.noAck && i - _b64Ack.got > WINDOW) {
-      await _sleepMs(120); waited += 120;
-      // Récepteur sans accusés (ancien écran / natif) : on n'attend plus
-      if (waited >= 4000 && _b64Ack.got === 0) { _b64Ack.noAck = true; break; }
-      if (waited >= 20000) break; // sécurité anti-blocage
-    }
-    sendMsg({ type: 'media:chunk', mediaId: id, index: i, data: chunks[i] });
-    if (i % 12 === 11) {
-      await _sleepMs(10);
-      setMediaStatus('📤 Transfert… ' + Math.round(((i + 1) / total) * 100) + ' %');
-    }
-  }
-  sendMsg({ type: 'media:play', mediaId: id });
-  setMediaStatus('⏳ Vérification de la réception…');
-  _armB64VerifyTimer();
+// Conversion partagée par les écrans qui reçoivent le même fichier
+let _b64Of = { file: null, p: null };
+function _vidFileB64(file) {
+  if (_b64Of.file !== file) _b64Of = { file, p: fileToBase64(file) };
+  return _b64Of.p;
 }
 
-// Sans confirmation de lecture (media-meta) ni demande de renvoi : alerter
-function _armB64VerifyTimer() {
-  if (_b64VerifyTimer) clearTimeout(_b64VerifyTimer);
-  _b64VerifyTimer = setTimeout(() => {
-    setMediaStatus('⚠ Pas de confirmation de l\'écran — vérifiez sa connexion');
-  }, 12000);
-}
-
-// L'écran signale des fragments perdus : on ne renvoie que ceux-là
-async function resendMissingChunks(msg) {
-  if (!_b64Send || _b64Send.id !== msg.mediaId) return;
-  if (_b64VerifyTimer) { clearTimeout(_b64VerifyTimer); _b64VerifyTimer = null; }
-  const miss = Array.isArray(msg.missing) ? msg.missing : [];
-  if (!miss.length || _b64Send.rounds >= 3) {
-    setMediaStatus('⚠ Transfert incomplet — réessayez');
-    return;
-  }
-  _b64Send.rounds++;
-  setMediaStatus('📤 Renvoi de ' + miss.length + ' fragments… (' + _b64Send.rounds + '/3)');
-  for (let j = 0; j < miss.length; j++) {
-    const i = miss[j];
-    if (_b64Send.chunks[i] == null) continue;
-    sendMsg({ type: 'media:chunk', mediaId: _b64Send.id, index: i, data: _b64Send.chunks[i] });
-    if (j % 12 === 11) await _sleepMs(12);
-  }
-  sendMsg({ type: 'media:play', mediaId: _b64Send.id });
-  setMediaStatus('⏳ Vérification de la réception…');
-  _armB64VerifyTimer();
-}
-
-let _rtcTransferDone = false;
-let _rtcBroken = false; // pair-à-pair constaté bloqué sur ce réseau (session)
-async function startFileTransfer(file, mediaId) {
-  _remotePendingIce = [];
-  _rtcTransferDone = false;
-  const pc = new RTCPeerConnection({ iceServers: [{ urls: STUN_URLS }] });
-  _rtcPc = pc;
-  pc.onicecandidate = e => { if (e.candidate) sendMsg({ type: 'rtc-ice', from: 'remote', candidate: e.candidate }); };
+// — Pair-à-pair vers un écran —
+async function _vidStartRtc(job) {
+  job.mode = 'rtc';
+  job.status = '🎬 Connexion à l\'écran…';
+  const target = { screens: [job.sid] };
+  let pc;
+  try { pc = new RTCPeerConnection({ iceServers: [{ urls: STUN_URLS }] }); }
+  catch (_) { _vidRtcFailed(job); return; }
+  job.pc = pc;
+  pc.onicecandidate = e => { if (e.candidate && _vidLive(job)) sendMsg({ type: 'rtc-ice', from: 'remote', candidate: e.candidate, target }); };
   pc.onconnectionstatechange = () => {
-    if (pc !== _rtcPc) return;          // ancienne connexion remplacée : ignorer
-    if (_rtcTransferDone) return;        // transfert terminé : les aléas sont sans effet
-    const st = pc.connectionState;
-    if (st === 'failed') {
-      // Pair-à-pair bloqué (isolation Wi-Fi, réseaux différents…) :
-      // bascule IMMÉDIATE sur l'envoi via le canal MQTT, sans re-tentative.
-      _rtcBroken = true;
-      setMediaStatus('🌐 Connexion directe impossible — envoi via le canal…');
-      try { pc.close(); } catch (_) {}
-      if (pc === _rtcPc) _rtcPc = null;
-      broadcastVideoBase64(file, mediaId);
-    }
+    if (!_vidLive(job) || job.pc !== pc) return; // connexion remplacée : ignorer
+    if (job.done) return;                         // transfert terminé : les aléas sont sans effet
     // 'disconnected' est souvent transitoire en WebRTC : on laisse la
     // connexion se rétablir d'elle-même au lieu d'afficher une erreur.
+    if (pc.connectionState === 'failed') _vidRtcFailed(job);
   };
-  _fileChannel = pc.createDataChannel('file', { ordered: true });
-  _fileChannel.binaryType = 'arraybuffer';
-  _fileChannel.onopen = () => sendFileOverChannel(_fileChannel, file, mediaId);
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  sendMsg({ type: 'rtc-offer', sdp: pc.localDescription, kind: 'file' });
-  setMediaStatus('🎬 Connexion à l\'écran…');
+  const ch = pc.createDataChannel('file', { ordered: true });
+  ch.binaryType = 'arraybuffer';
+  job.ch = ch;
+  ch.onopen = () => { if (_vidLive(job) && job.ch === ch) sendFileOverChannel(job); };
+  try {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+  } catch (_) { if (_vidLive(job)) _vidRtcFailed(job); return; }
+  if (!_vidLive(job)) return;
+  sendMsg({ type: 'rtc-offer', sdp: pc.localDescription, kind: 'file', target });
+  _vidRenderStatus();
+}
+// Pair-à-pair bloqué vers cet écran : bascule IMMÉDIATE sur l'envoi par le
+// relais, pour lui seul (mémorisé pour la session)
+function _vidRtcFailed(job) {
+  scrState(job.sid).rtcBroken = true;
+  _rtcBroken = true;
+  if (job.ch) { try { job.ch.close(); } catch (_) {} job.ch = null; }
+  if (job.pc) { try { job.pc.close(); } catch (_) {} job.pc = null; }
+  job.status = '🌐 Connexion directe impossible — envoi via le canal…';
+  _vidRenderStatus();
+  _vidStartB64(job);
 }
 
-async function sendFileOverChannel(ch, file, mediaId) {
+async function sendFileOverChannel(job) {
+  const ch = job.ch, file = job.file;
   const CHUNK = 16 * 1024;
   const HIGH = 4 * 1024 * 1024; // backpressure à 4 Mo
   ch.bufferedAmountLowThreshold = 1 * 1024 * 1024;
-  ch.send(JSON.stringify({ meta: true, name: file.name, size: file.size, mime: file.type || 'video/mp4', mediaId: mediaId || null }));
+  ch.send(JSON.stringify({ meta: true, name: file.name, size: file.size, mime: file.type || 'video/mp4', mediaId: job.mediaId }));
   let offset = 0;
-  setMediaStatus('📤 Transfert… 0 %');
+  job.status = '📤 Transfert… 0 %';
+  _vidRenderStatus();
   try {
     while (offset < file.size) {
-      if (ch.readyState !== 'open') return;
+      if (ch.readyState !== 'open' || !_vidLive(job)) return;
       const buf = await file.slice(offset, offset + CHUNK).arrayBuffer();
       ch.send(buf);
       offset += buf.byteLength;
@@ -9648,49 +10788,171 @@ async function sendFileOverChannel(ch, file, mediaId) {
         await new Promise(res => { ch.onbufferedamountlow = () => { ch.onbufferedamountlow = null; res(); }; });
       }
       const pct = Math.round((offset / file.size) * 100);
-      if (pct % 5 === 0) setMediaStatus('📤 Transfert… ' + pct + ' %');
+      if (pct !== job.pct && pct % 5 === 0) { job.pct = pct; job.status = '📤 Transfert… ' + pct + ' %'; _vidRenderStatus(); }
     }
     ch.send(JSON.stringify({ done: true }));
-    _rtcTransferDone = true; // les changements d'état RTC ultérieurs sont ignorés
-    setMediaStatus('🎬 Lecture sur l\'écran', true);
-    showMediaPlay(true); setPlayBtn(false); showMediaTimeline(true);
-  } catch (e) { setMediaStatus('⚠ Échec du transfert'); }
+    job.done = true; job.pct = 100; // les changements d'état RTC ultérieurs sont ignorés
+    job.status = '🎬 Lecture sur l\'écran';
+    _rtcTransferDone = ![..._vidJobs.values()].some((j) => j.batch === job.batch && j.mode === 'rtc' && !j.done && !j.failed && !j.closed);
+    if (scrInTarget(job.sid)) { showMediaPlay(true); setPlayBtn(false); showMediaTimeline(true); }
+    _vidRenderStatus();
+  } catch (e) {
+    if (!_vidLive(job)) return;
+    job.failed = true; job.status = '⚠ Échec du transfert';
+    _vidRenderStatus();
+  }
 }
 
+// Réponse / candidats de l'écran émetteur, appliqués à SA connexion
+function _vidRtcJobOf(sid) {
+  if (sid) { const j = _vidJobs.get(sid); return j && j.mode === 'rtc' && j.pc ? j : null; }
+  // Écran sans identifiant : seule connexion en attente de réponse
+  const waiting = [..._vidJobs.values()].filter((j) => j.mode === 'rtc' && j.pc && !j.pc.remoteDescription);
+  return waiting.length === 1 ? waiting[0] : null;
+}
 async function remoteHandleAnswer(sdp) {
-  if (!_rtcPc) return;
+  const job = _vidRtcJobOf(_rxFrom);
+  if (!job || job.pc.signalingState !== 'have-local-offer') return;
+  const pc = job.pc;
   try {
-    await _rtcPc.setRemoteDescription(new RTCSessionDescription(sdp));
-    for (const c of _remotePendingIce) { try { await _rtcPc.addIceCandidate(c); } catch (_) {} }
-    _remotePendingIce = [];
+    await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+    for (const c of job.pendingIce.splice(0)) { try { await pc.addIceCandidate(c); } catch (_) {} }
   } catch (_) {}
 }
 function remoteAddIce(cand) {
-  if (!_rtcPc || !_rtcPc.remoteDescription) { _remotePendingIce.push(cand); return; }
-  _rtcPc.addIceCandidate(new RTCIceCandidate(cand)).catch(() => {});
+  const job = _vidRtcJobOf(_rxFrom);
+  if (!job) return;
+  if (!job.pc.remoteDescription) { job.pendingIce.push(cand); return; }
+  job.pc.addIceCandidate(new RTCIceCandidate(cand)).catch(() => {});
 }
 
-// Ferme le transfert/diffusion en cours sans toucher au pool ni notifier l'écran
-function teardownBroadcast() {
-  if (_fileChannel) { try { _fileChannel.close(); } catch (_) {} _fileChannel = null; }
-  if (_rtcPc) { try { _rtcPc.close(); } catch (_) {} _rtcPc = null; }
-  _remotePendingIce = [];
+// — Repli base64 par le relais, pour un écran —
+// Écrans natifs (pas de WebRTC) et pair-à-pair bloqué par le réseau.
+// Transfert FIABILISÉ : fenêtre d'envoi régulée par les accusés de réception
+// de CET écran (media:chunkack) + renvoi des fragments manquants
+// (media:need-chunks). Le statut « en diffusion » n'est affiché que quand
+// l'écran confirme réellement la lecture (media-meta).
+const _sleepMs = ms => new Promise(r => setTimeout(r, ms));
+async function _vidStartB64(job) {
+  job.mode = 'b64';
+  if (!/^🌐/.test(job.status)) job.status = '🎬 Préparation de l\'envoi…';
+  _vidRenderStatus();
+  let b64;
+  try { b64 = await _vidFileB64(job.file); }
+  catch (_) { job.failed = true; job.status = '⚠ Lecture du fichier impossible'; _vidRenderStatus(); return; }
+  if (!_vidLive(job)) return;
+  const id = Math.random().toString(36).slice(2, 8);
+  const mime = job.file.type || 'video/mp4';
+  const CHUNK = 12000;
+  const total = Math.ceil(b64.length / CHUNK);
+  const chunks = [];
+  for (let i = 0; i < total; i++) chunks.push(b64.slice(i * CHUNK, (i + 1) * CHUNK));
+  const target = { screens: [job.sid] };
+  job.b64 = { id, chunks, rounds: 0, got: 0, noAck: false, verifyTimer: null, target };
+  sendMsg({ type: 'media:upload', mediaId: id, kind: 'video', mime, totalChunks: total, poolId: job.mediaId, target });
+  job.status = '📤 Transfert… 0 %';
+  _vidRenderStatus();
+  const WINDOW = 48; // fragments en vol au maximum (si l'écran accuse réception)
+  for (let i = 0; i < total; i++) {
+    if (!_vidLive(job)) return; // remplacé par un autre envoi
+    let waited = 0;
+    while (!job.b64.noAck && i - job.b64.got > WINDOW) {
+      await _sleepMs(120); waited += 120;
+      if (!_vidLive(job)) return;
+      // Récepteur sans accusés (ancien écran / natif) : on n'attend plus
+      if (waited >= 4000 && job.b64.got === 0) { job.b64.noAck = true; break; }
+      if (waited >= 20000) break; // sécurité anti-blocage
+    }
+    sendMsg({ type: 'media:chunk', mediaId: id, index: i, data: chunks[i], target });
+    if (i % 12 === 11) {
+      await _sleepMs(10);
+      job.pct = Math.round(((i + 1) / total) * 100);
+      job.status = '📤 Transfert… ' + job.pct + ' %';
+      _vidRenderStatus();
+    }
+  }
+  if (!_vidLive(job)) return;
+  sendMsg({ type: 'media:play', mediaId: id, target });
+  job.done = true; job.pct = 100;
+  job.status = '⏳ Vérification de la réception…';
+  _vidRenderStatus();
+  _armB64VerifyTimer(job);
+}
+
+// Sans confirmation de lecture (media-meta) ni demande de renvoi : alerter
+function _armB64VerifyTimer(job) {
+  if (job.b64.verifyTimer) clearTimeout(job.b64.verifyTimer);
+  job.b64.verifyTimer = setTimeout(() => {
+    job.b64.verifyTimer = null;
+    if (!_vidLive(job)) return;
+    job.status = '⚠ Pas de confirmation de l\'écran — vérifiez sa connexion';
+    _vidRenderStatus();
+  }, 12000);
+}
+
+// Transfert base64 auquel répond l'écran émetteur
+function _vidB64JobOf(sid, mediaId) {
+  const j = sid ? _vidJobs.get(sid) : [..._vidJobs.values()].find((x) => x.b64 && x.b64.id === mediaId);
+  return j && j.b64 && j.b64.id === mediaId && _vidLive(j) ? j : null;
+}
+function remoteOnChunkAck(m) {
+  const job = _vidB64JobOf(_rxFrom, m.mediaId);
+  if (job) job.b64.got = Math.max(job.b64.got, m.got);
+}
+
+// L'écran signale des fragments perdus : on ne renvoie que ceux-là, à lui seul
+async function resendMissingChunks(msg) {
+  const job = _vidB64JobOf(_rxFrom, msg.mediaId);
+  if (!job) return;
+  const b = job.b64;
+  if (b.verifyTimer) { clearTimeout(b.verifyTimer); b.verifyTimer = null; }
+  const miss = Array.isArray(msg.missing) ? msg.missing : [];
+  if (!miss.length || b.rounds >= 3) {
+    job.status = '⚠ Transfert incomplet — réessayez';
+    _vidRenderStatus();
+    return;
+  }
+  b.rounds++;
+  job.status = '📤 Renvoi de ' + miss.length + ' fragments… (' + b.rounds + '/3)';
+  _vidRenderStatus();
+  for (let j = 0; j < miss.length; j++) {
+    const i = miss[j];
+    if (b.chunks[i] == null) continue;
+    if (!_vidLive(job)) return;
+    sendMsg({ type: 'media:chunk', mediaId: b.id, index: i, data: b.chunks[i], target: b.target });
+    if (j % 12 === 11) await _sleepMs(12);
+  }
+  sendMsg({ type: 'media:play', mediaId: b.id, target: b.target });
+  job.status = '⏳ Vérification de la réception…';
+  _vidRenderStatus();
+  _armB64VerifyTimer(job);
+}
+
+// Remet à zéro les contrôles de lecture vidéo de l'interface (sans toucher aux transferts)
+function _mediaViewReset() {
   _mediaIsVideo = false; _remotePlaying = false; _remoteDur = 0; _remoteCur = 0;
   if (_seekSendTimer) { clearTimeout(_seekSendTimer); _seekSendTimer = null; }
   showMediaPlay(false); showMediaTimeline(false);
   _mediaSeeking = false;
 }
+// Ferme les transferts vers la cible et remet l'interface à zéro, sans notifier les écrans
+function teardownBroadcast() {
+  _vidStopJobs(scrTargetIds());
+  _mediaViewReset();
+}
 
-// Arrêt complet (bouton « Arrêter la diffusion ») : vide la sélection + éteint l'écran
-function stopMediaBroadcast(notify = true) {
-  teardownBroadcast();
+// Arrêt complet (bouton « Arrêter la diffusion ») : vide la sélection + éteint
+// les écrans de la cible. everywhere : tous les transferts (retour à l'accueil)
+function stopMediaBroadcast(notify = true, everywhere = false) {
+  _vidStopJobs(everywhere ? null : scrTargetIds());
+  _mediaViewReset();
   _activeMediaId = null;
+  if (scrTarget().k === 'all') scrAll().media = null;
   renderPool();
   showMediaStop(false);
   setMediaStatus('Aucun média diffusé');
   if (notify) sendMsg({ type: 'media-stop' });
 }
-
 // ══════════════════════════ MÉDIA — ÉCRAN (récepteur) ══════════════════════════
 let _screenPc = null, _screenPendingIce = [];
 let _vidParts = [], _vidMeta = null, _screenVidUrl = null, _screenProgTimer = 0;
@@ -9993,10 +11255,9 @@ async function _measureCallAudio(seq) {
 function clearCallAudio() {
   _callAudioSeq++;
   _callAudioData = null; _callAudioName = ''; _callAudioDur = 0;
-  _callAudioOnScreens = null;
   _screenCached.delete('__callaudio');
   renderCallAudioRow();
-  sendMsg({ type: 'media:evict', id: '__callaudio' });
+  sendMsg({ type: 'media:evict', id: '__callaudio' }); // tous les écrans (oublié de leur état : 28-screens.js)
 }
 // Fichier choisi → ligne « nom · durée · sur l'écran ✓ » ; sinon bouton de choix
 function renderCallAudioRow(message) {
@@ -10071,11 +11332,22 @@ function onLockWall(files) {
     if (pv) pv.style.backgroundImage = 'url(' + _lockWallData + ')';
     const st = document.getElementById('lockWallStatus');
     if (st) st.textContent = "📤 Envoi du fond d'écran…";
-    await sendImageChunks(_lockWallData, { mediaId: '__lockwall', show: false });
+    await ensureLockWall();
     if (st) st.textContent = "✓ Fond d'écran prêt sur l'écran";
   };
   img.onerror = () => URL.revokeObjectURL(img.src);
   img.src = URL.createObjectURL(files[0]);
+}
+// Fond d'écran verrouillé vers les écrans donnés (défaut : la cible) qui ne
+// l'ont pas encore (un seul exemplaire en cache, __lockwall)
+function ensureLockWall(screens) {
+  const data = _lockWallData;
+  if (!data) return Promise.resolve();
+  const ids = screens || scrTargetIds();
+  if (!ids.length) return sendImageChunks(data, { mediaId: '__lockwall', show: false }); // aucun écran connu : comme avant
+  const lack = ids.filter((s) => scrState(s).sent.get('__lockwall') !== data);
+  for (const s of lack) scrState(s).sent.set('__lockwall', data);
+  return sendImageChunks(data, { mediaId: '__lockwall', show: false, screens: lack });
 }
 // Réglages de l'appel du formulaire (champs de call:start, sans photo ni son :
 // hasPhoto / hasAudio disent s'ils accompagnent l'appel ; ringId désigne un son
@@ -10104,26 +11376,38 @@ function callFormFields() {
   });
 }
 
-// Photo et bande son d'un appel : un seul exemplaire en cache sur les écrans
+// Photo et bande son d'un appel : un seul exemplaire en cache sur chaque écran
 // (__callphoto, __callaudio). Avant chaque appel, on (re)envoie ceux de cet
-// appel s'ils diffèrent de ceux déjà envoyés (appel du formulaire, entrée de
-// la liste, déclenchement par la console). Sons importés (rings : ids
-// __ring_…) : chacun garde sa place en cache, envoyé une fois puis seulement
-// s'il manque (81-ringtones.js). Envois et appels restent dans l'ordre.
-let _callPhotoOnScreens = null, _callAudioOnScreens = null, _callAssetChain = Promise.resolve();
-function ensureCallAssets(photo, audio, rings) {
+// appel aux écrans visés dont l'exemplaire diffère (appel du formulaire,
+// entrée de la liste, déclenchement par la console) : chaque écran a le sien
+// (scrState(id).sent, 28-screens.js). Sons importés (rings : ids __ring_…) :
+// chacun garde sa place en cache, envoyé une fois puis seulement s'il manque
+// (81-ringtones.js). Envois et appels restent dans l'ordre.
+// screens : écrans destinataires (défaut : la cible au moment de l'appel).
+let _callAssetChain = Promise.resolve();
+function ensureCallAssets(photo, audio, rings, screens) {
+  const ids = screens || scrTargetIds();
   _callAssetChain = _callAssetChain.then(async () => {
-    if (photo && photo !== _callPhotoOnScreens) {
-      _callPhotoOnScreens = photo;
-      await sendImageChunks(photo, { mediaId: '__callphoto', show: false });
+    const lacking = (key, data) => {
+      const l = ids.filter((s) => scrKnown(s) && scrState(s).sent.get(key) !== data);
+      for (const s of l) scrState(s).sent.set(key, data);
+      return l;
+    };
+    if (photo) {
+      const l = lacking('__callphoto', photo);
+      if (l.length) await sendImageChunks(photo, { mediaId: '__callphoto', show: false, screens: l });
     }
-    if (audio && audio !== _callAudioOnScreens) {
-      _callAudioOnScreens = audio;
-      _screenCached.delete('__callaudio'); // « sur l'écran ✓ » au prochain accusé
-      renderCallAudioRow();
-      await sendImageChunks(audio, { mediaId: '__callaudio', show: false });
+    if (audio) {
+      const l = lacking('__callaudio', audio);
+      if (l.length) {
+        for (const s of l) scrState(s).cached.delete('__callaudio'); // « sur l'écran ✓ » au prochain accusé
+        _screenCached.delete('__callaudio');
+        scrRefreshCachedView();
+        renderCallAudioRow();
+        await sendImageChunks(audio, { mediaId: '__callaudio', show: false, screens: l });
+      }
     }
-    for (const id of rings || []) await ringSendIfMissing(id);
+    for (const id of rings || []) await ringSendIfMissing(id, ids);
   }).catch(() => {});
   return _callAssetChain;
 }
@@ -10140,6 +11424,15 @@ function _setCallStatusUI(t) {
   if (el) el.textContent = t;
 }
 function remoteOnCallState(m) {
+  // État de l'appel de cet écran (liste « Écrans connectés »)
+  const sid = _rxFrom && scrKnown(_rxFrom) ? _rxFrom : null;
+  if (sid) {
+    const st = scrState(sid);
+    if (m.state === 'declined' || m.state === 'ended') st.call = null;
+    else if (st.call) st.call.state = m.state;
+    scrChanged();
+    if (!scrInTarget(sid)) return; // l'interface suit les écrans de la cible
+  }
   if (_callUiTimer) { clearInterval(_callUiTimer); _callUiTimer = null; }
   if (m.state === 'ringing') _setCallStatusUI("📞 Ça sonne sur l'écran…");
   else if (m.state === 'incall') {
@@ -10956,9 +12249,8 @@ async function deleteRingTone(id) {
   ringLib = ringLib.filter((x) => x.id !== id);
   for (const k of RING_KINDS) if (ringSettings[k].sound === id) ringSettings[k].sound = 'classic';
   persistRingSettings();
-  _ringOnScreens.delete(id);
   _screenCached.delete(id);
-  sendMsg({ type: 'media:evict', id });
+  sendMsg({ type: 'media:evict', id }); // tous les écrans (oublié de leur état : 28-screens.js)
   _ringSetStatus('« ' + t.name + ' » supprimée.');
   renderRingPanel();
   if (typeof renderCallList === 'function') renderCallList();
@@ -11003,18 +12295,28 @@ async function previewRingTone(id) {
 }
 
 // ── Envoi aux écrans ──
-const _ringOnScreens = new Set(); // sons envoyés aux écrans (et non perdus depuis)
+// Chaque écran a ses sons (scrState(id).sent / .cached, 28-screens.js) : un
+// son part vers les seuls écrans visés qui ne l'ont pas.
 const _ringSentAt = new Map();
-// Appelé dans la file des envois (ensureCallAssets) : fragments du son s'il n'est pas déjà parti
-async function ringSendIfMissing(id) {
-  if (_ringOnScreens.has(id) || !ringLibHas(id)) return;
+const _ringOn = (id, s) => scrState(s).sent.has(id) || scrState(s).cached.has(id);
+// Son présent (envoyé ou accusé) sur tous les écrans en ligne
+const _ringOnScreens = {
+  has(id) { const ids = scrList().filter(scrOnline); return ids.length > 0 && ids.every((s) => _ringOn(id, s)); },
+};
+// Appelé dans la file des envois (ensureCallAssets) : fragments du son vers
+// les écrans donnés (défaut : la cible) qui ne l'ont pas déjà
+async function ringSendIfMissing(id, screens) {
+  if (!ringLibHas(id)) return;
   if (!mqttClient || !mqttClient.connected) return; // renvoyé à la resynchronisation
+  const lack = () => (screens || scrTargetIds()).filter((s) => scrKnown(s) && !_ringOn(id, s));
+  if (!lack().length) return;
   const data = await ringLibData(id);
-  if (!data || _ringOnScreens.has(id)) return;
-  _ringOnScreens.add(id);
+  const ids = lack();
+  if (!data || !ids.length) return;
+  for (const s of ids) scrState(s).sent.set(id, true);
   _ringSentAt.set(id, Date.now());
   _screenCached.delete(id);
-  await sendImageChunks(data, { mediaId: id, show: false });
+  await sendImageChunks(data, { mediaId: id, show: false, screens: ids });
 }
 // Sons qui doivent être sur les écrans : ceux choisis pour chaque type et,
 // passerelle en marche, ceux des entrées 1 à 20 des listes
@@ -11036,13 +12338,15 @@ function ringPreloadGatewayEntries() {
   const ids = ringGatewayIds();
   if (ids.length) ensureCallAssets(null, null, ids);
 }
-// L'écran a reçu un appel avec un son qu'il n'a pas (rechargé, transfert perdu)
-function ringOnScreenNeeds(id) {
+// Un écran a reçu un appel avec un son qu'il n'a pas (rechargé, transfert perdu) :
+// renvoyé à lui seul (sid inconnu : aux écrans de la cible)
+function ringOnScreenNeeds(id, sid) {
   _screenCached.delete(id);
   if (!ringLibHas(id)) return;
   if (Date.now() - (_ringSentAt.get(id) || 0) < 3000) return; // envoi tout récent : déjà en route
-  _ringOnScreens.delete(id);
-  ensureCallAssets(null, null, [id]);
+  const ids = sid ? [sid] : scrTargetIds();
+  for (const s of ids) { scrState(s).sent.delete(id); scrState(s).cached.delete(id); }
+  ensureCallAssets(null, null, [id], ids);
 }
 // Accusé « en cache » d'un écran : bande son du décroché, son importé
 function remoteOnCallAssetCached(id) {
@@ -11896,10 +13200,8 @@ function gwKnownScreens() {
   for (const id of gwState.patch.ids()) if (!ids.includes(id)) ids.push(id);
   return ids;
 }
-function gwScreenName(id) {
-  const sc = _pairedScreens.get(id);
-  return sc ? 'Écran ' + sc.n : 'Écran ' + id.slice(0, 4);
-}
+// Nom donné sur la télécommande (28-screens.js), sinon « Écran n »
+function gwScreenName(id) { return scrName(id); }
 // Ordre d'affichage : patchés par univers puis adresse, puis non patchés
 function gwPatchOrder() {
   const p = gwState.patch;

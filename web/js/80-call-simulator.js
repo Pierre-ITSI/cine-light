@@ -112,10 +112,9 @@ async function _measureCallAudio(seq) {
 function clearCallAudio() {
   _callAudioSeq++;
   _callAudioData = null; _callAudioName = ''; _callAudioDur = 0;
-  _callAudioOnScreens = null;
   _screenCached.delete('__callaudio');
   renderCallAudioRow();
-  sendMsg({ type: 'media:evict', id: '__callaudio' });
+  sendMsg({ type: 'media:evict', id: '__callaudio' }); // tous les écrans (oublié de leur état : 28-screens.js)
 }
 // Fichier choisi → ligne « nom · durée · sur l'écran ✓ » ; sinon bouton de choix
 function renderCallAudioRow(message) {
@@ -190,11 +189,22 @@ function onLockWall(files) {
     if (pv) pv.style.backgroundImage = 'url(' + _lockWallData + ')';
     const st = document.getElementById('lockWallStatus');
     if (st) st.textContent = "📤 Envoi du fond d'écran…";
-    await sendImageChunks(_lockWallData, { mediaId: '__lockwall', show: false });
+    await ensureLockWall();
     if (st) st.textContent = "✓ Fond d'écran prêt sur l'écran";
   };
   img.onerror = () => URL.revokeObjectURL(img.src);
   img.src = URL.createObjectURL(files[0]);
+}
+// Fond d'écran verrouillé vers les écrans donnés (défaut : la cible) qui ne
+// l'ont pas encore (un seul exemplaire en cache, __lockwall)
+function ensureLockWall(screens) {
+  const data = _lockWallData;
+  if (!data) return Promise.resolve();
+  const ids = screens || scrTargetIds();
+  if (!ids.length) return sendImageChunks(data, { mediaId: '__lockwall', show: false }); // aucun écran connu : comme avant
+  const lack = ids.filter((s) => scrState(s).sent.get('__lockwall') !== data);
+  for (const s of lack) scrState(s).sent.set('__lockwall', data);
+  return sendImageChunks(data, { mediaId: '__lockwall', show: false, screens: lack });
 }
 // Réglages de l'appel du formulaire (champs de call:start, sans photo ni son :
 // hasPhoto / hasAudio disent s'ils accompagnent l'appel ; ringId désigne un son
@@ -223,26 +233,38 @@ function callFormFields() {
   });
 }
 
-// Photo et bande son d'un appel : un seul exemplaire en cache sur les écrans
+// Photo et bande son d'un appel : un seul exemplaire en cache sur chaque écran
 // (__callphoto, __callaudio). Avant chaque appel, on (re)envoie ceux de cet
-// appel s'ils diffèrent de ceux déjà envoyés (appel du formulaire, entrée de
-// la liste, déclenchement par la console). Sons importés (rings : ids
-// __ring_…) : chacun garde sa place en cache, envoyé une fois puis seulement
-// s'il manque (81-ringtones.js). Envois et appels restent dans l'ordre.
-let _callPhotoOnScreens = null, _callAudioOnScreens = null, _callAssetChain = Promise.resolve();
-function ensureCallAssets(photo, audio, rings) {
+// appel aux écrans visés dont l'exemplaire diffère (appel du formulaire,
+// entrée de la liste, déclenchement par la console) : chaque écran a le sien
+// (scrState(id).sent, 28-screens.js). Sons importés (rings : ids __ring_…) :
+// chacun garde sa place en cache, envoyé une fois puis seulement s'il manque
+// (81-ringtones.js). Envois et appels restent dans l'ordre.
+// screens : écrans destinataires (défaut : la cible au moment de l'appel).
+let _callAssetChain = Promise.resolve();
+function ensureCallAssets(photo, audio, rings, screens) {
+  const ids = screens || scrTargetIds();
   _callAssetChain = _callAssetChain.then(async () => {
-    if (photo && photo !== _callPhotoOnScreens) {
-      _callPhotoOnScreens = photo;
-      await sendImageChunks(photo, { mediaId: '__callphoto', show: false });
+    const lacking = (key, data) => {
+      const l = ids.filter((s) => scrKnown(s) && scrState(s).sent.get(key) !== data);
+      for (const s of l) scrState(s).sent.set(key, data);
+      return l;
+    };
+    if (photo) {
+      const l = lacking('__callphoto', photo);
+      if (l.length) await sendImageChunks(photo, { mediaId: '__callphoto', show: false, screens: l });
     }
-    if (audio && audio !== _callAudioOnScreens) {
-      _callAudioOnScreens = audio;
-      _screenCached.delete('__callaudio'); // « sur l'écran ✓ » au prochain accusé
-      renderCallAudioRow();
-      await sendImageChunks(audio, { mediaId: '__callaudio', show: false });
+    if (audio) {
+      const l = lacking('__callaudio', audio);
+      if (l.length) {
+        for (const s of l) scrState(s).cached.delete('__callaudio'); // « sur l'écran ✓ » au prochain accusé
+        _screenCached.delete('__callaudio');
+        scrRefreshCachedView();
+        renderCallAudioRow();
+        await sendImageChunks(audio, { mediaId: '__callaudio', show: false, screens: l });
+      }
     }
-    for (const id of rings || []) await ringSendIfMissing(id);
+    for (const id of rings || []) await ringSendIfMissing(id, ids);
   }).catch(() => {});
   return _callAssetChain;
 }
@@ -259,6 +281,15 @@ function _setCallStatusUI(t) {
   if (el) el.textContent = t;
 }
 function remoteOnCallState(m) {
+  // État de l'appel de cet écran (liste « Écrans connectés »)
+  const sid = _rxFrom && scrKnown(_rxFrom) ? _rxFrom : null;
+  if (sid) {
+    const st = scrState(sid);
+    if (m.state === 'declined' || m.state === 'ended') st.call = null;
+    else if (st.call) st.call.state = m.state;
+    scrChanged();
+    if (!scrInTarget(sid)) return; // l'interface suit les écrans de la cible
+  }
   if (_callUiTimer) { clearInterval(_callUiTimer); _callUiTimer = null; }
   if (m.state === 'ringing') _setCallStatusUI("📞 Ça sonne sur l'écran…");
   else if (m.state === 'incall') {

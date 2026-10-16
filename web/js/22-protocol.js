@@ -181,6 +181,13 @@ const MSG_ROUTES = {
     handle: (m) => screenApplyDmxLook(m),
   },
   'screen:identify':   { roles: ['screen'], validate: () => true, handle: () => screenIdentify() },
+  // Nom et groupes de cet écran (télécommande, 28-screens.js)
+  'screen:config': {
+    roles: ['screen'],
+    validate: (m) => (m.name === undefined || _P.str(m.name, PROTO.NAME_MAX))
+      && (m.groups === undefined || (Array.isArray(m.groups) && m.groups.length <= 16 && m.groups.every((g) => typeof g === 'string' && SRP.GROUP_ID_RE.test(g)))),
+    handle: (m) => screenApplyConfig(m),
+  },
   'rtc-offer':         { roles: ['screen'], validate: _validSdp('offer'), handle: (m) => screenHandleOffer(m.sdp) },
   // Candidats ICE dans les deux sens : chaque rôle n'accepte que ceux de l'autre
   'rtc-ice': {
@@ -215,11 +222,11 @@ const MSG_ROUTES = {
     },
     handle: (m) => advancePool(m.dir),
   },
-  'media:cached':      { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => { _screenCached.add(m.id); _preloadInflight.delete(m.id); remoteOnCallAssetCached(m.id); } },
+  'media:cached':      { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenCached(m.id) },
   'media:chunkack': {
     roles: ['remote'],
     validate: (m) => _P.id(m.mediaId) && (m.got = _P.int(m.got, 0, PROTO.VID_MAX_CHUNKS) ?? 0, true),
-    handle: (m) => { if (_b64Ack.id === m.mediaId) _b64Ack.got = Math.max(_b64Ack.got, m.got); },
+    handle: (m) => remoteOnChunkAck(m),
   },
   'media:need-chunks': {
     roles: ['remote'],

@@ -11,6 +11,7 @@ const _LS_KEYS = {
   remote: 'setremote-session-v1',        // secret de la télécommande
   screen: 'setremote-screen-session-v1', // dernière session rejointe par cet écran
   screenId: 'setremote-screen-id',
+  screenConfig: 'setremote-screen-config-v1', // nom et groupes de cet écran (screen:config), par session
 };
 let _session = null; // secret de la session active (télécommande ou écran)
 
@@ -42,6 +43,22 @@ function renewRemoteSession() {
 // Écran : dernière session rejointe (QR ou code)
 function screenStoredSession() { return _readPairing(_LS_KEYS.screen); }
 function screenSaveSession(p) { _writePairing(_LS_KEYS.screen, p); }
+
+// Écran : nom et groupes donnés par la télécommande (screen:config), gardés
+// pour la session rejointe (une autre session repart sans nom ni groupe)
+function screenStoredConfig(p) {
+  try {
+    const o = JSON.parse(_lsGet(_LS_KEYS.screenConfig));
+    if (!o || typeof o !== 'object' || !p || o.channelId !== p.channelId) return { name: '', groups: [] };
+    return {
+      name: typeof o.name === 'string' ? o.name.replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, 40) : '',
+      groups: Array.isArray(o.groups) ? o.groups.filter((g, i, a) => typeof g === 'string' && SRP.GROUP_ID_RE.test(g) && a.indexOf(g) === i).slice(0, 16) : [],
+    };
+  } catch (_) { return { name: '', groups: [] }; }
+}
+function screenSaveConfig(p, cfg) {
+  _lsSet(_LS_KEYS.screenConfig, JSON.stringify({ channelId: p.channelId, name: cfg.name, groups: cfg.groups }));
+}
 
 // Écran : identifiant stable, annoncé dans « caps »
 function screenId() {

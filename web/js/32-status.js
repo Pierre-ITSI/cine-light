@@ -43,24 +43,34 @@ function renderLinkStatus() {
   renderPairedScreens(now);
 }
 
+// Noms : ceux du registre de la session (28-screens.js, « Écran n » par défaut)
 function renderPairedScreens(now) {
   const box = document.getElementById('pairScreens'), list = document.getElementById('pairScreensList');
   if (!box || !list) return;
   box.style.display = _pairedScreens.size ? 'flex' : 'none';
   document.getElementById('pairScreensCount').textContent = String(_pairedScreens.size);
-  list.innerHTML = [..._pairedScreens.values()].sort((a, b) => a.n - b.n).map((s) => {
+  const order = (id, s) => { const e = _scrReg.screens.get(id); return e ? e.n : 1e6 + s.n; };
+  list.innerHTML = [..._pairedScreens.entries()].sort((a, b) => order(...a) - order(...b)).map(([id, s]) => {
     const off = _linkState === 'connected' && now - s.lastSeen > SCREEN_OFFLINE_MS;
     return '<div class="pair-screen' + (off ? ' off' : '') + '"><span class="ps-dot"></span>'
-      + '<span class="ps-name">Écran ' + s.n + '</span><span class="ps-link">' + (off ? 'Hors ligne' : 'Internet') + '</span></div>';
+      + '<span class="ps-name">' + escapeHtml(scrName(id)) + '</span><span class="ps-link">' + (off ? 'Hors ligne' : 'Internet') + '</span></div>';
   }).join('');
+  if (typeof renderScreensUi === 'function') renderScreensUi(); // liaison de chaque écran (maquette 5)
 }
 
 // Chaque message authentifié d'un écran prouve qu'il est en ligne ; « caps »
-// rattache son étiquette d'émetteur (une par lancement) à son screenId stable.
+// rattache son étiquette d'émetteur (une par lancement) à son screenId stable
+// et l'inscrit au registre de la session (nom, groupes : 28-screens.js).
 function remoteNoteScreen(sender, msg) {
   if (msg.type === 'caps' && typeof msg.screenId === 'string' && SRP.SCREEN_ID_RE.test(msg.screenId)) {
     for (const [snd, id] of _screenOfSender) if (id === msg.screenId && snd !== sender) _screenOfSender.delete(snd);
     _screenOfSender.set(sender, msg.screenId);
+    // Trames reçues avant son « caps » : comptées sous son étiquette, désormais sous son identifiant
+    if (_pairedScreens.has(sender) && !_pairedScreens.has(msg.screenId)) {
+      _pairedScreens.set(msg.screenId, _pairedScreens.get(sender));
+    }
+    _pairedScreens.delete(sender);
+    scrRegister(msg.screenId);
   }
   const id = _screenOfSender.get(sender) || sender;
   let sc = _pairedScreens.get(id);

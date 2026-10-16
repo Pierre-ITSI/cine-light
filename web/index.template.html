@@ -144,6 +144,12 @@
       <div class="autosend-badge" id="autosendBadge">↗ envoyé</div>
     </div>
   </div>
+  <!-- Cible des commandes (maquette 6) : visible dès deux écrans appairés -->
+  <button type="button" class="target-btn" id="targetBtn" style="display:none" onclick="openTargetSheet()" aria-haspopup="dialog">
+    <svg class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>
+    <span class="tb-label" id="targetBtnLabel">Cible : <b>Tous les écrans</b></span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+  </button>
   <button class="screen-toggle-btn" id="blackoutBtn" onclick="toggleBlackout()">
     <span id="blackoutIcon">⚫</span><span id="blackoutLabel">Écran ON — appuyer pour éteindre</span>
   </button>
@@ -773,7 +779,7 @@
       <div class="pair-wait"><span class="pair-wait-dot"></span>En attente d'un écran…</div>
     </div>
     <div class="panel pair-screens" id="pairScreens" style="display:none">
-      <div class="panel-label">Écrans appairés (<span id="pairScreensCount">0</span>)</div>
+      <div class="pair-screens-head"><div class="panel-label">Écrans appairés (<span id="pairScreensCount">0</span>)</div><button type="button" class="pair-manage" onclick="openScreensView()">Gérer</button></div>
       <div id="pairScreensList" class="pair-screens-list"></div>
     </div>
     <!-- Passerelle DMX : visible partout ; hors de l'app native, la vue explique qu'il faut l'app (validé) -->
@@ -783,6 +789,30 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
       Chiffré de bout en bout : seuls vos appareils lisent les messages et les médias
     </div>
+  </div>
+</div>
+
+<!-- Écrans connectés & groupes (maquette 5) -->
+<div id="screens-view" role="dialog" aria-labelledby="svTitle">
+  <div class="sv-head">
+    <button type="button" class="sv-back" aria-label="Retour à la télécommande" onclick="closeScreensView()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <span class="sv-title" id="svTitle">Écrans connectés</span>
+    <button type="button" class="sv-pair" onclick="screensViewPair()">+ Appairer</button>
+  </div>
+  <div class="sv-list" id="svList"></div>
+  <div class="sv-groups">
+    <div class="sv-label">Groupes</div>
+    <div class="sv-chips" id="svGroups"></div>
+  </div>
+  <div class="sv-note">« Identifier » fait clignoter l'écran concerné pour le reconnaître sur le décor.</div>
+</div>
+
+<!-- Feuille : cible des commandes (maquette 6), renommer, groupes -->
+<div id="sr-sheet" onclick="if(event.target===this)closeSheet()">
+  <div class="sr-sheet" role="dialog" aria-modal="true" aria-labelledby="srSheetTitle">
+    <span class="sr-sheet-grip" aria-hidden="true"></span>
+    <h2 id="srSheetTitle">Envoyer les commandes à…</h2>
+    <div class="sr-sheet-body" id="srSheetBody"></div>
   </div>
 </div>
 

@@ -10,7 +10,7 @@ Appairage, chiffrement de bout en bout et schéma des messages entre la
 > `expo-app/` pas encore (§7).
 
 ```sh
-cd packages/protocol && npm test     # 58 tests node --test, aucune installation
+cd packages/protocol && npm test     # 60 tests node --test, aucune installation
 # (également exécutés par le `npm test` racine via tests/protocol-package.test.mjs)
 ```
 
@@ -172,15 +172,27 @@ Des tests de **dérive** relisent `web/js/*.js` (ou `index.html` à défaut) et
 **Multi-écran** :
 
 - `target` (facultatif, tout message `r2s`) : absent = tous les écrans,
-  `{ screens: [screenId, …] }` = écrans listés, `{ group: 'id' }` = membres du
-  groupe. Côté écran : `isAddressedTo(msg, { screenId, groups })`.
+  `{ screens: [screenId, …] }` = écrans listés (1 à 64), `{ group: 'id' }` =
+  membres du groupe. Côté écran : `isAddressedTo(msg, { screenId, groups })`,
+  appliqué par `createSecureChannel` (un écran ne voit jamais un ordre adressé
+  à d'autres).
 - Chaque écran tire au **premier lancement** un `screenId` stable
   (`createScreenId()`, 96 bits) et l'annonce dans `caps` avec `name` et
   `groups`.
 - `screen:config { target: { screens: [...] }, name?, groups? }` : la
-  télécommande renomme un écran / fixe ses groupes.
+  télécommande renomme un écran / fixe ses groupes (`name: ''` = nom par
+  défaut).
 - WebRTC (`rtc-offer`) : cibler **un** écran ; les réponses sont rattachées à
   l'écran par l'étiquette `sender` (authentifiée) apprise via `caps`.
+- **Usage dans la PWA** (`web/js/28-screens.js`) : la télécommande ne produit
+  que deux formes, rien (cible « Tous les écrans ») ou `{ screens }`. Un
+  groupe est **résolu en liste d'écrans** au moment de l'envoi : les groupes
+  vivent sur la télécommande, un écran qui aurait manqué son `screen:config`
+  (hors ligne au moment du changement) reçoit quand même les ordres de son
+  groupe. Les écrans apprennent tout de même leur nom et leurs groupes
+  (`screen:config`, renvoyé à la resynchronisation si `caps` diffère) :
+  affichage du nom, et `{ group }` reste utilisable par un autre émetteur.
+  Aucun changement de schéma n'a donc été nécessaire.
 - `dmx:look { target?, seq, live, look }` : émis par la passerelle DMX
   (`packages/dmx`, assemblé dans la PWA sous la globale `SRDMX` ;
   `web/js/86-dmx-gateway.js`), appliqué par l'écran (`web/js/36-dmx-screen.js`).
@@ -298,8 +310,18 @@ expose l'API dans la globale **`SRP`**, en tête du `<script>` unique.
   (`color`, `strobe`), sous une étiquette d'émetteur distincte pour ne pas
   perturber la fenêtre anti-rejeu du flux MQTT.
 - WebCrypto n'existe qu'en HTTPS, sur `localhost` ou en `file://`.
-- Toutes les commandes vont à tous les écrans (comportement historique) ; le
-  ciblage par écran (`target`) viendra avec l'interface correspondante.
+- **Plusieurs écrans** (`web/js/28-screens.js`, `39-screens-ui.js`,
+  maquettes 5 et 6) : écrans nommés et regroupés (par session), cible
+  « Tous / un groupe / un écran » choisie sous l'aperçu ; `sendMsg` ajoute la
+  cible à chaque ordre (sauf `hello`, `media:order`, `media:evict`, communs à
+  tous, et les messages déjà adressés : passerelle DMX, transferts). La
+  télécommande tient l'**état attendu de chaque écran** (couleur, effet,
+  strobe, noir, luminosité, média, cache) ; à chaque `caps`, la
+  resynchronisation (`24-resync.js`) renvoie à **cet écran seul** son état et
+  ce qui lui manque. Vidéo : une connexion WebRTC **par écran** visé (offre et
+  ICE adressés, réponse rattachée par l'étiquette `sender`), repli base64
+  **par écran** (`media:upload` / `media:chunk` adressés, accusés de cet
+  écran).
 
 ## 7. Intégration React Native (`expo-app`, Expo SDK 56, Hermes)
 

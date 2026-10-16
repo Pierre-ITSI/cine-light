@@ -38,6 +38,9 @@ test('relais : topic opaque, trames illisibles (ni type, ni contenu, ni média e
     onAddImages([window.__files['rouge.png']]);
   });
   await waitFor(sp, () => _mediaCache.has('m1') && _callState === 'ringing', null, { timeout: 10000 });
+  // Resynchronisation de l'écran (adressée à lui, après son « caps ») comprise
+  await waitFor(rp, () => _resyncTimer === null);
+  await sleep(200);
   await broker.flush();
   const session = await rp.evaluate(() => _session);
   const topics = new Set(broker.log.map((e) => e.topic));

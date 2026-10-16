@@ -26,7 +26,8 @@ async function connectSession(pairing, onConnected) {
   let ch, bc = null, recvKey = null;
   try {
     const opts = { pairing, role: mode };
-    if (mode === 'screen') opts.screenId = screenId();
+    // Écran : ordres adressés à d'autres écrans ignorés (target, 28-screens.js)
+    if (mode === 'screen') { opts.screenId = screenId(); opts.groups = _screenCfg.groups; }
     ch = await SRP.createSecureChannel(opts);
     if (mode === 'remote') bc = await SRP.createSecureChannel(opts);
     const { keys } = await SRP.deriveSession(pairing);
@@ -90,6 +91,10 @@ async function connectSession(pairing, onConnected) {
 // (le déchiffrement est asynchrone ; l'ordre compte : début de transfert avant
 // ses fragments, dernière couleur gagnante…).
 const _BC_TYPES = ['color', 'strobe']; // seuls types acceptés du repli même appareil
+// Télécommande : écran (screenId) qui a émis le message en cours de traitement,
+// d'après son étiquette d'émetteur authentifiée (rattachée par « caps ») ;
+// null si inconnu. Lu par les gestionnaires (réponse WebRTC, accusés, lecture…).
+let _rxFrom = null;
 function receiveFrame(ch, str, via) {
   _rxChain = _rxChain.then(async () => {
     if (ch !== _sec) return;
@@ -104,8 +109,12 @@ function receiveFrame(ch, str, via) {
     if (!r || r.kind !== 'message' || ch !== _sec) return; // écho, autre écran, fragment binaire
     if (via === 'bc' && !_BC_TYPES.includes(r.message.type)) return;
     secStats.received++;
-    if (mode === 'remote') remoteNoteScreen(r.sender, r.message);
+    if (mode === 'remote') {
+      remoteNoteScreen(r.sender, r.message);
+      _rxFrom = _screenOfSender.get(r.sender) || null;
+    }
     try { dispatchMessage(r.message); } catch (e) { console.warn('SetRemote : message', r.message.type, e); }
+    finally { _rxFrom = null; }
   });
   return _rxChain;
 }
@@ -147,7 +156,16 @@ function setClockSkewed(on) {
 
 // Envoi : forme « fil » (JSON), valeurs bornées aux plages du schéma, puis
 // scellement et publication DANS L'ORDRE des appels.
+// Télécommande : l'ordre part vers la cible courante (target, 28-screens.js)
+// et l'état attendu des écrans visés est noté, même hors ligne (la
+// resynchronisation le leur renverra).
 function sendMsg(obj) {
+  if (mode === 'remote') {
+    if (_scrMute) return; // rechargement de l'affichage (changement de cible) : rien ne part
+    obj = scrAddress(obj);
+    if (!obj) return;     // cible vide
+    scrTrack(obj);
+  }
   if (!mqttClient || !mqttClient.connected || !_sec) return;
   let msg;
   try { msg = prepareOutgoing(obj); } catch (_) { return; }

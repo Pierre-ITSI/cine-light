@@ -111,6 +111,38 @@ const gateway = (extra) => async (page) => {
   if (extra) await extra(page);
 };
 const patchAll = (page, entries) => page.evaluate(([ids, entries]) => entries.forEach((e, i) => gwPatchSet(ids[i], e)), [DMX_IDS, entries]);
+
+// ── Plusieurs écrans (maquettes 5 et 6) ──
+// Trois écrans en ligne, nommés ; groupes « Salon » (Julie, TV) et « Cuisine »
+// (tablette) ; tous à 3200 K / 60 %, puis un appel sur le téléphone de Julie,
+// l'effet TV (lissage 40 %) sur la TV ; cible : Salon.
+const SCR_IDS = ['JulieScreen00001', 'TvSalonScreen002', 'TabletteCuisine3'];
+const multiScreen = (extra) => remote(null, async (page) => {
+  await page.evaluate((ids) => {
+    setConnStatus('connected');
+    ids.forEach((id, i) => remoteNoteScreen('s' + i + 'SCRAAAAA', { type: 'caps', screenId: id }));
+    const [julie, tv, tab] = ids;
+    scrRenameScreen(julie, 'Téléphone de Julie'); scrRenameScreen(tv, 'TV salon'); scrRenameScreen(tab, 'Tablette cuisine');
+    scrCreateGroup('Salon', [julie, tv]);
+    scrCreateGroup('Cuisine', [tab]);
+    setKelvin(3200);
+    document.getElementById('dimmerSlider').value = 60; onDimmerChange();
+  }, SCR_IDS);
+  await page.clock.runFor(200);
+  await page.evaluate(async (ids) => {
+    const [julie, tv] = ids;
+    scrSetTarget({ k: 'screen', id: julie });
+    document.getElementById('callName').value = 'Maman';
+    await triggerCall();
+    scrSetTarget({ k: 'screen', id: tv });
+    selectEffect('tv');
+    document.getElementById('effectSmoothSlider').value = 40; onEffectParamChange();
+  }, SCR_IDS);
+  await page.clock.runFor(200);
+  await page.evaluate(() => scrSetTarget({ k: 'group', id: _scrReg.groups[0].id }));
+  await page.clock.runFor(300);
+  if (extra) await extra(page);
+});
 const E16 = (universe, address) => ({ universe, address, personality: 'extended16' });
 
 export const SCENES = {
@@ -244,6 +276,20 @@ export const SCENES = {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto(new URL('confidentialite.html', page.url()).href);
     await page.evaluate(() => document.fonts.ready);
+  },
+  // 5 · Écrans connectés & groupes
+  'remote-screens': multiScreen((page) => page.evaluate(() => openScreensView())),
+  // 6 · Choisir la cible (feuille), et le bouton « Cible » sous l'aperçu
+  'remote-target': multiScreen((page) => page.evaluate(() => openTargetSheet())),
+  'remote-target-chip': multiScreen(),
+  // Groupe : nom et écrans membres ; renommer un écran (feuilles, même présentation que la maquette 6)
+  'remote-group-edit': multiScreen((page) => page.evaluate(() => { openScreensView(); openGroupEditor(_scrReg.groups[0].id); })),
+  'remote-screen-rename': multiScreen((page) => page.evaluate((id) => { openScreensView(); openRenameScreen(id); }, SCR_IDS[1])),
+  // Écran de jeu nommé par la télécommande : son nom dans son menu
+  'screen-menu-named': async (page) => {
+    await joinScreen(page);
+    await page.evaluate(() => { screenApplyConfig({ type: 'screen:config', name: 'TV salon', groups: [] }); openScreenMenu(); });
+    await page.clock.runFor(300);
   },
   'screen-effect-police': async (page) => {
     await joinScreen(page);

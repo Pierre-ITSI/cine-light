@@ -1,0 +1,70 @@
+/* ══ Plusieurs écrans : cible des commandes (maquette 6), écrans connectés & groupes (maquette 5) ══ */
+
+/* — Télécommande : « Cible : … » sous l'aperçu — */
+.target-btn{width:100%;height:48px;display:flex;align-items:center;gap:10px;padding:0 14px;margin-bottom:12px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:.75rem;text-align:left;cursor:pointer}
+.target-btn.subset{border-color:var(--accent);background:rgba(255,107,44,.08)}
+.target-btn .tb-icon{flex-shrink:0;color:var(--accent)}
+.tb-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* — Onglet QR : « Écrans appairés (n) » + « Gérer » (maquette 1) — */
+.pair-screens-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pair-manage{background:none;border:none;padding:10px 0 10px 16px;margin:-10px 0;font-family:'DM Mono',monospace;font-size:.6875rem;line-height:1;color:var(--accent);cursor:pointer}
+
+/* — Écran de jeu : son nom dans le menu (sur deux lignes si long) — */
+.screen-menu-info{max-width:300px;text-align:center;line-height:1.5}
+
+/* — Feuille du bas : cible, renommer, groupes — */
+#sr-sheet{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.55);font-family:'DM Mono',monospace;color:var(--text)}
+#sr-sheet.open{display:block}
+.sr-sheet{position:absolute;left:0;right:0;bottom:0;max-height:88vh;overflow-y:auto;background:var(--mid);border-top:1px solid rgba(255,255,255,.12);border-radius:20px 20px 0 0;padding:12px 18px calc(26px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px}
+.sr-sheet-grip{align-self:center;width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.25);margin-bottom:8px;flex-shrink:0}
+.sr-sheet h2{margin:0 0 6px;font-family:'Lato',sans-serif;font-weight:600;font-size:1.1875rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr-sheet-body,.sr-form{display:flex;flex-direction:column}
+.sr-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 4px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
+.sr-row input{width:20px;height:20px;margin:0;flex-shrink:0;accent-color:var(--accent);cursor:pointer}
+.sr-row-label{flex:1;min-width:0;font-size:.8125rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr-row.on .sr-row-label{color:#FF8a55}
+.sr-row-meta{font-size:.6875rem;color:#a8a8a8;flex-shrink:0}
+.sr-row.disabled{opacity:.45;cursor:default}
+.sr-sublabel{margin:10px 0 8px;font-size:.625rem;letter-spacing:.2em;text-transform:uppercase;color:#a8a8a8}
+.sr-input{width:100%}
+.sr-sheet-note{margin:8px 0 0;font-size:.6875rem;color:#a8a8a8;line-height:1.6}
+.sr-add{margin-top:10px;min-height:46px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:transparent;color:#d0d0d0;font-family:'DM Mono',monospace;font-size:.6875rem;cursor:pointer}
+.sr-actions{display:flex;gap:10px;margin-top:14px}
+.sr-cancel,.sr-ok,.sr-del{height:50px;border-radius:8px;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.sr-cancel{flex:1;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text)}
+.sr-ok{flex:1.4;border:none;background:var(--accent);color:#000;font-weight:500}
+.sr-del{padding:0 14px;border:1px solid rgba(255,90,79,.5);background:transparent;color:#ff7a70;font-size:.6875rem}
+
+/* — Écrans connectés & groupes (maquette 5) — */
+#screens-view{display:none;position:fixed;inset:0;z-index:300;overflow-y:auto;overflow-x:hidden;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);color:var(--text);font-family:'DM Mono',monospace;padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));flex-direction:column;gap:12px}
+#screens-view.open{display:flex}
+.sv-head{display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.sv-back{width:36px;height:36px;margin-left:-8px;border:none;background:none;color:#c8c8c8;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0}
+.sv-title{flex:1;min-width:0;font-family:'Lato',sans-serif;font-weight:600;font-size:1.25rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sv-pair{display:flex;align-items:center;height:36px;padding:0 12px;border:1px solid rgba(255,255,255,.14);border-radius:6px;background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:.6875rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;flex-shrink:0}
+.sv-list{display:flex;flex-direction:column;gap:12px}
+.sv-card{background:var(--mid);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.sv-row{display:flex;align-items:center;gap:10px}
+.sv-card .sv-row+.sv-row{gap:8px}
+.sv-swatch{width:40px;height:40px;border-radius:8px;flex-shrink:0;border:1px solid rgba(255,255,255,.14)}
+.sv-main{flex:1;min-width:0}
+.sv-name,.sv-now{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sv-name{font-size:.875rem;color:var(--text)}
+.sv-now{font-size:.6875rem;color:#a8a8a8;margin-top:2px}
+.sv-link{display:flex;align-items:center;gap:6px;font-size:.625rem;color:var(--green);flex-shrink:0}
+.sv-link::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.sv-link.off{color:#ff7a70}
+.sv-group{height:28px;max-width:46%;padding:0 10px;border-radius:14px;border:1px solid rgba(255,107,44,.5);background:transparent;color:#FF8a55;font-family:'DM Mono',monospace;font-size:.625rem;letter-spacing:.06em;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sv-group.none{border-style:dashed;border-color:rgba(255,255,255,.25);color:#c8c8c8}
+.sv-flex{flex:1}
+.sv-btn{height:36px;padding:0 12px;border-radius:6px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:.6875rem;cursor:pointer;flex-shrink:0}
+.sv-icon{width:36px;height:36px;border-radius:6px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:#c8c8c8;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0}
+.sv-empty{font-size:.6875rem;color:#a8a8a8;line-height:1.55;text-align:center;padding:14px 6px;border:1px dashed var(--border);border-radius:10px}
+.sv-groups{background:var(--mid);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.sv-label{font-size:.625rem;letter-spacing:.2em;text-transform:uppercase;color:#a8a8a8}
+.sv-chips{display:flex;flex-wrap:wrap;gap:8px}
+.sv-chip{height:36px;max-width:100%;padding:0 14px;border-radius:18px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:#d0d0d0;font-family:'DM Mono',monospace;font-size:.6875rem;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sv-chip.on{border-color:var(--accent);background:rgba(255,107,44,.1);color:#FF8a55}
+.sv-chip.add{border:1px dashed rgba(255,255,255,.25);background:transparent;color:#c8c8c8}
+.sv-note{font-size:.6875rem;color:#a8a8a8;line-height:1.6;text-align:center}

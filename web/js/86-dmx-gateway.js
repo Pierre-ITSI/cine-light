@@ -304,10 +304,8 @@ function gwKnownScreens() {
   for (const id of gwState.patch.ids()) if (!ids.includes(id)) ids.push(id);
   return ids;
 }
-function gwScreenName(id) {
-  const sc = _pairedScreens.get(id);
-  return sc ? 'Écran ' + sc.n : 'Écran ' + id.slice(0, 4);
-}
+// Nom donné sur la télécommande (28-screens.js), sinon « Écran n »
+function gwScreenName(id) { return scrName(id); }
 // Ordre d'affichage : patchés par univers puis adresse, puis non patchés
 function gwPatchOrder() {
   const p = gwState.patch;

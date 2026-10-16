@@ -87,10 +87,15 @@ function sendCaps() {
   // actuellement affiché — la télécommande ne renvoie que ce qui manque.
   const cached = [];
   _mediaCache.forEach((c, id) => { if (cached.length < 500 && /^[A-Za-z0-9_-]{1,64}$/.test(id)) cached.push(id); });
-  // screenId : identifiant stable de cet écran (liste des écrans appairés)
-  sendMsg({ type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate, videoMode: 'rtc',
+  // screenId : identifiant stable de cet écran (liste des écrans appairés) ;
+  // name / groups : ceux donnés par la télécommande (screen:config), qu'elle
+  // complète s'ils ont changé pendant que l'écran était absent
+  const caps = { type: 'caps', torch: !ios, vibrate: !ios && !!navigator.vibrate, videoMode: 'rtc',
             cached, active: screenMediaVisible() ? (_screenActiveId || null) : null,
-            blackout: screenBlackoutOn, screenId: screenId() });
+            blackout: screenBlackoutOn, screenId: screenId() };
+  if (_screenCfg.name) caps.name = _screenCfg.name;
+  if (_screenCfg.groups.length) caps.groups = _screenCfg.groups.slice();
+  sendMsg(caps);
 }
 
 // Capacités du récepteur connecté (mémorisées pour choisir le transport vidéo).
