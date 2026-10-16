@@ -5,12 +5,15 @@ import { useKeepAwake } from 'expo-keep-awake';
 import * as Brightness from 'expo-brightness';
 import { Paths } from 'expo-file-system';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
-import type { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
+import type { ShouldStartLoadRequest, WebViewNavigationEvent } from 'react-native-webview/lib/WebViewTypes';
+import SetRemoteUdp, { createDmxBridge, type DmxBridge } from '../modules/setremote-udp';
 
 // Coque native de SetRemote : la PWA (fonctionnalités de référence) tourne dans
 // une vue web plein écran ; le natif apporte ce que le web ne sait pas faire :
 // barre d'état masquée en permanence, écran toujours allumé, vraie luminosité
-// matérielle. Les anciens écrans 100 % natifs restent accessibles sur /native.
+// matérielle, et réception UDP pour la passerelle DMX (sACN, Art-Net ; module
+// local modules/setremote-udp, contrat du pont dans docs/DMX-NATIVE.md § 9).
+// Les anciens écrans 100 % natifs restent accessibles sur /native.
 //
 // ── D'où vient l'interface ──
 // Par défaut elle est EMBARQUÉE dans le binaire (plugins/with-embedded-web.js,
@@ -83,10 +86,38 @@ export default function AppShell() {
     return () => { sub.remove(); restoreBrightness(); };
   }, [restoreBrightness]);
 
+  // Passerelle DMX : dmx:listen / dmx:stop / udp:send / net:info venant de la
+  // page ; datagrammes reçus remis par lots toutes les 20 ms via
+  // window.SRNative.receive(). Le natif ferme les sockets en arrière-plan et
+  // les rouvre au retour.
+  const dmx = useRef<DmxBridge | null>(null);
+  useEffect(() => {
+    const bridge = createDmxBridge({
+      native: SetRemoteUdp,
+      inject: (script) => webRef.current?.injectJavaScript(script),
+    });
+    dmx.current = bridge;
+    return () => { bridge.dispose(); dmx.current = null; };
+  }, []);
+
+  // L'écoute appartient au document qui l'a demandée : un nouveau document
+  // (navigation, rechargement) l'arrête ; un changement d'ancre (#) non.
+  const currentDoc = useRef<string | null>(null);
+  const onLoadStart = useCallback((e: WebViewNavigationEvent) => {
+    const doc = e.nativeEvent.url.split('#')[0];
+    if (doc !== currentDoc.current || e.nativeEvent.navigationType === 'reload') dmx.current?.reset();
+    currentDoc.current = doc;
+  }, []);
+  const reloadWeb = useCallback(() => {
+    dmx.current?.reset();
+    webRef.current?.reload();
+  }, []);
+
   // Messages de la PWA → fonctions natives
   const onMessage = useCallback(async (e: WebViewMessageEvent) => {
     let msg: { type?: string; value?: unknown };
     try { msg = JSON.parse(e.nativeEvent.data); } catch { return; }
+    if (dmx.current?.handle(msg)) return;
     if (msg.type === 'brightness-restore') { restoreBrightness(); return; }
     if (msg.type === 'brightness' && typeof msg.value === 'number' && isFinite(msg.value)) {
       const v = Math.min(1, Math.max(0, msg.value));
@@ -113,7 +144,7 @@ export default function AppShell() {
     return false;
   }, []);
 
-  const retry = useCallback(() => { setFailed(false); setReloadKey(k => k + 1); }, []);
+  const retry = useCallback(() => { dmx.current?.reset(); setFailed(false); setReloadKey(k => k + 1); }, []);
 
   return (
     <View style={styles.root}>
@@ -148,12 +179,13 @@ export default function AppShell() {
           allowFileAccessFromFileURLs={LOCAL}
           injectedJavaScriptBeforeContentLoaded={INJECT_BEFORE}
           onMessage={onMessage}
+          onLoadStart={onLoadStart}
           onShouldStartLoadWithRequest={onShouldStart}
           onError={() => setFailed(true)}
           onHttpError={(e) => { if (e.nativeEvent.statusCode >= 500) setFailed(true); }}
           // Le système iOS peut tuer le moteur web (mémoire) : on recharge
-          onContentProcessDidTerminate={() => webRef.current?.reload()}
-          onRenderProcessGone={() => webRef.current?.reload()}
+          onContentProcessDidTerminate={reloadWeb}
+          onRenderProcessGone={reloadWeb}
           // Médias : lecture en ligne, sans geste requis (sonneries, vidéos, bande son)
           allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
