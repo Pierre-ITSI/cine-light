@@ -8098,6 +8098,7 @@ function scrForget(id, newSid) {
   _pwCache.delete(id);
   _pairedScreens.delete(id);
   for (const [snd, s] of [..._screenOfSender]) if (s === id) _screenOfSender.delete(snd);
+  linkForgetScreen(id); // ses pairs Wi-Fi local / Bluetooth (21-links.js)
   _scrReg.sid = newSid;
   scrSave();
   if (oldSid && oldSid !== newSid) {
