@@ -413,13 +413,12 @@ internal class LanLink(private val manager: LinkManager, context: Context) : Lin
     if (gen != generation) return
     connecting = false
     candidate.failures++
-    if (candidate.failures >= 4) {
-      // Service fantôme (télécommande tuée sans retrait de l'annonce) : oublié,
-      // la recherche le reproposera s'il revient.
-      candidates.remove(candidate.name)
-    } else {
-      candidate.retryAt = System.currentTimeMillis() + backoff(candidate.failures)
-    }
+    // Après 4 échecs (service fantôme : télécommande tuée sans retrait de
+    // l'annonce, ou coupure passagère), un essai toutes les 30 s seulement. Le
+    // candidat n'est pas oublié : NSD ne le reproposerait pas tant que son
+    // annonce reste en cache. Une télécommande relancée s'annonce sous un
+    // nouveau nom, essayé en premier (0 échec).
+    candidate.retryAt = System.currentTimeMillis() + if (candidate.failures >= 4) STALE_BACKOFF_MS else backoff(candidate.failures)
     connectNext()
   }
 
@@ -541,6 +540,7 @@ internal class LanLink(private val manager: LinkManager, context: Context) : Lin
     const val CONNECT_TIMEOUT_MS = 4000
     const val RECONNECT_MS = 500L
     const val AUTH_BACKOFF_MS = 30000L
+    const val STALE_BACKOFF_MS = 30000L
     const val NETWORK_DEBOUNCE_MS = 500L
 
     fun backoff(failures: Int): Long = minOf(5000L, 500L shl minOf(failures - 1, 4).coerceAtLeast(0))

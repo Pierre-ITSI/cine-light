@@ -255,8 +255,11 @@ détournerait aussi la vue web. Un fil de lecture et un fil d'écriture par
 connexion (au plus 72 connexions, soit 144 fils), état sur un seul thread.
 Suivi des réseaux Wi-Fi / Ethernet **avec ou sans Internet**
 (`NetworkCallback`, regroupé 500 ms) ; recherche relancée quand un réseau
-revient. Service fantôme (télécommande tuée sans retrait de l'annonce) : oublié
-après 4 échecs de connexion.
+revient. Service fantôme (télécommande tuée sans retrait de l'annonce) ou
+coupure passagère : après 4 échecs de connexion, un essai toutes les 30 s
+seulement (il n'est pas oublié : NSD / le browser ne le reproposeraient pas
+tant que l'annonce reste en cache) ; une télécommande relancée s'annonce sous
+un nouveau nom, essayé en premier.
 
 **Commun** : 8 connexions non admises à la fois (au-delà, fermées aussitôt),
 64 pairs admis (au-delà, `too-many-peers`) ; reconnexion de l'écran avec

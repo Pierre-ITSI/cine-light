@@ -338,13 +338,12 @@ final class LanLink: LinkTransport {
     if let key = conn.candidate, let cand = candidates[key] {
       if !conn.admitted {
         // Connexion refusée ou poignée de main ratée (autre version, imitation de l'annonce)
+        // Après 4 échecs (service fantôme, coupure passagère) : un essai toutes
+        // les 30 s. Le candidat n'est pas oublié : le browser ne le
+        // reproposerait pas tant que l'annonce reste valide.
         cand.failures += 1
-        let delay = conn.authFailed ? 30 : LanLink.backoff(cand.failures)
-        if cand.failures >= 4 && !conn.authFailed {
-          candidates[key] = nil // service fantôme : le browser le reproposera s'il revient
-        } else {
-          cand.retryAt = Date().addingTimeInterval(delay)
-        }
+        let delay = (conn.authFailed || cand.failures >= 4) ? 30 : LanLink.backoff(cand.failures)
+        cand.retryAt = Date().addingTimeInterval(delay)
       } else {
         cand.retryAt = Date().addingTimeInterval(0.5)
       }
