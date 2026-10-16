@@ -235,6 +235,8 @@ function goBackToSplash() {
 
 function goBack() {
   closeScreensUi(); // vue « Écrans connectés », choix de la cible (39-screens-ui.js)
+  closeOfflineView(); // tourner sans réseau : préparation en cours arrêtée (93-offline.js)
+  if (_prep) _prep.running = false;
   rkStopListeners(); // anciens topics : réécoutés au prochain lancement de la télécommande
   stopStrobe();
   stopMediaBroadcast(true, true);

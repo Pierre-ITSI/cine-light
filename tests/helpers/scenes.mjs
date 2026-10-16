@@ -163,7 +163,11 @@ const linkScene = (links, inet) => (page) => page.evaluate(([ids, links, inet]) 
 // hors ligne, jamais préparée
 const offlineScene = (extra) => multiScreen(async (page) => {
   // Internet relié (abonnement, puis délai de grâce des écrans) AVANT de mettre la tablette hors ligne
-  await page.evaluate(() => { for (const c of window.__mqttClients) if (!c.connected && !c.disconnecting) c._connect(); });
+  await page.evaluate(() => {
+    for (const c of window.__mqttClients) if (!c.connected && !c.disconnecting) c._connect();
+    // Coque : Wi-Fi local et Bluetooth disponibles (ignoré dans un navigateur)
+    window.SRNative.receive({ type: 'link:state', lan: { available: true, active: true }, ble: { available: true, active: true } });
+  });
   await page.clock.runFor(100);
   await page.evaluate(async (ids) => {
     const [julie, tv, tab] = ids;

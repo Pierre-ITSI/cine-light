@@ -432,6 +432,37 @@ test('Réglages : la ligne « Liaison par défaut » reflète le choix, persista
   await p.close();
 });
 
+test('coque sans liaisons locales (jamais de link:state) : un choix « Wi-Fi local » mémorisé garde Internet ouvert', async () => {
+  const broker = new FakeBroker();
+  const p = await openPage(browser, {
+    broker, seed: 70, autoConnect: true,
+    init: { fn: () => {
+      window.SETREMOTE_NATIVE = { platform: 'ios', bridge: 1 };
+      window.__posted = [];
+      window.ReactNativeWebView = { postMessage: (s) => window.__posted.push(JSON.parse(s)) };
+      localStorage.setItem('setremote-link-v1', JSON.stringify({ v: 1, mode: 'lan' }));
+    } },
+  });
+  const { page } = p;
+  await page.evaluate(() => startMode('remote'));
+  await waitFor(page, () => !!mqttClient && mqttClient.connected, null, { timeout: 8000 });
+  await page.evaluate(() => openOfflineView());
+  assert.deepEqual(await page.evaluate(() => ({
+    posted: window.__posted.map((m) => m.type + (m.modes ? ':' + m.modes.join() : '')),
+    seg: [...document.querySelectorAll('.off-seg-btn')].map((b) => [b.id, b.disabled, b.classList.contains('active')]),
+    pill: document.getElementById('linkPillLabel').textContent, select: setLinkPref('ble'),
+  })), {
+    posted: ['link:state?', 'link:start:lan', 'link:state?'],
+    seg: [['offLink-auto', false, false], ['offLink-internet', false, false], ['offLink-lan', true, true], ['offLink-ble', true, false]],
+    pill: 'Internet · chiffré', select: false,
+  });
+  // La coque répond enfin : Wi-Fi local disponible, Internet fermé comme demandé
+  await page.evaluate(() => window.SRNative.receive({ type: 'link:state', lan: { available: true, active: true }, ble: { available: false, active: false } }));
+  assert.deepEqual(await page.evaluate(() => [mqttClient, document.getElementById('offLink-lan').disabled]), [null, false]);
+  assert.deepEqual(p.errors, []);
+  await p.close();
+});
+
 test('retrait d\'un écran en Wi-Fi local (sans Internet) : nouvelle session annoncée à la coque, les autres écrans suivent', async () => {
   const r = await rig(3, 68, { keys: true });
   const [A, B, C] = r.screens;

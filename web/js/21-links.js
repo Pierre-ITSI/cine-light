@@ -57,9 +57,12 @@ function linkPref() {
 }
 // Liaison locale utilisable : app native, et pas déclarée indisponible par la coque
 function linkModeUsable(m) { return IN_NATIVE_APP && LINK_MODES.includes(m) && linkNative[m].available !== false; }
+// Choisissable seule : la coque l'a déclarée disponible (une coque sans
+// liaisons locales ne répond jamais : le choix reste impossible)
+function linkModeSelectable(m) { return IN_NATIVE_APP && LINK_MODES.includes(m) && linkNative[m].available === true; }
 function setLinkPref(p) {
   if (!LINK_PREFS.includes(p)) return false;
-  if ((p === 'lan' || p === 'ble') && !linkModeUsable(p)) return false; // navigateur, ou liaison indisponible
+  if ((p === 'lan' || p === 'ble') && !linkModeSelectable(p)) return false; // navigateur, ou liaison indisponible
   _lsSet(LINK_PREF_KEY, JSON.stringify({ v: 1, mode: p }));
   linkApplyPref();
   return true;
@@ -77,11 +80,14 @@ function linkModesWanted() {
   if (p === 'lan' || p === 'ble') return usable.includes(p) ? [p] : [];
   return usable;
 }
-// Internet (broker / relais) voulu ? Toujours, sauf télécommande réglée sur une liaison locale seule
+// Internet (broker / relais) voulu ? Toujours, sauf télécommande réglée sur une
+// liaison locale seule QUE LA COQUE A DÉCLARÉE DISPONIBLE : tant qu'elle ne l'a
+// pas fait (coque d'avant ces liaisons, Bluetooth coupé…), Internet reste
+// ouvert, plutôt qu'une télécommande reliée à rien
 function linkInternetWanted() {
   if (mode !== 'remote' || !IN_NATIVE_APP) return true;
   const p = linkPref();
-  return p !== 'lan' && p !== 'ble';
+  return !((p === 'lan' || p === 'ble') && linkNative[p].available === true);
 }
 
 // ── Pairs ──
@@ -128,6 +134,7 @@ function linkApplyPref() {
     if (want && !mqttClient) internetConnect(_sec);
     else if (!want && mqttClient) { internetDisconnect(); if (mode === 'remote') setConnStatus('connecting'); }
     linkSync();
+    if (mode === 'remote') renderLinkStatus();
   }
   linkChanged();
 }
@@ -144,8 +151,7 @@ function linkOnState(m) {
       error: typeof s.error === 'string' && s.error ? s.error.replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, 120) : null,
     };
   }
-  linkSync();
-  linkChanged();
+  linkApplyPref(); // disponibilités connues : liaisons locales et Internet ajustés
   return true;
 }
 function linkOnError(m, reason) {

@@ -129,6 +129,13 @@ réglage). Un choix forcé (« Wi-Fi local », « Bluetooth ») ferme Internet s
 la télécommande : rien ne sort du plateau. Une liaison que la coque déclare
 indisponible (`available: false`) est grisée et signalée dans la vue.
 
+Garde-fou : une liaison locale ne peut être choisie seule, et Internet n'est
+fermé, **qu'une fois que la coque l'a déclarée disponible** (`available:
+true`). Une coque d'avant ces liaisons (qui ne répond jamais) ou une liaison
+coupée ne laissent donc jamais la télécommande reliée à rien : Internet reste
+ouvert, les boutons restent grisés. En « Auto », une liaison encore inconnue
+est demandée quand même (`link:start`) : la coque répondra par son état.
+
 ### 3.2 Pourquoi en parallèle
 
 La maquette dit « Auto : Internet si disponible, sinon Wi-Fi local, sinon

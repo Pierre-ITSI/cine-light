@@ -146,7 +146,7 @@ function renderOfflineView() {
   for (const p of LINK_PREFS) {
     const b = document.getElementById('offLink-' + p);
     if (!b) continue;
-    const usable = p === 'auto' || p === 'internet' || linkModeUsable(p);
+    const usable = p === 'auto' || p === 'internet' || linkModeSelectable(p);
     b.classList.toggle('active', p === pref);
     b.setAttribute('aria-checked', String(p === pref));
     b.disabled = !usable;
