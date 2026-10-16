@@ -276,6 +276,9 @@ service.
 
 ## 5. Bascule vers le relais (transition)
 
+> Valeurs pour le VPS OVH (`hub.itsi-app.com`) et procédure complète, avec
+> le déménagement de la PWA sur `set-remote.itsi-app.com` : `docs/HOSTING.md`.
+
 **Réglages** (`web/js/01-config.js`, puis `npm run build`) :
 
 | Réglage | Défaut | Rôle |

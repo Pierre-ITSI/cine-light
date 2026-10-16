@@ -128,7 +128,7 @@ console :
 location.href                       // file:///…/SetRemote.app/web/index.html (iOS)
 isSecureContext                     // true
 IN_NATIVE_APP                       // true (classe « in-app » sur <html>)
-SETREMOTE_NATIVE                    // { platform, bridge: 1, publicUrl }
+SETREMOTE_NATIVE                    // { platform, bridge: 1, publicUrl } (publicUrl : src/config.ts)
 await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt'])  // CryptoKey
 [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family + ' ' + f.weight)
 ```
