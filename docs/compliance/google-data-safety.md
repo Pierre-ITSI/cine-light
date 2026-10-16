@@ -3,7 +3,7 @@
 Document de travail pour la Play Console (package `com.pikoo.setremote`).
 
 - **Partie A** : réponses **cibles**, après migration.
-- **Partie B** : réponses **intermédiaires**, si l'app était publiée avant la migration (déconseillé).
+- **Partie B** : réponses dans l'**état actuel** (bout en bout livré, relais encore public), si l'app était publiée avant la fin de la migration.
 - **Partie C** : les autres exigences Play pour une nouvelle app en 2026.
 
 Sources vérifiées le **2026-10-14**. `support.google.com` était bloqué par le proxy de la session : les textes de règles Play ci-dessous viennent d'extraits de recherche web qui citent ces pages. **Relire les pages officielles dans la Play Console avant soumission.**
@@ -69,22 +69,15 @@ La fiche affichera « Aucune donnée collectée » et « Aucune donnée partagé
 
 ---
 
-## B. Formulaire Data safety — réponses INTERMÉDIAIRES (avant migration, déconseillé)
+## B. Formulaire Data safety — réponses dans l'état ACTUEL (relais encore public)
 
-État actuel (`main@5e0323d`, sources `web/`) : les commandes, images, sons, noms, photos et textes du simulateur passent **en clair** par le broker MQTT **public** `broker.hivemq.com`, lisible par n'importe quel abonné. Les vidéos passent en WebRTC, avec repli en clair sur ce broker. Aucune exemption ne s'applique : pas de bout en bout, et HiveMQ n'est pas un sous-traitant sous contrat. Il s'agit donc d'une **collecte et d'un partage avec un tiers**.
+*Mis à jour le 16 octobre 2026.* L'état décrit ici auparavant (`main@5e0323d` : contenus **en clair** sur le broker public, QR fabriqué par `api.qrserver.com`, Google Fonts) n'existe plus : tous les messages et médias sont chiffrés de bout en bout (AES-256-GCM, y compris le repli des vidéos sur le broker), le QR est dessiné sur l'appareil et les polices sont auto-hébergées. Restent : le broker MQTT **public** `broker.hivemq.com` comme relais (trames chiffrées ; il voit l'adresse IP et les métadonnées, et n'est pas un sous-traitant sous contrat), le STUN public de Google (adresse IP lors de l'envoi d'une vidéo) et GitHub Pages pour la version web.
 
-> Collecte ou partage de types requis ? → **Oui**
+> Collecte ou partage de types requis ? → **Non** (mêmes exemptions qu'en A.1 : chiffrement de bout en bout, traitement sur l'appareil ; l'adresse IP n'est pas un type de la liste Play)
 
-| Type Play | Collecté | Partagé | Traité de façon éphémère | Obligatoire ou facultatif | Finalité | Contenu |
-|---|---|---|---|---|---|---|
-| Photos et vidéos → **Photos** | Oui | **Oui** (broker public) | Oui | Facultatif (l'utilisateur choisit d'envoyer) | Fonctionnement de l'app | Images du pool, photo d'appelant, fond d'écran fictif |
-| Photos et vidéos → **Vidéos** | Oui | Oui (repli MQTT) | Oui | Facultatif | Fonctionnement de l'app | Vidéos du pool |
-| Fichiers audio → **Autres fichiers audio** | Oui | Oui | Oui | Facultatif | Fonctionnement de l'app | Bande son du décroché |
-| Activité dans l'app → **Autre contenu généré par l'utilisateur** | Oui | Oui | Oui | Facultatif | Fonctionnement de l'app | Nom et sous-titre d'appelant fictif, texte de message fictif, nom d'app fictive |
-
-- Chiffrées en transit : **Oui**, mais seulement au sens TLS jusqu'au broker. Les données y sont lisibles.
-- Suppression des données sur demande : **Non**, aucune donnée n'est conservée par l'éditeur. Préciser dans le champ d'explication si la console le propose.
-- La politique de confidentialité publiée devrait alors nommer HiveMQ, Google (Fonts, STUN), api.qrserver.com et GitHub. **Recommandation : ne pas publier dans cet état** (voir la check-list interne de migration (hors dépôt)).
+- **Réserve** : la conservation des journaux du broker public n'est pas connue ; la politique publiée le dit. Le plus sûr reste de basculer sur le relais auto-hébergé avant la soumission.
+- Chiffrées en transit : **Oui** (TLS vers le broker, DTLS pour WebRTC, plus le chiffrement de bout en bout).
+- Politique de confidentialité : `confidentialite.html` (et `privacy.html`) à la racine du dépôt décrit cet état réel et nomme HiveMQ, Google (STUN) et GitHub. Au passage au relais, seul son paragraphe balisé `RELAIS : DÉBUT / FIN` change.
 
 ---
 
@@ -131,13 +124,13 @@ Autorisations attendues dans le manifeste fusionné, d'après les `AndroidManife
 
 ### C.4 Politique de confidentialité
 
-Obligatoire dans la Play Console pour **toutes** les apps, même sans collecte. Play l'exige aussi **dans l'app** pour les apps qui accèdent à des données sensibles (appareil photo, micro). Apple l'exige dans l'app dans tous les cas (5.1.1(i)). Mettre le même lien « Confidentialité » sur l'écran d'accueil.
+Obligatoire dans la Play Console pour **toutes** les apps, même sans collecte. Play l'exige aussi **dans l'app** pour les apps qui accèdent à des données sensibles (appareil photo, micro). Apple l'exige dans l'app dans tous les cas (5.1.1(i)). **Fait** : télécommande › engrenage (Réglages) › « Politique de confidentialité », page embarquée dans l'app (`confidentialite.html`, `privacy.html` si l'anglais est choisi), lisible sans réseau.
 
 ### C.5 Déclarations « Contenu de l'application »
 
 | Déclaration | Réponse |
 |---|---|
-| Règles de confidentialité | `[SITE WEB]/confidentialite` |
+| Règles de confidentialité | `https://pierre-itsi.github.io/cine-light/confidentialite.html` (tant que la version web reste sur GitHub Pages) |
 | Annonces | **Non**, l'app ne contient pas d'annonces |
 | Accès à l'application | « Toutes les fonctionnalités sont disponibles sans accès particulier ». **Ajouter les instructions** de test sur deux appareils (texte adapté de `app-review-notes.md`, section 2), et le lien vers la vidéo de démonstration. |
 | Classification du contenu | Questionnaire IARC (C.6) |

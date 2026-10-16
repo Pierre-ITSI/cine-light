@@ -11,16 +11,17 @@ App access instructions).
 Items in `[BRACKETS]` must be filled or confirmed before submission. Do not submit until every
 behavior described here exists in the build. See the internal migration checklist (kept outside the repository), especially:
 
-- the strobe warning;
-- end-to-end encryption;
+- the strobe warning (done: mockup 11, see section 4);
+- end-to-end encryption (done);
 - the web playback screen URL;
-- the in-app privacy link.
+- the in-app privacy link (done: remote › gear icon › « Politique de confidentialité »);
+- the self-hosted relay (today the relay is the public HiveMQ MQTT broker: it only sees encrypted frames, but the « stores nothing » claims below are only true once the self-hosted relay is live).
 
 ---
 
 ## 1. Paste-ready Notes field
 
-Measured length: 3,296 characters, under the 4,000 limit. Re-measure after filling the brackets.
+Measured length: 3,714 characters (with the brackets), under the 4,000 limit. Re-measure after filling the brackets.
 
 <!-- id=review.notes max=4000 -->
 ```text
@@ -30,7 +31,7 @@ TWO-DEVICE WORKFLOW
 The app runs on two devices:
 1. REMOTE: the operator sets color (CCT 1,700–20,000 K, green/magenta tint, dimmer, color wheel), effects, media and prop screens.
 2. PLAYBACK SCREEN: shows what the remote sends, full screen.
-Pairing: on the remote, tap "Remote" and open the QR tab. On the other device, tap "Playback screen" and scan the QR code or type the short code. All messages between the two devices are end-to-end encrypted (AES-256-GCM, keys derived on the devices). Our relay server only forwards encrypted messages and stores nothing.
+Pairing: on the remote, tap "Remote" and open the QR tab. On the other device, tap "Playback screen" and scan the QR code or type the short code. All messages between the two devices are end-to-end encrypted (AES-256-GCM, keys derived on the devices). Our relay server only forwards encrypted messages and stores nothing. [CONFIRM: true once the self-hosted relay is live; until then, write "The relay only forwards encrypted messages it cannot read."]
 
 HOW TO TEST WITH ONE DEVICE
 A) Install the app on your device and choose "Remote". On a Mac or any other computer, open [WEB PLAYBACK SCREEN URL] in Safari (no install, no login) and enter the code shown on the remote. Everything you change on the device appears live in Safari.
@@ -51,13 +52,14 @@ For scenes where a character receives a call or message, the remote can display 
 - The feature is described in the App Store description.
 
 STROBE SAFETY
-A photosensitivity warning is shown before the strobe is activated [CONFIRM: must be acknowledged each time / once per session]. The strobe is capped at 30 Hz, shows a persistent "Strobe on" badge, and can be stopped instantly from the toggle or the Screen ON/OFF button. The App Store description includes the same warning.
+A photosensitivity warning is shown before the strobe is activated, and before effects with fast flashes (Police, Lightning, Paparazzi, Welding, Faulty neon, fast torch blinking). Nothing starts until the operator taps "Activer" (Enable). An optional "Don't ask again for this project" box lasts until the remote starts a new pairing session and can be undone in Settings. The strobe is capped at 30 Hz with flashes of at least 15 ms, shows a persistent "Strobe on" badge, and stops instantly from the toggle or the Screen ON/OFF button. The App Store description includes the same warning.
 
 PERMISSIONS (asked only when the feature is used)
 - Camera: take a photo or video to show on the playback screen; control the playback device's torch.
 - Photos: choose media (system picker).
 - Microphone: only when filming a video to show.
-[KEEP ONLY IF SHIPPED: Local network: direct link between the two devices on the same Wi-Fi. Bluetooth: link without Wi-Fi.]
+- Local network: only for the optional DMX gateway (receives sACN / Art-Net from a lighting console on the local network).
+Bluetooth is not used.
 
 PRIVACY
 No account, no analytics, no ads, no tracking. Encryption uses only the cryptography built into the operating system (Web Crypto API in WKWebView).
@@ -76,7 +78,7 @@ Contact: [NAME], [PHONE], [EMAIL]
 | 3 | The status line shows "Connected" | The screen goes full screen and briefly shows "Listening…" |
 | 4 | Change color, effects or media | Updates live |
 | 5 | **Screen ON/OFF** button = instant blackout | Goes black |
-| 6 | **Back** ends the session | Long-press or double-tap the top-left corner → menu → **Disconnect** |
+| 6 | Gear icon (**Settings**) → **Retour à l'accueil** (Back to home) ends the session | Long-press or double-tap the top-left corner → menu → **Disconnect** |
 
 ### Testing on simulators
 
@@ -88,7 +90,7 @@ Pairing works by typing the code (the simulator camera cannot scan QR codes). Th
 
 - **Torch** (Torch tab, "Synced torch" option of the strobe): needs a playback device whose system lets the app drive the LED torch. When the device does not allow it, the tab shows an "unavailable" notice. This is expected behavior, not a bug.
 - **Vibration**: same logic. Unavailable on devices that do not expose vibration control.
-- **DMX / sACN mode** (splash button "DMX mode"): optional professional feature. It needs an sACN lighting network and a gateway on the local network. [EITHER hide it in the review build, OR add: "Not testable without DMX hardware; see the demo video at 1:20."]
+- **DMX gateway** (QR tab → "Passerelle DMX", iPhone, iPad and Android app only; the old splash "DMX mode" was removed): optional professional feature. The remote receives sACN or Art-Net from a lighting console on the local network and drives the patched playback screens. [EITHER hide it in the review build, OR add: "Not testable without DMX hardware; see the demo video at 1:20."]
 
 ---
 
@@ -118,10 +120,12 @@ Pairing works by typing the code (the simulator camera cannot scan QR codes). Th
 
 ## 4. Strobe photosensitivity safeguard
 
-- The strobe frequency is limited to **30 Hz** (slider 0.5–30 Hz; in random mode the maximum is also 30 Hz).
-- **Before activation**, a photosensitivity warning explains that flashing lights may trigger seizures in people with photosensitive epilepsy. The operator must confirm before the strobe starts. [CONFIRM the exact wording and whether it appears on every activation or once per session.]
+- The strobe frequency is limited to **30 Hz** and flashes last at least **15 ms** (sliders 0.5–30 Hz and 15–500 ms, in regular and random mode; the same caps are enforced on the wire).
+- **Before each activation**, a photosensitivity warning (mockup 11) says, in French: "Lumière stroboscopique — Les flashs rapides peuvent déclencher des crises chez les personnes photosensibles. Prévenez l'équipe et les comédiens avant de lancer l'effet. Fréquence limitée à 30 Hz · flash de 15 ms minimum." (Stroboscopic light — Fast flashes can trigger seizures in photosensitive people. Warn the crew and the cast before starting the effect. Frequency capped at 30 Hz, 15 ms minimum flash.) Buttons "Annuler" (Cancel: nothing is sent) and "Activer" (Enable).
+- Optional checkbox "Ne plus demander pour ce projet" (Don't ask again for this project): until projects exist, it lasts for the current pairing session (a new session brings the warning back), and Settings › "Avertissement stroboscope" turns the warning back on.
 - While active: a "Strobe on" badge, a local preview, one-tap stop (toggle), and a global **Screen ON/OFF** blackout.
-- Effects with fast flashes (Lightning, Flash bursts, Police) [CONFIRM: also show the warning / or not].
+- Effects with fast flashes show the same warning: Police, Éclair (lightning), Paparazzi (flash bursts), Soudure (welding), Néon HS (faulty neon), and the torch's fast blink and police patterns: all of them flash more than 3 times per second at their default settings (WCAG 2.3.1 threshold). Recalling a memory that turns them on also shows it.
+- A strobe or effect sent by a lighting console through the DMX gateway is not interrupted by the dialog: as with any stage fixture, the console operator is responsible (`docs/DMX.md`).
 - The App Store and Play descriptions contain the same warning.
 
 ---
@@ -130,9 +134,9 @@ Pairing works by typing the code (the simulator camera cannot scan QR codes). Th
 
 - App Privacy label: **Data Not Collected**. See `app-store-privacy.md`.
 - Content is end-to-end encrypted on the devices (AES-256-GCM). Keys are derived on the devices at pairing and never sent to a server.
-- The relay server forwards ciphertext only and keeps nothing.
+- The relay server forwards ciphertext only and keeps nothing. [CONFIRM: once the self-hosted relay is live; today the public HiveMQ broker relays the encrypted frames.]
 - Encryption uses the operating system's built-in cryptography (Web Crypto API in WKWebView). There is no bundled crypto library. `ITSAppUsesNonExemptEncryption = NO` [CONFIRM after legal check; see `app-store-privacy.md` §D].
-- Privacy policy: [SITE WEB]/privacy. It is also linked in the app from the home screen [TO ADD in the build].
+- Privacy policy: https://pierre-itsi.github.io/cine-light/privacy.html (French: `confidentialite.html`). In the app: remote → gear icon (Settings) → "Politique de confidentialité"; the page is bundled in the app and opens offline.
 
 ---
 
@@ -156,7 +160,7 @@ Pairing works by typing the code (the simulator camera cannot scan QR codes). Th
 | 0:53–1:08 | Call tab: name "Alex", style Tonal → **Ring** → right shows the fictional incoming-call screen → Answer → timer → End | "Fictional prop screen for scenes. No real call is placed. No telephony or contacts access." |
 | 1:08–1:15 | Message type → lock-screen toggle → **Send notification** → right shows the mock lock screen card | "Fictional message prop. No system notification." |
 | 1:15–1:22 | Remote → export a project → choose **with / without media** → system share sheet | "Export a project, with or without media. Stays on your device." |
-| 1:22–1:27 | Screen ON/OFF → right goes black; Back → disconnect | "Instant blackout. End the session anytime." |
+| 1:22–1:27 | Screen ON/OFF → right goes black; Settings → Back to home → disconnect | "Instant blackout. End the session anytime." |
 | 1:27–1:30 | End card | "No account · No ads · No tracking · Data Not Collected" |
 
-[If DMX mode is kept in the build: add a 5 s shot of the playback screen following a console fader, with the caption "Optional DMX/sACN input via a local gateway". Trim the strobe or media shots to stay under 90 s.]
+[If the DMX gateway is kept in the build: add a 5 s shot of the playback screen following a console fader, with the caption "Optional DMX/sACN input via a local gateway". Trim the strobe or media shots to stay under 90 s.]

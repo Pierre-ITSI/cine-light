@@ -3,7 +3,7 @@
 Document de travail pour remplir App Store Connect pour SetRemote (bundle `com.pikoo.setremote`).
 
 - **Partie A** : réponses **cibles**, valables une fois la migration terminée (chiffrement de bout en bout, relais sans stockage, polices et QR locaux, STUN auto-hébergé).
-- **Partie B** : réponses **intermédiaires**, si l'app devait être publiée **avant** la migration. C'est fortement déconseillé : voir la check-list interne de migration (hors dépôt).
+- **Partie B** : réponses dans l'**état actuel** (bout en bout, QR et polices locaux livrés ; relais encore public, STUN de Google), si l'app est publiée avant la fin de la migration. Mieux vaut basculer d'abord sur le relais auto-hébergé : voir la check-list interne de migration (hors dépôt).
 
 Sources vérifiées le **2026-10-14** :
 
@@ -74,38 +74,31 @@ Les réponses ne sont saisies que si l'on répond « Yes » en A.1. Ce tableau s
 
 | Champ App Store Connect | Valeur |
 |---|---|
-| Privacy Policy URL | `[SITE WEB]/confidentialite` (FR) et `[SITE WEB]/en/privacy` (EN), publiées à partir de `politique-confidentialite.md` / `privacy-policy.md` |
+| Privacy Policy URL | `https://pierre-itsi.github.io/cine-light/confidentialite.html` (FR) et `https://pierre-itsi.github.io/cine-light/privacy.html` (EN) : pages `confidentialite.html` / `privacy.html` à la racine du dépôt, fidèles à l'état actuel (voir B). Une fois la migration terminée, y reporter le texte cible de `politique-confidentialite.md` / `privacy-policy.md` (ou changer d'URL si un domaine propre est pris) |
 | Privacy Choices URL (facultatif) | Laisser vide : il n'y a rien à paramétrer |
-| Lien **dans l'app** (guideline 5.1.1(i) : *« within the app in an easily accessible manner »*) | **À ajouter** sur l'écran d'accueil, par exemple un lien « Confidentialité » sous le crédit « by Pikoo ». Ce lien n'existe pas dans `web/index.template.html` aujourd'hui (`main@5e0323d`). |
+| Lien **dans l'app** (guideline 5.1.1(i) : *« within the app in an easily accessible manner »*) | **Présent** : télécommande › engrenage de l'en-tête (Réglages, maquette 13) › « Politique de confidentialité ». La page est embarquée dans l'app (`expo-app/scripts/embed-web.mjs`) et s'ouvre sans réseau, en anglais si l'anglais est choisi dans les Réglages. |
 
 ---
 
-## B. Réponses INTERMÉDIAIRES (publication avant migration, déconseillée)
+## B. Réponses dans l'état ACTUEL (bout en bout livré, relais encore public)
 
-Dans l'état actuel du code (`main@5e0323d` : `web/js/20-mqtt.js`, `64-qr-utils.js`, `70-media-remote.js`, `85-media-screen-playback.js`, `web/styles/00-base.css`, et `expo-app/app/index.tsx`), voici ce qui se passe :
+*Mis à jour le 16 octobre 2026.* Depuis `main@5e0323d`, l'état décrit ici auparavant (commandes et médias **en clair** sur le broker public, QR fabriqué par `api.qrserver.com`, Google Fonts, interface de l'app chargée depuis GitHub Pages) n'existe plus :
 
-- **Toutes** les commandes, les images (fragments base64), le fond d'écran verrouillé, la bande son du décroché, ainsi que le nom, la photo et le texte du simulateur d'appel passent **en clair (JSON)** par le broker MQTT **public** `broker.hivemq.com`. HiveMQ indique lui-même que ce broker est ouvert à tous et n'est pas fait pour des données privées. N'importe quel client peut s'abonner au sujet `setremote/v1/#` et tout lire.
-- Les vidéos passent par WebRTC (chiffrement DTLS). Si le pair-à-pair échoue, elles basculent en clair sur le même broker.
-- Le code canal (« set » + 4 chiffres) est envoyé à `api.qrserver.com` pour fabriquer l'image du QR code.
-- Google (Fonts et serveur STUN `stun.l.google.com`) reçoit l'adresse IP.
-- L'app iOS charge son interface depuis GitHub Pages (`pierre-itsi.github.io`).
+- **tous** les messages et médias sont chiffrés de bout en bout (`packages/protocol`, AES-256-GCM), y compris le repli des vidéos sur le broker ; le sujet MQTT est opaque (dérivé du secret) ;
+- le QR d'appairage est dessiné sur l'appareil (`vendor/qrcode-generator`) : plus aucun service de QR ;
+- les polices sont auto-hébergées (`vendor/fonts/`) : plus de Google Fonts ;
+- l'app native embarque son interface (`file://`) : elle ne la charge plus depuis GitHub Pages.
 
-Un tiers (HiveMQ) reçoit donc les contenus sous forme lisible, et tout abonné peut les copier. On ne peut pas soutenir que les données ne sont « pas stockées sous forme lisible ». **Réponse prudente :**
+Restent dans la production actuelle (voir `web/js/01-config.js`, `20-mqtt.js`) :
 
-> **Do you or your third-party partners collect data from this app?** → **Yes**
+- le relais est encore le broker MQTT **public** `broker.hivemq.com` (`RELAY_URL` vide) : il ne voit que des trames chiffrées, mais il voit l'adresse IP et les métadonnées (heure, taille, sujet), tout abonné peut voir passer les trames chiffrées, et HiveMQ n'est pas un sous-traitant sous contrat ;
+- le serveur STUN public de Google (`stun.l.google.com`) voit l'adresse IP lors de l'envoi d'une vidéo ;
+- la version web est hébergée par GitHub Pages (États-Unis).
 
-| Type Apple | Collecté ? | Lié à l'identité ? | Tracking ? | Finalité | Contenu concerné |
-|---|---|---|---|---|---|
-| **Photos or Videos** | Oui | Non | Non | App Functionality | Images et vidéos du pool média, photo d'appelant, fond d'écran verrouillé |
-| **Audio Data** | Oui | Non | Non | App Functionality | Bande son du décroché ; son des vidéos filmées |
-| **Other User Content** | Oui | Non | Non | App Functionality | Nom et sous-titre d'appelant fictif, texte de message fictif, nom d'app fictive |
-| Toutes les autres catégories | Non | — | — | — | Comme en A.2 |
+**Réponse proposée : « No, we do not collect data from this app »** (même raisonnement qu'en A.1) : aucun contenu n'est plus lisible hors des appareils de l'utilisateur, et l'adresse IP ne sert qu'à acheminer la connexion. **Réserve** : on ne connaît pas la durée de conservation des journaux du broker public ; la politique publiée le dit explicitement. Le plus sûr reste de basculer sur le relais auto-hébergé (`docs/BROKER.md` § 5) avant la soumission : les réponses A s'appliquent alors sans réserve.
 
-Notes :
-
-- J'ai classé les textes de messages fictifs en *Other User Content* et non en *Emails or Text Messages*. Ce ne sont pas des messages échangés entre personnes : ce sont des textes d'accessoire. Si App Review conteste, cocher aussi *Emails or Text Messages* avec les mêmes réponses.
-- *Identifiers* reste « Non » : le `clientId` MQTT (`cl-remote-xxxxxx`) est aléatoire à chaque connexion.
-- **Privacy Policy** : en intermédiaire, la politique publiée ne doit **pas** contenir les affirmations de la cible (bout en bout, relais sans stockage, pas de tiers). Il faudrait une version intermédiaire qui nomme HiveMQ (broker public), Google (Fonts, STUN), qrserver et GitHub (Pages, États-Unis). Je ne l'ai pas rédigée volontairement, car la recommandation est de **ne pas publier** dans cet état : l'exposition publique des contenus pose un problème de sécurité au titre de l'article 32 du RGPD, pas seulement un sujet de déclaration.
+- **Privacy Policy** : la version conforme à l'état actuel existe : `confidentialite.html` / `privacy.html` à la racine du dépôt. Elle nomme HiveMQ (broker public), Google (STUN) et GitHub (Pages, États-Unis), et ne contient aucune affirmation de la cible. Au passage au relais auto-hébergé, seul son paragraphe balisé `RELAIS : DÉBUT / FIN` (`RELAY: START / END` en anglais) change ; un test (`tests/privacy.test.mjs`) vérifie que le service n'est nommé nulle part ailleurs et qu'il correspond à la configuration de production.
+- *Identifiers* reste « Non » : le `clientId` MQTT est aléatoire à chaque connexion.
 
 ---
 

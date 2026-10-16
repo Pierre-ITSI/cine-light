@@ -135,7 +135,7 @@ TORCHE ET VIBREUR (selon l'appareil utilisé comme écran de jeu)
 PROJETS
 • Exportez un projet (réglages et mémoires), avec ou sans ses médias.
 
-[OPTIONNEL : DMX / sACN — l'écran de jeu peut suivre un univers sACN via une passerelle sur votre réseau local.]
+[OPTIONNEL : PASSERELLE DMX (app iPhone, iPad et Android) — la télécommande reçoit le sACN ou l'Art-Net de votre console sur le réseau local et pilote les écrans de jeu patchés.]
 
 CONFIDENTIALITÉ
 • Tout ce qui passe entre vos deux appareils est chiffré de bout en bout (AES-256-GCM).
@@ -143,7 +143,7 @@ CONFIDENTIALITÉ
 • Pas de compte, pas de publicité, pas de mesure d'audience, pas de suivi.
 
 AVERTISSEMENT PHOTOSENSIBILITÉ
-Le stroboscope et certains effets produisent des lumières clignotantes rapides pouvant provoquer des crises chez les personnes photosensibles. Un avertissement s'affiche avant l'activation du stroboscope. Prévenez les personnes présentes sur le plateau.
+Le stroboscope et certains effets produisent des lumières clignotantes rapides pouvant provoquer des crises chez les personnes photosensibles. Un avertissement s'affiche avant l'activation du stroboscope et des effets à flashs rapides. Prévenez les personnes présentes sur le plateau.
 
 Respectez le droit à l'image et le droit d'auteur des contenus que vous diffusez.
 ```
@@ -189,7 +189,7 @@ TORCH AND VIBRATION (depending on the device used as the playback screen)
 PROJECTS
 • Export a project (settings and cues), with or without its media.
 
-[OPTIONAL: DMX / sACN — the playback screen can follow an sACN universe through a gateway on your local network.]
+[OPTIONAL: DMX GATEWAY (iPhone, iPad and Android app) — the remote receives sACN or Art-Net from your lighting console on the local network and drives the patched playback screens.]
 
 PRIVACY
 • Everything sent between your two devices is end-to-end encrypted (AES-256-GCM).
@@ -197,7 +197,7 @@ PRIVACY
 • No account, no ads, no analytics, no tracking.
 
 PHOTOSENSITIVITY WARNING
-The strobe and some effects produce rapid flashing lights that may trigger seizures in people with photosensitive epilepsy. A warning is shown before the strobe is turned on. Warn everyone on set.
+The strobe and some effects produce rapid flashing lights that may trigger seizures in people with photosensitive epilepsy. A warning is shown before the strobe or a fast-flashing effect is turned on. Warn everyone on set.
 
 Respect image rights and copyright for the content you display.
 ```
@@ -333,8 +333,8 @@ Tableau généré automatiquement à partir des blocs ci-dessus. « Car. » = ca
 | `apple.promo.en` | 150 | 150 | 170 | OK |
 | `apple.keywords.fr` | 91 | 96 | 100 (100 octets) | OK |
 | `apple.keywords.en` | 88 | 88 | 100 (100 octets) | OK |
-| `desc.fr` | 2927 | 3063 | 4000 | OK |
-| `desc.en` | 2502 | 2554 | 4000 | OK |
+| `desc.fr` | 3024 | 3165 | 4000 | OK |
+| `desc.en` | 2596 | 2648 | 4000 | OK |
 | `apple.whatsnew.fr` | 203 | 208 | 4000 | OK |
 | `apple.whatsnew.en` | 165 | 165 | 4000 | OK |
 | `play.title.fr` | 30 | 31 | 30 | OK |

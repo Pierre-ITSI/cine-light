@@ -6,6 +6,10 @@ stockage, polices auto-hébergées, QR généré sur l'appareil, STUN auto-hébe
 NE PAS la publier avant la fin de la migration : voir
 la check-list interne de migration (hors dépôt), section 2.
 Remplacer tous les [CROCHETS] avant publication.
+La politique PUBLIÉE dès maintenant est confidentialite.html (racine du dépôt, servie
+par GitHub Pages et embarquée dans l'app, ouverte depuis Réglages) : elle décrit l'état
+RÉEL de la production (broker MQTT public HiveMQ, STUN de Google, GitHub Pages). Au passage
+au relais auto-hébergé, ne changer que son paragraphe balisé « RELAIS : DÉBUT / FIN ».
 -->
 
 # Politique de confidentialité de SetRemote
@@ -185,7 +189,7 @@ Pour garder le contrôle :
 
 ## 12. Avertissement photosensibilité
 
-Ce point ne relève pas des données personnelles, mais il concerne votre sécurité. Le stroboscope (jusqu'à 30 Hz) et certains effets produisent des lumières clignotantes qui peuvent provoquer des crises chez les personnes photosensibles. Un avertissement s'affiche avant l'activation du stroboscope. Prévenez les personnes présentes sur le plateau.
+Ce point ne relève pas des données personnelles, mais il concerne votre sécurité. Le stroboscope (jusqu'à 30 Hz) et certains effets produisent des lumières clignotantes qui peuvent provoquer des crises chez les personnes photosensibles. Un avertissement s'affiche avant l'activation du stroboscope et des effets à flashs rapides. Prévenez les personnes présentes sur le plateau.
 
 ## 13. Modifications
 

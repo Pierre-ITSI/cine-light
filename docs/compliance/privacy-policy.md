@@ -6,6 +6,10 @@ nothing, self-hosted fonts, on-device QR code, self-hosted STUN).
 DO NOT publish it before the migration is complete: see
 the internal migration checklist (kept outside the repository), section 2.
 Replace every [BRACKET] before publishing. The French version is the reference text.
+The policy PUBLISHED today is privacy.html (repository root, served by GitHub Pages and
+embedded in the app, opened from Settings): it describes the ACTUAL production state (public
+HiveMQ MQTT broker, Google STUN, GitHub Pages). When switching to the self-hosted relay, only
+change its paragraph marked « RELAY: START / END ».
 -->
 
 # SetRemote Privacy Policy
@@ -159,7 +163,7 @@ SetRemote asks for a permission only when you use the feature that needs it. You
 | **Camera** | Take a photo or film a video to show on the playback screen; control the playback device's **LED torch**, which the system operates through the camera | No background capture. Nothing is sent anywhere except to your paired device. |
 | **Photos and videos** | Choose the images and videos to show, a fictional caller's photo or a fictional wallpaper. Where the system allows it, only the items you select are accessible. | No browsing or uploading of your library |
 | **Microphone** | **Only when you film a video** to show: it records that video's sound | No background listening. No recording outside filming the video. |
-| **Local network** | Connect your two devices directly on the same Wi-Fi network; receive DMX/sACN data in DMX mode | No collection of information about other devices on the network |
+| **Local network** | Connect your two devices directly on the same Wi-Fi network; receive DMX (sACN, Art-Net) with the DMX gateway | No collection of information about other devices on the network |
 | **Bluetooth** | Connect your two devices without Wi-Fi | No location tracking. No scanning for devices other than SetRemote. |
 
 Some Android versions (11 and earlier) require the **location** permission to use Bluetooth. SetRemote **does not use or collect** your location.
@@ -185,7 +189,7 @@ To stay in control:
 
 ## 12. Photosensitivity warning
 
-This is not about personal data, but it concerns your safety. The strobe (up to 30 Hz) and some effects produce flashing lights that may trigger seizures in people with photosensitive epilepsy. A warning is shown before the strobe is activated. Warn everyone on set.
+This is not about personal data, but it concerns your safety. The strobe (up to 30 Hz) and some effects produce flashing lights that may trigger seizures in people with photosensitive epilepsy. A warning is shown before the strobe and fast-flashing effects are activated. Warn everyone on set.
 
 ## 13. Changes
 
