@@ -61,6 +61,10 @@ async function rig(n = 1, seed = 1) {
     screens.push(s);
   }
   await waitFor(rp, (k) => _screenOfSender.size === k, n);
+  // Resynchronisation de la télécommande après les « caps » (couleur, réglages) : terminée avant le test
+  await waitFor(rp, () => _resyncTimer === null);
+  await sleep(150);
+  await broker.flush();
   await rp.evaluate(() => openDmxGateway());
   const close = async () => { for (const s of screens) await s.close(); await remote.close(); };
   return { broker, remote, rp, screens, console: new FakeConsole(rp), close };

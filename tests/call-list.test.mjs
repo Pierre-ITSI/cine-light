@@ -107,6 +107,7 @@ test('« Appeler n° X » : la photo de l\'entrée part avant l\'appel, l\'écra
   const sp = screen.page;
   await connected(sp);
   await waitFor(rp, () => _pairedScreens.size === 1);
+  await waitFor(rp, () => _resyncTimer === null); // resynchronisation après le « caps » de l'écran
   await save(rp, { name: 'Maman', style: 'glass', photo: '#00ff00' });
   await save(rp, { name: 'Julien', style: 'tonal', photo: '#0000ff' });
   // Formulaire réglé sur autre chose : « Appeler n°1 » envoie l'entrée n° 1
@@ -120,13 +121,16 @@ test('« Appeler n° X » : la photo de l\'entrée part avant l\'appel, l\'écra
   const html = await sp.evaluate(() => document.getElementById('screen-call').innerHTML);
   assert.match(html, /Maman/);
   assert.match(html, /sc-call glass/);
-  const photo = await rp.evaluate(() => callList.call[0]);
-  assert.equal(photo.hasPhoto, true);
-  assert.equal(await sp.evaluate(() => _cachedCallPhoto()), await rp.evaluate(() => _callPhotoOnScreens), 'photo de l\'entrée n° 1 sur l\'écran');
+  assert.equal(await rp.evaluate(() => callList.call[0].hasPhoto), true);
+  // L'appel affiche la photo de l'entrée n° 1 (et non celle du formulaire, Julien)
+  const entryPhoto = await rp.evaluate(() => callAssetGet(callList.call[0].id + ':photo'));
+  assert.match(entryPhoto, /^data:image\/jpeg;base64,/);
+  assert.equal(await sp.evaluate(() => _callCfg.photo), entryPhoto, 'photo de l\'entrée n° 1 dans l\'appel');
   await broker.flush();
-  const types = (await broker.sent(rp)).map((m) => m.type);
-  const start = types.lastIndexOf('call:start');
-  assert.ok(types.lastIndexOf('media-img-chunk') < start, 'photo envoyée avant l\'appel');
+  const msgs = await broker.sent(rp);
+  const start = msgs.findIndex((m) => m.type === 'call:start');
+  assert.deepEqual([msgs[start].name, msgs[start].hasPhoto], ['Maman', true]);
+  assert.ok(msgs.slice(0, start).some((m) => m.type === 'media-img-start' && m.mediaId === '__callphoto'), 'photo envoyée avant l\'appel');
   assert.deepEqual(remote.errors, []); assert.deepEqual(screen.errors, []);
   await screen.close(); await remote.close();
 });
