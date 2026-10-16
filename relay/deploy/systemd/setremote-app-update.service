@@ -1,0 +1,38 @@
+# SetRemote : mise à jour des fichiers de la PWA (update-app.sh).
+# Installé par install-app-update.sh ; lancé par setremote-app-update.timer.
+# Journal : journalctl -u setremote-app-update (quelques lignes par nouvelle
+# version, rien quand tout est à jour).
+[Unit]
+Description=SetRemote : mise à jour des fichiers de la PWA
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/setremote-update-app
+Environment=SETREMOTE_ENV=/etc/setremote/app.env
+# Le client docker n'a rien à lire ni écrire dans le dossier personnel
+Environment=DOCKER_CONFIG=/tmp/docker-config
+TimeoutStartSec=15min
+Nice=10
+IOSchedulingClass=idle
+# Durcissement : seul le dossier des versions est modifiable (APP_ROOT ;
+# install-app-update.sh remplace ce chemin si .env en indique un autre)
+ProtectSystem=strict
+ReadWritePaths=/srv/setremote-app
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER

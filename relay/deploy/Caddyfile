@@ -1,5 +1,6 @@
-# SetRemote : proxy TLS du relais. Certificat Let's Encrypt automatique pour
-# RELAY_DOMAIN (enregistrement DNS en place, ports 80 et 443 ouverts).
+# SetRemote : proxy TLS du relais (RELAY_DOMAIN) et site de la PWA
+# (APP_DOMAIN). Certificats Let's Encrypt automatiques pour les deux noms
+# (enregistrements DNS en place, ports 80 et 443 ouverts).
 {
 	# Pas d'API d'administration (Caddy partage le réseau de l'hôte) :
 	# pour recharger cette configuration, « docker compose restart caddy ».
@@ -14,7 +15,7 @@
 	log default {
 		output stderr
 		level WARN
-		exclude http.log.error http.handlers.reverse_proxy http.stdlib
+		exclude http.log.error http.handlers.reverse_proxy http.handlers.file_server http.stdlib
 	}
 }
 
@@ -24,4 +25,53 @@
 	# WebSocket pris en charge d'office. X-Forwarded-For = adresse vue par Caddy
 	# (un en-tête X-Forwarded-For envoyé par le client est ignoré).
 	reverse_proxy 127.0.0.1:{$RELAY_LOCAL_PORT:8080}
+}
+
+# ── PWA : fichiers statiques déposés par update-app.sh ──
+# /srv/app = APP_ROOT de l'hôte (lecture seule) ; « current » est un lien
+# symbolique relatif vers releases/<commit>-<date>, remplacé d'un coup à
+# chaque mise à jour. Seule la liste blanche de verify-app.mjs y figure.
+{$APP_DOMAIN} {
+	# Aucune directive « log » ici : aucun journal d'accès.
+	root * /srv/app/current
+	encode zstd gzip
+
+	header {
+		-Server
+		# HTTPS seulement pendant un an, pour CE nom (pas les autres sous-domaines)
+		Strict-Transport-Security "max-age=31536000"
+		# Le secret d'appairage est dans le fragment (#…), jamais envoyé ;
+		# aucune adresse de page transmise aux sites liés par prudence
+		Referrer-Policy "no-referrer"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Cross-Origin-Opener-Policy "same-origin"
+		# Caméra : scan du QR et torche. Rien d'autre.
+		Permissions-Policy "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), display-capture=(), fullscreen=(self), screen-wake-lock=(self)"
+		# Scripts et styles inline indispensables : index.html est UN fichier
+		# (script et style assemblés par web/build.mjs) avec des gestionnaires
+		# onclick="…" ; data: et blob: pour les médias diffusés ; wss vers le
+		# relais, et vers le broker MQTT public tant que l'app l'utilise
+		# (APP_CONNECT_EXTRA). WebRTC (STUN) et la caméra ne relèvent pas de la CSP.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self'; connect-src 'self' wss://{$RELAY_DOMAIN} {$APP_CONNECT_EXTRA}; worker-src 'self'; manifest-src 'self'; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'none'; form-action 'self'"
+	}
+
+	@manifest path *.webmanifest
+	header @manifest Content-Type "application/manifest+json"
+	@woff2 path *.woff2
+	header @woff2 Content-Type "font/woff2"
+
+	# Cache : les noms de fichiers ne contiennent pas d'empreinte, sauf les
+	# bibliothèques versionnées de vendor/ (nom-1.2.3.js, jamais modifiées sous
+	# le même nom : verify-app.mjs le contrôle). Le service worker garde de
+	# toute façon sa propre copie hors ligne.
+	@nocache path / /index.html /sw.js /manifest.webmanifest /confidentialite.html /privacy.html
+	@immutable path_regexp ^/vendor/[a-z0-9-]+-\d+\.\d+\.\d+(\.min)?\.js$
+	route {
+		header Cache-Control "public, max-age=3600"
+		header @nocache Cache-Control "no-cache"
+		header @immutable Cache-Control "public, max-age=31536000, immutable"
+		# Pas de liste des dossiers (pas de « browse ») : /vendor/ → 404
+		file_server
+	}
 }

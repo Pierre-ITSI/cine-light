@@ -1,0 +1,12 @@
+# SetRemote : vérifie toutes les 5 minutes si une nouvelle version de la PWA
+# est publiée sur GitHub (une requête de quelques octets quand rien ne change).
+[Unit]
+Description=SetRemote : mise à jour des fichiers de la PWA, toutes les 5 minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30s
+
+[Install]
+WantedBy=timers.target
