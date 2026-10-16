@@ -70,15 +70,24 @@ function hideScreenMedia() {
 // seul tampon global → un préchargement écrasait l'image demandée), avec des
 // plafonds pour qu'un message forgé ne puisse pas saturer la mémoire.
 const _imgBufs = new Map();
-const IMG_MAX_CHUNKS = 2000, IMG_MAX_PARALLEL = 4, IMG_CHUNK_MAX = 20000;
+// Transferts simultanés : 6 au plus (préparation hors ligne + resynchronisation
+// + diffusion). Au-delà, celui qui n'a rien reçu depuis le plus longtemps est
+// abandonné (avant : le plus ANCIEN, même s'il recevait encore ses fragments).
+const IMG_MAX_CHUNKS = 2000, IMG_MAX_PARALLEL = 6, IMG_CHUNK_MAX = 20000;
 const _RE_MEDIA_ID = /^[A-Za-z0-9_-]{1,40}$/;
+// Photo / bande son préparées d'un appel enregistré (__ph_… / __au_…, 45 caractères)
+const _isPreparedCallAsset = (id) => SRP.CALL_PHOTO_ID_RE.test(id) || SRP.CALL_AUDIO_ID_RE.test(id);
 function mediaImgStart(msg) {
   const total = Number(msg.total);
   if (typeof msg.id !== 'string' || !Number.isInteger(total) || total < 1 || total > IMG_MAX_CHUNKS) return;
-  const mediaId = (typeof msg.mediaId === 'string' && _RE_MEDIA_ID.test(msg.mediaId)) ? msg.mediaId : null;
-  if (_imgBufs.size >= IMG_MAX_PARALLEL) _imgBufs.delete(_imgBufs.keys().next().value); // le plus ancien
+  const mediaId = (typeof msg.mediaId === 'string' && (_RE_MEDIA_ID.test(msg.mediaId) || _isPreparedCallAsset(msg.mediaId))) ? msg.mediaId : null;
+  if (!_imgBufs.has(msg.id) && _imgBufs.size >= IMG_MAX_PARALLEL) {
+    let idle = null;
+    for (const [k, b] of _imgBufs) if (!idle || b.at < _imgBufs.get(idle).at) idle = k;
+    _imgBufs.delete(idle);
+  }
   // Console prioritaire (passerelle DMX) : l'image est mise en cache sans s'afficher
-  _imgBufs.set(msg.id, { total, parts: new Array(total), got: 0, mediaId, show: msg.show !== false && !screenDmxLive() });
+  _imgBufs.set(msg.id, { total, parts: new Array(total), got: 0, mediaId, show: msg.show !== false && !screenDmxLive(), at: Date.now() });
 }
 function mediaImgChunk(msg) {
   const b = _imgBufs.get(msg.id);
@@ -86,6 +95,7 @@ function mediaImgChunk(msg) {
   const i = Number(msg.i);
   if (!Number.isInteger(i) || i < 0 || i >= b.total) return;
   if (typeof msg.data !== 'string' || msg.data.length > IMG_CHUNK_MAX) return;
+  b.at = Date.now();
   if (b.parts[i] === undefined) { b.parts[i] = msg.data; b.got++; }
   if (b.got !== b.total) return;
   _imgBufs.delete(msg.id);
@@ -93,7 +103,7 @@ function mediaImgChunk(msg) {
   // La bande son du décroché et les sons importés (sonneries, notifications :
   // __ring_…) passent par ce même canal : on valide selon le type attendu
   const isRing = b.mediaId !== null && SRP.RING_ID_RE.test(b.mediaId);
-  const isAudio = b.mediaId === '__callaudio' || isRing;
+  const isAudio = b.mediaId === '__callaudio' || isRing || (b.mediaId !== null && SRP.CALL_AUDIO_ID_RE.test(b.mediaId));
   const dataUrl = isAudio ? safeAudioData(raw) : safeImageData(raw);
   if (!dataUrl) return; // contenu non conforme : ignoré
   // Mise en cache pour affichage instantané ultérieur + accusé de réception
@@ -134,8 +144,8 @@ function sendScreenState(vid) {
 let _vidUp = null; // { id, mime, total, parts, got, poolId, retried }
 function screenVidUploadStart(msg) {
   _vidUp = { id: msg.mediaId, mime: msg.mime || 'video/mp4', total: msg.totalChunks,
-             parts: new Array(msg.totalChunks), got: 0, poolId: msg.poolId || null, retried: false };
-  setScreenStatus('📥 Réception vidéo… 0 %');
+             parts: new Array(msg.totalChunks), got: 0, poolId: msg.poolId || null, retried: false, show: msg.show !== false };
+  if (_vidUp.show) setScreenStatus('📥 Réception vidéo… 0 %');
 }
 function screenVidUploadChunk(msg) {
   if (!_vidUp || _vidUp.id !== msg.mediaId) return;
@@ -144,7 +154,7 @@ function screenVidUploadChunk(msg) {
   if (_vidUp.got % 16 === 0 || _vidUp.got === _vidUp.total) {
     sendMsg({ type: 'media:chunkack', mediaId: _vidUp.id, got: _vidUp.got });
   }
-  if (_vidUp.got % 40 === 0) setScreenStatus('📥 Réception vidéo… ' + Math.round(_vidUp.got / _vidUp.total * 100) + ' %');
+  if (_vidUp.got % 40 === 0 && _vidUp.show) setScreenStatus('📥 Réception vidéo… ' + Math.round(_vidUp.got / _vidUp.total * 100) + ' %');
 }
 function screenVidUploadPlay(msg) {
   if (!_vidUp || _vidUp.id !== msg.mediaId) return;
@@ -172,17 +182,18 @@ function screenVidUploadPlay(msg) {
     for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
     const blob = new Blob([arr], { type: up.mime });
     const url = URL.createObjectURL(blob);
-    setScreenStatus('🎬 Vidéo reçue (' + Math.round(blob.size / 1048576) + ' Mo)');
+    if (up.show) setScreenStatus('🎬 Vidéo reçue (' + Math.round(blob.size / 1048576) + ' Mo)');
     if (up.poolId) {
       const old = _mediaCache.get(up.poolId);
-      if (old && old.url && old.url !== url) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
+      if (old && old.url && old.url !== url && old.url !== _screenVidUrl) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
       _mediaCache.set(up.poolId, { kind: 'vid', url });
       sendMsg({ type: 'media:cached', id: up.poolId });
+      if (!up.show) return; // préparation hors ligne : en cache, rien d'affiché ni d'interrompu
       // Console prioritaire (passerelle DMX) : mise en cache seulement
       if (screenDmxLive()) { screenDmxOnCached(up.poolId); return; }
       _screenActiveId = up.poolId;
-    } else if (screenDmxLive()) return;
+    } else if (screenDmxLive() || !up.show) return;
     screenPlayVideoUrl(url);
-  } catch (_) { setScreenStatus('⚠ Vidéo illisible'); }
+  } catch (_) { if (up.show) setScreenStatus('⚠ Vidéo illisible'); }
 }
 

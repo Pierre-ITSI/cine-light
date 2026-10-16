@@ -793,6 +793,8 @@
     </div>
     <!-- Passerelle DMX : visible partout ; hors de l'app native, la vue explique qu'il faut l'app (validé) -->
     <button type="button" class="media-btn gw-entry" id="gwEntryBtn" onclick="openDmxGateway()"><span class="media-icon">🎛</span> Passerelle DMX <span class="gw-entry-state" id="gwEntryState"></span></button>
+    <!-- Tourner sans réseau (maquette 10) : liaison et préparation des écrans -->
+    <button type="button" class="media-btn gw-entry" id="offEntryBtn" onclick="openOfflineView()"><span class="media-icon">📶</span> Tourner sans réseau <span class="gw-entry-state" id="offEntryState"></span></button>
     <button class="media-btn pair-renew" onclick="confirmNewSession()"><span class="media-icon">⟳</span> Nouvelle session</button>
     <div class="pair-e2e">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
@@ -974,6 +976,10 @@
       <span class="st-row-main"><span class="st-row-label">Fréquence max du strobo</span><span class="st-row-sub">Sécurité photosensibilité</span></span>
       <span class="st-row-val" id="stStrobeMax">30 Hz</span>
     </div>
+    <button type="button" class="st-row" id="stLink" aria-haspopup="dialog" onclick="openOfflineView()">
+      <span class="st-row-main"><span class="st-row-label">Liaison par défaut</span><span class="st-row-sub">Internet, Wi-Fi local, Bluetooth</span></span>
+      <span class="st-row-val" id="stLinkVal">Auto</span>
+    </button>
   </div>
   <button type="button" class="st-btn st-danger" onclick="settingsForgetScreens()">OUBLIER TOUS LES ÉCRANS APPAIRÉS</button>
   <button type="button" class="st-btn" onclick="settingsGoHome()">RETOUR À L'ACCUEIL</button>
@@ -982,6 +988,39 @@
     <span>Aucun compte · aucune publicité · aucun suivi</span>
     <span id="stVersion">SetRemote · by Pikoo</span>
   </div>
+</div>
+
+<!-- Tourner sans réseau (maquette 10) : liaison (Auto / Internet / Wi-Fi local / Bluetooth) et préparation des écrans -->
+<div id="offline-view" role="dialog" aria-modal="true" aria-labelledby="offTitle">
+  <div class="off-head">
+    <div class="off-head-row">
+      <button type="button" class="sv-back" aria-label="Retour" onclick="closeOfflineView()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <span class="off-title" id="offTitle">Tourner sans réseau</span>
+    </div>
+    <p class="off-sub">Préparez les écrans tant que vous avez du réseau ; sur le plateau, seules les commandes circulent.</p>
+  </div>
+  <div class="flash-unavail-notice" id="offNeedsApp" style="display:none">
+    <strong>📶 Nécessite l'app SetRemote</strong>
+    Un navigateur ne peut ouvrir ni Wi-Fi local ni Bluetooth entre appareils. Ouvrez SetRemote dans l'app iPhone, iPad ou Android pour tourner sans Internet. Ici, la préparation des écrans passe par Internet.
+  </div>
+  <div class="off-card">
+    <span class="off-label" id="offLinkLabel">Liaison</span>
+    <div class="off-seg" role="radiogroup" aria-labelledby="offLinkLabel">
+      <button type="button" class="off-seg-btn active" id="offLink-auto" role="radio" aria-checked="true" onclick="setLinkPref('auto')">Auto</button>
+      <button type="button" class="off-seg-btn" id="offLink-internet" role="radio" aria-checked="false" onclick="setLinkPref('internet')">Internet</button>
+      <button type="button" class="off-seg-btn" id="offLink-lan" role="radio" aria-checked="false" onclick="setLinkPref('lan')">Wi-Fi local</button>
+      <button type="button" class="off-seg-btn" id="offLink-ble" role="radio" aria-checked="false" onclick="setLinkPref('ble')">Bluetooth</button>
+    </div>
+    <div class="off-desc" id="offLinkDesc">Auto : Internet si disponible, sinon Wi-Fi local, sinon Bluetooth (commandes uniquement).</div>
+    <div class="off-warn" id="offLinkWarn" role="status" style="display:none"></div>
+  </div>
+  <div class="off-card off-prep">
+    <span class="off-label">Préparation des écrans</span>
+    <div class="off-rows" id="offPrepRows"></div>
+  </div>
+  <button type="button" class="off-go" id="offPrepBtn" onclick="prepRunAll()">TOUT PRÉPARER MAINTENANT</button>
+  <div class="off-note" id="offPrepNote" role="status" style="display:none"></div>
+  <div class="off-tip"><b>Wi-Fi local sans Internet :</b> connectez tous les appareils au même mini-routeur de voyage, ou au partage de connexion d'un des téléphones.</div>
 </div>
 
 <!-- Politique de confidentialité dans l'app (Apple 5.1.1, Google Play) : page statique embarquée -->

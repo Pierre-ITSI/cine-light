@@ -90,6 +90,9 @@ function _validCallStart(m) {
     : null;
   m.autoAnswer = _P.num(m.autoAnswer, 0, 60) ?? 0;
   m.hasAudio = _P.bool(m.hasAudio);
+  // Photo / bande son PRÉPARÉES (tournage sans réseau) : ids dérivés du contenu
+  if (!(typeof m.photoId === 'string' && SRP.CALL_PHOTO_ID_RE.test(m.photoId))) m.photoId = null;
+  if (!(typeof m.audioId === 'string' && SRP.CALL_AUDIO_ID_RE.test(m.audioId))) m.audioId = null;
   return true;
 }
 
@@ -159,6 +162,7 @@ const MSG_ROUTES = {
       if (!_P.id(m.mediaId) || _P.int(m.totalChunks, 1, PROTO.VID_MAX_CHUNKS) === null) return false;
       if (!(typeof m.mime === 'string' && /^[a-z]+\/[a-z0-9.+-]{1,40}$/i.test(m.mime))) m.mime = undefined;
       if (!_P.id(m.poolId)) m.poolId = null;
+      m.show = m.show !== false; // false : mise en cache seulement (préparation hors ligne)
       return true;
     },
     handle: (m) => screenVidUploadStart(m),
@@ -195,7 +199,8 @@ const MSG_ROUTES = {
       && (m.groups === undefined || (Array.isArray(m.groups) && m.groups.length <= 16 && m.groups.every((g) => typeof g === 'string' && SRP.GROUP_ID_RE.test(g)))),
     handle: (m) => screenApplyConfig(m),
   },
-  'rtc-offer':         { roles: ['screen'], validate: _validSdp('offer'), handle: (m) => screenHandleOffer(m.sdp) },
+  // kind « cache » : préparation hors ligne, rien d'interrompu ni d'affiché
+  'rtc-offer':         { roles: ['screen'], validate: _validSdp('offer'), handle: (m) => screenHandleOffer(m.sdp, m.kind) },
   // Candidats ICE dans les deux sens : chaque rôle n'accepte que ceux de l'autre
   'rtc-ice': {
     roles: ['screen', 'remote'],

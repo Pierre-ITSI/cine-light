@@ -28,6 +28,7 @@ function renderScreensUi() {
   renderTargetBtn();
   renderScreensView();
   if (_sheet && (_sheet.kind === 'target' || _sheet.kind === 'screenGroups')) renderSheet();
+  if (typeof renderOfflineView === 'function') renderOfflineView(); // préparation de chaque écran (maquette 10)
 }
 function closeScreensUi() { closeRevokeDialog(); closeSheet(); closeScreensView(); }
 
@@ -244,12 +245,13 @@ function renderScreensView() {
   const list = scrList(), t = scrTarget();
   _setHtml(document.getElementById('svList'), list.length ? list.map((id) => {
     const e = _scrReg.screens.get(id);
-    const on = scrOnline(id);
+    // Liaison de l'écran (maquette 5) : Internet, Wi-Fi local, Bluetooth ou Hors ligne (21-links.js)
+    const link = scrOnline(id) ? scrLinkOf(id) : 'off';
     const groups = e.groups.map((g) => (scrGroup(g) || {}).name).filter(Boolean);
     return '<div class="sv-card" data-id="' + id + '">'
       + '<div class="sv-row"><span class="sv-swatch" style="' + scrSwatchCss(id) + '"></span>'
       + '<div class="sv-main"><div class="sv-name">' + escapeHtml(scrName(id)) + '</div><div class="sv-now">' + escapeHtml(scrNowText(id)) + '</div></div>'
-      + '<span class="sv-link' + (on ? '' : ' off') + '">' + (on ? 'Internet' : 'Hors ligne') + '</span></div>'
+      + '<span class="sv-link' + (link === 'internet' ? '' : ' ' + link) + '">' + LINK_LABELS[link] + '</span></div>'
       + '<div class="sv-row"><button type="button" class="sv-group' + (groups.length ? '' : ' none') + '" onclick="openScreenGroups(\'' + id + '\')">'
       + escapeHtml(groups.length ? groups.join(' · ') : 'Sans groupe') + '</button><span class="sv-flex"></span>'
       + '<button type="button" class="sv-btn" onclick="scrIdentify(\'' + id + '\')">Identifier</button>'

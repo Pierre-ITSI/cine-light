@@ -873,6 +873,58 @@ button.st-row{cursor:pointer}
 .st-foot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.6875rem;color:#a8a8a8;text-align:center}
 .st-policy{font-size:.75rem;color:var(--accent)}
 .st-policy:hover{color:#ff8a55}
+/* ══ Tourner sans réseau (maquette validée 10) et liaisons locales (maquettes 4, 5) ══
+   Préfixe off- propre à la vue. Couleurs des liaisons : Wi-Fi local #6fb4ff,
+   Bluetooth #c6a6ff (maquette 4). */
+
+/* — Pastille de l'en-tête, liste « Écrans connectés », écrans appairés (onglet QR) — */
+.link-pill.lan{color:#6fb4ff;background:rgba(111,180,255,.14)}
+.link-pill.ble{color:#c6a6ff;background:rgba(198,166,255,.14)}
+.sv-link.lan{color:#6fb4ff}
+.sv-link.ble{color:#c6a6ff}
+.pair-screen.lan .ps-dot{background:#6fb4ff}
+.pair-screen.ble .ps-dot{background:#c6a6ff}
+
+/* — Vue plein écran, au-dessus des Réglages (ouverte depuis « Liaison par défaut ») — */
+#offline-view{display:none;position:fixed;inset:0;z-index:315;overflow-y:auto;overflow-x:hidden;flex-direction:column;gap:12px;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);color:var(--text);font-family:'DM Mono',monospace;padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
+#offline-view.open{display:flex}
+#offline-view .flash-unavail-notice{margin:0;flex-shrink:0}
+.off-head{padding-bottom:12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.off-head-row{display:flex;align-items:center;gap:8px}
+.off-title{flex:1;min-width:0;font-family:'Lato',sans-serif;font-weight:600;font-size:1.25rem}
+.off-sub{margin:6px 0 0;font-size:.6875rem;color:#b0b0b0;line-height:1.5}
+
+/* Cartes */
+.off-card{background:var(--mid);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.off-prep{gap:12px}
+.off-label{font-size:.625rem;letter-spacing:.2em;text-transform:uppercase;color:#a8a8a8}
+.off-seg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.off-seg-btn{height:40px;padding:0 2px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:#d0d0d0;font-family:'DM Mono',monospace;font-size:.625rem;cursor:pointer}
+.off-seg-btn.active{border-color:var(--accent);background:rgba(255,107,44,.1);color:#FF8a55}
+.off-seg-btn:disabled{opacity:.4;cursor:default}
+.off-desc{font-size:.6875rem;color:#c4c4c4;line-height:1.55}
+.off-warn{font-size:.6875rem;color:#f0dca8;line-height:1.55}
+
+/* Préparation : un écran par ligne (nom, état, barre, détail) */
+.off-rows{display:flex;flex-direction:column;gap:12px}
+.off-row{--st:#a8a8a8;display:flex;flex-direction:column;gap:6px}
+.off-row.ready{--st:#5fdf8a}
+.off-row.busy{--st:#FF8a55}
+.off-row.fail{--st:#ff7a70}
+.off-row-head{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.8125rem}
+.off-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.off-state{font-size:.6875rem;color:var(--st);white-space:nowrap;flex-shrink:0}
+.off-bar{height:6px;border-radius:3px;background:rgba(245,242,236,.12);overflow:hidden}
+.off-bar div{height:6px;background:var(--st);transition:width .3s}
+.off-detail{font-size:.625rem;color:#a8a8a8;line-height:1.5}
+.off-empty{font-size:.6875rem;color:#a8a8a8;line-height:1.55}
+
+/* « Tout préparer maintenant », note, conseil Wi-Fi local */
+.off-go{height:52px;flex-shrink:0;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;letter-spacing:.08em;cursor:pointer}
+.off-go:disabled{opacity:.45;cursor:default}
+.off-note{font-size:.6875rem;color:#c4c4c4;line-height:1.55;text-align:center}
+.off-tip{margin-top:auto;flex-shrink:0;background:rgba(111,180,255,.08);border:1px solid rgba(111,180,255,.3);border-radius:10px;padding:12px 14px;font-size:.6875rem;color:#c9ddf5;line-height:1.6}
+.off-tip b{color:var(--text)}
 </style>
 </head>
 <body>
@@ -1626,6 +1678,8 @@ button.st-row{cursor:pointer}
     </div>
     <!-- Passerelle DMX : visible partout ; hors de l'app native, la vue explique qu'il faut l'app (validé) -->
     <button type="button" class="media-btn gw-entry" id="gwEntryBtn" onclick="openDmxGateway()"><span class="media-icon">🎛</span> Passerelle DMX <span class="gw-entry-state" id="gwEntryState"></span></button>
+    <!-- Tourner sans réseau (maquette 10) : liaison et préparation des écrans -->
+    <button type="button" class="media-btn gw-entry" id="offEntryBtn" onclick="openOfflineView()"><span class="media-icon">📶</span> Tourner sans réseau <span class="gw-entry-state" id="offEntryState"></span></button>
     <button class="media-btn pair-renew" onclick="confirmNewSession()"><span class="media-icon">⟳</span> Nouvelle session</button>
     <div class="pair-e2e">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
@@ -1807,6 +1861,10 @@ button.st-row{cursor:pointer}
       <span class="st-row-main"><span class="st-row-label">Fréquence max du strobo</span><span class="st-row-sub">Sécurité photosensibilité</span></span>
       <span class="st-row-val" id="stStrobeMax">30 Hz</span>
     </div>
+    <button type="button" class="st-row" id="stLink" aria-haspopup="dialog" onclick="openOfflineView()">
+      <span class="st-row-main"><span class="st-row-label">Liaison par défaut</span><span class="st-row-sub">Internet, Wi-Fi local, Bluetooth</span></span>
+      <span class="st-row-val" id="stLinkVal">Auto</span>
+    </button>
   </div>
   <button type="button" class="st-btn st-danger" onclick="settingsForgetScreens()">OUBLIER TOUS LES ÉCRANS APPAIRÉS</button>
   <button type="button" class="st-btn" onclick="settingsGoHome()">RETOUR À L'ACCUEIL</button>
@@ -1815,6 +1873,39 @@ button.st-row{cursor:pointer}
     <span>Aucun compte · aucune publicité · aucun suivi</span>
     <span id="stVersion">SetRemote · by Pikoo</span>
   </div>
+</div>
+
+<!-- Tourner sans réseau (maquette 10) : liaison (Auto / Internet / Wi-Fi local / Bluetooth) et préparation des écrans -->
+<div id="offline-view" role="dialog" aria-modal="true" aria-labelledby="offTitle">
+  <div class="off-head">
+    <div class="off-head-row">
+      <button type="button" class="sv-back" aria-label="Retour" onclick="closeOfflineView()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <span class="off-title" id="offTitle">Tourner sans réseau</span>
+    </div>
+    <p class="off-sub">Préparez les écrans tant que vous avez du réseau ; sur le plateau, seules les commandes circulent.</p>
+  </div>
+  <div class="flash-unavail-notice" id="offNeedsApp" style="display:none">
+    <strong>📶 Nécessite l'app SetRemote</strong>
+    Un navigateur ne peut ouvrir ni Wi-Fi local ni Bluetooth entre appareils. Ouvrez SetRemote dans l'app iPhone, iPad ou Android pour tourner sans Internet. Ici, la préparation des écrans passe par Internet.
+  </div>
+  <div class="off-card">
+    <span class="off-label" id="offLinkLabel">Liaison</span>
+    <div class="off-seg" role="radiogroup" aria-labelledby="offLinkLabel">
+      <button type="button" class="off-seg-btn active" id="offLink-auto" role="radio" aria-checked="true" onclick="setLinkPref('auto')">Auto</button>
+      <button type="button" class="off-seg-btn" id="offLink-internet" role="radio" aria-checked="false" onclick="setLinkPref('internet')">Internet</button>
+      <button type="button" class="off-seg-btn" id="offLink-lan" role="radio" aria-checked="false" onclick="setLinkPref('lan')">Wi-Fi local</button>
+      <button type="button" class="off-seg-btn" id="offLink-ble" role="radio" aria-checked="false" onclick="setLinkPref('ble')">Bluetooth</button>
+    </div>
+    <div class="off-desc" id="offLinkDesc">Auto : Internet si disponible, sinon Wi-Fi local, sinon Bluetooth (commandes uniquement).</div>
+    <div class="off-warn" id="offLinkWarn" role="status" style="display:none"></div>
+  </div>
+  <div class="off-card off-prep">
+    <span class="off-label">Préparation des écrans</span>
+    <div class="off-rows" id="offPrepRows"></div>
+  </div>
+  <button type="button" class="off-go" id="offPrepBtn" onclick="prepRunAll()">TOUT PRÉPARER MAINTENANT</button>
+  <div class="off-note" id="offPrepNote" role="status" style="display:none"></div>
+  <div class="off-tip"><b>Wi-Fi local sans Internet :</b> connectez tous les appareils au même mini-routeur de voyage, ou au partage de connexion d'un des téléphones.</div>
 </div>
 
 <!-- Politique de confidentialité dans l'app (Apple 5.1.1, Google Play) : page statique embarquée -->
@@ -6554,6 +6645,9 @@ function _validCallStart(m) {
     : null;
   m.autoAnswer = _P.num(m.autoAnswer, 0, 60) ?? 0;
   m.hasAudio = _P.bool(m.hasAudio);
+  // Photo / bande son PRÉPARÉES (tournage sans réseau) : ids dérivés du contenu
+  if (!(typeof m.photoId === 'string' && SRP.CALL_PHOTO_ID_RE.test(m.photoId))) m.photoId = null;
+  if (!(typeof m.audioId === 'string' && SRP.CALL_AUDIO_ID_RE.test(m.audioId))) m.audioId = null;
   return true;
 }
 
@@ -6623,6 +6717,7 @@ const MSG_ROUTES = {
       if (!_P.id(m.mediaId) || _P.int(m.totalChunks, 1, PROTO.VID_MAX_CHUNKS) === null) return false;
       if (!(typeof m.mime === 'string' && /^[a-z]+\/[a-z0-9.+-]{1,40}$/i.test(m.mime))) m.mime = undefined;
       if (!_P.id(m.poolId)) m.poolId = null;
+      m.show = m.show !== false; // false : mise en cache seulement (préparation hors ligne)
       return true;
     },
     handle: (m) => screenVidUploadStart(m),
@@ -6659,7 +6754,8 @@ const MSG_ROUTES = {
       && (m.groups === undefined || (Array.isArray(m.groups) && m.groups.length <= 16 && m.groups.every((g) => typeof g === 'string' && SRP.GROUP_ID_RE.test(g)))),
     handle: (m) => screenApplyConfig(m),
   },
-  'rtc-offer':         { roles: ['screen'], validate: _validSdp('offer'), handle: (m) => screenHandleOffer(m.sdp) },
+  // kind « cache » : préparation hors ligne, rien d'interrompu ni d'affiché
+  'rtc-offer':         { roles: ['screen'], validate: _validSdp('offer'), handle: (m) => screenHandleOffer(m.sdp, m.kind) },
   // Candidats ICE dans les deux sens : chaque rôle n'accepte que ceux de l'autre
   'rtc-ice': {
     roles: ['screen', 'remote'],
@@ -8882,6 +8978,7 @@ function renderScreensUi() {
   renderTargetBtn();
   renderScreensView();
   if (_sheet && (_sheet.kind === 'target' || _sheet.kind === 'screenGroups')) renderSheet();
+  if (typeof renderOfflineView === 'function') renderOfflineView(); // préparation de chaque écran (maquette 10)
 }
 function closeScreensUi() { closeRevokeDialog(); closeSheet(); closeScreensView(); }
 
@@ -9098,12 +9195,13 @@ function renderScreensView() {
   const list = scrList(), t = scrTarget();
   _setHtml(document.getElementById('svList'), list.length ? list.map((id) => {
     const e = _scrReg.screens.get(id);
-    const on = scrOnline(id);
+    // Liaison de l'écran (maquette 5) : Internet, Wi-Fi local, Bluetooth ou Hors ligne (21-links.js)
+    const link = scrOnline(id) ? scrLinkOf(id) : 'off';
     const groups = e.groups.map((g) => (scrGroup(g) || {}).name).filter(Boolean);
     return '<div class="sv-card" data-id="' + id + '">'
       + '<div class="sv-row"><span class="sv-swatch" style="' + scrSwatchCss(id) + '"></span>'
       + '<div class="sv-main"><div class="sv-name">' + escapeHtml(scrName(id)) + '</div><div class="sv-now">' + escapeHtml(scrNowText(id)) + '</div></div>'
-      + '<span class="sv-link' + (on ? '' : ' off') + '">' + (on ? 'Internet' : 'Hors ligne') + '</span></div>'
+      + '<span class="sv-link' + (link === 'internet' ? '' : ' ' + link) + '">' + LINK_LABELS[link] + '</span></div>'
       + '<div class="sv-row"><button type="button" class="sv-group' + (groups.length ? '' : ' none') + '" onclick="openScreenGroups(\'' + id + '\')">'
       + escapeHtml(groups.length ? groups.join(' · ') : 'Sans groupe') + '</button><span class="sv-flex"></span>'
       + '<button type="button" class="sv-btn" onclick="scrIdentify(\'' + id + '\')">Identifier</button>'
@@ -11626,6 +11724,13 @@ function mediaShowOn(it, ids, fromUi) {
     sendMsg({ type: 'media:show', id: it.id, target: { screens: have } });
     if (fromUi && it.kind === 'vid') sendMsg({ type: 'media:endmode', mode: _videoEndMode, target: { screens: have } });
   }
+  // Bluetooth seul (commandes uniquement) : le média manquant n'est pas envoyé ;
+  // son état attendu est noté, il partira dès le retour d'Internet ou du Wi-Fi local
+  if (lack.length && linkBleOnly()) {
+    scrChanged();
+    if (ids.some(scrInTarget)) setMediaStatus('⚠ Bluetooth : « ' + it.name + ' » n\'est pas préparé sur ' + (lack.length > 1 ? lack.length + ' écrans' : 'l\'écran') + ' — il faut Internet ou le Wi-Fi local');
+    return;
+  }
   if (lack.length) {
     if (it.kind === 'img') broadcastImage(it.file, it.id, lack);
     else broadcastVideo(it.file, it.id, lack);
@@ -11665,6 +11770,7 @@ function remoteOnScreenAdvanced(id) {
 // Un écran ne possède pas ce média en cache : transfert complet, à lui seul
 // (son importé d'un appel : renvoyé par 81-ringtones.js)
 function remoteOnScreenNeeds(id) {
+  if (linkBleOnly()) return; // Bluetooth seul : aucun média ne peut partir (l'écran redemandera)
   const sid = _rxFrom && scrKnown(_rxFrom) ? _rxFrom : null;
   if (SRP.RING_ID_RE.test(id)) { ringOnScreenNeeds(id, sid); return; }
   const ids = sid ? [sid] : scrTargetIds();
@@ -11705,6 +11811,9 @@ function remoteOnScreenCached(id) {
   const sid = _rxFrom;
   if (sid && scrKnown(sid)) {
     scrState(sid).cached.add(id);
+    // Vidéo préparée : l'accusé de mise en cache vaut confirmation (aucune lecture n'en suivra)
+    const job = _vidJobs.get(sid);
+    if (job && job.prep && job.mediaId === id && job.b64 && job.b64.verifyTimer) { clearTimeout(job.b64.verifyTimer); job.b64.verifyTimer = null; }
     const inf = _preloadInflight.get(id);
     if (inf) inf.delete(sid);
     scrRefreshCachedView();
@@ -11900,7 +12009,7 @@ function _vidJobsBusy() {
 }
 // Progression affichée : transferts de la dernière diffusion vers la cible
 function _vidRenderStatus() {
-  const jobs = [..._vidJobs.values()].filter((j) => j.batch === _vidBatch && scrInTarget(j.sid));
+  const jobs = [..._vidJobs.values()].filter((j) => !j.prep && j.batch === _vidBatch && scrInTarget(j.sid));
   if (!jobs.length) return;
   if (jobs.length === 1) { setMediaStatus(jobs[0].status, jobs[0].done && !jobs[0].failed && !/^⚠|^⏳/.test(jobs[0].status)); return; }
   const live = jobs.filter((j) => !j.done && !j.failed);
@@ -11950,13 +12059,14 @@ async function _vidStartRtc(job) {
   const ch = pc.createDataChannel('file', { ordered: true });
   ch.binaryType = 'arraybuffer';
   job.ch = ch;
-  ch.onopen = () => { if (_vidLive(job) && job.ch === ch) sendFileOverChannel(job); };
+  ch.onopen = () => { if (_vidLive(job) && job.ch === ch) { job.chOpen = true; sendFileOverChannel(job); } };
   try {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
   } catch (_) { if (_vidLive(job)) _vidRtcFailed(job); return; }
   if (!_vidLive(job)) return;
-  sendMsg({ type: 'rtc-offer', sdp: pc.localDescription, kind: 'file', target });
+  // Préparation hors ligne : « cache », l'écran ne coupe ni n'affiche rien
+  sendMsg({ type: 'rtc-offer', sdp: pc.localDescription, kind: job.prep ? 'cache' : 'file', target });
   _vidRenderStatus();
 }
 // Pair-à-pair bloqué vers cet écran : bascule IMMÉDIATE sur l'envoi par le
@@ -11976,7 +12086,9 @@ async function sendFileOverChannel(job) {
   const CHUNK = 16 * 1024;
   const HIGH = 4 * 1024 * 1024; // backpressure à 4 Mo
   ch.bufferedAmountLowThreshold = 1 * 1024 * 1024;
-  ch.send(JSON.stringify({ meta: true, name: file.name, size: file.size, mime: file.type || 'video/mp4', mediaId: job.mediaId }));
+  const meta = { meta: true, name: file.name, size: file.size, mime: file.type || 'video/mp4', mediaId: job.mediaId };
+  if (job.prep) meta.show = false; // préparation : mise en cache seulement
+  ch.send(JSON.stringify(meta));
   let offset = 0;
   job.status = '📤 Transfert… 0 %';
   _vidRenderStatus();
@@ -11996,7 +12108,7 @@ async function sendFileOverChannel(job) {
     job.done = true; job.pct = 100; // les changements d'état RTC ultérieurs sont ignorés
     job.status = '🎬 Lecture sur l\'écran';
     _rtcTransferDone = ![..._vidJobs.values()].some((j) => j.batch === job.batch && j.mode === 'rtc' && !j.done && !j.failed && !j.closed);
-    if (scrInTarget(job.sid)) { showMediaPlay(true); setPlayBtn(false); showMediaTimeline(true); }
+    if (!job.prep && scrInTarget(job.sid)) { showMediaPlay(true); setPlayBtn(false); showMediaTimeline(true); }
     _vidRenderStatus();
   } catch (e) {
     if (!_vidLive(job)) return;
@@ -12051,7 +12163,8 @@ async function _vidStartB64(job) {
   for (let i = 0; i < total; i++) chunks.push(b64.slice(i * CHUNK, (i + 1) * CHUNK));
   const target = { screens: [job.sid] };
   job.b64 = { id, chunks, rounds: 0, got: 0, noAck: false, verifyTimer: null, target };
-  sendMsg({ type: 'media:upload', mediaId: id, kind: 'video', mime, totalChunks: total, poolId: job.mediaId, target });
+  sendMsg(Object.assign({ type: 'media:upload', mediaId: id, kind: 'video', mime, totalChunks: total, poolId: job.mediaId, target },
+    job.prep ? { show: false } : {})); // préparation : mise en cache seulement
   job.status = '📤 Transfert… 0 %';
   _vidRenderStatus();
   const WINDOW = 48; // fragments en vol au maximum (si l'écran accuse réception)
@@ -12221,15 +12334,24 @@ function hideScreenMedia() {
 // seul tampon global → un préchargement écrasait l'image demandée), avec des
 // plafonds pour qu'un message forgé ne puisse pas saturer la mémoire.
 const _imgBufs = new Map();
-const IMG_MAX_CHUNKS = 2000, IMG_MAX_PARALLEL = 4, IMG_CHUNK_MAX = 20000;
+// Transferts simultanés : 6 au plus (préparation hors ligne + resynchronisation
+// + diffusion). Au-delà, celui qui n'a rien reçu depuis le plus longtemps est
+// abandonné (avant : le plus ANCIEN, même s'il recevait encore ses fragments).
+const IMG_MAX_CHUNKS = 2000, IMG_MAX_PARALLEL = 6, IMG_CHUNK_MAX = 20000;
 const _RE_MEDIA_ID = /^[A-Za-z0-9_-]{1,40}$/;
+// Photo / bande son préparées d'un appel enregistré (__ph_… / __au_…, 45 caractères)
+const _isPreparedCallAsset = (id) => SRP.CALL_PHOTO_ID_RE.test(id) || SRP.CALL_AUDIO_ID_RE.test(id);
 function mediaImgStart(msg) {
   const total = Number(msg.total);
   if (typeof msg.id !== 'string' || !Number.isInteger(total) || total < 1 || total > IMG_MAX_CHUNKS) return;
-  const mediaId = (typeof msg.mediaId === 'string' && _RE_MEDIA_ID.test(msg.mediaId)) ? msg.mediaId : null;
-  if (_imgBufs.size >= IMG_MAX_PARALLEL) _imgBufs.delete(_imgBufs.keys().next().value); // le plus ancien
+  const mediaId = (typeof msg.mediaId === 'string' && (_RE_MEDIA_ID.test(msg.mediaId) || _isPreparedCallAsset(msg.mediaId))) ? msg.mediaId : null;
+  if (!_imgBufs.has(msg.id) && _imgBufs.size >= IMG_MAX_PARALLEL) {
+    let idle = null;
+    for (const [k, b] of _imgBufs) if (!idle || b.at < _imgBufs.get(idle).at) idle = k;
+    _imgBufs.delete(idle);
+  }
   // Console prioritaire (passerelle DMX) : l'image est mise en cache sans s'afficher
-  _imgBufs.set(msg.id, { total, parts: new Array(total), got: 0, mediaId, show: msg.show !== false && !screenDmxLive() });
+  _imgBufs.set(msg.id, { total, parts: new Array(total), got: 0, mediaId, show: msg.show !== false && !screenDmxLive(), at: Date.now() });
 }
 function mediaImgChunk(msg) {
   const b = _imgBufs.get(msg.id);
@@ -12237,6 +12359,7 @@ function mediaImgChunk(msg) {
   const i = Number(msg.i);
   if (!Number.isInteger(i) || i < 0 || i >= b.total) return;
   if (typeof msg.data !== 'string' || msg.data.length > IMG_CHUNK_MAX) return;
+  b.at = Date.now();
   if (b.parts[i] === undefined) { b.parts[i] = msg.data; b.got++; }
   if (b.got !== b.total) return;
   _imgBufs.delete(msg.id);
@@ -12244,7 +12367,7 @@ function mediaImgChunk(msg) {
   // La bande son du décroché et les sons importés (sonneries, notifications :
   // __ring_…) passent par ce même canal : on valide selon le type attendu
   const isRing = b.mediaId !== null && SRP.RING_ID_RE.test(b.mediaId);
-  const isAudio = b.mediaId === '__callaudio' || isRing;
+  const isAudio = b.mediaId === '__callaudio' || isRing || (b.mediaId !== null && SRP.CALL_AUDIO_ID_RE.test(b.mediaId));
   const dataUrl = isAudio ? safeAudioData(raw) : safeImageData(raw);
   if (!dataUrl) return; // contenu non conforme : ignoré
   // Mise en cache pour affichage instantané ultérieur + accusé de réception
@@ -12285,8 +12408,8 @@ function sendScreenState(vid) {
 let _vidUp = null; // { id, mime, total, parts, got, poolId, retried }
 function screenVidUploadStart(msg) {
   _vidUp = { id: msg.mediaId, mime: msg.mime || 'video/mp4', total: msg.totalChunks,
-             parts: new Array(msg.totalChunks), got: 0, poolId: msg.poolId || null, retried: false };
-  setScreenStatus('📥 Réception vidéo… 0 %');
+             parts: new Array(msg.totalChunks), got: 0, poolId: msg.poolId || null, retried: false, show: msg.show !== false };
+  if (_vidUp.show) setScreenStatus('📥 Réception vidéo… 0 %');
 }
 function screenVidUploadChunk(msg) {
   if (!_vidUp || _vidUp.id !== msg.mediaId) return;
@@ -12295,7 +12418,7 @@ function screenVidUploadChunk(msg) {
   if (_vidUp.got % 16 === 0 || _vidUp.got === _vidUp.total) {
     sendMsg({ type: 'media:chunkack', mediaId: _vidUp.id, got: _vidUp.got });
   }
-  if (_vidUp.got % 40 === 0) setScreenStatus('📥 Réception vidéo… ' + Math.round(_vidUp.got / _vidUp.total * 100) + ' %');
+  if (_vidUp.got % 40 === 0 && _vidUp.show) setScreenStatus('📥 Réception vidéo… ' + Math.round(_vidUp.got / _vidUp.total * 100) + ' %');
 }
 function screenVidUploadPlay(msg) {
   if (!_vidUp || _vidUp.id !== msg.mediaId) return;
@@ -12323,18 +12446,19 @@ function screenVidUploadPlay(msg) {
     for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
     const blob = new Blob([arr], { type: up.mime });
     const url = URL.createObjectURL(blob);
-    setScreenStatus('🎬 Vidéo reçue (' + Math.round(blob.size / 1048576) + ' Mo)');
+    if (up.show) setScreenStatus('🎬 Vidéo reçue (' + Math.round(blob.size / 1048576) + ' Mo)');
     if (up.poolId) {
       const old = _mediaCache.get(up.poolId);
-      if (old && old.url && old.url !== url) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
+      if (old && old.url && old.url !== url && old.url !== _screenVidUrl) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
       _mediaCache.set(up.poolId, { kind: 'vid', url });
       sendMsg({ type: 'media:cached', id: up.poolId });
+      if (!up.show) return; // préparation hors ligne : en cache, rien d'affiché ni d'interrompu
       // Console prioritaire (passerelle DMX) : mise en cache seulement
       if (screenDmxLive()) { screenDmxOnCached(up.poolId); return; }
       _screenActiveId = up.poolId;
-    } else if (screenDmxLive()) return;
+    } else if (screenDmxLive() || !up.show) return;
     screenPlayVideoUrl(url);
-  } catch (_) { setScreenStatus('⚠ Vidéo illisible'); }
+  } catch (_) { if (up.show) setScreenStatus('⚠ Vidéo illisible'); }
 }
 
 // ══════════════════════════ SIMULATEUR D'APPEL ══════════════════════════
@@ -12610,8 +12734,17 @@ function ensureCallAssets(photo, audio, rings, screens) {
 
 async function triggerCall() {
   const fields = callFormFields();
-  // La photo, la bande son et le son importé (fragments) partent avant l'appel qui les utilise
-  await ensureCallAssets(_callPhoto, _callAudioData, fields.ringId ? [fields.ringId] : null);
+  if (linkBleOnly()) {
+    // Bluetooth seul (commandes uniquement) : photo et bande son ne partent pas ;
+    // annoncées seulement si chaque écran visé a déjà celles du formulaire
+    const ids = scrTargetIds();
+    const on = (key, data) => !!data && ids.length > 0 && ids.every((s) => scrState(s).cached.has(key) && scrState(s).sent.get(key) === data);
+    fields.hasPhoto = on('__callphoto', _callPhoto);
+    fields.hasAudio = on('__callaudio', _callAudioData);
+  } else {
+    // La photo, la bande son et le son importé (fragments) partent avant l'appel qui les utilise
+    await ensureCallAssets(_callPhoto, _callAudioData, fields.ringId ? [fields.ringId] : null);
+  }
   sendMsg(Object.assign({ type: 'call:start' }, fields));
   _setCallStatusUI(fields.kind === 'call' ? '📞 Sonnerie envoyée…' : '💬 Notification envoyée');
 }
@@ -12831,8 +12964,10 @@ function _scHeadAvatar(m) {
   return (m.photoMode === 'full' && m.photo && m.style !== 'minimal') ? '' : _scAvatarHtml(m);
 }
 
-function _cachedCallPhoto() {
-  const c = _mediaCache.get('__callphoto');
+// Photo de l'appel : celle préparée pour cet appel enregistré (photoId), sinon
+// __callphoto. Photo préparée absente : aucune (jamais celle d'un autre appel).
+function _cachedCallPhoto(photoId) {
+  const c = _mediaCache.get(photoId || '__callphoto');
   return c && c.kind === 'img' ? safeImageData(c.data) : null;
 }
 function screenCallStart(m) {
@@ -12850,7 +12985,7 @@ function screenCallStart(m) {
     appName: String(m.appName || '').slice(0, 24),
     appColor: safeHexColor(m.appColor, null),
     // Photo préchargée en fragments (__callphoto), validée à la réception
-    photo: m.hasPhoto ? _cachedCallPhoto() : null,
+    photo: m.hasPhoto ? _cachedCallPhoto(m.photoId) : null,
     photoMode: m.photoMode === 'full' ? 'full' : 'avatar',
     present: m.present === 'banner' ? 'banner' : 'full',
     ring: m.ring,
@@ -12858,6 +12993,8 @@ function screenCallStart(m) {
     ringId: (typeof m.ringId === 'string' && SRP.RING_ID_RE.test(m.ringId)) ? m.ringId : null,
     ringVolume: (typeof m.ringVolume === 'number' && Number.isFinite(m.ringVolume)) ? Math.min(1, Math.max(0, m.ringVolume)) : 1,
     hasAudio: !!m.hasAudio,
+    // Bande son préparée de l'appel enregistré (__au_…) ; absente : __callaudio
+    audioId: typeof m.audioId === 'string' && SRP.CALL_AUDIO_ID_RE.test(m.audioId) ? m.audioId : null,
     autoAnswer: Math.max(0, Math.min(60, Number(m.autoAnswer) || 0)),
     lock: m.lock ? { time: String(m.lock.time || '').slice(0, 8), date: String(m.lock.date || '').slice(0, 30) } : null,
   };
@@ -13091,7 +13228,7 @@ let _callAudioEl = null;
 let _callAudioSrc = null;
 async function _playCallAudio() {
   _stopCallAudio();
-  const c = _mediaCache.get('__callaudio');
+  const c = _mediaCache.get((_callCfg && _callCfg.audioId) || '__callaudio');
   if (!c || !c.data) return;
   const ctx = _ac();
   try {
@@ -13738,18 +13875,69 @@ function callEntryMessage(e, assets) {
   return m;
 }
 
+// ── Photo et bande son PRÉPARÉES (tournage sans réseau, 93-offline.js) ──
+// Chaque entrée a, pour sa photo et sa bande son, un id dérivé du contenu
+// (« __ph_ » / « __au_ » + 40 hex de SHA-256) : la préparation les met en cache
+// sur chaque écran, où elles restent côte à côte (au lieu de l'emplacement
+// unique __callphoto / __callaudio). Un appel ainsi préparé ne transporte plus
+// que leurs ids : il part même en Bluetooth.
+const _clPrepIds = new Map(); // entrée → { photo, audio } (ids, null si absents)
+async function _clContentId(prefix, data) {
+  const h = new Uint8Array(await SRP.getCrypto().subtle.digest('SHA-256', new TextEncoder().encode(data)));
+  let s = '';
+  for (let i = 0; i < 20; i++) s += h[i].toString(16).padStart(2, '0');
+  return prefix + s;
+}
+async function callEntryPrepIds(e, assets) {
+  const memo = _clPrepIds.get(e.id);
+  if (memo) return memo;
+  const a = assets || await callEntryAssets(e);
+  const r = { photo: a.photo ? await _clContentId('__ph_', a.photo) : null, audio: a.audio ? await _clContentId('__au_', a.audio) : null };
+  // Retenu seulement si tout ce que l'entrée annonce a été lu (stockage disponible)
+  if ((!e.hasPhoto || r.photo) && (!e.hasAudio || r.audio)) {
+    if (_clPrepIds.size >= 2 * CALL_LIST_MAX) _clPrepIds.delete(_clPrepIds.keys().next().value);
+    _clPrepIds.set(e.id, r);
+  }
+  return r;
+}
+
 // Déclenche une entrée : photo / bande son / son importé d'abord (s'ils ne
 // sont pas déjà en cache sur les écrans), puis l'appel. target : écrans visés
 // (console), absent = tous les écrans (bouton « Appeler n° X »).
+// Écrans qui ont déjà la photo et la bande son PRÉPARÉES de l'entrée : l'appel
+// les désigne (photoId, audioId), rien n'est renvoyé. Bluetooth seul : rien
+// n'est envoyé non plus ; un écran non préparé sonne sans photo ni bande son
+// (jamais celles d'un autre appel restées en cache).
 async function sendCallEntry(e, targets) {
   const assets = await callEntryAssets(e);
   const base = callEntryMessage(e, assets);
-  // Photo, bande son, son importé : vers les écrans de l'appel (console : écrans
-  // patchés concernés ; bouton : cible de la télécommande)
-  const screens = targets ? [...new Set(targets.flatMap((t) => (t && Array.isArray(t.screens) ? t.screens : [])))] : undefined;
-  await ensureCallAssets(assets.photo, assets.audio, base.ringId ? [base.ringId] : null, screens);
-  if (!targets) { sendMsg(base); return; }
-  for (const t of targets) sendMsg(Object.assign({}, base, { target: t }));
+  const rings = base.ringId ? [base.ringId] : null;
+  const prep = assets.photo || assets.audio ? await callEntryPrepIds(e, assets) : null;
+  const groups = targets ? targets.map((t) => ({ t, ids: t && Array.isArray(t.screens) ? t.screens : [] })) : [{ t: null, ids: scrTargetIds() }];
+  const ready = (s) => !!prep && scrKnown(s) && (!prep.photo || scrState(s).cached.has(prep.photo)) && (!prep.audio || scrState(s).cached.has(prep.audio));
+  const bleOnly = linkBleOnly();
+  if (!bleOnly && !groups.some((g) => g.ids.some(ready))) {
+    // Comme avant : photo, bande son, son importé vers les écrans de l'appel
+    // (console : écrans patchés concernés ; bouton : cible de la télécommande)
+    const screens = targets ? [...new Set(groups.flatMap((g) => g.ids))] : undefined;
+    await ensureCallAssets(assets.photo, assets.audio, rings, screens);
+    if (!targets) { sendMsg(base); return; }
+    for (const t of targets) sendMsg(Object.assign({}, base, { target: t }));
+    return;
+  }
+  const withPrep = Object.assign({}, base, prep && prep.photo ? { photoId: prep.photo } : {}, prep && prep.audio ? { audioId: prep.audio } : {});
+  const plain = bleOnly ? Object.assign({}, base, { hasPhoto: false, hasAudio: false }) : base;
+  const all = [...new Set(groups.flatMap((g) => g.ids))];
+  const lacking = all.filter((s) => !ready(s));
+  if (!bleOnly && lacking.length) await ensureCallAssets(assets.photo, assets.audio, null, lacking);
+  if (rings) await ensureCallAssets(null, null, rings, targets ? all : undefined); // sons importés manquants (pas en Bluetooth seul)
+  for (const g of groups) {
+    if (!g.ids.length) { sendMsg(g.t ? Object.assign({}, plain, { target: g.t }) : plain); continue; }
+    const r = g.ids.filter(ready), l = g.ids.filter((s) => !ready(s));
+    if (!g.t && !l.length) { sendMsg(withPrep); continue; } // toute la cible courante
+    if (r.length) sendMsg(Object.assign({}, withPrep, { target: { screens: r } }));
+    if (l.length) sendMsg(Object.assign({}, plain, { target: { screens: l } }));
+  }
 }
 
 // ── Plage DMX d'une entrée (index 0 = n° 1) ──
@@ -13986,12 +14174,14 @@ function screenMediaCtrl(msg) {
   else if (msg.action === 'seek' && isFinite(msg.time)) { try { vid.currentTime = msg.time; } catch (_) {} sendScreenState(vid); }
 }
 
-async function screenHandleOffer(sdp) {
+// kind « cache » (préparation hors ligne) : le fichier est seulement mis en
+// cache, la vidéo affichée continue
+async function screenHandleOffer(sdp, kind) {
   cleanupScreenRtc();
   _screenPendingIce = [];
   _vidParts = []; _vidMeta = null;
   const oldVid = document.getElementById('screen-media-video'); // stoppe la vidéo précédente pendant le transfert
-  if (oldVid && !screenDmxLive()) { try { oldVid.pause(); } catch (_) {} }
+  if (oldVid && kind !== 'cache' && !screenDmxLive()) { try { oldVid.pause(); } catch (_) {} }
   _screenPc = new RTCPeerConnection({ iceServers: [{ urls: STUN_URLS }] });
   _screenPc.onicecandidate = e => { if (e.candidate) sendMsg({ type: 'rtc-ice', from: 'screen', candidate: e.candidate }); };
   _screenPc.ondatachannel = e => setupScreenFileChannel(e.channel);
@@ -14024,18 +14214,21 @@ function screenAssembleVideo() {
   const blob = new Blob(_vidParts, { type: (_vidMeta && _vidMeta.mime) || 'video/mp4' });
   _vidParts = [];
   const mediaId = _vidMeta && _vidMeta.mediaId;
+  // Préparation hors ligne (show:false) : en cache seulement, rien d'affiché
+  const show = !(_vidMeta && _vidMeta.show === false);
   const url = URL.createObjectURL(blob);
-  setScreenStatus('🎬 Vidéo reçue (' + Math.round(blob.size / 1048576) + ' Mo)');
+  if (show) setScreenStatus('🎬 Vidéo reçue (' + Math.round(blob.size / 1048576) + ' Mo)');
   // Mise en cache : les prochains affichages de cette vidéo seront instantanés
   if (mediaId) {
     const old = _mediaCache.get(mediaId);
-    if (old && old.url && old.url !== url) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
+    if (old && old.url && old.url !== url && old.url !== _screenVidUrl) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
     _mediaCache.set(mediaId, { kind: 'vid', url });
     sendMsg({ type: 'media:cached', id: mediaId });
+    if (!show) return;
     // Console prioritaire (passerelle DMX) : mise en cache seulement
     if (screenDmxLive()) { screenDmxOnCached(mediaId); return; }
     _screenActiveId = mediaId;
-  } else if (screenDmxLive()) return;
+  } else if (screenDmxLive() || !show) return;
   screenPlayVideoUrl(url);
 }
 
@@ -15121,10 +15314,13 @@ async function installPWA() {
 //   Avertissement stroboscope     Activé / Désactivé (46-strobe-warning.js) ;
 //                                 la ligne bascule l'état pour la session
 //   Fréquence max du strobo       plafond du protocole (PROTO.STROBE_FREQ_MAX)
+//   Liaison par défaut            Auto / Internet / Wi-Fi local / Bluetooth
+//                                 (21-links.js) ; la ligne ouvre « Tourner sans
+//                                 réseau » (maquette 10, 93-offline.js), où se
+//                                 fait le choix
 // Laissées de côté tant que la fonction n'existe pas (pas de valeur inventée) :
 //   Relais (« Europe · eu-west »)  en production, broker MQTT public ; le relais
 //                                 auto-hébergé reste désactivé (RELAY_URL vide)
-//   Liaison par défaut (« Auto »)  seule la liaison Internet existe
 //   Purger les médias des écrans   les médias ne vivent qu'en mémoire sur
 //                                 l'écran de jeu, le temps de la session
 //
@@ -15171,7 +15367,14 @@ function renderSettings() {
   val.classList.toggle('on', warn);
   val.classList.toggle('off', !warn);
   document.getElementById('stStrobeMax').textContent = PROTO.STROBE_FREQ_MAX + ' Hz';
+  renderSettingsLink();
   document.getElementById('stVersion').textContent = 'SetRemote ' + APP_VERSION + ' · by Pikoo';
+}
+
+// « Liaison par défaut » : choix mémorisé (21-links.js)
+function renderSettingsLink() {
+  const v = document.getElementById('stLinkVal');
+  if (v) v.textContent = linkPrefLabel(linkPref());
 }
 
 // « Avertissement stroboscope » : désactivé = « Ne plus demander » de la boîte
@@ -15204,6 +15407,293 @@ function openPrivacyPolicy() {
 }
 function closePrivacyPolicy() {
   document.getElementById('policy-view').style.display = 'none';
+}
+// ══════════════════════════ TOURNER SANS RÉSEAU (maquette 10) ══════════════════════════
+// Vue « Tourner sans réseau » (télécommande) : choix de la liaison (Auto,
+// Internet, Wi-Fi local, Bluetooth : 21-links.js) et « Préparation des
+// écrans ». Accès : ligne « Liaison par défaut » des Réglages (maquette 13) et
+// bouton de l'onglet QR (à côté de la passerelle DMX).
+//
+// Préparer = mettre en cache sur chaque écran, tant qu'une liaison à haut
+// débit existe (Internet ou Wi-Fi local), tout ce qu'une commande peut
+// ensuite appeler sans transfert, donc aussi en Bluetooth :
+//   médias du pool (images, vidéos), sonneries et sons de notification
+//   importés (choix de chaque type, appels et SMS enregistrés), photo et
+//   bande son de chaque appel / SMS enregistré (ids dérivés du contenu,
+//   82-call-list.js), fond de l'écran verrouillé.
+// Ce qui manque à chaque écran se lit dans son état (28-screens.js : liste
+// exacte de son cache annoncée par « caps », accusés media:cached). « Tout
+// préparer maintenant » envoie à chaque écran joignable ce qui lui manque,
+// élément par élément, en attendant son accusé ; rien ne s'affiche ni ne
+// s'interrompt sur les écrans (show:false, offre WebRTC « cache »).
+// L'écran garde ces médias en mémoire pour toute la session (jusqu'à la
+// fermeture de l'app : politique de confidentialité, docs/OFFLINE.md § 6).
+let _offOpen = false;
+let _prep = null;            // préparation : { running, targets, cur: { id, sids, fracOf }, failed: Set }
+let _prepItems = [];         // éléments à préparer (derniers calculés)
+let _prepItemsSeq = 0;
+
+function openOfflineView() {
+  const v = document.getElementById('offline-view');
+  if (!v) return;
+  _offOpen = true;
+  v.classList.add('open');
+  v.scrollTop = 0;
+  if (IN_NATIVE_APP) nativePost({ type: 'link:state?' });
+  renderOfflineView();
+  prepRefreshItems();
+}
+function closeOfflineView() {
+  _offOpen = false;
+  const v = document.getElementById('offline-view');
+  if (v) v.classList.remove('open');
+  if (typeof renderSettings === 'function' && document.getElementById('settings-view').style.display === 'flex') renderSettings();
+}
+
+// ── Ce qu'il faut préparer (même liste pour chaque écran) ──
+function prepRingIds() {
+  const ids = new Set();
+  for (const k of RING_KINDS) if (ringLibHas(ringSettings[k].sound)) ids.add(ringSettings[k].sound);
+  for (const e of [...callList.call, ...callList.sms]) if (ringLibHas(e.ringId)) ids.add(e.ringId);
+  return [...ids];
+}
+// Ordre d'envoi : petits éléments d'abord (sons, photos), puis images, puis vidéos
+async function prepItems() {
+  const items = [];
+  if (_lockWallData) items.push({ id: '__lockwall', cat: 'wall' });
+  for (const id of prepRingIds()) items.push({ id, cat: 'ring' });
+  const seen = new Set();
+  for (const e of [...callList.call, ...callList.sms]) {
+    if (!e.hasPhoto && !e.hasAudio) continue;
+    let ids;
+    try { ids = await callEntryPrepIds(e); } catch (_) { continue; }
+    if (ids.photo && !seen.has(ids.photo)) { seen.add(ids.photo); items.push({ id: ids.photo, cat: 'photo', entry: e }); }
+    if (ids.audio && !seen.has(ids.audio)) { seen.add(ids.audio); items.push({ id: ids.audio, cat: 'audio', entry: e }); }
+  }
+  for (const m of _mediaPool) if (m.kind === 'img') items.push({ id: m.id, cat: 'media', media: m });
+  for (const m of _mediaPool) if (m.kind === 'vid') items.push({ id: m.id, cat: 'media', media: m });
+  return items;
+}
+async function prepRefreshItems() {
+  const seq = ++_prepItemsSeq;
+  const items = await prepItems();
+  if (seq === _prepItemsSeq) { _prepItems = items; renderOfflineView(); }
+  return items;
+}
+// L'écran a-t-il cet élément en cache (accusé) ?
+function prepHas(sid, it) {
+  const st = scrState(sid);
+  if (!st.cached.has(it.id)) return false;
+  // Fond verrouillé : un seul emplacement ; celui envoyé depuis a changé ?
+  if (it.cat === 'wall') return !st.sent.has('__lockwall') || st.sent.get('__lockwall') === _lockWallData;
+  return true;
+}
+
+// ── État de chaque écran (maquette 10 : Prêt / 64 % / Non préparé) ──
+const _PREP_CATS = [
+  ['ring', 'sonnerie', 'sonneries'], ['wall', 'fond d\'écran', 'fonds d\'écran'],
+  ['audio', 'bande son', 'bandes son'], ['photo', 'photo d\'appel', 'photos d\'appel'],
+];
+function _prepCount(items, sid) {
+  const pool = items.filter((i) => i.cat === 'media');
+  return { pool, poolHave: pool.filter((i) => prepHas(sid, i)).length };
+}
+function _prepCats(items, filter) {
+  const out = [];
+  for (const [cat, one, many] of _PREP_CATS) {
+    const n = items.filter((i) => i.cat === cat && filter(i)).length;
+    if (n) out.push(n > 1 ? n + ' ' + many : one);
+  }
+  return out;
+}
+function _prepMediaText(c) { return c.pool.length ? c.poolHave + '/' + c.pool.length + (c.pool.length > 1 ? ' médias' : ' média') : ''; }
+function prepScreenStatus(sid, items) {
+  const total = items.length;
+  const have = items.filter((it) => prepHas(sid, it)).length;
+  const c = _prepCount(items, sid);
+  const media = _prepMediaText(c);
+  const run = _prep && _prep.running;
+  if (have === total) {
+    const parts = (media ? [media] : []).concat(_prepCats(items, () => true));
+    return { cls: 'ready', state: 'Prêt', pct: 100, detail: parts.length ? parts.join(' · ') : 'Rien à préparer pour l\'instant' };
+  }
+  const cur = run && _prep.cur && _prep.cur.sids.includes(sid) ? _prep.cur : null;
+  const pct = Math.min(99, Math.floor(100 * (have + (cur && cur.fracOf ? cur.fracOf(sid) : 0)) / total));
+  const counts = media || (have + '/' + total + ' éléments');
+  if (_prep && _prep.failed.has(sid)) {
+    return { cls: 'fail', state: 'Interrompu', pct, detail: 'Liaison perdue à ' + counts + ' — relancez la préparation' };
+  }
+  if (run && _prep.targets.includes(sid)) return { cls: 'busy', state: pct + ' %', pct, detail: counts + ' · transfert en cours' };
+  const idle = have ? 'Incomplet' : 'Non préparé';
+  const link = scrOnline(sid) ? scrLinkOf(sid) : 'off';
+  if (link === 'off') return { cls: 'idle', state: idle, pct, detail: 'Ouvrez SetRemote sur « ' + scrName(sid) + ' » pour lancer la préparation' };
+  if (link === 'ble') return { cls: 'idle', state: idle, pct, detail: 'Bluetooth seul : il faut Internet ou le Wi-Fi local pour le préparer' };
+  const miss = _prepCats(items, (i) => !prepHas(sid, i));
+  return { cls: 'idle', state: idle, pct, detail: [counts].concat(miss.length ? ['manque ' + miss.join(', ')] : []).join(' · ') };
+}
+
+// ── Rendu ──
+const _LINK_DESC = {
+  auto: 'Auto : Internet si disponible, sinon Wi-Fi local, sinon Bluetooth (commandes uniquement).',
+  internet: 'Internet seul : relais chiffré de bout en bout, comme avant. Aucune liaison locale.',
+  lan: 'Wi-Fi local seul : appareils sur le même routeur ou partage de connexion, sans Internet. Médias compris.',
+  ble: 'Bluetooth seul : commandes uniquement. Les médias doivent être préparés avant.',
+};
+function _offLinkWarning(pref) {
+  if (!IN_NATIVE_APP) return '';
+  const wanted = pref === 'auto' ? LINK_MODES : pref === 'lan' || pref === 'ble' ? [pref] : [];
+  const out = [];
+  for (const m of wanted) {
+    const s = linkNative[m];
+    if (s.available === false) out.push(LINK_LABELS[m] + ' indisponible sur cet appareil' + (s.error ? ' : ' + s.error : ' (activez-le et autorisez SetRemote dans les réglages du système).'));
+    else if (s.error) out.push(LINK_LABELS[m] + ' : ' + s.error);
+  }
+  return out.join(' ');
+}
+function renderOfflineView() {
+  if (!_offOpen) return;
+  const pref = linkPref();
+  for (const p of LINK_PREFS) {
+    const b = document.getElementById('offLink-' + p);
+    if (!b) continue;
+    const usable = p === 'auto' || p === 'internet' || linkModeUsable(p);
+    b.classList.toggle('active', p === pref);
+    b.setAttribute('aria-checked', String(p === pref));
+    b.disabled = !usable;
+  }
+  document.getElementById('offNeedsApp').style.display = IN_NATIVE_APP ? 'none' : 'block';
+  _setHtml(document.getElementById('offLinkDesc'), escapeHtml(_LINK_DESC[pref]));
+  const warn = _offLinkWarning(pref), w = document.getElementById('offLinkWarn');
+  w.textContent = warn;
+  w.style.display = warn ? 'block' : 'none';
+  // Préparation des écrans
+  const items = _prepItems, list = scrList();
+  _setHtml(document.getElementById('offPrepRows'), list.length ? list.map((sid) => {
+    const s = prepScreenStatus(sid, items);
+    return '<div class="off-row ' + s.cls + '" data-id="' + sid + '">'
+      + '<div class="off-row-head"><span class="off-name">' + escapeHtml(scrName(sid)) + '</span><span class="off-state">' + escapeHtml(s.state) + '</span></div>'
+      + '<div class="off-bar"><div style="width:' + s.pct + '%"></div></div>'
+      + '<div class="off-detail">' + escapeHtml(s.detail) + '</div></div>';
+  }).join('') : '<div class="off-empty">Aucun écran appairé : appairez les écrans (onglet QR), puis préparez-les ici.</div>');
+  const btn = document.getElementById('offPrepBtn'), note = document.getElementById('offPrepNote');
+  let label = 'TOUT PRÉPARER MAINTENANT', on = false, why = '';
+  const reach = list.filter((s) => scrOnline(s) && scrMediaReachable(s));
+  const work = reach.some((s) => items.some((it) => !prepHas(s, it)));
+  if (_prep && _prep.running) label = 'PRÉPARATION EN COURS…';
+  else if (!list.length) why = '';
+  else if (list.every((s) => items.every((it) => prepHas(s, it)))) label = 'TOUT EST PRÊT';
+  else if (!mediaLinkUp()) why = 'Pour préparer les écrans, il faut Internet ou le Wi-Fi local : le Bluetooth ne porte que les commandes.';
+  else if (!work) why = 'Les écrans à préparer ne sont joignables ni par Internet ni en Wi-Fi local.';
+  else on = true;
+  btn.textContent = label;
+  btn.disabled = !on;
+  note.textContent = why;
+  note.style.display = why ? 'block' : 'none';
+  renderOfflineEntry();
+}
+// Bouton de l'onglet QR : liaison choisie quand ce n'est pas « Auto »
+function renderOfflineEntry() {
+  const st = document.getElementById('offEntryState');
+  if (st) { const p = linkPref(); st.textContent = p === 'auto' ? '' : '· ' + linkPrefLabel(p); }
+}
+
+// ── « Tout préparer maintenant » ──
+const _prepSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function prepRunAll() {
+  if (mode !== 'remote' || (_prep && _prep.running)) return false;
+  const items = await prepRefreshItems();
+  const targets = scrList().filter((s) => scrOnline(s) && scrMediaReachable(s) && items.some((it) => !prepHas(s, it)));
+  if (!targets.length || !mediaLinkUp()) { renderOfflineView(); return false; }
+  _prep = { running: true, targets, cur: null, failed: new Set() };
+  renderOfflineView();
+  try {
+    if (_mediaPool.length) sendPoolOrder({ screens: targets }); // n° des médias (console, avance au clic)
+    for (const it of items) {
+      if (!_prep.running) break;
+      const lack = targets.filter((s) => !_prep.failed.has(s) && !prepHas(s, it));
+      if (!lack.length) continue;
+      // Écran qui n'est plus joignable à haut débit : interrompu pour lui seul
+      for (const s of lack) if (!scrOnline(s) || !scrMediaReachable(s)) _prep.failed.add(s);
+      const sids = lack.filter((s) => !_prep.failed.has(s));
+      if (!sids.length) continue;
+      _prep.cur = { id: it.id, sids, fracOf: null };
+      renderOfflineView();
+      await prepSendItem(it, sids);
+      for (const s of sids) if (!prepHas(s, it) && (!scrOnline(s) || !scrMediaReachable(s))) _prep.failed.add(s);
+      _prep.cur = null;
+    }
+  } catch (e) { console.warn('SetRemote : préparation', e); }
+  finally { _prep.running = false; _prep.cur = null; renderOfflineView(); }
+  return true;
+}
+// Attend l'accusé de chaque écran (ou la perte de sa liaison, ou le délai)
+async function prepWait(it, sids, ms) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms && _prep && _prep.running) {
+    if (sids.every((s) => prepHas(s, it) || !scrOnline(s) || !scrMediaReachable(s))) return;
+    await _prepSleep(150);
+  }
+}
+const _prepAckMs = (chars) => 8000 + Math.round(chars / 30); // ≈ 30 Ko/s au pire (broker public)
+async function prepSendItem(it, sids) {
+  if (it.cat === 'wall') {
+    for (const s of sids) scrState(s).sent.delete('__lockwall');
+    await ensureLockWall(sids);
+    return prepWait(it, sids, _prepAckMs((_lockWallData || '').length));
+  }
+  if (it.cat === 'ring') {
+    for (const s of sids) scrState(s).sent.delete(it.id);
+    const meta = ringLib.find((t) => t.id === it.id);
+    await ringSendIfMissing(it.id, sids);
+    return prepWait(it, sids, _prepAckMs(meta ? meta.size * 1.4 : 1e6));
+  }
+  if (it.cat === 'photo' || it.cat === 'audio') {
+    const data = (await callEntryAssets(it.entry))[it.cat];
+    if (!data) return;
+    await sendImageChunks(data, { mediaId: it.id, show: false, screens: sids });
+    return prepWait(it, sids, _prepAckMs(data.length));
+  }
+  if (it.media.kind === 'img') {
+    let data;
+    try { data = await compressImageFile(it.media.file); } catch (_) { return; }
+    await sendImageChunks(data, { mediaId: it.id, show: false, screens: sids });
+    return prepWait(it, sids, _prepAckMs(data.length));
+  }
+  // Vidéo : un transfert par écran, l'un après l'autre (pair-à-pair, sinon fragments)
+  for (const s of sids) {
+    if (!_prep.running) return;
+    await prepSendVideo(it, s);
+  }
+}
+async function prepSendVideo(it, sid) {
+  // Une diffusion lancée par la télécommande vers cet écran passe d'abord
+  for (let g = 0; g < 1200 && _prep.running; g++) {
+    const j = _vidJobs.get(sid);
+    if (!j || j.prep || j.done || j.failed || j.closed) break;
+    await _prepSleep(500);
+  }
+  if (!_prep.running || !scrOnline(sid) || !scrMediaReachable(sid)) return false;
+  const job = _vidNewJob(sid, it.media.file, it.id, 0);
+  job.prep = true; // mise en cache seulement (offre « cache », show:false)
+  const st = scrState(sid);
+  if (st.rtcBroken || (st.caps && st.caps.videoMode === 'b64')) _vidStartB64(job);
+  else {
+    _vidStartRtc(job);
+    // Canal pair-à-pair jamais ouvert (réseau qui l'empêche) : envoi par fragments
+    setTimeout(() => { if (_vidLive(job) && job.mode === 'rtc' && !job.chOpen && !job.failed) _vidRtcFailed(job); }, 15000);
+  }
+  if (_prep.cur) _prep.cur.fracOf = (s) => (s === sid ? Math.min(0.99, (job.pct || 0) / 100) : 0);
+  const t0 = Date.now(), ms = 60000 + Math.round(it.media.file.size / 20);
+  let lastPct = -1;
+  while (Date.now() - t0 < ms) {
+    if (scrState(sid).cached.has(it.id)) break;
+    if (!_vidLive(job) || job.failed || !_prep.running || !scrOnline(sid) || !scrMediaReachable(sid)) break;
+    if (job.pct !== lastPct) { lastPct = job.pct; renderOfflineView(); }
+    await _prepSleep(200);
+  }
+  const ok = scrState(sid).cached.has(it.id);
+  if (_vidJobs.get(sid) === job) { _vidCloseJob(job); _vidJobs.delete(sid); }
+  return ok;
 }
 // ══════════════════════════ SPLASH — métiers qui défilent ══════════════════════════
 (function () {

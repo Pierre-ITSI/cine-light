@@ -409,6 +409,13 @@ function mediaShowOn(it, ids, fromUi) {
     sendMsg({ type: 'media:show', id: it.id, target: { screens: have } });
     if (fromUi && it.kind === 'vid') sendMsg({ type: 'media:endmode', mode: _videoEndMode, target: { screens: have } });
   }
+  // Bluetooth seul (commandes uniquement) : le média manquant n'est pas envoyé ;
+  // son état attendu est noté, il partira dès le retour d'Internet ou du Wi-Fi local
+  if (lack.length && linkBleOnly()) {
+    scrChanged();
+    if (ids.some(scrInTarget)) setMediaStatus('⚠ Bluetooth : « ' + it.name + ' » n\'est pas préparé sur ' + (lack.length > 1 ? lack.length + ' écrans' : 'l\'écran') + ' — il faut Internet ou le Wi-Fi local');
+    return;
+  }
   if (lack.length) {
     if (it.kind === 'img') broadcastImage(it.file, it.id, lack);
     else broadcastVideo(it.file, it.id, lack);
@@ -448,6 +455,7 @@ function remoteOnScreenAdvanced(id) {
 // Un écran ne possède pas ce média en cache : transfert complet, à lui seul
 // (son importé d'un appel : renvoyé par 81-ringtones.js)
 function remoteOnScreenNeeds(id) {
+  if (linkBleOnly()) return; // Bluetooth seul : aucun média ne peut partir (l'écran redemandera)
   const sid = _rxFrom && scrKnown(_rxFrom) ? _rxFrom : null;
   if (SRP.RING_ID_RE.test(id)) { ringOnScreenNeeds(id, sid); return; }
   const ids = sid ? [sid] : scrTargetIds();
@@ -488,6 +496,9 @@ function remoteOnScreenCached(id) {
   const sid = _rxFrom;
   if (sid && scrKnown(sid)) {
     scrState(sid).cached.add(id);
+    // Vidéo préparée : l'accusé de mise en cache vaut confirmation (aucune lecture n'en suivra)
+    const job = _vidJobs.get(sid);
+    if (job && job.prep && job.mediaId === id && job.b64 && job.b64.verifyTimer) { clearTimeout(job.b64.verifyTimer); job.b64.verifyTimer = null; }
     const inf = _preloadInflight.get(id);
     if (inf) inf.delete(sid);
     scrRefreshCachedView();
@@ -683,7 +694,7 @@ function _vidJobsBusy() {
 }
 // Progression affichée : transferts de la dernière diffusion vers la cible
 function _vidRenderStatus() {
-  const jobs = [..._vidJobs.values()].filter((j) => j.batch === _vidBatch && scrInTarget(j.sid));
+  const jobs = [..._vidJobs.values()].filter((j) => !j.prep && j.batch === _vidBatch && scrInTarget(j.sid));
   if (!jobs.length) return;
   if (jobs.length === 1) { setMediaStatus(jobs[0].status, jobs[0].done && !jobs[0].failed && !/^⚠|^⏳/.test(jobs[0].status)); return; }
   const live = jobs.filter((j) => !j.done && !j.failed);
@@ -733,13 +744,14 @@ async function _vidStartRtc(job) {
   const ch = pc.createDataChannel('file', { ordered: true });
   ch.binaryType = 'arraybuffer';
   job.ch = ch;
-  ch.onopen = () => { if (_vidLive(job) && job.ch === ch) sendFileOverChannel(job); };
+  ch.onopen = () => { if (_vidLive(job) && job.ch === ch) { job.chOpen = true; sendFileOverChannel(job); } };
   try {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
   } catch (_) { if (_vidLive(job)) _vidRtcFailed(job); return; }
   if (!_vidLive(job)) return;
-  sendMsg({ type: 'rtc-offer', sdp: pc.localDescription, kind: 'file', target });
+  // Préparation hors ligne : « cache », l'écran ne coupe ni n'affiche rien
+  sendMsg({ type: 'rtc-offer', sdp: pc.localDescription, kind: job.prep ? 'cache' : 'file', target });
   _vidRenderStatus();
 }
 // Pair-à-pair bloqué vers cet écran : bascule IMMÉDIATE sur l'envoi par le
@@ -759,7 +771,9 @@ async function sendFileOverChannel(job) {
   const CHUNK = 16 * 1024;
   const HIGH = 4 * 1024 * 1024; // backpressure à 4 Mo
   ch.bufferedAmountLowThreshold = 1 * 1024 * 1024;
-  ch.send(JSON.stringify({ meta: true, name: file.name, size: file.size, mime: file.type || 'video/mp4', mediaId: job.mediaId }));
+  const meta = { meta: true, name: file.name, size: file.size, mime: file.type || 'video/mp4', mediaId: job.mediaId };
+  if (job.prep) meta.show = false; // préparation : mise en cache seulement
+  ch.send(JSON.stringify(meta));
   let offset = 0;
   job.status = '📤 Transfert… 0 %';
   _vidRenderStatus();
@@ -779,7 +793,7 @@ async function sendFileOverChannel(job) {
     job.done = true; job.pct = 100; // les changements d'état RTC ultérieurs sont ignorés
     job.status = '🎬 Lecture sur l\'écran';
     _rtcTransferDone = ![..._vidJobs.values()].some((j) => j.batch === job.batch && j.mode === 'rtc' && !j.done && !j.failed && !j.closed);
-    if (scrInTarget(job.sid)) { showMediaPlay(true); setPlayBtn(false); showMediaTimeline(true); }
+    if (!job.prep && scrInTarget(job.sid)) { showMediaPlay(true); setPlayBtn(false); showMediaTimeline(true); }
     _vidRenderStatus();
   } catch (e) {
     if (!_vidLive(job)) return;
@@ -834,7 +848,8 @@ async function _vidStartB64(job) {
   for (let i = 0; i < total; i++) chunks.push(b64.slice(i * CHUNK, (i + 1) * CHUNK));
   const target = { screens: [job.sid] };
   job.b64 = { id, chunks, rounds: 0, got: 0, noAck: false, verifyTimer: null, target };
-  sendMsg({ type: 'media:upload', mediaId: id, kind: 'video', mime, totalChunks: total, poolId: job.mediaId, target });
+  sendMsg(Object.assign({ type: 'media:upload', mediaId: id, kind: 'video', mime, totalChunks: total, poolId: job.mediaId, target },
+    job.prep ? { show: false } : {})); // préparation : mise en cache seulement
   job.status = '📤 Transfert… 0 %';
   _vidRenderStatus();
   const WINDOW = 48; // fragments en vol au maximum (si l'écran accuse réception)

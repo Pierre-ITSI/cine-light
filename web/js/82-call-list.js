@@ -119,18 +119,69 @@ function callEntryMessage(e, assets) {
   return m;
 }
 
+// ── Photo et bande son PRÉPARÉES (tournage sans réseau, 93-offline.js) ──
+// Chaque entrée a, pour sa photo et sa bande son, un id dérivé du contenu
+// (« __ph_ » / « __au_ » + 40 hex de SHA-256) : la préparation les met en cache
+// sur chaque écran, où elles restent côte à côte (au lieu de l'emplacement
+// unique __callphoto / __callaudio). Un appel ainsi préparé ne transporte plus
+// que leurs ids : il part même en Bluetooth.
+const _clPrepIds = new Map(); // entrée → { photo, audio } (ids, null si absents)
+async function _clContentId(prefix, data) {
+  const h = new Uint8Array(await SRP.getCrypto().subtle.digest('SHA-256', new TextEncoder().encode(data)));
+  let s = '';
+  for (let i = 0; i < 20; i++) s += h[i].toString(16).padStart(2, '0');
+  return prefix + s;
+}
+async function callEntryPrepIds(e, assets) {
+  const memo = _clPrepIds.get(e.id);
+  if (memo) return memo;
+  const a = assets || await callEntryAssets(e);
+  const r = { photo: a.photo ? await _clContentId('__ph_', a.photo) : null, audio: a.audio ? await _clContentId('__au_', a.audio) : null };
+  // Retenu seulement si tout ce que l'entrée annonce a été lu (stockage disponible)
+  if ((!e.hasPhoto || r.photo) && (!e.hasAudio || r.audio)) {
+    if (_clPrepIds.size >= 2 * CALL_LIST_MAX) _clPrepIds.delete(_clPrepIds.keys().next().value);
+    _clPrepIds.set(e.id, r);
+  }
+  return r;
+}
+
 // Déclenche une entrée : photo / bande son / son importé d'abord (s'ils ne
 // sont pas déjà en cache sur les écrans), puis l'appel. target : écrans visés
 // (console), absent = tous les écrans (bouton « Appeler n° X »).
+// Écrans qui ont déjà la photo et la bande son PRÉPARÉES de l'entrée : l'appel
+// les désigne (photoId, audioId), rien n'est renvoyé. Bluetooth seul : rien
+// n'est envoyé non plus ; un écran non préparé sonne sans photo ni bande son
+// (jamais celles d'un autre appel restées en cache).
 async function sendCallEntry(e, targets) {
   const assets = await callEntryAssets(e);
   const base = callEntryMessage(e, assets);
-  // Photo, bande son, son importé : vers les écrans de l'appel (console : écrans
-  // patchés concernés ; bouton : cible de la télécommande)
-  const screens = targets ? [...new Set(targets.flatMap((t) => (t && Array.isArray(t.screens) ? t.screens : [])))] : undefined;
-  await ensureCallAssets(assets.photo, assets.audio, base.ringId ? [base.ringId] : null, screens);
-  if (!targets) { sendMsg(base); return; }
-  for (const t of targets) sendMsg(Object.assign({}, base, { target: t }));
+  const rings = base.ringId ? [base.ringId] : null;
+  const prep = assets.photo || assets.audio ? await callEntryPrepIds(e, assets) : null;
+  const groups = targets ? targets.map((t) => ({ t, ids: t && Array.isArray(t.screens) ? t.screens : [] })) : [{ t: null, ids: scrTargetIds() }];
+  const ready = (s) => !!prep && scrKnown(s) && (!prep.photo || scrState(s).cached.has(prep.photo)) && (!prep.audio || scrState(s).cached.has(prep.audio));
+  const bleOnly = linkBleOnly();
+  if (!bleOnly && !groups.some((g) => g.ids.some(ready))) {
+    // Comme avant : photo, bande son, son importé vers les écrans de l'appel
+    // (console : écrans patchés concernés ; bouton : cible de la télécommande)
+    const screens = targets ? [...new Set(groups.flatMap((g) => g.ids))] : undefined;
+    await ensureCallAssets(assets.photo, assets.audio, rings, screens);
+    if (!targets) { sendMsg(base); return; }
+    for (const t of targets) sendMsg(Object.assign({}, base, { target: t }));
+    return;
+  }
+  const withPrep = Object.assign({}, base, prep && prep.photo ? { photoId: prep.photo } : {}, prep && prep.audio ? { audioId: prep.audio } : {});
+  const plain = bleOnly ? Object.assign({}, base, { hasPhoto: false, hasAudio: false }) : base;
+  const all = [...new Set(groups.flatMap((g) => g.ids))];
+  const lacking = all.filter((s) => !ready(s));
+  if (!bleOnly && lacking.length) await ensureCallAssets(assets.photo, assets.audio, null, lacking);
+  if (rings) await ensureCallAssets(null, null, rings, targets ? all : undefined); // sons importés manquants (pas en Bluetooth seul)
+  for (const g of groups) {
+    if (!g.ids.length) { sendMsg(g.t ? Object.assign({}, plain, { target: g.t }) : plain); continue; }
+    const r = g.ids.filter(ready), l = g.ids.filter((s) => !ready(s));
+    if (!g.t && !l.length) { sendMsg(withPrep); continue; } // toute la cible courante
+    if (r.length) sendMsg(Object.assign({}, withPrep, { target: { screens: r } }));
+    if (l.length) sendMsg(Object.assign({}, plain, { target: { screens: l } }));
+  }
 }
 
 // ── Plage DMX d'une entrée (index 0 = n° 1) ──

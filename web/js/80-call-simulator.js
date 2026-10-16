@@ -271,8 +271,17 @@ function ensureCallAssets(photo, audio, rings, screens) {
 
 async function triggerCall() {
   const fields = callFormFields();
-  // La photo, la bande son et le son importé (fragments) partent avant l'appel qui les utilise
-  await ensureCallAssets(_callPhoto, _callAudioData, fields.ringId ? [fields.ringId] : null);
+  if (linkBleOnly()) {
+    // Bluetooth seul (commandes uniquement) : photo et bande son ne partent pas ;
+    // annoncées seulement si chaque écran visé a déjà celles du formulaire
+    const ids = scrTargetIds();
+    const on = (key, data) => !!data && ids.length > 0 && ids.every((s) => scrState(s).cached.has(key) && scrState(s).sent.get(key) === data);
+    fields.hasPhoto = on('__callphoto', _callPhoto);
+    fields.hasAudio = on('__callaudio', _callAudioData);
+  } else {
+    // La photo, la bande son et le son importé (fragments) partent avant l'appel qui les utilise
+    await ensureCallAssets(_callPhoto, _callAudioData, fields.ringId ? [fields.ringId] : null);
+  }
   sendMsg(Object.assign({ type: 'call:start' }, fields));
   _setCallStatusUI(fields.kind === 'call' ? '📞 Sonnerie envoyée…' : '💬 Notification envoyée');
 }
@@ -492,8 +501,10 @@ function _scHeadAvatar(m) {
   return (m.photoMode === 'full' && m.photo && m.style !== 'minimal') ? '' : _scAvatarHtml(m);
 }
 
-function _cachedCallPhoto() {
-  const c = _mediaCache.get('__callphoto');
+// Photo de l'appel : celle préparée pour cet appel enregistré (photoId), sinon
+// __callphoto. Photo préparée absente : aucune (jamais celle d'un autre appel).
+function _cachedCallPhoto(photoId) {
+  const c = _mediaCache.get(photoId || '__callphoto');
   return c && c.kind === 'img' ? safeImageData(c.data) : null;
 }
 function screenCallStart(m) {
@@ -511,7 +522,7 @@ function screenCallStart(m) {
     appName: String(m.appName || '').slice(0, 24),
     appColor: safeHexColor(m.appColor, null),
     // Photo préchargée en fragments (__callphoto), validée à la réception
-    photo: m.hasPhoto ? _cachedCallPhoto() : null,
+    photo: m.hasPhoto ? _cachedCallPhoto(m.photoId) : null,
     photoMode: m.photoMode === 'full' ? 'full' : 'avatar',
     present: m.present === 'banner' ? 'banner' : 'full',
     ring: m.ring,
@@ -519,6 +530,8 @@ function screenCallStart(m) {
     ringId: (typeof m.ringId === 'string' && SRP.RING_ID_RE.test(m.ringId)) ? m.ringId : null,
     ringVolume: (typeof m.ringVolume === 'number' && Number.isFinite(m.ringVolume)) ? Math.min(1, Math.max(0, m.ringVolume)) : 1,
     hasAudio: !!m.hasAudio,
+    // Bande son préparée de l'appel enregistré (__au_…) ; absente : __callaudio
+    audioId: typeof m.audioId === 'string' && SRP.CALL_AUDIO_ID_RE.test(m.audioId) ? m.audioId : null,
     autoAnswer: Math.max(0, Math.min(60, Number(m.autoAnswer) || 0)),
     lock: m.lock ? { time: String(m.lock.time || '').slice(0, 8), date: String(m.lock.date || '').slice(0, 30) } : null,
   };
@@ -752,7 +765,7 @@ let _callAudioEl = null;
 let _callAudioSrc = null;
 async function _playCallAudio() {
   _stopCallAudio();
-  const c = _mediaCache.get('__callaudio');
+  const c = _mediaCache.get((_callCfg && _callCfg.audioId) || '__callaudio');
   if (!c || !c.data) return;
   const ctx = _ac();
   try {

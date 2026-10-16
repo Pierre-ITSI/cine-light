@@ -8,10 +8,13 @@
 //   Avertissement stroboscope     Activé / Désactivé (46-strobe-warning.js) ;
 //                                 la ligne bascule l'état pour la session
 //   Fréquence max du strobo       plafond du protocole (PROTO.STROBE_FREQ_MAX)
+//   Liaison par défaut            Auto / Internet / Wi-Fi local / Bluetooth
+//                                 (21-links.js) ; la ligne ouvre « Tourner sans
+//                                 réseau » (maquette 10, 93-offline.js), où se
+//                                 fait le choix
 // Laissées de côté tant que la fonction n'existe pas (pas de valeur inventée) :
 //   Relais (« Europe · eu-west »)  en production, broker MQTT public ; le relais
 //                                 auto-hébergé reste désactivé (RELAY_URL vide)
-//   Liaison par défaut (« Auto »)  seule la liaison Internet existe
 //   Purger les médias des écrans   les médias ne vivent qu'en mémoire sur
 //                                 l'écran de jeu, le temps de la session
 //
@@ -58,7 +61,14 @@ function renderSettings() {
   val.classList.toggle('on', warn);
   val.classList.toggle('off', !warn);
   document.getElementById('stStrobeMax').textContent = PROTO.STROBE_FREQ_MAX + ' Hz';
+  renderSettingsLink();
   document.getElementById('stVersion').textContent = 'SetRemote ' + APP_VERSION + ' · by Pikoo';
+}
+
+// « Liaison par défaut » : choix mémorisé (21-links.js)
+function renderSettingsLink() {
+  const v = document.getElementById('stLinkVal');
+  if (v) v.textContent = linkPrefLabel(linkPref());
 }
 
 // « Avertissement stroboscope » : désactivé = « Ne plus demander » de la boîte

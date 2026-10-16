@@ -15,12 +15,14 @@ function screenMediaCtrl(msg) {
   else if (msg.action === 'seek' && isFinite(msg.time)) { try { vid.currentTime = msg.time; } catch (_) {} sendScreenState(vid); }
 }
 
-async function screenHandleOffer(sdp) {
+// kind « cache » (préparation hors ligne) : le fichier est seulement mis en
+// cache, la vidéo affichée continue
+async function screenHandleOffer(sdp, kind) {
   cleanupScreenRtc();
   _screenPendingIce = [];
   _vidParts = []; _vidMeta = null;
   const oldVid = document.getElementById('screen-media-video'); // stoppe la vidéo précédente pendant le transfert
-  if (oldVid && !screenDmxLive()) { try { oldVid.pause(); } catch (_) {} }
+  if (oldVid && kind !== 'cache' && !screenDmxLive()) { try { oldVid.pause(); } catch (_) {} }
   _screenPc = new RTCPeerConnection({ iceServers: [{ urls: STUN_URLS }] });
   _screenPc.onicecandidate = e => { if (e.candidate) sendMsg({ type: 'rtc-ice', from: 'screen', candidate: e.candidate }); };
   _screenPc.ondatachannel = e => setupScreenFileChannel(e.channel);
@@ -53,18 +55,21 @@ function screenAssembleVideo() {
   const blob = new Blob(_vidParts, { type: (_vidMeta && _vidMeta.mime) || 'video/mp4' });
   _vidParts = [];
   const mediaId = _vidMeta && _vidMeta.mediaId;
+  // Préparation hors ligne (show:false) : en cache seulement, rien d'affiché
+  const show = !(_vidMeta && _vidMeta.show === false);
   const url = URL.createObjectURL(blob);
-  setScreenStatus('🎬 Vidéo reçue (' + Math.round(blob.size / 1048576) + ' Mo)');
+  if (show) setScreenStatus('🎬 Vidéo reçue (' + Math.round(blob.size / 1048576) + ' Mo)');
   // Mise en cache : les prochains affichages de cette vidéo seront instantanés
   if (mediaId) {
     const old = _mediaCache.get(mediaId);
-    if (old && old.url && old.url !== url) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
+    if (old && old.url && old.url !== url && old.url !== _screenVidUrl) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
     _mediaCache.set(mediaId, { kind: 'vid', url });
     sendMsg({ type: 'media:cached', id: mediaId });
+    if (!show) return;
     // Console prioritaire (passerelle DMX) : mise en cache seulement
     if (screenDmxLive()) { screenDmxOnCached(mediaId); return; }
     _screenActiveId = mediaId;
-  } else if (screenDmxLive()) return;
+  } else if (screenDmxLive() || !show) return;
   screenPlayVideoUrl(url);
 }
 
