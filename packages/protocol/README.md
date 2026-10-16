@@ -10,7 +10,7 @@ Appairage, chiffrement de bout en bout et schéma des messages entre la
 > `expo-app/` pas encore (§7).
 
 ```sh
-cd packages/protocol && npm test     # 60 tests node --test, aucune installation
+cd packages/protocol && npm test     # 66 tests node --test, aucune installation
 # (également exécutés par le `npm test` racine via tests/protocol-package.test.mjs)
 ```
 
@@ -38,6 +38,7 @@ broker **public** `wss://broker.hivemq.com:8884/mqtt`, topic
 | **Injecteur** (quiconque peut publier sur le relais) | publie des trames arbitraires, rejoue des trames enregistrées | **Intégrité/authenticité** : toute trame non produite par un détenteur du secret est rejetée (`auth`). **Anti-rejeu** par émetteur + contrôle d'horloge. **Schéma strict** même pour les détenteurs du secret. |
 | **Attaquant actif pendant l'appairage manuel** | se place au milieu de l'échange ECDH | Détecté par la **SAS** à 6 chiffres comparée par l'utilisateur ; l'engagement (commit/reveal) ramène sa chance à 1/10⁶ par tentative. |
 | **Personne qui voit le QR** | photographie l'écran de la télécommande | Rejoint la session tant qu'elle n'est pas renouvelée → n'afficher le QR que le temps de l'appairage ; « Nouvelle session » révoque tout le monde. |
+| **Appareil retiré** (perdu, rendu, membre d'équipe parti) | connaît l'ancien secret de session et sa clé par écran | « Retirer l'écran » (§ 3.5) : nouvelle session remise aux SEULS autres écrans, chiffrée avec leur clé par écran ; l'appareil retiré ne peut plus rien déchiffrer, même en rejouant l'ancien QR (QR et code renouvelés). |
 | **Serveur web qui sert l'app** | reçoit les requêtes HTTP | Le secret est dans le **fragment** (`#…`), jamais envoyé au serveur ni dans le `Referer`. |
 
 **Hors garanties / risques résiduels (assumés et documentés)**
@@ -46,7 +47,28 @@ broker **public** `wss://broker.hivemq.com:8884/mqtt`, topic
   symétriques : un écran possède la clé `r2s` pour déchiffrer, il pourrait donc
   aussi forger des ordres « télécommande ». Les clés par sens empêchent la
   *réflexion* d'une trame, pas un appareil compromis. Évolution possible :
-  signature ECDSA des ordres par la télécommande.
+  signature ECDSA des ordres par la télécommande. Le **retrait** d'un écran
+  (§ 3.5) exclut un appareil pour la suite, mais il ne protège pas d'un
+  appareil qui attaque **pendant** qu'il est encore appairé, notamment :
+  - **échange de clé par écran détourné** : l'échange est authentifié par la
+    session ; un membre malveillant de la session qui s'interpose au moment
+    où un AUTRE écran établit sa clé (offre forgée au nom de la
+    télécommande, ou réponse au nom de l'écran) pourrait obtenir cette clé, et
+    donc la session suivante de cet écran après son propre retrait.
+    Atténuations : l'écran garde la première clé établie avec une
+    télécommande, la réponse doit venir de l'émetteur rattaché à l'écran
+    visé et répondre à l'offre en cours, et la télécommande compare le kid
+    annoncé par l'écran (caps) au sien ; une clé différente n'est jamais
+    remplacée d'office et l'écran ne suit pas le retrait suivant (à
+    réappairer). Parade complète (non faite) : clé d'identité ECDSA de la
+    télécommande, dont l'empreinte serait le channelId, signant les offres ;
+  - **retrait forgé** : `screen:revoked` est scellé avec la clé de session
+    (l'écran retiré n'a peut-être pas de clé par écran) ; un membre de la
+    session peut donc faire afficher « Écran retiré » à un autre écran
+    (déni de service : il faut le réappairer) ;
+  - **rattachement d'un écran** : un membre de la session peut annoncer un
+    `caps` avec le screenId d'un autre écran ; la télécommande rattache
+    alors cet émetteur (les messages qu'elle lui attribue, pas les clés).
 - **Métadonnées visibles par le relais** : topic opaque, tailles, horaires,
   adresses IP, nombre d'appareils, nature de la trame (message ou fragment de
   média) et l'étiquette d'émetteur. Le **type** de message (`color`,
@@ -104,11 +126,11 @@ Chaîne base64url (sans remplissage) des octets :
 
 ```
 0      version = 0x02
-1      kind    = 0x01 message JSON | 0x02 fragment de média
+1      kind    = 0x01 message JSON | 0x02 fragment de média | 0x03 message JSON pairwise
 2      senderLen (1..16), puis sender ASCII [A-Za-z0-9_-]
 +4     seq  uint32 BE        (compteur par émetteur)
 +6     ts   uint48 BE (ms)   (horloge de l'émetteur)
-kind 1 : rien de plus (le type est dans le chiffré)
+kind 1, 3 : rien de plus (le type est dans le chiffré)
 kind 2 : idLen + mediaId (≤ 64) + index u16 + total u16
 ──────── tout ce qui précède = AAD AES-GCM ────────
 +12    IV aléatoire 96 bits
@@ -197,8 +219,60 @@ Des tests de **dérive** relisent `web/js/*.js` (ou `index.html` à défaut) et
   (`packages/dmx`, assemblé dans la PWA sous la globale `SRDMX` ;
   `web/js/86-dmx-gateway.js`), appliqué par l'écran (`web/js/36-dmx-screen.js`).
   Règles de priorité console / télécommande : `docs/DMX.md`.
+- **Clés par écran et retrait** : voir § 3.5 (`key:offer`, `key:answer`,
+  `screen:revoked` dans la session ; `key:confirm`, `key:ok`,
+  `session:rekey`, `rekey:ok` scellés pairwise). `caps.kx` (échange pris en
+  charge) et `caps.kid` (identifiant de la clé détenue).
 - `screen:identify { target: { screens: [...] } }` : l'écran ciblé clignote
   3 s (« Identifier » du moniteur de la passerelle), sans changer son état.
+
+### 3.5 Clés par écran et retrait d'un écran (`pairwise.js`)
+
+Chaque écran établit avec la télécommande une clé AES-256-GCM qui lui est
+propre, juste après l'appairage (QR ou code) ou à sa première connexion s'il
+a été appairé avant cette version (`caps.kx = 1`) :
+
+```
+télécommande                                         écran
+  key:offer   { rid, xid, jwk_R }   ── session ──►    (paires ECDH P-256
+          ◄── session ──  key:answer { sid, rid, xid, jwk_E }   éphémères)
+  secret = HKDF-SHA256(ECDH, sel = SHA-256(channelId ‖ rid ‖ sid ‖ xid ‖ jwk_R ‖ jwk_E))
+  key:confirm { sid, rid, xid }     ── pairwise ──►   (l'ouvrir prouve la même clé)
+          ◄── pairwise ──  key:ok { sid, xid }
+```
+
+- `rid` : identifiant stable de la télécommande (`createRemoteId()`), `sid` :
+  screenId, `xid` : identifiant de l'échange. Clés par sens (r2s, s2r) et
+  `kid` (64 bits, public, annoncé dans `caps`) : HKDF du secret, liées à
+  `rid` et `sid`. Seul le secret (32 octets) est conservé, des deux côtés.
+- Trame pairwise : type 0x03, même format que 0x01. Le type est dans l'AAD :
+  une trame pairwise ne s'ouvre jamais avec `open()` ni une trame de session
+  avec `openPairwise()`, même avec la mauvaise clé. Le schéma impose le
+  canal (`explainInvalid(msg, { channel })`) : une `session:rekey` scellée
+  avec la clé de session est refusée.
+- L'écran garde la première clé établie avec une télécommande (une offre
+  ultérieure est ignorée) ; rejoindre une AUTRE session (QR, code) l'efface.
+
+Retrait (« Retirer l'écran », maquettes 5b et 5c) :
+
+1. l'écran retiré reçoit `screen:revoked` (clé de session, ancien topic) : il
+   efface sa session, sa clé et son nom, et affiche « Écran retiré » ;
+2. la télécommande crée une nouvelle session (`createPairing()`, même
+   dérivation) et la remet à chaque autre écran dans `session:rekey`, scellée
+   avec SA clé par écran, sur l'ancien topic ; l'écran accuse (`rekey:ok`) et
+   passe sur le nouveau topic en gardant affichage, cache et état ;
+3. la télécommande bascule dès les accusés des écrans en ligne (3 s au plus) ;
+   QR et code d'appairage sont renouvelés ; le nom, les groupes, la clé et le
+   patch DMX de l'écran retiré sont oubliés ;
+4. elle écoute l'ancien topic pendant 24 h (enregistré, 4 anciens topics au
+   plus) : un écran absent pendant le retrait y reçoit la session EN COURS
+   avec sa clé ; l'écran retiré, ou un appareil qui rejoue l'ancien QR, reçoit
+   `screen:revoked`. Passé ce délai, un écran retiré absent reste muet et ne
+   peut rien déchiffrer de la nouvelle session.
+
+Un écran sans clé par écran (version antérieure jamais reconnectée, clé en
+conflit) ne peut pas suivre : la confirmation du retrait le signale, et à son
+retour il reçoit `screen:revoked { reason: 'renewed' }` (à réappairer).
 
 ## 4. API
 
@@ -216,6 +290,8 @@ import {
   validate, explainInvalid, isAddressedTo, MESSAGE_TYPES, LIMITS,
   // channel.js (tout-en-un)
   createSecureChannel, createScreenId, SESSION_TOPIC_PREFIX, RENDEZVOUS_TOPIC_PREFIX,
+  // pairwise.js (clés par écran) + crypto.js
+  createRemoteId, createExchangeId, derivePairwiseSecret, pairwiseKeys, sealPairwise, openPairwise,
   // environnement
   setCrypto, ProtocolError,
 } from '@setremote/protocol';
@@ -389,6 +465,7 @@ Alternative : `import { install } from 'react-native-quick-crypto'; install();`
 
 ## 9. Limites connues / suites
 
-- Pas de rotation automatique de clé ni de révocation d'un écran isolé
-  (révocation = nouvelle session pour tous).
+- Pas de rotation automatique des clés : la session change au retrait d'un
+  écran (§ 3.5) ou par « Nouvelle session » (qui révoque tous les écrans) ;
+  les clés par écran, elles, ne sont pas renouvelées d'elles-mêmes.
 - `MESSAGE_TYPES` doit évoluer avec l'app : le test de dérive le rappelle.
