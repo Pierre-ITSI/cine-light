@@ -133,7 +133,7 @@
     <h2>SetRemote</h2>
     <div class="remote-header-end">
       <button type="button" class="link-pill reconnecting" id="linkPill" onclick="openLinkDetail()" aria-label="État de la liaison — détail par écran"><span class="link-dot"></span><span id="linkPillLabel">Connexion…</span></button>
-      <button class="back-btn" onclick="goBack()">← Retour</button>
+      <button type="button" class="hdr-gear" id="settingsBtn" aria-label="Réglages" onclick="openSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     </div>
   </div>
   <div class="swatch-row" id="previewRow">
@@ -890,6 +890,54 @@
     <div class="gw-ctable" id="gwChRows"></div>
     <div class="gw-rule" id="gwChNote">Effet, média, appel, SMS : n × 10 à n × 10 + 9 choisit le n°. 1–9 et valeurs hors liste : sans effet. Appel et SMS se déclenchent une fois, à l'entrée dans la plage.</div>
   </section>
+</div>
+
+<!-- Réglages (maquette 13), ouverts par l'engrenage de l'en-tête de la télécommande (maquette 1) -->
+<div id="settings-view" role="dialog" aria-modal="true" aria-labelledby="stTitle">
+  <div class="st-head">
+    <button type="button" class="st-back" onclick="closeSettings()">← Retour</button>
+    <span class="st-title" id="stTitle">Réglages</span>
+    <span class="st-spacer"></span>
+  </div>
+  <div class="st-card">
+    <span class="st-label">Langue</span>
+    <div class="st-seg">
+      <button type="button" class="st-seg-btn active" id="stLang-fr" aria-pressed="true" onclick="setAppLanguage('fr')">Français</button>
+      <button type="button" class="st-seg-btn" id="stLang-en" aria-pressed="false" lang="en" onclick="setAppLanguage('en')">English</button>
+    </div>
+    <p class="st-note" id="stLangNote" lang="en" style="display:none">The English version is coming soon. Until then, SetRemote stays in French.</p>
+  </div>
+  <div class="st-card st-rows">
+    <div class="st-row">
+      <span class="st-row-main"><span class="st-row-label">Chiffrement de bout en bout</span><span class="st-row-sub">Clés générées sur vos appareils</span></span>
+      <span class="st-row-val on">Actif</span>
+    </div>
+    <button type="button" class="st-row" id="stStrobeWarn" role="switch" aria-checked="true" onclick="toggleFlashWarningSetting()">
+      <span class="st-row-main"><span class="st-row-label">Avertissement stroboscope</span><span class="st-row-sub">Avant chaque activation</span></span>
+      <span class="st-row-val on" id="stStrobeWarnVal">Activé</span>
+    </button>
+    <div class="st-row">
+      <span class="st-row-main"><span class="st-row-label">Fréquence max du strobo</span><span class="st-row-sub">Sécurité photosensibilité</span></span>
+      <span class="st-row-val" id="stStrobeMax">30 Hz</span>
+    </div>
+  </div>
+  <button type="button" class="st-btn st-danger" onclick="settingsForgetScreens()">OUBLIER TOUS LES ÉCRANS APPAIRÉS</button>
+  <button type="button" class="st-btn" onclick="settingsGoHome()">RETOUR À L'ACCUEIL</button>
+  <div class="st-foot">
+    <a href="confidentialite.html" class="st-policy" onclick="event.preventDefault();openPrivacyPolicy()">Politique de confidentialité</a>
+    <span>Aucun compte · aucune publicité · aucun suivi</span>
+    <span id="stVersion">SetRemote · by Pikoo</span>
+  </div>
+</div>
+
+<!-- Politique de confidentialité dans l'app (Apple 5.1.1, Google Play) : page statique embarquée -->
+<div id="policy-view" role="dialog" aria-modal="true" aria-labelledby="policyTitle">
+  <div class="st-head">
+    <button type="button" class="st-back" onclick="closePrivacyPolicy()">← Retour</button>
+    <span class="st-title" id="policyTitle">Confidentialité</span>
+    <span class="st-spacer"></span>
+  </div>
+  <iframe id="policyFrame" title="Politique de confidentialité"></iframe>
 </div>
 
 <!-- Avertissement photosensibilité avant le stroboscope et les effets à flashs rapides (maquette 11) -->

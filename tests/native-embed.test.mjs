@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { launchBrowser, openPage, fileUrl, sleep } from './helpers/harness.mjs';
+import { launchBrowser, openPage, fileUrl, sleep, waitFor } from './helpers/harness.mjs';
 import { assertIndexUpToDate, embedWeb, checkEmbed, FILES, PAGES } from '../expo-app/scripts/embed-web.mjs';
 
 let browser, dir;
@@ -69,6 +69,23 @@ test('politique de confidentialité embarquée : pages en file://, polices du pa
     assert.ok(requests.some((u) => /\/vendor\/fonts\/lato-latin-400-normal\.woff2$/.test(u)), file + ' : polices du paquet');
     await close();
   }
+});
+
+test('coque : Réglages › Politique de confidentialité ouvre la page du paquet, sans réseau', async () => {
+  const { page, errors, requests, close } = await openEmbedded('index.html', { bridge: true });
+  await page.evaluate(() => { startMode('remote'); openSettings(); openPrivacyPolicy(); });
+  await waitFor(page, () => document.getElementById('policyFrame').getAttribute('src') === 'confidentialite.html');
+  let frame = null;
+  for (let i = 0; i < 200 && !frame; i++) { frame = page.frames().find((f) => f.url().endsWith('/confidentialite.html')); if (!frame) await sleep(25); }
+  assert.ok(frame, 'cadre de la politique chargé');
+  await frame.waitForLoadState('load');
+  const st = await frame.evaluate(() => ({ url: location.href, h1: document.querySelector('h1').textContent, theme: document.documentElement.getAttribute('data-theme') }));
+  assert.ok(st.url.startsWith(fileUrl(dir) + '/'), 'page du paquet : ' + st.url);
+  assert.equal(st.h1, 'Politique de confidentialité');
+  assert.equal(st.theme, 'dark', 'couleurs de l\'app dans la coque');
+  assert.deepEqual(requests.filter((u) => !u.startsWith('file:') && !u.startsWith('data:')), [], 'aucune requête hors du paquet');
+  assert.deepEqual(errors, []);
+  await close();
 });
 
 test('chargement en file:// : aucune requête réseau, polices locales, contexte sécurisé', async () => {

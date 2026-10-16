@@ -34,6 +34,15 @@ const screenCall = (m, after) => async (page) => {
   await page.clock.runFor(1200);
   if (after) { await after(page); await page.clock.runFor(1200); }
 };
+// Cadre de la politique de confidentialité chargé, polices comprises
+async function policyFrameReady(page, file) {
+  for (let i = 0; i < 400; i++) {
+    const f = page.frames().find((fr) => fr.url().endsWith('/' + file));
+    if (f) { await f.waitForLoadState('load'); await f.evaluate(() => document.fonts.ready); return; }
+    await new Promise((r) => setTimeout(r, 25));
+  }
+  throw new Error('cadre absent : ' + file);
+}
 const scrollTo = (id, top = 120) => (page) => page.evaluate(([id, top]) => {
   const el = document.getElementById(id);
   document.getElementById('remote-mode').scrollTop += el.getBoundingClientRect().top - top;
@@ -220,6 +229,15 @@ export const SCENES = {
   'remote-strobe-warning': remote(null, async (page) => {
     await scrollTo('strobeToggle', 96)(page);
     await page.evaluate(() => { document.getElementById('strobeToggle').checked = true; onStrobeToggle(); });
+  }),
+  // 13 · Réglages (engrenage de l'en-tête)
+  'remote-settings': remote(null, (page) => page.evaluate(() => openSettings())),
+  // Réglages : anglais choisi (note « bientôt ») et avertissement désactivé pour la session
+  'remote-settings-en': remote(null, (page) => page.evaluate(() => { setFlashWarningSkipped(true); openSettings(); setAppLanguage('en'); })),
+  // Politique de confidentialité ouverte depuis les Réglages (page embarquée)
+  'remote-privacy': remote(null, async (page) => {
+    await page.evaluate(() => { openSettings(); openPrivacyPolicy(); });
+    await policyFrameReady(page, 'confidentialite.html');
   }),
   // Page publique de la politique, thème clair du système
   'privacy-light': async (page) => {
