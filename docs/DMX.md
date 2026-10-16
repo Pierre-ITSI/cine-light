@@ -375,11 +375,16 @@ La passerelle envoie aux écrans, dans la session chiffrée :
 - **Identifier** (moniteur) : message `screen:identify` ciblé ; l'écran
   clignote 3 s à 2 Hz sans changer d'état.
 
-## 8. Ancien mode DMX 3CH / 9CH : incohérences constatées
+## 8. Ancien mode DMX 3CH / 9CH (supprimé) : incohérences constatées
 
-L'app contient un mode « DMX » antérieur (réception via un pont WebSocket ou
-un plugin Capacitor `SACN`). Il est **remplacé** par les personnalités
-ci-dessus ; l'état exact du code (au commit `4db93f6`) :
+L'app contenait un mode « DMX » antérieur (réception via un pont WebSocket ou
+un plugin Capacitor `SACN`), remplacé par la passerelle et les personnalités
+ci-dessus. Il a été **supprimé** : bouton « Mode DMX » de l'accueil, page
+`screen.html`, écran de configuration `#screen-sacn-config`,
+`web/js/60-sacn.js` et `web/styles/60-sacn.css`, ainsi que les types
+`setUniverse` / `dmx` de son pont WebSocket. Le constat ci-dessous est
+conservé pour la migration des patchs existants ; les références renvoient
+au commit `4db93f6`, où ce code existait encore :
 
 **3CH (Dim, CCT, Tint)** — cohérent entre `screenApplyDmx` et
 `applyDmxToOutput` (`web/js/60-sacn.js` l. 90–95 et 227–233) : Dimmer

@@ -72,7 +72,7 @@ Les testeurs installent l'app **TestFlight** puis SetRemote.
 | Étape | Qui | Quoi |
 |---|---|---|
 | `npm run build` (racine) | développeur | génère `index.html` depuis `web/` (à committer) |
-| `scripts/embed-web.mjs` | hook EAS `eas-build-pre-install`, plugin au prebuild, ou `npm run embed-web` | vérifie que `index.html` est à jour, copie `index.html`, `screen.html`, `manifest.webmanifest`, les icônes et `vendor/` (mqtt.js, polices, licences) dans `web-embed/` (non versionné), puis contrôle que toute ressource relative citée par les pages est présente |
+| `scripts/embed-web.mjs` | hook EAS `eas-build-pre-install`, plugin au prebuild, ou `npm run embed-web` | vérifie que `index.html` est à jour, copie `index.html`, `manifest.webmanifest`, les icônes et `vendor/` (mqtt.js, polices, licences) dans `web-embed/` (non versionné), puis contrôle que toute ressource relative citée par la page est présente |
 | `plugins/with-embedded-web.js` | `expo prebuild` (local ou EAS) | iOS : copie dans `ios/SetRemote/web/`, ajoutée au projet Xcode comme **référence de dossier** (Copy Bundle Resources, arborescence conservée). Android : copie dans `android/app/src/main/assets/web/` |
 | `app/index.tsx` | au lancement | iOS : `SetRemote.app/web/index.html` (lecture limitée au dossier `web/`) ; Android : `file:///android_asset/web/index.html` |
 
@@ -148,8 +148,6 @@ await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encry
 - [ ] **Vidéo WebRTC** télécommande → écran (deux appareils).
 - [ ] **Sélecteurs de fichiers** : images et vidéos du pool, photo
       d'appelant, fond d'écran verrouillé, bande son.
-- [ ] **Mode DMX** : le bouton ouvre la même page d'accueil qu'avant ; les
-      liens GitHub s'ouvrent dans le navigateur.
 - [ ] **Liens externes** : s'ouvrent dans Safari / Chrome, pas dans l'app.
 - [ ] **Onglet QR** : ⚠️ régression connue tant que `web/js/64-qr-utils.js`
       n'est pas adapté (refonte de l'appairage en cours) : le QR et l'adresse

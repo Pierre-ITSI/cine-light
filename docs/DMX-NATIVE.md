@@ -220,7 +220,8 @@ simple.
 8. **Liaison locale passerelle → écrans** pour les plateaux de plus de
    quelques écrans (§ 6).
 9. **Retirer l'ancien mode DMX** (3CH/9CH, pont WebSocket, plugin Capacitor
-   `SACN`) une fois la passerelle validée.
+   `SACN`) : **fait** (bouton « Mode DMX » de l'accueil, `screen.html`,
+   `web/js/60-sacn.js` supprimés ; voir `docs/DMX.md` § 8).
 
 ## 8. Codes de rejet des analyseurs
 

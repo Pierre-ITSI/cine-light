@@ -7,12 +7,11 @@
 // Ce script prépare cette copie dans expo-app/web-embed/ (ignoré par git) :
 //
 //   index.html             généré par web/build.mjs, vérifié à jour avec web/
-//   screen.html            page « Mode DMX », ouverte depuis l'accueil
 //   manifest.webmanifest   + icon-192.png, icon-512.png, apple-touch-icon.png
 //   vendor/                mqtt.js figé, polices et leurs licences
 //
 // puis vérifie que le paquet est complet : chaque ressource relative citée par
-// ces pages (src, href, url() CSS, location.href) doit y figurer.
+// la page (src, href, url() CSS, location.href) doit y figurer.
 //
 // Exclus volontairement : sw.js (aucun service worker dans l'app : son
 // enregistrement échoue sans bruit en file://, et l'erreur est déjà absorbée
@@ -41,10 +40,10 @@ export const ROOT_DIR = resolve(EXPO_DIR, '..');
 export const DEFAULT_OUT = join(EXPO_DIR, 'web-embed');
 
 // Contenu du paquet, relatif à la racine du dépôt
-export const FILES = ['index.html', 'screen.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
+export const FILES = ['index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 export const DIRS = ['vendor'];
 // Pages dont les références sont vérifiées
-const PAGES = ['index.html', 'screen.html'];
+const PAGES = ['index.html'];
 // Références volontairement absentes du paquet (voir l'en-tête)
 const EXCLUDED = new Set(['sw.js']);
 

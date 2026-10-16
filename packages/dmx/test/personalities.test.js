@@ -77,8 +77,18 @@ test('CCT 1700–20000 K (plage de l’app) et tint 0 = magenta, 128 = neutre, 2
   assert.ok(r(green) < r(neutral) && g(green) === g(neutral), 'vert : moins de rouge/bleu');
 });
 
+// Rendu de l'ancien mode DMX 3CH (web/js/60-sacn.js, retiré de l'app), copié
+// tel quel : référence figée pour la migration 3CH → Standard 8 (docs/DMX.md § 8).
+function legacyDmxKelvinGM(live, kelvin, gm, dimmer) {
+  const rgb = live.kelvinToRgb(kelvin);
+  let r = rgb.r, g = rgb.g, b = rgb.b;
+  if (gm > 0)      { r *= (1 - gm/100 * 0.45); b *= (1 - gm/100 * 0.45); }
+  else if (gm < 0) { const t = Math.abs(gm)/100; g *= (1 - t * 0.65); }
+  return live.rgbToHex(Math.round(r * dimmer), Math.round(g * dimmer), Math.round(b * dimmer));
+}
+
 test('portage fidèle : kelvinToRgb, tintWhite et le 3CH historique de web/js', (t) => {
-  const live = loadWebFunctions({ kelvinToRgb: '40-color.js', tintWhite: '40-color.js', dmxKelvinGM: '60-sacn.js', rgbToHex: '64-qr-utils.js' });
+  const live = loadWebFunctions({ kelvinToRgb: '40-color.js', tintWhite: '40-color.js', rgbToHex: '64-qr-utils.js' });
   if (!live) { t.skip('web/js introuvable'); return; }
   for (let K = 1700; K <= 20000; K += 37) assert.deepEqual(kelvinToRgb(K), { ...live.kelvinToRgb(K) }, 'kelvinToRgb ' + K);
   for (let gm = -100; gm <= 100; gm += 7) assert.deepEqual(tintWhite({ r: 200, g: 180, b: 160 }, gm), { ...live.tintWhite({ r: 200, g: 180, b: 160 }, gm) });
@@ -88,7 +98,7 @@ test('portage fidèle : kelvinToRgb, tintWhite et le 3CH historique de web/js', 
     for (const cct of [0, 21, 54, 128, 200, 255]) {
       for (const tint of [0, 128, 129, 180, 255]) {
         assert.equal(legacyDmxToTint(tint), dmxToTint(tint));
-        const legacy = live.dmxKelvinGM(Math.round(1700 + (cct / 255) * 18300), legacyDmxToTint(tint), dim / 255);
+        const legacy = legacyDmxKelvinGM(live, Math.round(1700 + (cct / 255) * 18300), legacyDmxToTint(tint), dim / 255);
         assert.equal(decode('standard8', [dim, 12, 34, 56, cct, tint, 255, 0]).color, legacy, `dim ${dim} cct ${cct} tint ${tint}`);
       }
     }

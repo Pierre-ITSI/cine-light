@@ -64,56 +64,12 @@
   <div class="splash-btns">
     <button class="splash-btn primary" onclick="startMode('remote')">Télécommande</button>
     <button class="splash-btn" onclick="startMode('screen')">Écran projecteur</button>
-    <button class="splash-btn" onclick="window.location.href='screen.html'">Mode DMX</button>
   </div>
   <button id="installBtn" class="install-btn" style="display:none" onclick="installPWA()">⬇ Installer l'application</button>
   <div id="iosInstallHint" class="install-hint" style="display:none">
     Pour installer : appuyez sur <strong>Partager</strong> <span style="font-size:1.1em">⎙</span> puis <strong>« Sur l'écran d'accueil »</strong>
   </div>
   <div class="splash-credit">by Pikoo</div>
-</div>
-
-<div id="screen-sacn-config">
-  <h2>🎛 Mode DMX</h2>
-  <p>Réception directe de données DMX</p>
-
-  <div id="screenSacnNativeBadge" class="sacn-native-badge" style="display:none">
-    📡 Réception UDP native — aucun bridge requis
-  </div>
-
-  <div id="screenSacnBridgeSection" class="sacn-bridge-row">
-    <label>Bridge WebSocket</label>
-    <div class="sacn-bridge-ip-row">
-      <span style="font-size:.6rem;color:var(--muted)">ws://</span>
-      <input type="text" id="screenSacnBridgeIP" class="sacn-input" placeholder="192.168.1.100"
-             value="localhost" style="flex:1"
-             onkeydown="if(event.key==='Enter')enterScreenSACN()">
-      <span style="font-size:.6rem;color:var(--muted)">:</span>
-      <input type="text" id="screenSacnBridgePort" class="sacn-input" value="3001"
-             style="width:58px;text-align:center">
-    </div>
-  </div>
-
-  <div class="sacn-config-grid">
-    <div class="sacn-config-field">
-      <label>Univers sACN</label>
-      <input type="number" id="screenSacnUniverse" class="sacn-input" value="1" min="1" max="63999"
-             style="width:100%;text-align:center">
-    </div>
-    <div class="sacn-config-field">
-      <label>Adresse de départ</label>
-      <input type="number" id="screenSacnBaseAddr" class="sacn-input" value="1" min="1" max="512"
-             style="width:100%;text-align:center">
-    </div>
-  </div>
-
-  <div class="chips-wrap" style="max-width:380px;width:100%">
-    <button class="chip active" id="screenSacnMode-3ch" onclick="selectScreenSacnMode('3ch')">3CH • DIM CCT TINT</button>
-    <button class="chip" id="screenSacnMode-9ch" onclick="selectScreenSacnMode('9ch')">9CH • DIM CCT TINT XC RGB STROB STROB+</button>
-  </div>
-
-  <button class="sacn-screen-go" onclick="enterScreenSACN()">▶ Démarrer</button>
-  <button class="screen-sacn-back" onclick="goBackToSplash()">← Fermer mode DMX</button>
 </div>
 
 <div id="screen-connect">
@@ -701,8 +657,8 @@
     </div>
     <div class="panel">
       <div class="panel-label">Appelant</div>
-      <input type="text" id="callName" class="sacn-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%;margin-bottom:10px">
-      <input type="text" id="callLabel" class="sacn-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px">
+      <input type="text" id="callName" class="text-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%;margin-bottom:10px">
+      <input type="text" id="callLabel" class="text-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px">
       <div style="display:flex;gap:10px;align-items:center">
         <div id="callPhotoPreview" style="width:46px;height:46px;border-radius:50%;background:var(--mid2);border:1px solid var(--border);background-size:cover;background-position:center;flex-shrink:0"></div>
         <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()">🖼 Photo (option)</button>
@@ -711,10 +667,10 @@
     </div>
     <div class="panel" id="callMsgPanel" style="display:none">
       <div class="panel-label">Message</div>
-      <input type="text" id="callMsgText" class="sacn-input" placeholder="Texte du message" value="Tu es où ??" style="width:100%;margin-bottom:14px">
+      <input type="text" id="callMsgText" class="text-input" placeholder="Texte du message" value="Tu es où ??" style="width:100%;margin-bottom:14px">
       <div class="panel-label">Application (fictive)</div>
       <div style="display:flex;gap:10px;align-items:center">
-        <input type="text" id="callAppName" class="sacn-input" placeholder="Nom affiché" value="SMS" maxlength="24" style="flex:1" oninput="this.dataset.touched='1'">
+        <input type="text" id="callAppName" class="text-input" placeholder="Nom affiché" value="SMS" maxlength="24" style="flex:1" oninput="this.dataset.touched='1'">
         <input type="color" id="callAppColor" value="#2f8cf0" style="width:52px;flex-shrink:0" oninput="this.dataset.touched='1'">
       </div>
       <div class="media-status" style="text-align:left;margin-top:6px">Pas de marque réelle : inventez un nom (ex. « Chatly ») et une couleur.</div>
@@ -728,8 +684,8 @@
         </label>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:10px">
-        <input type="text" id="lockTime" class="sacn-input" placeholder="Heure (ex : 00:10)" style="flex:1">
-        <input type="text" id="lockDate" class="sacn-input" placeholder="Ven. 17 juil." style="flex:1">
+        <input type="text" id="lockTime" class="text-input" placeholder="Heure (ex : 00:10)" style="flex:1">
+        <input type="text" id="lockDate" class="text-input" placeholder="Ven. 17 juil." style="flex:1">
       </div>
       <div style="display:flex;gap:10px;align-items:center">
         <div id="lockWallPreview" style="width:36px;height:62px;border-radius:8px;background:var(--mid2);background-size:cover;background-position:center;border:1px solid var(--border);flex-shrink:0"></div>

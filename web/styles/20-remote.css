@@ -18,6 +18,10 @@
 
 .panel{background:var(--mid);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:12px}
 .panel-label{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+/* Champ de saisie des panneaux (onglet Appel) */
+.text-input{background:var(--dark);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:.9rem;padding:10px 12px;border-radius:4px;outline:none;transition:border-color .2s;-moz-appearance:textfield}
+.text-input:focus{border-color:var(--accent)}
+.text-input::-webkit-inner-spin-button{-webkit-appearance:none}
 
 .dot{width:7px;height:7px;border-radius:50%;background:#444;transition:background .3s}
 .dot.connected{background:var(--green);box-shadow:0 0 6px var(--green)}

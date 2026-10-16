@@ -131,7 +131,7 @@ export default function AppShell() {
   }, [restoreBrightness]);
 
   // Les liens externes s'ouvrent dans le navigateur, pas dans la coque.
-  // En local, toute page file:// est admise (index.html, screen.html…) : la
+  // En local, toute page file:// est admise (index.html…) : la
   // WebView ne peut lire que le dossier web/ (iOS : allowingReadAccessToURL)
   // ou les assets de l'app (Android : allowFileAccess reste à false).
   const onShouldStart = useCallback((req: ShouldStartLoadRequest) => {

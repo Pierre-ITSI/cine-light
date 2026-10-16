@@ -1,5 +1,5 @@
 /* Service Worker — SetRemote PWA */
-const CACHE = 'setremote-v56';
+const CACHE = 'setremote-v57';
 const SHELL = [
   './',
   './index.html',
@@ -54,7 +54,7 @@ self.addEventListener('fetch', (e) => {
 
   // Navigations : réseau d'abord, repli cache → permet les mises à jour.
   // Seule la page d'accueil réussie remplace la copie hors-ligne (pas une 404,
-  // ni screen.html).
+  // ni une autre page).
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req)

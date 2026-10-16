@@ -5,7 +5,9 @@
 //   kelvinToRgb, tintWhite, recomputeColor  → web/js/40-color.js
 //   hslToRgb (HUE mode)                       → web/js/40-color.js
 //   rgbToHex, hexToRgb                        → web/js/64-qr-utils.js
-//   dmxKelvinGM and the 3ch DMX scaling        → web/js/60-sacn.js (screenApplyDmx / applyDmxToOutput)
+//   dmxKelvinGM and the 3ch DMX scaling        → web/js/60-sacn.js (screenApplyDmx / applyDmxToOutput),
+//                                               legacy DMX mode since removed from the app; a frozen
+//                                               copy remains in test/personalities.test.js
 // The colour wheel is an HSV disc (centre white, edge fully saturated); the
 // Expo app uses the same model in expo-app/src/lib/color.ts (hsvToHex).
 
@@ -115,7 +117,7 @@ export function dmxToTint(v) {
 }
 
 /**
- * Legacy 3ch/9ch tint scaling (web/js/60-sacn.js): 127 AND 128 are both neutral,
+ * Legacy 3ch/9ch tint scaling (removed web/js/60-sacn.js): 127 AND 128 are both neutral,
  * 0 → −100, 255 → +100. Identical to dmxToTint for v ≥ 128. Kept for migration notes.
  */
 export function legacyDmxToTint(v) {

@@ -28,8 +28,6 @@
  *  - 'dmx:listen', 'dmx:stop', 'udp:send', 'net:info' (PWA → coque) et
  *    'dmx:packets', 'net:info', 'dmx:error' (coque → PWA, window.SRNative.receive) :
  *    réception UDP de la passerelle DMX (docs/DMX-NATIVE.md, contrat du pont) ;
- *  - 'setUniverse', 'dmx' : pont sACN WebSocket local (index.html, screen.html) ;
- *  - 'code_changed', 'error' : pont WebSocket de screen.html ;
  *  - messages du canal de données WebRTC ({ meta } / { done }).
  */
 

@@ -1,18 +1,6 @@
 // ══════════════════════════ NAVIGATION ══════════════════════════
 function startMode(m) {
   document.getElementById('splash').style.display = 'none';
-  if (m === 'screen-sacn') {
-    const cfgDiv = document.getElementById('screen-sacn-config');
-    if (cfgDiv) cfgDiv.style.display = 'flex';
-    const hasNative = (typeof IS_NATIVE !== 'undefined' && IS_NATIVE)
-                      && !!(window.Capacitor?.Plugins?.SACN);
-    const bridgeSec = document.getElementById('screenSacnBridgeSection');
-    const nativeBadge = document.getElementById('screenSacnNativeBadge');
-    if (bridgeSec) bridgeSec.style.display = hasNative ? 'none' : 'flex';
-    if (nativeBadge) nativeBadge.style.display = hasNative ? 'block' : 'none';
-    if (hasNative) selectScreenSacnMode('9ch');
-    return;
-  }
   if (m === 'remote') {
     mode = 'remote';
     const rm = document.getElementById('remote-mode');
@@ -229,9 +217,6 @@ function goBackToSplash() {
   const sm = document.getElementById('screen-mode');
   if (sm) sm.style.display = 'none';
   clearLocationHash();
-  const cfgDiv = document.getElementById('screen-sacn-config');
-  if (cfgDiv) cfgDiv.style.display = 'none';
-  stopScreenSACN();
   hideScreenPairing();
   document.getElementById('splash').style.display = 'flex';
   applyPendingUpdate();

@@ -159,7 +159,7 @@ SetRemote ne demande une autorisation qu'au moment où vous utilisez la fonction
 | **Appareil photo** | Prendre une photo ou filmer une vidéo à diffuser sur l'écran de jeu ; piloter la **torche LED** de l'écran de jeu, car le système passe par l'appareil photo pour cela | Pas de capture en arrière-plan. Rien n'est envoyé ailleurs que vers votre appareil appairé. |
 | **Photos et vidéos** | Choisir les images et vidéos à diffuser, la photo d'un appelant fictif ou un fond d'écran fictif. Quand le système le permet, seuls les éléments que vous sélectionnez sont accessibles. | Pas de parcours ni d'envoi de votre photothèque |
 | **Micro** | **Uniquement quand vous filmez une vidéo** à diffuser : il enregistre le son de cette vidéo | Pas d'écoute en arrière-plan. Pas d'enregistrement en dehors du tournage de la vidéo. |
-| **Réseau local** | Relier directement vos deux appareils sur le même réseau Wi-Fi ; recevoir des données DMX/sACN en mode DMX | Pas de collecte d'informations sur les autres appareils du réseau |
+| **Réseau local** | Relier directement vos deux appareils sur le même réseau Wi-Fi ; recevoir des données DMX (sACN, Art-Net) avec la passerelle DMX | Pas de collecte d'informations sur les autres appareils du réseau |
 | **Bluetooth** | Relier vos deux appareils sans Wi-Fi | Pas de localisation. Pas de recherche d'appareils autres que SetRemote. |
 
 Certaines versions d'Android (11 et antérieures) exigent l'autorisation de **localisation** pour utiliser le Bluetooth. SetRemote **n'utilise pas et ne collecte pas** votre position.

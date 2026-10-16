@@ -51,7 +51,7 @@ test('paquet complet : toute ressource relative citée est embarquée', () => {
   assert.ok(r.files.includes('vendor/fonts/dm-mono-OFL.txt') && r.files.includes('vendor/fonts/lato-OFL.txt'));
   assert.ok(!r.files.includes('sw.js'), 'pas de service worker dans l\'app');
   assert.ok(!r.files.some((f) => f.startsWith('splash-')), 'pas d\'écrans de lancement PWA');
-  assert.ok(r.local.includes('screen.html'), 'Mode DMX : screen.html référencé et présent');
+  assert.ok(!r.files.includes('screen.html') && !r.local.includes('screen.html'), 'ancien mode DMX retiré : plus de screen.html');
 });
 
 test('chargement en file:// : aucune requête réseau, polices locales, contexte sécurisé', async () => {
@@ -101,15 +101,24 @@ test('coque reconnue sans SETREMOTE_NATIVE (injection Android tardive) : luminos
   await close();
 });
 
-test('Mode DMX dans l\'app : screen.html embarqué garde la page d\'accueil', async () => {
-  for (const [bridge, landing, connect] of [[true, 'flex', 'none'], [false, 'none', 'flex']]) {
-    const { page, errors, close } = await openEmbedded('screen.html', { bridge });
-    const st = await page.evaluate(() => ({
-      landing: getComputedStyle(document.getElementById('landing')).display,
-      connect: getComputedStyle(document.getElementById('connect-screen')).display,
-    }));
+test('ancien mode DMX retiré : accueil sans « Mode DMX », aucune trace dans la page', async () => {
+  for (const bridge of [true, false]) {
+    const { page, errors, close } = await openEmbedded('index.html', { bridge });
+    const st = await page.evaluate(() => {
+      const r = {
+        buttons: [...document.querySelectorAll('#splash .splash-btn')].map((b) => b.textContent.trim()),
+        config: document.getElementById('screen-sacn-config'),
+        links: [...document.querySelectorAll('[onclick]')].filter((e) => /screen\.html/.test(e.getAttribute('onclick'))).length,
+        legacy: ['enterScreenSACN', 'stopScreenSACN', 'screenApplyDmx', 'sacnConnect'].filter((f) => typeof window[f] !== 'undefined'),
+      };
+      // Retour à l'accueil depuis l'écran projecteur : plus d'appel à l'ancien mode
+      startMode('screen');
+      goBackToSplash();
+      r.splash = getComputedStyle(document.getElementById('splash')).display;
+      return r;
+    });
     assert.deepEqual(errors, []);
-    assert.deepEqual(st, { landing, connect }, bridge ? 'app native' : 'file:// hors app (pont local)');
+    assert.deepEqual(st, { buttons: ['Télécommande', 'Écran projecteur'], config: null, links: 0, legacy: [], splash: 'flex' }, bridge ? 'app native' : 'navigateur');
     await close();
   }
 });
