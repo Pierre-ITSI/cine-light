@@ -200,6 +200,120 @@ test('doublons : la même trame par Internet et en local n\'est appliquée qu\'u
   await r.close();
 });
 
+// Son WAV réel (sinusoïde), importé par le chemin de l'app
+function wavB64(sec, freq, rate = 8000) {
+  const n = Math.round(sec * rate), b = Buffer.alloc(44 + n * 2);
+  b.write('RIFF', 0); b.writeUInt32LE(36 + n * 2, 4); b.write('WAVE', 8); b.write('fmt ', 12);
+  b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22); b.writeUInt32LE(rate, 24);
+  b.writeUInt32LE(rate * 2, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34); b.write('data', 36); b.writeUInt32LE(n * 2, 40);
+  for (let i = 0; i < n; i++) b.writeInt16LE(Math.round(8000 * Math.sin(2 * Math.PI * freq * i / rate)), 44 + i * 2);
+  return b.toString('base64');
+}
+const offRows = (page) => page.$$eval('#offPrepRows .off-row', (els) => els.map((e) => [e.className.replace('off-row ', ''), e.querySelector('.off-name').textContent, e.querySelector('.off-state').textContent, e.querySelector('.off-detail').textContent]));
+
+test('préparation : chaque écran ne reçoit que ce qui lui manque, avec progression ; puis en Bluetooth, l\'appel n° 1 sonne avec sa photo et sa bande son', async () => {
+  const r = await rig(2, 65);
+  const [A, B] = r.screens;
+  const { rp, hub, broker } = r;
+  await rp.evaluate(([a, b]) => { scrRenameScreen(a, 'Téléphone de Julie'); scrRenameScreen(b, 'TV salon'); }, [A.id, B.id]);
+  // Pool : une image (préchargée d'office par Internet) et une vidéo (jamais préchargée)
+  await addImage(rp, 'decor.png', '#336699');
+  for (const s of [A, B]) await waitFor(s.page, () => _mediaCache.has('m1'), null, { timeout: 10000 });
+  await rp.evaluate(() => stopMediaBroadcast());
+  await rp.evaluate(() => onAddVideos([new File([new Uint8Array(200000).map((_, i) => (i * 7) & 255)], 'plan-large.mp4', { type: 'video/mp4' })]));
+  // Sonnerie importée, choisie pendant que la cible est A seul : seul A l'a
+  await rp.evaluate(async ([a, wav]) => {
+    scrSetTarget({ k: 'screen', id: a });
+    switchTab('call');
+    await onRingImport([new File([Uint8Array.from(atob(wav), (c) => c.charCodeAt(0))], 'sonnerie-prod.wav', { type: 'audio/wav' })]);
+  }, [A.id, wavB64(1, 440)]);
+  const ring = await rp.evaluate(() => ringLib[0].id);
+  await waitFor(A.page, (id) => _mediaCache.has(id), ring, { timeout: 10000 });
+  // Appel n° 1 enregistré avec photo et bande son ; fond verrouillé (rien d'envoyé)
+  const ids = await rp.evaluate(async (wav) => {
+    scrSetTarget({ k: 'all' });
+    const k = document.createElement('canvas'); k.width = k.height = 16;
+    const g = k.getContext('2d'); g.fillStyle = '#c08060'; g.fillRect(0, 0, 16, 16);
+    _callPhoto = k.toDataURL('image/jpeg', 0.7);
+    _callAudioData = 'data:audio/wav;base64,' + wav;
+    document.getElementById('callName').value = 'Maman';
+    await saveCurrentCall();
+    _callPhoto = null; _callAudioData = null;
+    const w = document.createElement('canvas'); w.width = 20; w.height = 36; w.getContext('2d').fillRect(0, 0, 20, 36);
+    _lockWallData = w.toDataURL('image/jpeg', 0.7);
+    return callEntryPrepIds(callList.call[0]);
+  }, wavB64(0.5, 330));
+  assert.match(ids.photo, /^__ph_[0-9a-f]{40}$/);
+  assert.match(ids.audio, /^__au_[0-9a-f]{40}$/);
+  // A a déjà la photo de l'appel n° 1
+  await rp.evaluate(async ([a, id]) => sendImageChunks((await callEntryAssets(callList.call[0])).photo, { mediaId: id, show: false, screens: [a] }), [A.id, ids.photo]);
+  await waitFor(rp, ([a, id]) => scrState(a).cached.has(id), [A.id, ids.photo], { timeout: 10000 });
+  await sleep(300); await broker.flush(); await hub.flush();
+  // Vue « Tourner sans réseau » (onglet QR) : ce qui manque à chaque écran
+  await rp.evaluate(() => switchTab('qr'));
+  await rp.click('#offEntryBtn');
+  await waitFor(rp, () => document.querySelectorAll('#offPrepRows .off-row').length === 2 && _prepItems.length === 6);
+  assert.deepEqual(await offRows(rp), [
+    ['idle', 'Téléphone de Julie', 'Incomplet', '1/2 médias · manque fond d\'écran, bande son'],
+    ['idle', 'TV salon', 'Incomplet', '1/2 médias · manque sonnerie, fond d\'écran, bande son, photo d\'appel'],
+  ]);
+  assert.equal(await rp.textContent('#offPrepBtn'), 'TOUT PRÉPARER MAINTENANT');
+  // États montrés pendant la préparation
+  await rp.evaluate(() => {
+    window.__seen = new Set();
+    const o = window.renderOfflineView;
+    window.renderOfflineView = function () { o(); for (const e of document.querySelectorAll('.off-row')) window.__seen.add(e.className.replace('off-row ', '') + ':' + e.querySelector('.off-state').textContent); window.__seen.add('btn:' + document.getElementById('offPrepBtn').textContent); };
+  });
+  for (const s of [A, B]) await s.page.evaluate(() => { window.__shown = 0; const o = window.showScreenMedia; window.showScreenMedia = function (...a) { window.__shown++; return o.apply(this, a); }; });
+  broker.clear(); hub.clear();
+  await rp.click('#offPrepBtn');
+  await waitFor(rp, () => document.getElementById('offPrepBtn').textContent === 'TOUT EST PRÊT', null, { timeout: 60000 });
+  const ready = '2/2 médias · sonnerie · fond d\'écran · bande son · photo d\'appel';
+  assert.deepEqual(await offRows(rp), [['ready', 'Téléphone de Julie', 'Prêt', ready], ['ready', 'TV salon', 'Prêt', ready]]);
+  assert.equal(await rp.evaluate(() => document.getElementById('offPrepBtn').disabled), true);
+  const seen = await rp.evaluate(() => [...window.__seen]);
+  assert.ok(seen.includes('btn:PRÉPARATION EN COURS…'), seen.join());
+  assert.ok(seen.some((s) => /^busy:\d+ %$/.test(s)), 'progression en % : ' + seen.join());
+  // Seul ce qui manquait est parti, à chaque écran
+  await broker.flush();
+  const sent = await broker.sent(rp);
+  const imgs = sent.filter((m) => m.type === 'media-img-start').map((m) => [m.mediaId, m.target.screens.slice().sort(), m.show]);
+  const both = [A.id, B.id].sort();
+  assert.deepEqual(imgs.sort(), [
+    ['__lockwall', both, false], [ids.audio, both, false], [ids.photo, [B.id], false], [ring, [B.id], false],
+  ].sort());
+  const vids = sent.filter((m) => m.type === 'rtc-offer' || m.type === 'media:upload');
+  assert.deepEqual(vids.map((m) => m.target.screens[0]).sort(), both, 'vidéo vers chaque écran');
+  assert.ok(vids.every((m) => (m.type === 'rtc-offer' ? m.kind === 'cache' : m.show === false)), 'vidéo mise en cache seulement');
+  // Rien ne s'est affiché sur les écrans
+  for (const s of [A, B]) {
+    assert.deepEqual(await s.page.evaluate(() => [window.__shown, screenMediaVisible(), _mediaCache.has('m2'), document.getElementById('screen-media-video').getAttribute('src')]), [0, false, true, null]);
+  }
+  // Sur le plateau : Bluetooth seul
+  hub.setUp('lan', false);
+  for (const p of [rp, A.page, B.page]) await cutInternet(p);
+  await waitFor(rp, () => linkBleOnly());
+  hub.clear();
+  await rp.evaluate(() => { switchTab('call'); setCallListKind('call'); return triggerSelectedCallEntry(); });
+  const photo = await rp.evaluate(() => callAssetGet(callList.call[0].id + ':photo'));
+  for (const s of [A, B]) {
+    await waitFor(s.page, () => _callState === 'ringing');
+    assert.deepEqual(await s.page.evaluate(() => [_callCfg.photo !== null, _callCfg.audioId, _callCfg.ringId]), [true, ids.audio, ring]);
+    assert.equal(await s.page.evaluate(() => _callCfg.photo), photo, 'photo préparée de l\'appel n° 1');
+  }
+  // Vidéo préparée : affichée depuis le cache, par une simple commande
+  await rp.evaluate(() => { switchTab('media'); selectMedia('m2'); });
+  for (const s of [A, B]) await waitFor(s.page, () => _screenActiveId === 'm2' && /^blob:/.test(document.getElementById('screen-media-video').getAttribute('src') || ''));
+  await hub.flush();
+  const viaBle = await hub.sent(rp, { mode: 'ble' });
+  assert.deepEqual(viaBle.filter((m) => m.type === 'call:start').map((m) => [m.photoId, m.audioId, m.hasPhoto, m.hasAudio]), [[ids.photo, ids.audio, true, true]]);
+  assert.ok(viaBle.some((m) => m.type === 'media:show' && m.id === 'm2'));
+  assert.deepEqual(viaBle.filter((m) => /^media-img|^rtc-|^media:(upload|chunk|play)/.test(m.type)), []);
+  assert.deepEqual(hub.violations, []);
+  noErrors(r);
+  await r.close();
+});
+
 test('Auto : Internet, puis Wi-Fi local, puis Bluetooth, puis retour d\'Internet ; liaison forcée, Internet seul', async () => {
   const r = await rig(1, 64);
   const [A] = r.screens;
@@ -243,4 +357,127 @@ test('Auto : Internet, puis Wi-Fi local, puis Bluetooth, puis retour d\'Internet
   await waitFor(rp, () => linkPeerCount('lan') === 1 && linkPeerCount('ble') === 1 && mqttClient.connected);
   noErrors(r);
   await r.close();
+});
+
+test('navigateur seul : Wi-Fi local et Bluetooth désactivés (« Nécessite l\'app SetRemote »), préparation par Internet', async () => {
+  const broker = new FakeBroker();
+  const remote = await openPage(browser, { broker, seed: 66, autoConnect: true });
+  const rp = remote.page;
+  await rp.evaluate(() => startMode('remote'));
+  await waitFor(rp, () => !!mqttClient && mqttClient.connected);
+  const screen = await openPage(browser, { broker, seed: 661, autoConnect: true, hash: await pairingHash(rp) });
+  await waitFor(rp, () => scrList().length === 1 && _resyncTimer === null, null, { timeout: 8000 });
+  await rp.evaluate(() => { _lockWallData = (() => { const w = document.createElement('canvas'); w.width = 20; w.height = 36; return w.toDataURL('image/jpeg', 0.7); })(); openSettings(); });
+  assert.equal(await rp.textContent('#stLinkVal'), 'Auto');
+  await rp.click('#stLink');
+  const v = await rp.evaluate(() => ({
+    open: getComputedStyle(document.getElementById('offline-view')).display,
+    notice: getComputedStyle(document.getElementById('offNeedsApp')).display,
+    noticeTitle: document.querySelector('#offNeedsApp strong').textContent,
+    seg: [...document.querySelectorAll('.off-seg-btn')].map((b) => [b.textContent, b.disabled, b.classList.contains('active')]),
+    desc: document.getElementById('offLinkDesc').textContent,
+    pref: setLinkPref('lan'), stored: localStorage.getItem('setremote-link-v1'),
+    bridge: typeof window.ReactNativeWebView, modes: linkModesWanted(), peers: linkPeerCount(),
+  }));
+  assert.deepEqual(v, {
+    open: 'flex', notice: 'block', noticeTitle: '📶 Nécessite l\'app SetRemote',
+    seg: [['Auto', false, true], ['Internet', false, false], ['Wi-Fi local', true, false], ['Bluetooth', true, false]],
+    desc: 'Auto : Internet si disponible, sinon Wi-Fi local, sinon Bluetooth (commandes uniquement).',
+    pref: false, stored: null, bridge: 'undefined', modes: [], peers: 0,
+  });
+  // Préparation : par Internet
+  await waitFor(rp, () => !document.getElementById('offPrepBtn').disabled);
+  await rp.click('#offPrepBtn');
+  await waitFor(rp, () => document.getElementById('offPrepBtn').textContent === 'TOUT EST PRÊT', null, { timeout: 15000 });
+  assert.deepEqual(await offRows(rp), [['ready', 'Écran 1', 'Prêt', 'fond d\'écran']]);
+  assert.equal(await screen.page.evaluate(() => _mediaCache.has('__lockwall')), true);
+  // Fermer la vue ramène aux Réglages
+  await rp.click('#offline-view .sv-back');
+  assert.deepEqual(await rp.evaluate(() => [getComputedStyle(document.getElementById('offline-view')).display, getComputedStyle(document.getElementById('settings-view')).display]), ['none', 'flex']);
+  assert.deepEqual(remote.errors, []); assert.deepEqual(screen.errors, []);
+  await screen.close(); await remote.close();
+});
+
+test('Réglages : la ligne « Liaison par défaut » reflète le choix, persistant après relance (et la coque l\'applique)', async () => {
+  const hub = new FakeLinkHub();
+  const p = await openPage(browser, { broker: hub.with(null), seed: 67, init: NATIVE });
+  const { page } = p;
+  await page.evaluate(() => startMode('remote'));
+  await page.click('#settingsBtn');
+  const row = () => page.evaluate(() => [...document.getElementById('stLink').querySelectorAll('span')].slice(1).map((e) => e.textContent));
+  assert.deepEqual(await row(), ['Liaison par défaut', 'Internet, Wi-Fi local, Bluetooth', 'Auto']);
+  await page.click('#stLink');
+  await page.click('#offLink-lan');
+  await page.click('#offline-view .sv-back');
+  assert.deepEqual(await row(), ['Liaison par défaut', 'Internet, Wi-Fi local, Bluetooth', 'Wi-Fi local']);
+  // Relance : choix retrouvé, appliqué (Wi-Fi local seul, sans Internet)
+  await page.reload();
+  hub.clear();
+  await page.evaluate(() => startMode('remote'));
+  await waitFor(page, () => !!_sec);
+  await hub.flush();
+  assert.deepEqual(hub.posted(page, 'link:start').map((m) => m.modes), [['lan']]);
+  assert.equal(await page.evaluate(() => mqttClient), null, 'Internet non ouvert');
+  await page.click('#settingsBtn');
+  assert.deepEqual((await row()).at(-1), 'Wi-Fi local');
+  await page.click('#stLink');
+  assert.equal(await page.evaluate(() => document.querySelector('.off-seg-btn.active').id), 'offLink-lan');
+  // Bluetooth indisponible sur l'appareil : bouton désactivé, raison affichée en Auto
+  hub.setAvailable(page, 'ble', false);
+  await page.click('#offLink-auto');
+  await waitFor(page, () => document.getElementById('offLink-ble').disabled && getComputedStyle(document.getElementById('offLinkWarn')).display === 'block');
+  assert.equal(await page.textContent('#offLinkWarn'), 'Bluetooth indisponible sur cet appareil (activez-le et autorisez SetRemote dans les réglages du système).');
+  assert.deepEqual(hub.posted(page, 'link:start').at(-1).modes, ['lan']);
+  assert.deepEqual(p.errors, []);
+  await p.close();
+});
+
+test('retrait d\'un écran en Wi-Fi local (sans Internet) : nouvelle session annoncée à la coque, les autres écrans suivent', async () => {
+  const r = await rig(3, 68, { keys: true });
+  const [A, B, C] = r.screens;
+  const { rp, hub } = r;
+  await localPeers(r, 'lan');
+  for (const p of [rp, A.page, B.page, C.page]) await cutInternet(p);
+  await waitFor(rp, () => document.getElementById('linkPillLabel').textContent === 'Wi-Fi local');
+  const old = await rp.evaluate(() => ({ ch: _session.channelId, room: _sec.topic }));
+  hub.clear();
+  await rp.evaluate((a) => scrRevoke(a), A.id);
+  await waitFor(A.page, () => getComputedStyle(document.getElementById('screen-revoked')).display === 'flex', null, { timeout: 8000 });
+  const next = await rp.evaluate(() => ({ ch: _session.channelId, room: _sec.topic }));
+  assert.notEqual(next.ch, old.ch);
+  for (const s of [B, C]) await waitFor(s.page, (ch) => _session.channelId === ch, next.ch, { timeout: 8000 });
+  // La coque reçoit la salle de la nouvelle session (télécommande et écrans qui suivent)
+  for (const p of [rp, B.page, C.page]) assert.equal(hub.posted(p, 'link:start').at(-1).room, next.room);
+  assert.deepEqual(hub.posted(A.page, 'link:stop'), [{ type: 'link:stop' }], 'écran retiré : liaisons fermées');
+  assert.equal(hub.posted(A.page, 'link:start').length, 0, 'et jamais rouvertes');
+  await waitFor(rp, () => _screenOfSender.size === 2 && linkPeerCount('lan') === 2, null, { timeout: 8000 });
+  await rp.evaluate(() => setKelvin(2900));
+  const c = await rp.evaluate(() => currentColor);
+  for (const s of [B, C]) await waitFor(s.page, (c) => screenBaseColor === c, c);
+  assert.equal(await A.page.evaluate(() => mode), null);
+  assert.deepEqual(await rp.evaluate((a) => [scrKnown(a), scrList().length, mqttClient && mqttClient.connected], A.id), [false, 2, false]);
+  assert.deepEqual(hub.violations, []);
+  for (const p of [r.remote, B, C]) assert.deepEqual(p.errors, []);
+  await r.close();
+});
+
+test('premier appairage sans Internet : QR scanné dans l\'app, l\'écran rejoint la télécommande en Wi-Fi local', async () => {
+  const broker = new FakeBroker(), hub = new FakeLinkHub();
+  const remote = await openPage(browser, { broker: hub.with(broker), seed: 69, init: NATIVE });
+  const rp = remote.page;
+  await rp.evaluate(() => startMode('remote'));
+  await waitFor(rp, () => !!_sec);
+  const hash = await pairingHash(rp);
+  // L'écran lit le secret dans le QR (aucun échange réseau) et ouvre la même salle
+  const screen = await openPage(browser, { broker: hub.with(broker), seed: 691, hash, init: NATIVE });
+  const sp = screen.page;
+  await waitFor(rp, () => scrList().length === 1, null, { timeout: 8000 });
+  await waitFor(sp, () => !!_pw, null, { timeout: 8000 }); // clé par écran établie en Wi-Fi local
+  assert.deepEqual(await rp.evaluate(() => [mqttClient.connected, linkPeerCount('lan'), document.getElementById('linkPillLabel').textContent]), [false, 1, 'Wi-Fi local']);
+  await rp.evaluate(() => setKelvin(3400));
+  const c = await rp.evaluate(() => currentColor);
+  await waitFor(sp, (c) => screenBaseColor === c, c);
+  assert.equal(broker.log.length, 0, 'rien n\'est passé par Internet');
+  assert.deepEqual(remote.errors, []); assert.deepEqual(screen.errors, []);
+  await screen.close(); await remote.close();
 });

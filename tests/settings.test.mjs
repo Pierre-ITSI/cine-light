@@ -72,6 +72,7 @@ test('en-tête : engrenage « Réglages » à la place de « ← Retour » ; vue
       ['Chiffrement de bout en bout', 'Clés générées sur vos appareils', 'Actif'],
       ['Avertissement stroboscope', 'Avant chaque activation', 'Activé'],
       ['Fréquence max du strobo', 'Sécurité photosensibilité', '30 Hz'],
+      ['Liaison par défaut', 'Internet, Wi-Fi local, Bluetooth', 'Auto'], // tests/offline.test.mjs
     ],
     buttons: ['OUBLIER TOUS LES ÉCRANS APPAIRÉS', 'RETOUR À L\'ACCUEIL'],
     foot: ['Politique de confidentialité', 'Aucun compte · aucune publicité · aucun suivi', `SetRemote ${APP_JSON_VERSION} · by Pikoo`],
@@ -79,7 +80,7 @@ test('en-tête : engrenage « Réglages » à la place de « ← Retour » ; vue
   });
   // Lignes de la maquette sans fonction réelle : absentes (pas de valeur inventée)
   const text = await page.evaluate(() => document.getElementById('settings-view').textContent);
-  for (const absent of ['Relais', 'eu-west', 'Liaison par défaut', 'Purger', '24 h']) assert.ok(!text.includes(absent), absent);
+  for (const absent of ['Relais', 'eu-west', 'Purger', '24 h']) assert.ok(!text.includes(absent), absent);
   // « ← Retour » : retour à la télécommande, session intacte
   const before = await page.evaluate(() => _session.channelId);
   await page.click('#settings-view .st-back');
