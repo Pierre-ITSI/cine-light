@@ -166,6 +166,34 @@ test('MESSAGE_TYPES documente sens, sources et champs, et est figé', () => {
   assert.equal(MESSAGE_TYPES.caps.fields.screenId.required, false);
 });
 
+test('ciblage PWA : tout message r2s accepte target.screens (1 à 64 écrans), jamais un message s2r', () => {
+  // La télécommande adresse chaque ordre à la cible choisie (tous = sans
+  // target ; groupe résolu en liste d’écrans ; un écran) : tous les messages
+  // réels r2s doivent rester valides une fois adressés.
+  const ids = (/** @type {number} */ n) => Array.from({ length: n }, (_, i) => ('S' + String(i).padStart(3, '0')).padEnd(16, 'x'));
+  for (const { direction, where, msg } of REAL_MESSAGES) {
+    if (direction !== 'r2s') {
+      assert.equal(validate({ ...msg, target: { screens: ids(1) } }), false, `${where} : target interdit en s2r`);
+      continue;
+    }
+    for (const n of [1, 2, LIMITS.targetScreens]) {
+      const m = { ...msg, target: { screens: ids(n) } };
+      assert.equal(explainInvalid(m, { direction: 'r2s' }), null, `${where} adressé à ${n} écran(s)`);
+    }
+    assert.equal(validate({ ...msg, target: { screens: ids(LIMITS.targetScreens + 1) } }), false, `${where} : 65 écrans refusés`);
+  }
+  assert.equal(LIMITS.targetScreens, 64);
+  // screen:config : émis par la PWA (nom vide = nom par défaut), toujours vers des écrans précis
+  assert.deepEqual(MESSAGE_TYPES['screen:config'].sources, ['web']);
+  assert.equal(validate({ type: 'screen:config', target: { screens: ids(1) }, name: '', groups: [] }, { direction: 'r2s' }), true);
+  assert.equal(validate({ type: 'screen:config', target: { screens: ids(1) }, name: 'TV salon', groups: ['gabc123'] }, { direction: 'r2s' }), true);
+  assert.equal(validate({ type: 'screen:config', target: { screens: ids(1) }, name: 'x'.repeat(LIMITS.screenNameChars + 1) }), false, 'nom > 40');
+  assert.equal(validate({ type: 'screen:config', target: { screens: ids(1) }, name: 'TV\nsalon' }), false, 'une seule ligne');
+  assert.equal(validate({ type: 'screen:config', target: { screens: ids(1) }, groups: Array(LIMITS.screenGroups + 1).fill('g') }), false, '> 16 groupes');
+  // caps : l’écran annonce le nom et les groupes reçus
+  assert.equal(validate({ type: 'caps', torch: true, vibrate: true, screenId: ids(1)[0], name: 'TV salon', groups: ['gabc123'] }, { direction: 's2r' }), true);
+});
+
 test('isAddressedTo : tous, liste d’écrans, groupe', () => {
   const me = { screenId: 'AbCdEfGh12345678', groups: ['cuisine'] };
   assert.equal(isAddressedTo({ type: 'color' }, me), true);

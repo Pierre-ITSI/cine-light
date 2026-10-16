@@ -2272,8 +2272,9 @@ const SPECS = {
     fields: {},
   },
   'screen:config': {
-    dir: 'r2s', src: [],
-    doc: 'Nouveau (multi-écran) : renomme un écran et/ou fixe ses groupes. Doit cibler target.screens.',
+    dir: 'r2s', src: ['web'],
+    doc: 'Multi-écran : renomme un écran et/ou fixe ses groupes (name vide = nom par défaut ; groups remplace la liste). '
+      + 'Doit cibler target.screens. La PWA l’envoie à chaque changement et à la resynchronisation si caps.name / caps.groups diffèrent.',
     fields: {
       name: opt(line(LIMITS.screenNameChars), 'nom affiché de l’écran'),
       groups: opt(arrayOf(GROUP_ID, LIMITS.screenGroups), 'groupes dont l’écran est membre (remplace la liste)'),
