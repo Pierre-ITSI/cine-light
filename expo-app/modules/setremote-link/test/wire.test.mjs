@@ -281,8 +281,8 @@ test('poignée de main puis données à travers la fragmentation Bluetooth (MTU 
   // Rappel « abonné » traité après coup : pas de second HELLO (le pair le refuserait)
   assert.equal(screen.helloIfNeeded(), null);
   assert.equal(remote.helloIfNeeded(), null);
-  assert.deepEqual(screen.receive(remote.hello()), { error: 'protocol' }, 'un second HELLO ferme la connexion');
   const big = 'A'.repeat(MAX_FRAME_BYTES.ble);
   deliver('s', encodeData(big));
   assert.deepEqual(received, [big]);
+  assert.deepEqual(screen.receive(remote.hello()), { error: 'protocol' }, 'un second HELLO ferme la connexion');
 });
