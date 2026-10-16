@@ -285,6 +285,25 @@ export const SCENES = {
   // Groupe : nom et écrans membres ; renommer un écran (feuilles, même présentation que la maquette 6)
   'remote-group-edit': multiScreen((page) => page.evaluate(() => { openScreensView(); openGroupEditor(_scrReg.groups[0].id); })),
   'remote-screen-rename': multiScreen((page) => page.evaluate((id) => { openScreensView(); openRenameScreen(id); }, SCR_IDS[1])),
+  // 5b · Retirer « Tablette cuisine » : confirmation (tous les autres écrans ont leur clé)
+  'remote-revoke-confirm': multiScreen((page) => page.evaluate((ids) => {
+    for (const id of ids) _scrReg.screens.get(id).pk = { s: 'A'.repeat(43), kid: 'kkkkkkkkkkk', ok: true };
+    openScreensView();
+    openRevokeDialog(ids[2]);
+  }, SCR_IDS)),
+  // Confirmation quand un écran (ancienne version, sans clé par écran) ne pourra pas suivre
+  'remote-revoke-lost': multiScreen((page) => page.evaluate((ids) => {
+    _scrReg.screens.get(ids[1]).pk = { s: 'A'.repeat(43), kid: 'kkkkkkkkkkk', ok: true };
+    openScreensView();
+    openRevokeDialog(ids[2]);
+  }, SCR_IDS)),
+  // 5c · Écran de jeu retiré par la télécommande
+  'screen-revoked': async (page) => {
+    await joinScreen(page);
+    await page.clock.runFor(300);
+    await page.evaluate(() => screenOnRevoked({ type: 'screen:revoked' }));
+    await page.clock.runFor(300);
+  },
   // Écran de jeu nommé par la télécommande : son nom dans son menu
   'screen-menu-named': async (page) => {
     await joinScreen(page);
