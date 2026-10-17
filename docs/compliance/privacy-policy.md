@@ -50,7 +50,7 @@ You pair the two devices by scanning a **QR code** or entering a **short code** 
 
 ### 3.1 The content you send to the playback screen
 
-This means the photos, videos and audio clips you add, the name and photo of a fictional caller, the text of fictional messages, the fictional lock-screen wallpaper, and the color, effect, torch and vibration commands.
+This means the photos, videos and audio clips you add, the name and photo of a fictional caller, the text of fictional messages, the name and icon of a fictional app (notification), the name, photo and messages of a fictional contact (conversation), the fictional lock-screen wallpaper, and the color, effect, torch and vibration commands.
 
 - It is **encrypted on the sending device** and **decrypted only on the paired receiving device**.
 - It is cached **only on the playback screen that receives it**, for the duration of the session. It is erased when you remove it from the media pool, end the session or close the app.
@@ -161,7 +161,7 @@ SetRemote asks for a permission only when you use the feature that needs it. You
 | Permission | Why | What SetRemote does not do |
 |---|---|---|
 | **Camera** | Take a photo or film a video to show on the playback screen; control the playback device's **LED torch**, which the system operates through the camera | No background capture. Nothing is sent anywhere except to your paired device. |
-| **Photos and videos** | Choose the images and videos to show, a fictional caller's photo or a fictional wallpaper. Where the system allows it, only the items you select are accessible. | No browsing or uploading of your library |
+| **Photos and videos** | Choose the images and videos to show, a fictional caller's or contact's photo, a fictional app icon or a fictional wallpaper. Where the system allows it, only the items you select are accessible. | No browsing or uploading of your library |
 | **Microphone** | **Only when you film a video** to show: it records that video's sound | No background listening. No recording outside filming the video. |
 | **Local network** | Connect your two devices directly on the same Wi-Fi network; receive DMX (sACN, Art-Net) with the DMX gateway | No collection of information about other devices on the network |
 | **Bluetooth** | Connect your two devices without Wi-Fi | No location tracking. No scanning for devices other than SetRemote. |

@@ -230,7 +230,9 @@ Quand le Bluetooth est la seule liaison :
 | sonneries / sons de notification importés (choix de chaque type, sons des appels et SMS enregistrés) | `__ring_<16 hex>` |
 | photo de chaque appel / SMS enregistré | `__ph_<40 hex>` (SHA-256 du contenu) |
 | bande son de chaque appel enregistré | `__au_<40 hex>` |
-| fond de l'écran verrouillé | `__lockwall` |
+| fond de l'écran verrouillé (SMS) | `__lockwall` |
+| fond de l'écran verrouillé des notifications | `__notifwall` |
+| icône de chaque notification enregistrée | `__ph_<40 hex>` (comme une photo d'appel) |
 
 Ce qui manque à chaque écran se lit dans son état (`28-screens.js` : liste
 exacte de son cache annoncée par `caps`, accusés `media:cached`).

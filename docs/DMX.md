@@ -167,6 +167,10 @@ L'effet utilise ses propres couleurs ; son intensité suit le Dimmer
   passerelle qui redémarre ne rejoue jamais un appel.
 - Appel *n* = entrée *n* de la **liste d'appels enregistrés de la télécommande**
   (20 premières entrées) ; SMS *n* = entrée *n* de sa liste de SMS.
+- Les **notifications d'application** (liste « Notifs » de l'onglet Tel) et la
+  **discussion** ne se déclenchent jamais depuis la console : le canal SMS ne
+  vise que la liste des SMS. Une ancienne entrée « messagerie » est devenue un
+  SMS et se déclenche comme tel.
 - Programmez ces canaux **sans fondu** (snap / « jump ») : un fondu de 30 à 0
   traverserait les emplacements 2 et 1 et déclencherait les appels 2 et 1.
   Même conseil pour Effet et Média.

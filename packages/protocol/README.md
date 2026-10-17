@@ -189,6 +189,17 @@ hors schéma : seule l'enveloppe change). Champs ajoutés : `call:start.photoId`
 `CALL_AUDIO_ID_RE`), `rtc-offer.kind: 'cache'` et `media:upload.show: false`
 (vidéo mise en cache sans interrompre ni afficher quoi que ce soit).
 
+**Onglet Tel** : `call:start.kind: 'notif'` (notification d'application :
+`present` `banner` / `lock`, `phone { date?, time? }` au format `AAAA-MM-JJ` /
+`HH:MM`, `received { mode: now | ago (min ≤ 10 080) | at (date, time) }` ;
+icône en fragments sous `__notificon`, fond verrouillé propre `__notifwall`).
+`kind: 'chat'` / `'whatsapp'` (ancienne messagerie) reste accepté et s'affiche
+en SMS. Discussion fictive : `chat:msg` (id `CHAT_ID_RE`, `from` contact /
+actor, texte ≤ 300), `chat:open` (≤ 40 messages, sans doublon, postés ⊂ fil),
+`chat:post`, `chat:close` (télécommande → écran) ; `chat:progress` (débit
+limité à 4/s) et `chat:sent` (écran → télécommande). Tous petits : ils
+passent aussi en Bluetooth.
+
 **Différence voulue avec `MSG_ROUTES`** : l'app *borne* une valeur hors plage
 (flash de 5 ms ramené à 15 ms) ; le schéma la *rejette*, à l'envoi comme à la
 réception. L'émetteur doit donc borner lui-même (voir §6, curseurs de flash).

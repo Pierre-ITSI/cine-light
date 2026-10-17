@@ -50,7 +50,7 @@ Vous reliez les deux appareils en scannant un **QR code** ou en saisissant un **
 
 ### 3.1 Les contenus que vous diffusez
 
-Il s'agit des photos, vidéos et clips audio que vous ajoutez, du nom et de la photo d'un appelant fictif, des textes de messages fictifs, du fond d'écran verrouillé fictif, ainsi que des commandes de couleur, d'effets, de torche et de vibration.
+Il s'agit des photos, vidéos et clips audio que vous ajoutez, du nom et de la photo d'un appelant fictif, des textes de messages fictifs, du nom et de l'icône d'une application fictive (notification), du nom, de la photo et des messages d'un contact fictif (discussion), du fond d'écran verrouillé fictif, ainsi que des commandes de couleur, d'effets, de torche et de vibration.
 
 - Ils sont **chiffrés sur l'appareil qui les envoie** et **déchiffrés uniquement sur l'appareil appairé** qui les reçoit.
 - Ils sont mis en cache **uniquement sur l'écran de jeu qui les reçoit**, le temps de la session. Ils sont effacés quand vous les retirez du pool média, quand vous mettez fin à la session ou quand vous fermez l'application.
@@ -161,7 +161,7 @@ SetRemote ne demande une autorisation qu'au moment où vous utilisez la fonction
 | Autorisation | Pourquoi | Ce que SetRemote ne fait pas |
 |---|---|---|
 | **Appareil photo** | Prendre une photo ou filmer une vidéo à diffuser sur l'écran de jeu ; piloter la **torche LED** de l'écran de jeu, car le système passe par l'appareil photo pour cela | Pas de capture en arrière-plan. Rien n'est envoyé ailleurs que vers votre appareil appairé. |
-| **Photos et vidéos** | Choisir les images et vidéos à diffuser, la photo d'un appelant fictif ou un fond d'écran fictif. Quand le système le permet, seuls les éléments que vous sélectionnez sont accessibles. | Pas de parcours ni d'envoi de votre photothèque |
+| **Photos et vidéos** | Choisir les images et vidéos à diffuser, la photo d'un appelant ou d'un contact fictif, l'icône d'une application fictive ou un fond d'écran fictif. Quand le système le permet, seuls les éléments que vous sélectionnez sont accessibles. | Pas de parcours ni d'envoi de votre photothèque |
 | **Micro** | **Uniquement quand vous filmez une vidéo** à diffuser : il enregistre le son de cette vidéo | Pas d'écoute en arrière-plan. Pas d'enregistrement en dehors du tournage de la vidéo. |
 | **Réseau local** | Relier directement vos deux appareils sur le même réseau Wi-Fi ; recevoir des données DMX (sACN, Art-Net) avec la passerelle DMX | Pas de collecte d'informations sur les autres appareils du réseau |
 | **Bluetooth** | Relier vos deux appareils sans Wi-Fi | Pas de localisation. Pas de recherche d'appareils autres que SetRemote. |

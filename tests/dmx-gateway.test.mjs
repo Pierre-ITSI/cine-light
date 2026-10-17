@@ -524,3 +524,34 @@ test('lot de 128 datagrammes injecté comme par la coque : traité aussitôt et 
   assert.deepEqual(errors, []);
   await close();
 });
+
+test('console : le canal SMS ne déclenche que les SMS ; jamais une notification ni une discussion', async () => {
+  const r = await rig(1, 9);
+  const [a] = r.screens;
+  // Liste : 1 notification (n° 1 de sa liste), 1 SMS ; discussion ouverte sur l'écran
+  await r.rp.evaluate(async () => {
+    switchTab('call');
+    setCallKind('notif'); document.getElementById('ntTitle').value = 'Notif'; await saveCurrentCall();
+    setCallKind('sms'); setCallRing('silent'); document.getElementById('callName').value = 'Léa'; document.getElementById('callMsgText').value = 'SMS 1'; await saveCurrentCall();
+    setCallKind('discussion'); openChatOnTarget();
+  });
+  await waitFor(a.page, () => document.getElementById('screen-chat').style.display === 'block');
+  await patch(r.rp, a.id, { universe: 1, address: 1, personality: 'extended16' });
+  r.broker.clear();
+  const E16 = (o = {}) => { const s = [255, 255, 255, 0, 0, 54, 128, 0, 0, 0, 128, 0, 0, 0, 0, 0]; for (const [k, v] of Object.entries(o)) s[k - 1] = v; return s; };
+  // Balayage complet des canaux Appel (14) et SMS (15)
+  for (let v = 0; v <= 255; v += 5) await r.console.sacn(1, E16({ 14: v, 15: v }));
+  await sleep(300);
+  await r.broker.flush();
+  const sent = await r.broker.sent(r.rp);
+  assert.deepEqual(sent.filter((m) => m.type.startsWith('chat:')), [], 'aucun message de discussion');
+  const starts = sent.filter((m) => m.type === 'call:start');
+  assert.ok(starts.some((m) => m.kind === 'sms'), 'le SMS n° 1 est déclenché');
+  assert.ok(starts.every((m) => m.kind !== 'notif'), 'aucune notification');
+  assert.ok(starts.filter((m) => m.kind === 'sms').every((m) => m.msg === 'SMS 1'), 'SMS n° 1 = premier SMS (pas la notification)');
+  // La discussion reste ouverte sur l'écran
+  assert.equal(await a.page.evaluate(() => document.getElementById('screen-chat').style.display), 'block');
+  assert.equal(await r.rp.evaluate(() => SRDMX.triggerMessage({ kind: 'sms', index: 1 }, { kind: 'chat', name: 'X' }, ['s']).kind), 'sms', 'ancienne messagerie → SMS');
+  for (const s of [r.remote, ...r.screens]) assert.deepEqual(s.errors, []);
+  await r.close();
+});
