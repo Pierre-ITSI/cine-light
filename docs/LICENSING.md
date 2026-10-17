@@ -462,15 +462,29 @@ non consultable depuis cet environnement : **à vérifier**).
 | **3** | **Liens externes par région** : bouton « Acheter sur le site » aux États-Unis (sans entitlement), entitlements UE/DMA, programmes Google US/UK/EEE | paiement Stripe même depuis l'app dans ces régions | **ne lève pas 3.1.1** : débloquer par clé reste interdit sans IAP (à vérifier pour les États-Unis) ; règles par pays, frais DMA, suivi juridique permanent ; le reste du monde n'est pas couvert |
 | **4** | **Apps natives sans aucun parcours d'achat**, qui se contentent de lire une licence achetée ailleurs | aucun lien, aucun prix dans l'app | **toujours risqué** : 3.1.1 vise le *déblocage* lui-même (« license keys » cités), pas seulement l'achat ; 3.1.3(b) n'autorise l'accès multiplateforme que si l'IAP existe aussi ; ni « Reader » ni 3.1.3(f). Refus probable à la revue, ou retrait plus tard |
 
-### 8.4 Recommandation
+### 8.4 Décision du propriétaire (17/10/2026)
 
-**Option 1 au lancement**, en le disant clairement : la licence ne concerne
-que la version web officielle ; les apps des stores restent gratuites et
-complètes (elles portent `LICENSING: 'off'` et n'affichent ni prix ni lien
-d'achat). Puis, si les fonctions natives (DMX, hors ligne) doivent devenir
-payantes, **option 2** (IAP, avec la même licence côté service grâce à
-3.1.3(b)). L'option 4 est à éviter : elle tombe sous la lettre de 3.1.1.
-**C'est une décision du propriétaire.** **[DÉCISION]**
+**Retenu : achat uniquement sur la version web, licence acceptée aussi dans
+les apps natives, sans achat intégré.** Le propriétaire applique déjà ce
+modèle à une autre application d'ITSI APP (abonnement vendu seulement sur le
+site, app acceptée sur les stores, version navigateur disponible).
+
+Conditions à respecter dans les apps natives pour rester dans ce cadre
+(c'est le profil des apps « compagnon » d'un service vendu ailleurs) :
+
+- **aucun prix, aucun bouton ni lien d'achat, aucune mention** du type
+  « achetez sur notre site » dans l'app (règle anti-incitation 3.1.1 /
+  3.1.3) ; l'app se contente d'un champ « Code de licence » ;
+- l'app reste **utile sans licence** (version libre complète) ;
+- la fiche store et les notes App Review décrivent le code comme l'accès à
+  un service souscrit ailleurs, sans parler d'achat dans l'app ;
+- le public visé est professionnel (équipes de tournage, sociétés de
+  production), ce qui rapproche du cas 3.1.3(c) « Enterprise Services ».
+
+Risque résiduel : la lettre de 3.1.1 cite les clés de licence ; un refus
+reste possible selon le relecteur. Repli prévu : option 3 (lien externe
+autorisé, UE / États-Unis) ou option 2 (achat intégré). À revérifier au
+lancement de la version payante. **[DÉCIDÉ]**
 
 ## 9. Relais officiel et relais auto-hébergé
 
