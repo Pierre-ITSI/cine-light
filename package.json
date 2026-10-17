@@ -15,6 +15,7 @@
     "test:update-snapshots": "UPDATE_SNAPSHOTS=1 node --test tests/visual.test.mjs",
     "test:dmx": "node --test \"packages/dmx/test/*.test.js\"",
     "test:relay": "node --test \"relay/test/*.test.js\"",
+    "test:license": "node --test \"packages/license/test/*.test.js\"",
     "notices": "node scripts/third-party-notices.mjs",
     "check:notices": "node scripts/third-party-notices.mjs --check",
     "check:spdx": "node scripts/spdx-headers.mjs --check"

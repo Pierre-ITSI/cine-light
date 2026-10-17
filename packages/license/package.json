@@ -1,0 +1,22 @@
+{
+  "name": "@setremote/license",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SetRemote : format des clés de licence (XXXX-XXXX-XXXX, Base32 de Crockford + contrôle GF(32)) et vérification hors ligne des baux signés Ed25519. Préparation : pas encore utilisé par l'app. Zéro dépendance, WebCrypto seulement.",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./key.js": "./key.js",
+    "./lease.js": "./lease.js",
+    "./issue.js": "./issue.js"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  },
+  "license": "AGPL-3.0-only"
+}
