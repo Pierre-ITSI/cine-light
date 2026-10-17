@@ -387,22 +387,70 @@ système » sinon.
 
 ## 7. Ce que la licence débloque, et la version libre
 
-### 7.1 Build officiel (`LICENSING: 'on'`, servi par ITSI APP)
+### 7.1 Build officiel (`LICENSING: 'on'`, servi par ITSI APP) — décidé le 17/10/2026
 
-**[DÉCISION]** Le code libre contient déjà toutes les fonctions : ce que l'on
-vend, c'est **le service officiel** (hébergement, relais, mises à jour,
-support), pas du code caché. Proposition pour le build officiel :
+**[DÉCIDÉ]** Seuls les onglets **Média** et **Appel** (appels, SMS, messages)
+sont concernés. Tout le reste (couleur, effets, flash, QR, plusieurs écrans,
+passerelle DMX, hors ligne) reste gratuit sans limite. Les écrans de jeu sont
+toujours gratuits.
 
-| Sans licence (découverte) | Avec licence (par télécommande) |
-|---|---|
-| 1 écran appairé, couleur / CCT / effets de base | écrans illimités |
-| — | médias (images, vidéos), simulateur d'appel |
-| — | passerelle DMX (dans l'app native seulement, voir §8) |
-| — | préparation hors ligne / liaison locale |
+| Période (par télécommande) | Média | Appel / SMS / message |
+|---|---|---|
+| Jours 1 à 30 (essai) | illimité | illimité |
+| Après 30 jours, sans licence | 5 envois de médias par jour | 5 déclenchements par jour (tous types confondus) |
+| Avec licence (6 mois) | illimité | illimité |
 
-Les écrans restent toujours gratuits. Le détail est à arbitrer sur maquettes.
+- **Aucun texte dans l'interface** n'annonce l'essai ni les quotas : ils
+  figurent uniquement dans les conditions générales. L'interface n'apparaît
+  qu'au moment où une action est bloquée (quota du jour atteint) : elle
+  propose alors de s'authentifier (voir §7.3). Ce message sera maquetté et
+  validé avant implémentation.
+- **Ce qui compte comme un envoi** (à confirmer sur maquette) : un média
+  affiché sur au moins un écran (sélection dans le pool ou avance), un appel,
+  un SMS ou un message déclenché (télécommande, liste numérotée ou console
+  DMX). Rejouer le même média ne recompte pas dans la journée.
+- **Journée** : jour calendaire local de la télécommande, remise à zéro à
+  minuit.
+- **Début de l'essai** : premier lancement de la télécommande sur l'appareil.
+  Sans compte, l'essai et les compteurs vivent sur l'appareil : une
+  réinstallation les remet à zéro. Variante plus robuste : enregistrer la
+  date de premier usage auprès du service de licence avec l'identifiant
+  d'installation (ne survit pas non plus à une réinstallation). Choix
+  assumé : le modèle repose sur la bonne foi des professionnels, le code
+  étant de toute façon libre.
+- **DMX** : la console qui déclenche un appel ou un SMS consomme le même
+  quota. Quota épuisé : l'appel n'est pas lancé et la télécommande affiche
+  la demande d'authentification (pas l'écran de jeu, qui reste neutre sur
+  le plateau).
 
-### 7.2 Version libre / auto-hébergée
+### 7.3 Authentification par le site (web view)
+
+**[DÉCIDÉ]** Quand une licence est demandée, l'app ouvre une page du site
+d'ITSI APP dans une **web view**, qui invite à saisir la clé de licence ; la
+page renvoie ensuite à l'app par une **URL de retour**.
+
+Conception proposée :
+- **App native** : `expo-web-browser` `openAuthSessionAsync` (iOS
+  `ASWebAuthenticationSession`, Android Custom Tabs) avec le schéma de
+  retour `setremote://licence`. **PWA** : redirection vers la page de
+  licence puis retour sur l'app, résultat dans le **fragment** de l'URL
+  (`#licence=…`), jamais dans la requête (pas de trace dans les journaux).
+- **Ce qui revient** : pas la clé brute, mais le **bail signé** du §6
+  (et l'identifiant de siège). La page vérifie la clé auprès du service,
+  gère la reprise de siège (§5.2) et renvoie le bail. La clé n'apparaît
+  ainsi jamais dans une URL ; l'app garde seulement le bail, qu'elle
+  renouvelle en arrière-plan.
+- **Paramètres d'appel** : `seat` (identifiant d'installation),
+  `state` (valeur aléatoire anti-rejeu, vérifiée au retour),
+  `src=app|web`.
+- **Règles des stores** : quand `src=app`, la page **n'affiche ni prix, ni
+  bouton, ni lien d'achat** — uniquement le champ de clé et « Libérer le
+  siège ». La page d'achat Stripe n'est accessible que depuis le site,
+  hors de l'app (§8.4).
+- La même page sert à libérer ou reprendre le siège depuis n'importe quelle
+  télécommande qui connaît le code (§5.3).
+
+### 7.4 Version libre / auto-hébergée
 
 - `LICENSING: 'off'` dans `web/js/01-config.js` — **valeur par défaut du
   dépôt**, constante de build (ni `window.SETREMOTE_CONFIG` ni la coque native
