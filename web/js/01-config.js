@@ -39,3 +39,13 @@ const STUN_URLS = Object.freeze([..._cfgPick('STUN_URLS',
 // requête, ni fragment, ni identifiants) ; '' = location
 const PUBLIC_URL = _cfgPick('PUBLIC_URL',
   (u) => u === '' || (typeof u === 'string' && /^https:\/\/[a-z0-9.-]+(:\d+)?(\/[\w.~%-]*)*$/i.test(u)));
+// Vérification de licence de la future version officielle payante
+// (docs/LICENSING.md) :
+//   LICENSING  'off' = aucune vérification, aucune requête au service de
+//              licence, toutes les fonctions disponibles : version libre et
+//              auto-hébergée (valeur par défaut, à garder dans ce dépôt).
+//              Réservé : 'on' pour le seul build officiel d'ITSI APP.
+// Constante de BUILD, volontairement hors de SETREMOTE_DEFAULTS : ni
+// window.SETREMOTE_CONFIG ni la coque native ne peuvent la modifier.
+// PRÉPARATION : rien ne la lit encore.
+const LICENSING = 'off';

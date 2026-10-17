@@ -3,7 +3,7 @@
 // sources first-party, licence déclarée par chaque paquet. Aucun navigateur.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { readFileSync, existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -54,6 +54,31 @@ test('paquets : licence AGPL-3.0-only déclarée', () => {
   for (const p of ['package.json', 'relay/package.json', 'packages/protocol/package.json', 'packages/dmx/package.json', 'expo-app/package.json']) {
     assert.equal(JSON.parse(read(p)).license, 'AGPL-3.0-only', p);
   }
+});
+
+test('documents d\'ouverture présents, liens relatifs valides', () => {
+  const docs = ['README.md', 'CONTRIBUTING.md', 'TRADEMARK.md', 'THIRD_PARTY_NOTICES.md', 'docs/CLA.md', 'docs/LICENSING.md'];
+  for (const doc of docs) {
+    const text = read(doc);
+    for (const m of text.matchAll(/\]\(([^)#\s]+)(?:#[^)]*)?\)/g)) {
+      if (/^[a-z]+:/i.test(m[1])) continue;
+      assert.ok(existsSync(path.join(ROOT_DIR, path.dirname(doc), m[1])), `${doc} → ${m[1]}`);
+    }
+  }
+  assert.match(read('docs/CLA.md'), /AVOCAT/);
+  assert.match(read('README.md'), /relay\/deploy\/README\.md/);
+  assert.match(read('README.md'), /docs\/HOSTING\.md/);
+  assert.match(read('README.md'), /confidentialite\.html/);
+});
+
+test('LICENSING : \'off\' par défaut (version libre), constante de build hors de SETREMOTE_DEFAULTS', () => {
+  const cfg = read('web/js/01-config.js');
+  assert.match(cfg, /^const LICENSING = 'off';$/m);
+  const defaults = cfg.slice(cfg.indexOf('const SETREMOTE_DEFAULTS'), cfg.indexOf('});', cfg.indexOf('const SETREMOTE_DEFAULTS')));
+  assert.doesNotMatch(defaults, /LICENSING/);
+  // Rien ne la lit encore (préparation)
+  const code = build().html.split('\n').filter((l) => !/^\s*\/\//.test(l) && /\bLICENSING\b/.test(l));
+  assert.deepEqual(code, ["const LICENSING = 'off';"]);
 });
 
 // ── THIRD_PARTY_NOTICES.md ──────────────────────────────────────────────────
