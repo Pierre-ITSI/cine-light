@@ -423,32 +423,32 @@ toujours gratuits.
   la demande d'authentification (pas l'écran de jeu, qui reste neutre sur
   le plateau).
 
-### 7.3 Authentification par le site (web view)
+### 7.3 Activation de la licence — parcours validé (maquettes 19 à 23, 17/10/2026)
 
-**[DÉCIDÉ]** Quand une licence est demandée, l'app ouvre une page du site
-d'ITSI APP dans une **web view**, qui invite à saisir la clé de licence ; la
-page renvoie ensuite à l'app par une **URL de retour**.
+**[DÉCIDÉ]** Remplace la web view initialement envisagée : la saisie se fait
+**dans l'app**, la vérification passe toujours par le service de licence.
 
-Conception proposée :
-- **App native** : `expo-web-browser` `openAuthSessionAsync` (iOS
-  `ASWebAuthenticationSession`, Android Custom Tabs) avec le schéma de
-  retour `setremote://licence`. **PWA** : redirection vers la page de
-  licence puis retour sur l'app, résultat dans le **fragment** de l'URL
-  (`#licence=…`), jamais dans la requête (pas de trace dans les journaux).
-- **Ce qui revient** : pas la clé brute, mais le **bail signé** du §6
-  (et l'identifiant de siège). La page vérifie la clé auprès du service,
-  gère la reprise de siège (§5.2) et renvoie le bail. La clé n'apparaît
-  ainsi jamais dans une URL ; l'app garde seulement le bail, qu'elle
-  renouvelle en arrière-plan.
-- **Paramètres d'appel** : `seat` (identifiant d'installation),
-  `state` (valeur aléatoire anti-rejeu, vérifiée au retour),
-  `src=app|web`.
-- **Règles des stores** : quand `src=app`, la page **n'affiche ni prix, ni
-  bouton, ni lien d'achat** — uniquement le champ de clé et « Libérer le
-  siège ». La page d'achat Stripe n'est accessible que depuis le site,
-  hors de l'app (§8.4).
-- La même page sert à libérer ou reprendre le siège depuis n'importe quelle
-  télécommande qui connaît le code (§5.3).
+- **Jamais de blocage modal en pleine prise** (maquette 19) : quota du jour
+  épuisé → carte dans l'onglet (Média ou Appel), seul le bouton d'envoi est
+  grisé ; liste, sonneries et réglages restent modifiables. Petit compteur
+  « Envois aujourd'hui · n / 5 » visible **uniquement après l'essai** (l'essai
+  lui-même n'est jamais mentionné).
+- **Activer ma licence** (maquette 20) : feuille du bas, champ formaté
+  automatiquement `XXXX-XXXX-XXXX`, contrôle du caractère de vérification en
+  direct, détection d'une clé copiée (« Coller »), scan du QR de la clé.
+- **Siège déjà pris** (maquette 21) : nom de l'autre télécommande et date de
+  dernière utilisation, bouton « Utiliser sur cet appareil » (§5.2).
+- **Réglages › Licence** (maquette 22) : statut, échéance, clé masquée,
+  appareil, validité hors ligne, « Libérer cette télécommande » ; rappel
+  discret 7 jours avant l'échéance.
+- **Page du site après achat** (maquette 23, hors de l'app) : clé, bouton
+  « Ouvrir dans SetRemote » (lien `https://set-remote.itsi-app.com/#licence=…`
+  / lien universel vers l'app, la clé dans le **fragment**, jamais dans la
+  requête), QR de la clé, copie, reçu par e-mail.
+- **Ce que l'app conserve** : le bail signé (§6), pas la clé en clair (la clé
+  masquée affichée vient du bail).
+- **Règles des stores** : aucun prix, lien ou bouton d'achat dans l'app ;
+  l'achat se fait uniquement sur le site (§8.4).
 
 ### 7.4 Version libre / auto-hébergée
 
