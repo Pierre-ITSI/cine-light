@@ -1,8 +1,11 @@
 name: CI
 
 on:
+  # Une seule exécution par commit : la branche de dev n'est qu'un miroir de main.
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

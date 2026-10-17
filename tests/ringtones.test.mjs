@@ -114,6 +114,15 @@ test('import : bon fichier (nom, durée, IndexedDB), 5 Mo au plus, pas un son, i
   await page.locator('#ringLibRows .rt-del').click();
   await waitFor(page, () => ringLib.length === 0);
   assert.equal(await shown(page, 'ringLibLabel'), false);
+  // La suppression IndexedDB se termine après la mise à jour de l'interface :
+  // attendre qu'elle soit écrite avant de recharger (sinon test instable en CI)
+  await page.evaluate(async () => {
+    for (let i = 0; i < 100; i++) {
+      const m = await _ringTx('readonly', (s) => s.getAll());
+      if (!m || !m.length) return;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+  });
   await page.reload();
   await page.evaluate(() => { startMode('remote'); switchTab('call'); });
   await waitFor(page, () => _ringLibLoaded);
