@@ -14,7 +14,10 @@
     "test": "node web/build.mjs --check && node --test --test-concurrency=2 \"tests/*.test.mjs\"",
     "test:update-snapshots": "UPDATE_SNAPSHOTS=1 node --test tests/visual.test.mjs",
     "test:dmx": "node --test \"packages/dmx/test/*.test.js\"",
-    "test:relay": "node --test \"relay/test/*.test.js\""
+    "test:relay": "node --test \"relay/test/*.test.js\"",
+    "notices": "node scripts/third-party-notices.mjs",
+    "check:notices": "node scripts/third-party-notices.mjs --check",
+    "check:spdx": "node scripts/spdx-headers.mjs --check"
   },
   "devDependencies": {
     "playwright": "1.56.1",

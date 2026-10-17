@@ -3,10 +3,12 @@
 // sources first-party, licence déclarée par chaque paquet. Aucun navigateur.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { ROOT_DIR, SPDX_TEXT, listSourceFiles, missingHeaders, addHeader, hasHeader, headerFor, EXCLUDED } from '../scripts/spdx-headers.mjs';
+import { check as checkNotices, uncoveredVendorFiles, VENDORED, lockPackages, COMPATIBLE, REVIEWED } from '../scripts/third-party-notices.mjs';
 import { build, HEADER } from '../web/build.mjs';
 
 const read = (p) => readFileSync(path.join(ROOT_DIR, p), 'utf8');
@@ -51,5 +53,34 @@ test('index.html : avis de licence une seule fois (en-tête), fragments assembl�
 test('paquets : licence AGPL-3.0-only déclarée', () => {
   for (const p of ['package.json', 'relay/package.json', 'packages/protocol/package.json', 'packages/dmx/package.json', 'expo-app/package.json']) {
     assert.equal(JSON.parse(read(p)).license, 'AGPL-3.0-only', p);
+  }
+});
+
+// ── THIRD_PARTY_NOTICES.md ──────────────────────────────────────────────────
+test('THIRD_PARTY_NOTICES.md à jour : vendor/ couvert, package-lock relais et app native listés', () => {
+  assert.deepEqual(checkNotices(), [], 'lancez : node scripts/third-party-notices.mjs');
+  assert.deepEqual(uncoveredVendorFiles(), []);
+  const text = read('THIRD_PARTY_NOTICES.md');
+  for (const v of VENDORED) assert.ok(text.includes(v.licenseFile), v.name);
+});
+
+test('un fichier ajouté dans vendor/ sans entrée fait échouer le contrôle', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'notices-'));
+  try {
+    mkdirSync(path.join(dir, 'vendor', 'fonts'), { recursive: true });
+    for (const v of VENDORED) for (const f of [...v.files, v.licenseFile]) writeFileSync(path.join(dir, f), 'x');
+    assert.deepEqual(uncoveredVendorFiles(dir), []);
+    writeFileSync(path.join(dir, 'vendor', 'leaflet-1.9.4.js'), '/* tiers */');
+    writeFileSync(path.join(dir, 'vendor', 'fonts', 'inter-400.woff2'), 'x');
+    assert.deepEqual(uncoveredVendorFiles(dir), ['vendor/fonts/inter-400.woff2', 'vendor/leaflet-1.9.4.js']);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('licences des dépendances livrées : compatibles AGPL ou examinées une à une', () => {
+  for (const lock of ['relay/package-lock.json', 'expo-app/package-lock.json']) {
+    for (const p of lockPackages(path.join(ROOT_DIR, lock))) {
+      assert.ok(COMPATIBLE.has(p.license) || p.license in REVIEWED, `${lock} : ${p.name}@${p.version} (${p.license})`);
+      assert.doesNotMatch(p.license, /^(GPL|LGPL|AGPL|SSPL|BUSL|Commons-Clause|UNKNOWN)/, p.name);
+    }
   }
 });
