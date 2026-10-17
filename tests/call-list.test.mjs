@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Onglet Appel : appels et SMS enregistrés, numérotés (maquette 18). Les 20
 // premiers de chaque liste sont les cibles des canaux Appel / SMS de la
 // passerelle DMX.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ MÉMOIRES D'EFFETS ══════════════════════════
 // Enregistre un effet complet (type + tous ses réglages), persisté en
 // localStorage, rappelable d'un tap et modifiable.

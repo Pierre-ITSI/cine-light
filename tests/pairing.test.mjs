@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Appairage sécurisé entre pages réelles (faux broker MQTT) : QR (lien avec
 // le secret dans le fragment), code manuel + comparaison du nombre (SAS),
 // plusieurs écrans sur la même session, « Nouvelle session », liaison.

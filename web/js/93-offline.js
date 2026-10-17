@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ TOURNER SANS RÉSEAU (maquette 10) ══════════════════════════
 // Vue « Tourner sans réseau » (télécommande) : choix de la liaison (Auto,
 // Internet, Wi-Fi local, Bluetooth : 21-links.js) et « Préparation des

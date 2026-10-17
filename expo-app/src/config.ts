@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ════════════════════════════════════════════════════════════════════════════
 // Réglages de la coque native (logique pure, testée sous Node : test/config.test.mjs)
 //

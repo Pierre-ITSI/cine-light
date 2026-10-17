@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Cohérence du module setremote-link : TypeScript (référence), Swift, Kotlin,
 // config plugin, branchement dans la coque et retrait des anciens transports.
 // Le Swift n'est pas compilable ici : ces tests en vérifient les constantes et

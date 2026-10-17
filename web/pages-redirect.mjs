@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ════════════════════════════════════════════════════════════════════════════
 // SetRemote — site de REDIRECTION pour l'ancienne adresse GitHub Pages
 // (https://pierre-itsi.github.io/cine-light/), à publier le jour où la PWA

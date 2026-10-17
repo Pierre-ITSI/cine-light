@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ RESYNCHRONISATION (télécommande) ══════════════════════════
 // Un écran annonce ses capacités (« caps ») à chaque (re)connexion et en
 // réponse au « hello » de la télécommande (envoyé à chaque (re)connexion de

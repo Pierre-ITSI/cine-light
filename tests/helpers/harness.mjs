@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Harnais Playwright commun aux tests (aucune dépendance hors playwright).
 //
 // • Chromium : chemin configurable par PW_CHROMIUM (sinon navigateur géré par

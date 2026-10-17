@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Chaîne couleur de la télécommande : dimmer / kelvin / tint / roue / HUE / RGB,
 // synchronisation des trois modes de sélection et envoi automatique.
 import { test, before, after } from 'node:test';

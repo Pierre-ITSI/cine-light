@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Sonneries et sons de notification importés (onglet Appel, maquette 12) :
 // import (taille, type, décodage WebAudio, IndexedDB), choix et volume par
 // type (appel, SMS, messagerie), envoi aux écrans en fragments chiffrés et

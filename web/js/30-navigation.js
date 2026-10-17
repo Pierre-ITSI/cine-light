@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ NAVIGATION ══════════════════════════
 function startMode(m) {
   document.getElementById('splash').style.display = 'none';

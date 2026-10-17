@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP */
 #splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);gap:40px;z-index:100;animation:fadeIn .6s ease;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);min-height:100vh}
 #splash h1{font-family:'Lato',sans-serif;font-weight:700;font-size:clamp(2.5rem,8vw,4rem);letter-spacing:-.02em;color:#F5F2EC}
 #splash p{color:var(--muted);font-size:.8rem;letter-spacing:.15em;text-transform:uppercase}

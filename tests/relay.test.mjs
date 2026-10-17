@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Relais WebSocket privé (relay/server.js) avec la VRAIE app : une instance du
 // relais tourne dans ce processus (port aléatoire, preuve relayAuth exigée) et
 // les pages s'y connectent (RELAY_URL fourni par window.SETREMOTE_CONFIG).

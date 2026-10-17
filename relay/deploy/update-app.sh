@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 # ════════════════════════════════════════════════════════════════════════════
 # SetRemote : mise à jour des fichiers de la PWA servis par Caddy (APP_DOMAIN).
 # Lancé toutes les 5 minutes par le minuteur systemd setremote-app-update.timer

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ CLÉS PAR ÉCRAN & RETRAIT D'UN ÉCRAN ══════════════════════════
 // Maquettes validées 5b (« Retirer l'écran » + confirmation) et 5c (écran retiré).
 //

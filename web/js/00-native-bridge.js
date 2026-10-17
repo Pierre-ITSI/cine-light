@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ APP NATIVE (coque iOS/Android) ══════════════════════════
 // La coque native injecte window.SETREMOTE_NATIVE avant le chargement et
 // expose window.ReactNativeWebView.postMessage pour les fonctions natives.

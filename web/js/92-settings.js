@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ RÉGLAGES (maquette 13) ══════════════════════════
 // Vue plein écran ouverte par l'engrenage de l'en-tête de la télécommande
 // (maquette 1), à la place de l'ancien bouton « ← Retour » : le retour à

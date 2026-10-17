@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ LIAISONS LOCALES : WI-FI LOCAL ET BLUETOOTH ══════════════════════════
 // Maquettes validées 4 (indicateur de liaison), 5 (liaison de chaque écran),
 // 10 (tourner sans réseau) et 13 (« Liaison par défaut »). Contrat du pont

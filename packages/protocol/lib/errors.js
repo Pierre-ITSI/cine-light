@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 /**
  * Erreur typée du protocole. `code` est stable et destiné au code appelant
  * (journalisation, métriques) ; `message` est purement indicatif.

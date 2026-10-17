@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ── Initialisation du laboratoire d'effets ──
 buildEffectCards();
 loadFxMemories();

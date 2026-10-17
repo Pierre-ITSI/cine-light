@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Gateway patch: which DMX universe/address/personality drives each screen.
 //
 //   { screenId → { protocol: 'sacn'|'artnet', universe, address (1–512), personality, name? } }

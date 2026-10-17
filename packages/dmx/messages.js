@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Messages sent by the gateway to the screens (inside the encrypted session),
 // following packages/protocol/schema.js conventions (direction r2s, optional `target`).
 //

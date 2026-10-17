@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ MÉDIA — TÉLÉCOMMANDE ══════════════════════════
 // Vidéo : transfert du FICHIER vers chaque écran visé via DataChannel WebRTC
 // (une connexion pair-à-pair PAR écran, voir « Vidéo » plus bas). L'écran lit

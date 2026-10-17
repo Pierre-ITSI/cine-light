@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ STATUS ══════════════════════════
 // Télécommande : pastille de liaison dans l'en-tête et liste des écrans
 // appairés (onglet d'appairage). Un écran est « hors ligne » s'il n'a rien

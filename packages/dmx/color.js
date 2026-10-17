@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Colour pipeline of the SetRemote app, ported verbatim so that a screen driven
 // by DMX shows exactly what the remote app would show for the same settings.
 //

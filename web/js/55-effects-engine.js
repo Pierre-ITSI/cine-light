@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ EFFECTS TAB — RÉCEPTEUR (screen) ══════════════════════════
 let _screenEffect = null, _screenFxParams = null, _screenFxSuspended = false;
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Format sur le fil, version 1 (src/wire.ts, référence du natif) : messages,
 // poignée de main, enregistrements Wi-Fi, fragmentation Bluetooth, limites et
 // données hostiles (appareils étrangers sur le réseau ou à portée).

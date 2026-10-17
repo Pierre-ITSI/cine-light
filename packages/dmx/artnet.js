@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Art-Net 4 (Artistic Licence) — ArtDmx, ArtPoll, ArtSync parsing and ArtPollReply building.
 //
 // Reference: "Art-Net 4 Specification", Protocol Release V1.4, document revision

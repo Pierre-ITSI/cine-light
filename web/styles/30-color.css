@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP */
 /* Gradients de couleur pour les sliders */
 #dimmerSlider{background:linear-gradient(to right,#333,#fff) !important}
 #kelvinSlider{background:linear-gradient(to right,#ff9b4a,#ffd2a0,#fff,#c9dfff,#a0c8ff) !important}

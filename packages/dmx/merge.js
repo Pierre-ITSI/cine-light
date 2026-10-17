@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Per-universe source tracking and merging.
 //
 // sACN (ANSI E1.31-2018, superseded by E1.31-2025 with the same rules):

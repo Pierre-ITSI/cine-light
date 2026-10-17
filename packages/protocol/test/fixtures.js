@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 /**
  * Messages RÉELS, recopiés des sites d'appel de index.html (sendMsg) et de
  * expo-app (transport.send), plus les nouveaux messages multi-écran.

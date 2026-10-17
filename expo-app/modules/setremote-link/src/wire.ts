@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ════════════════════════════════════════════════════════════════════════════
 // Format sur le fil des liaisons hors ligne, version 1 : IMPLÉMENTATION DE
 // RÉFÉRENCE en TypeScript. L'app ne l'exécute pas (index.ts ne l'exporte pas :

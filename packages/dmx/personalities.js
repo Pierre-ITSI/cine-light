@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Fixture personalities ("modes") a console programmer patches for a SetRemote
 // screen, and decoding of a DMX slice into a Look the screen can apply.
 // These tables are the source of truth for docs/DMX.md (the fixture manual).

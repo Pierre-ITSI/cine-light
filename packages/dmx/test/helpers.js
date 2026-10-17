@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Test helpers: packets built byte by byte from the specification tables,
 // independently of the library's own builders, plus a fake clock.
 

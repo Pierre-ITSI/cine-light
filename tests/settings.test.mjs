@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Réglages (maquette 13), ouverts par l'engrenage de l'en-tête (maquette 1) :
 // lignes reprises quand la fonction existe, langue mémorisée (note « English
 // coming soon »), « Oublier tous les écrans appairés » (= Nouvelle session,

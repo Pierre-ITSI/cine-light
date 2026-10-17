@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Tourner sans réseau (maquette 10, docs/OFFLINE.md) : liaisons locales
 // Wi-Fi local / Bluetooth par le pont natif (faux pont FakeLinkHub qui relie
 // les pages entre elles), trames sur toutes les liaisons et doublons écartés,

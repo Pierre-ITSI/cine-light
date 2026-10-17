@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 package expo.modules.setremoteudp
 
 import android.os.Handler

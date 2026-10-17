@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Vérification du relais SetRemote depuis l'EXTÉRIEUR, sans dépendance (Node ≥ 22,
 // lancé par check.sh) :
 //   wss  : deux sockets dans une salle de session neuve (preuve TOFU), trame relayée,

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 import ExpoModulesCore
 
 // Module Expo « SetRemoteUdp » : la passerelle DMX de la vue web (app/index.tsx).

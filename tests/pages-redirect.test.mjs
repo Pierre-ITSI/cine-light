@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Redirection de l'ancienne adresse GitHub Pages (web/pages-redirect.mjs) :
 // deux vrais serveurs HTTP locaux (ancienne origine 127.0.0.1, nouvelle
 // origine localhost). La vraie PWA est d'abord installée sur l'ancienne

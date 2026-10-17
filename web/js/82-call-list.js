@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ APPELS ET SMS ENREGISTRÉS (télécommande) ══════════════════════════
 // Onglet Appel (maquette 18) : deux listes numérotées, « Appels » et « SMS »
 // (SMS et messagerie). « + Enregistrer l'appel actuel » ajoute le formulaire

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Décodeur PNG minimal (zéro dépendance) + comparaison pixel à pixel.
 // Couvre ce que produit Chromium : 8 bits, non entrelacé, types de couleur
 // 0 (gris), 2 (RVB), 4 (gris+alpha), 6 (RVBA), filtres 0 à 4.

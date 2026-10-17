@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // @setremote/dmx — DMX gateway engine for SetRemote screens.
 // Zero dependencies; ES modules with JSDoc; browsers, Node 22, React Native/Hermes.
 // Specification for console programmers: docs/DMX.md. Native UDP plan: docs/DMX-NATIVE.md.

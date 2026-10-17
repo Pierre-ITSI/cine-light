@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Relais WebSocket auto-hébergé (relay/) : sa propre suite node --test,
 // rattachée ici pour que `npm test` (et la CI) l'exécute. Aucun navigateur
 // requis. `ws` vient de relay/node_modules (cd relay && npm ci) ou, à défaut,

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 package expo.modules.setremotelink
 
 import java.nio.charset.CodingErrorAction

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // — Comportement de fin de lecture (reçu de la télécommande) —
 let _screenVidEndMode = 'loop';
 function screenSetEndMode(m) {

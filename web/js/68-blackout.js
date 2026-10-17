@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ BLACKOUT (Off écran) ══════════════════════════
 let remoteBlackout = false, screenBlackoutOn = false;
 // La télécommande n'impose son état OFF/ON lors d'une resynchronisation que si

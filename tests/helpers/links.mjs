@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Faux pont natif pour les liaisons locales (docs/OFFLINE.md) : relie les
 // pages entre elles, dans le processus de test, en Wi-Fi local ('lan') et en
 // Bluetooth ('ble'), comme le ferait la coque native.

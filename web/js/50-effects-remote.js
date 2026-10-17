@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ EFFECTS TAB — TÉLÉCOMMANDE ══════════════════════════
 let activeScreenEffect = null, effectSendTimer = null;
 let fxDir = 'h'; // direction du chaser

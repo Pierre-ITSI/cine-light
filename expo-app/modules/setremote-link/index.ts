@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Liaisons hors ligne télécommande ↔ écrans (Wi-Fi local, Bluetooth LE) pour
 // la vue web. Contrat du pont et choix techniques : docs/OFFLINE-NATIVE.md.
 // src/wire.ts (référence du format sur le fil, pour les tests) n'est

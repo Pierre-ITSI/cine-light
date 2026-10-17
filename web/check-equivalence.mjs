@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ════════════════════════════════════════════════════════════════════════════
 // Preuve d'équivalence : index.html monolithique d'origine ↔ index.html généré.
 //
@@ -21,6 +22,10 @@ import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { OUTPUT, ROOT_DIR, HEADER, build } from './build.mjs';
 
+// En-tête « GÉNÉRÉ » de toute version (l'actuel porte aussi l'avis SPDX) :
+// ignoré des deux côtés, la référence pouvant être plus ancienne.
+const GENERATED_LINE = /^<!-- GÉNÉRÉ par web\/build\.mjs — .*-->$/;
+
 function parts(html) {
   const sOpen = html.indexOf('<style>'), sClose = html.indexOf('</style>', sOpen);
   const jOpen = html.indexOf('<script>'), jClose = html.indexOf('</script>', jOpen);
@@ -31,7 +36,7 @@ function parts(html) {
   const style = html.slice(sOpen + 7, sClose);
   const script = html.slice(jOpen + 8, jClose);
   const markup = (html.slice(0, sOpen + 7) + '@@STYLE@@' + html.slice(sClose, jOpen + 8) + '@@SCRIPT@@' + html.slice(jClose))
-    .split('\n').filter((l) => l !== HEADER).join('\n');
+    .split('\n').filter((l) => l !== HEADER && !GENERATED_LINE.test(l)).join('\n');
   return { style, script, markup };
 }
 

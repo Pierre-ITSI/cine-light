@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ ÉCRAN : LOOK DE LA CONSOLE (passerelle DMX) ══════════════════════════
 // La passerelle (une télécommande en mode passerelle, 86-dmx-gateway.js)
 // décode le sACN / Art-Net de la console et envoie à chaque écran patché un

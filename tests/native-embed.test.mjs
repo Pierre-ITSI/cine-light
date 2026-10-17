@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Interface embarquée dans l'app native (expo-app/scripts/embed-web.mjs) :
 // paquet complet, autonome (aucune requête réseau au chargement), contexte
 // sécurisé en file://, et reconnaissance de la coque même quand l'injection

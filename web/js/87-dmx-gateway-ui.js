@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ PASSERELLE DMX — INTERFACE (maquettes 14 à 17) ══════════════════════════
 //   14 · Passerelle : protocole, IP / masque / interface (lecture seule) et
 //        voyant de réception, conseils réseau, univers reçus

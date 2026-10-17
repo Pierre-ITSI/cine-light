@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 /**
  * Canal sécurisé prêt à l'emploi : assemble deriveSession + seal/open +
  * anti-rejeu + schéma + adressage multi-écran, pour qu'une intégration

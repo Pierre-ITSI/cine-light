@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP */
 /* ══ Avertissement stroboscope (maquette validée 11) ══
    Préfixe sw- propre à la boîte ; au-dessus de toutes les vues de la télécommande. */
 #strobe-warn{display:none;position:fixed;inset:0;z-index:650;background:rgba(0,0,0,.62);font-family:'DM Mono',monospace;color:var(--text)}

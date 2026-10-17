@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Pont DMX WebView ↔ natif (src/bridge.ts) : validation des messages de la
 // page, regroupement des datagrammes, format des scripts injectés, et
 // cohérence des noms et limites entre TypeScript, Swift et Kotlin.

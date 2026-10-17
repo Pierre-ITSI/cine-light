@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ════════════════════════════════════════════════════════════════════════════
 // SetRemote — assemblage de web/ vers index.html (Node 22, aucune dépendance)
 //
@@ -31,7 +32,14 @@ import { bundleProtocol, bundleDmx } from './bundle-protocol.mjs';
 export const WEB_DIR = dirname(fileURLToPath(import.meta.url));
 export const ROOT_DIR = resolve(WEB_DIR, '..');
 export const OUTPUT = join(ROOT_DIR, 'index.html');
-export const HEADER = '<!-- GÉNÉRÉ par web/build.mjs — ne pas éditer, modifier web/ -->';
+export const HEADER = '<!-- GÉNÉRÉ par web/build.mjs — ne pas éditer, modifier web/ — SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP -->';
+// En-tête de licence de chaque fragment (scripts/spdx-headers.mjs) : retiré à
+// l'assemblage, l'avis figurant une fois dans HEADER. Seule cette ligne exacte,
+// en 1re ligne, est retirée : le <style> et le <script> restent inchangés.
+export const FRAGMENT_LICENSE = Object.freeze({
+  '.css': '/* SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP */\n',
+  '.js': '// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP\n',
+});
 
 const STYLES_MARK = '/* @@STYLES@@ */\n';
 const SCRIPTS_MARK = '/* @@SCRIPTS@@ */\n';
@@ -47,8 +55,10 @@ export function listFragments(sub, ext) {
     .map((f) => ({ name: sub + '/' + f, text: readFileSync(join(dir, f), 'utf8') }));
 }
 
-function concat(frags) {
-  return frags.map((f) => (f.text.endsWith('\n') ? f.text : f.text + '\n')).join('');
+function concat(frags, ext) {
+  const lic = FRAGMENT_LICENSE[ext];
+  return frags.map((f) => (f.text.startsWith(lic) ? f.text.slice(lic.length) : f.text))
+    .map((t) => (t.endsWith('\n') ? t : t + '\n')).join('');
 }
 
 function replaceOnce(haystack, mark, value, label) {
@@ -73,8 +83,8 @@ export function build() {
   }
   const protocol = bundleProtocol();
   const dmx = bundleDmx();
-  let html = replaceOnce(tpl, STYLES_MARK, concat(cssFrags), 'STYLES');
-  html = replaceOnce(html, SCRIPTS_MARK, protocol.code + dmx.code + concat(jsFrags), 'SCRIPTS');
+  let html = replaceOnce(tpl, STYLES_MARK, concat(cssFrags, '.css'), 'STYLES');
+  html = replaceOnce(html, SCRIPTS_MARK, protocol.code + dmx.code + concat(jsFrags, '.js'), 'SCRIPTS');
   // En-tête juste après le doctype (le doctype reste la 1re ligne : aucun
   // risque de mode quirks).
   const nl = html.indexOf('\n');

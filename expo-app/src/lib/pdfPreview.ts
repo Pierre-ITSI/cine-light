@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ════════════════════════════════════════════════════════════════════════════
 // Aperçu PDF demandé par la page (table des canaux DMX, maquette 17) :
 // logique pure, sans React Native, testée sous Node (test/pdf-preview.test.mjs).

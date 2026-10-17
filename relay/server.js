@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 /**
  * SetRemote — relais WebSocket auto-hébergé. Conception de docs/BROKER.md §2.1
  * (Durable Objects Cloudflare) ramenée à UN processus Node, tout en mémoire.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 import { NativeModule, requireOptionalNativeModule } from 'expo';
 
 import type { DmxProtocol, NetInterface, SetRemoteUdpEvents, UdpNativeModule, UdpPacket } from './bridge';

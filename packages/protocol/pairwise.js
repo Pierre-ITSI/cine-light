@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 /**
  * Clés PAR ÉCRAN (« pairwise ») : une clé AES-256-GCM propre au couple
  * télécommande ↔ écran, en plus du secret de session commun à tous.

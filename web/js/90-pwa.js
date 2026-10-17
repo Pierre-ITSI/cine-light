@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ PWA — installation & hors-ligne ══════════════════════════
 let _deferredInstall = null;
 let _swUpdatePending = false, _swReloaded = false;

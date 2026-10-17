@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ MQTT + CHIFFREMENT DE BOUT EN BOUT ══════════════════════════
 // Tout ce qui passe par le relais est scellé (SRP.createSecureChannel) :
 // commandes, fragments d'images / sons / vidéo, signalisation WebRTC (SDP,

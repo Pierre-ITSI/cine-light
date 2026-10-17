@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Simulateur d'appel côté écran : 3 types × 3 styles × (plein écran / bandeau,
 // verrouillé / bannière), décrocher / raccrocher, et sécurité des champs reçus.
 import { test, before, after } from 'node:test';

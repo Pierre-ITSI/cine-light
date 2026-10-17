@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Build web/ → index.html : à jour, déterministe, et interface (CSS + balisage)
 // identique au commit de référence visuelle.
 import { test } from 'node:test';

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP */
 /* Écran projecteur — rejoindre la télécommande (scan du QR ou code) : 25-pairing.css */
 #screen-connect{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:flex-start;background:var(--dark);gap:18px;padding:max(48px,env(safe-area-inset-top)) max(28px,env(safe-area-inset-right)) max(32px,env(safe-area-inset-bottom)) max(28px,env(safe-area-inset-left));animation:fadeIn .4s ease;min-height:100vh;overflow-y:auto}
 #screen-connect h2{font-family:'Lato',sans-serif;font-weight:600;font-size:1.75rem;color:var(--accent);text-align:center}

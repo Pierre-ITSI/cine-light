@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 """Génère les écrans de lancement iOS (apple-touch-startup-image) + les balises <link>."""
 import struct, zlib, math
 

@@ -1,6 +1,7 @@
 {
   "name": "setremote",
   "version": "1.0.0",
+  "license": "AGPL-3.0-only",
   "private": true,
   "description": "SetRemote — PWA film-set. Sources dans web/, index.html (racine) généré par web/build.mjs et servi tel quel par GitHub Pages.",
   "engines": {

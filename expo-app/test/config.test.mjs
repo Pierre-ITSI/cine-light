@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Réglages de la coque (src/config.ts) : adresse publique des liens d'appairage,
 // script injecté avant la page, cohérence avec PUBLIC_URL du web.
 //

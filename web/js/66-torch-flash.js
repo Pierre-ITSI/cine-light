@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ TORCH & VIBRATE (receiver) ══════════════════════════
 let torchEnabled = false, torchTrack = null, vibrateEnabled = true;
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Laboratoire d'effets : chaque effet de EFFECT_CONFIG se sélectionne, dessine
 // des frames sans erreur (télécommande et écran), et les boutons −/+ des
 // sliders utilisent les bornes COURANTES du slider.

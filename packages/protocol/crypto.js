@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 /**
  * Chiffrement de bout en bout des messages SetRemote.
  *

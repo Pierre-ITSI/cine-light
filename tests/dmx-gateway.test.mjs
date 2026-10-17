@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Passerelle DMX dans l'app : une télécommande « app native » (pont simulé)
 // reçoit des datagrammes sACN / Art-Net construits avec packages/dmx, les
 // décode et pilote de vrais écrans de jeu par la session chiffrée (FakeBroker).

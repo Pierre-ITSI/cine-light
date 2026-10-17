@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ MÉDIA — ÉCRAN (récepteur) ══════════════════════════
 let _screenPc = null, _screenPendingIce = [];
 let _vidParts = [], _vidMeta = null, _screenVidUrl = null, _screenProgTimer = 0;

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ CONFIGURATION (transport, WebRTC) ══════════════════════════
 // Relais privé auto-hébergé (relay/, docs/BROKER.md §5) : DÉSACTIVÉ par défaut,
 // le comportement reste celui d'aujourd'hui tant que RELAY_URL est vide.

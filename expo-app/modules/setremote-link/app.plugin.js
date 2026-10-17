@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ════════════════════════════════════════════════════════════════════════════
 // Config plugin du module setremote-link (liaisons hors ligne Wi-Fi / Bluetooth).
 //

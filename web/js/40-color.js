@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ COLOR WHEEL ══════════════════════════
 function initWheel() { _bindColorWheel('colorWheel', onWheelPick); }
 function _bindColorWheel(canvasId, onPick) {

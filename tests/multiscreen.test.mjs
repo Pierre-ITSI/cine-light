@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Plusieurs écrans (maquettes 5 et 6) : une télécommande et trois vrais écrans
 // de jeu sur la même session chiffrée (FakeBroker). Couvre : noms et groupes
 // (vue « Écrans connectés »), cible Tous / groupe / écran, écrans qui ignorent

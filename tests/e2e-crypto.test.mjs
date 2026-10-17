@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Chiffrement de bout en bout dans l'app : ce que voit le relais, trames
 // falsifiées / rejouées / non chiffrées ignorées, médias (images, photo
 // d'appel) et signalisation WebRTC chiffrés, bornage à l'émission.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ ÉCRANS CONNECTÉS & CIBLE — INTERFACE ══════════════════════════
 // Maquette 5 « Écrans connectés » : pour chaque écran son nom, ce qu'il
 // montre, sa liaison, ses groupes, « Identifier » et « Renommer » ; groupes

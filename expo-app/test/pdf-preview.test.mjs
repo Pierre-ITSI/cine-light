@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Aperçu PDF de la table des canaux (src/lib/pdfPreview.ts) : validation du
 // message de la page, appel d'expo-print (A4, marges iOS), erreurs renvoyées
 // à la page par window.SRNative.receive, annulation silencieuse.

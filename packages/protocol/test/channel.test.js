@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSecureChannel, createScreenId, SESSION_TOPIC_PREFIX } from '../channel.js';

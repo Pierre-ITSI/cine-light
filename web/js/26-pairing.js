@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ APPAIRAGE PAR CODE (sans caméra) ══════════════════════════
 // Un code court par écran (6 caractères sans I/L/O/0/1, valable 2 min). Les
 // deux appareils échangent des clés ECDH P-256 en clair sur un topic de

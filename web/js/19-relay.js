@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ TRANSPORT : RELAIS WEBSOCKET PRIVÉ ══════════════════════════
 // RELAY_URL configuré (01-config.js) : les MÊMES trames scellées (SRP) passent
 // par le relais SetRemote (relay/server.js) au lieu du broker MQTT public.

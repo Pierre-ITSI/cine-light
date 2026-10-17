@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Robustesse du protocole (Partie 3) : table d'aiguillage + validateurs
 // (2e barrière, après le schéma strict du paquet protocole), bornage des
 // effets, cycle de vie MQTT (coupure / reconnexion) et resynchronisation

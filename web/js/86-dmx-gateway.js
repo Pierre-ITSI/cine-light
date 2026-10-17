@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ PASSERELLE DMX (télécommande en mode passerelle) ══════════════════════════
 // La télécommande, dans l'app native, reçoit le sACN ou l'Art-Net de la
 // console (UDP, impossible dans un navigateur) et pilote chaque écran patché

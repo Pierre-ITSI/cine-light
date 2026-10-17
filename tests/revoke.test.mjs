@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Retrait d'un écran (maquettes 5b et 5c) : clé par écran établie dans la
 // session, nouvelle session remise aux AUTRES écrans avec leur clé, écran
 // retiré qui affiche « Écran retiré » et ne peut plus rien déchiffrer (même en

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 # Compile l'app iOS sur EAS (cloud, pas de Mac) puis l'envoie sur TestFlight.
 # Sans aucune question : tout passe par des variables d'environnement.
 #

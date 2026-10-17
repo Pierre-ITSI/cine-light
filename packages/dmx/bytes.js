@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Small byte helpers shared by the protocol parsers.
 // Written for every target runtime: browsers, Node 22 and React Native/Hermes.
 // Hermes has no TextDecoder, so UTF-8 decoding is done by hand.

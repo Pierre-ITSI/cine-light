@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP */
 #remote-mode{display:none;position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;padding:calc(14px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);min-height:100vh}
 /* Mini-carte sticky (preview + On/Off) affichée quand la preview sort du viewport */
 #stickyPreview{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:rgba(13,17,23,.68);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);transform:translateY(-110%);transition:transform .28s ease;pointer-events:none}

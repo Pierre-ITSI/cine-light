@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ PROTOCOLE — validation & aiguillage ══════════════════════════
 // Chaque type de message reçu est décrit par :
 //   roles    : modes qui le traitent ('screen' = écran de jeu, 'remote' = télécommande)

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ SCREEN DISPLAY ══════════════════════════
 let screenStrobeTimer = null, screenBaseColor = '#1a1a1a';
 function receiveColor(color) {

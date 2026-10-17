@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ QR D'APPAIRAGE ══════════════════════════
 // QR généré localement (vendor/qrcode-generator, MIT) : le lien d'appairage
 // contient le secret de session dans son fragment, il ne quitte jamais

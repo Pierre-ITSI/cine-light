@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ ÉCRANS : NOMS, GROUPES, CIBLE ══════════════════════════
 // Maquettes validées 5 (écrans connectés & groupes) et 6 (choisir la cible).
 //

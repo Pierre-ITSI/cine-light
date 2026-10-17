@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ SONNERIES ET SONS DE NOTIFICATION (télécommande) ══════════════════════════
 // Onglet Appel, panneau « Sonnerie » (appel) / « Son de notification » (SMS,
 // messagerie) — maquette validée 12 : sons intégrés (Classique, Digitale,

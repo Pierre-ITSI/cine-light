@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // GatewayEngine — turns received sACN / Art-Net datagrams into per-screen looks.
 //
 //   datagram ─► parse (sacn.js / artnet.js) ─► merge per universe (merge.js)

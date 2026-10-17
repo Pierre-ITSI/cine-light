@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Chargement, navigation, onglets, sortie de session écran.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';

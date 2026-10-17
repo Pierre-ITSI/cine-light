@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ AVERTISSEMENT STROBOSCOPE (maquette 11) ══════════════════════════
 // Avertissement photosensibilité affiché AVANT d'activer, depuis la
 // télécommande, le stroboscope ou un effet à flashs rapides : « Annuler »

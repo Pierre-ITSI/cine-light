@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ════════════════════════════════════════════════════════════════════════════
 // SHA-256 et HMAC-SHA256 en TypeScript pur (FIPS 180-4, RFC 2104).
 //

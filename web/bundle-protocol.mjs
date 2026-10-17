@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ════════════════════════════════════════════════════════════════════════════
 // Assemble un paquet de packages/ (modules ES) en UN script classique pour la
 // PWA : packages/protocol → globale SRP, packages/dmx → globale SRDMX.

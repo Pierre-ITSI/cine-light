@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ════════════════════════════════════════════════════════════════════════════
 // SetRemote : sélection et vérification des fichiers de la PWA avant mise en
 // service sur le VPS (appelé par update-app.sh, dans un conteneur Node 22 sans

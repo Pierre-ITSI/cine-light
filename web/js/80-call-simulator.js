@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ SIMULATEUR D'APPEL ══════════════════════════
 // Télécommande : configure et déclenche. Écran : affiche l'overlay (appel,
 // SMS, messagerie ; styles Verre / Tonal / Épuré), sonne (WebAudio : sons

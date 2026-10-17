@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Écrans clés capturés pour la non-régression visuelle. Chaque scène part
 // d'une page neuve, horloge figée (T0) et aléa déterministe : deux rendus du
 // même HTML dans le même environnement sont identiques au pixel près.

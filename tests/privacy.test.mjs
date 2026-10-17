@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Politique de confidentialité (confidentialite.html, privacy.html) : pages
 // statiques à la racine (GitHub Pages) et embarquées dans l'app. Aucune
 // requête externe, lisibles en clair comme en sombre, fidèles à la production

@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 # ════════════════════════════════════════════════════════════════════════════
 # SetRemote : installe (ou réinstalle) la mise à jour automatique des fichiers
 # de la PWA sur le VPS. À lancer depuis ce dossier, après « cp .env.example .env » :

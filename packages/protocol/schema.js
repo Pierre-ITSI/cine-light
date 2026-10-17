@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 /**
  * Schéma EXHAUSTIF des messages SetRemote (protocole applicatif).
  *

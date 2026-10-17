@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Réception d'images en fragments côté écran (mediaImgStart / mediaImgChunk) :
 // transferts parallèles entrelacés, doublons, désordre, plafonds, validation.
 import { test, before, after } from 'node:test';

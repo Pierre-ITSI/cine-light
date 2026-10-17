@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Non-régression visuelle : chaque écran clé de index.html doit être identique
 // au pixel près (seul un bruit d'anticrénelage de ±1 sur ≤ 16 pixels est
 // toléré) à sa capture de référence (tests/screenshots/*.png), rendue à

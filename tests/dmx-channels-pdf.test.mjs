@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Table des canaux DMX en PDF (maquette 17, bouton « PDF ») : document
 // imprimable autonome (A4, noir sur blanc, aucune requête) avec le patch en
 // cours et la table de chaque mode utilisé.

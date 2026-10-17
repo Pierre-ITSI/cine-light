@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Pont des liaisons hors ligne (src/bridge.ts) : validation des messages de la
 // page, dérivations du topic (roomTag, authKey), SHA-256 / HMAC en TS pur,
 // plafonds de taille, relevé par lots, relais des événements natifs.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ SESSION CHIFFRÉE ══════════════════════════
 // Une télécommande possède UN secret de session { channelId (128 bits),
 // key (256 bits) } partagé par tous ses écrans (packages/protocol, globale

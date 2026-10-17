@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 # Vérifie le relais et la PWA SetRemote depuis l'EXTÉRIEUR (votre ordinateur,
 # pas le VPS) :
 #   relais : DNS, HTTPS (certificat valide) + /healthz, WebSocket (wss), STUN (3478) ;

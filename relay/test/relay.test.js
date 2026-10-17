@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Relais WebSocket (relay/server.js) : routes et validation, rediffusion,
 // limites (taille, débit, salles, IP), rendez-vous, TOFU, X-Forwarded-For,
 // keepalive, arrêt propre. Aucune dépendance hors ws ; trames et topics réels

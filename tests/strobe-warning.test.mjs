@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Avertissement stroboscope (maquette 11) : affiché sur la télécommande AVANT
 // le strobe, les effets à flashs rapides, les mémoires qui les rallument et
 // les clignotements rapides de la torche. « Annuler » n'envoie rien,

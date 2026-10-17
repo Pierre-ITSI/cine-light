@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 /**
  * @setremote/protocol — appairage, chiffrement de bout en bout et schéma
  * des messages SetRemote. Zéro dépendance ; nécessite WebCrypto

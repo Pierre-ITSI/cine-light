@@ -21,6 +21,6 @@
   "scripts": {
     "test": "node --test \"test/*.test.js\""
   },
-  "license": "UNLICENSED",
+  "license": "AGPL-3.0-only",
   "private": true
 }

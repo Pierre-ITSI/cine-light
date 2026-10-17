@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // Auto-hébergement de la PWA (relay/deploy) : liste blanche et vérifications de
 // verify-app.mjs sur le dépôt réel (tout fichier que l'app référence doit y
 // figurer), refus des paquets incomplets, cohérence du Caddyfile (cache,

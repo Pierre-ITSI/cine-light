@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // sACN — ANSI E1.31 "Lightweight streaming protocol for transport of DMX512 using ACN".
 //
 // Layouts follow ANSI E1.31-2018, Table 4-1 (E1.31 Data Packet), Table 4-2
