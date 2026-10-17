@@ -80,6 +80,13 @@ function remoteResync() {
   if (la.length) { if (_callAudioData) ensureCallAssets(null, _callAudioData, null, la); else renderCallAudioRow(); }
   const lp = lacking('__callphoto');
   if (lp.length && _callPhoto) ensureCallAssets(_callPhoto, null, null, lp);
+  // Notification : icône et fond verrouillé propres (84-notification.js)
+  const li = lacking('__notificon');
+  if (li.length && _notifIcon) ensureCallAssets(_notifIcon, null, null, li, '__notificon');
+  if (_notifWallData) { const l = lacking('__notifwall'); if (l.length) ensureSlotImage('__notifwall', _notifWallData, l); }
+  // Discussion ouverte sur ces écrans : fil, messages postés et avatar renvoyés
+  // (un écran rechargé retrouve la discussion où il en était, 83-discussion.js)
+  if (ids.length) chatOnScreensResync(ids);
   // Sons importés absents : renvoyés s'ils servent encore (choix d'un type,
   // entrées 1 à 20 sous la passerelle), sinon simplement oubliés
   const rings = ringNeededIds();

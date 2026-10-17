@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ SONNERIES ET SONS DE NOTIFICATION (télécommande) ══════════════════════════
-// Onglet Appel, panneau « Sonnerie » (appel) / « Son de notification » (SMS,
-// messagerie) — maquette validée 12 : sons intégrés (Classique, Digitale,
-// Douce, Silencieux) ou sons importés par l'utilisateur (MP3, M4A, WAV… ≤ 5 Mo,
-// vérifiés par WebAudio). Chaque type garde son choix et son volume ; la
-// bibliothèque « Vos sonneries » est commune aux trois types. Par défaut :
-// Classique à 100 %, c.-à-d. les sons d'avant (sonnerie classique, son SMS,
-// son messagerie).
+// Onglet Tel, panneau « Sonnerie » (appel) / « Son de notification » (SMS,
+// notification d'application) — maquette validée 12 : sons intégrés (Classique,
+// Digitale, Douce, Silencieux) ou sons importés par l'utilisateur (MP3, M4A,
+// WAV… ≤ 5 Mo, vérifiés par WebAudio). Chaque type garde son choix et son
+// volume ; la bibliothèque « Vos sonneries » est commune aux trois types. Par
+// défaut : Classique à 100 %, c.-à-d. les sons d'avant (sonnerie classique,
+// son SMS ; pour la notification, l'ancien son de la messagerie).
+// Migration : le choix enregistré pour l'ancienne « messagerie » (clé chat)
+// passe à la notification, qui la remplace (même son, même volume).
 //
 // Stockage : bibliothèque en IndexedDB (base setremote-ringtones : « meta »
 // = nom, durée… ; « data » = data-URL du son), à défaut en mémoire le temps
@@ -20,7 +22,7 @@
 // l'écran (24-resync.js), sur demande de l'écran (media:need) et, passerelle
 // DMX en marche, pour les entrées 1 à 20 des listes (déclenchement instantané
 // depuis la console).
-const RING_KINDS = ['call', 'sms', 'chat'];
+const RING_KINDS = ['call', 'sms', 'notif'];
 const RING_BUILTINS = ['classic', 'digital', 'soft', 'silent'];
 const RING_MAX_BYTES = 5 * 1024 * 1024;
 const RING_SETTINGS_KEY = 'setremote-ring-v1';
@@ -28,8 +30,8 @@ const RING_DB = 'setremote-ringtones';
 const RING_NAME_MAX = 80;
 
 // ── Choix par type : { sound: son intégré ou id importé, vol: 0..1 } ──
-const ringSettings = { call: { sound: 'classic', vol: 1 }, sms: { sound: 'classic', vol: 1 }, chat: { sound: 'classic', vol: 1 } };
-function _ringKind(k) { return RING_KINDS.includes(k) ? k : 'call'; }
+const ringSettings = { call: { sound: 'classic', vol: 1 }, sms: { sound: 'classic', vol: 1 }, notif: { sound: 'classic', vol: 1 } };
+function _ringKind(k) { return k === 'chat' || k === 'whatsapp' ? 'sms' : (RING_KINDS.includes(k) ? k : 'call'); }
 function _ringIsId(s) { return typeof s === 'string' && SRP.RING_ID_RE.test(s); }
 function _ringVol(v) {
   return (typeof v === 'number' && Number.isFinite(v)) ? Math.min(1, Math.max(0, Math.round(v * 100) / 100)) : 1;
@@ -37,6 +39,8 @@ function _ringVol(v) {
 function loadRingSettings() {
   let o = null;
   try { o = JSON.parse(_lsGet(RING_SETTINGS_KEY)); } catch (_) { o = null; }
+  // Ancienne messagerie → notification (si la notification n'a pas encore de choix)
+  if (o && typeof o === 'object' && o.notif === undefined && o.chat !== undefined) o.notif = o.chat;
   for (const k of RING_KINDS) {
     const s = o && typeof o === 'object' ? o[k] : null;
     const ok = s && typeof s === 'object' && (RING_BUILTINS.includes(s.sound) || _ringIsId(s.sound));
@@ -44,7 +48,7 @@ function loadRingSettings() {
   }
 }
 function persistRingSettings() {
-  _lsSet(RING_SETTINGS_KEY, JSON.stringify({ v: 1, call: ringSettings.call, sms: ringSettings.sms, chat: ringSettings.chat }));
+  _lsSet(RING_SETTINGS_KEY, JSON.stringify({ v: 1, call: ringSettings.call, sms: ringSettings.sms, notif: ringSettings.notif }));
 }
 
 // Champs « son » d'un call:start pour un choix { sound, vol } :
@@ -229,6 +233,7 @@ function setCallRing(r) {
   persistRingSettings();
   _ringSetStatus('');
   renderRingPanel();
+  if (callKind === 'notif') renderNotifForm(); // tuile « Son »
 }
 function selectRingTone(id) {
   if (!ringLibHas(id)) return;
@@ -239,6 +244,7 @@ function _ringSelect(id) {
   ringSettings[_ringKind(callKind)].sound = id;
   persistRingSettings();
   renderRingPanel();
+  if (callKind === 'notif') renderNotifForm();
   ensureCallAssets(null, null, [id]); // envoyé dès le choix, comme la photo
 }
 function onRingVolume() {
@@ -264,7 +270,7 @@ function ringApplyEntry(e) {
 async function deleteRingTone(id) {
   const t = ringLib.find((x) => x.id === id);
   if (!t) return false;
-  if (!confirm('Supprimer « ' + t.name + ' » ? Les appels et SMS qui l\'utilisent reviennent au son Classique.')) return false;
+  if (!confirm('Supprimer « ' + t.name + ' » ? Les appels, SMS et notifications qui l\'utilisent reviennent au son Classique.')) return false;
   if (_ringPrev && _ringPrev.id === id) _ringPrevStop();
   ringLib = ringLib.filter((x) => x.id !== id);
   for (const k of RING_KINDS) if (ringSettings[k].sound === id) ringSettings[k].sound = 'classic';
@@ -274,6 +280,7 @@ async function deleteRingTone(id) {
   _ringSetStatus('« ' + t.name + ' » supprimée.');
   renderRingPanel();
   if (typeof renderCallList === 'function') renderCallList();
+  if (callKind === 'notif') renderNotifForm();
   await _ringLibDelete(id);
   return true;
 }

@@ -29,6 +29,25 @@ const remote = (tab, extra) => async (page) => {
   if (extra) await extra(page);
   await page.clock.runFor(400);
 };
+// Notification d'application de la maquette 24 / 25
+const NOTIF = {
+  kind: 'notif', name: 'Virement reçu', appName: 'Banque Atlas',
+  msg: 'Vous avez reçu 2 400,00 € de SARL Prod Nord. Solde disponible : 3 182,45 €.',
+  phone: { date: '2025-10-17', time: '14:32' }, received: { mode: 'ago', min: 15 },
+};
+// Discussion sur l'écran (maquette 27), réponse du comédien tapée au vrai clavier
+const screenChat = (style) => async (page) => {
+  await joinScreen(page);
+  await page.evaluate((style) => {
+    const msgs = [['d1', 'contact', 'Tu es où ?'], ['d2', 'contact', 'Ton père t\'attend depuis une heure'], ['d6', 'contact', 'Réponds-moi s\'il te plaît'],
+      ['d3', 'actor', 'je suis chez Léa, j\'arrive'], ['d4', 'contact', 'Je t\'ai vue avec lui. On en parlera ce soir.']];
+    for (const [id, from, text] of msgs) screenChatMsg({ id, from, text });
+    screenChatOpen({ name: 'Maman', style, ids: msgs.map((m) => m[0]), sent: ['d1', 'd2', 'd6'], typed: 0 });
+  }, style);
+  await page.keyboard.type('je suis chez L');
+  await page.keyboard.press('a');
+  await page.clock.runFor(600);
+};
 const screenCall = (m, after) => async (page) => {
   await joinScreen(page);
   await page.evaluate((m) => screenCallStart({ ring: 'silent', ...m }), m);
@@ -207,6 +226,30 @@ export const SCENES = {
   'remote-media': remote('media'),
   'remote-call': remote('call'),
   'remote-call-sms': remote('call', (page) => page.evaluate(() => { setCallKind('sms'); setCallStyle('tonal'); })),
+  // 24 · Notification d'application : écran verrouillé, heure du téléphone, reçue il y a 15 min
+  'remote-call-notif': remote('call', async (page) => {
+    await page.evaluate(() => {
+      setCallKind('notif'); setNotifPresent('lock');
+      document.getElementById('ntPhoneDate').value = '2025-10-17'; document.getElementById('ntPhoneTime').value = '14:32';
+      setNotifReceived('ago');
+    });
+    await scrollTo('callkind-call', 80)(page);
+  }),
+  // Tuile « Son » ouverte : son de notification propre (indépendant des SMS)
+  'remote-call-notif-sound': remote('call', async (page) => {
+    await page.evaluate(() => { setCallKind('notif'); toggleNotifDetail('sound'); });
+    await scrollTo('ntSendBtn', 80)(page);
+  }),
+  // 26 · Discussion : 2 messages postés, réponse de Julie en frappe sur l'écran (14 / 26)
+  'remote-call-discussion': multiScreen(async (page) => {
+    await page.evaluate((julie) => {
+      switchTab('call'); setCallKind('discussion');
+      scrSetTarget({ k: 'screen', id: julie });
+      openChatOnTarget(); sendNextChatMessage(); sendNextChatMessage();
+      _chat.progress = { id: 'd3', typed: 14, total: 26 }; renderChatPanel();
+    }, SCR_IDS[0]);
+    await scrollTo('dcContactPanel', 80)(page);
+  }),
   // 12 · Sonnerie de l'appel : sons intégrés, « Vos sonneries », volume, bande son au décroché
   'remote-call-ring': ringScene('call'),
   // Son de notification d'un SMS (même bibliothèque, choix propre au type, sans décroché)
@@ -236,8 +279,15 @@ export const SCENES = {
   'screen-incall-tonal': screenCall({ kind: 'call', style: 'tonal', name: 'Maman' }, (page) => page.evaluate(() => screenCallAnswer())),
   'screen-incall-glass': screenCall({ kind: 'call', style: 'glass', name: 'Maman' }, (page) => page.evaluate(() => screenCallAnswer())),
   'screen-sms-lock-minimal': screenCall({ kind: 'sms', style: 'minimal', name: 'Léa', msg: 'Tu es où ??', lock: { time: '', date: '' } }),
-  'screen-chat-lock-glass': screenCall({ kind: 'chat', style: 'glass', name: 'Léa', msg: 'On t’attend sur le plateau', appName: 'Chatly', lock: { time: '07:42', date: '' } }),
-  'screen-chat-banner-tonal': screenCall({ kind: 'chat', style: 'tonal', name: 'Régie', msg: 'Moteur demandé dans 5 min', appName: 'Chatly', appColor: '#22aa66' }),
+  // 25 · Notification d'application sur le faux écran verrouillé (heure du téléphone imposée, reçue il y a 15 min)
+  'screen-notif-lock-glass': screenCall({ ...NOTIF, style: 'glass', present: 'lock' }),
+  // Notification en bandeau sur un écran allumé (reçue à une date et une heure : « hier »)
+  'screen-notif-banner-tonal': screenCall({ ...NOTIF, style: 'tonal', present: 'banner', received: { mode: 'at', date: '2025-10-16', time: '18:05' } }),
+  'screen-notif-banner-minimal': screenCall({ ...NOTIF, style: 'minimal', present: 'banner', received: { mode: 'now' } }),
+  // 27 · Discussion : messages du contact postés, réponse du comédien en cours de frappe
+  'screen-discussion-minimal': screenChat('minimal'),
+  'screen-discussion-glass': screenChat('glass'),
+  'screen-discussion-tonal': screenChat('tonal'),
   // Accès à la passerelle (onglet QR, app native seulement)
   'remote-qr-dmx-entry': remote('qr', async (page) => {
     await page.evaluate(() => { setConnStatus('connected'); remoteNoteScreen('sAAAAAAAA', { type: 'caps', screenId: 'ScreenOne0000001' }); renderLinkStatus(); });
@@ -294,7 +344,7 @@ export const SCENES = {
       await add({ name: 'Julien', style: 'tonal', photo: '#406080' });
       await add({ kind: 'sms', name: 'Léa', style: 'glass', lock: true });
       await add({ kind: 'sms', name: 'Régie', style: 'tonal' });
-      await add({ kind: 'chat', name: 'Chatly — Tom', style: 'minimal' });
+      await add({ kind: 'sms', name: 'Tom', style: 'minimal' });
       setCallKind('call');
       _callListSel.call = callList.call[0].id;
       setCallListKind('call');

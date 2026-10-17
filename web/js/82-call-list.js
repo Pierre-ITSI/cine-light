@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
-// ══════════════════════════ APPELS ET SMS ENREGISTRÉS (télécommande) ══════════════════════════
-// Onglet Appel (maquette 18) : deux listes numérotées, « Appels » et « SMS »
-// (SMS et messagerie). « + Enregistrer l'appel actuel » ajoute le formulaire
+// ══════════════════════════ APPELS, SMS ET NOTIFICATIONS ENREGISTRÉS (télécommande) ══════════════════════════
+// Onglet Tel (maquette 18) : trois listes numérotées, « Appels », « SMS » et
+// « Notifs » (notifications d'application, 84-notification.js : icône
+// enregistrée comme la photo d'une entrée). Migration : une entrée de
+// l'ancienne « messagerie » (kind chat / whatsapp) devient un SMS (mêmes
+// textes, nom et couleur d'application). « + Enregistrer l'appel actuel » ajoute le formulaire
 // (type, style, textes, sonnerie, photo, bande son…) à la liste de son type ;
 // toucher une entrée la recharge dans le formulaire ; « Appeler n° X » la
 // déclenche sur tous les écrans. Glisser-déposer pour changer l'ordre.
-// Les 20 premières entrées de chaque liste sont les cibles des canaux Appel et
-// SMS de la passerelle DMX : valeur n × 10 … n × 10 + 9 = entrée n (docs/DMX.md).
+// Les 20 premières entrées des listes Appels et SMS sont les cibles des canaux
+// Appel et SMS de la passerelle DMX : valeur n × 10 … n × 10 + 9 = entrée n
+// (docs/DMX.md). Les notifications n'ont pas de canal : pas de déclenchement
+// depuis la console (le canal SMS ne déclenche que les SMS).
 //
 // Stockage : réglages en localStorage ; photos et bandes son (trop lourdes pour
 // localStorage) dans IndexedDB, à défaut en mémoire le temps de la session.
@@ -17,20 +22,23 @@ const CALL_LIST_KEY = 'setremote-call-list-v1';
 const CALL_LIST_MAX = 99;           // par liste
 const CALL_LIST_DMX_ITEMS = 20;     // entrées accessibles depuis la console
 const CALL_ASSETS_DB = 'setremote-call-assets';
-let callList = { call: [], sms: [] };
+const CALL_LISTS = ['call', 'sms', 'notif'];
+let callList = { call: [], sms: [], notif: [] };
 let callListKind = 'call';
-const _callListSel = { call: null, sms: null };
+const _callListSel = { call: null, sms: null, notif: null };
 
 const _CALL_STYLE_NAMES = { glass: 'Verre', tonal: 'Tonal', minimal: 'Épuré' };
-const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio'];
+const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio', 'phone', 'received'];
 
 // ── Persistance ──
-function _clListOf(kind) { return kind === 'call' ? 'call' : 'sms'; }
+function _clListOf(kind) { return kind === 'call' || kind === 'notif' ? kind : 'sms'; }
 function _clSanitize(e) {
   if (!e || typeof e !== 'object' || typeof e.id !== 'string' || !/^[A-Za-z0-9_-]{1,40}$/.test(e.id)) return null;
-  if (!['call', 'sms', 'chat'].includes(e.kind)) return null;
+  if (!['call', 'sms', 'notif', 'chat', 'whatsapp'].includes(e.kind)) return null;
   const out = { id: e.id };
   for (const k of _CALL_ENTRY_FIELDS) if (e[k] !== undefined) out[k] = e[k];
+  if (out.kind === 'chat' || out.kind === 'whatsapp') out.kind = 'sms'; // ancienne messagerie → SMS
+  if (out.kind !== 'notif') { delete out.phone; delete out.received; }
   // Son : valeurs reconnues seulement. Un SMS enregistré avant les sons par
   // type (sans ringVolume) portait la sonnerie de l'appel, que l'écran
   // ignorait : il garde son son d'origine (Classique).
@@ -47,10 +55,10 @@ function loadCallList() {
   let o = null;
   try { o = JSON.parse(localStorage.getItem(CALL_LIST_KEY)); } catch (_) { o = null; }
   const pick = (arr, list) => (Array.isArray(arr) ? arr : []).map(_clSanitize).filter((e) => e && _clListOf(e.kind) === list).slice(0, CALL_LIST_MAX);
-  callList = { call: pick(o && o.call, 'call'), sms: pick(o && o.sms, 'sms') };
+  callList = { call: pick(o && o.call, 'call'), sms: pick(o && o.sms, 'sms'), notif: pick(o && o.notif, 'notif') };
 }
 function persistCallList() {
-  try { localStorage.setItem(CALL_LIST_KEY, JSON.stringify({ v: 1, call: callList.call, sms: callList.sms })); } catch (_) {}
+  try { localStorage.setItem(CALL_LIST_KEY, JSON.stringify({ v: 1, call: callList.call, sms: callList.sms, notif: callList.notif })); } catch (_) {}
   if (typeof gwSyncTriggerEntries === 'function') gwSyncTriggerEntries();
 }
 
@@ -116,7 +124,8 @@ function callEntryMessage(e, assets) {
   Object.assign(m, ringMsgFields(e.ringId || e.ring, e.ringVolume));
   m.hasPhoto = !!(assets && assets.photo);
   m.hasAudio = !!(assets && assets.audio);
-  if (m.kind !== 'call' && m.lock === undefined) m.lock = null;
+  if (m.kind === 'sms' && m.lock === undefined) m.lock = null;
+  if (m.kind === 'notif') { delete m.lock; m.hasAudio = false; }
   return m;
 }
 
@@ -161,11 +170,12 @@ async function sendCallEntry(e, targets) {
   const groups = targets ? targets.map((t) => ({ t, ids: t && Array.isArray(t.screens) ? t.screens : [] })) : [{ t: null, ids: scrTargetIds() }];
   const ready = (s) => !!prep && scrKnown(s) && (!prep.photo || scrState(s).cached.has(prep.photo)) && (!prep.audio || scrState(s).cached.has(prep.audio));
   const bleOnly = linkBleOnly();
+  const pk = e.kind === 'notif' ? '__notificon' : '__callphoto'; // icône d'une notification
   if (!bleOnly && !groups.some((g) => g.ids.some(ready))) {
     // Comme avant : photo, bande son, son importé vers les écrans de l'appel
     // (console : écrans patchés concernés ; bouton : cible de la télécommande)
     const screens = targets ? [...new Set(groups.flatMap((g) => g.ids))] : undefined;
-    await ensureCallAssets(assets.photo, assets.audio, rings, screens);
+    await ensureCallAssets(assets.photo, assets.audio, rings, screens, pk);
     if (!targets) { sendMsg(base); return; }
     for (const t of targets) sendMsg(Object.assign({}, base, { target: t }));
     return;
@@ -174,7 +184,7 @@ async function sendCallEntry(e, targets) {
   const plain = bleOnly ? Object.assign({}, base, { hasPhoto: false, hasAudio: false }) : base;
   const all = [...new Set(groups.flatMap((g) => g.ids))];
   const lacking = all.filter((s) => !ready(s));
-  if (!bleOnly && lacking.length) await ensureCallAssets(assets.photo, assets.audio, null, lacking);
+  if (!bleOnly && lacking.length) await ensureCallAssets(assets.photo, assets.audio, null, lacking, pk);
   if (rings) await ensureCallAssets(null, null, rings, targets ? all : undefined); // sons importés manquants (pas en Bluetooth seul)
   for (const g of groups) {
     if (!g.ids.length) { sendMsg(g.t ? Object.assign({}, plain, { target: g.t }) : plain); continue; }
@@ -186,13 +196,20 @@ async function sendCallEntry(e, targets) {
 }
 
 // ── Plage DMX d'une entrée (index 0 = n° 1) ──
-function callEntryDmxRange(i) {
-  return i < CALL_LIST_DMX_ITEMS ? ((i + 1) * 10) + '–' + ((i + 1) * 10 + 9) : '—';
+function callEntryDmxRange(i, kind) {
+  return i < CALL_LIST_DMX_ITEMS && kind !== 'notif' ? ((i + 1) * 10) + '–' + ((i + 1) * 10 + 9) : '—';
 }
 
 function _clMeta(e) {
   const parts = [_CALL_STYLE_NAMES[e.style] || 'Verre'];
-  if (e.kind === 'chat') parts.push('messagerie');
+  if (e.kind === 'notif') {
+    if (e.appName) parts.push(e.appName);
+    if (e.hasPhoto) parts.push('icône');
+    parts.push(e.present === 'lock' ? 'écran verrouillé' : 'bandeau');
+    const tone = e.ringId ? ringName(e.ringId) : null;
+    if (tone) parts.push('♪ ' + tone);
+    return parts.join(' · ');
+  }
   if (e.hasPhoto) parts.push('photo');
   if (e.hasAudio) parts.push('bande son');
   const tone = e.ringId ? ringName(e.ringId) : null; // son importé (s'il est encore dans la bibliothèque)
@@ -212,18 +229,23 @@ function _clSelected(kind) {
 // ── Rendu ──
 function renderCallList() {
   const kind = callListKind, list = callList[kind];
-  const cb = document.getElementById('clKind-call'), sb = document.getElementById('clKind-sms');
+  const cb = document.getElementById('clKind-call'), sb = document.getElementById('clKind-sms'), nb = document.getElementById('clKind-notif');
   if (cb) { cb.textContent = 'Appels (' + callList.call.length + ')'; cb.classList.toggle('active', kind === 'call'); }
   if (sb) { sb.textContent = 'SMS (' + callList.sms.length + ')'; sb.classList.toggle('active', kind === 'sms'); }
+  if (nb) { nb.textContent = 'Notifs (' + callList.notif.length + ')'; nb.classList.toggle('active', kind === 'notif'); }
   const who = document.getElementById('callListWho');
-  if (who) who.textContent = kind === 'call' ? 'Appelant' : 'Expéditeur';
+  if (who) who.textContent = kind === 'call' ? 'Appelant' : kind === 'notif' ? 'Titre' : 'Expéditeur';
+  const note = document.getElementById('callListNote');
+  if (note) note.textContent = kind === 'notif'
+    ? 'Les notifications ne se déclenchent pas depuis la console : seulement d\'ici. Glissez pour changer l\'ordre.'
+    : 'Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16). Valeur 0 : raccrocher. Glissez pour changer l\'ordre.';
   const sel = _clSelected(kind);
   const rows = document.getElementById('callListRows');
   if (rows) {
     rows.innerHTML = list.map((e, i) => '<div class="cl-row' + (sel && e.id === sel.id ? ' selected' : '') + '" data-id="' + e.id + '" onclick="selectCallEntry(\'' + e.id + '\')">'
       + '<span class="cl-num">' + (i + 1) + '</span>'
       + '<span class="cl-main"><span class="cl-name">' + escapeHtml(e.name || 'Inconnu') + '</span><span class="cl-meta">' + escapeHtml(_clMeta(e)) + '</span></span>'
-      + '<span class="cl-dmx">' + callEntryDmxRange(i) + '</span>'
+      + '<span class="cl-dmx">' + callEntryDmxRange(i, kind) + '</span>'
       + '<span class="cl-grip" aria-label="Déplacer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 9h14M5 15h14"/></svg></span>'
       + '</div>').join('');
   }
@@ -234,17 +256,17 @@ function renderCallList() {
   const go = document.getElementById('callListGo');
   if (go && sel) {
     const n = list.indexOf(sel) + 1;
-    go.textContent = kind === 'call' ? 'Appeler n°' + n : 'Envoyer le SMS n°' + n;
+    go.textContent = (kind === 'call' ? 'Appeler n°{n}' : kind === 'notif' ? 'Envoyer la notification n°{n}' : 'Envoyer le SMS n°{n}').replace('{n}', n);
   }
   renderCallListSaveLabel();
 }
 function renderCallListSaveLabel() {
   const b = document.getElementById('callListSave');
-  if (b) b.textContent = '+ Enregistrer ' + (callKind === 'call' ? 'l\'appel actuel' : callKind === 'sms' ? 'le SMS actuel' : 'le message actuel');
+  if (b) b.textContent = callKind === 'call' ? '+ Enregistrer l\'appel actuel' : callKind === 'notif' ? '+ Enregistrer la notification actuelle' : '+ Enregistrer le SMS actuel';
 }
 
 function setCallListKind(k) {
-  callListKind = k === 'sms' ? 'sms' : 'call';
+  callListKind = CALL_LISTS.includes(k) ? k : 'call';
   renderCallList();
 }
 
@@ -259,8 +281,10 @@ async function saveCurrentCall() {
   // Réglages masqués pour ce type : non enregistrés (bande son et décroché
   // n'existent que pour un appel, l'écran verrouillé que pour un message)
   if (e.kind === 'call') delete e.lock;
+  else if (e.kind === 'notif') { delete e.lock; delete e.label; e.autoAnswer = 0; e.hasAudio = false; delete e.photoMode; }
   else { e.autoAnswer = 0; e.hasAudio = false; delete e.present; delete e.photoMode; }
-  const photo = _callPhoto, audio = e.hasAudio ? _callAudioData : null;
+  // Notification : l'icône est rangée comme la photo de l'entrée
+  const photo = e.kind === 'notif' ? _notifIcon : _callPhoto, audio = e.hasAudio ? _callAudioData : null;
   callList[list].push(e);
   _callListSel[list] = e.id;
   callListKind = list;
@@ -277,7 +301,7 @@ async function saveCurrentCall() {
 let _clLoadSeq = 0;
 async function selectCallEntry(id) {
   if (_clSuppressClick) return; // clic résiduel après un glisser-déposer
-  const kind = callList.call.some((e) => e.id === id) ? 'call' : 'sms';
+  const kind = CALL_LISTS.find((k) => callList[k].some((e) => e.id === id)) || 'call';
   const e = callList[kind].find((x) => x.id === id);
   if (!e) return;
   _callListSel[kind] = id;
@@ -290,6 +314,14 @@ async function loadCallEntryIntoForm(e) {
   const seq = ++_clLoadSeq;
   const val = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
   setCallKind(e.kind);
+  if (e.kind === 'notif') {
+    ringApplyEntry(e);
+    renderCallListSaveLabel();
+    const assets = await callEntryAssets(e);
+    if (seq !== _clLoadSeq) return;
+    notifApplyEntry(e, assets.photo); // 84-notification.js
+    return;
+  }
   setCallStyle(_CALL_STYLE_NAMES[e.style] ? e.style : 'glass');
   setCallPresent(e.present === 'banner' ? 'banner' : 'full');
   setCallPhotoMode(e.photoMode === 'full' ? 'full' : 'avatar');
@@ -326,7 +358,7 @@ async function triggerSelectedCallEntry() {
   const e = _clSelected(callListKind);
   if (!e) return;
   const n = callList[callListKind].indexOf(e) + 1;
-  _setCallStatusUI(e.kind === 'call' ? '📞 Appel n°' + n + ' envoyé…' : '💬 SMS n°' + n + ' envoyé');
+  _setCallStatusUI((e.kind === 'call' ? '📞 Appel n°{n} envoyé…' : e.kind === 'notif' ? '🔔 Notification n°{n} envoyée' : '💬 SMS n°{n} envoyé').replace('{n}', n));
   await sendCallEntry(e);
 }
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
-// Simulateur d'appel côté écran : 3 types × 3 styles × (plein écran / bandeau,
+// Simulateur d'appel côté écran : appel et SMS × 3 styles × (plein écran / bandeau,
 // verrouillé / bannière), décrocher / raccrocher, et sécurité des champs reçus.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -13,7 +13,7 @@ before(async () => {
 });
 after(async () => { await ctx?.close(); await browser?.close(); });
 
-const KINDS = ['call', 'sms', 'chat'];
+const KINDS = ['call', 'sms']; // notification et ancienne messagerie : notification.test.mjs
 const STYLES = ['glass', 'tonal', 'minimal'];
 const overlay = (page) => page.evaluate(() => {
   const el = document.getElementById('screen-call');

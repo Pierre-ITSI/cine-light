@@ -121,7 +121,7 @@ export function triggerMessage(trigger, entry, screens) {
   if (!isObj(entry)) return null;
   const msg = { type: 'call:start' };
   if (trigger.kind === 'call') msg.kind = 'call';
-  else msg.kind = entry.kind === 'chat' ? 'chat' : 'sms';
+  else msg.kind = 'sms'; // l'ancienne messagerie (chat) est devenue SMS ; jamais de notification ni de discussion
   for (const k of CALL_FIELDS) if (entry[k] !== undefined) msg[k] = entry[k];
   msg.target = target;
   return msg;

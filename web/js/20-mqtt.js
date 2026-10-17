@@ -159,7 +159,7 @@ function receiveFrame(ch, str, via, peer) {
 // « le dernier gagne », la trame d'un numéro de séquence inférieur au dernier
 // appliqué (même émetteur, même type) est ignorée.
 const _RX_LATEST_WINS = new Set(['color', 'strobe', 'effect', 'blackout', 'screen:brightness', 'torch-onoff', 'torch-dim',
-  'torch-effect', 'media:autoadvance', 'media:endmode', 'dmx:look', 'media-progress', 'call:state']);
+  'torch-effect', 'media:autoadvance', 'media:endmode', 'dmx:look', 'media-progress', 'call:state', 'chat:progress']);
 const _rxLastSeq = new Map(); // 'émetteur|type' → séquence appliquée
 function _rxInOrder(str, sender, type) {
   if (!_RX_LATEST_WINS.has(type)) return true;

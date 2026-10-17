@@ -154,6 +154,9 @@ test('tout message valide pour le schéma tient dans MAX_MESSAGE_BYTES (pires ca
       type: 'call:start', kind: 'whatsapp', style: 'generic', name: lone(40), label: lone(40), msg: lone(200), appName: lone(24), appColor: '#ffffff',
       hasPhoto: true, ring: 'classic', ringId: '__ring_ffffffffffffffff', ringVolume: 0.123456789012345, present: 'banner', photoMode: 'avatar', hasAudio: false, autoAnswer: 60, lock: { time: lone(8), date: lone(30) }, target,
     },
+    { type: 'call:start', kind: 'notif', style: 'glass', name: lone(40), msg: lone(200), appName: lone(24), hasPhoto: true, ring: 'classic', ringId: '__ring_ffffffffffffffff', ringVolume: 0.5, present: 'lock', photoId: '__ph_' + 'f'.repeat(40), phone: { date: '2026-12-31', time: '23:59' }, received: { mode: 'at', date: '2026-12-31', time: '23:59' }, target },
+    { type: 'chat:msg', id: 'A'.repeat(12), from: 'contact', text: lone(LIMITS.chatTextChars), target },
+    { type: 'chat:open', name: lone(LIMITS.chatNameChars), style: 'tonal', hasAvatar: true, ids: Array.from({ length: LIMITS.chatMessages }, (_, i) => pad('c', i, 12)), sent: Array.from({ length: LIMITS.chatMessages }, (_, i) => pad('c', i, 12)), typed: LIMITS.chatTextChars, target },
   ];
   for (const m of worst) {
     assert.equal(explainInvalid(m), null, `${m.type} : ${explainInvalid(m)}`);
@@ -320,4 +323,29 @@ test('dérive : expo-app n’utilise que des types connus', { skip: !existsSync(
     }
   }
   assert.deepEqual([...unknown], []);
+});
+
+test('notification (kind notif) et discussion (chat:*) : sens, champs propres, bornes', () => {
+  const n = (/** @type {object} */ o) => validate({ type: 'call:start', kind: 'notif', ...o });
+  assert.equal(n({ present: 'banner', received: { mode: 'now' } }), true);
+  assert.equal(n({ present: 'lock', phone: { time: '00:00' }, received: { mode: 'ago', min: 0 } }), true);
+  assert.equal(n({ received: { mode: 'ago', min: LIMITS.notifAgoMinutes } }), true);
+  assert.equal(n({ received: { mode: 'ago', min: LIMITS.notifAgoMinutes + 1 } }), false);
+  assert.equal(n({ received: { mode: 'ago', min: 1.5 } }), false);
+  assert.equal(n({ received: { mode: 'now', min: 3 } }), false, 'min hors mode ago');
+  assert.equal(n({ received: { mode: 'ago', min: 3, date: '2025-01-01' } }), false);
+  assert.equal(n({ phone: { date: '2025-13-01' } }), false);
+  assert.equal(n({ phone: { date: '2025-02-31x' } }), false);
+  assert.equal(n({ phone: { time: '9:05' } }), false, 'HH:MM sur deux chiffres');
+  assert.equal(validate({ type: 'call:start', kind: 'chat', name: 'ancienne messagerie' }), true, 'anciennes télécommandes acceptées');
+  // Sens : la télécommande parle à l'écran, l'écran ne renvoie que la progression et l'envoi
+  for (const type of ['chat:open', 'chat:msg', 'chat:post', 'chat:close']) assert.equal(MESSAGE_TYPES[type].direction, 'r2s', type);
+  for (const type of ['chat:progress', 'chat:sent']) assert.equal(MESSAGE_TYPES[type].direction, 's2r', type);
+  assert.equal(validate({ type: 'chat:post', id: 'a' }, { direction: 's2r' }), false, 'un écran ne poste pas pour le contact');
+  assert.equal(validate({ type: 'chat:sent', id: 'a' }, { direction: 'r2s' }), false, 'la télécommande ne tape pas pour le comédien');
+  assert.equal(validate({ type: 'chat:progress', id: 'a', typed: 1, total: 2, target: { screens: ['AbCdEfGh12345678'] } }), false, 'pas de target s2r');
+  assert.equal(validate({ type: 'chat:progress', id: 'a', typed: 2, total: 2 }), true);
+  assert.equal(validate({ type: 'chat:msg', id: 'a', from: 'actor', text: 'x'.repeat(LIMITS.chatTextChars) }), true);
+  assert.equal(validate({ type: 'chat:open', name: 'M', style: 'minimal', ids: ['a', 'b'], sent: ['b'], typed: 301 }), false);
+  assert.deepEqual([LIMITS.chatMessages, LIMITS.chatTextChars, LIMITS.chatNameChars], [40, 300, 40]);
 });

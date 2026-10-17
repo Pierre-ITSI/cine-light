@@ -39,6 +39,8 @@ const PROTO = {
   STROBE_DUR_MIN: 15, STROBE_DUR_MAX: 2000,    // ms
   VIB_MAX_ENTRIES: 20, VIB_MAX_MS: 2000,
   NAME_MAX: 40, MSG_MAX: 200, APP_MAX: 24, LOCK_TIME_MAX: 8, LOCK_DATE_MAX: 30,
+  NOTIF_AGO_MAX: 10080,                        // « il y a n min » : 7 jours au plus
+  CHAT_MSGS_MAX: 40, CHAT_TEXT_MAX: 300,       // = LIMITS du schéma (discussion)
   SDP_MAX: 16000, ICE_MAX: 4096,               // = LIMITS du schéma (packages/protocol)
   ORDER_MAX: 500, MISSING_MAX: 400,
   VID_MAX_CHUNKS: 50000,                       // ≈ 600 Mo base64 en fragments de 12 000
@@ -71,7 +73,13 @@ function _validVibrate(m) {
   return true;
 }
 
+// Date / heure du faux téléphone (notification) : formats stricts, sinon absentes
+const _pDate = (v) => (typeof v === 'string' && SRP.DATE_RE.test(v) ? v : undefined);
+const _pTime = (v) => (typeof v === 'string' && SRP.TIME_RE.test(v) ? v : undefined);
 function _validCallStart(m) {
+  // Ancienne « messagerie » (chat, whatsapp) d'une télécommande non à jour : affichée comme un SMS
+  if (m.kind === 'chat' || m.kind === 'whatsapp') m.kind = 'sms';
+  if (!_P.oneOf(m.kind, ['call', 'sms', 'notif'])) m.kind = 'sms';
   m.name = _P.text(m.name, PROTO.NAME_MAX);
   m.label = _P.text(m.label, PROTO.NAME_MAX);
   m.msg = _P.text(m.msg, PROTO.MSG_MAX);
@@ -94,7 +102,34 @@ function _validCallStart(m) {
   // Photo / bande son PRÉPARÉES (tournage sans réseau) : ids dérivés du contenu
   if (!(typeof m.photoId === 'string' && SRP.CALL_PHOTO_ID_RE.test(m.photoId))) m.photoId = null;
   if (!(typeof m.audioId === 'string' && SRP.CALL_AUDIO_ID_RE.test(m.audioId))) m.audioId = null;
+  // Notification : bandeau ou écran verrouillé, heure du téléphone, heure de réception
+  if (m.kind === 'notif') {
+    m.present = m.present === 'lock' ? 'lock' : 'banner';
+    const ph = _P.isObj(m.phone) ? m.phone : {};
+    m.phone = { date: _pDate(ph.date), time: _pTime(ph.time) };
+    const r = _P.isObj(m.received) ? m.received : {};
+    if (r.mode === 'ago' && _P.int(r.min, 0, PROTO.NOTIF_AGO_MAX) !== null) m.received = { mode: 'ago', min: r.min };
+    else if (r.mode === 'at' && _pDate(r.date) && _pTime(r.time)) m.received = { mode: 'at', date: r.date, time: r.time };
+    else m.received = { mode: 'now' };
+  } else { delete m.phone; delete m.received; }
   return true;
+}
+
+// Discussion : identifiants courts, listes bornées sans doublon
+const _chatId = (v) => typeof v === 'string' && SRP.CHAT_ID_RE.test(v);
+const _chatIds = (a) => Array.isArray(a) && a.length <= PROTO.CHAT_MSGS_MAX && a.every(_chatId) && new Set(a).size === a.length;
+function _validChatOpen(m) {
+  if (!_chatIds(m.ids) || !_chatIds(m.sent) || !m.sent.every((id) => m.ids.includes(id))) return false;
+  m.name = _P.text(m.name, PROTO.NAME_MAX);
+  if (!_P.oneOf(m.style, ['glass', 'tonal', 'minimal'])) m.style = 'minimal';
+  m.hasAvatar = _P.bool(m.hasAvatar);
+  m.typed = _P.int(m.typed, 0, PROTO.CHAT_TEXT_MAX) ?? 0;
+  return true;
+}
+function _validChatMsg(m) {
+  if (!_chatId(m.id) || !_P.oneOf(m.from, ['contact', 'actor'])) return false;
+  m.text = _P.text(m.text, PROTO.CHAT_TEXT_MAX);
+  return m.text.trim().length > 0;
 }
 
 const _validSdp = (type) => (m) => _P.isObj(m.sdp) && m.sdp.type === type && _P.str(m.sdp.sdp, PROTO.SDP_MAX);
@@ -178,6 +213,11 @@ const MSG_ROUTES = {
   'call:start':        { roles: ['screen'], validate: _validCallStart, handle: (m) => screenCallStart(m) },
   'call:answer':       { roles: ['screen'], validate: () => true, handle: () => screenCallAnswer() },
   'call:end':          { roles: ['screen'], validate: () => true, handle: () => screenCallEnd() },
+  // Discussion fictive (83-discussion.js) : jamais déclenchée par la console DMX
+  'chat:open':         { roles: ['screen'], validate: _validChatOpen, handle: (m) => screenChatOpen(m) },
+  'chat:msg':          { roles: ['screen'], validate: _validChatMsg, handle: (m) => screenChatMsg(m) },
+  'chat:post':         { roles: ['screen'], validate: (m) => { m.typing = _P.bool(m.typing); return _chatId(m.id); }, handle: (m) => screenChatPost(m) },
+  'chat:close':        { roles: ['screen'], validate: () => true, handle: () => screenChatClose() },
   // Passerelle DMX : look calculé depuis la console (36-dmx-screen.js, docs/DMX.md § 7)
   'dmx:look': {
     roles: ['screen'],
@@ -247,6 +287,12 @@ const MSG_ROUTES = {
       && m.missing.every((i) => _P.int(i, 0, PROTO.VID_MAX_CHUNKS - 1) !== null),
     handle: (m) => resendMissingChunks(m),
   },
+  'chat:progress': {
+    roles: ['remote'],
+    validate: (m) => _chatId(m.id) && _P.int(m.total, 1, PROTO.CHAT_TEXT_MAX) !== null && _P.int(m.typed, 0, m.total) !== null,
+    handle: (m) => remoteOnChatProgress(m),
+  },
+  'chat:sent':         { roles: ['remote'], validate: (m) => _chatId(m.id), handle: (m) => remoteOnChatSent(m) },
   'call:state':        { roles: ['remote'], validate: (m) => _P.oneOf(m.state, ['ringing', 'incall', 'declined', 'ended']), handle: (m) => remoteOnCallState(m) },
   'media:advanced':    { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenAdvanced(m.id) },
   'media:need':        { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenNeeds(m.id) },
@@ -332,12 +378,26 @@ function clampOutgoing(m) {
       m.appName = line(m.appName, PROTO.APP_MAX);
       m.msg = _P.text(m.msg, PROTO.MSG_MAX).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '');
       if (_P.isObj(m.lock)) m.lock = { time: line(m.lock.time, PROTO.LOCK_TIME_MAX), date: line(m.lock.date, PROTO.LOCK_DATE_MAX) };
+      if (_P.isObj(m.phone)) {
+        const ph = {};
+        if (_pDate(m.phone.date)) ph.date = m.phone.date;
+        if (_pTime(m.phone.time)) ph.time = m.phone.time;
+        m.phone = ph;
+      }
+      if (_P.isObj(m.received)) {
+        const r = m.received;
+        if (r.mode === 'ago') m.received = { mode: 'ago', min: Math.round(_P.num(r.min, 0, PROTO.NOTIF_AGO_MAX) ?? 0) };
+        else if (r.mode === 'at' && _pDate(r.date) && _pTime(r.time)) m.received = { mode: 'at', date: r.date, time: r.time };
+        else m.received = { mode: 'now' };
+      }
       if (m.appColor !== undefined && !_P.hex(m.appColor)) delete m.appColor;
       clampKeys(m, ['autoAnswer'], 0, 60, true);
       clampKeys(m, ['ringVolume'], 0, 1);
       if (m.ringId !== undefined && !_P.ringId(m.ringId)) delete m.ringId;
       break;
     }
+    case 'chat:open': m.name = _P.text(m.name, PROTO.NAME_MAX).replace(/[\u0000-\u001F\u007F]/g, ' '); break;
+    case 'chat:msg': m.text = _P.text(m.text, PROTO.CHAT_TEXT_MAX).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ''); break;
   }
   return m;
 }

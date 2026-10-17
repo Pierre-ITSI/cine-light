@@ -137,6 +137,7 @@ function suspendScreen() {
   hideScreenMedia();
   stopScreenEffect();
   screenCallHide();
+  screenChatHide();
   setBlackout(false);
   screenDmxReset();
   stopScreenAlive();
@@ -213,6 +214,7 @@ function goBackToSplash() {
   hideScreenMedia();
   stopScreenEffect();
   screenCallHide();
+  screenChatHide();
   setBlackout(false);
   screenDmxReset();
   // Fermer réellement la session écran : sinon le téléphone continue de

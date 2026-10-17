@@ -1,25 +1,35 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ SIMULATEUR D'APPEL ══════════════════════════
-// Télécommande : configure et déclenche. Écran : affiche l'overlay (appel,
-// SMS, messagerie ; styles Verre / Tonal / Épuré), sonne (WebAudio : sons
-// intégrés synthétisés, ou son importé mis en cache — 81-ringtones.js), vibre
-// (Android) et renvoie son état (ringing/incall/declined/ended).
+// Télécommande (onglet Tel) : configure et déclenche. Écran : affiche l'overlay
+// (appel, SMS, notification d'application — 84-notification.js ; styles
+// Verre / Tonal / Épuré), sonne (WebAudio : sons intégrés synthétisés, ou son
+// importé mis en cache — 81-ringtones.js), vibre (Android) et renvoie son état
+// (ringing/incall/declined/ended). La discussion (fil de messages) est à part :
+// 83-discussion.js. L'ancienne « messagerie » (kind chat) est devenue SMS.
 
 // — Télécommande —
+// callKind : 'call' | 'sms' | 'notif' | 'discussion'
 let callKind = 'call', callStyle = 'glass', _callPhoto = null;
 let _callUiTimer = null, _callUiT0 = 0;
+const CALL_KINDS = ['call', 'sms', 'notif', 'discussion'];
 
-// Application fictive par défaut selon le type de message (modifiable)
-const _CALL_APP_DEFAULTS = { sms: { name: 'SMS', color: '#2f8cf0' }, chat: { name: 'Messagerie', color: '#7a5af8' } };
+// Application fictive par défaut d'un SMS (modifiable)
+const _CALL_APP_DEFAULTS = { sms: { name: 'SMS', color: '#2f8cf0' } };
 const _CALL_STYLE_HINTS = {
   glass: 'Translucide et flouté, boutons ronds.',
   tonal: 'Surfaces tonales, gros avatar, boutons pilule.',
   minimal: 'Sobre et contrasté, sans effet.',
 };
 
+function _callShow(id, on, disp) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = on ? (disp || 'block') : 'none';
+}
 function setCallKind(k) {
+  if (k === 'chat' || k === 'whatsapp') k = 'sms'; // ancienne messagerie
+  if (!CALL_KINDS.includes(k)) k = 'call';
   callKind = k;
-  ['call','sms','chat'].forEach(x => {
+  CALL_KINDS.forEach(x => {
     const b = document.getElementById('callkind-' + x);
     if (b) b.classList.toggle('active', x === k);
   });
@@ -29,26 +39,44 @@ function setCallKind(k) {
   const an = document.getElementById('callAppName'), ac = document.getElementById('callAppColor');
   if (def && an && !an.dataset.touched) an.value = def.name;
   if (def && ac && !ac.dataset.touched) ac.value = def.color;
-  document.getElementById('callPresentRow').style.display = k === 'call' ? 'block' : 'none';
-  document.getElementById('callMsgPanel').style.display = k === 'call' ? 'none' : 'block';
-  document.getElementById('callLockPanel').style.display = k === 'call' ? 'none' : 'block';
+  const call = k === 'call', sms = k === 'sms', notif = k === 'notif', disc = k === 'discussion';
+  _callShow('callStyleRow', !notif);
+  _callShow('callPresentRow', call);
+  _callShow('callWhoPanel', call || sms);
+  _callShow('callMsgPanel', sms);
+  _callShow('callLockPanel', sms);
+  _callShow('callTriggerPanel', !disc);
+  _callShow('callTriggerBtn', !notif, 'flex');
+  _callShow('callAnswerBtn', !notif, 'flex');
+  _callShow('callListPanel', !disc, 'flex');
+  notifShowForm(notif);       // 84-notification.js (son : panneau déplacé sous la tuile « Son »)
+  chatShowForm(disc);         // 83-discussion.js
+  _syncCallStyleChips();
   renderRingPanel(); // « Sonnerie » (appel) ou « Son de notification » : choix propre au type
   _syncCallPhotoRow();
   const btn = document.getElementById('callTriggerBtn');
-  if (btn) btn.innerHTML = k === 'call'
+  if (btn) btn.innerHTML = call
     ? '<span class="media-icon">📞</span> Faire sonner'
     : '<span class="media-icon">💬</span> Envoyer la notification';
-  renderCallListSaveLabel(); // « + Enregistrer l'appel / le SMS actuel »
+  renderCallListSaveLabel(); // « + Enregistrer l'appel / le SMS / la notification actuel(le) »
 }
+// Style : commun à l'appel et au SMS ; la discussion a le sien (83-discussion.js),
+// la notification aussi (84-notification.js, tuile « Style »)
 function setCallStyle(s) {
-  callStyle = s;
+  if (!_CALL_STYLE_HINTS[s]) s = 'glass';
+  if (callKind === 'discussion') chatSetStyle(s);
+  else callStyle = s;
+  _syncCallStyleChips();
+  _syncCallPhotoRow();
+}
+function _syncCallStyleChips() {
+  const s = callKind === 'discussion' ? chatStyleNow() : callStyle;
   ['glass','tonal','minimal'].forEach(x => {
     const b = document.getElementById('callstyle-' + x);
     if (b) b.classList.toggle('active', x === s);
   });
   const h = document.getElementById('callStyleHint');
-  if (h) h.textContent = _CALL_STYLE_HINTS[s] || '';
-  _syncCallPhotoRow();
+  if (h) h.textContent = callKind === 'discussion' ? (_CHAT_STYLE_HINTS[s] || '') : (_CALL_STYLE_HINTS[s] || '');
 }
 
 // Présentation de l'appel entrant : plein écran ou bandeau haut
@@ -198,21 +226,25 @@ function onLockWall(files) {
 }
 // Fond d'écran verrouillé vers les écrans donnés (défaut : la cible) qui ne
 // l'ont pas encore (un seul exemplaire en cache, __lockwall)
-function ensureLockWall(screens) {
-  const data = _lockWallData;
+function ensureLockWall(screens) { return ensureSlotImage('__lockwall', _lockWallData, screens); }
+// Image à emplacement unique en cache sur l'écran (fond verrouillé des SMS
+// __lockwall, des notifications __notifwall, avatar de la discussion
+// __chatavatar) vers les écrans donnés (défaut : la cible) qui ne l'ont pas
+function ensureSlotImage(key, data, screens) {
   if (!data) return Promise.resolve();
   const ids = screens || scrTargetIds();
-  if (!ids.length) return sendImageChunks(data, { mediaId: '__lockwall', show: false }); // aucun écran connu : comme avant
-  const lack = ids.filter((s) => scrState(s).sent.get('__lockwall') !== data);
-  for (const s of lack) scrState(s).sent.set('__lockwall', data);
-  return sendImageChunks(data, { mediaId: '__lockwall', show: false, screens: lack });
+  if (!ids.length) return sendImageChunks(data, { mediaId: key, show: false }); // aucun écran connu : comme avant
+  const lack = ids.filter((s) => scrState(s).sent.get(key) !== data);
+  for (const s of lack) scrState(s).sent.set(key, data);
+  return sendImageChunks(data, { mediaId: key, show: false, screens: lack });
 }
 // Réglages de l'appel du formulaire (champs de call:start, sans photo ni son :
 // hasPhoto / hasAudio disent s'ils accompagnent l'appel ; ringId désigne un son
 // importé préchargé). Aussi la forme d'une entrée de la liste enregistrée
 // (82-call-list.js).
 function callFormFields() {
-  const lockOn = callKind !== 'call' && document.getElementById('lockToggle').checked;
+  if (callKind === 'notif') return notifFormFields(); // 84-notification.js
+  const lockOn = callKind === 'sms' && document.getElementById('lockToggle').checked;
   return Object.assign({
     kind: callKind,
     style: callStyle,
@@ -242,8 +274,10 @@ function callFormFields() {
 // chacun garde sa place en cache, envoyé une fois puis seulement s'il manque
 // (81-ringtones.js). Envois et appels restent dans l'ordre.
 // screens : écrans destinataires (défaut : la cible au moment de l'appel).
+// photoKey : emplacement de la photo (__callphoto ; icône d'une notification : __notificon).
 let _callAssetChain = Promise.resolve();
-function ensureCallAssets(photo, audio, rings, screens) {
+function ensureCallAssets(photo, audio, rings, screens, photoKey) {
+  const pk = photoKey || '__callphoto';
   const ids = screens || scrTargetIds();
   _callAssetChain = _callAssetChain.then(async () => {
     const lacking = (key, data) => {
@@ -252,8 +286,8 @@ function ensureCallAssets(photo, audio, rings, screens) {
       return l;
     };
     if (photo) {
-      const l = lacking('__callphoto', photo);
-      if (l.length) await sendImageChunks(photo, { mediaId: '__callphoto', show: false, screens: l });
+      const l = lacking(pk, photo);
+      if (l.length) await sendImageChunks(photo, { mediaId: pk, show: false, screens: l });
     }
     if (audio) {
       const l = lacking('__callaudio', audio);
@@ -272,19 +306,22 @@ function ensureCallAssets(photo, audio, rings, screens) {
 
 async function triggerCall() {
   const fields = callFormFields();
+  const notif = fields.kind === 'notif';
+  const photo = notif ? _notifIcon : _callPhoto, pk = notif ? '__notificon' : '__callphoto';
   if (linkBleOnly()) {
     // Bluetooth seul (commandes uniquement) : photo et bande son ne partent pas ;
     // annoncées seulement si chaque écran visé a déjà celles du formulaire
     const ids = scrTargetIds();
     const on = (key, data) => !!data && ids.length > 0 && ids.every((s) => scrState(s).cached.has(key) && scrState(s).sent.get(key) === data);
-    fields.hasPhoto = on('__callphoto', _callPhoto);
+    fields.hasPhoto = on(pk, photo);
     fields.hasAudio = on('__callaudio', _callAudioData);
   } else {
-    // La photo, la bande son et le son importé (fragments) partent avant l'appel qui les utilise
-    await ensureCallAssets(_callPhoto, _callAudioData, fields.ringId ? [fields.ringId] : null);
+    // La photo (icône), la bande son et le son importé (fragments) partent avant l'appel qui les utilise
+    await ensureCallAssets(photo, notif ? null : _callAudioData, fields.ringId ? [fields.ringId] : null, undefined, pk);
+    if (notif && fields.present === 'lock') await ensureSlotImage('__notifwall', _notifWallData);
   }
   sendMsg(Object.assign({ type: 'call:start' }, fields));
-  _setCallStatusUI(fields.kind === 'call' ? '📞 Sonnerie envoyée…' : '💬 Notification envoyée');
+  _setCallStatusUI(fields.kind === 'call' ? '📞 Sonnerie envoyée…' : notif ? '🔔 Notification envoyée' : '💬 SMS envoyé');
 }
 function _setCallStatusUI(t) {
   const el = document.getElementById('callStatus');
@@ -382,7 +419,7 @@ function _startRinging(cfg) {
   }
   _startBuiltinRing(cfg.ring, vol);
 }
-// Notification (SMS / messagerie, bannière ou écran verrouillé) : une fois
+// Notification (SMS / notification d'application, bannière ou écran verrouillé) : une fois
 function _playNotifSound(cfg) {
   const vol = cfg.ringVolume;
   if (cfg.ringId) {
@@ -397,7 +434,7 @@ function _notifBuiltin(kind, ring, vol) {
   if (ring === 'silent') return;
   if (ring === 'digital') { _tone(1250, 0, 0.07, 0.13 * v, 'square'); _tone(1250, 0.13, 0.07, 0.13 * v, 'square'); }
   else if (ring === 'soft') { [659, 988].forEach((f, i) => _tone(f, i * 0.2, 0.4, 0.13 * v, 'sine')); }
-  else if (kind === 'chat') { _tone(880, 0, 0.09, 0.16 * v, 'sine'); _tone(1174, 0.12, 0.12, 0.16 * v, 'sine'); }
+  else if (kind === 'notif') { _tone(880, 0, 0.09, 0.16 * v, 'sine'); _tone(1174, 0.12, 0.12, 0.16 * v, 'sine'); } // son de l'ancienne messagerie
   else { [1318, 1046, 784].forEach((f, i) => _tone(f, i * 0.13, 0.18, 0.15 * v, 'sine')); }
 }
 
@@ -504,8 +541,8 @@ function _scHeadAvatar(m) {
 
 // Photo de l'appel : celle préparée pour cet appel enregistré (photoId), sinon
 // __callphoto. Photo préparée absente : aucune (jamais celle d'un autre appel).
-function _cachedCallPhoto(photoId) {
-  const c = _mediaCache.get(photoId || '__callphoto');
+function _cachedCallPhoto(photoId, slot) {
+  const c = _mediaCache.get(photoId || slot || '__callphoto');
   return c && c.kind === 'img' ? safeImageData(c.data) : null;
 }
 function screenCallStart(m) {
@@ -514,8 +551,10 @@ function screenCallStart(m) {
   _callHideSeq++; // annule une éventuelle fermeture animée encore en attente
   // Tout ce qui vient du réseau est normalisé/validé avant d'être affiché
   m = m || {};
+  // Ancienne messagerie (chat, whatsapp) : affichée comme un SMS
+  const kind = m.kind === 'call' || m.kind === 'notif' ? m.kind : 'sms';
   _callCfg = {
-    kind: m.kind === 'call' ? 'call' : (m.kind === 'sms' ? 'sms' : 'chat'), // 'whatsapp' (ancien) → 'chat'
+    kind,
     style: _scStyle(m.style),
     name: String(m.name || '').slice(0, 40),
     label: String(m.label || '').slice(0, 40),
@@ -523,7 +562,8 @@ function screenCallStart(m) {
     appName: String(m.appName || '').slice(0, 24),
     appColor: safeHexColor(m.appColor, null),
     // Photo préchargée en fragments (__callphoto), validée à la réception
-    photo: m.hasPhoto ? _cachedCallPhoto(m.photoId) : null,
+    // Notification : icône de l'application (__notificon)
+    photo: m.hasPhoto ? _cachedCallPhoto(m.photoId, kind === 'notif' ? '__notificon' : null) : null,
     photoMode: m.photoMode === 'full' ? 'full' : 'avatar',
     present: m.present === 'banner' ? 'banner' : 'full',
     ring: m.ring,
@@ -536,6 +576,7 @@ function screenCallStart(m) {
     autoAnswer: Math.max(0, Math.min(60, Number(m.autoAnswer) || 0)),
     lock: m.lock ? { time: String(m.lock.time || '').slice(0, 8), date: String(m.lock.date || '').slice(0, 30) } : null,
   };
+  if (kind === 'notif') Object.assign(_callCfg, notifScreenCfg(m)); // 84-notification.js : lock, phone, received
   const el = document.getElementById('screen-call'); if (!el) return;
   el.style.display = 'block';
   if (_callCfg.kind === 'call') {
@@ -569,15 +610,11 @@ function screenCallStart(m) {
 
 // Application fictive affichée sur les notifications (nom + couleur réglables)
 function _scApp(m) {
-  const sms = m.kind === 'sms';
-  return {
-    name: m.appName || (sms ? 'SMS' : 'Messagerie'),
-    color: m.appColor || (sms ? '#2f8cf0' : '#7a5af8'),
-    icon: sms ? _SCI.bubble : _SCI.chat,
-  };
+  return { name: m.appName || 'SMS', color: m.appColor || '#2f8cf0', icon: _SCI.bubble };
 }
 // Carte de notification (bannière ou écran verrouillé), selon le style
 function _scNotifCard(m, extraCls) {
+  if (m.kind === 'notif') return notifCardHtml(m, extraCls); // 84-notification.js
   const app = _scApp(m);
   const cls = 'sc-notif ' + m.style + (extraCls ? ' ' + extraCls : '');
   const click = extraCls ? '' : ' onclick="event.stopPropagation();screenCallEnd()"';
@@ -612,11 +649,13 @@ function _scLockDate(d) {
 }
 function _scRenderLock() {
   const m = _callCfg, el = document.getElementById('screen-call');
-  const wall = _mediaCache.get('__lockwall');
-  const wallUrl = wall && wall.kind === 'img' ? wall.data : null;
-  const now = new Date();
+  // Notification : son propre fond (__notifwall), date longue du faux téléphone
+  const notif = m.kind === 'notif';
+  const wall = _mediaCache.get(notif ? '__notifwall' : '__lockwall');
+  const wallUrl = wall && wall.kind === 'img' ? safeImageData(wall.data) : null;
+  const now = notif ? notifPhoneNow(m.phone) : new Date();
   const time = m.lock.time || (String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'));
-  const date = m.lock.date || _scLockDate(now);
+  const date = m.lock.date || (notif ? notifLongDate(now) : _scLockDate(now));
   // Tonal : heures et minutes empilées
   const clock = m.style === 'tonal'
     ? escapeHtml(time).replace(':', '<br>')

@@ -4,7 +4,7 @@
    la passerelle DMX (mode Étendu 16). */
 .call-list{display:flex;flex-direction:column;gap:12px}
 .call-list .panel-label{margin-bottom:0}
-.cl-kinds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cl-kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .cl-kinds .gw-seg-btn{height:42px}
 .cl-head,.cl-row{display:grid;grid-template-columns:30px minmax(0,1fr) 62px 30px;gap:8px}
 .cl-head{padding:0 10px;font-size:.5625rem;letter-spacing:.12em;color:#a8a8a8;text-transform:uppercase}

@@ -45,16 +45,17 @@ function closeOfflineView() {
 function prepRingIds() {
   const ids = new Set();
   for (const k of RING_KINDS) if (ringLibHas(ringSettings[k].sound)) ids.add(ringSettings[k].sound);
-  for (const e of [...callList.call, ...callList.sms]) if (ringLibHas(e.ringId)) ids.add(e.ringId);
+  for (const e of [...callList.call, ...callList.sms, ...callList.notif]) if (ringLibHas(e.ringId)) ids.add(e.ringId);
   return [...ids];
 }
 // Ordre d'envoi : petits éléments d'abord (sons, photos), puis images, puis vidéos
 async function prepItems() {
   const items = [];
-  if (_lockWallData) items.push({ id: '__lockwall', cat: 'wall' });
+  if (_lockWallData) items.push({ id: '__lockwall', cat: 'wall', data: _lockWallData });
+  if (_notifWallData) items.push({ id: '__notifwall', cat: 'wall', data: _notifWallData }); // fond propre aux notifications
   for (const id of prepRingIds()) items.push({ id, cat: 'ring' });
   const seen = new Set();
-  for (const e of [...callList.call, ...callList.sms]) {
+  for (const e of [...callList.call, ...callList.sms, ...callList.notif]) {
     if (!e.hasPhoto && !e.hasAudio) continue;
     let ids;
     try { ids = await callEntryPrepIds(e); } catch (_) { continue; }
@@ -76,7 +77,7 @@ function prepHas(sid, it) {
   const st = scrState(sid);
   if (!st.cached.has(it.id)) return false;
   // Fond verrouillé : un seul emplacement ; celui envoyé depuis a changé ?
-  if (it.cat === 'wall') return !st.sent.has('__lockwall') || st.sent.get('__lockwall') === _lockWallData;
+  if (it.cat === 'wall') return !st.sent.has(it.id) || st.sent.get(it.id) === it.data;
   return true;
 }
 
@@ -229,9 +230,9 @@ async function prepWait(it, sids, ms) {
 const _prepAckMs = (chars) => 8000 + Math.round(chars / 30); // ≈ 30 Ko/s au pire (broker public)
 async function prepSendItem(it, sids) {
   if (it.cat === 'wall') {
-    for (const s of sids) scrState(s).sent.delete('__lockwall');
-    await ensureLockWall(sids);
-    return prepWait(it, sids, _prepAckMs((_lockWallData || '').length));
+    for (const s of sids) scrState(s).sent.delete(it.id);
+    await ensureSlotImage(it.id, it.data, sids);
+    return prepWait(it, sids, _prepAckMs((it.data || '').length));
   }
   if (it.cat === 'ring') {
     for (const s of sids) scrState(s).sent.delete(it.id);

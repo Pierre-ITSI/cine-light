@@ -4,12 +4,16 @@ buildEffectCards();
 loadFxMemories();
 renderFxMemories();
 
-// ── Onglet Appel : état initial des options, sons par type (bibliothèque en
-// IndexedDB, chargée en arrière-plan), appels et SMS enregistrés ──
+// ── Onglet Tel : état initial des options, sons par type (bibliothèque en
+// IndexedDB, chargée en arrière-plan), appels, SMS et notifications
+// enregistrés, discussion préparée ──
 _syncCallPhotoRow();
 ringInit();
 loadCallList();
 renderCallList();
+chatLoad();
+renderNotifForm();
+renderChatPanel();
 
 // ── Mini-carte sticky : apparaît dès que la preview commence à être masquée ──
 (function initStickyPreview() {

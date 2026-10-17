@@ -110,6 +110,7 @@
   <img id="screen-media-img" alt="">
   <video id="screen-media-video" playsinline autoplay></video>
   <div id="screen-dim"></div>
+  <div id="screen-chat"></div>
   <div id="screen-call"></div>
   <div id="screen-blackout"></div>
   <div id="screen-identify"></div>
@@ -169,7 +170,7 @@
     <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects">✨ Effets</button>
     <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash">🔦 Flash<span class="beta-badge">Bêta</span></button>
     <button class="tab-btn" onclick="switchTab('media')" id="tab-media">🎞 Média</button>
-    <button class="tab-btn" onclick="switchTab('call')" id="tab-call">📞 Appel</button>
+    <button class="tab-btn" onclick="switchTab('call')" id="tab-call">📞 Tel</button>
     <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr">📡 QR</button>
   </div>
 
@@ -642,10 +643,12 @@
   <div class="tab-content" id="content-call">
     <div class="panel">
       <div class="panel-label">Type</div>
-      <div class="chips-wrap">
-        <button class="chip active" id="callkind-call" onclick="setCallKind('call')">📞 Appel</button>
-        <button class="chip" id="callkind-sms" onclick="setCallKind('sms')">✉️ SMS</button>
-        <button class="chip" id="callkind-chat" onclick="setCallKind('chat')">💬 Messagerie</button>
+      <!-- Onglet Tel (maquettes 24 et 26) : appel, SMS, notification d'application, discussion -->
+      <div class="tel-kinds">
+        <button type="button" class="gw-seg-btn active" id="callkind-call" onclick="setCallKind('call')">📞 Appel</button>
+        <button type="button" class="gw-seg-btn" id="callkind-sms" onclick="setCallKind('sms')">✉️ SMS</button>
+        <button type="button" class="gw-seg-btn" id="callkind-notif" onclick="setCallKind('notif')">🔔 Notification</button>
+        <button type="button" class="gw-seg-btn tel-kind-wide" id="callkind-discussion" onclick="setCallKind('discussion')">💬 Discussion</button>
       </div>
       <div id="callStyleRow" style="margin-top:14px">
         <div class="panel-label">Style</div>
@@ -671,7 +674,7 @@
         </div>
       </div>
     </div>
-    <div class="panel">
+    <div class="panel" id="callWhoPanel">
       <div class="panel-label">Appelant</div>
       <input type="text" id="callName" class="text-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%;margin-bottom:10px">
       <input type="text" id="callLabel" class="text-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px">
@@ -710,7 +713,76 @@
       </div>
       <div class="media-status" id="lockWallStatus">Sans fond : dégradé sombre. Heure/date vides : celles de l'écran.</div>
     </div>
-    <!-- Sonnerie (appel) / son de notification (SMS, messagerie) : sons intégrés ou importés (maquette 12) -->
+    <!-- Notification d'application (maquette 24) : style, fond et son propres, indépendants des SMS -->
+    <div class="panel" id="ntAppPanel" style="display:none">
+      <div class="panel-label">Application</div>
+      <div class="nt-app">
+        <button type="button" class="nt-icon" id="ntIconPreview" aria-label="Changer l'icône" onclick="document.getElementById('ntIconInput').click()"></button>
+        <div class="nt-app-main">
+          <input type="text" id="ntAppName" class="text-input" value="Banque Atlas" maxlength="24" placeholder="Nom de l'application" oninput="renderNotifForm()">
+          <span class="nt-links">
+            <button type="button" class="nt-link" onclick="document.getElementById('ntIconInput').click()">Changer l'icône (PNG, JPG)</button>
+            <button type="button" class="nt-link nt-link-dim" id="ntIconClear" style="display:none" onclick="clearNotifIcon()">Retirer</button>
+          </span>
+        </div>
+        <input type="file" id="ntIconInput" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onNotifIcon(this.files);this.value=''">
+      </div>
+      <div class="media-status nt-status" id="ntIconStatus" style="display:none"></div>
+    </div>
+    <div class="panel nt-show" id="ntShowPanel" style="display:none">
+      <div class="panel-label">Affichage</div>
+      <div class="nt-seg">
+        <button type="button" class="gw-seg-btn active" id="ntpres-banner" onclick="setNotifPresent('banner')">Bandeau (déverrouillé)</button>
+        <button type="button" class="gw-seg-btn" id="ntpres-lock" onclick="setNotifPresent('lock')">Écran verrouillé</button>
+      </div>
+      <div class="panel-label nt-sub">Heure du téléphone</div>
+      <div class="nt-row">
+        <label class="text-input nt-date" id="ntPhoneDateBox" onclick="ntOpenPicker(event, 'ntPhoneDate')"><span id="ntPhoneDateText"></span><input type="date" id="ntPhoneDate" aria-label="Date du téléphone" onchange="renderNotifForm()"></label>
+        <input type="text" id="ntPhoneTime" class="text-input nt-time" placeholder="Heure réelle" inputmode="numeric" maxlength="5" aria-label="Heure du téléphone" oninput="renderNotifForm()">
+      </div>
+      <div class="panel-label nt-sub">Reçue</div>
+      <div class="nt-seg nt-recv">
+        <button type="button" class="gw-seg-btn active" id="ntrecv-now" onclick="setNotifReceived('now')">Maintenant</button>
+        <div class="gw-seg-btn nt-ago" id="ntrecv-ago" role="button" tabindex="0" onclick="setNotifReceived('ago')">il y a <input type="text" id="ntAgoMin" value="15" maxlength="5" inputmode="numeric" aria-label="Minutes écoulées" onfocus="setNotifReceived('ago')" oninput="renderNotifForm()"> min</div>
+        <button type="button" class="gw-seg-btn" id="ntrecv-at" onclick="setNotifReceived('at')">Date et heure</button>
+      </div>
+      <div class="nt-row" id="ntAtRow" style="display:none">
+        <label class="text-input nt-date" id="ntAtDateBox" onclick="ntOpenPicker(event, 'ntAtDate')"><span id="ntAtDateText"></span><input type="date" id="ntAtDate" aria-label="Date de réception" onchange="renderNotifForm()"></label>
+        <input type="text" id="ntAtTime" class="text-input nt-time" placeholder="Heure" inputmode="numeric" maxlength="5" aria-label="Heure de réception" oninput="renderNotifForm()">
+      </div>
+      <div class="panel-label nt-sub">Titre et contenu</div>
+      <input type="text" id="ntTitle" class="text-input nt-title" value="Virement reçu" maxlength="40" placeholder="Titre">
+      <textarea id="ntBody" class="text-input nt-body" maxlength="200" placeholder="Contenu">Vous avez reçu 2 400,00 € de SARL Prod Nord. Solde disponible : 3 182,45 €.</textarea>
+    </div>
+    <div class="nt-actions" id="ntSendPanel" style="display:none">
+      <button type="button" class="nt-send" id="ntSendBtn" onclick="triggerCall()">🔔 Envoyer la notification</button>
+      <div class="nt-tiles">
+        <button type="button" class="nt-tile" id="ntTile-style" onclick="toggleNotifDetail('style')"><span>Style</span><b id="ntTileStyle"></b></button>
+        <button type="button" class="nt-tile" id="ntTile-wall" onclick="toggleNotifDetail('wall')"><span>Fond</span><b id="ntTileWall"></b></button>
+        <button type="button" class="nt-tile" id="ntTile-sound" onclick="toggleNotifDetail('sound')"><span>Son</span><b id="ntTileSound"></b></button>
+      </div>
+      <div class="nt-note">Réglages propres aux notifications, indépendants des SMS.</div>
+      <div class="panel nt-detail" id="ntDetail-style" style="display:none">
+        <div class="panel-label">Style de la notification</div>
+        <div class="chips-wrap">
+          <button class="chip active" id="ntstyle-glass" onclick="setNotifStyle('glass')">Verre</button>
+          <button class="chip" id="ntstyle-tonal" onclick="setNotifStyle('tonal')">Tonal</button>
+          <button class="chip" id="ntstyle-minimal" onclick="setNotifStyle('minimal')">Épuré</button>
+        </div>
+        <div class="media-status" id="ntStyleHint" style="text-align:left;margin-top:8px"></div>
+      </div>
+      <div class="panel nt-detail" id="ntDetail-wall" style="display:none">
+        <div class="panel-label">Fond de l'écran verrouillé</div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div id="ntWallPreview" class="nt-wall-preview"></div>
+          <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('ntWallInput').click()">🖼 Fond d'écran</button>
+          <input type="file" id="ntWallInput" accept="image/*" style="display:none" onchange="onNotifWall(this.files);this.value=''">
+        </div>
+        <div class="media-status" id="ntWallStatus">Sans fond : dégradé sombre. Propre aux notifications.</div>
+      </div>
+      <div id="ntSoundSlot"></div>
+    </div>
+    <!-- Sonnerie (appel) / son de notification (SMS, notification) : sons intégrés ou importés (maquette 12) -->
     <div class="panel" id="callRingPanel">
       <div class="panel-label" id="ringPanelLabel">Sonnerie</div>
       <div class="chips-wrap" style="margin-bottom:14px">
@@ -746,26 +818,64 @@
       </div>
       <div class="rt-note">Les sonneries importées sont envoyées et gardées sur l'écran de jeu : elles sonnent même sans réseau.</div>
     </div>
-    <div class="panel">
+    <div class="panel" id="callTriggerPanel">
       <button class="media-btn" id="callTriggerBtn" onclick="triggerCall()"><span class="media-icon">📞</span> Faire sonner</button>
       <div style="display:flex;gap:10px">
-        <button class="media-btn" style="flex:1" onclick="sendMsg({type:'call:answer'})">✅ Décrocher</button>
+        <button class="media-btn" style="flex:1" id="callAnswerBtn" onclick="sendMsg({type:'call:answer'})">✅ Décrocher</button>
         <button class="media-btn" style="flex:1;border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)" onclick="sendMsg({type:'call:end'})">⏹ Terminer</button>
       </div>
       <div class="media-status" id="callStatus">—</div>
     </div>
-    <!-- Appels et SMS enregistrés, numérotés (maquette 18) : cibles des canaux Appel / SMS de la passerelle DMX -->
+    <!-- Discussion (maquette 26) : fil préparé, messages du contact envoyés d'ici, ceux du comédien tapés sur l'écran -->
+    <div class="panel dc-contact" id="dcContactPanel" style="display:none">
+      <div class="dc-contact-row">
+        <button type="button" class="dc-avatar" id="dcAvatar" aria-label="Photo du contact" onclick="document.getElementById('dcAvatarInput').click()"></button>
+        <input type="file" id="dcAvatarInput" accept="image/*" style="display:none" onchange="onChatAvatar(this.files);this.value=''">
+        <span class="dc-contact-main">
+          <input type="text" id="dcName" class="dc-name" value="Maman" maxlength="40" aria-label="Nom du contact" oninput="onChatNames()">
+          <span class="dc-state" id="dcState"></span>
+        </span>
+      </div>
+      <label class="dc-actor-row"><span>Comédien</span><input type="text" id="dcActor" class="dc-name" value="Julie" maxlength="40" aria-label="Nom du comédien" oninput="onChatNames()"></label>
+    </div>
+    <div class="panel dc-thread" id="dcThreadPanel" style="display:none">
+      <div class="dc-head"><span class="panel-label">Fil préparé</span><span class="dc-pair" id="dcPair"></span></div>
+      <div class="dc-rows" id="dcRows"></div>
+      <button type="button" class="dc-add" id="dcAdd" onclick="addChatMessage()">+ Ajouter un message · glisser pour réordonner</button>
+    </div>
+    <div class="panel dc-help-card" id="dcActorPanel" style="display:none">
+      <div class="panel-label" id="dcActorLabel"></div>
+      <div class="dc-help">Chaque touche du clavier de l'écran ajoute la lettre suivante du texte prévu. « Envoyer » n'est actif qu'une fois le texte complet.</div>
+    </div>
+    <div class="dc-send" id="dcSendPanel" style="display:none">
+      <div class="dc-send-row">
+        <button type="button" class="dc-go" id="dcGo" onclick="sendNextChatMessage()"></button>
+        <button type="button" class="dc-write" id="dcWriteBtn" onclick="toggleChatWrite()">Écrire…</button>
+      </div>
+      <div class="dc-write-box" id="dcWriteBox" style="display:none">
+        <textarea id="dcWriteText" class="text-input" maxlength="300" aria-label="Message improvisé"></textarea>
+        <button type="button" class="dc-write-send" onclick="sendImprovisedChat()">Envoyer</button>
+      </div>
+      <label class="dc-typing"><input type="checkbox" id="dcTypingToggle" onchange="onChatTypingToggle()"><span id="dcTypingLabel"></span></label>
+      <div class="dc-ctl">
+        <button type="button" class="dc-ctl-btn" id="dcOpenBtn" onclick="openChatOnTarget()">Ouvrir sur l'écran</button>
+        <button type="button" class="dc-ctl-btn" id="dcRestartBtn" onclick="restartChat()">Recommencer</button>
+        <button type="button" class="dc-ctl-btn dc-ctl-close" id="dcCloseBtn" onclick="closeChat()">Fermer</button>
+      </div>
+    </div>
+    <!-- Appels, SMS et notifications enregistrés, numérotés (maquette 18) : appels et SMS = cibles des canaux Appel / SMS de la passerelle DMX -->
     <div class="panel call-list" id="callListPanel">
       <div class="panel-label">Liste enregistrée</div>
       <div class="cl-kinds">
         <button type="button" class="gw-seg-btn active" id="clKind-call" onclick="setCallListKind('call')">Appels (0)</button>
         <button type="button" class="gw-seg-btn" id="clKind-sms" onclick="setCallListKind('sms')">SMS (0)</button>
+        <button type="button" class="gw-seg-btn" id="clKind-notif" onclick="setCallListKind('notif')">Notifs (0)</button>
       </div>
       <div class="cl-head"><span>N°</span><span id="callListWho">Appelant</span><span>DMX</span><span></span></div>
       <div class="cl-rows" id="callListRows"></div>
       <div class="media-pool-empty" id="callListEmpty">Réglez l'appel ci-dessus puis enregistrez-le : il prend le numéro suivant.</div>
       <button type="button" class="cl-save" id="callListSave" onclick="saveCurrentCall()">+ Enregistrer l'appel actuel</button>
-      <div class="cl-note">Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16). Valeur 0 : raccrocher. Glissez pour changer l'ordre.</div>
+      <div class="cl-note" id="callListNote">Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16). Valeur 0 : raccrocher. Glissez pour changer l'ordre.</div>
       <div class="cl-actions" id="callListActions">
         <button type="button" class="cl-go" id="callListGo" onclick="triggerSelectedCallEntry()">Appeler n°1</button>
         <button type="button" class="cl-del" id="callListDel" onclick="deleteSelectedCallEntry()">Supprimer</button>

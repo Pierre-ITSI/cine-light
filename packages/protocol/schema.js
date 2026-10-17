@@ -126,6 +126,11 @@ export const RING_ID_RE = /^__ring_[0-9a-f]{16}$/;
  */
 export const CALL_PHOTO_ID_RE = /^__ph_[0-9a-f]{40}$/;
 export const CALL_AUDIO_ID_RE = /^__au_[0-9a-f]{40}$/;
+/** Message d’une discussion fictive (chat:*) : identifiant court tiré par la télécommande. */
+export const CHAT_ID_RE = /^[A-Za-z0-9_-]{1,12}$/;
+/** Date et heure du faux téléphone (notification) : AAAA-MM-JJ et HH:MM (24 h). */
+export const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+export const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 /** Fragment de data-URL (images/sons) : aucun guillemet, parenthèse ni chevron possible. */
 const DATAURL_SLICE_RE = /^[A-Za-z0-9+/=:;,.-]*$/;
 const BASE64_RE = /^[A-Za-z0-9+/]*={0,2}$/;
@@ -143,6 +148,12 @@ const MEDIA_ID = str(64, MEDIA_ID_RE);
 const SCREEN_ID = str(32, SCREEN_ID_RE);
 const GROUP_ID = str(32, GROUP_ID_RE);
 const LEGACY_ID = str(64, /^[A-Za-z0-9_-]{1,64}$/);
+const CHAT_ID = str(12, CHAT_ID_RE);
+const DATE = str(10, DATE_RE);
+const TIME = str(5, TIME_RE);
+const STYLE3 = oneOf('glass', 'tonal', 'minimal');
+/** Tableau sans doublon */
+const unique = (/** @type {unknown[]} */ a) => new Set(a).size === a.length;
 
 /** Plafonds exportés (documentation + tests). */
 export const LIMITS = Object.freeze({
@@ -166,6 +177,10 @@ export const LIMITS = Object.freeze({
   dmxMediaSlots: 25,
   keyIdChars: 11,
   exchangeIdChars: 16,
+  notifAgoMinutes: 10_080,
+  chatMessages: 40,
+  chatTextChars: 300,
+  chatNameChars: 40,
 });
 const KID = B64U(11);
 const XID = B64U(16);
@@ -517,39 +532,125 @@ const SPECS = {
   // ═══ Télécommande → écran : faux appel / notification ═══
   'call:start': {
     dir: 'r2s', src: ['web'],
-    doc: 'Faux appel entrant ou notification (SMS / messagerie) affiché par l’écran. La photo n’y voyage plus : '
-      + 'elle est envoyée avant, en fragments media-img-* sous l’id __callphoto (comme __lockwall). Un son importé '
-      + '(sonnerie d’appel, son de notification) voyage de même, sous un id dérivé de son contenu (ringId, __ring_…) ; '
-      + 'absent du cache de l’écran, celui-ci joue le son intégré `ring` et le redemande (media:need).',
+    doc: 'Faux appel entrant, SMS ou notification d’application affiché par l’écran. La photo n’y voyage plus : '
+      + 'elle est envoyée avant, en fragments media-img-* sous l’id __callphoto (comme __lockwall) ; l’icône d’une notification '
+      + 'de même, sous __notificon. Un son importé (sonnerie d’appel, son de notification) voyage de même, sous un id dérivé '
+      + 'de son contenu (ringId, __ring_…) ; absent du cache de l’écran, celui-ci joue le son intégré `ring` et le redemande '
+      + '(media:need). kind « chat » / « whatsapp » (ancienne messagerie, retirée) : accepté des anciennes télécommandes, '
+      + 'affiché comme un SMS. Notification (kind « notif ») : name = titre, msg = contenu, appName = application fictive, '
+      + 'present « banner » (bandeau, écran déverrouillé) ou « lock » (carte sur le faux écran verrouillé, fond __notifwall), '
+      + 'phone = date et heure du faux téléphone (absentes : celles de l’écran), received = heure de réception affichée.',
     fields: {
-      kind: req(oneOf('call', 'sms', 'chat', 'whatsapp'), 'appel / sms / messagerie (whatsapp = ancien nom)'),
+      kind: req(oneOf('call', 'sms', 'notif', 'chat', 'whatsapp'), 'appel / sms / notification d’application (chat, whatsapp = ancienne messagerie, affichée en SMS)'),
       style: opt(oneOf('glass', 'tonal', 'minimal', 'ios', 'android', 'generic'), 'style visuel (ios/android/generic = anciens noms)'),
-      name: opt(line(40), 'nom de l’appelant'),
+      name: opt(line(40), 'nom de l’appelant / de l’expéditeur ; titre de la notification'),
       label: opt(line(40), 'sous-titre'),
-      msg: opt(text(200), 'texte du message'),
+      msg: opt(text(200), 'texte du message ; contenu de la notification'),
       appName: opt(line(24), 'nom de l’application fictive'),
       appColor: opt(HEX, 'couleur de l’application fictive'),
-      hasPhoto: opt(bool, 'photo de l’appelant préchargée en fragments (media-img-*, mediaId __callphoto) ; plus jamais en ligne'),
+      hasPhoto: opt(bool, 'photo de l’appelant préchargée en fragments (media-img-*, mediaId __callphoto) ; notification : icône de '
+        + 'l’application (__notificon) ; plus jamais en ligne'),
       ring: opt(oneOf('classic', 'digital', 'soft', 'silent'), 'son intégré : sonnerie (appel, en boucle) ou son de notification '
-        + '(SMS / messagerie, une fois) ; repli quand le son importé ringId manque à l’écran'),
+        + '(SMS / notification, une fois) ; repli quand le son importé ringId manque à l’écran'),
       ringId: opt(str(23, RING_ID_RE), 'son importé préchargé en fragments (media-img-*, mediaId = cet id) ; absent = son intégré'),
       ringVolume: opt(num(0, 1), 'volume du son 0..1 (absent = 1)'),
-      present: opt(oneOf('full', 'banner'), 'plein écran ou bandeau'),
+      present: opt(oneOf('full', 'banner', 'lock'), 'appel : plein écran ou bandeau ; notification : bandeau ou écran verrouillé'),
       photoMode: opt(oneOf('avatar', 'full'), 'photo en avatar ou plein écran'),
       hasAudio: opt(bool, 'bande son préchargée (__callaudio) à jouer au décroché'),
-      photoId: opt(str(45, CALL_PHOTO_ID_RE), 'photo PRÉPARÉE de l’appel enregistré (__ph_…, déjà en cache sur l’écran) à la place de __callphoto ; '
-        + 'absente du cache : pas de photo (jamais celle d’un autre appel)'),
+      photoId: opt(str(45, CALL_PHOTO_ID_RE), 'photo (notification : icône) PRÉPARÉE de l’entrée enregistrée (__ph_…, déjà en cache sur l’écran) '
+        + 'à la place de __callphoto / __notificon ; absente du cache : pas de photo (jamais celle d’un autre appel)'),
       audioId: opt(str(45, CALL_AUDIO_ID_RE), 'bande son PRÉPARÉE de l’appel enregistré (__au_…) à la place de __callaudio ; '
         + 'absente du cache : décroché silencieux'),
       autoAnswer: opt(int(0, 60), 'décroché automatique après n s (0 = non)'),
       lock: opt(nullable(object({
         time: req(line(8), 'heure affichée'),
         date: req(line(30), 'date affichée'),
-      })), 'faux écran verrouillé'),
+      })), 'faux écran verrouillé (SMS)'),
+      phone: opt(object({
+        date: opt(DATE, 'date du faux téléphone AAAA-MM-JJ (absente : celle de l’écran)'),
+        time: opt(TIME, 'heure du faux téléphone HH:MM (absente : celle de l’écran)'),
+      }), 'notification : date et heure du faux téléphone (écran verrouillé, calcul de « Reçue »)'),
+      received: opt(object({
+        mode: req(oneOf('now', 'ago', 'at'), 'maintenant / il y a n min / date et heure'),
+        min: opt(int(0, LIMITS.notifAgoMinutes), 'minutes écoulées (mode ago)'),
+        date: opt(DATE, 'date de réception (mode at)'),
+        time: opt(TIME, 'heure de réception (mode at)'),
+      }), 'notification : heure de réception, affichée comme un téléphone (« maintenant », « il y a 15 min », « 14:17 », « hier »…)'),
+    },
+    refine: m => {
+      const notif = m.kind === 'notif';
+      if (!notif && (m.phone !== undefined || m.received !== undefined)) return 'phone / received : notification seulement';
+      if (m.present === 'lock' && !notif) return 'present « lock » : notification seulement';
+      if (notif && m.present === 'full') return 'notification : present « banner » ou « lock »';
+      const r = m.received;
+      if (r) {
+        if (r.mode === 'ago' && r.min === undefined) return 'received ago sans min';
+        if (r.mode === 'at' && (r.date === undefined || r.time === undefined)) return 'received at sans date et heure';
+        if (r.mode !== 'ago' && r.min !== undefined) return 'received : min hors mode ago';
+        if (r.mode !== 'at' && (r.date !== undefined || r.time !== undefined)) return 'received : date/heure hors mode at';
+      }
+      return null;
     },
   },
   'call:answer': { dir: 'r2s', src: ['web'], doc: 'Décroche le faux appel.', fields: {} },
   'call:end': { dir: 'r2s', src: ['web'], doc: 'Termine le faux appel / la notification.', fields: {} },
+
+  // ═══ Télécommande ↔ écran : discussion fictive (fil préparé) ═══
+  // Petits messages (≤ 2,8 Ko en JSON) : passent aussi par le Bluetooth. Jamais déclenchée par la console DMX.
+  'chat:open': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Ouvre (ou resynchronise) la discussion sur l’écran : contact, style, ordre du fil et messages déjà postés. '
+      + 'Le texte de chaque message voyage à part (chat:msg, envoyés avant). Envoyé à l’ouverture, après une modification du fil '
+      + 'et à la resynchronisation de l’écran (rechargé : il retrouve le fil où il en était). Avatar : fragments media-img-* sous __chatavatar.',
+    fields: {
+      name: req(line(LIMITS.chatNameChars), 'nom du contact'),
+      style: req(STYLE3, 'style des bulles (Verre / Tonal / Épuré)'),
+      hasAvatar: opt(bool, 'avatar du contact préchargé (__chatavatar)'),
+      ids: req(arrayOf(CHAT_ID, LIMITS.chatMessages), 'messages du fil, dans l’ordre préparé'),
+      sent: req(arrayOf(CHAT_ID, LIMITS.chatMessages), 'messages déjà postés, dans l’ordre où ils l’ont été'),
+      typed: opt(int(0, LIMITS.chatTextChars), 'lettres déjà tapées du message du comédien en cours (reprise)'),
+    },
+    refine: m => {
+      if (!unique(m.ids) || !unique(m.sent)) return 'chat:open : identifiant en double';
+      if (!m.sent.every((/** @type {string} */ id) => m.ids.includes(id))) return 'chat:open : message posté absent du fil';
+      return null;
+    },
+  },
+  'chat:msg': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Texte d’un message du fil : du contact (reçu) ou du comédien (préparé, révélé lettre à lettre à chaque touche du clavier de l’écran). '
+      + 'Affiché en texte brut (textContent).',
+    fields: {
+      id: req(CHAT_ID, 'identifiant du message'),
+      from: req(oneOf('contact', 'actor'), 'contact (bulle reçue) ou comédien (bulle envoyée)'),
+      text: req(text(LIMITS.chatTextChars), 'texte (1 à 300 caractères, sauts de ligne permis)'),
+    },
+    refine: m => (m.text.trim() ? null : 'chat:msg : texte vide'),
+  },
+  'chat:post': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Poste un message du contact (déjà décrit par chat:msg) ; typing : indicateur « … écrit » 2 s avant la bulle.',
+    fields: {
+      id: req(CHAT_ID, 'message du contact à poster'),
+      typing: opt(bool, 'indicateur « … écrit » avant la bulle'),
+    },
+  },
+  'chat:close': { dir: 'r2s', src: ['web'], doc: 'Ferme la discussion sur l’écran.', fields: {} },
+  'chat:progress': {
+    dir: 's2r', src: ['web'],
+    doc: 'Frappe du comédien sur l’écran : lettres révélées du message en cours (au plus 4 par seconde).',
+    fields: {
+      id: req(CHAT_ID, 'message en cours'),
+      typed: req(int(0, LIMITS.chatTextChars), 'lettres révélées'),
+      total: req(int(1, LIMITS.chatTextChars), 'lettres du message'),
+    },
+    refine: m => (m.typed > m.total ? 'chat:progress : typed > total' : null),
+  },
+  'chat:sent': {
+    dir: 's2r', src: ['web'],
+    doc: 'Le comédien a envoyé son message (texte complet) : la bulle est postée sur l’écran.',
+    fields: { id: req(CHAT_ID, 'message envoyé') },
+  },
 
   // ═══ Passerelle DMX → écran ═══
   'dmx:look': {

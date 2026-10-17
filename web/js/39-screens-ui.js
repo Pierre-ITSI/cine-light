@@ -204,10 +204,11 @@ function scrNowText(id) {
   const st = scrState(id);
   if (st.call) {
     const who = st.call.name || 'Inconnu';
-    if (st.call.kind === 'sms') return 'SMS · ' + who;
-    if (st.call.kind === 'chat' || st.call.kind === 'whatsapp') return 'Message · ' + who;
+    if (st.call.kind === 'sms' || st.call.kind === 'chat' || st.call.kind === 'whatsapp') return 'SMS · ' + who;
+    if (st.call.kind === 'notif') return 'Notification · ' + who;
     return (st.call.state === 'incall' ? 'En ligne · ' : 'Appel entrant · ') + who;
   }
+  if (chatIsOpenOn(id)) return 'Discussion · ' + chatContactName();
   if (st.dmxLive) return 'Console DMX';
   if (st.blackout) return 'Écran noir';
   const it = st.media ? _mediaPool.find((m) => m.id === st.media) : null;
