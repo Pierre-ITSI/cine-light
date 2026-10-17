@@ -1,5 +1,12 @@
 # Passerelle DMX : réception UDP dans l'app native (Expo SDK 56)
 
+> **Décision du propriétaire (17/10/2026) : unicast uniquement sur iPhone / iPad.**
+> L'autorisation multicast d'Apple ne sera pas demandée. `SETREMOTE_MULTICAST_ENTITLEMENT`
+> reste désactivée ; les consoles envoient leurs univers en unicast vers l'adresse IP de
+> la passerelle (l'écran 14 l'indique). Sur iPhone, la découverte Art-Net automatique
+> (ArtPoll en broadcast) n'est donc pas disponible : saisir l'IP de la passerelle dans la
+> console. Android garde le multicast et le broadcast.
+
 Pour les développeurs. Complète `docs/DMX.md` (manuel des pupitreurs) et le
 paquet `packages/dmx` (moteur). Sources consultées le **15 octobre 2026**
 (§ 9 : 16 octobre 2026).
