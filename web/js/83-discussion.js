@@ -28,7 +28,7 @@
 //     tout ce qui le précède s'affiche d'un coup comme historique (ni « … écrit »,
 //     ni animation), la scène reprend à ce message ; repère orange dans le fil.
 //     « Repartir de zéro » : plus rien d'affiché.
-//   • Discussions enregistrées (maquette validée 26c) : 83-discussions-saved.js.
+//   • Discussions enregistrées (maquette validée 26c) : 89-discussions-saved.js.
 // Protocole (packages/protocol/schema.js) : chat:msg (texte d'un message),
 // chat:open (contact, style, ordre, messages postés ; history : reprise),
 // chat:rewind (« ↶ »), chat:post, chat:close ; retour chat:progress,
@@ -64,7 +64,7 @@ function _chatDefault() {
     ],
     sent: [], open: false, screens: null, progress: null,
     resumeAt: null,  // « Reprendre ici » : message où la scène a repris (repère dans le fil)
-    savedId: null,   // discussion enregistrée chargée ou enregistrée en dernier (83-discussions-saved.js)
+    savedId: null,   // discussion enregistrée chargée ou enregistrée en dernier (89-discussions-saved.js)
   };
 }
 let _chat = _chatDefault();

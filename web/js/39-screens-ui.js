@@ -85,7 +85,7 @@ function renderSheet(focus) {
   const s = _sheet;
   let t = '', h = '', form = s.kind === 'rename' || s.kind === 'group';
   if (s.kind === 'chatName' || s.kind === 'chatMenu') {
-    // Discussions enregistrées (83-discussions-saved.js) : nom, menu « ⋯ »
+    // Discussions enregistrées (89-discussions-saved.js) : nom, menu « ⋯ »
     const c = chatSheetContent(s);
     if (!c) { closeSheet(); return; }
     t = c.title; h = c.html; form = c.form;
@@ -163,7 +163,7 @@ function sheetSave() {
   const s = _sheet;
   const inp = document.getElementById('srName');
   if (!s || !inp) return;
-  if (s.kind === 'chatName') { chatSheetSave(s, inp.value); return; } // 83-discussions-saved.js
+  if (s.kind === 'chatName') { chatSheetSave(s, inp.value); return; } // 89-discussions-saved.js
   if (s.kind === 'rename') scrRenameScreen(s.id, inp.value);
   else if (s.kind === 'group') {
     const members = [...s.members].filter(scrKnown);
