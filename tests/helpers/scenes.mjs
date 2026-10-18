@@ -250,6 +250,29 @@ export const SCENES = {
     }, SCR_IDS[0]);
     await scrollTo('dcContactPanel', 80)(page);
   }),
+  // 26b · « Reprendre ici » au n° 3 : 1 et 2 affichés comme historique, repère orange, bouton « ↶ »
+  'remote-call-discussion-resume': multiScreen(async (page) => {
+    await page.evaluate((julie) => {
+      switchTab('call'); setCallKind('discussion');
+      scrSetTarget({ k: 'screen', id: julie });
+      openChatOnTarget(); resumeChatAt('d3');
+    }, SCR_IDS[0]);
+    await scrollTo('dcTabs', 60)(page);
+  }),
+  // 26c · Discussions enregistrées : quatre entrées, la première chargée dans « Fil en cours »
+  'remote-call-discussion-saved': remote('call', async (page) => {
+    await page.evaluate(() => {
+      const msgs = (n) => Array.from({ length: n }, (_, i) => ({ id: 'm' + (i + 1), from: i % 2 ? 'actor' : 'contact', text: 'Message ' + (i + 1) }));
+      const e = (id, name, contact, actor, style, n) => ({ id, name, contact, actor, style, msgs: msgs(n), hasPhoto: false, photoSig: null });
+      chatSaved = [
+        e('c12', 'Séq. 12 — Maman inquiète', 'Maman', 'Julie', 'glass', 7), e('c14', 'Séq. 14 — Rupture', 'Thomas', 'Julie', 'minimal', 11),
+        e('c21', 'Séq. 21 — Agence', 'Agence Riviera', 'Marc', 'tonal', 4), e('c30', 'Séq. 30 — Groupe famille', 'Papa', 'Julie', 'minimal', 9),
+      ];
+      _chat.savedId = 'c12';
+      setCallKind('discussion'); setChatView('saved');
+    });
+    await scrollTo('dcTabs', 80)(page);
+  }),
   // 12 · Sonnerie de l'appel : sons intégrés, « Vos sonneries », volume, bande son au décroché
   'remote-call-ring': ringScene('call'),
   // Son de notification d'un SMS (même bibliothèque, choix propre au type, sans décroché)
