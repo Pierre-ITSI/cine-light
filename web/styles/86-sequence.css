@@ -1,0 +1,121 @@
+/* SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP */
+/* ══ Séquence (maquettes validées 28 à 32) ══
+   Télécommande : liste des étapes, GO / ↶ / STOP, éditer une étape.
+   Écran : faux téléphone (écran verrouillé et notifications empilées, pavé du
+   code, image d'écran d'accueil), trois styles neutres .glass .tonal .minimal. */
+
+/* Télécommande — liste (maquette 28) */
+.sq{display:flex;flex-direction:column;gap:10px}
+.sq-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.sq-title{font-family:'Lato',sans-serif;font-weight:600;font-size:1.25rem}
+.sq-add{font-family:'DM Mono',monospace;font-size:.6875rem;color:#c8c8c8;border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:8px 10px;background:transparent;cursor:pointer}
+.sq-add:disabled{opacity:.4;cursor:default}
+.sq-sub{display:flex;justify-content:space-between;gap:10px;font-size:.6875rem;color:#c8c8c8}
+.sq-sub span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sq-sub span+span{flex:none;max-width:55%}
+.sq-list{background:var(--mid);border:1px solid var(--border);border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:2px}
+.sq-row{display:grid;grid-template-columns:22px 22px minmax(0,1fr) auto;gap:6px;align-items:center;padding:7px 8px;border-radius:8px;border:1px solid transparent;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.sq-row.done{opacity:.45}
+.sq-row.cur{border-color:var(--accent);background:rgba(255,107,44,.08)}
+.sq-row.next{border:1px dashed rgba(255,255,255,.3)}
+.sq-num{font-size:.625rem;color:#8f8f8f}
+.sq-label{font-size:.6875rem;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sq-row.missing .sq-label{color:#ff8f86}
+.sq-badge{font-size:.5625rem;border:1px solid;border-radius:10px;padding:2px 6px;white-space:nowrap}
+.sq-badge.go,.sq-legend .go{color:#FF8a55}
+.sq-badge.auto,.sq-legend .auto{color:#6fb4ff}
+.sq-badge.actor,.sq-legend .actor{color:#5fdf8a}
+.sq-row.cl-drag-src{opacity:.35;border-style:dashed;border-color:var(--accent)}
+.sq-empty{font-size:.6875rem;color:#a8a8a8;line-height:1.55;text-align:center;padding:14px 6px;border:1px dashed var(--border);border-radius:10px}
+.sq-legend{display:flex;gap:8px;font-size:.5625rem;color:#a8a8a8;justify-content:center}
+.sq-now{background:var(--mid);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:.6875rem;color:#c4c4c4;line-height:1.55}
+.sq-now b{color:var(--text);font-weight:400}
+.sq-now-next{color:#a8a8a8}
+.sq-restart{margin-top:8px;padding:0;border:none;background:none;font-family:'DM Mono',monospace;font-size:.6875rem;color:#FF8a55;cursor:pointer}
+.sq-warn{background:rgba(255,196,64,.08);border:1px solid rgba(255,196,64,.35);border-radius:8px;padding:10px 12px;font-size:.6875rem;color:#ffc440;line-height:1.5}
+/* GO / ↶ / STOP : toujours à portée de doigt (collés en bas pendant le défilement) */
+.sq-ctl{position:sticky;bottom:0;display:flex;gap:8px;padding-top:8px;background:linear-gradient(to top,rgba(10,10,15,.94) 70%,rgba(10,10,15,0));z-index:5}
+.sq-ctl button{height:60px;border-radius:8px;font-family:'DM Mono',monospace;cursor:pointer}
+.sq-ctl button:disabled{opacity:.4;cursor:default}
+.sq-go{flex:2;border:none;background:var(--accent);color:#000;font-size:1rem;font-weight:500;letter-spacing:.1em}
+.sq-back{flex:1;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-size:.75rem}
+.sq-stop{flex:1;border:1px solid rgba(255,122,112,.5);background:var(--mid2);color:#ff8f86;font-size:.75rem}
+
+/* Télécommande — éditer une étape (maquette 29) */
+#seq-step-view{display:none;position:fixed;inset:0;z-index:300;overflow-y:auto;overflow-x:hidden;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);color:var(--text);font-family:'DM Mono',monospace;padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));flex-direction:column;gap:10px}
+.ss-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.ss-back{width:90px;text-align:left;padding:0;border:none;background:none;font-family:'DM Mono',monospace;font-size:.75rem;color:#c8c8c8;cursor:pointer}
+.ss-title{font-family:'Lato',sans-serif;font-weight:600;font-size:1.125rem}
+.ss-spacer{width:90px}
+.ss-card{background:var(--mid);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ss-card:empty{display:none}
+.ss-label{font-size:.625rem;letter-spacing:.2em;text-transform:uppercase;color:#a8a8a8}
+.ss-label.ss-sub{margin-top:4px}
+.ss-row{display:flex;gap:6px}
+.ss-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.ss-opt{flex:1;min-width:0;min-height:36px;padding:4px 6px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:#d0d0d0;font-family:'DM Mono',monospace;font-size:.625rem;display:flex;align-items:center;justify-content:center;gap:5px;text-align:center;line-height:1.3;cursor:pointer;overflow:hidden;word-break:break-word}
+.ss-opt.on{border-color:var(--accent);background:rgba(255,107,44,.1);color:#FF8a55}
+.ss-opt[style*="--sw"]::before{content:'';flex:none;width:10px;height:10px;border-radius:3px;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.ss-note{font-size:.625rem;color:#a8a8a8;line-height:1.5}
+.ss-note.ss-warn{color:#ff8f86}
+.ss-home{display:flex;align-items:center;gap:10px}
+.ss-home-thumb{width:44px;height:78px;border-radius:6px;border:none;padding:0;flex:none;background:linear-gradient(160deg,#3d5a80,#98c1d9);background-size:cover;background-position:center;cursor:pointer}
+.ss-home-txt{font-size:.625rem;color:#c4c4c4;line-height:1.5;min-width:0;word-break:break-word}
+.ss-link{padding:0;border:none;background:none;font-family:'DM Mono',monospace;font-size:.625rem;color:#FF8a55;cursor:pointer}
+.ss-stepper{display:flex;align-items:center;gap:8px;font-size:.6875rem;color:#c4c4c4}
+.ss-stepper span{flex:1}
+.ss-step-btn{width:36px;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:.875rem;cursor:pointer}
+.ss-step-val{min-width:64px;text-align:center;font-weight:400;color:var(--text);font-variant-numeric:tabular-nums}
+.ss-err{font-size:.6875rem;color:#ff8f86;text-align:center}
+/* SUPPRIMER / ENREGISTRER : toujours visibles en bas, même quand les choix font défiler la vue */
+.ss-actions{display:flex;gap:8px;margin-top:auto;position:sticky;bottom:calc(-22px - env(safe-area-inset-bottom));padding:10px 0 calc(22px + env(safe-area-inset-bottom));margin-bottom:calc(-22px - env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(10,10,15,.96) 75%,rgba(10,10,15,0))}
+.ss-actions button{height:46px;border-radius:8px;font-family:'DM Mono',monospace;cursor:pointer}
+.ss-del{flex:1;border:1px solid rgba(255,122,112,.5);background:var(--mid2);color:#ff8f86;font-size:.6875rem}
+.ss-save{flex:1.6;border:none;background:var(--accent);color:#000;font-size:.75rem}
+
+/* Écran — faux téléphone (maquettes 30 à 32), sous la discussion (85) et l'appel (95) */
+#screen-phone{display:none;position:absolute;inset:0;z-index:84;color:#fff;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif;cursor:default}
+.sp-lock,.sp-code,.sp-home,.sp-unlocked{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
+.sp-lock,.sp-code{background:linear-gradient(180deg,#24324a 0%,#0e1420 100%);animation:scFadeIn .35s ease}
+.sp-lock{gap:10px;padding:calc(60px + env(safe-area-inset-top)) 14px calc(22px + env(safe-area-inset-bottom))}
+.sp-lock-head{text-align:center}
+.sp-date{font-size:15px;opacity:.85}
+.sp-time{font-size:80px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.sp-stack{margin-top:14px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden}
+.sp-card{display:flex;gap:10px;padding:10px 12px;border-radius:20px;background:rgba(255,255,255,.16);text-align:left;cursor:pointer;flex:none;animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
+.sp-icon{width:34px;height:34px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#3a7bd5,#00d2ff);font-size:16px;font-weight:700}
+.sp-card .sp-icon svg{width:18px;height:18px}
+.sp-body{flex:1;min-width:0}
+.sp-top{display:flex;justify-content:space-between;gap:8px;font-size:12px;opacity:.8}
+.sp-app{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-when{flex:none}
+.sp-name{font-size:14px;font-weight:600}
+.sp-msg{font-size:13px;opacity:.9;line-height:1.3;word-break:break-word}
+.sp-hint{margin-top:auto;text-align:center;color:rgba(255,255,255,.7);font-size:13px}
+/* SMS : bulle sur fond vert ; appel manqué : combiné sur fond rouge (maquette 30) */
+.sp-icon.sp-sms{background:#3a8f5c}
+.sp-icon.sp-missed{background:#c0453a}
+/* Verre : translucide et flouté */
+#screen-phone.glass .sp-card{backdrop-filter:blur(24px) saturate(1.4)}
+/* Tonal : surfaces tonales, heure fine en deux lignes */
+#screen-phone.tonal .sp-lock-head{text-align:left;padding:0 14px;display:flex;flex-direction:column}
+#screen-phone.tonal .sp-time{order:1;font-weight:300;font-size:88px;line-height:.95;margin-top:10px}
+#screen-phone.tonal .sp-date{order:2;font-weight:500;margin-top:8px}
+#screen-phone.tonal .sp-card{background:rgba(43,46,52,.92);border-radius:26px;padding:12px 14px}
+#screen-phone.tonal .sp-key{border-radius:24px;background:rgba(255,255,255,.1)}
+/* Épuré : sobre et contrasté */
+#screen-phone.minimal .sp-time{font-weight:200;font-size:72px}
+#screen-phone.minimal .sp-card{background:#16191f;border:1px solid rgba(255,255,255,.12);border-radius:14px}
+#screen-phone.minimal .sp-key{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+/* Pavé du code (maquette 31) */
+.sp-code{gap:10px;padding:calc(90px + env(safe-area-inset-top)) 30px calc(30px + env(safe-area-inset-bottom))}
+.sp-code-title{text-align:center;font-size:18px}
+.sp-dots{display:flex;justify-content:center;gap:16px;margin:10px 0 26px}
+.sp-dot{width:13px;height:13px;border-radius:50%;border:1.5px solid #fff;background:transparent}
+.sp-dot.on{background:#fff}
+.sp-keys{display:grid;grid-template-columns:repeat(3,72px);gap:18px 26px;justify-content:center}
+.sp-key{width:72px;height:72px;border-radius:50%;border:none;background:rgba(255,255,255,.14);color:#fff;font-family:inherit;font-size:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.sp-key:active{background:rgba(255,255,255,.32)}
+/* Écran d'accueil (maquette 32) : image importée plein écran */
+.sp-home{background:linear-gradient(160deg,#3d5a80 0%,#98c1d9 60%,#e0fbfc 100%);background-size:cover;background-position:center;cursor:pointer}
+.sp-unlocked{background:#000}

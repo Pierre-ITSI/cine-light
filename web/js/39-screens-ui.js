@@ -12,7 +12,7 @@
 // confirmation ; le retrait lui-même : 29-revoke.js.
 // Modèle (registre, cible, état de chaque écran) : 28-screens.js.
 let _svOpen = false;
-let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group' | 'chatName' | 'chatMenu', … }
+let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group' | 'chatName' | 'chatMenu' | 'seqName' | 'seqMenu', … }
 const _uiHtml = new Map();   // dernier HTML posé par conteneur (pas de re-rendu inutile pendant un geste)
 
 function _setHtml(el, html) {
@@ -84,9 +84,9 @@ function renderSheet(focus) {
   const title = document.getElementById('srSheetTitle'), body = document.getElementById('srSheetBody');
   const s = _sheet;
   let t = '', h = '', form = s.kind === 'rename' || s.kind === 'group';
-  if (s.kind === 'chatName' || s.kind === 'chatMenu') {
-    // Discussions enregistrées (89-discussions-saved.js) : nom, menu « ⋯ »
-    const c = chatSheetContent(s);
+  if (s.kind === 'chatName' || s.kind === 'chatMenu' || s.kind === 'seqName' || s.kind === 'seqMenu') {
+    // Discussions enregistrées (89-discussions-saved.js), séquences enregistrées (96-sequences-saved.js) : nom, menu « ⋯ »
+    const c = s.kind.startsWith('seq') ? seqSheetContent(s) : chatSheetContent(s);
     if (!c) { closeSheet(); return; }
     t = c.title; h = c.html; form = c.form;
   } else if (s.kind === 'target') {
@@ -164,6 +164,7 @@ function sheetSave() {
   const inp = document.getElementById('srName');
   if (!s || !inp) return;
   if (s.kind === 'chatName') { chatSheetSave(s, inp.value); return; } // 89-discussions-saved.js
+  if (s.kind === 'seqName') { seqSheetSave(s, inp.value); return; }   // 96-sequences-saved.js
   if (s.kind === 'rename') scrRenameScreen(s.id, inp.value);
   else if (s.kind === 'group') {
     const members = [...s.members].filter(scrKnown);

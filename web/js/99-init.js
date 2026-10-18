@@ -16,6 +16,11 @@ loadSavedChats();      // discussions enregistrées (89-discussions-saved.js)
 renderNotifForm();
 renderChatPanel();
 
+// ── Onglet Séquence : séquence en cours, séquences enregistrées ──
+seqLoad();
+loadSavedSeqs();       // 96-sequences-saved.js
+renderSeq();
+
 // ── Mini-carte sticky : apparaît dès que la preview commence à être masquée ──
 (function initStickyPreview() {
   const row = document.getElementById('previewRow');

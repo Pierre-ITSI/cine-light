@@ -383,6 +383,7 @@ function remoteOnChatSent(m) {
   // Les autres écrans de la discussion suivent
   const others = (_chat.screens || []).filter((s) => s !== _rxFrom);
   if (others.length) _chatSendOpen(others);
+  seqOnChatSent(_rxFrom); // réponse attendue par une Séquence (91-sequence.js)
 }
 // Resynchronisation (24-resync.js) : écrans de la discussion revenus
 function chatOnScreensResync(ids) {

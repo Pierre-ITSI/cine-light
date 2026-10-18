@@ -110,6 +110,7 @@
   <img id="screen-media-img" alt="">
   <video id="screen-media-video" playsinline autoplay></video>
   <div id="screen-dim"></div>
+  <div id="screen-phone"></div>
   <div id="screen-chat"></div>
   <div id="screen-call"></div>
   <div id="screen-blackout"></div>
@@ -165,13 +166,15 @@
     <span id="blackoutIcon">⚫</span><span id="blackoutLabel">Écran ON — appuyer pour éteindre</span>
   </button>
 
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('color')" id="tab-color">🎨 Couleur</button>
-    <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects">✨ Effets</button>
-    <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash">🔦 Flash<span class="beta-badge">Bêta</span></button>
-    <button class="tab-btn" onclick="switchTab('media')" id="tab-media">🎞 Média</button>
-    <button class="tab-btn" onclick="switchTab('call')" id="tab-call">📞 Tel</button>
-    <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr">📡 QR</button>
+  <!-- 7 onglets : icône au-dessus du libellé ; sous 375 px, la barre défile horizontalement -->
+  <div class="tabs" id="tabsBar">
+    <button class="tab-btn active" onclick="switchTab('color')" id="tab-color"><span class="tab-ic">🎨</span> Couleur</button>
+    <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects"><span class="tab-ic">✨</span> Effets</button>
+    <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash"><span class="tab-ic">🔦</span> Flash<span class="beta-badge">Bêta</span></button>
+    <button class="tab-btn" onclick="switchTab('media')" id="tab-media"><span class="tab-ic">🎞</span> Média</button>
+    <button class="tab-btn" onclick="switchTab('call')" id="tab-call"><span class="tab-ic">📞</span> Tel</button>
+    <button class="tab-btn" onclick="switchTab('seq')" id="tab-seq"><span class="tab-ic">🎬</span> Séquence</button>
+    <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr"><span class="tab-ic">📡</span> QR</button>
   </div>
 
   <div class="tab-content active" id="content-color">
@@ -897,6 +900,35 @@
     </div>
   </div>
 
+  <!-- Séquence (maquettes 28 et 29) : étapes qui référencent les états enregistrés des autres onglets, GO / ↶ / STOP -->
+  <div class="tab-content" id="content-seq">
+    <div class="dc-tabs">
+      <button type="button" class="gw-seg-btn active" id="seqTab-cur" onclick="setSeqView('cur')">Séquence en cours</button>
+      <button type="button" class="gw-seg-btn" id="seqTab-saved" onclick="setSeqView('saved')">Enregistrées (0)</button>
+    </div>
+    <div class="sq" id="seqCurView">
+      <div class="sq-head"><span class="sq-title">Séquence</span><button type="button" class="sq-add" id="seqAddBtn" onclick="openSeqStep(null)">+ ÉTAPE</button></div>
+      <div class="sq-sub"><span id="seqName"></span><span id="seqTarget"></span></div>
+      <div class="sq-list" id="seqRows"></div>
+      <div class="sq-empty" id="seqEmpty">Aucune étape. « + ÉTAPE » ajoute la première : couleur, effet, média, appel, SMS, notification, déverrouillage, discussion.</div>
+      <div class="sq-legend"><span class="go">● GO</span><span class="auto">● automatique</span><span class="actor">● geste du comédien</span></div>
+      <div class="sq-now" id="seqNow" role="status"></div>
+      <div class="sq-warn" id="seqWarn" role="alert" style="display:none"></div>
+      <div class="sq-ctl">
+        <button type="button" class="sq-go" id="seqGoBtn" onclick="seqGo()">GO</button>
+        <button type="button" class="sq-back" id="seqBackBtn" aria-label="Revenir d'une étape" title="Revenir d'une étape" onclick="seqBack()">↶</button>
+        <button type="button" class="sq-stop" id="seqStopBtn" onclick="seqStop()">STOP</button>
+      </div>
+    </div>
+    <div class="dc-saved" id="seqSavedView" style="display:none">
+      <div class="dc-saved-rows" id="seqSavedRows"></div>
+      <div class="dc-saved-empty" id="seqSavedEmpty"></div>
+      <div class="dc-saved-hint" id="seqSavedHint"></div>
+      <button type="button" class="cl-save" id="seqSaveBtn" onclick="openSaveSeqSheet()">+ Enregistrer la séquence en cours</button>
+      <div class="cl-note" id="seqSavedNote"></div>
+    </div>
+  </div>
+
   <div class="tab-content" id="content-qr">
     <div class="panel pair-panel">
       <div class="panel-label">Appairer un écran de jeu</div>
@@ -941,6 +973,24 @@
     <div class="sv-chips" id="svGroups"></div>
   </div>
   <div class="sv-note">« Identifier » fait clignoter l'écran concerné pour le reconnaître sur le décor.</div>
+</div>
+
+<!-- Séquence : éditer une étape (maquette 29) -->
+<div id="seq-step-view" role="dialog" aria-modal="true" aria-labelledby="ssTitle">
+  <div class="ss-head">
+    <button type="button" class="ss-back" onclick="closeSeqStep()">← Séquence</button>
+    <span class="ss-title" id="ssTitle">Étape</span>
+    <span class="ss-spacer"></span>
+  </div>
+  <div class="ss-card"><span class="ss-label">Type</span><div class="ss-grid" id="ssKinds"></div></div>
+  <div class="ss-card" id="ssRefCard"></div>
+  <div class="ss-card" id="ssTrigCard"></div>
+  <div class="ss-err" id="ssErr" role="alert" style="display:none"></div>
+  <input type="file" id="seqHomeInput" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onSeqHomeImage(this.files);this.value=''">
+  <div class="ss-actions">
+    <button type="button" class="ss-del" id="ssDel" onclick="seqStepDelete()">SUPPRIMER</button>
+    <button type="button" class="ss-save" id="ssSave" onclick="seqStepSave()">ENREGISTRER</button>
+  </div>
 </div>
 
 <!-- Feuille : cible des commandes (maquette 6), renommer, groupes -->

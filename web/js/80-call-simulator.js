@@ -617,7 +617,7 @@ function _scNotifCard(m, extraCls) {
   if (m.kind === 'notif') return notifCardHtml(m, extraCls); // 84-notification.js
   const app = _scApp(m);
   const cls = 'sc-notif ' + m.style + (extraCls ? ' ' + extraCls : '');
-  const click = extraCls ? '' : ' onclick="event.stopPropagation();screenCallEnd()"';
+  const click = extraCls ? '' : ' onclick="event.stopPropagation();screenNotifTap()"';
   const name = escapeHtml(m.name || ''), msg = escapeHtml(m.msg || ''), appName = escapeHtml(app.name);
   if (m.style === 'tonal') {
     // En-tête discret (pastille + nom d'app), avatar de l'expéditeur à droite
@@ -695,10 +695,11 @@ const _SCI = {
   camera: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M4.5 7h2.6l1.5-2h6.8l1.5 2h2.6A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-9A1.5 1.5 0 0 1 4.5 7z"/><circle cx="12" cy="12.8" r="3.6" fill="#3a3a42"/><circle cx="12" cy="12.8" r="2.2" fill="#fff"/></svg>',
 };
 
-// Boutons d'action (même handler pour les 3 styles)
-const _SC_DECLINE = 'event.stopPropagation();screenCallDecline()';
-const _SC_ANSWER = 'event.stopPropagation();screenCallAnswer()';
-const _SC_HANGUP = 'event.stopPropagation();screenCallEnd()';
+// Boutons d'action (même handler pour les 3 styles) : gestes du comédien,
+// rapportés à une Séquence qui les attend (94-sequence-phone.js)
+const _SC_DECLINE = 'event.stopPropagation();screenTapDecline()';
+const _SC_ANSWER = 'event.stopPropagation();screenTapAnswer()';
+const _SC_HANGUP = 'event.stopPropagation();screenTapHangup()';
 
 function _scRenderIncoming() {
   const m = _callCfg, el = document.getElementById('screen-call');

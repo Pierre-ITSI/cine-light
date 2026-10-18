@@ -294,7 +294,7 @@ function _ntIconHtml(m, cls) {
 // Carte de notification d'application (bandeau ou écran verrouillé), selon le style
 function notifCardHtml(m, extraCls) {
   const cls = 'sc-notif nt-card ' + m.style + (extraCls ? ' ' + extraCls : '');
-  const click = extraCls ? '' : ' onclick="event.stopPropagation();screenCallEnd()"';
+  const click = extraCls ? '' : ' onclick="event.stopPropagation();screenNotifTap()"';
   const when = escapeHtml(notifReceivedLabel(m.received, notifPhoneNow(m.phone)));
   const app = escapeHtml(m.appName || ''), title = escapeHtml(m.name || ''), body = escapeHtml(m.msg || '');
   if (m.style === 'tonal') {

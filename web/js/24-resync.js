@@ -87,6 +87,8 @@ function remoteResync() {
   // Discussion ouverte sur ces écrans : fil, messages postés et avatar renvoyés
   // (un écran rechargé retrouve la discussion où il en était, 83-discussion.js)
   if (ids.length) chatOnScreensResync(ids);
+  // Séquence : faux téléphone (écran verrouillé, notifications empilées, image d'accueil) renvoyé (91-sequence.js)
+  if (ids.length) seqOnScreensResync(ids);
   // Sons importés absents : renvoyés s'ils servent encore (choix d'un type,
   // entrées 1 à 20 sous la passerelle), sinon simplement oubliés
   const rings = ringNeededIds();

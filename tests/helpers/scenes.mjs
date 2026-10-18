@@ -208,6 +208,61 @@ const offlineScene = (extra) => multiScreen(async (page) => {
   await page.evaluate(() => { openOfflineView(); });
 });
 
+// ── Séquence (maquettes 28 à 32) ──
+// « Séq. 12 — « Le message » » : les éléments enregistrés des autres onglets
+// (mémoire de couleur, SMS, appel, discussion, média du pool), huit étapes ;
+// étapes 1 à 3 jouées, l'appel sonne depuis 4 s.
+// Image d'écran d'accueil de test (dégradé de la maquette 32), dessinée dans la page
+const seqHomeImage = (w, h) => {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, w * 0.55, h);
+  gr.addColorStop(0, '#3d5a80'); gr.addColorStop(0.6, '#98c1d9'); gr.addColorStop(1, '#e0fbfc');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(255,255,255,.85)';
+  for (let i = 0; i < 16; i++) g.fillRect(w * (0.1 + (i % 4) * 0.22), h * (0.12 + Math.floor(i / 4) * 0.12), w * 0.14, w * 0.14);
+  return c.toDataURL('image/jpeg', 0.85);
+};
+const seqScene = (extra) => multiScreen(async (page) => {
+  await page.evaluate(async ([julie, tv, imgFn]) => {
+    const T = { k: 'screen', id: julie };
+    const img = (0, eval)('(' + imgFn + ')')(90, 160);
+    colorMemories = [{ id: 'k1', name: 'ambiance nuit', spec: { kelvin: 3200, tint: 0, dimmer: 40, wheelHex: '#ffffff', crossfade: 0 }, strobe: { active: false, random: false, freq: 2, dur: 50, freqMax: 8, durMax: 200, torch: false } }];
+    callList.call = [{ id: 'c1', kind: 'call', style: 'glass', name: 'Maman', label: 'mobile', ring: 'silent', ringVolume: 1, present: 'full', photoMode: 'avatar', autoAnswer: 0 }];
+    callList.sms = [
+      { id: 's1', kind: 'sms', style: 'glass', name: 'Maman', msg: 'Tu es où ?', appName: 'SMS', ring: 'silent', ringVolume: 1, lock: { time: '', date: '' } },
+      { id: 's2', kind: 'sms', style: 'glass', name: 'Maman', msg: 'Rappelle-moi stp', appName: 'SMS', ring: 'silent', ringVolume: 1, lock: null },
+    ];
+    chatSaved = [{ id: 'cm', name: 'Séq. 12 — Maman', contact: 'Maman', actor: 'Julie', style: 'glass', msgs: [{ id: 'd1', from: 'contact', text: 'Rappelle-moi stp' }, { id: 'd2', from: 'actor', text: 'j\'arrive' }], hasPhoto: false, photoSig: null }];
+    _mediaPool = [{ id: 'm1', kind: 'img', name: 'photo plage', file: null, thumb: null }];
+    const sig = seqImageSig(img);
+    await callAssetPut(seqHomeKey(sig), img);
+    _seq = { name: 'Séq. 12 — « Le message »', savedId: null, steps: seqSanitizeSteps([
+      { id: 'a1', kind: 'color', ref: 'k1', target: T, trig: { k: 'go' } },
+      { id: 'a2', kind: 'sms', ref: 's1', target: T, trig: { k: 'go' } },
+      { id: 'a3', kind: 'call', ref: 'c1', target: T, trig: { k: 'after', s: 6 } },
+      { id: 'a4', kind: 'missed', ref: 'c1', target: T, trig: { k: 'gesture', g: 'hangup', t: 12 } },
+      { id: 'a5', kind: 'sms', ref: 's2', target: T, trig: { k: 'after', s: 4 } },
+      { id: 'a6', kind: 'unlock', target: T, trig: { k: 'gesture', g: 'touch' }, opt: { code: 4, then: 'home', img: sig, imgName: 'accueil-julie.jpg' } },
+      { id: 'a7', kind: 'chat', ref: 'cm', target: T, trig: { k: 'gesture', g: 'unlock' } },
+      { id: 'a8', kind: 'media', ref: { id: 'm1', name: 'photo plage', kind: 'img' }, target: { k: 'screen', id: tv }, trig: { k: 'go' }, opt: { end: 'loop' } },
+    ]) };
+    switchTab('seq');
+  }, [SCR_IDS[0], SCR_IDS[1], seqHomeImage.toString()]);
+  if (extra) await extra(page);
+});
+// Faux téléphone sur l'écran de jeu (maquettes 30 à 32) : état tel que l'envoie la télécommande
+const SEQ_NOTIFS = [
+  { id: 'n1', kind: 'sms', app: 'SMS', name: 'Maman', msg: 'Tu es où ?', ago: 125 },
+  { id: 'n2', kind: 'missed', app: 'Téléphone', name: 'Appel manqué', msg: 'Maman', ago: 65 },
+  { id: 'n3', kind: 'sms', app: 'SMS', name: 'Maman', msg: 'Rappelle-moi stp', ago: 0 },
+];
+const screenPhone = (m, after) => async (page) => {
+  await joinScreen(page);
+  await page.evaluate((m) => screenPhoneState(Object.assign({ unlock: null, home: false, watch: [], chime: null }, m)), m);
+  await page.clock.runFor(600);
+  if (after) { await after(page); await page.clock.runFor(600); }
+};
+
 export const SCENES = {
   'splash': async (page) => { await page.clock.runFor(1000); },
   'screen-connect': async (page) => { await page.evaluate(() => startMode('screen')); await page.clock.runFor(600); },
@@ -440,6 +495,27 @@ export const SCENES = {
     await joinScreen(page);
     await page.evaluate(() => { screenApplyConfig({ type: 'screen:config', name: 'TV salon', groups: [] }); openScreenMenu(); });
     await page.clock.runFor(300);
+  },
+  // 28 · Séquence : huit étapes, 1 à 3 jouées, l'appel sonne depuis 4 s
+  'remote-seq': seqScene(async (page) => {
+    await page.evaluate(async () => { seqGo(); seqGo(); seqGo(); await _seqChain; });
+    await page.clock.runFor(4000);
+    await scrollTo('seqTab-cur', 14)(page);
+  }),
+  // 29 · Éditer l'étape 6 : code 4 chiffres, puis écran d'accueil (image), au toucher de l'écran, téléphone de Julie
+  'remote-seq-step': seqScene((page) => page.evaluate(async () => { openSeqStep('a6'); await _seqPaintHomeThumb(_seqEdit.step.opt.img); })),
+  // 30 · Écran verrouillé : trois notifications empilées, la plus récente en haut
+  'screen-seq-lock': screenPhone({ mode: 'locked', style: 'glass', notifs: SEQ_NOTIFS, unlock: { code: 4, then: 'home' } }),
+  // 31 · Pavé du code : deux touches, deux points remplis
+  'screen-seq-code': screenPhone({ mode: 'code', style: 'glass', notifs: SEQ_NOTIFS, unlock: { code: 4, then: 'home' } }, (page) => page.evaluate(() => { _spKey(); _spKey(); })),
+  // 32 · Écran d'accueil : image importée, plein écran
+  'screen-seq-home': async (page) => {
+    await joinScreen(page);
+    await page.evaluate((imgFn) => {
+      _mediaCache.set('__seqhome', { kind: 'img', data: (0, eval)('(' + imgFn + ')')(390, 844) });
+      screenPhoneState({ mode: 'home', style: 'glass', notifs: [], unlock: null, home: true, watch: ['home'], chime: null });
+    }, seqHomeImage.toString());
+    await page.clock.runFor(600);
   },
   'screen-effect-police': async (page) => {
     await joinScreen(page);

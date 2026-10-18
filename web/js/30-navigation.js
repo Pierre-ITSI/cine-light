@@ -138,6 +138,7 @@ function suspendScreen() {
   stopScreenEffect();
   screenCallHide();
   screenChatHide();
+  screenPhoneHide();
   setBlackout(false);
   screenDmxReset();
   stopScreenAlive();
@@ -215,6 +216,7 @@ function goBackToSplash() {
   stopScreenEffect();
   screenCallHide();
   screenChatHide();
+  screenPhoneHide();
   setBlackout(false);
   screenDmxReset();
   // Fermer réellement la session écran : sinon le téléphone continue de
@@ -241,6 +243,7 @@ function goBack() {
   closeOfflineView(); // tourner sans réseau : préparation en cours arrêtée (93-offline.js)
   if (_prep) _prep.running = false;
   rkStopListeners(); // anciens topics : réécoutés au prochain lancement de la télécommande
+  seqHalt(); // Séquence : minuteries arrêtées (91-sequence.js)
   stopStrobe();
   stopMediaBroadcast(true, true);
   gwStop(); // passerelle DMX : les écrans gardent leur look et sont rendus à la télécommande
@@ -257,8 +260,17 @@ function goBack() {
 function switchTab(t) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.getElementById('tab-' + t).classList.add('active');
+  const btn = document.getElementById('tab-' + t);
+  btn.classList.add('active');
+  // Barre qui défile (écran étroit) : l'onglet choisi reste entièrement visible
+  const bar = btn.parentElement;
+  if (bar && bar.scrollWidth > bar.clientWidth) {
+    const l = btn.offsetLeft - bar.offsetLeft, r = l + btn.offsetWidth;
+    if (l < bar.scrollLeft) bar.scrollLeft = l - 4;
+    else if (r > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = r - bar.clientWidth + 4;
+  }
   document.getElementById('content-' + t).classList.add('active');
+  if (t === 'seq') renderSeq(); // éléments supprimés entre-temps : « élément introuvable »
   if (t === 'qr') renderPairPanel();
   else remoteStopPairCode(true); // le code ne reste actif que sur l'onglet d'appairage
 }

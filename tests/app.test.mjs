@@ -54,7 +54,7 @@ test("télécommande : startMode('remote') puis chaque onglet", async () => {
   assert.equal(base.splash, 'none');
   assert.equal(base.pill, 'Connexion…');
   assert.equal(base.oldInput, false, 'plus de saisie de code canal');
-  for (const t of ['color', 'effects', 'flash', 'media', 'call', 'qr', 'color']) {
+  for (const t of ['color', 'effects', 'flash', 'media', 'call', 'seq', 'qr', 'color']) {
     await page.click('#tab-' + t);
     const r = await page.evaluate((t) => {
       const c = document.getElementById('content-' + t);

@@ -41,6 +41,8 @@ const PROTO = {
   NAME_MAX: 40, MSG_MAX: 200, APP_MAX: 24, LOCK_TIME_MAX: 8, LOCK_DATE_MAX: 30,
   NOTIF_AGO_MAX: 10080,                        // « il y a n min » : 7 jours au plus
   CHAT_MSGS_MAX: 40, CHAT_TEXT_MAX: 300,       // = LIMITS du schéma (discussion)
+  PHONE_NOTIFS_MAX: 8, PHONE_AGO_MAX: 604800,  // = LIMITS du schéma (faux téléphone d'une Séquence)
+  PHONE_GESTURES: ['touch', 'notif', 'hangup', 'answer', 'unlock', 'home'],
   SDP_MAX: 16000, ICE_MAX: 4096,               // = LIMITS du schéma (packages/protocol)
   ORDER_MAX: 500, MISSING_MAX: 400,
   VID_MAX_CHUNKS: 50000,                       // ≈ 600 Mo base64 en fragments de 12 000
@@ -135,6 +137,34 @@ function _validChatMsg(m) {
   return m.text.trim().length > 0;
 }
 
+// Faux téléphone d'une Séquence (91-sequence.js → 94-sequence-phone.js) :
+// pile bornée sans doublon, textes tronqués, gestes connus seulement
+const _phoneId = (v) => typeof v === 'string' && SRP.PHONE_NOTIF_ID_RE.test(v);
+function _validPhoneState(m) {
+  if (!_P.oneOf(m.mode, ['off', 'locked', 'code', 'unlocked', 'home'])) return false;
+  if (!_P.oneOf(m.style, ['glass', 'tonal', 'minimal'])) m.style = 'glass';
+  if (!Array.isArray(m.notifs) || m.notifs.length > PROTO.PHONE_NOTIFS_MAX) return false;
+  const seen = new Set();
+  const out = [];
+  for (const n of m.notifs) {
+    if (!_P.isObj(n) || !_phoneId(n.id) || seen.has(n.id) || !_P.oneOf(n.kind, ['sms', 'notif', 'missed'])) return false;
+    seen.add(n.id);
+    out.push({
+      id: n.id, kind: n.kind, app: _P.text(n.app, PROTO.APP_MAX), name: _P.text(n.name, PROTO.NAME_MAX), msg: _P.text(n.msg, PROTO.MSG_MAX),
+      color: _P.hex(n.color) ? n.color : null, ago: _P.int(n.ago, 0, PROTO.PHONE_AGO_MAX) ?? 0,
+    });
+  }
+  m.notifs = out;
+  const u = m.unlock;
+  m.unlock = _P.isObj(u) && [0, 4, 6].includes(u.code) ? { code: u.code, then: u.then === 'home' ? 'home' : 'app' } : null;
+  if (m.mode === 'code' && !(m.unlock && m.unlock.code)) return false;
+  m.home = _P.bool(m.home);
+  m.watch = Array.isArray(m.watch) ? m.watch.filter((g, i, a) => _P.oneOf(g, PROTO.PHONE_GESTURES) && g !== 'unlock' && a.indexOf(g) === i) : [];
+  const c = m.chime;
+  m.chime = _P.isObj(c) && seen.has(c.id) ? { id: c.id, ring: _P.oneOf(c.ring, PROTO.CALL_RINGS) ? c.ring : 'classic', ringId: _P.ringId(c.ringId) ? c.ringId : null, vol: _P.num(c.vol, 0, 1) ?? 1 } : null;
+  return true;
+}
+
 const _validSdp = (type) => (m) => _P.isObj(m.sdp) && m.sdp.type === type && _P.str(m.sdp.sdp, PROTO.SDP_MAX);
 const _validIce = (m) => _P.oneOf(m.from, ['remote', 'screen']) && _P.isObj(m.candidate)
   && _P.str(m.candidate.candidate, PROTO.ICE_MAX);
@@ -222,6 +252,8 @@ const MSG_ROUTES = {
   'chat:post':         { roles: ['screen'], validate: (m) => { m.typing = _P.bool(m.typing); return _chatId(m.id); }, handle: (m) => screenChatPost(m) },
   'chat:rewind':       { roles: ['screen'], validate: (m) => { m.drop = _P.bool(m.drop); return _chatId(m.id); }, handle: (m) => screenChatRewind(m) },
   'chat:close':        { roles: ['screen'], validate: () => true, handle: () => screenChatClose() },
+  // Faux téléphone d'une Séquence (94-sequence-phone.js) : jamais déclenché par la console DMX
+  'phone:state':       { roles: ['screen'], validate: _validPhoneState, handle: (m) => screenPhoneState(m) },
   // Passerelle DMX : look calculé depuis la console (36-dmx-screen.js, docs/DMX.md § 7)
   'dmx:look': {
     roles: ['screen'],
@@ -297,6 +329,11 @@ const MSG_ROUTES = {
     handle: (m) => remoteOnChatProgress(m),
   },
   'chat:sent':         { roles: ['remote'], validate: (m) => _chatId(m.id), handle: (m) => remoteOnChatSent(m) },
+  'phone:gesture': {
+    roles: ['remote'],
+    validate: (m) => _P.oneOf(m.g, PROTO.PHONE_GESTURES) && (m.n === undefined || (m.g === 'notif' && _phoneId(m.n))),
+    handle: (m) => remoteOnPhoneGesture(m),
+  },
   'call:state':        { roles: ['remote'], validate: (m) => _P.oneOf(m.state, ['ringing', 'incall', 'declined', 'ended']), handle: (m) => remoteOnCallState(m) },
   'media:advanced':    { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenAdvanced(m.id) },
   'media:need':        { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenNeeds(m.id) },
@@ -401,7 +438,15 @@ function clampOutgoing(m) {
       break;
     }
     case 'chat:open': m.name = _P.text(m.name, PROTO.NAME_MAX).replace(/[\u0000-\u001F\u007F]/g, ' '); break;
-    case 'chat:msg': m.text = _P.text(m.text, PROTO.CHAT_TEXT_MAX).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ''); break;
+    case 'phone:state':
+      if (Array.isArray(m.notifs)) {
+        const line = (v, max) => _P.text(v, max).replace(/[\u0000-\u001F\u007F]/g, ' ');
+        m.notifs = m.notifs.slice(0, PROTO.PHONE_NOTIFS_MAX).map((n) => Object.assign({ id: n.id, kind: n.kind, app: line(n.app, PROTO.APP_MAX), name: line(n.name, PROTO.NAME_MAX),
+          ago: Math.round(_P.num(n.ago, 0, PROTO.PHONE_AGO_MAX) ?? 0) },
+        n.msg ? { msg: _P.text(n.msg, PROTO.MSG_MAX).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '') } : {}, _P.hex(n.color) ? { color: n.color } : {}));
+      }
+      break;
+    case 'chat:msg': m.text =_P.text(m.text, PROTO.CHAT_TEXT_MAX).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ''); break;
   }
   return m;
 }
