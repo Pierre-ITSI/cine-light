@@ -128,6 +128,10 @@ export const CALL_PHOTO_ID_RE = /^__ph_[0-9a-f]{40}$/;
 export const CALL_AUDIO_ID_RE = /^__au_[0-9a-f]{40}$/;
 /** Message d’une discussion fictive (chat:*) : identifiant court tiré par la télécommande. */
 export const CHAT_ID_RE = /^[A-Za-z0-9_-]{1,12}$/;
+/** Notification empilée sur le faux téléphone d’une Séquence (phone:*) : identifiant court tiré par la télécommande. */
+export const PHONE_NOTIF_ID_RE = /^[A-Za-z0-9_-]{1,12}$/;
+/** Gestes du comédien rapportés par l’écran (phone:gesture) ; « unlock » : code complet ou glissement. */
+export const PHONE_GESTURES = Object.freeze(['touch', 'notif', 'hangup', 'answer', 'unlock', 'home']);
 /** Date et heure du faux téléphone (notification) : AAAA-MM-JJ et HH:MM (24 h). */
 export const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 export const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -152,6 +156,8 @@ const CHAT_ID = str(12, CHAT_ID_RE);
 const DATE = str(10, DATE_RE);
 const TIME = str(5, TIME_RE);
 const STYLE3 = oneOf('glass', 'tonal', 'minimal');
+const PHONE_ID = str(12, PHONE_NOTIF_ID_RE);
+const RINGS = oneOf('classic', 'digital', 'soft', 'silent');
 /** Tableau sans doublon */
 const unique = (/** @type {unknown[]} */ a) => new Set(a).size === a.length;
 
@@ -181,6 +187,8 @@ export const LIMITS = Object.freeze({
   chatMessages: 40,
   chatTextChars: 300,
   chatNameChars: 40,
+  phoneNotifs: 8,
+  phoneAgoSeconds: 604_800,
 });
 const KID = B64U(11);
 const XID = B64U(16);
@@ -666,6 +674,65 @@ const SPECS = {
     dir: 's2r', src: ['web'],
     doc: 'Le comédien a envoyé son message (texte complet) : la bulle est postée sur l’écran.',
     fields: { id: req(CHAT_ID, 'message envoyé') },
+  },
+
+  // ═══ Télécommande ↔ écran : faux téléphone d’une Séquence (onglet Séquence) ═══
+  // Petits messages : passent aussi par le Bluetooth (sauf une pile très chargée). Jamais déclenchés par la console DMX.
+  'phone:state': {
+    dir: 'r2s', src: ['web'],
+    doc: 'État COMPLET du faux téléphone d’une Séquence sur l’écran visé, renvoyé à chaque changement et à la resynchronisation '
+      + '(un écran rechargé retrouve son écran verrouillé, ses notifications empilées, le déverrouillage, l’écran d’accueil). '
+      + 'mode : off (rien d’affiché), locked (écran verrouillé, notifications empilées, la plus récente en haut), code (pavé du code), '
+      + 'unlocked (déverrouillé : l’app visée, la discussion, s’ouvre par-dessus), home (image d’écran d’accueil, préchargée en '
+      + 'fragments media-img-* sous __seqhome). notifs : dans l’ordre d’arrivée ; ago = secondes écoulées à l’envoi (l’écran calcule '
+      + 'l’heure relative avec sa propre horloge). unlock : déverrouillage attendu (code 4 ou 6 chiffres, 0 = glisser seul ; '
+      + 'aucun code n’est transmis : chaque touche remplit le point suivant). watch : gestes que la télécommande attend de cet écran '
+      + '(seuls ceux-là sont rapportés, avec « unlock » toujours). chime : son de la notification qui vient d’arriver (jamais à la '
+      + 'resynchronisation). Trois styles neutres, aucune marque. Textes affichés en texte brut.',
+    fields: {
+      mode: req(oneOf('off', 'locked', 'code', 'unlocked', 'home'), 'état du faux téléphone'),
+      style: req(STYLE3, 'style (Verre / Tonal / Épuré)'),
+      notifs: req(arrayOf(object({
+        id: req(PHONE_ID, 'identifiant de la notification empilée'),
+        kind: req(oneOf('sms', 'notif', 'missed'), 'SMS, notification d’application, appel manqué'),
+        app: req(line(24), 'application affichée en tête (« SMS », « Téléphone », nom fictif)'),
+        name: req(line(40), 'expéditeur, titre, « Appel manqué »'),
+        msg: opt(text(200), 'texte, contenu, nom de l’appelant'),
+        color: opt(HEX, 'couleur de l’icône'),
+        ago: req(int(0, LIMITS.phoneAgoSeconds), 'secondes écoulées depuis l’arrivée, au moment de l’envoi'),
+      }), LIMITS.phoneNotifs), 'notifications empilées, dans l’ordre d’arrivée'),
+      unlock: opt(object({
+        code: req(oneOf(0, 4, 6), 'chiffres du code (0 = glisser seul)'),
+        then: req(oneOf('app', 'home'), 'ensuite : l’app visée ou l’écran d’accueil (image)'),
+      }), 'déverrouillage attendu : toucher l’écran verrouillé demande le code'),
+      home: opt(bool, 'image d’écran d’accueil préchargée (__seqhome)'),
+      watch: opt(arrayOf(oneOf(...PHONE_GESTURES.filter((g) => g !== 'unlock')), PHONE_GESTURES.length), 'gestes attendus de cet écran'),
+      chime: opt(object({
+        id: req(PHONE_ID, 'notification qui vient d’arriver'),
+        ring: req(RINGS, 'son intégré (repli)'),
+        ringId: opt(str(23, RING_ID_RE), 'son importé préchargé (__ring_…)'),
+        vol: opt(num(0, 1), 'volume 0..1'),
+      }), 'son de la notification arrivée (une fois)'),
+    },
+    refine: m => {
+      if (!unique(m.notifs.map((/** @type {any} */ n) => n.id))) return 'phone:state : notification en double';
+      if (m.watch && !unique(m.watch)) return 'phone:state : geste en double';
+      if (m.mode === 'code' && !(m.unlock && m.unlock.code > 0)) return 'phone:state : pavé du code sans code attendu';
+      if (m.chime && !m.notifs.some((/** @type {any} */ n) => n.id === m.chime.id)) return 'phone:state : son d’une notification absente';
+      return null;
+    },
+  },
+  'phone:gesture': {
+    dir: 's2r', src: ['web'],
+    doc: 'Geste du comédien sur le faux téléphone d’une Séquence (au plus un par geste toutes les 400 ms, 5 par seconde) : touche '
+      + 'l’écran, touche une notification (n), refuse ou raccroche, décroche, déverrouille (code complet ou glissement), touche '
+      + 'l’image d’accueil. Seuls les gestes attendus (phone:state.watch) partent, « unlock » toujours. Jamais le contenu des '
+      + 'touches : le code n’existe pas, seule sa complétion est rapportée. La réponse dans la discussion passe par chat:sent.',
+    fields: {
+      g: req(oneOf(...PHONE_GESTURES), 'geste'),
+      n: opt(PHONE_ID, 'notification touchée (geste notif)'),
+    },
+    refine: m => (m.n !== undefined && m.g !== 'notif' ? 'phone:gesture : n hors geste notif' : null),
   },
 
   // ═══ Passerelle DMX → écran ═══

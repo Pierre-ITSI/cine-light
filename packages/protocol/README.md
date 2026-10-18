@@ -164,10 +164,9 @@ kind 2 : idLen + mediaId (≤ 64) + index u16 + total u16
 
 ### 3.4 Schéma applicatif (`schema.js`)
 
-`MESSAGE_TYPES` documente les **45 types** utilisés aujourd'hui par
-`index.html` et `expo-app`, plus les nouveaux `screen:config`, `dmx:look` et
-`screen:identify` (48 au total : 32 `r2s`, 15 `s2r`, 1 `both` ; sources et
-champs décrits).
+`MESSAGE_TYPES` documente **tous les types** utilisés par `index.html` et
+`expo-app` (64 aujourd'hui : 42 `r2s`, 21 `s2r`, 1 `both` ; sources et champs
+décrits).
 `screen:alive` (écran → télécommande, sans champ) est le signe de vie qu'un
 écran envoie toutes les 15 s.
 `validate(msg, { direction })` est une **liste blanche stricte** : type ou
@@ -203,6 +202,23 @@ exact du fil, affichés d'un coup comme historique, sans lettre tapée),
 (télécommande → écran) ; `chat:progress` (débit
 limité à 4/s) et `chat:sent` (écran → télécommande). Tous petits : ils
 passent aussi en Bluetooth.
+
+**Onglet Séquence** (faux téléphone d'une séquence, `web/js/91-sequence.js` →
+`94-sequence-phone.js`) : `phone:state` (télécommande → écran) décrit l'état
+COMPLET du téléphone visé, renvoyé à chaque changement et à la
+resynchronisation : `mode` (`off`, `locked`, `code`, `unlocked`, `home`),
+`style` (Verre / Tonal / Épuré), `notifs` (≤ 8, ids `PHONE_NOTIF_ID_RE` sans
+doublon, `kind` sms / notif / missed, textes bornés, `ago` en secondes ≤ 7 jours :
+l'écran calcule l'heure relative avec sa propre horloge), `unlock { code: 0 | 4
+| 6, then: app | home }` (aucun code ne voyage : chaque touche remplit le point
+suivant ; `mode: 'code'` exige un code attendu), `home` (image d'accueil
+préchargée en fragments sous `__seqhome`), `watch` (gestes attendus de cet
+écran, sans `unlock`) et `chime` (son de la notification qui vient d'arriver,
+jamais à la resynchronisation). `phone:gesture { g, n? }` (écran →
+télécommande, `PHONE_GESTURES` : touch, notif, hangup, answer, unlock, home ;
+`n` seulement pour `notif`) : seuls les gestes attendus partent, `unlock`
+toujours, au plus un par geste toutes les 400 ms et 5 par seconde ; la réponse
+dans la discussion reste `chat:sent`. La console DMX ne pilote pas la Séquence.
 
 **Différence voulue avec `MSG_ROUTES`** : l'app *borne* une valeur hors plage
 (flash de 5 ms ramené à 15 ms) ; le schéma la *rejette*, à l'envoi comme à la

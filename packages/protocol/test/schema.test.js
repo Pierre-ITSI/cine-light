@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { MESSAGE_TYPES, LIMITS, RING_ID_RE, CALL_PHOTO_ID_RE, CALL_AUDIO_ID_RE, validate, explainInvalid, isAddressedTo } from '../schema.js';
+import { MESSAGE_TYPES, LIMITS, RING_ID_RE, CALL_PHOTO_ID_RE, CALL_AUDIO_ID_RE, PHONE_NOTIF_ID_RE, PHONE_GESTURES, validate, explainInvalid, isAddressedTo } from '../schema.js';
 import { MAX_MESSAGE_BYTES } from '../crypto.js';
 import { RENDEZVOUS_MESSAGE_TYPES } from '../pairing.js';
 import { utf8Encode } from '../lib/encoding.js';
@@ -325,6 +325,41 @@ test('dérive : expo-app n’utilise que des types connus', { skip: !existsSync(
     }
   }
   assert.deepEqual([...unknown], []);
+});
+
+test('Séquence (phone:*) : sens, pile de notifications, déverrouillage sans code transmis, gestes', () => {
+  // Sens : l'état part de la télécommande, les gestes de l'écran ; jamais l'inverse
+  assert.equal(MESSAGE_TYPES['phone:state'].direction, 'r2s');
+  assert.equal(MESSAGE_TYPES['phone:gesture'].direction, 's2r');
+  const state = { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [{ id: 'n1', kind: 'sms', app: 'SMS', name: 'Maman', ago: 0 }] };
+  assert.equal(validate(state, { direction: 'r2s' }), true);
+  assert.equal(validate(state, { direction: 's2r' }), false, 'un écran ne décrit pas le téléphone');
+  assert.equal(validate({ type: 'phone:gesture', g: 'touch' }, { direction: 's2r' }), true);
+  assert.equal(validate({ type: 'phone:gesture', g: 'touch' }, { direction: 'r2s' }), false, 'la télécommande ne joue pas le comédien');
+  assert.equal(validate({ type: 'phone:gesture', g: 'touch', target: { screens: ['AbCdEfGh12345678'] } }), false, 'pas de target s2r');
+  assert.equal(validate({ ...state, target: { group: 'g1' } }), true, 'adressable comme tout ordre');
+  // Pile : 8 notifications au plus, ids courts et uniques, âge en secondes (7 jours au plus)
+  const pile = (/** @type {number} */ k) => ({ ...state, notifs: Array.from({ length: k }, (_, i) => ({ id: 'n' + i, kind: 'sms', app: 'SMS', name: 'A', ago: LIMITS.phoneAgoSeconds })) });
+  assert.equal(LIMITS.phoneNotifs, 8);
+  assert.equal(validate(pile(LIMITS.phoneNotifs)), true);
+  assert.equal(validate(pile(LIMITS.phoneNotifs + 1)), false);
+  assert.ok(PHONE_NOTIF_ID_RE.test('a'.repeat(12)) && !PHONE_NOTIF_ID_RE.test('a'.repeat(13)) && !PHONE_NOTIF_ID_RE.test(''));
+  assert.equal(validate({ ...state, notifs: [{ id: 'n', kind: 'sms', app: 'SMS', name: 'A', msg: 'x'.repeat(201), ago: 0 }] }), false);
+  // Déverrouillage : 4 ou 6 chiffres ou glisser (0) ; aucun code ni touche ne voyage
+  for (const code of [0, 4, 6]) assert.equal(validate({ ...state, unlock: { code, then: 'app' } }), true, 'code ' + code);
+  assert.equal(validate({ ...state, mode: 'code', unlock: { code: 6, then: 'home' } }), true);
+  assert.equal(validate({ ...state, mode: 'code', unlock: { code: 0, then: 'home' } }), false, 'pavé : un code est attendu');
+  assert.deepEqual(Object.keys(MESSAGE_TYPES['phone:state'].fields).sort(), ['chime', 'home', 'mode', 'notifs', 'style', 'unlock', 'watch']);
+  assert.deepEqual(Object.keys(MESSAGE_TYPES['phone:gesture'].fields).sort(), ['g', 'n']);
+  // Gestes : liste fermée ; « unlock » toujours rapporté, donc jamais « attendu »
+  assert.deepEqual([...PHONE_GESTURES], ['touch', 'notif', 'hangup', 'answer', 'unlock', 'home']);
+  for (const g of PHONE_GESTURES) assert.equal(validate({ type: 'phone:gesture', g }), true, g);
+  assert.equal(validate({ type: 'phone:gesture', g: 'notif', n: 'n1' }), true);
+  assert.equal(validate({ ...state, watch: PHONE_GESTURES.filter((g) => g !== 'unlock') }), true);
+  // État complet chargé : bien en deçà du plafond d'un message
+  const big = { ...state, notifs: Array.from({ length: 8 }, (_, i) => ({ id: 'n' + i, kind: 'notif', app: 'a'.repeat(24), name: 'b'.repeat(40), msg: 'c'.repeat(200), color: '#ffffff', ago: 604800 })), unlock: { code: 6, then: 'home' }, home: true, watch: ['touch'] };
+  assert.equal(validate(big), true);
+  assert.ok(utf8Encode(JSON.stringify(big)).length < MAX_MESSAGE_BYTES);
 });
 
 test('notification (kind notif) et discussion (chat:*) : sens, champs propres, bornes', () => {
