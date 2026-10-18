@@ -195,8 +195,12 @@ hors schéma : seule l'enveloppe change). Champs ajoutés : `call:start.photoId`
 icône en fragments sous `__notificon`, fond verrouillé propre `__notifwall`).
 `kind: 'chat'` / `'whatsapp'` (ancienne messagerie) reste accepté et s'affiche
 en SMS. Discussion fictive : `chat:msg` (id `CHAT_ID_RE`, `from` contact /
-actor, texte ≤ 300), `chat:open` (≤ 40 messages, sans doublon, postés ⊂ fil),
-`chat:post`, `chat:close` (télécommande → écran) ; `chat:progress` (débit
+actor, texte ≤ 300), `chat:open` (≤ 40 messages, sans doublon, postés ⊂ fil ;
+`history: true` pour « Reprendre ici » / « Repartir de zéro » : postés = début
+exact du fil, affichés d'un coup comme historique, sans lettre tapée),
+`chat:rewind` (« ↶ » : `id` du dernier message affiché, remis en attente ;
+`drop` : message improvisé, retiré du fil), `chat:post`, `chat:close`
+(télécommande → écran) ; `chat:progress` (débit
 limité à 4/s) et `chat:sent` (écran → télécommande). Tous petits : ils
 passent aussi en Bluetooth.
 

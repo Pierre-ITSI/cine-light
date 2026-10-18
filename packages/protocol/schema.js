@@ -609,11 +609,27 @@ const SPECS = {
       ids: req(arrayOf(CHAT_ID, LIMITS.chatMessages), 'messages du fil, dans l’ordre préparé'),
       sent: req(arrayOf(CHAT_ID, LIMITS.chatMessages), 'messages déjà postés, dans l’ordre où ils l’ont été'),
       typed: opt(int(0, LIMITS.chatTextChars), 'lettres déjà tapées du message du comédien en cours (reprise)'),
+      history: opt(bool, '« Reprendre ici » / « Repartir de zéro » : sent = les messages du fil AVANT le point de reprise (début exact de ids), '
+        + 'affichés d’un coup comme historique (ni « … écrit », ni animation, ni son) ; frappe locale et file d’attente de l’écran remises à zéro'),
     },
     refine: m => {
       if (!unique(m.ids) || !unique(m.sent)) return 'chat:open : identifiant en double';
       if (!m.sent.every((/** @type {string} */ id) => m.ids.includes(id))) return 'chat:open : message posté absent du fil';
+      if (m.history) {
+        if (!m.sent.every((/** @type {string} */ id, /** @type {number} */ i) => m.ids[i] === id)) return 'chat:open : historique hors de l’ordre du fil';
+        if (m.typed) return 'chat:open : historique avec lettres tapées';
+      }
       return null;
+    },
+  },
+  'chat:rewind': {
+    dir: 'r2s', src: ['web'],
+    doc: '« ↶ » : retire de l’écran le dernier message affiché (ou encore en attente derrière « … écrit »), remis en attente dans le fil : '
+      + 'un message du comédien se retape lettre à lettre. drop : message improvisé (« Écrire… »), retiré aussi du fil. '
+      + 'Sans effet si le message n’est pas affiché. L’état complet repart à la resynchronisation (chat:open).',
+    fields: {
+      id: req(CHAT_ID, 'message retiré de l’écran'),
+      drop: opt(bool, 'message improvisé : retiré du fil'),
     },
   },
   'chat:msg': {

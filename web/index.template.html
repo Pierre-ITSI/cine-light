@@ -827,6 +827,18 @@
       <div class="media-status" id="callStatus">—</div>
     </div>
     <!-- Discussion (maquette 26) : fil préparé, messages du contact envoyés d'ici, ceux du comédien tapés sur l'écran -->
+    <!-- Sous-onglets (maquette 26c) : fil en cours, discussions enregistrées -->
+    <div class="dc-tabs" id="dcTabs" style="display:none">
+      <button type="button" class="gw-seg-btn active" id="dcTab-thread" onclick="setChatView('thread')">Fil en cours</button>
+      <button type="button" class="gw-seg-btn" id="dcTab-saved" onclick="setChatView('saved')">Enregistrées (0)</button>
+    </div>
+    <div class="dc-saved" id="dcSavedPanel" style="display:none">
+      <div class="dc-saved-rows" id="dcSavedRows"></div>
+      <div class="dc-saved-empty" id="dcSavedEmpty">Aucune discussion enregistrée pour l'instant.</div>
+      <div class="dc-saved-hint" id="dcSavedHint">Toucher : charger dans « Fil en cours ». ⋯ : renommer · dupliquer · supprimer.</div>
+      <button type="button" class="cl-save" id="dcSaveBtn" onclick="openSaveChatSheet()">+ Enregistrer le fil en cours</button>
+      <div class="cl-note">Une discussion enregistrée garde le contact (nom, photo), le comédien, le style et tous les messages. Le point de reprise n'est pas enregistré.</div>
+    </div>
     <div class="panel dc-contact" id="dcContactPanel" style="display:none">
       <div class="dc-contact-row">
         <button type="button" class="dc-avatar" id="dcAvatar" aria-label="Photo du contact" onclick="document.getElementById('dcAvatarInput').click()"></button>
@@ -841,7 +853,7 @@
     <div class="panel dc-thread" id="dcThreadPanel" style="display:none">
       <div class="dc-head"><span class="panel-label">Fil préparé</span><span class="dc-pair" id="dcPair"></span></div>
       <div class="dc-rows" id="dcRows"></div>
-      <button type="button" class="dc-add" id="dcAdd" onclick="addChatMessage()">+ Ajouter un message · glisser pour réordonner</button>
+      <button type="button" class="dc-add" id="dcAdd" onclick="addChatMessage()">+ Ajouter un message · glisser pour réordonner · toucher un message : « Reprendre ici »</button>
     </div>
     <div class="panel dc-help-card" id="dcActorPanel" style="display:none">
       <div class="panel-label" id="dcActorLabel"></div>
@@ -850,16 +862,18 @@
     <div class="dc-send" id="dcSendPanel" style="display:none">
       <div class="dc-send-row">
         <button type="button" class="dc-go" id="dcGo" onclick="sendNextChatMessage()"></button>
+        <button type="button" class="dc-back" id="dcBackBtn" aria-label="Revenir d'un message" title="Revenir d'un message" onclick="rewindChat()" disabled>↶</button>
         <button type="button" class="dc-write" id="dcWriteBtn" onclick="toggleChatWrite()">Écrire…</button>
       </div>
       <div class="dc-write-box" id="dcWriteBox" style="display:none">
         <textarea id="dcWriteText" class="text-input" maxlength="300" aria-label="Message improvisé"></textarea>
         <button type="button" class="dc-write-send" onclick="sendImprovisedChat()">Envoyer</button>
       </div>
+      <div class="dc-back-hint">« ↶ » retire le dernier message affiché sur l'écran (et le remet en attente).</div>
       <label class="dc-typing"><input type="checkbox" id="dcTypingToggle" onchange="onChatTypingToggle()"><span id="dcTypingLabel"></span></label>
       <div class="dc-ctl">
         <button type="button" class="dc-ctl-btn" id="dcOpenBtn" onclick="openChatOnTarget()">Ouvrir sur l'écran</button>
-        <button type="button" class="dc-ctl-btn" id="dcRestartBtn" onclick="restartChat()">Recommencer</button>
+        <button type="button" class="dc-ctl-btn" id="dcRestartBtn" onclick="restartChat()">Repartir de zéro</button>
         <button type="button" class="dc-ctl-btn dc-ctl-close" id="dcCloseBtn" onclick="closeChat()">Fermer</button>
       </div>
     </div>

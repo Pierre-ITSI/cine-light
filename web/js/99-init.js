@@ -12,6 +12,7 @@ ringInit();
 loadCallList();
 renderCallList();
 chatLoad();
+loadSavedChats();      // discussions enregistrées (83-discussions-saved.js)
 renderNotifForm();
 renderChatPanel();
 

@@ -157,6 +157,8 @@ test('tout message valide pour le schéma tient dans MAX_MESSAGE_BYTES (pires ca
     { type: 'call:start', kind: 'notif', style: 'glass', name: lone(40), msg: lone(200), appName: lone(24), hasPhoto: true, ring: 'classic', ringId: '__ring_ffffffffffffffff', ringVolume: 0.5, present: 'lock', photoId: '__ph_' + 'f'.repeat(40), phone: { date: '2026-12-31', time: '23:59' }, received: { mode: 'at', date: '2026-12-31', time: '23:59' }, target },
     { type: 'chat:msg', id: 'A'.repeat(12), from: 'contact', text: lone(LIMITS.chatTextChars), target },
     { type: 'chat:open', name: lone(LIMITS.chatNameChars), style: 'tonal', hasAvatar: true, ids: Array.from({ length: LIMITS.chatMessages }, (_, i) => pad('c', i, 12)), sent: Array.from({ length: LIMITS.chatMessages }, (_, i) => pad('c', i, 12)), typed: LIMITS.chatTextChars, target },
+    { type: 'chat:open', name: lone(LIMITS.chatNameChars), style: 'tonal', hasAvatar: true, ids: Array.from({ length: LIMITS.chatMessages }, (_, i) => pad('c', i, 12)), sent: Array.from({ length: LIMITS.chatMessages }, (_, i) => pad('c', i, 12)), typed: 0, history: true, target },
+    { type: 'chat:rewind', id: 'A'.repeat(12), drop: true, target },
   ];
   for (const m of worst) {
     assert.equal(explainInvalid(m), null, `${m.type} : ${explainInvalid(m)}`);
@@ -339,7 +341,7 @@ test('notification (kind notif) et discussion (chat:*) : sens, champs propres, b
   assert.equal(n({ phone: { time: '9:05' } }), false, 'HH:MM sur deux chiffres');
   assert.equal(validate({ type: 'call:start', kind: 'chat', name: 'ancienne messagerie' }), true, 'anciennes télécommandes acceptées');
   // Sens : la télécommande parle à l'écran, l'écran ne renvoie que la progression et l'envoi
-  for (const type of ['chat:open', 'chat:msg', 'chat:post', 'chat:close']) assert.equal(MESSAGE_TYPES[type].direction, 'r2s', type);
+  for (const type of ['chat:open', 'chat:msg', 'chat:post', 'chat:close', 'chat:rewind']) assert.equal(MESSAGE_TYPES[type].direction, 'r2s', type);
   for (const type of ['chat:progress', 'chat:sent']) assert.equal(MESSAGE_TYPES[type].direction, 's2r', type);
   assert.equal(validate({ type: 'chat:post', id: 'a' }, { direction: 's2r' }), false, 'un écran ne poste pas pour le contact');
   assert.equal(validate({ type: 'chat:sent', id: 'a' }, { direction: 'r2s' }), false, 'la télécommande ne tape pas pour le comédien');
@@ -347,5 +349,15 @@ test('notification (kind notif) et discussion (chat:*) : sens, champs propres, b
   assert.equal(validate({ type: 'chat:progress', id: 'a', typed: 2, total: 2 }), true);
   assert.equal(validate({ type: 'chat:msg', id: 'a', from: 'actor', text: 'x'.repeat(LIMITS.chatTextChars) }), true);
   assert.equal(validate({ type: 'chat:open', name: 'M', style: 'minimal', ids: ['a', 'b'], sent: ['b'], typed: 301 }), false);
+  assert.equal(validate({ type: 'chat:rewind', id: 'a' }, { direction: 's2r' }), false, 'un écran ne revient pas en arrière');
+  // Reprise : l'historique est exactement le début du fil (jusqu'au point de reprise), sans lettre tapée
+  const h = (/** @type {object} */ o) => validate({ type: 'chat:open', name: 'M', style: 'glass', ids: ['a', 'b', 'c'], history: true, ...o });
+  assert.equal(h({ sent: [] }), true, 'reprise au n° 1');
+  assert.equal(h({ sent: ['a', 'b'] }), true, 'reprise au n° 3');
+  assert.equal(h({ sent: ['a', 'b', 'c'] }), true, 'tout en historique');
+  assert.equal(h({ sent: ['b', 'a'] }), false, 'ordre du fil imposé');
+  assert.equal(h({ sent: ['a'], typed: 0 }), true);
+  assert.equal(h({ sent: ['a'], typed: 1 }), false);
+  assert.equal(h({ sent: ['b', 'a'], history: false }), true, 'sans reprise : ordre de publication libre');
   assert.deepEqual([LIMITS.chatMessages, LIMITS.chatTextChars, LIMITS.chatNameChars], [40, 300, 40]);
 });

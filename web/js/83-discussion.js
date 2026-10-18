@@ -21,9 +21,18 @@
 //   • Reprise : la télécommande garde le fil (localStorage) et le renvoie à
 //     chaque resynchronisation d'un écran : un écran rechargé retrouve la
 //     discussion où elle en était (messages postés, lettres déjà tapées).
+//   • Revenir en arrière (maquette validée 26b) : « ↶ » retire le DERNIER
+//     message affiché sur l'écran et le remet en attente (un message du
+//     comédien se retape lettre à lettre) ; un message improvisé
+//     (« Écrire… ») disparaît du fil. « Reprendre ici » (toucher un message) :
+//     tout ce qui le précède s'affiche d'un coup comme historique (ni « … écrit »,
+//     ni animation), la scène reprend à ce message ; repère orange dans le fil.
+//     « Repartir de zéro » : plus rien d'affiché.
+//   • Discussions enregistrées (maquette validée 26c) : 83-discussions-saved.js.
 // Protocole (packages/protocol/schema.js) : chat:msg (texte d'un message),
-// chat:open (contact, style, ordre, messages postés), chat:post, chat:close ;
-// retour chat:progress, chat:sent. Textes affichés par textContent.
+// chat:open (contact, style, ordre, messages postés ; history : reprise),
+// chat:rewind (« ↶ »), chat:post, chat:close ; retour chat:progress,
+// chat:sent. Textes affichés par textContent.
 const CHAT_LS_KEY = 'setremote-chat-v1';
 const CHAT_AVATAR_KEY = 'setremote-chat-avatar-v1';
 const CHAT_MAX = 40, CHAT_TEXT_MAX = 300, CHAT_TYPING_MS = 2000, CHAT_PROGRESS_MS = 250;
@@ -33,6 +42,13 @@ const _CHAT_STYLE_HINTS = {
   minimal: 'Fond clair, bulles sobres et contrastées.',
 };
 const _tplChat = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
+// Textes affichés ajoutés avec la maquette 26b, regroupés pour la traduction ({…} : valeurs)
+const _CHAT_TXT = {
+  resumeBtn: 'Reprendre ici',
+  resume1: 'Reprise ici · 1 affiché comme historique',
+  resume2: 'Reprise ici · 1 et 2 affichés comme historique',
+  resumeN: 'Reprise ici · 1 à {n} affichés comme historique',
+};
 
 // — Télécommande —
 let _chatSeq = 0;
@@ -47,6 +63,8 @@ function _chatDefault() {
       m('actor', 'pardon maman', 5),
     ],
     sent: [], open: false, screens: null, progress: null,
+    resumeAt: null,  // « Reprendre ici » : message où la scène a repris (repère dans le fil)
+    savedId: null,   // discussion enregistrée chargée ou enregistrée en dernier (83-discussions-saved.js)
   };
 }
 let _chat = _chatDefault();
@@ -59,8 +77,9 @@ function chatLoad() {
   try { o = JSON.parse(_lsGet(CHAT_LS_KEY)); } catch (_) { o = null; }
   if (o && typeof o === 'object' && Array.isArray(o.msgs)) {
     const d = _chatDefault();
-    const msgs = o.msgs.filter((x) => x && _chatOk(x.id) && (x.from === 'contact' || x.from === 'actor') && typeof x.text === 'string')
-      .slice(0, CHAT_MAX).map((x) => ({ id: x.id, from: x.from, text: x.text.slice(0, CHAT_TEXT_MAX) }));
+    const seen = new Set();
+    const msgs = o.msgs.filter((x) => x && _chatOk(x.id) && !seen.has(x.id) && seen.add(x.id) && (x.from === 'contact' || x.from === 'actor') && typeof x.text === 'string')
+      .slice(0, CHAT_MAX).map((x) => Object.assign({ id: x.id, from: x.from, text: x.text.slice(0, CHAT_TEXT_MAX) }, x.impro === true ? { impro: true } : {}));
     const ids = new Set(msgs.map((x) => x.id));
     _chat = {
       name: typeof o.name === 'string' ? o.name.slice(0, 40) : d.name,
@@ -72,6 +91,8 @@ function chatLoad() {
       open: !!o.open,
       screens: Array.isArray(o.screens) ? o.screens.filter((s) => typeof s === 'string' && SRP.SCREEN_ID_RE.test(s)).slice(0, 64) : null,
       progress: null,
+      resumeAt: typeof o.resumeAt === 'string' && ids.has(o.resumeAt) ? o.resumeAt : null,
+      savedId: typeof o.savedId === 'string' && /^[A-Za-z0-9_-]{1,40}$/.test(o.savedId) ? o.savedId : null,
     };
   }
   const a = _lsGet(CHAT_AVATAR_KEY);
@@ -79,7 +100,7 @@ function chatLoad() {
 }
 function chatSave() {
   const c = _chat;
-  _lsSet(CHAT_LS_KEY, JSON.stringify({ v: 1, name: c.name, actor: c.actor, style: c.style, typing: c.typing, msgs: c.msgs, sent: c.sent, open: c.open, screens: c.screens }));
+  _lsSet(CHAT_LS_KEY, JSON.stringify({ v: 1, name: c.name, actor: c.actor, style: c.style, typing: c.typing, msgs: c.msgs, sent: c.sent, open: c.open, screens: c.screens, resumeAt: c.resumeAt, savedId: c.savedId }));
 }
 function chatStyleNow() { return _chat.style; }
 function chatSetStyle(s) { _chat.style = _CHAT_STYLE_HINTS[s] ? s : 'minimal'; _chatChanged(); }
@@ -103,22 +124,25 @@ function _chatTarget(only) {
   return ids && ids.length ? { target: { screens: ids.slice() } } : {};
 }
 // Renvoi complet (textes puis état) : synchrone, dans l'ordre des envois
-function _chatSyncTexts(only) {
+function _chatSyncTexts(only, history) {
   const t = _chatTarget(only);
   const msgs = _chat.msgs.filter(_chatValid);
   for (const m of msgs) _chatDefsSent.set(m.id, m.from + '|' + m.text);
   for (const m of msgs) sendMsg(Object.assign({ type: 'chat:msg', id: m.id, from: m.from, text: m.text.slice(0, CHAT_TEXT_MAX) }, t));
-  _chatSendOpen(only);
+  _chatSendOpen(only, history);
 }
-function _chatSendOpen(only) {
+// history : reprise (« Reprendre ici », « Repartir de zéro », discussion
+// chargée) — les messages postés, début exact du fil, s'affichent d'un coup
+// et l'écran oublie sa frappe en cours
+function _chatSendOpen(only, history) {
   const ids = _chat.msgs.filter(_chatValid).map((m) => m.id);
   const cur = chatCurrentActor();
   const p = _chat.progress;
   sendMsg(Object.assign({
     type: 'chat:open', name: _chat.name.slice(0, 40), style: _chat.style, hasAvatar: !!_chatAvatar,
     ids, sent: _chat.sent.filter((id) => ids.includes(id)),
-    typed: cur && p && p.id === cur.id ? Math.min(p.typed, _chatLen(cur.text)) : 0,
-  }, _chatTarget(only)));
+    typed: !history && cur && p && p.id === cur.id ? Math.min(p.typed, _chatLen(cur.text)) : 0,
+  }, history ? { history: true } : {}, _chatTarget(only)));
 }
 function _chatSendAvatar(only) {
   if (!_chatAvatar || linkBleOnly()) return Promise.resolve();
@@ -126,11 +150,11 @@ function _chatSendAvatar(only) {
   return ensureSlotImage('__chatavatar', _chatAvatar, ids && ids.length ? ids : undefined);
 }
 // Ouvre la discussion sur la cible courante (chip « Cible »)
-function openChatOnTarget() {
+function openChatOnTarget(history) {
   const ids = scrTargetIds();
   _chat.screens = ids.length ? ids : null;
   _chat.open = true;
-  _chatSyncTexts();
+  _chatSyncTexts(undefined, history === true);
   _chatSendAvatar().then(() => { if (_chat.open && _chatAvatar) _chatSendOpen(); });
   chatSave();
   renderChatPanel();
@@ -144,12 +168,63 @@ function closeChat() {
   renderChatPanel();
   if (typeof scrChanged === 'function') scrChanged();
 }
+// « Repartir de zéro » : plus rien d'affiché, frappe oubliée
 function restartChat() {
   _chat.sent = [];
   _chat.progress = null;
-  if (_chat.open) _chatSendOpen();
+  _chat.resumeAt = null;
+  if (_chat.open) { _chatFlushTexts(); _chatSendOpen(undefined, true); }
   chatSave();
   renderChatPanel();
+}
+// « ↶ » : retire le dernier message affiché sur l'écran, remis en attente
+// (un message du comédien se retape lettre à lettre) ; un message improvisé
+// (« Écrire… ») disparaît du fil. Peut se répéter.
+function rewindChat() {
+  const id = _chat.sent[_chat.sent.length - 1];
+  if (!id) return;
+  if (_chat.open) _chatFlushTexts();
+  _chat.sent.pop();
+  const i = _chat.msgs.findIndex((x) => x.id === id);
+  const drop = i >= 0 && _chat.msgs[i].impro === true;
+  if (drop) {
+    _chat.msgs.splice(i, 1);
+    _chatDefsSent.delete(id);
+    if (_chatEditId === id) _chatEditId = null;
+  }
+  // Frappe en cours : gardée seulement si le message du comédien reste le même
+  const cur = chatCurrentActor();
+  if (_chat.progress && (!cur || cur.id !== _chat.progress.id)) _chat.progress = null;
+  // Retour dans l'historique d'une reprise : le repère n'a plus lieu d'être
+  if (!_chatResumeInfo()) _chat.resumeAt = null;
+  if (_chat.open) sendMsg(Object.assign({ type: 'chat:rewind', id }, drop ? { drop: true } : {}, _chatTarget()));
+  chatSave();
+  renderChatPanel();
+}
+// « Reprendre ici » : les messages du fil avant celui-ci s'affichent d'un coup
+// comme historique (sans « … écrit », sans animation), la scène reprend à ce
+// message. Ouvre la discussion sur la cible si elle est fermée.
+function resumeChatAt(id) {
+  const i = _chat.msgs.findIndex((x) => x.id === id);
+  if (i < 0 || !_chatValid(_chat.msgs[i])) return;
+  _chat.sent = _chat.msgs.slice(0, i).filter(_chatValid).map((m) => m.id);
+  _chat.progress = null;
+  _chat.resumeAt = i > 0 ? id : null; // au n° 1 : comme « Repartir de zéro »
+  _chatEditId = null;
+  if (!_chat.open) openChatOnTarget(true);
+  else { _chatFlushTexts(); _chatSendOpen(undefined, true); }
+  chatSave();
+  renderChatPanel();
+}
+// Point de reprise encore valable : son rang (historique toujours affiché)
+function _chatResumeInfo() {
+  const i = _chat.resumeAt ? _chat.msgs.findIndex((x) => x.id === _chat.resumeAt) : -1;
+  if (i <= 0) return null;
+  const hist = _chat.msgs.slice(0, i).filter(_chatValid);
+  return hist.length && hist.every(_chatSent) ? { id: _chat.resumeAt, n: i } : null;
+}
+function _chatResumeLabel(n) {
+  return n === 1 ? _CHAT_TXT.resume1 : n === 2 ? _CHAT_TXT.resume2 : _tplChat(_CHAT_TXT.resumeN, { n });
 }
 // « Envoyer n° X (contact) » : ouvre la discussion si besoin, puis poste
 function sendNextChatMessage() {
@@ -174,7 +249,7 @@ function sendImprovisedChat() {
   const ta = document.getElementById('dcWriteText');
   const text = ta ? ta.value.trim().slice(0, CHAT_TEXT_MAX) : '';
   if (!text || _chat.msgs.length >= CHAT_MAX) return;
-  const m = { id: _chatNewId(), from: 'contact', text };
+  const m = { id: _chatNewId(), from: 'contact', text, impro: true }; // improvisé : « ↶ » le retire du fil
   const i = _chat.msgs.findIndex((x) => !_chatSent(x));
   _chat.msgs.splice(i < 0 ? _chat.msgs.length : i, 0, m);
   if (!_chat.open) openChatOnTarget();
@@ -230,8 +305,12 @@ function _chatChanged(soft) {
   _chatEditTimer = setTimeout(_chatFlushEdits, 400);
 }
 function _chatFlushEdits() {
+  if (_chatFlushTexts()) _chatSendOpen();
+}
+// Textes modifiés seulement (false : discussion fermée)
+function _chatFlushTexts() {
   if (_chatEditTimer) { clearTimeout(_chatEditTimer); _chatEditTimer = null; }
-  if (!_chat.open) return;
+  if (!_chat.open) return false;
   const t = _chatTarget();
   for (const m of _chat.msgs.filter(_chatValid)) {
     const def = m.from + '|' + m.text;
@@ -239,7 +318,7 @@ function _chatFlushEdits() {
     _chatDefsSent.set(m.id, def);
     sendMsg(Object.assign({ type: 'chat:msg', id: m.id, from: m.from, text: m.text.slice(0, CHAT_TEXT_MAX) }, t));
   }
-  _chatSendOpen();
+  return true;
 }
 function addChatMessage() {
   if (_chat.msgs.length >= CHAT_MAX) return;
@@ -315,12 +394,25 @@ function chatOnScreensResync(ids) {
 }
 
 // ── Rendu (télécommande) ──
+// Sous-onglets (maquette 26c) : « Fil en cours » | « Enregistrées (n) »
+let _chatView = 'thread';
 function chatShowForm(on) {
-  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcSendPanel']) {
-    const el = document.getElementById(id);
-    if (el) el.style.display = on ? '' : 'none';
+  const saved = on && _chatView === 'saved';
+  const show = (id, v) => { const el = document.getElementById(id); if (el) el.style.display = v ? '' : 'none'; };
+  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcSendPanel']) show(id, on && !saved);
+  show('dcTabs', on);
+  show('dcSavedPanel', saved);
+  // Le style appartient au fil en cours : masqué sur la liste
+  if (on) show('callStyleRow', !saved);
+  for (const v of ['thread', 'saved']) {
+    const b = document.getElementById('dcTab-' + v);
+    if (b) b.classList.toggle('active', _chatView === v);
   }
-  if (on) renderChatPanel();
+  if (on) { renderChatPanel(); renderSavedChats(); }
+}
+function setChatView(v) {
+  _chatView = v === 'saved' ? 'saved' : 'thread';
+  chatShowForm(callKind === 'discussion');
 }
 function _chatScreensLabel() {
   const ids = _chat.screens || [];
@@ -357,6 +449,8 @@ function _chatRenderHead() {
   if (tg) tg.checked = !!_chat.typing;
   const cb = document.getElementById('dcCloseBtn');
   if (cb) cb.disabled = !_chat.open;
+  const bk = document.getElementById('dcBackBtn');
+  if (bk) bk.disabled = !_chat.sent.length;
 }
 function _chatProgressText(cur) {
   const p = _chat.progress && _chat.progress.id === cur.id ? _chat.progress : null;
@@ -374,6 +468,7 @@ function renderChatPanel() {
   const rows = document.getElementById('dcRows');
   if (!rows) return;
   const cur = chatCurrentActor();
+  const resume = _chatResumeInfo();
   rows.textContent = '';
   _chat.msgs.forEach((m, i) => {
     const row = document.createElement('div');
@@ -391,6 +486,14 @@ function renderChatPanel() {
       const pr = document.createElement('div'); pr.className = 'dc-progress'; pr.id = 'dcProgress';
       pr.textContent = _chatProgressText(cur);
       rows.appendChild(pr);
+    }
+    // Repère orange du point de reprise (maquette 26b)
+    if (resume && resume.id === m.id) {
+      const mk = document.createElement('div'); mk.className = 'dc-resume'; mk.id = 'dcResume';
+      const line = () => { const l = document.createElement('span'); l.className = 'dc-resume-line'; return l; };
+      const t = document.createElement('span'); t.textContent = _chatResumeLabel(resume.n);
+      mk.append(line(), t, line());
+      rows.appendChild(mk);
     }
     if (_chatEditId === m.id) rows.appendChild(_chatEditor(m));
   });
@@ -414,9 +517,14 @@ function _chatEditor(m) {
   const act = document.createElement('div'); act.className = 'dc-edit-actions';
   const del = document.createElement('button'); del.type = 'button'; del.className = 'cl-del'; del.textContent = 'Supprimer';
   del.onclick = () => deleteChatMessage(m.id);
+  // « Reprendre ici » (maquette 26b) : ce qui précède devient l'historique affiché
+  const res = document.createElement('button'); res.type = 'button'; res.className = 'dc-edit-resume'; res.textContent = _CHAT_TXT.resumeBtn;
+  res.onclick = () => resumeChatAt(m.id);
+  res.disabled = !_chatValid(m);
+  ta.addEventListener('input', () => { res.disabled = !_chatValid(m); });
   const ok = document.createElement('button'); ok.type = 'button'; ok.className = 'dc-edit-ok'; ok.textContent = 'OK';
   ok.onclick = () => closeChatEditor();
-  act.append(del, ok);
+  act.append(res, del, ok);
   box.append(seg, ta, act);
   return box;
 }
@@ -444,8 +552,8 @@ let _dcDrag = null, _dcSuppressClick = false;
     document.body.appendChild(g);
     d.ghost = g;
     d.row.classList.add('cl-drag-src');
-    // La ligne de progression et l'éditeur suivent leur message : masqués pendant le glisser
-    box.querySelectorAll('.dc-progress, .dc-edit').forEach((el) => { el.style.display = 'none'; });
+    // La ligne de progression, le repère de reprise et l'éditeur suivent leur message : masqués pendant le glisser
+    box.querySelectorAll('.dc-progress, .dc-resume, .dc-edit').forEach((el) => { el.style.display = 'none'; });
     document.addEventListener('touchmove', blockScroll, { passive: false });
     if (navigator.vibrate) navigator.vibrate(30);
   }
@@ -516,20 +624,53 @@ function _sccCur() {
 }
 function screenChatOpen(m) {
   const prev = _scChat;
+  // Reprise (history) : historique affiché d'un coup, sans animation ; frappe locale oubliée
+  const hist = m.history === true;
   _sccStopQueue();
+  if (hist) _sccAnim.clear();
   for (const k of [..._scChatMsgs.keys()]) if (!m.ids.includes(k)) _scChatMsgs.delete(k);
   _scChat = {
     name: String(m.name || '').slice(0, 40), style: ['glass', 'tonal', 'minimal'].includes(m.style) ? m.style : 'minimal',
     hasAvatar: !!m.hasAvatar, ids: m.ids.slice(), sent: m.sent.filter((id) => m.ids.includes(id)), typed: 0, curId: null,
+    instant: hist || !!(prev && prev.instant), // pas de fondu d'entrée (gardé : le retirer le rejouerait)
   };
-  // Même message en cours sans rechargement : la frappe locale fait foi
+  // Même message en cours sans rechargement : la frappe locale fait foi (sauf reprise)
   const cur = _sccCur();
   if (cur) {
     const total = _chatLen(cur.text);
     _scChat.curId = cur.id;
-    _scChat.typed = Math.min(total, prev && prev.curId === cur.id ? prev.typed : (m.typed || 0));
+    _scChat.typed = hist ? 0 : Math.min(total, prev && prev.curId === cur.id ? prev.typed : (m.typed || 0));
+    // Frappe remise à zéro : la télécommande l'apprend (après une progression peut-être encore en route)
+    if (hist && prev && prev.curId === cur.id && prev.typed) _sccProgress();
   }
   _sccRender(!prev);
+}
+// « ↶ » : retire un message affiché (ou encore derrière « … écrit ») ; drop :
+// message improvisé, retiré du fil. Un message du comédien se retape.
+function screenChatRewind(m) {
+  const c = _scChat;
+  if (!c) return;
+  let changed = false;
+  const q = _sccQueue.indexOf(m.id);
+  if (q >= 0) {
+    _sccQueue.splice(q, 1);
+    _sccQueueTyping.delete(m.id);
+    if (q === 0 && _sccTypingTimer) {
+      clearTimeout(_sccTypingTimer);
+      _sccTypingTimer = null; _sccTypingOn = false;
+      if (_sccQueue.length) _sccTypingTimer = setTimeout(_sccNextPost, 300);
+    }
+    changed = true;
+  }
+  const i = c.sent.indexOf(m.id);
+  if (i >= 0) { c.sent.splice(i, 1); changed = true; }
+  if (m.drop && c.ids.includes(m.id)) { c.ids = c.ids.filter((x) => x !== m.id); _scChatMsgs.delete(m.id); changed = true; }
+  if (!changed) return;
+  // Message du comédien en cours changé : sa frappe repart de zéro
+  const cur = _sccCur();
+  if (!cur || cur.id !== c.curId) { c.curId = cur ? cur.id : null; c.typed = 0; }
+  _sccRender();
+  if (cur) _sccProgress(); // lettres du message en cours, à jour sur la télécommande
 }
 function screenChatPost(m) {
   const c = _scChat;
@@ -654,7 +795,7 @@ function _sccRender(first) {
     root.append(head, list, comp);
     el.appendChild(root);
   }
-  root.className = 'scc ' + c.style;
+  root.className = 'scc ' + c.style + (c.instant ? ' scc-instant' : '');
   el.style.display = 'block';
   // En-tête : avatar et nom du contact
   const head = root.querySelector('.scc-head');

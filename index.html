@@ -788,6 +788,27 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
    de saisie révélé lettre à lettre. Trois styles neutres (.glass Verre,
    .tonal Tonal, .minimal Épuré) : aucune marque, aucune bulle bleue. */
 
+/* Télécommande — sous-onglets et discussions enregistrées (maquette 26c) */
+.dc-tabs{display:flex;gap:8px;margin-bottom:12px}
+.dc-tabs .gw-seg-btn{flex:1;min-width:0;font-size:.6875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dc-saved{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+.dc-saved-rows{display:flex;flex-direction:column;gap:12px}
+.dc-saved-rows:empty{display:none}
+.dc-saved-row{display:grid;grid-template-columns:minmax(0,1fr) 30px;gap:8px;align-items:center;min-height:56px;padding:0 12px;border-radius:10px;background:var(--mid);border:1px solid var(--border);cursor:pointer;user-select:none;-webkit-user-select:none}
+.dc-saved-row.selected{background:rgba(255,107,44,.1);border-color:var(--accent)}
+.dc-saved-main{min-width:0;padding:10px 0}
+.dc-saved-name,.dc-saved-meta{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dc-saved-name{font-size:.75rem;color:var(--text)}
+.dc-saved-row.selected .dc-saved-name{color:#FF8a55}
+.dc-saved-meta{font-size:.625rem;color:#a8a8a8;margin-top:3px}
+.dc-saved-more{width:30px;height:44px;border:none;border-radius:6px;background:transparent;color:#8f8f8f;font-family:'DM Mono',monospace;font-size:.8125rem;cursor:pointer;padding:0}
+.dc-saved-empty{font-size:.6875rem;color:#a8a8a8;line-height:1.55;text-align:center;padding:14px 6px;border:1px dashed var(--border);border-radius:10px}
+.dc-saved-hint{font-size:.625rem;color:#a8a8a8;line-height:1.6}
+.dc-saved .cl-save:disabled{opacity:.4;cursor:default}
+/* Feuille « ⋯ » : renommer, dupliquer, supprimer */
+.dc-menu-btn{min-height:48px;padding:0 4px;border:none;border-bottom:1px solid rgba(255,255,255,.06);background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:.8125rem;text-align:left;cursor:pointer}
+.dc-menu-btn.danger{color:#ff7a70}
+
 /* Télécommande — contact */
 .dc-contact-row{display:flex;align-items:center;gap:10px}
 .dc-avatar{width:36px;height:36px;border-radius:50%;border:none;padding:0;flex:none;background:#4a5a70;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-family:'Lato',sans-serif;font-weight:700;font-size:1rem;color:var(--text);cursor:pointer}
@@ -816,6 +837,9 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .dc-row.actor .dc-who{color:#6fb4ff}
 .dc-text{word-break:break-word;white-space:pre-wrap}
 .dc-progress{font-size:.625rem;color:#6fb4ff;padding-left:26px}
+/* Point de reprise (maquette 26b) : repère orange sous le message où la scène a repris */
+.dc-resume{display:flex;align-items:center;gap:6px;font-size:.625rem;color:#FF8a55;padding-left:26px}
+.dc-resume-line{flex:1;height:1px;background:var(--accent)}
 .dc-add{background:none;border:none;padding:0;text-align:left;font-family:'DM Mono',monospace;font-size:.625rem;color:#a8a8a8;cursor:pointer}
 .dc-add:disabled{opacity:.4;cursor:default}
 .dc-edit{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:8px;background:var(--mid2);border:1px solid var(--border)}
@@ -824,6 +848,8 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .dc-edit textarea{width:100%;height:64px;box-sizing:border-box;resize:none;font-size:.8125rem;line-height:1.35}
 .dc-edit-actions{display:flex;gap:8px;justify-content:flex-end}
 .dc-edit-actions .cl-del{height:36px}
+.dc-edit-resume{height:36px;padding:0 12px;margin-right:auto;border-radius:8px;border:1px solid rgba(255,107,44,.5);background:transparent;color:#FF8a55;font-family:'DM Mono',monospace;font-size:.6875rem;letter-spacing:.04em;cursor:pointer}
+.dc-edit-resume:disabled{opacity:.4;cursor:default}
 .dc-edit-ok{height:36px;padding:0 18px;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:'DM Mono',monospace;font-size:.6875rem;letter-spacing:.06em;cursor:pointer}
 
 /* Télécommande — aide, envoi */
@@ -833,11 +859,15 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .dc-send-row{display:flex;gap:8px}
 .dc-go{flex:1.6;height:52px;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;padding:0 8px;min-width:0}
 .dc-go:disabled{background:var(--mid2);color:#8f8f8f;cursor:default}
+.dc-back{flex:none;width:52px;height:52px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-size:1.125rem;cursor:pointer;padding:0}
+.dc-back:disabled{opacity:.4;cursor:default}
 .dc-write{flex:1;height:52px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:.6875rem;cursor:pointer}
 .dc-write-box{display:flex;gap:8px;margin-top:8px;align-items:stretch}
 .dc-write-box textarea{flex:1;height:52px;box-sizing:border-box;resize:none;font-size:.8125rem}
 .dc-write-send{padding:0 14px;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:'DM Mono',monospace;font-size:.6875rem;cursor:pointer}
+.dc-back-hint{margin-top:12px;font-size:.625rem;color:#a8a8a8;line-height:1.5}
 .dc-typing{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.625rem;color:#a8a8a8;cursor:pointer}
+.dc-back-hint+.dc-typing{margin-top:4px}
 .dc-typing input{margin:0;accent-color:var(--accent)}
 .dc-ctl{display:flex;gap:6px;margin-top:12px}
 .dc-ctl-btn:first-child{flex:1.5}
@@ -856,6 +886,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .scc-b{max-width:74%;border-radius:18px;padding:8px 12px;font-size:.9375rem;line-height:1.3;white-space:pre-wrap;word-break:break-word}
 .scc-b.in{align-self:flex-start}
 .scc-b.out{align-self:flex-end}
+.scc.scc-instant{animation:none}
 .scc-b.scc-new{animation:sccIn .28s cubic-bezier(.2,.9,.3,1.1)}
 @keyframes sccIn{from{transform:translateY(10px) scale(.96);opacity:0}to{transform:none;opacity:1}}
 .scc-typing{display:flex;gap:4px;align-items:center;padding:12px 14px}
@@ -1900,6 +1931,18 @@ button.st-row{cursor:pointer}
       <div class="media-status" id="callStatus">—</div>
     </div>
     <!-- Discussion (maquette 26) : fil préparé, messages du contact envoyés d'ici, ceux du comédien tapés sur l'écran -->
+    <!-- Sous-onglets (maquette 26c) : fil en cours, discussions enregistrées -->
+    <div class="dc-tabs" id="dcTabs" style="display:none">
+      <button type="button" class="gw-seg-btn active" id="dcTab-thread" onclick="setChatView('thread')">Fil en cours</button>
+      <button type="button" class="gw-seg-btn" id="dcTab-saved" onclick="setChatView('saved')">Enregistrées (0)</button>
+    </div>
+    <div class="dc-saved" id="dcSavedPanel" style="display:none">
+      <div class="dc-saved-rows" id="dcSavedRows"></div>
+      <div class="dc-saved-empty" id="dcSavedEmpty">Aucune discussion enregistrée pour l'instant.</div>
+      <div class="dc-saved-hint" id="dcSavedHint">Toucher : charger dans « Fil en cours ». ⋯ : renommer · dupliquer · supprimer.</div>
+      <button type="button" class="cl-save" id="dcSaveBtn" onclick="openSaveChatSheet()">+ Enregistrer le fil en cours</button>
+      <div class="cl-note">Une discussion enregistrée garde le contact (nom, photo), le comédien, le style et tous les messages. Le point de reprise n'est pas enregistré.</div>
+    </div>
     <div class="panel dc-contact" id="dcContactPanel" style="display:none">
       <div class="dc-contact-row">
         <button type="button" class="dc-avatar" id="dcAvatar" aria-label="Photo du contact" onclick="document.getElementById('dcAvatarInput').click()"></button>
@@ -1914,7 +1957,7 @@ button.st-row{cursor:pointer}
     <div class="panel dc-thread" id="dcThreadPanel" style="display:none">
       <div class="dc-head"><span class="panel-label">Fil préparé</span><span class="dc-pair" id="dcPair"></span></div>
       <div class="dc-rows" id="dcRows"></div>
-      <button type="button" class="dc-add" id="dcAdd" onclick="addChatMessage()">+ Ajouter un message · glisser pour réordonner</button>
+      <button type="button" class="dc-add" id="dcAdd" onclick="addChatMessage()">+ Ajouter un message · glisser pour réordonner · toucher un message : « Reprendre ici »</button>
     </div>
     <div class="panel dc-help-card" id="dcActorPanel" style="display:none">
       <div class="panel-label" id="dcActorLabel"></div>
@@ -1923,16 +1966,18 @@ button.st-row{cursor:pointer}
     <div class="dc-send" id="dcSendPanel" style="display:none">
       <div class="dc-send-row">
         <button type="button" class="dc-go" id="dcGo" onclick="sendNextChatMessage()"></button>
+        <button type="button" class="dc-back" id="dcBackBtn" aria-label="Revenir d'un message" title="Revenir d'un message" onclick="rewindChat()" disabled>↶</button>
         <button type="button" class="dc-write" id="dcWriteBtn" onclick="toggleChatWrite()">Écrire…</button>
       </div>
       <div class="dc-write-box" id="dcWriteBox" style="display:none">
         <textarea id="dcWriteText" class="text-input" maxlength="300" aria-label="Message improvisé"></textarea>
         <button type="button" class="dc-write-send" onclick="sendImprovisedChat()">Envoyer</button>
       </div>
+      <div class="dc-back-hint">« ↶ » retire le dernier message affiché sur l'écran (et le remet en attente).</div>
       <label class="dc-typing"><input type="checkbox" id="dcTypingToggle" onchange="onChatTypingToggle()"><span id="dcTypingLabel"></span></label>
       <div class="dc-ctl">
         <button type="button" class="dc-ctl-btn" id="dcOpenBtn" onclick="openChatOnTarget()">Ouvrir sur l'écran</button>
-        <button type="button" class="dc-ctl-btn" id="dcRestartBtn" onclick="restartChat()">Recommencer</button>
+        <button type="button" class="dc-ctl-btn" id="dcRestartBtn" onclick="restartChat()">Repartir de zéro</button>
         <button type="button" class="dc-ctl-btn dc-ctl-close" id="dcCloseBtn" onclick="closeChat()">Fermer</button>
       </div>
     </div>
@@ -3081,11 +3126,27 @@ const SPECS = {
       ids: req(arrayOf(CHAT_ID, LIMITS.chatMessages), 'messages du fil, dans l’ordre préparé'),
       sent: req(arrayOf(CHAT_ID, LIMITS.chatMessages), 'messages déjà postés, dans l’ordre où ils l’ont été'),
       typed: opt(int(0, LIMITS.chatTextChars), 'lettres déjà tapées du message du comédien en cours (reprise)'),
+      history: opt(bool, '« Reprendre ici » / « Repartir de zéro » : sent = les messages du fil AVANT le point de reprise (début exact de ids), '
+        + 'affichés d’un coup comme historique (ni « … écrit », ni animation, ni son) ; frappe locale et file d’attente de l’écran remises à zéro'),
     },
     refine: m => {
       if (!unique(m.ids) || !unique(m.sent)) return 'chat:open : identifiant en double';
       if (!m.sent.every((/** @type {string} */ id) => m.ids.includes(id))) return 'chat:open : message posté absent du fil';
+      if (m.history) {
+        if (!m.sent.every((/** @type {string} */ id, /** @type {number} */ i) => m.ids[i] === id)) return 'chat:open : historique hors de l’ordre du fil';
+        if (m.typed) return 'chat:open : historique avec lettres tapées';
+      }
       return null;
+    },
+  },
+  'chat:rewind': {
+    dir: 'r2s', src: ['web'],
+    doc: '« ↶ » : retire de l’écran le dernier message affiché (ou encore en attente derrière « … écrit »), remis en attente dans le fil : '
+      + 'un message du comédien se retape lettre à lettre. drop : message improvisé (« Écrire… »), retiré aussi du fil. '
+      + 'Sans effet si le message n’est pas affiché. L’état complet repart à la resynchronisation (chat:open).',
+    fields: {
+      id: req(CHAT_ID, 'message retiré de l’écran'),
+      drop: opt(bool, 'message improvisé : retiré du fil'),
     },
   },
   'chat:msg': {
@@ -7103,6 +7164,9 @@ function _validChatOpen(m) {
   if (!_P.oneOf(m.style, ['glass', 'tonal', 'minimal'])) m.style = 'minimal';
   m.hasAvatar = _P.bool(m.hasAvatar);
   m.typed = _P.int(m.typed, 0, PROTO.CHAT_TEXT_MAX) ?? 0;
+  // Reprise (« Reprendre ici », « Repartir de zéro ») : historique = début exact du fil, sans lettre tapée
+  m.history = _P.bool(m.history);
+  if (m.history && (m.typed || !m.sent.every((id, i) => m.ids[i] === id))) return false;
   return true;
 }
 function _validChatMsg(m) {
@@ -7196,6 +7260,7 @@ const MSG_ROUTES = {
   'chat:open':         { roles: ['screen'], validate: _validChatOpen, handle: (m) => screenChatOpen(m) },
   'chat:msg':          { roles: ['screen'], validate: _validChatMsg, handle: (m) => screenChatMsg(m) },
   'chat:post':         { roles: ['screen'], validate: (m) => { m.typing = _P.bool(m.typing); return _chatId(m.id); }, handle: (m) => screenChatPost(m) },
+  'chat:rewind':       { roles: ['screen'], validate: (m) => { m.drop = _P.bool(m.drop); return _chatId(m.id); }, handle: (m) => screenChatRewind(m) },
   'chat:close':        { roles: ['screen'], validate: () => true, handle: () => screenChatClose() },
   // Passerelle DMX : look calculé depuis la console (36-dmx-screen.js, docs/DMX.md § 7)
   'dmx:look': {
@@ -9458,7 +9523,7 @@ function screenIdentify() {
 // confirmation ; le retrait lui-même : 29-revoke.js.
 // Modèle (registre, cible, état de chaque écran) : 28-screens.js.
 let _svOpen = false;
-let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group', … }
+let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group' | 'chatName' | 'chatMenu', … }
 const _uiHtml = new Map();   // dernier HTML posé par conteneur (pas de re-rendu inutile pendant un geste)
 
 function _setHtml(el, html) {
@@ -9529,8 +9594,13 @@ function renderSheet(focus) {
   if (!_sheet) { wrap.classList.remove('open'); return; }
   const title = document.getElementById('srSheetTitle'), body = document.getElementById('srSheetBody');
   const s = _sheet;
-  let t = '', h = '';
-  if (s.kind === 'target') {
+  let t = '', h = '', form = s.kind === 'rename' || s.kind === 'group';
+  if (s.kind === 'chatName' || s.kind === 'chatMenu') {
+    // Discussions enregistrées (83-discussions-saved.js) : nom, menu « ⋯ »
+    const c = chatSheetContent(s);
+    if (!c) { closeSheet(); return; }
+    t = c.title; h = c.html; form = c.form;
+  } else if (s.kind === 'target') {
     // Maquette 6 : Tous, chaque groupe (vide : non sélectionnable), chaque écran
     t = 'Envoyer les commandes à…';
     const cur = scrTarget(), list = scrList();
@@ -9576,7 +9646,7 @@ function renderSheet(focus) {
   }
   title.textContent = t;
   // Formulaires : posés une fois (saisie en cours préservée) ; listes : mises à jour
-  if (s.kind === 'rename' || s.kind === 'group') { _uiHtml.delete(body); body.innerHTML = h; }
+  if (form) { _uiHtml.delete(body); body.innerHTML = h; }
   else _setHtml(body, h);
   wrap.classList.add('open');
   if (focus) { const inp = document.getElementById('srName'); if (inp) { try { inp.focus({ preventScroll: true }); } catch (_) {} } }
@@ -9604,6 +9674,7 @@ function sheetSave() {
   const s = _sheet;
   const inp = document.getElementById('srName');
   if (!s || !inp) return;
+  if (s.kind === 'chatName') { chatSheetSave(s, inp.value); return; } // 83-discussions-saved.js
   if (s.kind === 'rename') scrRenameScreen(s.id, inp.value);
   else if (s.kind === 'group') {
     const members = [...s.members].filter(scrKnown);
@@ -14755,9 +14826,18 @@ let _clDrag = null, _clSuppressClick = false;
 //   • Reprise : la télécommande garde le fil (localStorage) et le renvoie à
 //     chaque resynchronisation d'un écran : un écran rechargé retrouve la
 //     discussion où elle en était (messages postés, lettres déjà tapées).
+//   • Revenir en arrière (maquette validée 26b) : « ↶ » retire le DERNIER
+//     message affiché sur l'écran et le remet en attente (un message du
+//     comédien se retape lettre à lettre) ; un message improvisé
+//     (« Écrire… ») disparaît du fil. « Reprendre ici » (toucher un message) :
+//     tout ce qui le précède s'affiche d'un coup comme historique (ni « … écrit »,
+//     ni animation), la scène reprend à ce message ; repère orange dans le fil.
+//     « Repartir de zéro » : plus rien d'affiché.
+//   • Discussions enregistrées (maquette validée 26c) : 83-discussions-saved.js.
 // Protocole (packages/protocol/schema.js) : chat:msg (texte d'un message),
-// chat:open (contact, style, ordre, messages postés), chat:post, chat:close ;
-// retour chat:progress, chat:sent. Textes affichés par textContent.
+// chat:open (contact, style, ordre, messages postés ; history : reprise),
+// chat:rewind (« ↶ »), chat:post, chat:close ; retour chat:progress,
+// chat:sent. Textes affichés par textContent.
 const CHAT_LS_KEY = 'setremote-chat-v1';
 const CHAT_AVATAR_KEY = 'setremote-chat-avatar-v1';
 const CHAT_MAX = 40, CHAT_TEXT_MAX = 300, CHAT_TYPING_MS = 2000, CHAT_PROGRESS_MS = 250;
@@ -14767,6 +14847,13 @@ const _CHAT_STYLE_HINTS = {
   minimal: 'Fond clair, bulles sobres et contrastées.',
 };
 const _tplChat = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
+// Textes affichés ajoutés avec la maquette 26b, regroupés pour la traduction ({…} : valeurs)
+const _CHAT_TXT = {
+  resumeBtn: 'Reprendre ici',
+  resume1: 'Reprise ici · 1 affiché comme historique',
+  resume2: 'Reprise ici · 1 et 2 affichés comme historique',
+  resumeN: 'Reprise ici · 1 à {n} affichés comme historique',
+};
 
 // — Télécommande —
 let _chatSeq = 0;
@@ -14781,6 +14868,8 @@ function _chatDefault() {
       m('actor', 'pardon maman', 5),
     ],
     sent: [], open: false, screens: null, progress: null,
+    resumeAt: null,  // « Reprendre ici » : message où la scène a repris (repère dans le fil)
+    savedId: null,   // discussion enregistrée chargée ou enregistrée en dernier (83-discussions-saved.js)
   };
 }
 let _chat = _chatDefault();
@@ -14793,8 +14882,9 @@ function chatLoad() {
   try { o = JSON.parse(_lsGet(CHAT_LS_KEY)); } catch (_) { o = null; }
   if (o && typeof o === 'object' && Array.isArray(o.msgs)) {
     const d = _chatDefault();
-    const msgs = o.msgs.filter((x) => x && _chatOk(x.id) && (x.from === 'contact' || x.from === 'actor') && typeof x.text === 'string')
-      .slice(0, CHAT_MAX).map((x) => ({ id: x.id, from: x.from, text: x.text.slice(0, CHAT_TEXT_MAX) }));
+    const seen = new Set();
+    const msgs = o.msgs.filter((x) => x && _chatOk(x.id) && !seen.has(x.id) && seen.add(x.id) && (x.from === 'contact' || x.from === 'actor') && typeof x.text === 'string')
+      .slice(0, CHAT_MAX).map((x) => Object.assign({ id: x.id, from: x.from, text: x.text.slice(0, CHAT_TEXT_MAX) }, x.impro === true ? { impro: true } : {}));
     const ids = new Set(msgs.map((x) => x.id));
     _chat = {
       name: typeof o.name === 'string' ? o.name.slice(0, 40) : d.name,
@@ -14806,6 +14896,8 @@ function chatLoad() {
       open: !!o.open,
       screens: Array.isArray(o.screens) ? o.screens.filter((s) => typeof s === 'string' && SRP.SCREEN_ID_RE.test(s)).slice(0, 64) : null,
       progress: null,
+      resumeAt: typeof o.resumeAt === 'string' && ids.has(o.resumeAt) ? o.resumeAt : null,
+      savedId: typeof o.savedId === 'string' && /^[A-Za-z0-9_-]{1,40}$/.test(o.savedId) ? o.savedId : null,
     };
   }
   const a = _lsGet(CHAT_AVATAR_KEY);
@@ -14813,7 +14905,7 @@ function chatLoad() {
 }
 function chatSave() {
   const c = _chat;
-  _lsSet(CHAT_LS_KEY, JSON.stringify({ v: 1, name: c.name, actor: c.actor, style: c.style, typing: c.typing, msgs: c.msgs, sent: c.sent, open: c.open, screens: c.screens }));
+  _lsSet(CHAT_LS_KEY, JSON.stringify({ v: 1, name: c.name, actor: c.actor, style: c.style, typing: c.typing, msgs: c.msgs, sent: c.sent, open: c.open, screens: c.screens, resumeAt: c.resumeAt, savedId: c.savedId }));
 }
 function chatStyleNow() { return _chat.style; }
 function chatSetStyle(s) { _chat.style = _CHAT_STYLE_HINTS[s] ? s : 'minimal'; _chatChanged(); }
@@ -14837,22 +14929,25 @@ function _chatTarget(only) {
   return ids && ids.length ? { target: { screens: ids.slice() } } : {};
 }
 // Renvoi complet (textes puis état) : synchrone, dans l'ordre des envois
-function _chatSyncTexts(only) {
+function _chatSyncTexts(only, history) {
   const t = _chatTarget(only);
   const msgs = _chat.msgs.filter(_chatValid);
   for (const m of msgs) _chatDefsSent.set(m.id, m.from + '|' + m.text);
   for (const m of msgs) sendMsg(Object.assign({ type: 'chat:msg', id: m.id, from: m.from, text: m.text.slice(0, CHAT_TEXT_MAX) }, t));
-  _chatSendOpen(only);
+  _chatSendOpen(only, history);
 }
-function _chatSendOpen(only) {
+// history : reprise (« Reprendre ici », « Repartir de zéro », discussion
+// chargée) — les messages postés, début exact du fil, s'affichent d'un coup
+// et l'écran oublie sa frappe en cours
+function _chatSendOpen(only, history) {
   const ids = _chat.msgs.filter(_chatValid).map((m) => m.id);
   const cur = chatCurrentActor();
   const p = _chat.progress;
   sendMsg(Object.assign({
     type: 'chat:open', name: _chat.name.slice(0, 40), style: _chat.style, hasAvatar: !!_chatAvatar,
     ids, sent: _chat.sent.filter((id) => ids.includes(id)),
-    typed: cur && p && p.id === cur.id ? Math.min(p.typed, _chatLen(cur.text)) : 0,
-  }, _chatTarget(only)));
+    typed: !history && cur && p && p.id === cur.id ? Math.min(p.typed, _chatLen(cur.text)) : 0,
+  }, history ? { history: true } : {}, _chatTarget(only)));
 }
 function _chatSendAvatar(only) {
   if (!_chatAvatar || linkBleOnly()) return Promise.resolve();
@@ -14860,11 +14955,11 @@ function _chatSendAvatar(only) {
   return ensureSlotImage('__chatavatar', _chatAvatar, ids && ids.length ? ids : undefined);
 }
 // Ouvre la discussion sur la cible courante (chip « Cible »)
-function openChatOnTarget() {
+function openChatOnTarget(history) {
   const ids = scrTargetIds();
   _chat.screens = ids.length ? ids : null;
   _chat.open = true;
-  _chatSyncTexts();
+  _chatSyncTexts(undefined, history === true);
   _chatSendAvatar().then(() => { if (_chat.open && _chatAvatar) _chatSendOpen(); });
   chatSave();
   renderChatPanel();
@@ -14878,12 +14973,63 @@ function closeChat() {
   renderChatPanel();
   if (typeof scrChanged === 'function') scrChanged();
 }
+// « Repartir de zéro » : plus rien d'affiché, frappe oubliée
 function restartChat() {
   _chat.sent = [];
   _chat.progress = null;
-  if (_chat.open) _chatSendOpen();
+  _chat.resumeAt = null;
+  if (_chat.open) { _chatFlushTexts(); _chatSendOpen(undefined, true); }
   chatSave();
   renderChatPanel();
+}
+// « ↶ » : retire le dernier message affiché sur l'écran, remis en attente
+// (un message du comédien se retape lettre à lettre) ; un message improvisé
+// (« Écrire… ») disparaît du fil. Peut se répéter.
+function rewindChat() {
+  const id = _chat.sent[_chat.sent.length - 1];
+  if (!id) return;
+  if (_chat.open) _chatFlushTexts();
+  _chat.sent.pop();
+  const i = _chat.msgs.findIndex((x) => x.id === id);
+  const drop = i >= 0 && _chat.msgs[i].impro === true;
+  if (drop) {
+    _chat.msgs.splice(i, 1);
+    _chatDefsSent.delete(id);
+    if (_chatEditId === id) _chatEditId = null;
+  }
+  // Frappe en cours : gardée seulement si le message du comédien reste le même
+  const cur = chatCurrentActor();
+  if (_chat.progress && (!cur || cur.id !== _chat.progress.id)) _chat.progress = null;
+  // Retour dans l'historique d'une reprise : le repère n'a plus lieu d'être
+  if (!_chatResumeInfo()) _chat.resumeAt = null;
+  if (_chat.open) sendMsg(Object.assign({ type: 'chat:rewind', id }, drop ? { drop: true } : {}, _chatTarget()));
+  chatSave();
+  renderChatPanel();
+}
+// « Reprendre ici » : les messages du fil avant celui-ci s'affichent d'un coup
+// comme historique (sans « … écrit », sans animation), la scène reprend à ce
+// message. Ouvre la discussion sur la cible si elle est fermée.
+function resumeChatAt(id) {
+  const i = _chat.msgs.findIndex((x) => x.id === id);
+  if (i < 0 || !_chatValid(_chat.msgs[i])) return;
+  _chat.sent = _chat.msgs.slice(0, i).filter(_chatValid).map((m) => m.id);
+  _chat.progress = null;
+  _chat.resumeAt = i > 0 ? id : null; // au n° 1 : comme « Repartir de zéro »
+  _chatEditId = null;
+  if (!_chat.open) openChatOnTarget(true);
+  else { _chatFlushTexts(); _chatSendOpen(undefined, true); }
+  chatSave();
+  renderChatPanel();
+}
+// Point de reprise encore valable : son rang (historique toujours affiché)
+function _chatResumeInfo() {
+  const i = _chat.resumeAt ? _chat.msgs.findIndex((x) => x.id === _chat.resumeAt) : -1;
+  if (i <= 0) return null;
+  const hist = _chat.msgs.slice(0, i).filter(_chatValid);
+  return hist.length && hist.every(_chatSent) ? { id: _chat.resumeAt, n: i } : null;
+}
+function _chatResumeLabel(n) {
+  return n === 1 ? _CHAT_TXT.resume1 : n === 2 ? _CHAT_TXT.resume2 : _tplChat(_CHAT_TXT.resumeN, { n });
 }
 // « Envoyer n° X (contact) » : ouvre la discussion si besoin, puis poste
 function sendNextChatMessage() {
@@ -14908,7 +15054,7 @@ function sendImprovisedChat() {
   const ta = document.getElementById('dcWriteText');
   const text = ta ? ta.value.trim().slice(0, CHAT_TEXT_MAX) : '';
   if (!text || _chat.msgs.length >= CHAT_MAX) return;
-  const m = { id: _chatNewId(), from: 'contact', text };
+  const m = { id: _chatNewId(), from: 'contact', text, impro: true }; // improvisé : « ↶ » le retire du fil
   const i = _chat.msgs.findIndex((x) => !_chatSent(x));
   _chat.msgs.splice(i < 0 ? _chat.msgs.length : i, 0, m);
   if (!_chat.open) openChatOnTarget();
@@ -14964,8 +15110,12 @@ function _chatChanged(soft) {
   _chatEditTimer = setTimeout(_chatFlushEdits, 400);
 }
 function _chatFlushEdits() {
+  if (_chatFlushTexts()) _chatSendOpen();
+}
+// Textes modifiés seulement (false : discussion fermée)
+function _chatFlushTexts() {
   if (_chatEditTimer) { clearTimeout(_chatEditTimer); _chatEditTimer = null; }
-  if (!_chat.open) return;
+  if (!_chat.open) return false;
   const t = _chatTarget();
   for (const m of _chat.msgs.filter(_chatValid)) {
     const def = m.from + '|' + m.text;
@@ -14973,7 +15123,7 @@ function _chatFlushEdits() {
     _chatDefsSent.set(m.id, def);
     sendMsg(Object.assign({ type: 'chat:msg', id: m.id, from: m.from, text: m.text.slice(0, CHAT_TEXT_MAX) }, t));
   }
-  _chatSendOpen();
+  return true;
 }
 function addChatMessage() {
   if (_chat.msgs.length >= CHAT_MAX) return;
@@ -15049,12 +15199,25 @@ function chatOnScreensResync(ids) {
 }
 
 // ── Rendu (télécommande) ──
+// Sous-onglets (maquette 26c) : « Fil en cours » | « Enregistrées (n) »
+let _chatView = 'thread';
 function chatShowForm(on) {
-  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcSendPanel']) {
-    const el = document.getElementById(id);
-    if (el) el.style.display = on ? '' : 'none';
+  const saved = on && _chatView === 'saved';
+  const show = (id, v) => { const el = document.getElementById(id); if (el) el.style.display = v ? '' : 'none'; };
+  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcSendPanel']) show(id, on && !saved);
+  show('dcTabs', on);
+  show('dcSavedPanel', saved);
+  // Le style appartient au fil en cours : masqué sur la liste
+  if (on) show('callStyleRow', !saved);
+  for (const v of ['thread', 'saved']) {
+    const b = document.getElementById('dcTab-' + v);
+    if (b) b.classList.toggle('active', _chatView === v);
   }
-  if (on) renderChatPanel();
+  if (on) { renderChatPanel(); renderSavedChats(); }
+}
+function setChatView(v) {
+  _chatView = v === 'saved' ? 'saved' : 'thread';
+  chatShowForm(callKind === 'discussion');
 }
 function _chatScreensLabel() {
   const ids = _chat.screens || [];
@@ -15091,6 +15254,8 @@ function _chatRenderHead() {
   if (tg) tg.checked = !!_chat.typing;
   const cb = document.getElementById('dcCloseBtn');
   if (cb) cb.disabled = !_chat.open;
+  const bk = document.getElementById('dcBackBtn');
+  if (bk) bk.disabled = !_chat.sent.length;
 }
 function _chatProgressText(cur) {
   const p = _chat.progress && _chat.progress.id === cur.id ? _chat.progress : null;
@@ -15108,6 +15273,7 @@ function renderChatPanel() {
   const rows = document.getElementById('dcRows');
   if (!rows) return;
   const cur = chatCurrentActor();
+  const resume = _chatResumeInfo();
   rows.textContent = '';
   _chat.msgs.forEach((m, i) => {
     const row = document.createElement('div');
@@ -15125,6 +15291,14 @@ function renderChatPanel() {
       const pr = document.createElement('div'); pr.className = 'dc-progress'; pr.id = 'dcProgress';
       pr.textContent = _chatProgressText(cur);
       rows.appendChild(pr);
+    }
+    // Repère orange du point de reprise (maquette 26b)
+    if (resume && resume.id === m.id) {
+      const mk = document.createElement('div'); mk.className = 'dc-resume'; mk.id = 'dcResume';
+      const line = () => { const l = document.createElement('span'); l.className = 'dc-resume-line'; return l; };
+      const t = document.createElement('span'); t.textContent = _chatResumeLabel(resume.n);
+      mk.append(line(), t, line());
+      rows.appendChild(mk);
     }
     if (_chatEditId === m.id) rows.appendChild(_chatEditor(m));
   });
@@ -15148,9 +15322,14 @@ function _chatEditor(m) {
   const act = document.createElement('div'); act.className = 'dc-edit-actions';
   const del = document.createElement('button'); del.type = 'button'; del.className = 'cl-del'; del.textContent = 'Supprimer';
   del.onclick = () => deleteChatMessage(m.id);
+  // « Reprendre ici » (maquette 26b) : ce qui précède devient l'historique affiché
+  const res = document.createElement('button'); res.type = 'button'; res.className = 'dc-edit-resume'; res.textContent = _CHAT_TXT.resumeBtn;
+  res.onclick = () => resumeChatAt(m.id);
+  res.disabled = !_chatValid(m);
+  ta.addEventListener('input', () => { res.disabled = !_chatValid(m); });
   const ok = document.createElement('button'); ok.type = 'button'; ok.className = 'dc-edit-ok'; ok.textContent = 'OK';
   ok.onclick = () => closeChatEditor();
-  act.append(del, ok);
+  act.append(res, del, ok);
   box.append(seg, ta, act);
   return box;
 }
@@ -15178,8 +15357,8 @@ let _dcDrag = null, _dcSuppressClick = false;
     document.body.appendChild(g);
     d.ghost = g;
     d.row.classList.add('cl-drag-src');
-    // La ligne de progression et l'éditeur suivent leur message : masqués pendant le glisser
-    box.querySelectorAll('.dc-progress, .dc-edit').forEach((el) => { el.style.display = 'none'; });
+    // La ligne de progression, le repère de reprise et l'éditeur suivent leur message : masqués pendant le glisser
+    box.querySelectorAll('.dc-progress, .dc-resume, .dc-edit').forEach((el) => { el.style.display = 'none'; });
     document.addEventListener('touchmove', blockScroll, { passive: false });
     if (navigator.vibrate) navigator.vibrate(30);
   }
@@ -15250,20 +15429,53 @@ function _sccCur() {
 }
 function screenChatOpen(m) {
   const prev = _scChat;
+  // Reprise (history) : historique affiché d'un coup, sans animation ; frappe locale oubliée
+  const hist = m.history === true;
   _sccStopQueue();
+  if (hist) _sccAnim.clear();
   for (const k of [..._scChatMsgs.keys()]) if (!m.ids.includes(k)) _scChatMsgs.delete(k);
   _scChat = {
     name: String(m.name || '').slice(0, 40), style: ['glass', 'tonal', 'minimal'].includes(m.style) ? m.style : 'minimal',
     hasAvatar: !!m.hasAvatar, ids: m.ids.slice(), sent: m.sent.filter((id) => m.ids.includes(id)), typed: 0, curId: null,
+    instant: hist || !!(prev && prev.instant), // pas de fondu d'entrée (gardé : le retirer le rejouerait)
   };
-  // Même message en cours sans rechargement : la frappe locale fait foi
+  // Même message en cours sans rechargement : la frappe locale fait foi (sauf reprise)
   const cur = _sccCur();
   if (cur) {
     const total = _chatLen(cur.text);
     _scChat.curId = cur.id;
-    _scChat.typed = Math.min(total, prev && prev.curId === cur.id ? prev.typed : (m.typed || 0));
+    _scChat.typed = hist ? 0 : Math.min(total, prev && prev.curId === cur.id ? prev.typed : (m.typed || 0));
+    // Frappe remise à zéro : la télécommande l'apprend (après une progression peut-être encore en route)
+    if (hist && prev && prev.curId === cur.id && prev.typed) _sccProgress();
   }
   _sccRender(!prev);
+}
+// « ↶ » : retire un message affiché (ou encore derrière « … écrit ») ; drop :
+// message improvisé, retiré du fil. Un message du comédien se retape.
+function screenChatRewind(m) {
+  const c = _scChat;
+  if (!c) return;
+  let changed = false;
+  const q = _sccQueue.indexOf(m.id);
+  if (q >= 0) {
+    _sccQueue.splice(q, 1);
+    _sccQueueTyping.delete(m.id);
+    if (q === 0 && _sccTypingTimer) {
+      clearTimeout(_sccTypingTimer);
+      _sccTypingTimer = null; _sccTypingOn = false;
+      if (_sccQueue.length) _sccTypingTimer = setTimeout(_sccNextPost, 300);
+    }
+    changed = true;
+  }
+  const i = c.sent.indexOf(m.id);
+  if (i >= 0) { c.sent.splice(i, 1); changed = true; }
+  if (m.drop && c.ids.includes(m.id)) { c.ids = c.ids.filter((x) => x !== m.id); _scChatMsgs.delete(m.id); changed = true; }
+  if (!changed) return;
+  // Message du comédien en cours changé : sa frappe repart de zéro
+  const cur = _sccCur();
+  if (!cur || cur.id !== c.curId) { c.curId = cur ? cur.id : null; c.typed = 0; }
+  _sccRender();
+  if (cur) _sccProgress(); // lettres du message en cours, à jour sur la télécommande
 }
 function screenChatPost(m) {
   const c = _scChat;
@@ -15388,7 +15600,7 @@ function _sccRender(first) {
     root.append(head, list, comp);
     el.appendChild(root);
   }
-  root.className = 'scc ' + c.style;
+  root.className = 'scc ' + c.style + (c.instant ? ' scc-instant' : '');
   el.style.display = 'block';
   // En-tête : avatar et nom du contact
   const head = root.querySelector('.scc-head');
@@ -15466,6 +15678,287 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => { if (_scChat) _sccFitViewport(); });
   window.visualViewport.addEventListener('scroll', () => { if (_scChat) _sccFitViewport(); });
 }
+// ══════════════════════════ DISCUSSIONS ENREGISTRÉES (onglet Tel, télécommande) ══════════════════════════
+// Maquette validée 26c. Deux sous-onglets dans « Discussion » : « Fil en
+// cours » (83-discussion.js) et « Enregistrées (n) ». Une discussion
+// enregistrée garde son nom, le contact (nom, photo), le comédien, le style
+// et tous les messages ; PAS le point de reprise (ni ce qui est posté).
+//   • « + Enregistrer le fil en cours » : demande un nom, ajoute en fin de liste.
+//   • Toucher une ligne : la charge dans « Fil en cours » (confirmation si le
+//     fil en cours a des modifications non enregistrées). Ouverte sur un
+//     écran, la discussion y repart de zéro avec le nouveau fil.
+//   • « ⋯ » : renommer, dupliquer, supprimer (avec confirmation).
+// Stockage (comme la liste des appels, 82-call-list.js) : textes en
+// localStorage, photos dans IndexedDB (callAssetPut / Get / Delete, clé
+// « chat-<id>:photo »), à défaut en mémoire le temps de la session. Au plus
+// CHAT_SAVED_MAX entrées, toutes revalidées au chargement. Jamais déclenchées
+// par la console DMX (aucun canal).
+const CHAT_SAVED_KEY = 'setremote-chat-saved-v1';
+const CHAT_SAVED_MAX = 100;
+const CHAT_SAVED_NAME_MAX = 40;
+const _CHSV_ID_RE = /^[A-Za-z0-9_-]{1,40}$/;
+const _CHSV_SIG_RE = /^[0-9a-f]{8}-\d{1,9}$/;
+// Textes affichés (maquette 26c), regroupés pour la traduction ({…} : valeurs)
+const _CHSV_TXT = {
+  tab: 'Enregistrées ({n})',
+  meta: '{contact} ‹› {comedien} · {n} · {style}',
+  msgs1: '1 message',
+  msgsN: '{n} messages',
+  save: '+ Enregistrer le fil en cours',
+  full: 'Liste pleine ({max} discussions)',
+  sheetSave: 'Enregistrer le fil en cours',
+  sheetRename: 'Renommer la discussion',
+  nameLabel: 'Nom de la discussion',
+  nameNote: 'Vide : « {defaut} ».',
+  cancel: 'Annuler',
+  ok: 'Enregistrer',
+  rename: 'Renommer',
+  duplicate: 'Dupliquer',
+  remove: 'Supprimer',
+  copy: '{nom} (copie)',
+  confirmLoad: 'Le fil en cours a des modifications non enregistrées. Charger « {nom} » à la place ?',
+  confirmDelete: 'Supprimer la discussion « {nom} » ?',
+  storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
+  untitled: 'Discussion',
+};
+
+let chatSaved = [];
+
+// Empreinte courte d'une photo (FNV-1a 32 bits + longueur) : comparer sans relire IndexedDB
+function _chsvPhotoSig(data) {
+  if (!data) return null;
+  let h = 0x811c9dc5;
+  for (let i = 0; i < data.length; i++) { h ^= data.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(16).padStart(8, '0') + '-' + data.length;
+}
+const _chsvLine = (v, max) => (typeof v === 'string' ? v.replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, max) : '');
+const _chsvPhotoKey = (id) => 'chat-' + id + ':photo';
+const _chsvStyleName = (s) => ({ glass: 'Verre', tonal: 'Tonal', minimal: 'Épuré' })[s] || 'Épuré';
+
+// ── Validation (chargement) ──
+function _chsvSanitize(e) {
+  if (!e || typeof e !== 'object' || typeof e.id !== 'string' || !_CHSV_ID_RE.test(e.id) || !Array.isArray(e.msgs)) return null;
+  const seen = new Set();
+  const msgs = e.msgs.filter((x) => x && typeof x.id === 'string' && SRP.CHAT_ID_RE.test(x.id) && !seen.has(x.id) && seen.add(x.id)
+    && (x.from === 'contact' || x.from === 'actor') && typeof x.text === 'string' && x.text.trim())
+    .slice(0, CHAT_MAX).map((x) => ({ id: x.id, from: x.from, text: x.text.slice(0, CHAT_TEXT_MAX) }));
+  const photoSig = e.hasPhoto === true && typeof e.photoSig === 'string' && _CHSV_SIG_RE.test(e.photoSig) ? e.photoSig : null;
+  return {
+    id: e.id,
+    name: _chsvLine(e.name, CHAT_SAVED_NAME_MAX) || _CHSV_TXT.untitled,
+    contact: _chsvLine(e.contact, 40),
+    actor: _chsvLine(e.actor, 40),
+    style: _CHAT_STYLE_HINTS[e.style] ? e.style : 'minimal',
+    msgs,
+    hasPhoto: !!photoSig,
+    photoSig,
+  };
+}
+function loadSavedChats() {
+  let o = null;
+  try { o = JSON.parse(_lsGet(CHAT_SAVED_KEY)); } catch (_) { o = null; }
+  const ids = new Set();
+  chatSaved = (o && Array.isArray(o.list) ? o.list : []).map(_chsvSanitize)
+    .filter((e) => e && !ids.has(e.id) && ids.add(e.id)).slice(0, CHAT_SAVED_MAX);
+  if (_chat.savedId && !ids.has(_chat.savedId)) _chat.savedId = null;
+}
+// false : mémoire pleine (rien n'est changé dans le stockage)
+function _chsvPersist() {
+  try { localStorage.setItem(CHAT_SAVED_KEY, JSON.stringify({ v: 1, list: chatSaved })); return true; } catch (_) { return false; }
+}
+const _chsvNewId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+// ── Fil en cours ↔ entrée ──
+// Ce qu'une entrée garde du fil (ni le point de reprise ni les messages postés)
+function _chsvSnapshot() {
+  return {
+    contact: _chat.name.slice(0, 40), actor: _chat.actor.slice(0, 40), style: _chat.style,
+    msgs: _chat.msgs.filter(_chatValid).slice(0, CHAT_MAX).map((m) => ({ id: m.id, from: m.from, text: m.text.slice(0, CHAT_TEXT_MAX) })),
+    hasPhoto: !!_chatAvatar, photoSig: _chsvPhotoSig(_chatAvatar),
+  };
+}
+const _chsvSig = (e) => JSON.stringify([e.contact, e.actor, e.style, e.msgs.map((m) => [m.from, m.text]), e.photoSig || null]);
+// Modifications non enregistrées : différent de l'entrée d'origine ; sans
+// entrée, tout fil non vide différent du fil d'exemple
+function chatHasUnsavedChanges() {
+  const cur = _chsvSig(_chsvSnapshot());
+  const e = chatSaved.find((x) => x.id === _chat.savedId);
+  if (e) return cur !== _chsvSig(e);
+  if (!_chat.msgs.some(_chatValid)) return false;
+  const d = _chatDefault();
+  return cur !== _chsvSig({ contact: d.name, actor: d.actor, style: d.style, msgs: d.msgs, photoSig: null });
+}
+function _chsvDefaultName() {
+  return _tplChat('{contact} ‹› {comedien}', { contact: chatContactName(), comedien: _chat.actor || 'Comédien' }).slice(0, CHAT_SAVED_NAME_MAX);
+}
+
+// « + Enregistrer le fil en cours »
+async function saveCurrentChat(name) {
+  if (chatSaved.length >= CHAT_SAVED_MAX) return null;
+  const e = Object.assign({ id: _chsvNewId(), name: _chsvLine(String(name || '').trim(), CHAT_SAVED_NAME_MAX) || _chsvDefaultName() || _CHSV_TXT.untitled }, _chsvSnapshot());
+  chatSaved.push(e);
+  if (!_chsvPersist()) { chatSaved.pop(); alert(_CHSV_TXT.storeFull); return null; }
+  _chat.savedId = e.id;
+  chatSave();
+  renderSavedChats();
+  if (_chatAvatar) await callAssetPut(_chsvPhotoKey(e.id), _chatAvatar);
+  return e.id;
+}
+
+// Toucher une ligne : charge l'entrée dans « Fil en cours »
+let _chsvLoadSeq = 0;
+async function loadSavedChat(id) {
+  const e = chatSaved.find((x) => x.id === id);
+  if (!e) return false;
+  const dirty = chatHasUnsavedChanges();
+  // Déjà chargée, sans modification : simple retour au fil (la scène en cours est gardée)
+  if (e.id === _chat.savedId && !dirty) { setChatView('thread'); return true; }
+  if (dirty && !confirm(_tplChat(_CHSV_TXT.confirmLoad, { nom: e.name }))) return false;
+  const seq = ++_chsvLoadSeq;
+  const photo = e.hasPhoto ? safeImageData(await callAssetGet(_chsvPhotoKey(e.id))) : null;
+  if (seq !== _chsvLoadSeq) return false; // une autre entrée touchée entre-temps
+  _chat.name = e.contact; _chat.actor = e.actor; _chat.style = e.style;
+  _chat.msgs = e.msgs.map((m) => ({ id: m.id, from: m.from, text: m.text }));
+  _chat.sent = []; _chat.progress = null; _chat.resumeAt = null;
+  _chat.savedId = e.id;
+  _chatEditId = null;
+  _chatAvatar = photo;
+  _lsSet(CHAT_AVATAR_KEY, photo);
+  _chatDefsSent.clear();
+  chatSave();
+  // Discussion ouverte : l'écran repart de zéro avec ce fil (et cette photo)
+  if (_chat.open) {
+    _chatSyncTexts(undefined, true);
+    if (_chatAvatar) _chatSendAvatar().then(() => { if (_chat.open && seq === _chsvLoadSeq) _chatSendOpen(); });
+  }
+  _chatView = 'thread';
+  chatShowForm(callKind === 'discussion');
+  if (typeof scrChanged === 'function') scrChanged();
+  return true;
+}
+
+function renameSavedChat(id, name) {
+  const e = chatSaved.find((x) => x.id === id);
+  if (!e) return;
+  const prev = e.name;
+  e.name = _chsvLine(String(name || '').trim(), CHAT_SAVED_NAME_MAX) || prev;
+  if (!_chsvPersist()) { e.name = prev; alert(_CHSV_TXT.storeFull); }
+  renderSavedChats();
+}
+// Copie placée juste après l'original (photo comprise)
+async function duplicateSavedChat(id) {
+  const i = chatSaved.findIndex((x) => x.id === id);
+  if (i < 0 || chatSaved.length >= CHAT_SAVED_MAX) return null;
+  const src = chatSaved[i];
+  const e = Object.assign({}, src, { id: _chsvNewId(), name: _tplChat(_CHSV_TXT.copy, { nom: src.name }).slice(0, CHAT_SAVED_NAME_MAX), msgs: src.msgs.map((m) => Object.assign({}, m)) });
+  const photo = src.hasPhoto ? await callAssetGet(_chsvPhotoKey(src.id)) : null;
+  if (photo) await callAssetPut(_chsvPhotoKey(e.id), photo);
+  else { e.hasPhoto = false; e.photoSig = null; }
+  const j = chatSaved.indexOf(src); // la liste a pu changer pendant la lecture
+  if (chatSaved.length >= CHAT_SAVED_MAX) { callAssetDelete(_chsvPhotoKey(e.id)); return null; }
+  chatSaved.splice(j < 0 ? chatSaved.length : j + 1, 0, e);
+  if (!_chsvPersist()) { chatSaved.splice(chatSaved.indexOf(e), 1); callAssetDelete(_chsvPhotoKey(e.id)); alert(_CHSV_TXT.storeFull); return null; }
+  renderSavedChats();
+  return e.id;
+}
+function deleteSavedChat(id) {
+  const i = chatSaved.findIndex((x) => x.id === id);
+  if (i < 0) return false;
+  if (!confirm(_tplChat(_CHSV_TXT.confirmDelete, { nom: chatSaved[i].name }))) return false;
+  chatSaved.splice(i, 1);
+  _chsvPersist();
+  callAssetDelete(_chsvPhotoKey(id));
+  if (_chat.savedId === id) { _chat.savedId = null; chatSave(); }
+  renderSavedChats();
+  return true;
+}
+
+// ── Rendu ──
+function _chsvMeta(e) {
+  const n = e.msgs.length;
+  return _tplChat(_CHSV_TXT.meta, {
+    contact: e.contact || 'Contact', comedien: e.actor || 'Comédien',
+    n: n === 1 ? _CHSV_TXT.msgs1 : _tplChat(_CHSV_TXT.msgsN, { n }), style: _chsvStyleName(e.style),
+  });
+}
+function renderSavedChats() {
+  const tab = document.getElementById('dcTab-saved');
+  if (tab) tab.textContent = _tplChat(_CHSV_TXT.tab, { n: chatSaved.length });
+  const rows = document.getElementById('dcSavedRows');
+  if (!rows) return;
+  rows.textContent = '';
+  for (const e of chatSaved) {
+    const row = document.createElement('div');
+    row.className = 'dc-saved-row' + (e.id === _chat.savedId ? ' selected' : '');
+    row.dataset.id = e.id;
+    row.onclick = () => loadSavedChat(e.id);
+    const main = document.createElement('span'); main.className = 'dc-saved-main';
+    const nm = document.createElement('span'); nm.className = 'dc-saved-name'; nm.textContent = e.name;
+    const meta = document.createElement('span'); meta.className = 'dc-saved-meta'; meta.textContent = _chsvMeta(e);
+    main.append(nm, meta);
+    const more = document.createElement('button'); more.type = 'button'; more.className = 'dc-saved-more'; more.textContent = '⋯';
+    more.setAttribute('aria-label', _CHSV_TXT.rename + ', ' + _CHSV_TXT.duplicate.toLowerCase() + ', ' + _CHSV_TXT.remove.toLowerCase());
+    more.onclick = (ev) => { ev.stopPropagation(); openSavedChatMenu(e.id); };
+    row.append(main, more);
+    rows.appendChild(row);
+  }
+  const empty = document.getElementById('dcSavedEmpty');
+  if (empty) empty.style.display = chatSaved.length ? 'none' : '';
+  const hint = document.getElementById('dcSavedHint');
+  if (hint) hint.style.display = chatSaved.length ? '' : 'none';
+  const btn = document.getElementById('dcSaveBtn');
+  if (btn) {
+    const full = chatSaved.length >= CHAT_SAVED_MAX;
+    btn.disabled = full;
+    btn.textContent = full ? _tplChat(_CHSV_TXT.full, { max: CHAT_SAVED_MAX }) : _CHSV_TXT.save;
+  }
+}
+
+// ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) ──
+function openSaveChatSheet() {
+  if (chatSaved.length >= CHAT_SAVED_MAX) return;
+  _sheet = { kind: 'chatName', id: null }; renderSheet(true);
+}
+function openSavedChatMenu(id) {
+  if (!chatSaved.some((x) => x.id === id)) return;
+  _sheet = { kind: 'chatMenu', id }; renderSheet();
+}
+function openRenameSavedChat(id) {
+  if (!chatSaved.some((x) => x.id === id)) return;
+  _sheet = { kind: 'chatName', id }; renderSheet(true);
+}
+// Contenu d'une feuille de discussion : { title, html, form } ; null : entrée disparue
+function chatSheetContent(s) {
+  const e = s.id ? chatSaved.find((x) => x.id === s.id) : null;
+  if (s.id && !e) return null;
+  if (s.kind === 'chatMenu') {
+    const b = (cls, fn, label) => '<button type="button" class="dc-menu-btn' + cls + '" onclick="' + fn + '(\'' + e.id + '\')">' + escapeHtml(label) + '</button>';
+    return {
+      title: e.name, form: false,
+      html: b('', 'chatMenuRename', _CHSV_TXT.rename) + (chatSaved.length < CHAT_SAVED_MAX ? b('', 'chatMenuDuplicate', _CHSV_TXT.duplicate) : '')
+        + b(' danger', 'chatMenuDelete', _CHSV_TXT.remove)
+        + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CHSV_TXT.cancel) + '</button></div>',
+    };
+  }
+  const def = _chsvDefaultName() || _CHSV_TXT.untitled;
+  return {
+    title: e ? _CHSV_TXT.sheetRename : _CHSV_TXT.sheetSave, form: true,
+    html: '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
+      + '<label class="sr-sublabel" for="srName">' + escapeHtml(_CHSV_TXT.nameLabel) + '</label>'
+      + '<input type="text" id="srName" class="text-input sr-input" maxlength="' + CHAT_SAVED_NAME_MAX + '" autocomplete="off" placeholder="' + escapeHtml(e ? e.name : def) + '" value="' + escapeHtml(e ? e.name : '') + '">'
+      + (e ? '' : '<p class="sr-sheet-note">' + escapeHtml(_tplChat(_CHSV_TXT.nameNote, { defaut: def })) + '</p>')
+      + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CHSV_TXT.cancel) + '</button>'
+      + '<button type="submit" class="sr-ok">' + escapeHtml(_CHSV_TXT.ok) + '</button></div></form>',
+  };
+}
+function chatSheetSave(s, value) {
+  closeSheet();
+  if (s.id) renameSavedChat(s.id, value);
+  else saveCurrentChat(value);
+}
+function chatMenuRename(id) { openRenameSavedChat(id); }
+function chatMenuDuplicate(id) { closeSheet(); duplicateSavedChat(id); }
+function chatMenuDelete(id) { closeSheet(); deleteSavedChat(id); }
 // ══════════════════════════ NOTIFICATION D'APPLICATION (onglet Tel) ══════════════════════════
 // Maquettes validées 24 (télécommande) et 25 (écran). Remplace l'ancienne
 // « messagerie » : une application fictive (icône importée, nom), un titre et
@@ -17356,6 +17849,7 @@ ringInit();
 loadCallList();
 renderCallList();
 chatLoad();
+loadSavedChats();      // discussions enregistrées (83-discussions-saved.js)
 renderNotifForm();
 renderChatPanel();
 

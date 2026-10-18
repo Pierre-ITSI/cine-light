@@ -222,7 +222,7 @@ describe('télécommande et écran reliés', () => {
     assert.equal(await rp.textContent('#dcGo'), 'Plus de message de Maman');
   });
 
-  test('« Écrire… » : message improvisé du contact, inséré dans le fil ; modifications suivies ; Recommencer, Fermer', async () => {
+  test('« Écrire… » : message improvisé du contact, inséré dans le fil ; modifications suivies ; Repartir de zéro, Fermer', async () => {
     await rp.click('#dcWriteBtn');
     await rp.fill('#dcWriteText', 'Tu m\'entends ?');
     await rp.click('.dc-write-send');
@@ -234,7 +234,8 @@ describe('télécommande et écran reliés', () => {
     await rp.fill('#dcRows .dc-edit textarea', 'T\'es où ?');
     await waitFor(sp, () => document.querySelector('#screen-chat .scc-b').textContent === 'T\'es où ?');
     await rp.locator('#dcRows .dc-edit .dc-edit-ok').click();
-    // Recommencer : plus rien de posté
+    // « Repartir de zéro » : plus rien de posté
+    assert.equal(await rp.textContent('#dcRestartBtn'), 'Repartir de zéro');
     await rp.click('#dcRestartBtn');
     await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 0);
     assert.equal(await rp.textContent('#dcGo'), 'Envoyer n°1 (Maman)');

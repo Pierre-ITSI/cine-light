@@ -124,6 +124,9 @@ function _validChatOpen(m) {
   if (!_P.oneOf(m.style, ['glass', 'tonal', 'minimal'])) m.style = 'minimal';
   m.hasAvatar = _P.bool(m.hasAvatar);
   m.typed = _P.int(m.typed, 0, PROTO.CHAT_TEXT_MAX) ?? 0;
+  // Reprise (« Reprendre ici », « Repartir de zéro ») : historique = début exact du fil, sans lettre tapée
+  m.history = _P.bool(m.history);
+  if (m.history && (m.typed || !m.sent.every((id, i) => m.ids[i] === id))) return false;
   return true;
 }
 function _validChatMsg(m) {
@@ -217,6 +220,7 @@ const MSG_ROUTES = {
   'chat:open':         { roles: ['screen'], validate: _validChatOpen, handle: (m) => screenChatOpen(m) },
   'chat:msg':          { roles: ['screen'], validate: _validChatMsg, handle: (m) => screenChatMsg(m) },
   'chat:post':         { roles: ['screen'], validate: (m) => { m.typing = _P.bool(m.typing); return _chatId(m.id); }, handle: (m) => screenChatPost(m) },
+  'chat:rewind':       { roles: ['screen'], validate: (m) => { m.drop = _P.bool(m.drop); return _chatId(m.id); }, handle: (m) => screenChatRewind(m) },
   'chat:close':        { roles: ['screen'], validate: () => true, handle: () => screenChatClose() },
   // Passerelle DMX : look calculé depuis la console (36-dmx-screen.js, docs/DMX.md § 7)
   'dmx:look': {
