@@ -499,8 +499,7 @@ export const SCENES = {
   // 28 · Séquence : huit étapes, 1 à 3 jouées, l'appel sonne depuis 4 s
   'remote-seq': seqScene(async (page) => {
     await page.evaluate(async () => { seqGo(); seqGo(); seqGo(); await _seqChain; });
-    await page.clock.runFor(4000);
-    await scrollTo('seqTab-cur', 14)(page);
+    await page.clock.runFor(4000); // sans défilement : la mini-carte collante ne s'en mêle pas (rendu stable)
   }),
   // 29 · Éditer l'étape 6 : code 4 chiffres, puis écran d'accueil (image), au toucher de l'écran, téléphone de Julie
   'remote-seq-step': seqScene((page) => page.evaluate(async () => { openSeqStep('a6'); await _seqPaintHomeThumb(_seqEdit.step.opt.img); })),
