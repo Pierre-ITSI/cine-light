@@ -130,8 +130,15 @@ export const CALL_AUDIO_ID_RE = /^__au_[0-9a-f]{40}$/;
 export const CHAT_ID_RE = /^[A-Za-z0-9_-]{1,12}$/;
 /** Notification empilée sur le faux téléphone d’une Séquence (phone:*) : identifiant court tiré par la télécommande. */
 export const PHONE_NOTIF_ID_RE = /^[A-Za-z0-9_-]{1,12}$/;
-/** Gestes du comédien rapportés par l’écran (phone:gesture) ; « unlock » : code complet ou glissement. */
-export const PHONE_GESTURES = Object.freeze(['touch', 'notif', 'hangup', 'answer', 'unlock', 'home']);
+/**
+ * Gestes du comédien rapportés par l’écran (phone:gesture) ; « unlock » : code complet ou glissement ;
+ * « dismiss » : alerte « Batterie faible » fermée. Ces deux-là partent toujours (jamais « attendus »).
+ */
+export const PHONE_GESTURES = Object.freeze(['touch', 'notif', 'hangup', 'answer', 'unlock', 'home', 'dismiss']);
+/** Gestes toujours rapportés (hors phone:state.watch). */
+export const PHONE_GESTURES_ALWAYS = Object.freeze(['unlock', 'dismiss']);
+/** Réseau mobile affiché dans la barre d’état du faux téléphone. */
+export const PHONE_NET_TYPES = Object.freeze(['3G', '4G', '5G']);
 /** Date et heure du faux téléphone (notification) : AAAA-MM-JJ et HH:MM (24 h). */
 export const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 export const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -189,6 +196,10 @@ export const LIMITS = Object.freeze({
   chatNameChars: 40,
   phoneNotifs: 8,
   phoneAgoSeconds: 604_800,
+  phoneClockSeconds: 604_800,
+  phoneSleepSeconds: [1, 120],
+  chatPauseSeconds: 60,
+  chatWriteSeconds: [1, 60],
 });
 const KID = B64U(11);
 const XID = B64U(16);
@@ -266,6 +277,47 @@ const DMX_LOOK = object({
   }), 'média affiché (absent = média masqué)'),
   blackout: opt(oneOf(true), 'noir total (absent = écran allumé)'),
 });
+
+/**
+ * Barre d’état du faux téléphone (paramètres « Téléphone au départ » d’une Séquence, ou bandeau au-dessus des
+ * médias réglé dans l’onglet Média). Horloge : run = l’heure avance depuis date/time (el = secondes écoulées à
+ * l’envoi ; l’écran ajoute le temps passé depuis la réception, avec sa propre horloge), frozen = figée sur
+ * date/time, real = heure réelle de l’écran (ni date, ni heure, ni el).
+ */
+const PHONE_BAR_SHAPE = object({
+  clock: req(object({
+    mode: req(oneOf('run', 'frozen', 'real'), 'l’heure avance / figée / heure réelle'),
+    date: opt(DATE, 'date du faux téléphone AAAA-MM-JJ (run, frozen)'),
+    time: opt(TIME, 'heure du faux téléphone HH:MM (run, frozen)'),
+    el: opt(int(0, LIMITS.phoneClockSeconds), 'secondes écoulées depuis le départ, au moment de l’envoi (run)'),
+  }), 'date et heure'),
+  net: req(object({
+    bars: req(int(0, 4), 'barres de réseau (0 = « Pas de service »)'),
+    type: req(oneOf(...PHONE_NET_TYPES), 'réseau mobile'),
+    plane: req(bool, 'mode avion'),
+    wifi: req(bool, 'Wi-Fi'),
+  }), 'réseau'),
+  bat: req(object({
+    level: req(int(1, 100), 'niveau %'),
+    charging: req(bool, 'en charge'),
+    pct: req(bool, 'pourcentage affiché'),
+    low: opt(bool, 'batterie faible (étape « Batterie faible ») : icône rouge'),
+  }), 'batterie'),
+});
+const PHONE_BAR = (/** @type {any} */ v) => {
+  if (!PHONE_BAR_SHAPE(v)) return false;
+  const c = v.clock;
+  if (c.mode === 'real') return c.date === undefined && c.time === undefined && c.el === undefined;
+  if (c.date === undefined || c.time === undefined) return false;
+  return c.mode === 'run' || c.el === undefined;
+};
+/** Frappe automatique d’un message du comédien (Lecture auto) : seul ou dans chat:open (reprise). */
+const CHAT_TYPE_FIELDS = {
+  id: req(CHAT_ID, 'message du comédien'),
+  dur: opt(int(...LIMITS.chatWriteSeconds), 'le texte s’écrit tout seul, lettre à lettre, en dur s (absent : le comédien tape)'),
+  send: req(bool, 'envoi automatique une fois le texte complet (sinon : au bouton du comédien)'),
+};
+const CHAT_TYPE_REFINE = (/** @type {any} */ t) => (t.dur === undefined && !t.send ? 'frappe automatique sans effet' : null);
 
 // ─────────────────────────── Table des messages ───────────────────────────
 
@@ -510,6 +562,13 @@ const SPECS = {
     doc: 'Fin de vidéo : boucle, pause sur la dernière image, ou extinction.',
     fields: { mode: req(oneOf('loop', 'pause', 'off'), 'mode') },
   },
+  'media:bar': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Onglet Média, hors séquence : barre d’état du faux téléphone (mêmes réglages que « Téléphone au départ ») en bandeau haut '
+      + 'au-dessus des médias affichés seuls. null : retirée. Ciblée comme les autres ordres média, renvoyée à la resynchronisation. '
+      + 'Pendant une Séquence, la barre de la séquence (phone:state.bar) prime sur ses écrans.',
+    fields: { bar: req(nullable(PHONE_BAR), 'réglages de la barre (null : aucune)') },
+  },
   'media:upload': {
     dir: 'r2s', src: ['web', 'native'],
     doc: 'Début d’envoi d’un fichier en base64 fragmenté (repli sans WebRTC / écran natif).',
@@ -619,6 +678,11 @@ const SPECS = {
       typed: opt(int(0, LIMITS.chatTextChars), 'lettres déjà tapées du message du comédien en cours (reprise)'),
       history: opt(bool, '« Reprendre ici » / « Repartir de zéro » : sent = les messages du fil AVANT le point de reprise (début exact de ids), '
         + 'affichés d’un coup comme historique (ni « … écrit », ni animation, ni son) ; frappe locale et file d’attente de l’écran remises à zéro'),
+      pend: opt(arrayOf(CHAT_ID, LIMITS.chatMessages), 'messages du comédien postés sans réseau : « Non distribué » (point rouge) jusqu’au retour du réseau'),
+      auto: opt(object({
+        ...CHAT_TYPE_FIELDS,
+        el: opt(int(0, LIMITS.chatWriteSeconds[1] * 1000), 'ms déjà écoulées de la frappe automatique (reprise)'),
+      }), 'Lecture auto : frappe automatique en cours (reprise après rechargement)'),
     },
     refine: m => {
       if (!unique(m.ids) || !unique(m.sent)) return 'chat:open : identifiant en double';
@@ -626,9 +690,26 @@ const SPECS = {
       if (m.history) {
         if (!m.sent.every((/** @type {string} */ id, /** @type {number} */ i) => m.ids[i] === id)) return 'chat:open : historique hors de l’ordre du fil';
         if (m.typed) return 'chat:open : historique avec lettres tapées';
+        if (m.auto) return 'chat:open : historique avec frappe automatique';
+      }
+      if (m.pend && (!unique(m.pend) || !m.pend.every((/** @type {string} */ id) => m.sent.includes(id)))) return 'chat:open : message non distribué hors des messages postés';
+      const t = m.auto;
+      if (t) {
+        if (!m.ids.includes(t.id) || m.sent.includes(t.id)) return 'chat:open : frappe automatique d’un message absent ou déjà posté';
+        if (t.el !== undefined && (t.dur === undefined || t.el > t.dur * 1000)) return 'chat:open : avancée de frappe hors durée';
+        const r = CHAT_TYPE_REFINE(t);
+        if (r) return 'chat:open : ' + r;
       }
       return null;
     },
+  },
+  'chat:type': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Lecture auto (maquette 26d) : message du comédien en cours. dur : le texte s’écrit tout seul, lettre à lettre, en dur s ; '
+      + 'absent : le comédien tape (comme sans lecture auto). send : il part tout seul une fois complet (sinon au bouton « Envoyer »). '
+      + 'L’envoi revient par chat:sent, comme une frappe du comédien.',
+    fields: { ...CHAT_TYPE_FIELDS },
+    refine: m => CHAT_TYPE_REFINE(m),
   },
   'chat:rewind': {
     dir: 'r2s', src: ['web'],
@@ -653,11 +734,14 @@ const SPECS = {
   },
   'chat:post': {
     dir: 'r2s', src: ['web'],
-    doc: 'Poste un message du contact (déjà décrit par chat:msg) ; typing : indicateur « … écrit » 2 s avant la bulle.',
+    doc: 'Poste un message du contact (déjà décrit par chat:msg) ; typing : indicateur « … écrit » avant la bulle, pendant dur s '
+      + '(durée d’écriture du message, Lecture auto) ou 2 s (dur absent).',
     fields: {
       id: req(CHAT_ID, 'message du contact à poster'),
       typing: opt(bool, 'indicateur « … écrit » avant la bulle'),
+      dur: opt(int(...LIMITS.chatWriteSeconds), 'durée de l’indicateur « … écrit » en s (absent : 2 s)'),
     },
+    refine: m => (m.dur !== undefined && m.typing !== true ? 'chat:post : durée sans indicateur' : null),
   },
   'chat:close': { dir: 'r2s', src: ['web'], doc: 'Ferme la discussion sur l’écran.', fields: {} },
   'chat:progress': {
@@ -672,8 +756,12 @@ const SPECS = {
   },
   'chat:sent': {
     dir: 's2r', src: ['web'],
-    doc: 'Le comédien a envoyé son message (texte complet) : la bulle est postée sur l’écran.',
-    fields: { id: req(CHAT_ID, 'message envoyé') },
+    doc: 'Le comédien a envoyé son message (texte complet) : la bulle est postée sur l’écran. undelivered : envoyé sans réseau '
+      + '(barre d’état « Pas de service ») : la bulle reste « Non distribué » jusqu’au retour du réseau (chat:open.pend).',
+    fields: {
+      id: req(CHAT_ID, 'message envoyé'),
+      undelivered: opt(bool, 'envoyé sans réseau : non distribué'),
+    },
   },
 
   // ═══ Télécommande ↔ écran : faux téléphone d’une Séquence (onglet Séquence) ═══
@@ -688,7 +776,13 @@ const SPECS = {
       + 'l’heure relative avec sa propre horloge). unlock : déverrouillage attendu (code 4 ou 6 chiffres, 0 = glisser seul ; '
       + 'aucun code n’est transmis : chaque touche remplit le point suivant). watch : gestes que la télécommande attend de cet écran '
       + '(seuls ceux-là sont rapportés, avec « unlock » toujours). chime : son de la notification qui vient d’arriver (jamais à la '
-      + 'resynchronisation). Trois styles neutres, aucune marque. Textes affichés en texte brut.',
+      + 'resynchronisation). Trois styles neutres, aucune marque. Textes affichés en texte brut. '
+      + 'bar : barre d’état (maquette 28b, heure / réseau / batterie) affichée partout sur cet écran pendant la séquence (écran '
+      + 'verrouillé, déverrouillé, appels, bandeaux, discussion, bandeau haut au-dessus des médias) ; elle prime sur media:bar ; '
+      + 'absente : plus de barre de la séquence. sleep : étape « Veille » (maquette 29b), écran noir verrouillé qui se rallume aux '
+      + 'notifications / appels et/ou au toucher et se rendort après `after` s ; le déverrouillage le réveille pour de bon. alert : '
+      + '« Batterie faible » (maquette 33) à fermer (geste dismiss). power off : « Extinction » (fondu, logo neutre, écran noir ; '
+      + 'le téléphone ne répond plus) jusqu’au rallumage (étape « Veille » ou ↶).',
     fields: {
       mode: req(oneOf('off', 'locked', 'code', 'unlocked', 'home'), 'état du faux téléphone'),
       style: req(STYLE3, 'style (Verre / Tonal / Épuré)'),
@@ -706,19 +800,32 @@ const SPECS = {
         then: req(oneOf('app', 'home'), 'ensuite : l’app visée ou l’écran d’accueil (image)'),
       }), 'déverrouillage attendu : toucher l’écran verrouillé demande le code'),
       home: opt(bool, 'image d’écran d’accueil préchargée (__seqhome)'),
-      watch: opt(arrayOf(oneOf(...PHONE_GESTURES.filter((g) => g !== 'unlock')), PHONE_GESTURES.length), 'gestes attendus de cet écran'),
+      watch: opt(arrayOf(oneOf(...PHONE_GESTURES.filter((g) => !PHONE_GESTURES_ALWAYS.includes(g))), PHONE_GESTURES.length), 'gestes attendus de cet écran'),
       chime: opt(object({
         id: req(PHONE_ID, 'notification qui vient d’arriver'),
         ring: req(RINGS, 'son intégré (repli)'),
         ringId: opt(str(23, RING_ID_RE), 'son importé préchargé (__ring_…)'),
         vol: opt(num(0, 1), 'volume 0..1'),
       }), 'son de la notification arrivée (une fois)'),
+      bar: opt(PHONE_BAR, 'barre d’état de la séquence (absente : aucune ; l’écran revient à media:bar)'),
+      sleep: opt(object({
+        notif: req(bool, 'se rallume à chaque notification / appel'),
+        touch: req(bool, 'se rallume au toucher'),
+        after: req(int(...LIMITS.phoneSleepSeconds), 'se rendort après n s'),
+      }), 'étape « Veille » : écran noir verrouillé'),
+      alert: opt(object({
+        id: req(PHONE_ID, 'identifiant de l’alerte (fermée : geste dismiss)'),
+        level: req(int(1, 100), 'pourcentage annoncé'),
+      }), 'alerte « Batterie faible »'),
+      power: opt(oneOf('on', 'off'), 'off : téléphone éteint (absent : allumé)'),
     },
     refine: m => {
       if (!unique(m.notifs.map((/** @type {any} */ n) => n.id))) return 'phone:state : notification en double';
       if (m.watch && !unique(m.watch)) return 'phone:state : geste en double';
       if (m.mode === 'code' && !(m.unlock && m.unlock.code > 0)) return 'phone:state : pavé du code sans code attendu';
       if (m.chime && !m.notifs.some((/** @type {any} */ n) => n.id === m.chime.id)) return 'phone:state : son d’une notification absente';
+      if (m.sleep && m.mode !== 'locked' && m.mode !== 'code') return 'phone:state : veille hors écran verrouillé';
+      if (m.power === 'off' && (m.chime || m.watch)) return 'phone:state : téléphone éteint, ni son ni geste attendu';
       return null;
     },
   },
@@ -726,8 +833,9 @@ const SPECS = {
     dir: 's2r', src: ['web'],
     doc: 'Geste du comédien sur le faux téléphone d’une Séquence (au plus un par geste toutes les 400 ms, 5 par seconde) : touche '
       + 'l’écran, touche une notification (n), refuse ou raccroche, décroche, déverrouille (code complet ou glissement), touche '
-      + 'l’image d’accueil. Seuls les gestes attendus (phone:state.watch) partent, « unlock » toujours. Jamais le contenu des '
-      + 'touches : le code n’existe pas, seule sa complétion est rapportée. La réponse dans la discussion passe par chat:sent.',
+      + 'l’image d’accueil, ferme l’alerte « Batterie faible » (dismiss). Seuls les gestes attendus (phone:state.watch) partent, '
+      + '« unlock » et « dismiss » toujours. Jamais le contenu des touches : le code n’existe pas, seule sa complétion est '
+      + 'rapportée. La réponse dans la discussion passe par chat:sent.',
     fields: {
       g: req(oneOf(...PHONE_GESTURES), 'geste'),
       n: opt(PHONE_ID, 'notification touchée (geste notif)'),

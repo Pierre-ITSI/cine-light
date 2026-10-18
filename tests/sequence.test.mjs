@@ -401,7 +401,7 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     page.on('dialog', (d) => d.accept());
     await page.click('#seqAddBtn');
     assert.equal(await page.textContent('#ssTitle'), 'Nouvelle étape');
-    assert.deepEqual(await page.$$eval('#ssKinds .ss-opt', (b) => b.map((x) => x.textContent)), ['🎨 Couleur', '✨ Effet', '🎞 Média', '📞 Appel', '✉️ SMS', '🔔 Notif', '📵 Manqué', '🔓 Déverrouil.', '💬 Discussion']);
+    assert.deepEqual(await page.$$eval('#ssKinds .ss-opt', (b) => b.map((x) => x.textContent)), ['🎨 Couleur', '✨ Effet', '🎞 Média', '📞 Appel', '✉️ SMS', '🔔 Notif', '😴 Veille', '📵 Manqué', '🔓 Déverrouil.', '💬 Discussion', '🔋 Batterie', '📴 Extinction', '📶 Réseau']);
     await page.locator('#ssKinds .ss-opt', { hasText: 'SMS' }).click();
     await page.locator('#ssRefCard .ss-opt', { hasText: '2 · Maman' }).click();
     await page.locator('#ssTrigCard .ss-opt', { hasText: 'Après N s' }).click();

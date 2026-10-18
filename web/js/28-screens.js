@@ -446,6 +446,7 @@ function scrLoadView() {
     _autoAdvance = !!st.autoAdvance;
     const aa = document.getElementById('mediaAutoAdvToggle'); if (aa) aa.checked = _autoAdvance;
     _scrViewMedia(st);
+    if (typeof renderMediaBarRow === 'function') renderMediaBarRow(); // barre d'état de la cible (98-phone-params.js)
   } finally {
     _scrMute--;
     // Envois différés programmés par les contrôles rechargés : annulés

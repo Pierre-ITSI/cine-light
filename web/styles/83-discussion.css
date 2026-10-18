@@ -44,7 +44,7 @@
 .dc-pair{font-size:.625rem;color:#a8a8a8}
 .dc-rows{display:flex;flex-direction:column;gap:9px}
 .dc-rows:empty{display:none}
-.dc-row{display:grid;grid-template-columns:20px 64px minmax(0,1fr);gap:6px;font-size:.6875rem;align-items:baseline;border:1px solid transparent;border-radius:8px;padding:0 8px;margin:0 -8px;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.dc-row{display:grid;grid-template-columns:20px 64px minmax(0,1fr) auto;gap:6px;font-size:.6875rem;align-items:baseline;border:1px solid transparent;border-radius:8px;padding:0 8px;margin:0 -8px;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .dc-row.sent{opacity:.45}
 .dc-row.cur{border-color:#6fb4ff;background:rgba(111,180,255,.08);padding:8px;margin:0}
 .dc-row.editing{border-color:var(--accent)}
@@ -159,3 +159,31 @@
 .scc.tonal .scc-caret{background:#e6e6e6}
 .scc.tonal .scc-send{width:40px;height:40px;border-radius:14px;background:#2b2e34;color:#6d7178}
 .scc.tonal .scc-send.on{background:#e3e1dc;color:#1b1b1b}
+
+/* Timings et lecture automatique (maquette 26d) */
+.dc-pill{font-size:.5625rem;color:#6fb4ff;border:1px solid #6fb4ff;border-radius:10px;padding:1px 6px;white-space:nowrap;align-self:center;font-variant-numeric:tabular-nums}
+.dc-timing{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;background:var(--mid);border:1px solid var(--border)}
+.dc-timing-panel{margin-bottom:12px}
+.dc-row.sel{border-color:var(--accent);padding:6px 8px;margin:0}
+.dc-row.sel.sent{opacity:.7}
+.dc-timing-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.dc-timing-quote{min-width:0;font-size:.625rem;color:#c4c4c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dc-tlabel{font-size:.625rem;letter-spacing:.2em;text-transform:uppercase;color:#a8a8a8;white-space:nowrap}
+.dc-tstep{display:flex;align-items:center;gap:8px;font-size:.6875rem}
+.dc-tstep>span{flex:1}
+.dc-tbtn{width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:.875rem;cursor:pointer;padding:0}
+.dc-tval{min-width:52px;text-align:center;font-weight:400;font-size:.8125rem;font-variant-numeric:tabular-nums}
+.dc-timing .ss-opt{min-height:34px}
+.dc-timing-note{font-size:.625rem;color:#a8a8a8;line-height:1.55}
+.dc-auto-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.dc-auto-head .panel-label{margin-bottom:0}
+.dc-auto-state{font-size:.625rem;color:#a8a8a8;white-space:nowrap}
+.dc-auto-state.on{color:#5fdf8a}
+.dc-auto-bar{height:6px;border-radius:3px;background:#333;margin-top:10px;overflow:hidden}
+.dc-auto-bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:3px}
+.dc-auto-row{display:flex;gap:8px;margin-top:12px}
+.dc-auto-row button{height:52px;border-radius:8px;font-family:'DM Mono',monospace;font-size:.75rem;cursor:pointer;letter-spacing:.04em}
+.dc-auto-row button:disabled{opacity:.4;cursor:default}
+.dc-auto-play{flex:1.9;border:none;background:var(--accent);color:#000;font-weight:500}
+.dc-auto-pause{flex:1;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text)}
+.dc-auto-row .dc-auto-back{flex:none;width:52px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-size:1.125rem;padding:0}

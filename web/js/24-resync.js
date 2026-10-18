@@ -89,6 +89,8 @@ function remoteResync() {
   if (ids.length) chatOnScreensResync(ids);
   // Séquence : faux téléphone (écran verrouillé, notifications empilées, image d'accueil) renvoyé (91-sequence.js)
   if (ids.length) seqOnScreensResync(ids);
+  // Onglet Média : barre d'état au-dessus des médias, sur les écrans où elle est activée (98-phone-params.js)
+  if (ids.length) mediaBarOnScreensResync(ids);
   // Sons importés absents : renvoyés s'ils servent encore (choix d'un type,
   // entrées 1 à 20 sous la passerelle), sinon simplement oubliés
   const rings = ringNeededIds();

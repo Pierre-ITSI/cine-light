@@ -1,0 +1,87 @@
+/* SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP */
+/* ══ Faux téléphone : barre d'état (28b), veille (29b), batterie faible et extinction (33), pas de réseau (34) ══
+   Barre : heure à gauche ; réseau, Wi-Fi, pourcentage, batterie à droite. Trois
+   styles neutres .glass .tonal .minimal ; .pb-band : bandeau au-dessus d'un
+   média ; .pb-dark : texte sombre sur fond clair (discussion Épurée).
+   z-index de l'écran : barre 96 (au-dessus de l'appel, 95), alerte 97,
+   veille / extinction 98 (sous les contrôles de l'écran, 100). */
+.pb{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#fff;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif;font-size:15px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pb-right{display:flex;align-items:center;gap:6px}
+.pb-sig{display:inline-flex;align-items:flex-end;gap:1.5px;height:11px}
+.pb-sig i{display:block;width:3px;border-radius:1px;background:currentColor;opacity:.3}
+.pb-sig i:nth-child(1){height:4px}.pb-sig i:nth-child(2){height:6px}.pb-sig i:nth-child(3){height:8.5px}.pb-sig i:nth-child(4){height:11px}
+.pb-sig i.on{opacity:1}
+.pb-net{font-size:12px;font-weight:600}
+.pb-nosvc{font-size:13px;font-weight:500}
+.pb-pct{font-size:12px;font-weight:500}
+.pb-ic{display:inline-flex}
+.pb-bat{position:relative;display:inline-block;width:24px;height:11px;box-sizing:border-box;border:1.5px solid currentColor;border-radius:3px;padding:1px;opacity:.95;margin-right:2px}
+.pb-bat::after{content:'';position:absolute;right:-4px;top:2.5px;width:2px;height:3px;border-radius:0 1px 1px 0;background:currentColor;opacity:.6}
+.pb-bat i{display:block;height:100%;border-radius:1px;background:currentColor}
+.pb-bat.low{border-color:currentColor}
+.pb-bat.low i{background:#ff4d43}
+.pb-bat.chg i{background:#3fbf6f}
+.pb-bolt{margin-left:-4px}
+.pb.tonal{font-weight:500}
+.pb.minimal{font-weight:500;letter-spacing:.01em}
+
+/* Écran de jeu : barre en haut, sans capter les touchers */
+#screen-sbar{display:none;position:absolute;top:0;left:0;right:0;z-index:96;height:calc(44px + env(safe-area-inset-top));box-sizing:border-box;padding:env(safe-area-inset-top) 18px 0;pointer-events:none;animation:scFadeIn .3s ease}
+#screen-sbar.pb-band{background:rgba(0,0,0,.6)}
+#screen-sbar.pb-dark{color:#111}
+#screen-sbar.pb-dark .pb-bat.low i{background:#e0352b}
+/* Bandeaux (SMS, notification, appel) sous la barre */
+#screen-mode.sb-on .sc-notif:not(.in-lock),#screen-mode.sb-on .sc-callbar{top:calc(48px + env(safe-area-inset-top))}
+
+/* Alerte « Batterie faible » (maquette 33) */
+#screen-palert{display:none;position:absolute;inset:0;z-index:97;align-items:center;justify-content:center;padding:0 34px;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif;color:#fff}
+.pa-card{width:100%;max-width:322px;margin-top:-120px;border-radius:14px;background:rgba(40,44,54,.97);box-shadow:0 20px 50px rgba(0,0,0,.45);text-align:center;overflow:hidden;animation:scFadeIn .3s ease}
+.pa-title{padding:20px 16px 0;font-size:16px;font-weight:600}
+.pa-msg{padding:6px 16px 16px;font-size:13px;opacity:.9}
+.pa-close{display:block;width:calc(100% - 32px);margin:0 16px;padding:12px 0 14px;border:none;border-top:1px solid rgba(255,255,255,.18);background:none;color:#6fb4ff;font-family:inherit;font-size:15px;cursor:pointer}
+#screen-palert.tonal .pa-card{background:rgba(43,46,52,.98);border-radius:26px}
+#screen-palert.tonal .pa-close{color:#a8c7fa}
+#screen-palert.minimal .pa-card{background:#16191f;border:1px solid rgba(255,255,255,.12);border-radius:12px}
+#screen-palert.minimal .pa-close{color:#fff}
+
+/* Veille (maquette 29b) et extinction (maquette 33) : écran noir en fondu, logo neutre */
+#screen-ppower{display:none;position:absolute;inset:0;z-index:98;background:#000;opacity:0;transition:opacity .6s ease;align-items:center;justify-content:center}
+#screen-ppower.on{opacity:1}
+#screen-ppower.instant{transition:none}
+.pp-logo{width:64px;height:64px;color:rgba(255,255,255,.82);opacity:0;transition:opacity .5s ease}
+#screen-ppower.logo .pp-logo{opacity:1}
+
+/* Discussion : message du comédien non distribué (maquette 34) */
+.scc-und{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin:-4px 2px 2px auto;font-size:11px;color:#ff6b62}
+.scc-und::before{content:'!';display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#ff453a;color:#fff;font-size:10px;font-weight:700}
+.scc.minimal .scc-und{color:#d4302a}
+
+/* Télécommande — Téléphone au départ (maquette 28b) ; aussi l'onglet Média */
+.pp-preview{background:#000;border-radius:10px;padding:12px 14px;font-size:14px}
+.pp-preview .pb-sig{height:13px;gap:2px}
+.pp-preview .pb-sig i{width:4px}
+.pp-preview .pb-sig i:nth-child(1){height:4px}.pp-preview .pb-sig i:nth-child(2){height:7px}.pp-preview .pb-sig i:nth-child(3){height:10px}.pp-preview .pb-sig i:nth-child(4){height:13px}
+.pp-cap{font-size:.625rem;color:#a8a8a8;text-align:center;margin-top:-2px}
+.pp-dt-row{display:flex;gap:6px}
+.pp-dt{position:relative;display:flex;align-items:center;height:38px;box-sizing:border-box;padding:0 10px;background:#000;border:1px solid rgba(255,255,255,.14);border-radius:6px;font-size:.8125rem;color:var(--text);min-width:0;overflow:hidden;white-space:nowrap;cursor:pointer}
+.pp-dt.pp-date{flex:1.5}
+.pp-dt.pp-time{flex:1;justify-content:center}
+.pp-dt input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none;padding:0;margin:0}
+.pp-dt.off{opacity:.45;cursor:default}
+.pp-dt.off input{cursor:default}
+.pp-bars .ss-opt{line-height:1.25}
+.pp-sig{height:10px}
+.pp-sig i{width:3px}
+.pp-sig i:not(.on){opacity:0}
+.pp-wifi{display:flex;align-items:center;gap:6px;font-size:.6875rem}
+.pp-wifi span{flex:1.1}
+.pp-level{display:flex;align-items:center;gap:10px}
+.pp-level b{font-weight:400;font-size:.8125rem;min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
+.pp-level input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:linear-gradient(to right,var(--accent) var(--v,50%),#333 var(--v,50%));outline:none;margin:0}
+.pp-level input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:transparent;border:none;cursor:pointer}
+.pp-level input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:transparent;border:none;cursor:pointer}
+.pp-note{font-size:.625rem;color:#a8a8a8;line-height:1.6}
+.mbar{display:flex;flex-direction:column;gap:6px;margin:6px 2px 10px}
+.mbar-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.72rem;color:var(--text);cursor:pointer}
+.mbar-edit{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:#a8a8a8;font-family:'DM Mono',monospace;font-size:.625rem;cursor:pointer;text-align:left}
+.mbar-edit span:last-child{color:#FF8a55;flex:none}

@@ -113,6 +113,10 @@
   <div id="screen-phone"></div>
   <div id="screen-chat"></div>
   <div id="screen-call"></div>
+  <!-- Faux téléphone d'une Séquence : barre d'état (28b), alerte batterie (33), veille / extinction (29b, 33) -->
+  <div id="screen-sbar" aria-hidden="true"></div>
+  <div id="screen-palert" role="alertdialog" aria-live="assertive"></div>
+  <div id="screen-ppower"></div>
   <div id="screen-blackout"></div>
   <div id="screen-identify"></div>
   <div class="status-pill" id="screen-status">Connexion…</div>
@@ -617,6 +621,17 @@
           <span class="toggle-track"></span><span class="toggle-thumb"></span>
         </span>
       </label>
+      <!-- Barre d'état du téléphone au-dessus des médias, hors séquence (réglages de la maquette 28b) -->
+      <div class="mbar" id="mediaBarRow">
+        <label class="mbar-toggle">
+          <span>Barre d'état du téléphone</span>
+          <span class="toggle-switch" style="flex-shrink:0">
+            <input type="checkbox" id="mediaBarToggle" onchange="setMediaBar(this.checked)">
+            <span class="toggle-track"></span><span class="toggle-thumb"></span>
+          </span>
+        </label>
+        <button type="button" class="mbar-edit" id="mediaBarEdit" onclick="openPhoneParams('media')"><span id="mediaBarSum"></span><span id="mediaBarEditLbl">Régler ›</span></button>
+      </div>
       <div class="media-status" id="mediaStatus">Aucun média diffusé</div>
       <button class="media-btn" id="mediaPlayBtn" onclick="toggleVideoPlayback()" style="display:none">
         <span class="media-icon" id="mediaPlayIcon">⏸</span><span id="mediaPlayLabel">Pause</span>
@@ -858,6 +873,18 @@
       <div class="dc-rows" id="dcRows"></div>
       <button type="button" class="dc-add" id="dcAdd" onclick="addChatMessage()">+ Ajouter un message · glisser pour réordonner · toucher un message : « Reprendre ici »</button>
     </div>
+    <!-- Timings du message touché (maquette 26d) -->
+    <div class="dc-timing-panel" id="dcTimingPanel" style="display:none"></div>
+    <!-- Lecture automatique (maquette 26d) : enchaîne les messages selon leurs timings -->
+    <div class="panel dc-auto" id="dcAutoPanel" style="display:none">
+      <div class="dc-auto-head"><span class="panel-label">Lecture automatique</span><span class="dc-auto-state" id="dcAutoState" role="status"></span></div>
+      <div class="dc-auto-bar"><i id="dcAutoFill"></i></div>
+      <div class="dc-auto-row">
+        <button type="button" class="dc-auto-play" id="dcAutoPlay" onclick="chatAutoStart()">▶ LECTURE AUTO</button>
+        <button type="button" class="dc-auto-pause" id="dcAutoPause" onclick="chatAutoPause()" disabled>⏸ PAUSE</button>
+        <button type="button" class="dc-auto-back" id="dcAutoBack" onclick="chatAutoBack()" aria-label="Pause et revenir d'un message" title="Pause et revenir d'un message" disabled>↶</button>
+      </div>
+    </div>
     <div class="panel dc-help-card" id="dcActorPanel" style="display:none">
       <div class="panel-label" id="dcActorLabel"></div>
       <div class="dc-help">Chaque touche du clavier de l'écran ajoute la lettre suivante du texte prévu. « Envoyer » n'est actif qu'une fois le texte complet.</div>
@@ -909,8 +936,10 @@
     <div class="sq" id="seqCurView">
       <div class="sq-head"><span class="sq-title">Séquence</span><button type="button" class="sq-add" id="seqAddBtn" onclick="openSeqStep(null)">+ ÉTAPE</button></div>
       <div class="sq-sub"><span id="seqName"></span><span id="seqTarget"></span></div>
+      <!-- Téléphone au départ (maquette 28b) : barre d'état de la séquence -->
+      <button type="button" class="sq-phone" id="seqPhoneBtn" onclick="openPhoneParams('seq')"><span class="sq-phone-l">📱 Téléphone au départ</span><span class="sq-phone-v" id="seqPhoneSum"></span></button>
       <div class="sq-list" id="seqRows"></div>
-      <div class="sq-empty" id="seqEmpty">Aucune étape. « + ÉTAPE » ajoute la première : couleur, effet, média, appel, SMS, notification, déverrouillage, discussion.</div>
+      <div class="sq-empty" id="seqEmpty">Aucune étape. « + ÉTAPE » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.</div>
       <div class="sq-legend"><span class="go">● GO</span><span class="auto">● automatique</span><span class="actor">● geste du comédien</span></div>
       <div class="sq-now" id="seqNow" role="status"></div>
       <div class="sq-warn" id="seqWarn" role="alert" style="display:none"></div>
@@ -982,7 +1011,7 @@
     <span class="ss-title" id="ssTitle">Étape</span>
     <span class="ss-spacer"></span>
   </div>
-  <div class="ss-card"><span class="ss-label">Type</span><div class="ss-grid" id="ssKinds"></div></div>
+  <div class="ss-card"><span class="ss-label">Type</span><div class="ss-kinds" id="ssKinds"></div></div>
   <div class="ss-card" id="ssRefCard"></div>
   <div class="ss-card" id="ssTrigCard"></div>
   <div class="ss-err" id="ssErr" role="alert" style="display:none"></div>
@@ -991,6 +1020,21 @@
     <button type="button" class="ss-del" id="ssDel" onclick="seqStepDelete()">SUPPRIMER</button>
     <button type="button" class="ss-save" id="ssSave" onclick="seqStepSave()">ENREGISTRER</button>
   </div>
+</div>
+
+<!-- Téléphone au départ (maquette 28b) ; aussi « Barre d'état du téléphone » de l'onglet Média -->
+<div id="phone-params-view" role="dialog" aria-modal="true" aria-labelledby="ppTitle">
+  <div class="ss-head">
+    <button type="button" class="ss-back" id="ppBack" onclick="closePhoneParams()">← Séquence</button>
+    <span class="ss-title" id="ppTitle">Téléphone au départ</span>
+    <span class="ss-spacer"></span>
+  </div>
+  <div class="pp-preview pb glass" id="ppPreview" aria-hidden="true"></div>
+  <div class="pp-cap" id="ppCap"></div>
+  <div class="ss-card" id="ppClock"></div>
+  <div class="ss-card" id="ppNet"></div>
+  <div class="ss-card" id="ppBat"></div>
+  <div class="pp-note" id="ppNote"></div>
 </div>
 
 <!-- Feuille : cible des commandes (maquette 6), renommer, groupes -->

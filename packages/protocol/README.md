@@ -220,6 +220,25 @@ télécommande, `PHONE_GESTURES` : touch, notif, hangup, answer, unlock, home ;
 toujours, au plus un par geste toutes les 400 ms et 5 par seconde ; la réponse
 dans la discussion reste `chat:sent`. La console DMX ne pilote pas la Séquence.
 
+**Barre d'état, veille, batterie, réseau** (maquettes 28b, 29b, 33, 34) :
+`phone:state.bar` = barre d'état de la séquence (`clock { mode: run | frozen |
+real, date?, time?, el? }` — `run` : l'heure avance depuis `date`/`time`, `el`
+= secondes écoulées à l'envoi, l'écran ajoute le temps écoulé depuis la
+réception ; `frozen` : figée ; `real` : heure de l'écran, sans date ni heure —,
+`net { bars 0..4 (0 = « Pas de service »), type 3G / 4G / 5G, plane, wifi }`,
+`bat { level 1..100, charging, pct, low? }`) affichée partout sur l'écran visé
+et prioritaire ; `sleep { notif, touch, after 1..120 }` (écran verrouillé
+seulement), `alert { id, level }` (« Batterie faible », fermée par le geste
+`dismiss`, toujours rapporté comme `unlock`), `power: 'off'` (ni `chime` ni
+`watch` alors). `media:bar { bar | null }` (télécommande → écran) : même barre,
+réglée dans l'onglet Média, en bandeau au-dessus d'un média affiché seul ;
+celle de la séquence prime. Discussion : `chat:post.dur` (durée de « … écrit »,
+1–60 s, avec `typing`), `chat:type { id, dur?, send }` (lecture auto : le texte
+du comédien s'écrit tout seul en `dur` s et/ou part tout seul une fois complet),
+`chat:open.auto { id, dur?, send, el? }` (reprise d'une frappe automatique) et
+`chat:open.pend` (messages « Non distribué », ⊂ postés), `chat:sent.undelivered`
+(envoyé sans réseau).
+
 **Différence voulue avec `MSG_ROUTES`** : l'app *borne* une valeur hors plage
 (flash de 5 ms ramené à 15 ms) ; le schéma la *rejette*, à l'envoi comme à la
 réception. L'émetteur doit donc borner lui-même (voir §6, curseurs de flash).

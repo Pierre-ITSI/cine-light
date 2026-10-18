@@ -349,15 +349,70 @@ test('Séquence (phone:*) : sens, pile de notifications, déverrouillage sans co
   for (const code of [0, 4, 6]) assert.equal(validate({ ...state, unlock: { code, then: 'app' } }), true, 'code ' + code);
   assert.equal(validate({ ...state, mode: 'code', unlock: { code: 6, then: 'home' } }), true);
   assert.equal(validate({ ...state, mode: 'code', unlock: { code: 0, then: 'home' } }), false, 'pavé : un code est attendu');
-  assert.deepEqual(Object.keys(MESSAGE_TYPES['phone:state'].fields).sort(), ['chime', 'home', 'mode', 'notifs', 'style', 'unlock', 'watch']);
+  assert.deepEqual(Object.keys(MESSAGE_TYPES['phone:state'].fields).sort(), ['alert', 'bar', 'chime', 'home', 'mode', 'notifs', 'power', 'sleep', 'style', 'unlock', 'watch']);
   assert.deepEqual(Object.keys(MESSAGE_TYPES['phone:gesture'].fields).sort(), ['g', 'n']);
-  // Gestes : liste fermée ; « unlock » toujours rapporté, donc jamais « attendu »
-  assert.deepEqual([...PHONE_GESTURES], ['touch', 'notif', 'hangup', 'answer', 'unlock', 'home']);
+  // Gestes : liste fermée ; « unlock » et « dismiss » toujours rapportés, donc jamais « attendus »
+  assert.deepEqual([...PHONE_GESTURES], ['touch', 'notif', 'hangup', 'answer', 'unlock', 'home', 'dismiss']);
   for (const g of PHONE_GESTURES) assert.equal(validate({ type: 'phone:gesture', g }), true, g);
   assert.equal(validate({ type: 'phone:gesture', g: 'notif', n: 'n1' }), true);
-  assert.equal(validate({ ...state, watch: PHONE_GESTURES.filter((g) => g !== 'unlock') }), true);
+  assert.equal(validate({ type: 'phone:gesture', g: 'dismiss', n: 'n1' }), false, 'n : geste notif seulement');
+  assert.equal(validate({ ...state, watch: PHONE_GESTURES.filter((g) => g !== 'unlock' && g !== 'dismiss') }), true);
+  assert.equal(validate({ ...state, watch: ['unlock'] }), false);
   // État complet chargé : bien en deçà du plafond d'un message
   const big = { ...state, notifs: Array.from({ length: 8 }, (_, i) => ({ id: 'n' + i, kind: 'notif', app: 'a'.repeat(24), name: 'b'.repeat(40), msg: 'c'.repeat(200), color: '#ffffff', ago: 604800 })), unlock: { code: 6, then: 'home' }, home: true, watch: ['touch'] };
+  assert.equal(validate(big), true);
+  assert.ok(utf8Encode(JSON.stringify(big)).length < MAX_MESSAGE_BYTES);
+});
+
+test('barre d’état, veille, batterie, extinction, réseau (28b, 29b, 33, 34) : sens, horloge, bornes', () => {
+  const bar = { clock: { mode: 'run', date: '2026-10-17', time: '23:47', el: 0 }, net: { bars: 0, type: '4G', plane: false, wifi: false }, bat: { level: 5, charging: false, pct: true } };
+  const state = { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [], bar };
+  // Sens : la télécommande décrit le téléphone ; un écran ne l’impose jamais
+  assert.equal(MESSAGE_TYPES['media:bar'].direction, 'r2s');
+  assert.equal(validate(state, { direction: 'r2s' }), true);
+  assert.equal(validate(state, { direction: 's2r' }), false);
+  assert.equal(validate({ type: 'media:bar', bar }, { direction: 's2r' }), false, 'un écran ne règle pas la barre');
+  assert.equal(validate({ type: 'media:bar', bar, target: { group: 'g1' } }, { direction: 'r2s' }), true, 'ciblée comme les ordres média');
+  // Horloge : run (el), frozen (date et heure, sans el), real (rien)
+  const clock = (/** @type {object} */ c) => validate({ ...state, bar: { ...bar, clock: c } });
+  assert.equal(clock({ mode: 'run', date: '2026-10-17', time: '23:47' }), true, 'el facultatif');
+  assert.equal(clock({ mode: 'run', date: '2026-10-17', time: '23:47', el: LIMITS.phoneClockSeconds }), true);
+  assert.equal(clock({ mode: 'run', date: '2026-10-17', time: '23:47', el: LIMITS.phoneClockSeconds + 1 }), false);
+  assert.equal(clock({ mode: 'run', date: '2026-10-17', time: '23:47', el: -1 }), false);
+  assert.equal(clock({ mode: 'frozen', date: '2026-10-17', time: '23:47' }), true);
+  assert.equal(clock({ mode: 'frozen', time: '23:47' }), false);
+  assert.equal(clock({ mode: 'real' }), true);
+  assert.equal(clock({ mode: 'real', el: 3 }), false);
+  assert.equal(clock({ mode: 'later' }), false);
+  // Réseau 0 à 4 barres, 3G / 4G / 5G ; batterie 1 à 100 %
+  for (const bars of [0, 1, 2, 3, 4]) assert.equal(validate({ ...state, bar: { ...bar, net: { ...bar.net, bars } } }), true, 'barres ' + bars);
+  for (const type of ['3G', '4G', '5G']) assert.equal(validate({ ...state, bar: { ...bar, net: { ...bar.net, type } } }), true, type);
+  assert.equal(validate({ ...state, bar: { ...bar, bat: { ...bar.bat, level: 101 } } }), false);
+  assert.equal(validate({ ...state, bar: { ...bar, bat: { ...bar.bat, level: 50.5 } } }), false);
+  // Veille : écran verrouillé (ou pavé) seulement, 1 à 120 s
+  const sleep = { notif: true, touch: false, after: 8 };
+  assert.equal(validate({ ...state, sleep }), true);
+  assert.equal(validate({ ...state, mode: 'code', unlock: { code: 4, then: 'app' }, sleep }), true);
+  for (const mode of ['off', 'unlocked', 'home']) assert.equal(validate({ ...state, mode, sleep }), false, 'veille ' + mode);
+  assert.equal(validate({ ...state, sleep: { ...sleep, after: LIMITS.phoneSleepSeconds[1] } }), true);
+  assert.equal(validate({ ...state, sleep: { ...sleep, after: LIMITS.phoneSleepSeconds[1] + 1 } }), false);
+  // Batterie faible, extinction
+  assert.equal(validate({ ...state, alert: { id: 'a1', level: 5 } }), true);
+  assert.equal(validate({ ...state, power: 'off' }), true);
+  assert.equal(validate({ ...state, power: 'on', watch: ['touch'] }), true);
+  // Discussion : timings, frappe automatique, non distribué
+  assert.equal(MESSAGE_TYPES['chat:type'].direction, 'r2s');
+  assert.equal(validate({ type: 'chat:type', id: 'a', dur: 4, send: true }, { direction: 's2r' }), false, 'un écran ne déclenche pas la lecture auto');
+  assert.equal(validate({ type: 'chat:type', id: 'a', dur: LIMITS.chatWriteSeconds[1], send: false }), true);
+  assert.equal(validate({ type: 'chat:post', id: 'a', typing: true, dur: LIMITS.chatWriteSeconds[1] }), true);
+  assert.equal(validate({ type: 'chat:sent', id: 'a', undelivered: true }, { direction: 's2r' }), true);
+  assert.equal(validate({ type: 'chat:sent', id: 'a', undelivered: true }, { direction: 'r2s' }), false);
+  // État complet le plus chargé : toujours sous le plafond d’un message
+  const big = {
+    ...state, notifs: Array.from({ length: 8 }, (_, i) => ({ id: 'n' + i, kind: 'notif', app: 'a'.repeat(24), name: 'b'.repeat(40), msg: 'c'.repeat(200), color: '#ffffff', ago: 604800 })),
+    unlock: { code: 6, then: 'home' }, home: true, watch: ['touch'], sleep, alert: { id: 'a'.repeat(12), level: 100 },
+    bar: { clock: { mode: 'run', date: '2026-10-17', time: '23:47', el: 604800 }, net: { bars: 4, type: '5G', plane: true, wifi: true }, bat: { level: 100, charging: true, pct: true } },
+  };
   assert.equal(validate(big), true);
   assert.ok(utf8Encode(JSON.stringify(big)).length < MAX_MESSAGE_BYTES);
 });

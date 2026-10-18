@@ -181,7 +181,9 @@ test('chargement : entrées revalidées, textes jamais interprétés, plafond de
   assert.equal(r.n, 100, 'plafond');
   assert.deepEqual(r.first, {
     id: 'xss', name: '<b onclick=window.__p=2>Nom</b>', contact: '<i>C</i>', actor: '', style: 'minimal', hasPhoto: false, photoSig: null,
-    msgs: [{ id: 'd1', from: 'contact', text: 'a' }, { id: 'd4', from: 'actor', text: 'y'.repeat(300) }],
+    // Enregistrée avant les timings (maquette 26d) : valeurs par défaut, comportement inchangé
+    msgs: [{ id: 'd1', from: 'contact', text: 'a', pause: 0, write: 2, auto: false, send: 'button' },
+      { id: 'd4', from: 'actor', text: 'y'.repeat(300), pause: 0, write: 3, auto: false, send: 'button' }],
   });
   assert.equal(r.last, 'c98');
   assert.equal(await page.evaluate(() => [window.__p, document.querySelectorAll('#dcSavedRows b, #dcSavedRows i, #dcSavedRows img').length].join()), ',0');

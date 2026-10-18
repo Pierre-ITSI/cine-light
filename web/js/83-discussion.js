@@ -29,10 +29,27 @@
 //     ni animation), la scène reprend à ce message ; repère orange dans le fil.
 //     « Repartir de zéro » : plus rien d'affiché.
 //   • Discussions enregistrées (maquette validée 26c) : 89-discussions-saved.js.
+//   • Timings et lecture automatique (maquette validée 26d). Chaque message a :
+//     « Pause avant » (s), « Écriture » (contact : durée de « … écrit » ;
+//     comédien : « Le comédien tape » ou « Automatique », le texte s'écrit
+//     tout seul lettre à lettre pendant la durée), « Envoi » (Automatique /
+//     Au bouton). Pastilles « pause · écriture » dans le fil. « ▶ Lecture
+//     auto » enchaîne les messages selon leurs timings ; elle s'arrête sur un
+//     message « Au bouton » (contact : « Envoyer n° X » ; comédien : son
+//     bouton Envoyer) ou tapé par le comédien, puis repart d'elle-même.
+//     « ⏸ Pause » fige le déroulé (GO de la lecture : reprise au message en
+//     cours) ; « ↶ » met en pause et retire le dernier message affiché.
+//     Sans lecture auto (et pour les anciens fils : pause 0 s, envoi au
+//     bouton), tout se passe comme avant.
+//   • Pas de réseau (maquette 34) : le message du comédien envoyé quand la
+//     barre d'état de la séquence dit « Pas de service » reste « Non
+//     distribué » (point rouge) ; le retour du réseau le distribue (91-sequence.js).
 // Protocole (packages/protocol/schema.js) : chat:msg (texte d'un message),
-// chat:open (contact, style, ordre, messages postés ; history : reprise),
-// chat:rewind (« ↶ »), chat:post, chat:close ; retour chat:progress,
-// chat:sent. Textes affichés par textContent.
+// chat:open (contact, style, ordre, messages postés ; history : reprise ;
+// pend : non distribués ; auto : frappe automatique en cours), chat:rewind
+// (« ↶ »), chat:post (dur : « … écrit » de la lecture auto), chat:type
+// (lecture auto, message du comédien), chat:close ; retour chat:progress,
+// chat:sent (undelivered : sans réseau). Textes affichés par textContent.
 const CHAT_LS_KEY = 'setremote-chat-v1';
 const CHAT_AVATAR_KEY = 'setremote-chat-avatar-v1';
 const CHAT_MAX = 40, CHAT_TEXT_MAX = 300, CHAT_TYPING_MS = 2000, CHAT_PROGRESS_MS = 250;
@@ -48,13 +65,37 @@ const _CHAT_TXT = {
   resume1: 'Reprise ici · 1 affiché comme historique',
   resume2: 'Reprise ici · 1 et 2 affichés comme historique',
   resumeN: 'Reprise ici · 1 à {n} affichés comme historique',
+  // Timings et lecture automatique (maquette 26d)
+  pill: '{p} s · {w} s', pillAuto: '{p} s · auto {w} s', pillActor: '{p} s · tape',
+  timingHead: 'Message {n} · {nom}',
+  pause: 'Pause avant', writeLabel: 'Écriture', writeDur: 'Durée d\'écriture',
+  writeActor: 'Le comédien tape', writeAuto: 'Automatique',
+  sendLabel: 'Envoi', sendAuto: 'Automatique', sendButton: 'Au bouton',
+  timingNote: 'Contact : « … écrit » pendant la durée d\'écriture. Comédien : le texte s\'écrit tout seul lettre par lettre.',
+  seconds: '{n} s',
+  autoLabel: 'Lecture automatique',
+  autoRun: '● en cours · {n} / {total}', autoPaused: '⏸ en pause · {n} / {total}', autoReady: 'prête · {n} / {total}',
+  autoActor: '● attend {comedien} · {n} / {total}', autoButton: '● attend « Envoyer » · {n} / {total}', autoDone: 'terminée · {n} / {total}',
+  autoPlay: '▶ LECTURE AUTO', autoPause: '⏸ PAUSE', autoBack: '↶', autoBackAria: 'Pause et revenir d\'un message',
+  undelivered: 'Non distribué',
 };
+// Timings d'un message (maquette 26d) ; valeurs par défaut = comportement d'avant
+// (pause 0 s, envoi au bouton, le comédien tape) : anciens fils et discussions inchangés
+const CHAT_PAUSE_MAX = 60, CHAT_WRITE_MAX = 60;
+function chatTimingDefaults(from) { return { pause: 0, write: from === 'actor' ? 3 : 2, auto: false, send: 'button' }; }
+function chatTiming(x, from) {
+  const d = chatTimingDefaults(from), int = (v, min, max, def) => (Number.isInteger(v) && v >= min && v <= max ? v : def);
+  const t = x && typeof x === 'object' ? x : {};
+  return { pause: int(t.pause, 0, CHAT_PAUSE_MAX, d.pause), write: int(t.write, 0, CHAT_WRITE_MAX, d.write), auto: from === 'actor' && t.auto === true, send: t.send === 'auto' ? 'auto' : 'button' };
+}
+// Copie d'un message (fil, discussion enregistrée) : texte et timings
+function chatMsgCopy(m) { return Object.assign({ id: m.id, from: m.from, text: m.text }, chatTiming(m, m.from)); }
 
 // — Télécommande —
 let _chatSeq = 0;
 const _chatNewId = () => 'm' + Date.now().toString(36).slice(-5) + (++_chatSeq).toString(36);
 function _chatDefault() {
-  const m = (from, text, i) => ({ id: 'd' + i, from, text });
+  const m = (from, text, i) => Object.assign({ id: 'd' + i, from, text }, chatTimingDefaults(from));
   return {
     name: 'Maman', actor: 'Julie', style: 'minimal', typing: false,
     msgs: [
@@ -65,11 +106,13 @@ function _chatDefault() {
     sent: [], open: false, screens: null, progress: null,
     resumeAt: null,  // « Reprendre ici » : message où la scène a repris (repère dans le fil)
     savedId: null,   // discussion enregistrée chargée ou enregistrée en dernier (89-discussions-saved.js)
+    pend: [],        // messages du comédien envoyés sans réseau : « Non distribué » (maquette 34)
   };
 }
 let _chat = _chatDefault();
 let _chatAvatar = null;
 let _chatEditId = null;
+let _chatTimingId = null; // message dont les timings sont affichés (dernier touché, maquette 26d)
 const _chatOk = (id) => typeof id === 'string' && SRP.CHAT_ID_RE.test(id);
 
 function chatLoad() {
@@ -79,7 +122,7 @@ function chatLoad() {
     const d = _chatDefault();
     const seen = new Set();
     const msgs = o.msgs.filter((x) => x && _chatOk(x.id) && !seen.has(x.id) && seen.add(x.id) && (x.from === 'contact' || x.from === 'actor') && typeof x.text === 'string')
-      .slice(0, CHAT_MAX).map((x) => Object.assign({ id: x.id, from: x.from, text: x.text.slice(0, CHAT_TEXT_MAX) }, x.impro === true ? { impro: true } : {}));
+      .slice(0, CHAT_MAX).map((x) => Object.assign({ id: x.id, from: x.from, text: x.text.slice(0, CHAT_TEXT_MAX) }, chatTiming(x, x.from), x.impro === true ? { impro: true } : {}));
     const ids = new Set(msgs.map((x) => x.id));
     _chat = {
       name: typeof o.name === 'string' ? o.name.slice(0, 40) : d.name,
@@ -93,14 +136,17 @@ function chatLoad() {
       progress: null,
       resumeAt: typeof o.resumeAt === 'string' && ids.has(o.resumeAt) ? o.resumeAt : null,
       savedId: typeof o.savedId === 'string' && /^[A-Za-z0-9_-]{1,40}$/.test(o.savedId) ? o.savedId : null,
+      pend: [],
     };
+    const sent = new Set(_chat.sent);
+    _chat.pend = Array.isArray(o.pend) ? [...new Set(o.pend.filter((id) => sent.has(id)))] : [];
   }
   const a = _lsGet(CHAT_AVATAR_KEY);
   _chatAvatar = safeImageData(a);
 }
 function chatSave() {
   const c = _chat;
-  _lsSet(CHAT_LS_KEY, JSON.stringify({ v: 1, name: c.name, actor: c.actor, style: c.style, typing: c.typing, msgs: c.msgs, sent: c.sent, open: c.open, screens: c.screens, resumeAt: c.resumeAt, savedId: c.savedId }));
+  _lsSet(CHAT_LS_KEY, JSON.stringify({ v: 2, name: c.name, actor: c.actor, style: c.style, typing: c.typing, msgs: c.msgs, sent: c.sent, open: c.open, screens: c.screens, resumeAt: c.resumeAt, savedId: c.savedId, pend: c.pend }));
 }
 function chatStyleNow() { return _chat.style; }
 function chatSetStyle(s) { _chat.style = _CHAT_STYLE_HINTS[s] ? s : 'minimal'; _chatChanged(); }
@@ -138,11 +184,17 @@ function _chatSendOpen(only, history) {
   const ids = _chat.msgs.filter(_chatValid).map((m) => m.id);
   const cur = chatCurrentActor();
   const p = _chat.progress;
+  const sent = _chat.sent.filter((id) => ids.includes(id));
+  const pend = _chat.pend.filter((id) => sent.includes(id));
+  // Frappe automatique en cours (lecture auto) : l'écran la reprend où elle en est
+  const ta = _chatAuto.type;
+  const auto = !history && ta && cur && cur.id === ta.id
+    ? Object.assign({ id: ta.id, send: ta.send }, ta.dur ? { dur: ta.dur, el: Math.max(0, Math.min(ta.dur * 1000, Date.now() - ta.t0)) } : {}) : null;
   sendMsg(Object.assign({
     type: 'chat:open', name: _chat.name.slice(0, 40), style: _chat.style, hasAvatar: !!_chatAvatar,
-    ids, sent: _chat.sent.filter((id) => ids.includes(id)),
+    ids, sent,
     typed: !history && cur && p && p.id === cur.id ? Math.min(p.typed, _chatLen(cur.text)) : 0,
-  }, history ? { history: true } : {}, _chatTarget(only)));
+  }, history ? { history: true } : {}, pend.length ? { pend } : {}, auto ? { auto } : {}, _chatTarget(only)));
 }
 function _chatSendAvatar(only) {
   if (!_chatAvatar || linkBleOnly()) return Promise.resolve();
@@ -162,6 +214,7 @@ function openChatOnTarget(history) {
 }
 function closeChat() {
   if (_chat.open) sendMsg(Object.assign({ type: 'chat:close' }, _chatTarget()));
+  chatAutoStop();
   _chat.open = false;
   _chat.progress = null;
   chatSave();
@@ -170,7 +223,9 @@ function closeChat() {
 }
 // « Repartir de zéro » : plus rien d'affiché, frappe oubliée
 function restartChat() {
+  chatAutoStop();
   _chat.sent = [];
+  _chat.pend = [];
   _chat.progress = null;
   _chat.resumeAt = null;
   if (_chat.open) { _chatFlushTexts(); _chatSendOpen(undefined, true); }
@@ -183,8 +238,11 @@ function restartChat() {
 function rewindChat() {
   const id = _chat.sent[_chat.sent.length - 1];
   if (!id) return;
+  chatAutoPause(); // la lecture auto ne repart qu'au ▶
+  _chatAuto.type = null; _chatAuto.phase = null; _chatAuto.done = false;
   if (_chat.open) _chatFlushTexts();
   _chat.sent.pop();
+  _chat.pend = _chat.pend.filter((x) => x !== id);
   const i = _chat.msgs.findIndex((x) => x.id === id);
   const drop = i >= 0 && _chat.msgs[i].impro === true;
   if (drop) {
@@ -207,7 +265,9 @@ function rewindChat() {
 function resumeChatAt(id) {
   const i = _chat.msgs.findIndex((x) => x.id === id);
   if (i < 0 || !_chatValid(_chat.msgs[i])) return;
+  chatAutoStop();
   _chat.sent = _chat.msgs.slice(0, i).filter(_chatValid).map((m) => m.id);
+  _chat.pend = _chat.pend.filter((x) => _chat.sent.includes(x));
   _chat.progress = null;
   _chat.resumeAt = i > 0 ? id : null; // au n° 1 : comme « Repartir de zéro »
   _chatEditId = null;
@@ -232,10 +292,18 @@ function sendNextChatMessage() {
   if (!m) return;
   if (!_chat.open) openChatOnTarget();
   else _chatFlushEdits();
-  _chat.sent.push(m.id);
-  sendMsg(Object.assign({ type: 'chat:post', id: m.id, typing: !!_chat.typing }, _chatTarget()));
+  // Lecture auto : « … écrit » pendant la durée d'écriture du message, puis la lecture continue
+  const auto = _chatAuto.on;
+  _chatPost(m, auto ? (m.write > 0 ? m.write : -1) : (_chat.typing ? 0 : -1));
+  if (auto) _chatAutoAfterPost(m);
   chatSave();
   renderChatPanel();
+}
+// Poste un message du contact ; dur : « … écrit » en s (0 : 2 s ; -1 : sans indicateur)
+function _chatPost(m, dur) {
+  _chat.sent.push(m.id);
+  const typing = dur >= 0;
+  sendMsg(Object.assign({ type: 'chat:post', id: m.id, typing }, typing && dur > 0 ? { dur: Math.min(CHAT_WRITE_MAX, dur) } : {}, _chatTarget()));
 }
 function toggleChatWrite() {
   const box = document.getElementById('dcWriteBox');
@@ -250,13 +318,14 @@ function sendImprovisedChat() {
   const text = ta ? ta.value.trim().slice(0, CHAT_TEXT_MAX) : '';
   if (!text || _chat.msgs.length >= CHAT_MAX) return;
   const m = { id: _chatNewId(), from: 'contact', text, impro: true }; // improvisé : « ↶ » le retire du fil
+  Object.assign(m, chatTimingDefaults('contact'));
   const i = _chat.msgs.findIndex((x) => !_chatSent(x));
   _chat.msgs.splice(i < 0 ? _chat.msgs.length : i, 0, m);
   if (!_chat.open) openChatOnTarget();
   else _chatSyncTexts(); // le nouveau message et l'ordre, avant de le poster
   _chatDefsSent.set(m.id, m.from + '|' + m.text);
-  _chat.sent.push(m.id);
-  sendMsg(Object.assign({ type: 'chat:post', id: m.id, typing: !!_chat.typing }, _chatTarget()));
+  Object.assign(m, chatTimingDefaults('contact'));
+  _chatPost(m, _chat.typing ? 0 : -1);
   if (ta) ta.value = '';
   toggleChatWrite();
   chatSave();
@@ -323,9 +392,10 @@ function _chatFlushTexts() {
 function addChatMessage() {
   if (_chat.msgs.length >= CHAT_MAX) return;
   const last = _chat.msgs[_chat.msgs.length - 1];
-  const m = { id: _chatNewId(), from: last && last.from === 'contact' ? 'actor' : 'contact', text: '' };
+  const from = last && last.from === 'contact' ? 'actor' : 'contact';
+  const m = Object.assign({ id: _chatNewId(), from, text: '' }, chatTimingDefaults(from));
   _chat.msgs.push(m);
-  _chatEditId = m.id;
+  _chatEditId = m.id; _chatTimingId = m.id;
   _chatChanged();
   const ta = document.querySelector('#dcRows .dc-edit textarea');
   if (ta) ta.focus();
@@ -333,12 +403,27 @@ function addChatMessage() {
 function editChatMessage(id) {
   if (_dcSuppressClick) return;
   _chatEditId = _chatEditId === id ? null : id;
+  _chatTimingId = id;
   renderChatPanel();
 }
 function setChatMessageSide(id, from) {
   const m = _chat.msgs.find((x) => x.id === id);
   if (!m) return;
   m.from = from === 'actor' ? 'actor' : 'contact';
+  Object.assign(m, chatTiming(m, m.from));
+  _chatChanged();
+}
+// Timings d'un message (maquette 26d) : pause, écriture, envoi
+function setChatTiming(id, k, v) {
+  const m = _chat.msgs.find((x) => x.id === id);
+  if (!m) return;
+  const t = chatTiming(m, m.from);
+  if (k === 'pause') t.pause = Math.max(0, Math.min(CHAT_PAUSE_MAX, t.pause + v));
+  else if (k === 'write') t.write = Math.max(m.from === 'actor' ? 1 : 0, Math.min(CHAT_WRITE_MAX, t.write + v));
+  else if (k === 'auto') t.auto = m.from === 'actor' && !!v;
+  else if (k === 'send') t.send = v === 'auto' ? 'auto' : 'button';
+  else return;
+  Object.assign(m, t);
   _chatChanged();
 }
 function onChatMessageText(id, el) {
@@ -360,6 +445,7 @@ function deleteChatMessage(id) {
   _chat.sent = _chat.sent.filter((x) => x !== id);
   _chatDefsSent.delete(id);
   if (_chatEditId === id) _chatEditId = null;
+  if (_chatTimingId === id) _chatTimingId = null;
   _chatChanged();
 }
 
@@ -378,12 +464,126 @@ function remoteOnChatSent(m) {
   if (!msg || msg.from !== 'actor' || _chatSent(msg)) return;
   _chat.sent.push(msg.id);
   _chat.progress = null;
+  if (_chatAuto.type && _chatAuto.type.id === msg.id) _chatAuto.type = null;
+  // Envoyé sans réseau (maquette 34) : « Non distribué » jusqu'au retour du réseau
+  if (m.undelivered && !_chat.pend.includes(msg.id)) _chat.pend.push(msg.id);
   chatSave();
   renderChatPanel();
   // Les autres écrans de la discussion suivent
   const others = (_chat.screens || []).filter((s) => s !== _rxFrom);
   if (others.length) _chatSendOpen(others);
+  if (m.undelivered) seqOnChatUndelivered(_rxFrom, msg); // « Message non envoyé » (91-sequence.js)
   seqOnChatSent(_rxFrom); // réponse attendue par une Séquence (91-sequence.js)
+  if (_chatAuto.on) _chatAutoNext(); // lecture auto : le comédien a envoyé, elle reprend
+}
+// Réseau revenu (91-sequence.js) : messages « Non distribué » distribués
+function chatDeliverPending() {
+  if (!_chat.pend.length) return;
+  _chat.pend = [];
+  chatSave();
+  if (_chat.open) _chatSendOpen();
+  renderChatPanel();
+}
+
+// ── Lecture automatique (maquette 26d) ──
+// phase : { id, k: 'pause' | 'write' (contact) | 'type' (texte automatique) | 'actor' (le comédien tape) | 'button' (« Envoyer n° X ») }
+// type : frappe automatique envoyée à l'écran (chat:type), pour la reprise après rechargement
+const _chatAuto = { on: false, done: false, timer: null, tick: null, phase: null, t0: 0, dur: 0, type: null };
+const _chatNextMsg = () => _chat.msgs.find((x) => _chatValid(x) && !_chatSent(x)) || null;
+function chatAutoStart() {
+  if (_chatAuto.on || !_chatNextMsg()) return;
+  if (!_chat.open) openChatOnTarget();
+  _chatAuto.on = true; _chatAuto.done = false;
+  if (!_chatAuto.tick) _chatAuto.tick = setInterval(_chatRenderAuto, 500);
+  _chatAutoNext(true);
+}
+function chatAutoPause() {
+  if (!_chatAuto.on) return;
+  _chatAuto.on = false;
+  if (_chatAuto.timer) { clearTimeout(_chatAuto.timer); _chatAuto.timer = null; }
+  if (_chatAuto.tick) { clearInterval(_chatAuto.tick); _chatAuto.tick = null; }
+  renderChatPanel();
+}
+function chatAutoStop() {
+  chatAutoPause();
+  _chatAuto.phase = null; _chatAuto.type = null; _chatAuto.done = false;
+}
+// « ↶ » de la lecture : pause, puis le dernier message affiché est retiré
+function chatAutoBack() { chatAutoPause(); rewindChat(); }
+function _chatAutoPhase(id, k, dur) { _chatAuto.phase = { id, k }; _chatAuto.t0 = Date.now(); _chatAuto.dur = dur || 0; }
+// Message suivant : pause avant, puis écriture et envoi
+function _chatAutoNext(resume) {
+  if (_chatAuto.timer) { clearTimeout(_chatAuto.timer); _chatAuto.timer = null; }
+  if (!_chatAuto.on) return;
+  if (!_chat.open) { chatAutoStop(); renderChatPanel(); return; }
+  const m = _chatNextMsg();
+  if (!m) { chatAutoPause(); _chatAuto.phase = null; _chatAuto.done = true; renderChatPanel(); return; }
+  // Repris au ▶ sur un message déjà en cours d'écriture par le comédien : on attend son envoi
+  if (resume && _chatAuto.type && _chatAuto.type.id === m.id) { _chatAutoPhase(m.id, _chatAuto.type.dur ? 'type' : 'actor', _chatAuto.type.dur); renderChatPanel(); return; }
+  if (m.from === 'contact' && m.send === 'button') { _chatAutoPhase(m.id, 'button'); renderChatPanel(); return; }
+  if (m.from === 'actor' && !m.auto && m.send === 'button') { _chatAutoPhase(m.id, 'actor'); renderChatPanel(); return; }
+  if (m.pause > 0) {
+    _chatAutoPhase(m.id, 'pause', m.pause);
+    _chatAuto.timer = setTimeout(() => { _chatAuto.timer = null; _chatAutoWrite(m.id); }, m.pause * 1000);
+    renderChatPanel();
+    return;
+  }
+  _chatAutoWrite(m.id);
+}
+function _chatAutoWrite(id) {
+  if (!_chatAuto.on || !_chat.open) return;
+  const m = _chat.msgs.find((x) => x.id === id);
+  if (!m || _chatSent(m) || _chatNextMsg() !== m) { _chatAutoNext(); return; }
+  _chatFlushEdits();
+  if (m.from === 'contact') {
+    _chatPost(m, m.write > 0 ? m.write : -1);
+    _chatAutoAfterPost(m);
+    chatSave();
+  } else {
+    // Comédien : le texte s'écrit tout seul (dur) et/ou part tout seul une fois complet (send)
+    const dur = m.auto ? Math.max(1, m.write) : null;
+    _chatAuto.type = { id: m.id, dur, send: m.send === 'auto', t0: Date.now() };
+    sendMsg(Object.assign({ type: 'chat:type', id: m.id, send: m.send === 'auto' }, dur ? { dur } : {}, _chatTarget()));
+    _chatAutoPhase(m.id, dur ? 'type' : 'actor', dur || 0);
+  }
+  renderChatPanel();
+}
+// Contact posté : la bulle arrive après « … écrit » ; le message suivant attend jusque-là
+function _chatAutoAfterPost(m) {
+  const w = m.write > 0 ? m.write : 0;
+  _chatAutoPhase(m.id, 'write', w);
+  if (_chatAuto.timer) clearTimeout(_chatAuto.timer);
+  _chatAuto.timer = setTimeout(() => { _chatAuto.timer = null; _chatAutoNext(); }, w * 1000 + 50);
+}
+// État et avancée affichés (« en cours · 3 / 4 », barre)
+function _chatAutoInfo() {
+  const valid = _chat.msgs.filter(_chatValid), total = valid.length;
+  const a = _chatAuto, ph = a.phase;
+  // « … écrit » en cours : le message posté n'est pas encore affiché, il reste le message en cours
+  const writing = !!ph && ph.k === 'write' && _chat.sent.includes(ph.id) && a.on;
+  const sent = valid.filter(_chatSent).length - (writing ? 1 : 0);
+  let frac = 0;
+  if (a.on && ph && a.dur > 0 && (ph.k === 'pause' || ph.k === 'type' || ph.k === 'write')) frac = Math.min(1, (Date.now() - a.t0) / (a.dur * 1000)) * (ph.k === 'pause' ? 0.3 : 1);
+  const n = a.done || sent >= total ? total : (a.on || ph ? sent + 1 : sent);
+  const v = { n: Math.min(n, total), total, comedien: _chat.actor || 'Comédien' };
+  let text;
+  if (a.done || (total && sent >= total)) text = _tplChat(_CHAT_TXT.autoDone, v);
+  else if (!a.on) text = _tplChat(ph ? _CHAT_TXT.autoPaused : _CHAT_TXT.autoReady, v);
+  else if (ph && ph.k === 'actor') text = _tplChat(_CHAT_TXT.autoActor, v);
+  else if (ph && ph.k === 'button') text = _tplChat(_CHAT_TXT.autoButton, v);
+  else text = _tplChat(_CHAT_TXT.autoRun, v);
+  const pct = total ? Math.round(Math.min(1, (sent + frac) / total) * 1000) / 10 : 0;
+  return { text, pct, live: a.on };
+}
+function _chatRenderAuto() {
+  const st = document.getElementById('dcAutoState'), fill = document.getElementById('dcAutoFill');
+  const info = _chatAutoInfo();
+  if (st) { st.textContent = info.text; st.classList.toggle('on', info.live); }
+  if (fill) fill.style.width = info.pct + '%';
+  const play = document.getElementById('dcAutoPlay'), pause = document.getElementById('dcAutoPause'), back = document.getElementById('dcAutoBack');
+  if (play) play.disabled = !_chatAuto.on && !_chatNextMsg(); // en cours : reste allumé (maquette 26d), sans effet
+  if (pause) pause.disabled = !_chatAuto.on;
+  if (back) back.disabled = !_chat.sent.length;
 }
 // Resynchronisation (24-resync.js) : écrans de la discussion revenus
 function chatOnScreensResync(ids) {
@@ -400,7 +600,8 @@ let _chatView = 'thread';
 function chatShowForm(on) {
   const saved = on && _chatView === 'saved';
   const show = (id, v) => { const el = document.getElementById(id); if (el) el.style.display = v ? '' : 'none'; };
-  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcSendPanel']) show(id, on && !saved);
+  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcAutoPanel', 'dcSendPanel']) show(id, on && !saved);
+  if (!on || saved) show('dcTimingPanel', false);
   show('dcTabs', on);
   show('dcSavedPanel', saved);
   // Le style appartient au fil en cours : masqué sur la liste
@@ -452,6 +653,7 @@ function _chatRenderHead() {
   if (cb) cb.disabled = !_chat.open;
   const bk = document.getElementById('dcBackBtn');
   if (bk) bk.disabled = !_chat.sent.length;
+  _chatRenderAuto();
 }
 function _chatProgressText(cur) {
   const p = _chat.progress && _chat.progress.id === cur.id ? _chat.progress : null;
@@ -473,7 +675,7 @@ function renderChatPanel() {
   rows.textContent = '';
   _chat.msgs.forEach((m, i) => {
     const row = document.createElement('div');
-    row.className = 'dc-row' + (_chatSent(m) ? ' sent' : '') + (cur && cur.id === m.id ? ' cur' : '') + (m.from === 'actor' ? ' actor' : '') + (_chatEditId === m.id ? ' editing' : '');
+    row.className = 'dc-row' + (_chatSent(m) ? ' sent' : '') + (cur && cur.id === m.id ? ' cur' : '') + (m.from === 'actor' ? ' actor' : '') + (_chatEditId === m.id ? ' editing' : '') + (_chatTimingId === m.id ? ' sel' : '');
     row.dataset.id = m.id;
     row.onclick = () => editChatMessage(m.id);
     const num = document.createElement('span'); num.className = 'dc-num'; num.textContent = String(i + 1);
@@ -481,7 +683,10 @@ function renderChatPanel() {
     who.textContent = _tplChat('{nom} ›', { nom: m.from === 'actor' ? (_chat.actor || 'Comédien') : chatContactName() });
     const txt = document.createElement('span'); txt.className = 'dc-text';
     txt.textContent = m.text || '…';
-    row.append(num, who, txt);
+    // Pastille des timings (maquette 26d) : pause · écriture
+    const pill = document.createElement('span'); pill.className = 'dc-pill';
+    pill.textContent = _tplChat(m.from === 'actor' ? (m.auto ? _CHAT_TXT.pillAuto : _CHAT_TXT.pillActor) : _CHAT_TXT.pill, { p: m.pause, w: m.write });
+    row.append(num, who, txt, pill);
     rows.appendChild(row);
     if (cur && cur.id === m.id) {
       const pr = document.createElement('div'); pr.className = 'dc-progress'; pr.id = 'dcProgress';
@@ -500,6 +705,7 @@ function renderChatPanel() {
   });
   const add = document.getElementById('dcAdd');
   if (add) add.disabled = _chat.msgs.length >= CHAT_MAX;
+  _chatRenderTiming();
 }
 // Éditeur d'un message : côté, texte, supprimer
 function _chatEditor(m) {
@@ -527,6 +733,44 @@ function _chatEditor(m) {
   ok.onclick = () => closeChatEditor();
   act.append(res, del, ok);
   box.append(seg, ta, act);
+  return box;
+}
+// Carte des timings du message touché (maquette 26d), sous le fil
+function _chatRenderTiming() {
+  const panel = document.getElementById('dcTimingPanel');
+  if (!panel) return;
+  const m = _chat.msgs.find((x) => x.id === _chatTimingId);
+  panel.textContent = '';
+  panel.style.display = m && callKind === 'discussion' && _chatView === 'thread' ? '' : 'none';
+  if (m) panel.appendChild(_chatTimingEditor(m));
+}
+// Timings du message (maquette 26d) : pause avant, écriture, envoi
+function _chatTimingEditor(m) {
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+  const box = el('div', 'dc-timing');
+  const i = _chat.msgs.indexOf(m) + 1;
+  const head = el('div', 'dc-timing-head');
+  head.append(el('span', 'dc-tlabel', _tplChat(_CHAT_TXT.timingHead, { n: i, nom: m.from === 'actor' ? (_chat.actor || 'Comédien') : chatContactName() })),
+    el('span', 'dc-timing-quote', '« ' + (m.text || '…') + ' »'));
+  const stepper = (label, val, k) => {
+    const r = el('div', 'dc-tstep');
+    const minus = el('button', 'dc-tbtn', '−'), plus = el('button', 'dc-tbtn', '+');
+    minus.type = plus.type = 'button'; minus.setAttribute('aria-label', label + ' −'); plus.setAttribute('aria-label', label + ' +');
+    minus.onclick = () => setChatTiming(m.id, k, -1); plus.onclick = () => setChatTiming(m.id, k, 1);
+    r.append(el('span', '', label), minus, el('b', 'dc-tval', _tplChat(_CHAT_TXT.seconds, { n: val })), plus);
+    return r;
+  };
+  const opts = (items) => {
+    const r = el('div', 'ss-row');
+    for (const [on, label, fn] of items) { const b = el('button', 'ss-opt' + (on ? ' on' : ''), label); b.type = 'button'; b.onclick = fn; r.appendChild(b); }
+    return r;
+  };
+  box.append(head, stepper(_CHAT_TXT.pause, m.pause, 'pause'), el('span', 'dc-tlabel', _CHAT_TXT.writeLabel));
+  if (m.from === 'actor') box.appendChild(opts([[!m.auto, _CHAT_TXT.writeActor, () => setChatTiming(m.id, 'auto', false)], [m.auto, _CHAT_TXT.writeAuto, () => setChatTiming(m.id, 'auto', true)]]));
+  if (m.from === 'contact' || m.auto) box.appendChild(stepper(_CHAT_TXT.writeDur, m.write, 'write'));
+  box.append(el('span', 'dc-tlabel', _CHAT_TXT.sendLabel),
+    opts([[m.send === 'auto', _CHAT_TXT.sendAuto, () => setChatTiming(m.id, 'send', 'auto')], [m.send !== 'auto', _CHAT_TXT.sendButton, () => setChatTiming(m.id, 'send', 'button')]]),
+    el('div', 'dc-timing-note', _CHAT_TXT.timingNote));
   return box;
 }
 
@@ -630,10 +874,13 @@ function screenChatOpen(m) {
   _sccStopQueue();
   if (hist) _sccAnim.clear();
   for (const k of [..._scChatMsgs.keys()]) if (!m.ids.includes(k)) _scChatMsgs.delete(k);
+  _sccAutoStop();
   _scChat = {
     name: String(m.name || '').slice(0, 40), style: ['glass', 'tonal', 'minimal'].includes(m.style) ? m.style : 'minimal',
     hasAvatar: !!m.hasAvatar, ids: m.ids.slice(), sent: m.sent.filter((id) => m.ids.includes(id)), typed: 0, curId: null,
     instant: hist || !!(prev && prev.instant), // pas de fondu d'entrée (gardé : le retirer le rejouerait)
+    pend: Array.isArray(m.pend) ? m.pend.filter((id) => m.sent.includes(id)) : [], // « Non distribué » (maquette 34)
+    auto: null,                                                                      // lecture auto : { id, dur, send, t0 }
   };
   // Même message en cours sans rechargement : la frappe locale fait foi (sauf reprise)
   const cur = _sccCur();
@@ -645,6 +892,8 @@ function screenChatOpen(m) {
     if (hist && prev && prev.curId === cur.id && prev.typed) _sccProgress();
   }
   _sccRender(!prev);
+  // Frappe automatique en cours (lecture auto, reprise) : repart où elle en était
+  if (m.auto && cur && cur.id === m.auto.id) screenChatType(m.auto, m.auto.el || 0);
 }
 // « ↶ » : retire un message affiché (ou encore derrière « … écrit ») ; drop :
 // message improvisé, retiré du fil. Un message du comédien se retape.
@@ -664,7 +913,8 @@ function screenChatRewind(m) {
     changed = true;
   }
   const i = c.sent.indexOf(m.id);
-  if (i >= 0) { c.sent.splice(i, 1); changed = true; }
+  if (i >= 0) { c.sent.splice(i, 1); c.pend = c.pend.filter((x) => x !== m.id); changed = true; }
+  if (changed) _sccAutoStop();
   if (m.drop && c.ids.includes(m.id)) { c.ids = c.ids.filter((x) => x !== m.id); _scChatMsgs.delete(m.id); changed = true; }
   if (!changed) return;
   // Message du comédien en cours changé : sa frappe repart de zéro
@@ -679,10 +929,12 @@ function screenChatPost(m) {
   if (!c || !msg || msg.from !== 'contact' || !c.ids.includes(m.id) || c.sent.includes(m.id) || _sccQueue.includes(m.id)) return;
   _sccQueue.push(m.id);
   if (!m.typing) _sccQueueTyping.add(m.id);
+  else if (m.dur) _sccQueueDur.set(m.id, m.dur * 1000); // lecture auto : durée d'écriture du message
   if (!_sccTypingTimer) _sccNextPost();
   else _sccRender();
 }
 const _sccQueueTyping = new Set(); // messages postés sans indicateur
+const _sccQueueDur = new Map();    // durée de « … écrit » propre au message (lecture auto)
 function _sccNextPost() {
   _sccTypingTimer = null;
   const c = _scChat;
@@ -691,6 +943,7 @@ function _sccNextPost() {
   const post = () => {
     _sccQueue.shift();
     _sccQueueTyping.delete(id);
+    _sccQueueDur.delete(id);
     _sccTypingOn = false;
     if (!c.sent.includes(id)) { c.sent.push(id); _sccAnim.add(id); }
     _sccRender();
@@ -699,14 +952,44 @@ function _sccNextPost() {
   if (_sccQueueTyping.has(id)) { post(); return; }
   _sccTypingOn = true;
   _sccRender();
-  _sccTypingTimer = setTimeout(post, CHAT_TYPING_MS);
+  _sccTypingTimer = setTimeout(post, _sccQueueDur.get(id) || CHAT_TYPING_MS);
 }
 function _sccStopQueue() {
   if (_sccTypingTimer) clearTimeout(_sccTypingTimer);
-  _sccTypingTimer = null; _sccTypingOn = false; _sccQueue = []; _sccQueueTyping.clear();
+  _sccTypingTimer = null; _sccTypingOn = false; _sccQueue = []; _sccQueueTyping.clear(); _sccQueueDur.clear();
+}
+// Lecture auto (chat:type) : le texte du comédien s'écrit tout seul en dur s
+// (sinon il le tape), puis part tout seul une fois complet si send
+let _sccAutoTimer = null;
+function screenChatType(m, el) {
+  const c = _scChat, cur = _sccCur();
+  if (!c || !cur || cur.id !== m.id) return;
+  _sccAutoStop();
+  c.auto = { id: m.id, dur: m.dur ? m.dur * 1000 : 0, send: !!m.send, t0: Date.now() - (el || 0) };
+  if (c.curId !== cur.id) { c.curId = cur.id; c.typed = 0; }
+  if (c.auto.dur) _sccAutoTimer = setInterval(_sccAutoTick, 60);
+  _sccAutoTick();
+}
+function _sccAutoTick() {
+  const c = _scChat, a = c && c.auto, cur = _sccCur();
+  if (!a || !cur || cur.id !== a.id) { _sccAutoStop(); return; }
+  const total = _chatLen(cur.text);
+  if (a.dur) {
+    const n = Math.min(total, Math.floor(total * Math.min(1, (Date.now() - a.t0) / a.dur)));
+    if (n > c.typed) { c.typed = n; _sccRenderCompose(); _sccProgress(); }
+  }
+  if (c.typed >= total) {
+    if (_sccAutoTimer) { clearInterval(_sccAutoTimer); _sccAutoTimer = null; }
+    if (a.send) { c.auto = null; screenChatSend(); }
+  }
+}
+function _sccAutoStop() {
+  if (_sccAutoTimer) { clearInterval(_sccAutoTimer); _sccAutoTimer = null; }
+  if (_scChat) _scChat.auto = null;
 }
 function screenChatClose() { screenChatHide(); }
 function screenChatHide() {
+  _sccAutoStop();
   _sccStopQueue();
   if (_sccProgTimer) { clearTimeout(_sccProgTimer); _sccProgTimer = null; }
   _scChat = null;
@@ -730,6 +1013,8 @@ function screenChatKey(d) {
   c.typed = n;
   _sccRenderCompose();
   _sccProgress();
+  // Lecture auto, « Envoi automatique » : complet, il part tout seul
+  if (c.auto && c.auto.id === cur.id && !c.auto.dur) _sccAutoTick();
 }
 function screenChatSend() {
   const c = _scChat, cur = _sccCur();
@@ -737,8 +1022,12 @@ function screenChatSend() {
   c.sent.push(cur.id);
   _sccAnim.add(cur.id);
   c.typed = 0; c.curId = null;
+  _sccAutoStop();
   if (_sccProgTimer) { clearTimeout(_sccProgTimer); _sccProgTimer = null; }
-  sendMsg({ type: 'chat:sent', id: cur.id });
+  // Sans réseau (barre d'état de la séquence, 97-phone-status.js) : non distribué
+  const und = screenPhoneNoNetwork();
+  if (und) c.pend.push(cur.id);
+  sendMsg(Object.assign({ type: 'chat:sent', id: cur.id }, und ? { undelivered: true } : {}));
   _sccRender();
 }
 // Progression vers la télécommande : au plus une fois par CHAT_PROGRESS_MS (dernière valeur gardée)
@@ -810,6 +1099,7 @@ function _sccRender(first) {
     if (!m) continue;
     const b = _sccEl('div', 'scc-b ' + (m.from === 'actor' ? 'out' : 'in') + (_sccAnim.has(id) ? ' scc-new' : ''), m.text);
     list.appendChild(b);
+    if (c.pend.includes(id)) list.appendChild(_sccEl('div', 'scc-und', _CHAT_TXT.undelivered)); // point rouge (maquette 34)
   }
   _sccAnim.clear();
   if (_sccTypingOn) {

@@ -271,6 +271,7 @@ function switchTab(t) {
   }
   document.getElementById('content-' + t).classList.add('active');
   if (t === 'seq') renderSeq(); // éléments supprimés entre-temps : « élément introuvable »
+  if (t === 'media') renderMediaBarRow(); // barre d'état au-dessus des médias (98-phone-params.js)
   if (t === 'qr') renderPairPanel();
   else remoteStopPairCode(true); // le code ne reste actif que sur l'onglet d'appairage
 }

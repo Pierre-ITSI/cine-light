@@ -42,7 +42,10 @@ const PROTO = {
   NOTIF_AGO_MAX: 10080,                        // « il y a n min » : 7 jours au plus
   CHAT_MSGS_MAX: 40, CHAT_TEXT_MAX: 300,       // = LIMITS du schéma (discussion)
   PHONE_NOTIFS_MAX: 8, PHONE_AGO_MAX: 604800,  // = LIMITS du schéma (faux téléphone d'une Séquence)
-  PHONE_GESTURES: ['touch', 'notif', 'hangup', 'answer', 'unlock', 'home'],
+  PHONE_GESTURES: ['touch', 'notif', 'hangup', 'answer', 'unlock', 'home', 'dismiss'],
+  PHONE_GESTURES_ALWAYS: ['unlock', 'dismiss'],          // toujours rapportés, jamais « attendus »
+  PHONE_CLOCK_MAX: 604800, PHONE_SLEEP_MAX: 120,       // = LIMITS du schéma (barre d'état, veille)
+  CHAT_WRITE_MAX: 60,                                  // s : « … écrit », frappe automatique (Lecture auto)
   SDP_MAX: 16000, ICE_MAX: 4096,               // = LIMITS du schéma (packages/protocol)
   ORDER_MAX: 500, MISSING_MAX: 400,
   VID_MAX_CHUNKS: 50000,                       // ≈ 600 Mo base64 en fragments de 12 000
@@ -129,6 +132,10 @@ function _validChatOpen(m) {
   // Reprise (« Reprendre ici », « Repartir de zéro ») : historique = début exact du fil, sans lettre tapée
   m.history = _P.bool(m.history);
   if (m.history && (m.typed || !m.sent.every((id, i) => m.ids[i] === id))) return false;
+  // Non distribués (envoyés sans réseau) : parmi les postés ; frappe automatique en cours : message du fil non posté
+  m.pend = Array.isArray(m.pend) ? m.pend.filter((id, i, a) => _chatId(id) && m.sent.includes(id) && a.indexOf(id) === i) : [];
+  m.auto = m.history ? null : _validChatType(m.auto, true);
+  if (m.auto && (!m.ids.includes(m.auto.id) || m.sent.includes(m.auto.id))) m.auto = null;
   return true;
 }
 function _validChatMsg(m) {
@@ -136,10 +143,37 @@ function _validChatMsg(m) {
   m.text = _P.text(m.text, PROTO.CHAT_TEXT_MAX);
   return m.text.trim().length > 0;
 }
+// Lecture auto (maquette 26d) : frappe automatique d'un message du comédien
+function _validChatType(t, withEl) {
+  if (!_P.isObj(t) || !_chatId(t.id)) return null;
+  const dur = _P.int(t.dur, 1, PROTO.CHAT_WRITE_MAX);
+  const out = { id: t.id, dur, send: _P.bool(t.send) };
+  if (dur === null && !out.send) return null;
+  if (withEl) out.el = dur === null ? 0 : (_P.int(t.el, 0, dur * 1000) ?? 0);
+  return out;
+}
 
 // Faux téléphone d'une Séquence (91-sequence.js → 94-sequence-phone.js) :
 // pile bornée sans doublon, textes tronqués, gestes connus seulement
 const _phoneId = (v) => typeof v === 'string' && SRP.PHONE_NOTIF_ID_RE.test(v);
+// Barre d'état (maquette 28b) : horloge, réseau, batterie ; null si inutilisable
+function _validPhoneBar(b) {
+  if (!_P.isObj(b) || !_P.isObj(b.clock) || !_P.isObj(b.net) || !_P.isObj(b.bat)) return null;
+  const c = b.clock;
+  if (!_P.oneOf(c.mode, ['run', 'frozen', 'real'])) return null;
+  let clock = { mode: 'real' };
+  if (c.mode !== 'real') {
+    if (!_pDate(c.date) || !_pTime(c.time)) return null;
+    clock = { mode: c.mode, date: c.date, time: c.time };
+    if (c.mode === 'run') clock.el = _P.int(c.el, 0, PROTO.PHONE_CLOCK_MAX) ?? 0;
+  }
+  const bars = _P.int(b.net.bars, 0, 4), level = _P.int(b.bat.level, 1, 100);
+  if (bars === null || level === null || !_P.oneOf(b.net.type, SRP.PHONE_NET_TYPES)) return null;
+  return {
+    clock, net: { bars, type: b.net.type, plane: _P.bool(b.net.plane), wifi: _P.bool(b.net.wifi) },
+    bat: Object.assign({ level, charging: _P.bool(b.bat.charging), pct: _P.bool(b.bat.pct) }, b.bat.low === true ? { low: true } : {}),
+  };
+}
 function _validPhoneState(m) {
   if (!_P.oneOf(m.mode, ['off', 'locked', 'code', 'unlocked', 'home'])) return false;
   if (!_P.oneOf(m.style, ['glass', 'tonal', 'minimal'])) m.style = 'glass';
@@ -159,9 +193,18 @@ function _validPhoneState(m) {
   m.unlock = _P.isObj(u) && [0, 4, 6].includes(u.code) ? { code: u.code, then: u.then === 'home' ? 'home' : 'app' } : null;
   if (m.mode === 'code' && !(m.unlock && m.unlock.code)) return false;
   m.home = _P.bool(m.home);
-  m.watch = Array.isArray(m.watch) ? m.watch.filter((g, i, a) => _P.oneOf(g, PROTO.PHONE_GESTURES) && g !== 'unlock' && a.indexOf(g) === i) : [];
+  m.watch = Array.isArray(m.watch) ? m.watch.filter((g, i, a) => _P.oneOf(g, PROTO.PHONE_GESTURES) && !PROTO.PHONE_GESTURES_ALWAYS.includes(g) && a.indexOf(g) === i) : [];
   const c = m.chime;
   m.chime = _P.isObj(c) && seen.has(c.id) ? { id: c.id, ring: _P.oneOf(c.ring, PROTO.CALL_RINGS) ? c.ring : 'classic', ringId: _P.ringId(c.ringId) ? c.ringId : null, vol: _P.num(c.vol, 0, 1) ?? 1 } : null;
+  // Barre d'état, veille, batterie faible, extinction (maquettes 28b, 29b, 33)
+  m.bar = m.bar === undefined ? null : _validPhoneBar(m.bar);
+  const sl = m.sleep;
+  m.sleep = _P.isObj(sl) && (m.mode === 'locked' || m.mode === 'code')
+    ? { notif: _P.bool(sl.notif), touch: _P.bool(sl.touch), after: _P.int(sl.after, 1, PROTO.PHONE_SLEEP_MAX) ?? 8 } : null;
+  const al = m.alert;
+  m.alert = _P.isObj(al) && _phoneId(al.id) && _P.int(al.level, 1, 100) !== null ? { id: al.id, level: al.level } : null;
+  m.power = m.power === 'off' ? 'off' : 'on';
+  if (m.power === 'off') { m.chime = null; m.watch = []; }
   return true;
 }
 
@@ -249,11 +292,14 @@ const MSG_ROUTES = {
   // Discussion fictive (83-discussion.js) : jamais déclenchée par la console DMX
   'chat:open':         { roles: ['screen'], validate: _validChatOpen, handle: (m) => screenChatOpen(m) },
   'chat:msg':          { roles: ['screen'], validate: _validChatMsg, handle: (m) => screenChatMsg(m) },
-  'chat:post':         { roles: ['screen'], validate: (m) => { m.typing = _P.bool(m.typing); return _chatId(m.id); }, handle: (m) => screenChatPost(m) },
+  'chat:post':         { roles: ['screen'], validate: (m) => { m.typing = _P.bool(m.typing); m.dur = m.typing ? _P.int(m.dur, 1, PROTO.CHAT_WRITE_MAX) : null; return _chatId(m.id); }, handle: (m) => screenChatPost(m) },
+  'chat:type':         { roles: ['screen'], validate: (m) => { const t = _validChatType(m, false); if (t) Object.assign(m, t); return !!t; }, handle: (m) => screenChatType(m) },
   'chat:rewind':       { roles: ['screen'], validate: (m) => { m.drop = _P.bool(m.drop); return _chatId(m.id); }, handle: (m) => screenChatRewind(m) },
   'chat:close':        { roles: ['screen'], validate: () => true, handle: () => screenChatClose() },
   // Faux téléphone d'une Séquence (94-sequence-phone.js) : jamais déclenché par la console DMX
   'phone:state':       { roles: ['screen'], validate: _validPhoneState, handle: (m) => screenPhoneState(m) },
+  // Onglet Média, hors séquence : barre d'état en bandeau au-dessus des médias (97-phone-status.js)
+  'media:bar':         { roles: ['screen'], validate: (m) => { if (m.bar === null) return true; m.bar = _validPhoneBar(m.bar); return m.bar !== null; }, handle: (m) => screenMediaBar(m.bar) },
   // Passerelle DMX : look calculé depuis la console (36-dmx-screen.js, docs/DMX.md § 7)
   'dmx:look': {
     roles: ['screen'],
@@ -328,7 +374,7 @@ const MSG_ROUTES = {
     validate: (m) => _chatId(m.id) && _P.int(m.total, 1, PROTO.CHAT_TEXT_MAX) !== null && _P.int(m.typed, 0, m.total) !== null,
     handle: (m) => remoteOnChatProgress(m),
   },
-  'chat:sent':         { roles: ['remote'], validate: (m) => _chatId(m.id), handle: (m) => remoteOnChatSent(m) },
+  'chat:sent':         { roles: ['remote'], validate: (m) => { m.undelivered = _P.bool(m.undelivered); return _chatId(m.id); }, handle: (m) => remoteOnChatSent(m) },
   'phone:gesture': {
     roles: ['remote'],
     validate: (m) => _P.oneOf(m.g, PROTO.PHONE_GESTURES) && (m.n === undefined || (m.g === 'notif' && _phoneId(m.n))),

@@ -5,7 +5,9 @@
 // Une séquence enregistrée garde son nom et ses étapes : des RÉFÉRENCES aux
 // éléments enregistrés des autres onglets, jamais des copies (une mémoire
 // modifiée est jouée telle quelle, une supprimée devient « élément
-// introuvable »), avec cible, départ et réglages ; pas le déroulé.
+// introuvable »), avec cible, départ et réglages, et ses réglages « Téléphone
+// au départ » (maquette 28b : heure, réseau, batterie) ; pas le déroulé.
+// Anciennes séquences (sans ces réglages) : valeurs par défaut (heure réelle).
 //   • « + Enregistrer la séquence en cours » : demande un nom, ajoute en fin de liste.
 //   • Toucher une ligne : la charge dans « Séquence en cours » (confirmation si
 //     la séquence en cours a des modifications non enregistrées) ; un déroulé
@@ -31,7 +33,7 @@ const _SQSV_TXT = {
   full: 'Liste pleine ({max} séquences)',
   empty: 'Aucune séquence enregistrée pour l\'instant.',
   hint: 'Toucher : charger dans « Séquence en cours ». ⋯ : renommer · dupliquer · supprimer.',
-  note: 'Une séquence enregistrée garde ses étapes, leurs cibles et leurs départs. Les couleurs, effets, médias, appels, SMS, notifications et discussions restent ceux de leurs onglets : modifiés là-bas, ils sont joués tels quels.',
+  note: 'Une séquence enregistrée garde ses étapes, leurs cibles et leurs départs, et son « Téléphone au départ ». Les couleurs, effets, médias, appels, SMS, notifications et discussions restent ceux de leurs onglets : modifiés là-bas, ils sont joués tels quels.',
   sheetSave: 'Enregistrer la séquence en cours',
   sheetRename: 'Renommer la séquence',
   nameLabel: 'Nom de la séquence',
@@ -52,7 +54,7 @@ let seqSaved = [];
 
 function _sqsvSanitize(e) {
   if (!e || typeof e !== 'object' || typeof e.id !== 'string' || !_SEQ_ID_RE.test(e.id)) return null;
-  return { id: e.id, name: _seqLine(e.name, SEQ_NAME_MAX) || _SQSV_TXT.untitled, steps: seqSanitizeSteps(e.steps) };
+  return { id: e.id, name: _seqLine(e.name, SEQ_NAME_MAX) || _SQSV_TXT.untitled, steps: seqSanitizeSteps(e.steps), phone: phoneBarSanitize(e.phone) };
 }
 function loadSavedSeqs() {
   let o = null;
@@ -66,11 +68,11 @@ function _sqsvPersist() {
 }
 const _sqsvNewId = () => 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const _sqsvClone = (steps) => JSON.parse(JSON.stringify(steps));
-const _sqsvSig = (steps) => JSON.stringify(steps);
+const _sqsvSig = (steps, phone) => JSON.stringify([steps, phone]);
 // Modifications non enregistrées : différente de l'entrée d'origine ; sans entrée, toute séquence non vide
 function seqHasUnsavedChanges() {
   const e = seqSaved.find((x) => x.id === _seq.savedId);
-  if (e) return _sqsvSig(e.steps) !== _sqsvSig(_seq.steps);
+  if (e) return _sqsvSig(e.steps, e.phone) !== _sqsvSig(_seq.steps, seqPhoneCfg());
   return _seq.steps.length > 0;
 }
 function _sqsvDefaultName() { return (_seq.name || _SQSV_TXT.untitled).slice(0, SEQ_NAME_MAX); }
@@ -78,7 +80,7 @@ function _sqsvDefaultName() { return (_seq.name || _SQSV_TXT.untitled).slice(0, 
 // « + Enregistrer la séquence en cours »
 function saveCurrentSeq(name) {
   if (seqSaved.length >= SEQ_SAVED_MAX) return null;
-  const e = { id: _sqsvNewId(), name: _seqLine(String(name || '').trim(), SEQ_NAME_MAX) || _sqsvDefaultName(), steps: _sqsvClone(_seq.steps) };
+  const e = { id: _sqsvNewId(), name: _seqLine(String(name || '').trim(), SEQ_NAME_MAX) || _sqsvDefaultName(), steps: _sqsvClone(_seq.steps), phone: _sqsvClone(seqPhoneCfg()) };
   seqSaved.push(e);
   if (!_sqsvPersist()) { seqSaved.pop(); alert(_SQSV_TXT.storeFull); return null; }
   _seq.savedId = e.id;
@@ -96,7 +98,7 @@ function loadSavedSeq(id) {
   if (dirty && !confirm(_seqTpl(_SQSV_TXT.confirmLoad, { nom: e.name }))) return false;
   if (seqPos() >= 0 || _seqRun.state !== 'idle') seqRestart();
   const dropped = _seq.steps.filter((s) => s.kind === 'unlock' && s.opt.img).map((s) => s.opt.img);
-  _seq = { name: e.name, steps: _sqsvClone(e.steps), savedId: e.id };
+  _seq = { name: e.name, steps: _sqsvClone(e.steps), savedId: e.id, phone: _sqsvClone(e.phone) };
   seqSave();
   seqGcImages(dropped);
   setSeqView('cur');
@@ -116,7 +118,7 @@ function duplicateSavedSeq(id) {
   const i = seqSaved.findIndex((x) => x.id === id);
   if (i < 0 || seqSaved.length >= SEQ_SAVED_MAX) return null;
   const src = seqSaved[i];
-  const e = { id: _sqsvNewId(), name: _seqTpl(_SQSV_TXT.copy, { nom: src.name }).slice(0, SEQ_NAME_MAX), steps: _sqsvClone(src.steps) };
+  const e = { id: _sqsvNewId(), name: _seqTpl(_SQSV_TXT.copy, { nom: src.name }).slice(0, SEQ_NAME_MAX), steps: _sqsvClone(src.steps), phone: _sqsvClone(src.phone) };
   seqSaved.splice(i + 1, 0, e);
   if (!_sqsvPersist()) { seqSaved.splice(i + 1, 1); alert(_SQSV_TXT.storeFull); return null; }
   renderSeq();

@@ -516,6 +516,57 @@ export const SCENES = {
     }, seqHomeImage.toString());
     await page.clock.runFor(600);
   },
+  // 28b · Téléphone au départ : l'heure avance depuis ven. 17 oct. 2026 23:47, 2 barres 4G, Wi-Fi, 18 % affiché
+  'remote-seq-phone': seqScene((page) => page.evaluate(() => {
+    _seq.phone = { clock: { mode: 'run', date: '2026-10-17', time: '23:47' }, net: { bars: 2, type: '4G', plane: false, wifi: true }, bat: { level: 18, charging: false, pct: true } };
+    openPhoneParams('seq');
+  })),
+  // 29b · Étape « Veille » en tête de séquence : se rallume aux notifications et au toucher, se rendort après 8 s
+  'remote-seq-step-sleep': seqScene((page) => page.evaluate(() => {
+    _seq.steps.unshift(seqSanitizeStep({ id: 'a0', kind: 'sleep', target: _seq.steps[0].target, trig: { k: 'go' }, opt: { notif: true, touch: true, after: 8 } }));
+    openSeqStep('a0');
+  })),
+  // 26d · Timings du fil et lecture automatique : messages 1 et 2 postés, le n° 3 (texte automatique en 4 s) en cours
+  'remote-call-discussion-timing': multiScreen(async (page) => {
+    await page.evaluate((julie) => {
+      switchTab('call'); setCallKind('discussion');
+      scrSetTarget({ k: 'screen', id: julie });
+      const m = (id, from, text, pause, write, auto, send) => ({ id, from, text, pause, write, auto, send });
+      _chat.msgs = [
+        m('d1', 'contact', 'Tu es où ?', 2, 3, false, 'auto'), m('d2', 'contact', 'Ton père t\'attend depuis une heure', 4, 5, false, 'auto'),
+        m('d3', 'actor', 'je suis chez Léa, j\'arrive', 1, 4, true, 'auto'), m('d4', 'contact', 'Je t\'ai vue avec lui.', 6, 4, false, 'auto'),
+      ];
+      openChatOnTarget();
+      _chat.sent = ['d1', 'd2'];
+      _chatTimingId = 'd3'; // message touché : ses timings sous le fil
+      chatAutoStart();
+    }, SCR_IDS[0]);
+    await scrollTo('dcThreadPanel', 84)(page);
+  }),
+  // 33 · Batterie faible : alerte sur l'écran verrouillé, icône rouge, heure figée à 23:47
+  'screen-seq-battery': screenPhone({
+    mode: 'locked', style: 'glass', notifs: [], alert: { id: 'b1', level: 5 },
+    bar: { clock: { mode: 'frozen', date: '2026-10-17', time: '23:47' }, net: { bars: 3, type: '4G', plane: false, wifi: false }, bat: { level: 5, charging: false, pct: false } },
+  }),
+  // 34 · Pas de réseau : « Pas de service », appel impossible, message non envoyé
+  'screen-seq-nonetwork': screenPhone({
+    mode: 'locked', style: 'glass',
+    notifs: [
+      { id: 'n1', kind: 'sms', app: 'SMS', name: 'Message non envoyé', msg: '« j\'arrive » — Toucher pour réessayer', ago: 40 },
+      { id: 'n2', kind: 'missed', app: 'Téléphone', name: 'Appel impossible', msg: 'Aucun réseau disponible.', ago: 0 },
+    ],
+    bar: { clock: { mode: 'frozen', date: '2026-10-17', time: '23:47' }, net: { bars: 0, type: '4G', plane: false, wifi: false }, bat: { level: 52, charging: false, pct: false } },
+  }),
+  // Barre d'état en bandeau au-dessus d'un média du pool (photo), réglée dans l'onglet Média
+  'screen-media-statusbar': async (page) => {
+    await joinScreen(page);
+    await page.evaluate((imgFn) => {
+      _mediaCache.set('m1', { kind: 'img', data: (0, eval)('(' + imgFn + ')')(390, 844) });
+      screenShowCached('m1');
+      screenMediaBar({ clock: { mode: 'run', date: '2026-10-17', time: '08:05', el: 0 }, net: { bars: 4, type: '5G', plane: false, wifi: true }, bat: { level: 76, charging: false, pct: true } });
+    }, seqHomeImage.toString());
+    await page.clock.runFor(600);
+  },
   'screen-effect-police': async (page) => {
     await joinScreen(page);
     await page.evaluate(() => receiveEffect({ name: 'police', active: true, params: { speed: 3, intensity: 100, chaos: 0, drift: 0 } }));

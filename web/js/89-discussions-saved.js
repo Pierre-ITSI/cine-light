@@ -3,7 +3,10 @@
 // Maquette validée 26c. Deux sous-onglets dans « Discussion » : « Fil en
 // cours » (83-discussion.js) et « Enregistrées (n) ». Une discussion
 // enregistrée garde son nom, le contact (nom, photo), le comédien, le style
-// et tous les messages ; PAS le point de reprise (ni ce qui est posté).
+// et tous les messages avec leurs timings (maquette 26d : pause avant,
+// écriture, envoi) ; PAS le point de reprise (ni ce qui est posté).
+// Migration : une discussion enregistrée avant les timings les reçoit par
+// défaut (pause 0 s, le comédien tape, envoi au bouton) : rien ne change.
 //   • « + Enregistrer le fil en cours » : demande un nom, ajoute en fin de liste.
 //   • Toucher une ligne : la charge dans « Fil en cours » (confirmation si le
 //     fil en cours a des modifications non enregistrées). Ouverte sur un
@@ -62,7 +65,7 @@ function _chsvSanitize(e) {
   const seen = new Set();
   const msgs = e.msgs.filter((x) => x && typeof x.id === 'string' && SRP.CHAT_ID_RE.test(x.id) && !seen.has(x.id) && seen.add(x.id)
     && (x.from === 'contact' || x.from === 'actor') && typeof x.text === 'string' && x.text.trim())
-    .slice(0, CHAT_MAX).map((x) => ({ id: x.id, from: x.from, text: x.text.slice(0, CHAT_TEXT_MAX) }));
+    .slice(0, CHAT_MAX).map((x) => Object.assign({ id: x.id, from: x.from, text: x.text.slice(0, CHAT_TEXT_MAX) }, chatTiming(x, x.from)));
   const photoSig = e.hasPhoto === true && typeof e.photoSig === 'string' && _CHSV_SIG_RE.test(e.photoSig) ? e.photoSig : null;
   return {
     id: e.id,
@@ -85,7 +88,7 @@ function loadSavedChats() {
 }
 // false : mémoire pleine (rien n'est changé dans le stockage)
 function _chsvPersist() {
-  try { localStorage.setItem(CHAT_SAVED_KEY, JSON.stringify({ v: 1, list: chatSaved })); return true; } catch (_) { return false; }
+  try { localStorage.setItem(CHAT_SAVED_KEY, JSON.stringify({ v: 2, list: chatSaved })); return true; } catch (_) { return false; }
 }
 const _chsvNewId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -94,11 +97,11 @@ const _chsvNewId = () => 'c' + Date.now().toString(36) + Math.random().toString(
 function _chsvSnapshot() {
   return {
     contact: _chat.name.slice(0, 40), actor: _chat.actor.slice(0, 40), style: _chat.style,
-    msgs: _chat.msgs.filter(_chatValid).slice(0, CHAT_MAX).map((m) => ({ id: m.id, from: m.from, text: m.text.slice(0, CHAT_TEXT_MAX) })),
+    msgs: _chat.msgs.filter(_chatValid).slice(0, CHAT_MAX).map((m) => Object.assign(chatMsgCopy(m), { text: m.text.slice(0, CHAT_TEXT_MAX) })),
     hasPhoto: !!_chatAvatar, photoSig: _chsvPhotoSig(_chatAvatar),
   };
 }
-const _chsvSig = (e) => JSON.stringify([e.contact, e.actor, e.style, e.msgs.map((m) => [m.from, m.text]), e.photoSig || null]);
+const _chsvSig = (e) => JSON.stringify([e.contact, e.actor, e.style, e.msgs.map((m) => { const t = chatTiming(m, m.from); return [m.from, m.text, t.pause, t.write, t.auto, t.send]; }), e.photoSig || null]);
 // Modifications non enregistrées : différent de l'entrée d'origine ; sans
 // entrée, tout fil non vide différent du fil d'exemple
 function chatHasUnsavedChanges() {
@@ -139,8 +142,9 @@ async function loadSavedChat(id) {
   const photo = e.hasPhoto ? safeImageData(await callAssetGet(_chsvPhotoKey(e.id))) : null;
   if (seq !== _chsvLoadSeq) return false; // une autre entrée touchée entre-temps
   _chat.name = e.contact; _chat.actor = e.actor; _chat.style = e.style;
-  _chat.msgs = e.msgs.map((m) => ({ id: m.id, from: m.from, text: m.text }));
-  _chat.sent = []; _chat.progress = null; _chat.resumeAt = null;
+  chatAutoStop();
+  _chat.msgs = e.msgs.map((m) => chatMsgCopy(m));
+  _chat.sent = []; _chat.pend = []; _chat.progress = null; _chat.resumeAt = null;
   _chat.savedId = e.id;
   _chatEditId = null;
   _chatAvatar = photo;
@@ -171,7 +175,7 @@ async function duplicateSavedChat(id) {
   const i = chatSaved.findIndex((x) => x.id === id);
   if (i < 0 || chatSaved.length >= CHAT_SAVED_MAX) return null;
   const src = chatSaved[i];
-  const e = Object.assign({}, src, { id: _chsvNewId(), name: _tplChat(_CHSV_TXT.copy, { nom: src.name }).slice(0, CHAT_SAVED_NAME_MAX), msgs: src.msgs.map((m) => Object.assign({}, m)) });
+  const e = Object.assign({}, src, { id: _chsvNewId(), name: _tplChat(_CHSV_TXT.copy, { nom: src.name }).slice(0, CHAT_SAVED_NAME_MAX), msgs: src.msgs.map((m) => chatMsgCopy(m)) });
   const photo = src.hasPhoto ? await callAssetGet(_chsvPhotoKey(src.id)) : null;
   if (photo) await callAssetPut(_chsvPhotoKey(e.id), photo);
   else { e.hasPhoto = false; e.photoSig = null; }

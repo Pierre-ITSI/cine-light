@@ -833,7 +833,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .dc-pair{font-size:.625rem;color:#a8a8a8}
 .dc-rows{display:flex;flex-direction:column;gap:9px}
 .dc-rows:empty{display:none}
-.dc-row{display:grid;grid-template-columns:20px 64px minmax(0,1fr);gap:6px;font-size:.6875rem;align-items:baseline;border:1px solid transparent;border-radius:8px;padding:0 8px;margin:0 -8px;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.dc-row{display:grid;grid-template-columns:20px 64px minmax(0,1fr) auto;gap:6px;font-size:.6875rem;align-items:baseline;border:1px solid transparent;border-radius:8px;padding:0 8px;margin:0 -8px;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .dc-row.sent{opacity:.45}
 .dc-row.cur{border-color:#6fb4ff;background:rgba(111,180,255,.08);padding:8px;margin:0}
 .dc-row.editing{border-color:var(--accent)}
@@ -948,6 +948,34 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .scc.tonal .scc-caret{background:#e6e6e6}
 .scc.tonal .scc-send{width:40px;height:40px;border-radius:14px;background:#2b2e34;color:#6d7178}
 .scc.tonal .scc-send.on{background:#e3e1dc;color:#1b1b1b}
+
+/* Timings et lecture automatique (maquette 26d) */
+.dc-pill{font-size:.5625rem;color:#6fb4ff;border:1px solid #6fb4ff;border-radius:10px;padding:1px 6px;white-space:nowrap;align-self:center;font-variant-numeric:tabular-nums}
+.dc-timing{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;background:var(--mid);border:1px solid var(--border)}
+.dc-timing-panel{margin-bottom:12px}
+.dc-row.sel{border-color:var(--accent);padding:6px 8px;margin:0}
+.dc-row.sel.sent{opacity:.7}
+.dc-timing-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.dc-timing-quote{min-width:0;font-size:.625rem;color:#c4c4c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dc-tlabel{font-size:.625rem;letter-spacing:.2em;text-transform:uppercase;color:#a8a8a8;white-space:nowrap}
+.dc-tstep{display:flex;align-items:center;gap:8px;font-size:.6875rem}
+.dc-tstep>span{flex:1}
+.dc-tbtn{width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:.875rem;cursor:pointer;padding:0}
+.dc-tval{min-width:52px;text-align:center;font-weight:400;font-size:.8125rem;font-variant-numeric:tabular-nums}
+.dc-timing .ss-opt{min-height:34px}
+.dc-timing-note{font-size:.625rem;color:#a8a8a8;line-height:1.55}
+.dc-auto-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.dc-auto-head .panel-label{margin-bottom:0}
+.dc-auto-state{font-size:.625rem;color:#a8a8a8;white-space:nowrap}
+.dc-auto-state.on{color:#5fdf8a}
+.dc-auto-bar{height:6px;border-radius:3px;background:#333;margin-top:10px;overflow:hidden}
+.dc-auto-bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:3px}
+.dc-auto-row{display:flex;gap:8px;margin-top:12px}
+.dc-auto-row button{height:52px;border-radius:8px;font-family:'DM Mono',monospace;font-size:.75rem;cursor:pointer;letter-spacing:.04em}
+.dc-auto-row button:disabled{opacity:.4;cursor:default}
+.dc-auto-play{flex:1.9;border:none;background:var(--accent);color:#000;font-weight:500}
+.dc-auto-pause{flex:1;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text)}
+.dc-auto-row .dc-auto-back{flex:none;width:52px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-size:1.125rem;padding:0}
 /* ══ Onglet Tel : type (Appel / SMS / Notification, Discussion) et notification
    d'application (maquettes validées 24 et 25) ══ */
 .tel-kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
@@ -1080,8 +1108,13 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .sq-back{flex:1;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-size:.75rem}
 .sq-stop{flex:1;border:1px solid rgba(255,122,112,.5);background:var(--mid2);color:#ff8f86;font-size:.75rem}
 
+/* Téléphone au départ (maquette 28b) : ligne sous le nom de la séquence */
+.sq-phone{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--mid);color:var(--text);font-family:'DM Mono',monospace;font-size:.6875rem;cursor:pointer;text-align:left}
+.sq-phone-l{white-space:nowrap}
+.sq-phone-v{min-width:0;color:#a8a8a8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 /* Télécommande — éditer une étape (maquette 29) */
-#seq-step-view{display:none;position:fixed;inset:0;z-index:300;overflow-y:auto;overflow-x:hidden;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);color:var(--text);font-family:'DM Mono',monospace;padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));flex-direction:column;gap:10px}
+#seq-step-view,#phone-params-view{display:none;position:fixed;inset:0;z-index:300;overflow-y:auto;overflow-x:hidden;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);color:var(--text);font-family:'DM Mono',monospace;padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));flex-direction:column;gap:10px}
 .ss-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .ss-back{width:90px;text-align:left;padding:0;border:none;background:none;font-family:'DM Mono',monospace;font-size:.75rem;color:#c8c8c8;cursor:pointer}
 .ss-title{font-family:'Lato',sans-serif;font-weight:600;font-size:1.125rem}
@@ -1092,6 +1125,11 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .ss-label.ss-sub{margin-top:4px}
 .ss-row{display:flex;gap:6px}
 .ss-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+/* Types d'étape (maquette 29b) : rangées de 3 ou 4 */
+.ss-kinds{display:flex;flex-direction:column;gap:6px}
+.ss-kinds .ss-opt{min-height:36px;padding:4px 3px}
+.ss-text{font-size:.6875rem;color:#e0e0e0;line-height:1.55}
+.ss-stepper.ss-wide .ss-step-val{flex:1}
 .ss-opt{flex:1;min-width:0;min-height:36px;padding:4px 6px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:#d0d0d0;font-family:'DM Mono',monospace;font-size:.625rem;display:flex;align-items:center;justify-content:center;gap:5px;text-align:center;line-height:1.3;cursor:pointer;overflow:hidden;word-break:break-word}
 .ss-opt.on{border-color:var(--accent);background:rgba(255,107,44,.1);color:#FF8a55}
 .ss-opt[style*="--sw"]::before{content:'';flex:none;width:10px;height:10px;border-radius:3px;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
@@ -1158,6 +1196,92 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 /* Écran d'accueil (maquette 32) : image importée plein écran */
 .sp-home{background:linear-gradient(160deg,#3d5a80 0%,#98c1d9 60%,#e0fbfc 100%);background-size:cover;background-position:center;cursor:pointer}
 .sp-unlocked{background:#000}
+/* ══ Faux téléphone : barre d'état (28b), veille (29b), batterie faible et extinction (33), pas de réseau (34) ══
+   Barre : heure à gauche ; réseau, Wi-Fi, pourcentage, batterie à droite. Trois
+   styles neutres .glass .tonal .minimal ; .pb-band : bandeau au-dessus d'un
+   média ; .pb-dark : texte sombre sur fond clair (discussion Épurée).
+   z-index de l'écran : barre 96 (au-dessus de l'appel, 95), alerte 97,
+   veille / extinction 98 (sous les contrôles de l'écran, 100). */
+.pb{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#fff;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif;font-size:15px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pb-right{display:flex;align-items:center;gap:6px}
+.pb-sig{display:inline-flex;align-items:flex-end;gap:1.5px;height:11px}
+.pb-sig i{display:block;width:3px;border-radius:1px;background:currentColor;opacity:.3}
+.pb-sig i:nth-child(1){height:4px}.pb-sig i:nth-child(2){height:6px}.pb-sig i:nth-child(3){height:8.5px}.pb-sig i:nth-child(4){height:11px}
+.pb-sig i.on{opacity:1}
+.pb-net{font-size:12px;font-weight:600}
+.pb-nosvc{font-size:13px;font-weight:500}
+.pb-pct{font-size:12px;font-weight:500}
+.pb-ic{display:inline-flex}
+.pb-bat{position:relative;display:inline-block;width:24px;height:11px;box-sizing:border-box;border:1.5px solid currentColor;border-radius:3px;padding:1px;opacity:.95;margin-right:2px}
+.pb-bat::after{content:'';position:absolute;right:-4px;top:2.5px;width:2px;height:3px;border-radius:0 1px 1px 0;background:currentColor;opacity:.6}
+.pb-bat i{display:block;height:100%;border-radius:1px;background:currentColor}
+.pb-bat.low{border-color:currentColor}
+.pb-bat.low i{background:#ff4d43}
+.pb-bat.chg i{background:#3fbf6f}
+.pb-bolt{margin-left:-4px}
+.pb.tonal{font-weight:500}
+.pb.minimal{font-weight:500;letter-spacing:.01em}
+
+/* Écran de jeu : barre en haut, sans capter les touchers */
+#screen-sbar{display:none;position:absolute;top:0;left:0;right:0;z-index:96;height:calc(44px + env(safe-area-inset-top));box-sizing:border-box;padding:env(safe-area-inset-top) 18px 0;pointer-events:none;animation:scFadeIn .3s ease}
+#screen-sbar.pb-band{background:rgba(0,0,0,.6)}
+#screen-sbar.pb-dark{color:#111}
+#screen-sbar.pb-dark .pb-bat.low i{background:#e0352b}
+/* Bandeaux (SMS, notification, appel) sous la barre */
+#screen-mode.sb-on .sc-notif:not(.in-lock),#screen-mode.sb-on .sc-callbar{top:calc(48px + env(safe-area-inset-top))}
+
+/* Alerte « Batterie faible » (maquette 33) */
+#screen-palert{display:none;position:absolute;inset:0;z-index:97;align-items:center;justify-content:center;padding:0 34px;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif;color:#fff}
+.pa-card{width:100%;max-width:322px;margin-top:-120px;border-radius:14px;background:rgba(40,44,54,.97);box-shadow:0 20px 50px rgba(0,0,0,.45);text-align:center;overflow:hidden;animation:scFadeIn .3s ease}
+.pa-title{padding:20px 16px 0;font-size:16px;font-weight:600}
+.pa-msg{padding:6px 16px 16px;font-size:13px;opacity:.9}
+.pa-close{display:block;width:calc(100% - 32px);margin:0 16px;padding:12px 0 14px;border:none;border-top:1px solid rgba(255,255,255,.18);background:none;color:#6fb4ff;font-family:inherit;font-size:15px;cursor:pointer}
+#screen-palert.tonal .pa-card{background:rgba(43,46,52,.98);border-radius:26px}
+#screen-palert.tonal .pa-close{color:#a8c7fa}
+#screen-palert.minimal .pa-card{background:#16191f;border:1px solid rgba(255,255,255,.12);border-radius:12px}
+#screen-palert.minimal .pa-close{color:#fff}
+
+/* Veille (maquette 29b) et extinction (maquette 33) : écran noir en fondu, logo neutre */
+#screen-ppower{display:none;position:absolute;inset:0;z-index:98;background:#000;opacity:0;transition:opacity .6s ease;align-items:center;justify-content:center}
+#screen-ppower.on{opacity:1}
+#screen-ppower.instant{transition:none}
+.pp-logo{width:64px;height:64px;color:rgba(255,255,255,.82);opacity:0;transition:opacity .5s ease}
+#screen-ppower.logo .pp-logo{opacity:1}
+
+/* Discussion : message du comédien non distribué (maquette 34) */
+.scc-und{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin:-4px 2px 2px auto;font-size:11px;color:#ff6b62}
+.scc-und::before{content:'!';display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#ff453a;color:#fff;font-size:10px;font-weight:700}
+.scc.minimal .scc-und{color:#d4302a}
+
+/* Télécommande — Téléphone au départ (maquette 28b) ; aussi l'onglet Média */
+.pp-preview{background:#000;border-radius:10px;padding:12px 14px;font-size:14px}
+.pp-preview .pb-sig{height:13px;gap:2px}
+.pp-preview .pb-sig i{width:4px}
+.pp-preview .pb-sig i:nth-child(1){height:4px}.pp-preview .pb-sig i:nth-child(2){height:7px}.pp-preview .pb-sig i:nth-child(3){height:10px}.pp-preview .pb-sig i:nth-child(4){height:13px}
+.pp-cap{font-size:.625rem;color:#a8a8a8;text-align:center;margin-top:-2px}
+.pp-dt-row{display:flex;gap:6px}
+.pp-dt{position:relative;display:flex;align-items:center;height:38px;box-sizing:border-box;padding:0 10px;background:#000;border:1px solid rgba(255,255,255,.14);border-radius:6px;font-size:.8125rem;color:var(--text);min-width:0;overflow:hidden;white-space:nowrap;cursor:pointer}
+.pp-dt.pp-date{flex:1.5}
+.pp-dt.pp-time{flex:1;justify-content:center}
+.pp-dt input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none;padding:0;margin:0}
+.pp-dt.off{opacity:.45;cursor:default}
+.pp-dt.off input{cursor:default}
+.pp-bars .ss-opt{line-height:1.25}
+.pp-sig{height:10px}
+.pp-sig i{width:3px}
+.pp-sig i:not(.on){opacity:0}
+.pp-wifi{display:flex;align-items:center;gap:6px;font-size:.6875rem}
+.pp-wifi span{flex:1.1}
+.pp-level{display:flex;align-items:center;gap:10px}
+.pp-level b{font-weight:400;font-size:.8125rem;min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
+.pp-level input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:linear-gradient(to right,var(--accent) var(--v,50%),#333 var(--v,50%));outline:none;margin:0}
+.pp-level input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:transparent;border:none;cursor:pointer}
+.pp-level input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:transparent;border:none;cursor:pointer}
+.pp-note{font-size:.625rem;color:#a8a8a8;line-height:1.6}
+.mbar{display:flex;flex-direction:column;gap:6px;margin:6px 2px 10px}
+.mbar-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.72rem;color:var(--text);cursor:pointer}
+.mbar-edit{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:#a8a8a8;font-family:'DM Mono',monospace;font-size:.625rem;cursor:pointer;text-align:left}
+.mbar-edit span:last-child{color:#FF8a55;flex:none}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
@@ -1342,6 +1466,10 @@ button.st-row{cursor:pointer}
   <div id="screen-phone"></div>
   <div id="screen-chat"></div>
   <div id="screen-call"></div>
+  <!-- Faux téléphone d'une Séquence : barre d'état (28b), alerte batterie (33), veille / extinction (29b, 33) -->
+  <div id="screen-sbar" aria-hidden="true"></div>
+  <div id="screen-palert" role="alertdialog" aria-live="assertive"></div>
+  <div id="screen-ppower"></div>
   <div id="screen-blackout"></div>
   <div id="screen-identify"></div>
   <div class="status-pill" id="screen-status">Connexion…</div>
@@ -1846,6 +1974,17 @@ button.st-row{cursor:pointer}
           <span class="toggle-track"></span><span class="toggle-thumb"></span>
         </span>
       </label>
+      <!-- Barre d'état du téléphone au-dessus des médias, hors séquence (réglages de la maquette 28b) -->
+      <div class="mbar" id="mediaBarRow">
+        <label class="mbar-toggle">
+          <span>Barre d'état du téléphone</span>
+          <span class="toggle-switch" style="flex-shrink:0">
+            <input type="checkbox" id="mediaBarToggle" onchange="setMediaBar(this.checked)">
+            <span class="toggle-track"></span><span class="toggle-thumb"></span>
+          </span>
+        </label>
+        <button type="button" class="mbar-edit" id="mediaBarEdit" onclick="openPhoneParams('media')"><span id="mediaBarSum"></span><span id="mediaBarEditLbl">Régler ›</span></button>
+      </div>
       <div class="media-status" id="mediaStatus">Aucun média diffusé</div>
       <button class="media-btn" id="mediaPlayBtn" onclick="toggleVideoPlayback()" style="display:none">
         <span class="media-icon" id="mediaPlayIcon">⏸</span><span id="mediaPlayLabel">Pause</span>
@@ -2087,6 +2226,18 @@ button.st-row{cursor:pointer}
       <div class="dc-rows" id="dcRows"></div>
       <button type="button" class="dc-add" id="dcAdd" onclick="addChatMessage()">+ Ajouter un message · glisser pour réordonner · toucher un message : « Reprendre ici »</button>
     </div>
+    <!-- Timings du message touché (maquette 26d) -->
+    <div class="dc-timing-panel" id="dcTimingPanel" style="display:none"></div>
+    <!-- Lecture automatique (maquette 26d) : enchaîne les messages selon leurs timings -->
+    <div class="panel dc-auto" id="dcAutoPanel" style="display:none">
+      <div class="dc-auto-head"><span class="panel-label">Lecture automatique</span><span class="dc-auto-state" id="dcAutoState" role="status"></span></div>
+      <div class="dc-auto-bar"><i id="dcAutoFill"></i></div>
+      <div class="dc-auto-row">
+        <button type="button" class="dc-auto-play" id="dcAutoPlay" onclick="chatAutoStart()">▶ LECTURE AUTO</button>
+        <button type="button" class="dc-auto-pause" id="dcAutoPause" onclick="chatAutoPause()" disabled>⏸ PAUSE</button>
+        <button type="button" class="dc-auto-back" id="dcAutoBack" onclick="chatAutoBack()" aria-label="Pause et revenir d'un message" title="Pause et revenir d'un message" disabled>↶</button>
+      </div>
+    </div>
     <div class="panel dc-help-card" id="dcActorPanel" style="display:none">
       <div class="panel-label" id="dcActorLabel"></div>
       <div class="dc-help">Chaque touche du clavier de l'écran ajoute la lettre suivante du texte prévu. « Envoyer » n'est actif qu'une fois le texte complet.</div>
@@ -2138,8 +2289,10 @@ button.st-row{cursor:pointer}
     <div class="sq" id="seqCurView">
       <div class="sq-head"><span class="sq-title">Séquence</span><button type="button" class="sq-add" id="seqAddBtn" onclick="openSeqStep(null)">+ ÉTAPE</button></div>
       <div class="sq-sub"><span id="seqName"></span><span id="seqTarget"></span></div>
+      <!-- Téléphone au départ (maquette 28b) : barre d'état de la séquence -->
+      <button type="button" class="sq-phone" id="seqPhoneBtn" onclick="openPhoneParams('seq')"><span class="sq-phone-l">📱 Téléphone au départ</span><span class="sq-phone-v" id="seqPhoneSum"></span></button>
       <div class="sq-list" id="seqRows"></div>
-      <div class="sq-empty" id="seqEmpty">Aucune étape. « + ÉTAPE » ajoute la première : couleur, effet, média, appel, SMS, notification, déverrouillage, discussion.</div>
+      <div class="sq-empty" id="seqEmpty">Aucune étape. « + ÉTAPE » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.</div>
       <div class="sq-legend"><span class="go">● GO</span><span class="auto">● automatique</span><span class="actor">● geste du comédien</span></div>
       <div class="sq-now" id="seqNow" role="status"></div>
       <div class="sq-warn" id="seqWarn" role="alert" style="display:none"></div>
@@ -2211,7 +2364,7 @@ button.st-row{cursor:pointer}
     <span class="ss-title" id="ssTitle">Étape</span>
     <span class="ss-spacer"></span>
   </div>
-  <div class="ss-card"><span class="ss-label">Type</span><div class="ss-grid" id="ssKinds"></div></div>
+  <div class="ss-card"><span class="ss-label">Type</span><div class="ss-kinds" id="ssKinds"></div></div>
   <div class="ss-card" id="ssRefCard"></div>
   <div class="ss-card" id="ssTrigCard"></div>
   <div class="ss-err" id="ssErr" role="alert" style="display:none"></div>
@@ -2220,6 +2373,21 @@ button.st-row{cursor:pointer}
     <button type="button" class="ss-del" id="ssDel" onclick="seqStepDelete()">SUPPRIMER</button>
     <button type="button" class="ss-save" id="ssSave" onclick="seqStepSave()">ENREGISTRER</button>
   </div>
+</div>
+
+<!-- Téléphone au départ (maquette 28b) ; aussi « Barre d'état du téléphone » de l'onglet Média -->
+<div id="phone-params-view" role="dialog" aria-modal="true" aria-labelledby="ppTitle">
+  <div class="ss-head">
+    <button type="button" class="ss-back" id="ppBack" onclick="closePhoneParams()">← Séquence</button>
+    <span class="ss-title" id="ppTitle">Téléphone au départ</span>
+    <span class="ss-spacer"></span>
+  </div>
+  <div class="pp-preview pb glass" id="ppPreview" aria-hidden="true"></div>
+  <div class="pp-cap" id="ppCap"></div>
+  <div class="ss-card" id="ppClock"></div>
+  <div class="ss-card" id="ppNet"></div>
+  <div class="ss-card" id="ppBat"></div>
+  <div class="pp-note" id="ppNote"></div>
 </div>
 
 <!-- Feuille : cible des commandes (maquette 6), renommer, groupes -->
@@ -2839,7 +3007,9 @@ const CALL_PHOTO_ID_RE = /^__ph_[0-9a-f]{40}$/;
 const CALL_AUDIO_ID_RE = /^__au_[0-9a-f]{40}$/;
 const CHAT_ID_RE = /^[A-Za-z0-9_-]{1,12}$/;
 const PHONE_NOTIF_ID_RE = /^[A-Za-z0-9_-]{1,12}$/;
-const PHONE_GESTURES = Object.freeze(['touch', 'notif', 'hangup', 'answer', 'unlock', 'home']);
+const PHONE_GESTURES = Object.freeze(['touch', 'notif', 'hangup', 'answer', 'unlock', 'home', 'dismiss']);
+const PHONE_GESTURES_ALWAYS = Object.freeze(['unlock', 'dismiss']);
+const PHONE_NET_TYPES = Object.freeze(['3G', '4G', '5G']);
 const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DATAURL_SLICE_RE = /^[A-Za-z0-9+/=:;,.-]*$/;
@@ -2892,6 +3062,10 @@ const LIMITS = Object.freeze({
   chatNameChars: 40,
   phoneNotifs: 8,
   phoneAgoSeconds: 604_800,
+  phoneClockSeconds: 604_800,
+  phoneSleepSeconds: [1, 120],
+  chatPauseSeconds: 60,
+  chatWriteSeconds: [1, 60],
 });
 const KID = B64U(11);
 const XID = B64U(16);
@@ -2967,6 +3141,40 @@ const DMX_LOOK = object({
   }), 'média affiché (absent = média masqué)'),
   blackout: opt(oneOf(true), 'noir total (absent = écran allumé)'),
 });
+
+const PHONE_BAR_SHAPE = object({
+  clock: req(object({
+    mode: req(oneOf('run', 'frozen', 'real'), 'l’heure avance / figée / heure réelle'),
+    date: opt(DATE, 'date du faux téléphone AAAA-MM-JJ (run, frozen)'),
+    time: opt(TIME, 'heure du faux téléphone HH:MM (run, frozen)'),
+    el: opt(int(0, LIMITS.phoneClockSeconds), 'secondes écoulées depuis le départ, au moment de l’envoi (run)'),
+  }), 'date et heure'),
+  net: req(object({
+    bars: req(int(0, 4), 'barres de réseau (0 = « Pas de service »)'),
+    type: req(oneOf(...PHONE_NET_TYPES), 'réseau mobile'),
+    plane: req(bool, 'mode avion'),
+    wifi: req(bool, 'Wi-Fi'),
+  }), 'réseau'),
+  bat: req(object({
+    level: req(int(1, 100), 'niveau %'),
+    charging: req(bool, 'en charge'),
+    pct: req(bool, 'pourcentage affiché'),
+    low: opt(bool, 'batterie faible (étape « Batterie faible ») : icône rouge'),
+  }), 'batterie'),
+});
+const PHONE_BAR = (/** @type {any} */ v) => {
+  if (!PHONE_BAR_SHAPE(v)) return false;
+  const c = v.clock;
+  if (c.mode === 'real') return c.date === undefined && c.time === undefined && c.el === undefined;
+  if (c.date === undefined || c.time === undefined) return false;
+  return c.mode === 'run' || c.el === undefined;
+};
+const CHAT_TYPE_FIELDS = {
+  id: req(CHAT_ID, 'message du comédien'),
+  dur: opt(int(...LIMITS.chatWriteSeconds), 'le texte s’écrit tout seul, lettre à lettre, en dur s (absent : le comédien tape)'),
+  send: req(bool, 'envoi automatique une fois le texte complet (sinon : au bouton du comédien)'),
+};
+const CHAT_TYPE_REFINE = (/** @type {any} */ t) => (t.dur === undefined && !t.send ? 'frappe automatique sans effet' : null);
 
 const SPECS = {
   'color': {
@@ -3203,6 +3411,13 @@ const SPECS = {
     doc: 'Fin de vidéo : boucle, pause sur la dernière image, ou extinction.',
     fields: { mode: req(oneOf('loop', 'pause', 'off'), 'mode') },
   },
+  'media:bar': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Onglet Média, hors séquence : barre d’état du faux téléphone (mêmes réglages que « Téléphone au départ ») en bandeau haut '
+      + 'au-dessus des médias affichés seuls. null : retirée. Ciblée comme les autres ordres média, renvoyée à la resynchronisation. '
+      + 'Pendant une Séquence, la barre de la séquence (phone:state.bar) prime sur ses écrans.',
+    fields: { bar: req(nullable(PHONE_BAR), 'réglages de la barre (null : aucune)') },
+  },
   'media:upload': {
     dir: 'r2s', src: ['web', 'native'],
     doc: 'Début d’envoi d’un fichier en base64 fragmenté (repli sans WebRTC / écran natif).',
@@ -3309,6 +3524,11 @@ const SPECS = {
       typed: opt(int(0, LIMITS.chatTextChars), 'lettres déjà tapées du message du comédien en cours (reprise)'),
       history: opt(bool, '« Reprendre ici » / « Repartir de zéro » : sent = les messages du fil AVANT le point de reprise (début exact de ids), '
         + 'affichés d’un coup comme historique (ni « … écrit », ni animation, ni son) ; frappe locale et file d’attente de l’écran remises à zéro'),
+      pend: opt(arrayOf(CHAT_ID, LIMITS.chatMessages), 'messages du comédien postés sans réseau : « Non distribué » (point rouge) jusqu’au retour du réseau'),
+      auto: opt(object({
+        ...CHAT_TYPE_FIELDS,
+        el: opt(int(0, LIMITS.chatWriteSeconds[1] * 1000), 'ms déjà écoulées de la frappe automatique (reprise)'),
+      }), 'Lecture auto : frappe automatique en cours (reprise après rechargement)'),
     },
     refine: m => {
       if (!unique(m.ids) || !unique(m.sent)) return 'chat:open : identifiant en double';
@@ -3316,9 +3536,26 @@ const SPECS = {
       if (m.history) {
         if (!m.sent.every((/** @type {string} */ id, /** @type {number} */ i) => m.ids[i] === id)) return 'chat:open : historique hors de l’ordre du fil';
         if (m.typed) return 'chat:open : historique avec lettres tapées';
+        if (m.auto) return 'chat:open : historique avec frappe automatique';
+      }
+      if (m.pend && (!unique(m.pend) || !m.pend.every((/** @type {string} */ id) => m.sent.includes(id)))) return 'chat:open : message non distribué hors des messages postés';
+      const t = m.auto;
+      if (t) {
+        if (!m.ids.includes(t.id) || m.sent.includes(t.id)) return 'chat:open : frappe automatique d’un message absent ou déjà posté';
+        if (t.el !== undefined && (t.dur === undefined || t.el > t.dur * 1000)) return 'chat:open : avancée de frappe hors durée';
+        const r = CHAT_TYPE_REFINE(t);
+        if (r) return 'chat:open : ' + r;
       }
       return null;
     },
+  },
+  'chat:type': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Lecture auto (maquette 26d) : message du comédien en cours. dur : le texte s’écrit tout seul, lettre à lettre, en dur s ; '
+      + 'absent : le comédien tape (comme sans lecture auto). send : il part tout seul une fois complet (sinon au bouton « Envoyer »). '
+      + 'L’envoi revient par chat:sent, comme une frappe du comédien.',
+    fields: { ...CHAT_TYPE_FIELDS },
+    refine: m => CHAT_TYPE_REFINE(m),
   },
   'chat:rewind': {
     dir: 'r2s', src: ['web'],
@@ -3343,11 +3580,14 @@ const SPECS = {
   },
   'chat:post': {
     dir: 'r2s', src: ['web'],
-    doc: 'Poste un message du contact (déjà décrit par chat:msg) ; typing : indicateur « … écrit » 2 s avant la bulle.',
+    doc: 'Poste un message du contact (déjà décrit par chat:msg) ; typing : indicateur « … écrit » avant la bulle, pendant dur s '
+      + '(durée d’écriture du message, Lecture auto) ou 2 s (dur absent).',
     fields: {
       id: req(CHAT_ID, 'message du contact à poster'),
       typing: opt(bool, 'indicateur « … écrit » avant la bulle'),
+      dur: opt(int(...LIMITS.chatWriteSeconds), 'durée de l’indicateur « … écrit » en s (absent : 2 s)'),
     },
+    refine: m => (m.dur !== undefined && m.typing !== true ? 'chat:post : durée sans indicateur' : null),
   },
   'chat:close': { dir: 'r2s', src: ['web'], doc: 'Ferme la discussion sur l’écran.', fields: {} },
   'chat:progress': {
@@ -3362,8 +3602,12 @@ const SPECS = {
   },
   'chat:sent': {
     dir: 's2r', src: ['web'],
-    doc: 'Le comédien a envoyé son message (texte complet) : la bulle est postée sur l’écran.',
-    fields: { id: req(CHAT_ID, 'message envoyé') },
+    doc: 'Le comédien a envoyé son message (texte complet) : la bulle est postée sur l’écran. undelivered : envoyé sans réseau '
+      + '(barre d’état « Pas de service ») : la bulle reste « Non distribué » jusqu’au retour du réseau (chat:open.pend).',
+    fields: {
+      id: req(CHAT_ID, 'message envoyé'),
+      undelivered: opt(bool, 'envoyé sans réseau : non distribué'),
+    },
   },
 
   'phone:state': {
@@ -3376,7 +3620,13 @@ const SPECS = {
       + 'l’heure relative avec sa propre horloge). unlock : déverrouillage attendu (code 4 ou 6 chiffres, 0 = glisser seul ; '
       + 'aucun code n’est transmis : chaque touche remplit le point suivant). watch : gestes que la télécommande attend de cet écran '
       + '(seuls ceux-là sont rapportés, avec « unlock » toujours). chime : son de la notification qui vient d’arriver (jamais à la '
-      + 'resynchronisation). Trois styles neutres, aucune marque. Textes affichés en texte brut.',
+      + 'resynchronisation). Trois styles neutres, aucune marque. Textes affichés en texte brut. '
+      + 'bar : barre d’état (maquette 28b, heure / réseau / batterie) affichée partout sur cet écran pendant la séquence (écran '
+      + 'verrouillé, déverrouillé, appels, bandeaux, discussion, bandeau haut au-dessus des médias) ; elle prime sur media:bar ; '
+      + 'absente : plus de barre de la séquence. sleep : étape « Veille » (maquette 29b), écran noir verrouillé qui se rallume aux '
+      + 'notifications / appels et/ou au toucher et se rendort après `after` s ; le déverrouillage le réveille pour de bon. alert : '
+      + '« Batterie faible » (maquette 33) à fermer (geste dismiss). power off : « Extinction » (fondu, logo neutre, écran noir ; '
+      + 'le téléphone ne répond plus) jusqu’au rallumage (étape « Veille » ou ↶).',
     fields: {
       mode: req(oneOf('off', 'locked', 'code', 'unlocked', 'home'), 'état du faux téléphone'),
       style: req(STYLE3, 'style (Verre / Tonal / Épuré)'),
@@ -3394,19 +3644,32 @@ const SPECS = {
         then: req(oneOf('app', 'home'), 'ensuite : l’app visée ou l’écran d’accueil (image)'),
       }), 'déverrouillage attendu : toucher l’écran verrouillé demande le code'),
       home: opt(bool, 'image d’écran d’accueil préchargée (__seqhome)'),
-      watch: opt(arrayOf(oneOf(...PHONE_GESTURES.filter((g) => g !== 'unlock')), PHONE_GESTURES.length), 'gestes attendus de cet écran'),
+      watch: opt(arrayOf(oneOf(...PHONE_GESTURES.filter((g) => !PHONE_GESTURES_ALWAYS.includes(g))), PHONE_GESTURES.length), 'gestes attendus de cet écran'),
       chime: opt(object({
         id: req(PHONE_ID, 'notification qui vient d’arriver'),
         ring: req(RINGS, 'son intégré (repli)'),
         ringId: opt(str(23, RING_ID_RE), 'son importé préchargé (__ring_…)'),
         vol: opt(num(0, 1), 'volume 0..1'),
       }), 'son de la notification arrivée (une fois)'),
+      bar: opt(PHONE_BAR, 'barre d’état de la séquence (absente : aucune ; l’écran revient à media:bar)'),
+      sleep: opt(object({
+        notif: req(bool, 'se rallume à chaque notification / appel'),
+        touch: req(bool, 'se rallume au toucher'),
+        after: req(int(...LIMITS.phoneSleepSeconds), 'se rendort après n s'),
+      }), 'étape « Veille » : écran noir verrouillé'),
+      alert: opt(object({
+        id: req(PHONE_ID, 'identifiant de l’alerte (fermée : geste dismiss)'),
+        level: req(int(1, 100), 'pourcentage annoncé'),
+      }), 'alerte « Batterie faible »'),
+      power: opt(oneOf('on', 'off'), 'off : téléphone éteint (absent : allumé)'),
     },
     refine: m => {
       if (!unique(m.notifs.map((/** @type {any} */ n) => n.id))) return 'phone:state : notification en double';
       if (m.watch && !unique(m.watch)) return 'phone:state : geste en double';
       if (m.mode === 'code' && !(m.unlock && m.unlock.code > 0)) return 'phone:state : pavé du code sans code attendu';
       if (m.chime && !m.notifs.some((/** @type {any} */ n) => n.id === m.chime.id)) return 'phone:state : son d’une notification absente';
+      if (m.sleep && m.mode !== 'locked' && m.mode !== 'code') return 'phone:state : veille hors écran verrouillé';
+      if (m.power === 'off' && (m.chime || m.watch)) return 'phone:state : téléphone éteint, ni son ni geste attendu';
       return null;
     },
   },
@@ -3414,8 +3677,9 @@ const SPECS = {
     dir: 's2r', src: ['web'],
     doc: 'Geste du comédien sur le faux téléphone d’une Séquence (au plus un par geste toutes les 400 ms, 5 par seconde) : touche '
       + 'l’écran, touche une notification (n), refuse ou raccroche, décroche, déverrouille (code complet ou glissement), touche '
-      + 'l’image d’accueil. Seuls les gestes attendus (phone:state.watch) partent, « unlock » toujours. Jamais le contenu des '
-      + 'touches : le code n’existe pas, seule sa complétion est rapportée. La réponse dans la discussion passe par chat:sent.',
+      + 'l’image d’accueil, ferme l’alerte « Batterie faible » (dismiss). Seuls les gestes attendus (phone:state.watch) partent, '
+      + '« unlock » et « dismiss » toujours. Jamais le contenu des touches : le code n’existe pas, seule sa complétion est '
+      + 'rapportée. La réponse dans la discussion passe par chat:sent.',
     fields: {
       g: req(oneOf(...PHONE_GESTURES), 'geste'),
       n: opt(PHONE_ID, 'notification touchée (geste notif)'),
@@ -3632,7 +3896,7 @@ const COMMON_FIELDS = Object.freeze({
   _id: 'identifiant d’écho de l’ancien protocole en clair (toléré, inutile en v2)',
   target: "adressage (r2s uniquement) : { screens: [screenId…] } ou { group: 'id' } ; absent = tous",
 });
-  return { HEX_COLOR_RE, MEDIA_ID_RE, SCREEN_ID_RE, GROUP_ID_RE, RING_ID_RE, CALL_PHOTO_ID_RE, CALL_AUDIO_ID_RE, CHAT_ID_RE, PHONE_NOTIF_ID_RE, PHONE_GESTURES, DATE_RE, TIME_RE, LIMITS, explainInvalid, validate, isAddressedTo, MESSAGE_TYPES, COMMON_FIELDS };
+  return { HEX_COLOR_RE, MEDIA_ID_RE, SCREEN_ID_RE, GROUP_ID_RE, RING_ID_RE, CALL_PHOTO_ID_RE, CALL_AUDIO_ID_RE, CHAT_ID_RE, PHONE_NOTIF_ID_RE, PHONE_GESTURES, PHONE_GESTURES_ALWAYS, PHONE_NET_TYPES, DATE_RE, TIME_RE, LIMITS, explainInvalid, validate, isAddressedTo, MESSAGE_TYPES, COMMON_FIELDS };
 })();
 // ── crypto.js ──
 __m["crypto.js"] = (function () {
@@ -7320,7 +7584,10 @@ const PROTO = {
   NOTIF_AGO_MAX: 10080,                        // « il y a n min » : 7 jours au plus
   CHAT_MSGS_MAX: 40, CHAT_TEXT_MAX: 300,       // = LIMITS du schéma (discussion)
   PHONE_NOTIFS_MAX: 8, PHONE_AGO_MAX: 604800,  // = LIMITS du schéma (faux téléphone d'une Séquence)
-  PHONE_GESTURES: ['touch', 'notif', 'hangup', 'answer', 'unlock', 'home'],
+  PHONE_GESTURES: ['touch', 'notif', 'hangup', 'answer', 'unlock', 'home', 'dismiss'],
+  PHONE_GESTURES_ALWAYS: ['unlock', 'dismiss'],          // toujours rapportés, jamais « attendus »
+  PHONE_CLOCK_MAX: 604800, PHONE_SLEEP_MAX: 120,       // = LIMITS du schéma (barre d'état, veille)
+  CHAT_WRITE_MAX: 60,                                  // s : « … écrit », frappe automatique (Lecture auto)
   SDP_MAX: 16000, ICE_MAX: 4096,               // = LIMITS du schéma (packages/protocol)
   ORDER_MAX: 500, MISSING_MAX: 400,
   VID_MAX_CHUNKS: 50000,                       // ≈ 600 Mo base64 en fragments de 12 000
@@ -7407,6 +7674,10 @@ function _validChatOpen(m) {
   // Reprise (« Reprendre ici », « Repartir de zéro ») : historique = début exact du fil, sans lettre tapée
   m.history = _P.bool(m.history);
   if (m.history && (m.typed || !m.sent.every((id, i) => m.ids[i] === id))) return false;
+  // Non distribués (envoyés sans réseau) : parmi les postés ; frappe automatique en cours : message du fil non posté
+  m.pend = Array.isArray(m.pend) ? m.pend.filter((id, i, a) => _chatId(id) && m.sent.includes(id) && a.indexOf(id) === i) : [];
+  m.auto = m.history ? null : _validChatType(m.auto, true);
+  if (m.auto && (!m.ids.includes(m.auto.id) || m.sent.includes(m.auto.id))) m.auto = null;
   return true;
 }
 function _validChatMsg(m) {
@@ -7414,10 +7685,37 @@ function _validChatMsg(m) {
   m.text = _P.text(m.text, PROTO.CHAT_TEXT_MAX);
   return m.text.trim().length > 0;
 }
+// Lecture auto (maquette 26d) : frappe automatique d'un message du comédien
+function _validChatType(t, withEl) {
+  if (!_P.isObj(t) || !_chatId(t.id)) return null;
+  const dur = _P.int(t.dur, 1, PROTO.CHAT_WRITE_MAX);
+  const out = { id: t.id, dur, send: _P.bool(t.send) };
+  if (dur === null && !out.send) return null;
+  if (withEl) out.el = dur === null ? 0 : (_P.int(t.el, 0, dur * 1000) ?? 0);
+  return out;
+}
 
 // Faux téléphone d'une Séquence (91-sequence.js → 94-sequence-phone.js) :
 // pile bornée sans doublon, textes tronqués, gestes connus seulement
 const _phoneId = (v) => typeof v === 'string' && SRP.PHONE_NOTIF_ID_RE.test(v);
+// Barre d'état (maquette 28b) : horloge, réseau, batterie ; null si inutilisable
+function _validPhoneBar(b) {
+  if (!_P.isObj(b) || !_P.isObj(b.clock) || !_P.isObj(b.net) || !_P.isObj(b.bat)) return null;
+  const c = b.clock;
+  if (!_P.oneOf(c.mode, ['run', 'frozen', 'real'])) return null;
+  let clock = { mode: 'real' };
+  if (c.mode !== 'real') {
+    if (!_pDate(c.date) || !_pTime(c.time)) return null;
+    clock = { mode: c.mode, date: c.date, time: c.time };
+    if (c.mode === 'run') clock.el = _P.int(c.el, 0, PROTO.PHONE_CLOCK_MAX) ?? 0;
+  }
+  const bars = _P.int(b.net.bars, 0, 4), level = _P.int(b.bat.level, 1, 100);
+  if (bars === null || level === null || !_P.oneOf(b.net.type, SRP.PHONE_NET_TYPES)) return null;
+  return {
+    clock, net: { bars, type: b.net.type, plane: _P.bool(b.net.plane), wifi: _P.bool(b.net.wifi) },
+    bat: Object.assign({ level, charging: _P.bool(b.bat.charging), pct: _P.bool(b.bat.pct) }, b.bat.low === true ? { low: true } : {}),
+  };
+}
 function _validPhoneState(m) {
   if (!_P.oneOf(m.mode, ['off', 'locked', 'code', 'unlocked', 'home'])) return false;
   if (!_P.oneOf(m.style, ['glass', 'tonal', 'minimal'])) m.style = 'glass';
@@ -7437,9 +7735,18 @@ function _validPhoneState(m) {
   m.unlock = _P.isObj(u) && [0, 4, 6].includes(u.code) ? { code: u.code, then: u.then === 'home' ? 'home' : 'app' } : null;
   if (m.mode === 'code' && !(m.unlock && m.unlock.code)) return false;
   m.home = _P.bool(m.home);
-  m.watch = Array.isArray(m.watch) ? m.watch.filter((g, i, a) => _P.oneOf(g, PROTO.PHONE_GESTURES) && g !== 'unlock' && a.indexOf(g) === i) : [];
+  m.watch = Array.isArray(m.watch) ? m.watch.filter((g, i, a) => _P.oneOf(g, PROTO.PHONE_GESTURES) && !PROTO.PHONE_GESTURES_ALWAYS.includes(g) && a.indexOf(g) === i) : [];
   const c = m.chime;
   m.chime = _P.isObj(c) && seen.has(c.id) ? { id: c.id, ring: _P.oneOf(c.ring, PROTO.CALL_RINGS) ? c.ring : 'classic', ringId: _P.ringId(c.ringId) ? c.ringId : null, vol: _P.num(c.vol, 0, 1) ?? 1 } : null;
+  // Barre d'état, veille, batterie faible, extinction (maquettes 28b, 29b, 33)
+  m.bar = m.bar === undefined ? null : _validPhoneBar(m.bar);
+  const sl = m.sleep;
+  m.sleep = _P.isObj(sl) && (m.mode === 'locked' || m.mode === 'code')
+    ? { notif: _P.bool(sl.notif), touch: _P.bool(sl.touch), after: _P.int(sl.after, 1, PROTO.PHONE_SLEEP_MAX) ?? 8 } : null;
+  const al = m.alert;
+  m.alert = _P.isObj(al) && _phoneId(al.id) && _P.int(al.level, 1, 100) !== null ? { id: al.id, level: al.level } : null;
+  m.power = m.power === 'off' ? 'off' : 'on';
+  if (m.power === 'off') { m.chime = null; m.watch = []; }
   return true;
 }
 
@@ -7527,11 +7834,14 @@ const MSG_ROUTES = {
   // Discussion fictive (83-discussion.js) : jamais déclenchée par la console DMX
   'chat:open':         { roles: ['screen'], validate: _validChatOpen, handle: (m) => screenChatOpen(m) },
   'chat:msg':          { roles: ['screen'], validate: _validChatMsg, handle: (m) => screenChatMsg(m) },
-  'chat:post':         { roles: ['screen'], validate: (m) => { m.typing = _P.bool(m.typing); return _chatId(m.id); }, handle: (m) => screenChatPost(m) },
+  'chat:post':         { roles: ['screen'], validate: (m) => { m.typing = _P.bool(m.typing); m.dur = m.typing ? _P.int(m.dur, 1, PROTO.CHAT_WRITE_MAX) : null; return _chatId(m.id); }, handle: (m) => screenChatPost(m) },
+  'chat:type':         { roles: ['screen'], validate: (m) => { const t = _validChatType(m, false); if (t) Object.assign(m, t); return !!t; }, handle: (m) => screenChatType(m) },
   'chat:rewind':       { roles: ['screen'], validate: (m) => { m.drop = _P.bool(m.drop); return _chatId(m.id); }, handle: (m) => screenChatRewind(m) },
   'chat:close':        { roles: ['screen'], validate: () => true, handle: () => screenChatClose() },
   // Faux téléphone d'une Séquence (94-sequence-phone.js) : jamais déclenché par la console DMX
   'phone:state':       { roles: ['screen'], validate: _validPhoneState, handle: (m) => screenPhoneState(m) },
+  // Onglet Média, hors séquence : barre d'état en bandeau au-dessus des médias (97-phone-status.js)
+  'media:bar':         { roles: ['screen'], validate: (m) => { if (m.bar === null) return true; m.bar = _validPhoneBar(m.bar); return m.bar !== null; }, handle: (m) => screenMediaBar(m.bar) },
   // Passerelle DMX : look calculé depuis la console (36-dmx-screen.js, docs/DMX.md § 7)
   'dmx:look': {
     roles: ['screen'],
@@ -7606,7 +7916,7 @@ const MSG_ROUTES = {
     validate: (m) => _chatId(m.id) && _P.int(m.total, 1, PROTO.CHAT_TEXT_MAX) !== null && _P.int(m.typed, 0, m.total) !== null,
     handle: (m) => remoteOnChatProgress(m),
   },
-  'chat:sent':         { roles: ['remote'], validate: (m) => _chatId(m.id), handle: (m) => remoteOnChatSent(m) },
+  'chat:sent':         { roles: ['remote'], validate: (m) => { m.undelivered = _P.bool(m.undelivered); return _chatId(m.id); }, handle: (m) => remoteOnChatSent(m) },
   'phone:gesture': {
     roles: ['remote'],
     validate: (m) => _P.oneOf(m.g, PROTO.PHONE_GESTURES) && (m.n === undefined || (m.g === 'notif' && _phoneId(m.n))),
@@ -7818,6 +8128,8 @@ function remoteResync() {
   if (ids.length) chatOnScreensResync(ids);
   // Séquence : faux téléphone (écran verrouillé, notifications empilées, image d'accueil) renvoyé (91-sequence.js)
   if (ids.length) seqOnScreensResync(ids);
+  // Onglet Média : barre d'état au-dessus des médias, sur les écrans où elle est activée (98-phone-params.js)
+  if (ids.length) mediaBarOnScreensResync(ids);
   // Sons importés absents : renvoyés s'ils servent encore (choix d'un type,
   // entrées 1 à 20 sous la passerelle), sinon simplement oubliés
   const rings = ringNeededIds();
@@ -8651,6 +8963,7 @@ function scrLoadView() {
     _autoAdvance = !!st.autoAdvance;
     const aa = document.getElementById('mediaAutoAdvToggle'); if (aa) aa.checked = _autoAdvance;
     _scrViewMedia(st);
+    if (typeof renderMediaBarRow === 'function') renderMediaBarRow(); // barre d'état de la cible (98-phone-params.js)
   } finally {
     _scrMute--;
     // Envois différés programmés par les contrôles rechargés : annulés
@@ -9429,6 +9742,7 @@ function switchTab(t) {
   }
   document.getElementById('content-' + t).classList.add('active');
   if (t === 'seq') renderSeq(); // éléments supprimés entre-temps : « élément introuvable »
+  if (t === 'media') renderMediaBarRow(); // barre d'état au-dessus des médias (98-phone-params.js)
   if (t === 'qr') renderPairPanel();
   else remoteStopPairCode(true); // le code ne reste actif que sur l'onglet d'appairage
 }
@@ -15134,10 +15448,27 @@ let _clDrag = null, _clSuppressClick = false;
 //     ni animation), la scène reprend à ce message ; repère orange dans le fil.
 //     « Repartir de zéro » : plus rien d'affiché.
 //   • Discussions enregistrées (maquette validée 26c) : 89-discussions-saved.js.
+//   • Timings et lecture automatique (maquette validée 26d). Chaque message a :
+//     « Pause avant » (s), « Écriture » (contact : durée de « … écrit » ;
+//     comédien : « Le comédien tape » ou « Automatique », le texte s'écrit
+//     tout seul lettre à lettre pendant la durée), « Envoi » (Automatique /
+//     Au bouton). Pastilles « pause · écriture » dans le fil. « ▶ Lecture
+//     auto » enchaîne les messages selon leurs timings ; elle s'arrête sur un
+//     message « Au bouton » (contact : « Envoyer n° X » ; comédien : son
+//     bouton Envoyer) ou tapé par le comédien, puis repart d'elle-même.
+//     « ⏸ Pause » fige le déroulé (GO de la lecture : reprise au message en
+//     cours) ; « ↶ » met en pause et retire le dernier message affiché.
+//     Sans lecture auto (et pour les anciens fils : pause 0 s, envoi au
+//     bouton), tout se passe comme avant.
+//   • Pas de réseau (maquette 34) : le message du comédien envoyé quand la
+//     barre d'état de la séquence dit « Pas de service » reste « Non
+//     distribué » (point rouge) ; le retour du réseau le distribue (91-sequence.js).
 // Protocole (packages/protocol/schema.js) : chat:msg (texte d'un message),
-// chat:open (contact, style, ordre, messages postés ; history : reprise),
-// chat:rewind (« ↶ »), chat:post, chat:close ; retour chat:progress,
-// chat:sent. Textes affichés par textContent.
+// chat:open (contact, style, ordre, messages postés ; history : reprise ;
+// pend : non distribués ; auto : frappe automatique en cours), chat:rewind
+// (« ↶ »), chat:post (dur : « … écrit » de la lecture auto), chat:type
+// (lecture auto, message du comédien), chat:close ; retour chat:progress,
+// chat:sent (undelivered : sans réseau). Textes affichés par textContent.
 const CHAT_LS_KEY = 'setremote-chat-v1';
 const CHAT_AVATAR_KEY = 'setremote-chat-avatar-v1';
 const CHAT_MAX = 40, CHAT_TEXT_MAX = 300, CHAT_TYPING_MS = 2000, CHAT_PROGRESS_MS = 250;
@@ -15153,13 +15484,37 @@ const _CHAT_TXT = {
   resume1: 'Reprise ici · 1 affiché comme historique',
   resume2: 'Reprise ici · 1 et 2 affichés comme historique',
   resumeN: 'Reprise ici · 1 à {n} affichés comme historique',
+  // Timings et lecture automatique (maquette 26d)
+  pill: '{p} s · {w} s', pillAuto: '{p} s · auto {w} s', pillActor: '{p} s · tape',
+  timingHead: 'Message {n} · {nom}',
+  pause: 'Pause avant', writeLabel: 'Écriture', writeDur: 'Durée d\'écriture',
+  writeActor: 'Le comédien tape', writeAuto: 'Automatique',
+  sendLabel: 'Envoi', sendAuto: 'Automatique', sendButton: 'Au bouton',
+  timingNote: 'Contact : « … écrit » pendant la durée d\'écriture. Comédien : le texte s\'écrit tout seul lettre par lettre.',
+  seconds: '{n} s',
+  autoLabel: 'Lecture automatique',
+  autoRun: '● en cours · {n} / {total}', autoPaused: '⏸ en pause · {n} / {total}', autoReady: 'prête · {n} / {total}',
+  autoActor: '● attend {comedien} · {n} / {total}', autoButton: '● attend « Envoyer » · {n} / {total}', autoDone: 'terminée · {n} / {total}',
+  autoPlay: '▶ LECTURE AUTO', autoPause: '⏸ PAUSE', autoBack: '↶', autoBackAria: 'Pause et revenir d\'un message',
+  undelivered: 'Non distribué',
 };
+// Timings d'un message (maquette 26d) ; valeurs par défaut = comportement d'avant
+// (pause 0 s, envoi au bouton, le comédien tape) : anciens fils et discussions inchangés
+const CHAT_PAUSE_MAX = 60, CHAT_WRITE_MAX = 60;
+function chatTimingDefaults(from) { return { pause: 0, write: from === 'actor' ? 3 : 2, auto: false, send: 'button' }; }
+function chatTiming(x, from) {
+  const d = chatTimingDefaults(from), int = (v, min, max, def) => (Number.isInteger(v) && v >= min && v <= max ? v : def);
+  const t = x && typeof x === 'object' ? x : {};
+  return { pause: int(t.pause, 0, CHAT_PAUSE_MAX, d.pause), write: int(t.write, 0, CHAT_WRITE_MAX, d.write), auto: from === 'actor' && t.auto === true, send: t.send === 'auto' ? 'auto' : 'button' };
+}
+// Copie d'un message (fil, discussion enregistrée) : texte et timings
+function chatMsgCopy(m) { return Object.assign({ id: m.id, from: m.from, text: m.text }, chatTiming(m, m.from)); }
 
 // — Télécommande —
 let _chatSeq = 0;
 const _chatNewId = () => 'm' + Date.now().toString(36).slice(-5) + (++_chatSeq).toString(36);
 function _chatDefault() {
-  const m = (from, text, i) => ({ id: 'd' + i, from, text });
+  const m = (from, text, i) => Object.assign({ id: 'd' + i, from, text }, chatTimingDefaults(from));
   return {
     name: 'Maman', actor: 'Julie', style: 'minimal', typing: false,
     msgs: [
@@ -15170,11 +15525,13 @@ function _chatDefault() {
     sent: [], open: false, screens: null, progress: null,
     resumeAt: null,  // « Reprendre ici » : message où la scène a repris (repère dans le fil)
     savedId: null,   // discussion enregistrée chargée ou enregistrée en dernier (89-discussions-saved.js)
+    pend: [],        // messages du comédien envoyés sans réseau : « Non distribué » (maquette 34)
   };
 }
 let _chat = _chatDefault();
 let _chatAvatar = null;
 let _chatEditId = null;
+let _chatTimingId = null; // message dont les timings sont affichés (dernier touché, maquette 26d)
 const _chatOk = (id) => typeof id === 'string' && SRP.CHAT_ID_RE.test(id);
 
 function chatLoad() {
@@ -15184,7 +15541,7 @@ function chatLoad() {
     const d = _chatDefault();
     const seen = new Set();
     const msgs = o.msgs.filter((x) => x && _chatOk(x.id) && !seen.has(x.id) && seen.add(x.id) && (x.from === 'contact' || x.from === 'actor') && typeof x.text === 'string')
-      .slice(0, CHAT_MAX).map((x) => Object.assign({ id: x.id, from: x.from, text: x.text.slice(0, CHAT_TEXT_MAX) }, x.impro === true ? { impro: true } : {}));
+      .slice(0, CHAT_MAX).map((x) => Object.assign({ id: x.id, from: x.from, text: x.text.slice(0, CHAT_TEXT_MAX) }, chatTiming(x, x.from), x.impro === true ? { impro: true } : {}));
     const ids = new Set(msgs.map((x) => x.id));
     _chat = {
       name: typeof o.name === 'string' ? o.name.slice(0, 40) : d.name,
@@ -15198,14 +15555,17 @@ function chatLoad() {
       progress: null,
       resumeAt: typeof o.resumeAt === 'string' && ids.has(o.resumeAt) ? o.resumeAt : null,
       savedId: typeof o.savedId === 'string' && /^[A-Za-z0-9_-]{1,40}$/.test(o.savedId) ? o.savedId : null,
+      pend: [],
     };
+    const sent = new Set(_chat.sent);
+    _chat.pend = Array.isArray(o.pend) ? [...new Set(o.pend.filter((id) => sent.has(id)))] : [];
   }
   const a = _lsGet(CHAT_AVATAR_KEY);
   _chatAvatar = safeImageData(a);
 }
 function chatSave() {
   const c = _chat;
-  _lsSet(CHAT_LS_KEY, JSON.stringify({ v: 1, name: c.name, actor: c.actor, style: c.style, typing: c.typing, msgs: c.msgs, sent: c.sent, open: c.open, screens: c.screens, resumeAt: c.resumeAt, savedId: c.savedId }));
+  _lsSet(CHAT_LS_KEY, JSON.stringify({ v: 2, name: c.name, actor: c.actor, style: c.style, typing: c.typing, msgs: c.msgs, sent: c.sent, open: c.open, screens: c.screens, resumeAt: c.resumeAt, savedId: c.savedId, pend: c.pend }));
 }
 function chatStyleNow() { return _chat.style; }
 function chatSetStyle(s) { _chat.style = _CHAT_STYLE_HINTS[s] ? s : 'minimal'; _chatChanged(); }
@@ -15243,11 +15603,17 @@ function _chatSendOpen(only, history) {
   const ids = _chat.msgs.filter(_chatValid).map((m) => m.id);
   const cur = chatCurrentActor();
   const p = _chat.progress;
+  const sent = _chat.sent.filter((id) => ids.includes(id));
+  const pend = _chat.pend.filter((id) => sent.includes(id));
+  // Frappe automatique en cours (lecture auto) : l'écran la reprend où elle en est
+  const ta = _chatAuto.type;
+  const auto = !history && ta && cur && cur.id === ta.id
+    ? Object.assign({ id: ta.id, send: ta.send }, ta.dur ? { dur: ta.dur, el: Math.max(0, Math.min(ta.dur * 1000, Date.now() - ta.t0)) } : {}) : null;
   sendMsg(Object.assign({
     type: 'chat:open', name: _chat.name.slice(0, 40), style: _chat.style, hasAvatar: !!_chatAvatar,
-    ids, sent: _chat.sent.filter((id) => ids.includes(id)),
+    ids, sent,
     typed: !history && cur && p && p.id === cur.id ? Math.min(p.typed, _chatLen(cur.text)) : 0,
-  }, history ? { history: true } : {}, _chatTarget(only)));
+  }, history ? { history: true } : {}, pend.length ? { pend } : {}, auto ? { auto } : {}, _chatTarget(only)));
 }
 function _chatSendAvatar(only) {
   if (!_chatAvatar || linkBleOnly()) return Promise.resolve();
@@ -15267,6 +15633,7 @@ function openChatOnTarget(history) {
 }
 function closeChat() {
   if (_chat.open) sendMsg(Object.assign({ type: 'chat:close' }, _chatTarget()));
+  chatAutoStop();
   _chat.open = false;
   _chat.progress = null;
   chatSave();
@@ -15275,7 +15642,9 @@ function closeChat() {
 }
 // « Repartir de zéro » : plus rien d'affiché, frappe oubliée
 function restartChat() {
+  chatAutoStop();
   _chat.sent = [];
+  _chat.pend = [];
   _chat.progress = null;
   _chat.resumeAt = null;
   if (_chat.open) { _chatFlushTexts(); _chatSendOpen(undefined, true); }
@@ -15288,8 +15657,11 @@ function restartChat() {
 function rewindChat() {
   const id = _chat.sent[_chat.sent.length - 1];
   if (!id) return;
+  chatAutoPause(); // la lecture auto ne repart qu'au ▶
+  _chatAuto.type = null; _chatAuto.phase = null; _chatAuto.done = false;
   if (_chat.open) _chatFlushTexts();
   _chat.sent.pop();
+  _chat.pend = _chat.pend.filter((x) => x !== id);
   const i = _chat.msgs.findIndex((x) => x.id === id);
   const drop = i >= 0 && _chat.msgs[i].impro === true;
   if (drop) {
@@ -15312,7 +15684,9 @@ function rewindChat() {
 function resumeChatAt(id) {
   const i = _chat.msgs.findIndex((x) => x.id === id);
   if (i < 0 || !_chatValid(_chat.msgs[i])) return;
+  chatAutoStop();
   _chat.sent = _chat.msgs.slice(0, i).filter(_chatValid).map((m) => m.id);
+  _chat.pend = _chat.pend.filter((x) => _chat.sent.includes(x));
   _chat.progress = null;
   _chat.resumeAt = i > 0 ? id : null; // au n° 1 : comme « Repartir de zéro »
   _chatEditId = null;
@@ -15337,10 +15711,18 @@ function sendNextChatMessage() {
   if (!m) return;
   if (!_chat.open) openChatOnTarget();
   else _chatFlushEdits();
-  _chat.sent.push(m.id);
-  sendMsg(Object.assign({ type: 'chat:post', id: m.id, typing: !!_chat.typing }, _chatTarget()));
+  // Lecture auto : « … écrit » pendant la durée d'écriture du message, puis la lecture continue
+  const auto = _chatAuto.on;
+  _chatPost(m, auto ? (m.write > 0 ? m.write : -1) : (_chat.typing ? 0 : -1));
+  if (auto) _chatAutoAfterPost(m);
   chatSave();
   renderChatPanel();
+}
+// Poste un message du contact ; dur : « … écrit » en s (0 : 2 s ; -1 : sans indicateur)
+function _chatPost(m, dur) {
+  _chat.sent.push(m.id);
+  const typing = dur >= 0;
+  sendMsg(Object.assign({ type: 'chat:post', id: m.id, typing }, typing && dur > 0 ? { dur: Math.min(CHAT_WRITE_MAX, dur) } : {}, _chatTarget()));
 }
 function toggleChatWrite() {
   const box = document.getElementById('dcWriteBox');
@@ -15355,13 +15737,14 @@ function sendImprovisedChat() {
   const text = ta ? ta.value.trim().slice(0, CHAT_TEXT_MAX) : '';
   if (!text || _chat.msgs.length >= CHAT_MAX) return;
   const m = { id: _chatNewId(), from: 'contact', text, impro: true }; // improvisé : « ↶ » le retire du fil
+  Object.assign(m, chatTimingDefaults('contact'));
   const i = _chat.msgs.findIndex((x) => !_chatSent(x));
   _chat.msgs.splice(i < 0 ? _chat.msgs.length : i, 0, m);
   if (!_chat.open) openChatOnTarget();
   else _chatSyncTexts(); // le nouveau message et l'ordre, avant de le poster
   _chatDefsSent.set(m.id, m.from + '|' + m.text);
-  _chat.sent.push(m.id);
-  sendMsg(Object.assign({ type: 'chat:post', id: m.id, typing: !!_chat.typing }, _chatTarget()));
+  Object.assign(m, chatTimingDefaults('contact'));
+  _chatPost(m, _chat.typing ? 0 : -1);
   if (ta) ta.value = '';
   toggleChatWrite();
   chatSave();
@@ -15428,9 +15811,10 @@ function _chatFlushTexts() {
 function addChatMessage() {
   if (_chat.msgs.length >= CHAT_MAX) return;
   const last = _chat.msgs[_chat.msgs.length - 1];
-  const m = { id: _chatNewId(), from: last && last.from === 'contact' ? 'actor' : 'contact', text: '' };
+  const from = last && last.from === 'contact' ? 'actor' : 'contact';
+  const m = Object.assign({ id: _chatNewId(), from, text: '' }, chatTimingDefaults(from));
   _chat.msgs.push(m);
-  _chatEditId = m.id;
+  _chatEditId = m.id; _chatTimingId = m.id;
   _chatChanged();
   const ta = document.querySelector('#dcRows .dc-edit textarea');
   if (ta) ta.focus();
@@ -15438,12 +15822,27 @@ function addChatMessage() {
 function editChatMessage(id) {
   if (_dcSuppressClick) return;
   _chatEditId = _chatEditId === id ? null : id;
+  _chatTimingId = id;
   renderChatPanel();
 }
 function setChatMessageSide(id, from) {
   const m = _chat.msgs.find((x) => x.id === id);
   if (!m) return;
   m.from = from === 'actor' ? 'actor' : 'contact';
+  Object.assign(m, chatTiming(m, m.from));
+  _chatChanged();
+}
+// Timings d'un message (maquette 26d) : pause, écriture, envoi
+function setChatTiming(id, k, v) {
+  const m = _chat.msgs.find((x) => x.id === id);
+  if (!m) return;
+  const t = chatTiming(m, m.from);
+  if (k === 'pause') t.pause = Math.max(0, Math.min(CHAT_PAUSE_MAX, t.pause + v));
+  else if (k === 'write') t.write = Math.max(m.from === 'actor' ? 1 : 0, Math.min(CHAT_WRITE_MAX, t.write + v));
+  else if (k === 'auto') t.auto = m.from === 'actor' && !!v;
+  else if (k === 'send') t.send = v === 'auto' ? 'auto' : 'button';
+  else return;
+  Object.assign(m, t);
   _chatChanged();
 }
 function onChatMessageText(id, el) {
@@ -15465,6 +15864,7 @@ function deleteChatMessage(id) {
   _chat.sent = _chat.sent.filter((x) => x !== id);
   _chatDefsSent.delete(id);
   if (_chatEditId === id) _chatEditId = null;
+  if (_chatTimingId === id) _chatTimingId = null;
   _chatChanged();
 }
 
@@ -15483,12 +15883,126 @@ function remoteOnChatSent(m) {
   if (!msg || msg.from !== 'actor' || _chatSent(msg)) return;
   _chat.sent.push(msg.id);
   _chat.progress = null;
+  if (_chatAuto.type && _chatAuto.type.id === msg.id) _chatAuto.type = null;
+  // Envoyé sans réseau (maquette 34) : « Non distribué » jusqu'au retour du réseau
+  if (m.undelivered && !_chat.pend.includes(msg.id)) _chat.pend.push(msg.id);
   chatSave();
   renderChatPanel();
   // Les autres écrans de la discussion suivent
   const others = (_chat.screens || []).filter((s) => s !== _rxFrom);
   if (others.length) _chatSendOpen(others);
+  if (m.undelivered) seqOnChatUndelivered(_rxFrom, msg); // « Message non envoyé » (91-sequence.js)
   seqOnChatSent(_rxFrom); // réponse attendue par une Séquence (91-sequence.js)
+  if (_chatAuto.on) _chatAutoNext(); // lecture auto : le comédien a envoyé, elle reprend
+}
+// Réseau revenu (91-sequence.js) : messages « Non distribué » distribués
+function chatDeliverPending() {
+  if (!_chat.pend.length) return;
+  _chat.pend = [];
+  chatSave();
+  if (_chat.open) _chatSendOpen();
+  renderChatPanel();
+}
+
+// ── Lecture automatique (maquette 26d) ──
+// phase : { id, k: 'pause' | 'write' (contact) | 'type' (texte automatique) | 'actor' (le comédien tape) | 'button' (« Envoyer n° X ») }
+// type : frappe automatique envoyée à l'écran (chat:type), pour la reprise après rechargement
+const _chatAuto = { on: false, done: false, timer: null, tick: null, phase: null, t0: 0, dur: 0, type: null };
+const _chatNextMsg = () => _chat.msgs.find((x) => _chatValid(x) && !_chatSent(x)) || null;
+function chatAutoStart() {
+  if (_chatAuto.on || !_chatNextMsg()) return;
+  if (!_chat.open) openChatOnTarget();
+  _chatAuto.on = true; _chatAuto.done = false;
+  if (!_chatAuto.tick) _chatAuto.tick = setInterval(_chatRenderAuto, 500);
+  _chatAutoNext(true);
+}
+function chatAutoPause() {
+  if (!_chatAuto.on) return;
+  _chatAuto.on = false;
+  if (_chatAuto.timer) { clearTimeout(_chatAuto.timer); _chatAuto.timer = null; }
+  if (_chatAuto.tick) { clearInterval(_chatAuto.tick); _chatAuto.tick = null; }
+  renderChatPanel();
+}
+function chatAutoStop() {
+  chatAutoPause();
+  _chatAuto.phase = null; _chatAuto.type = null; _chatAuto.done = false;
+}
+// « ↶ » de la lecture : pause, puis le dernier message affiché est retiré
+function chatAutoBack() { chatAutoPause(); rewindChat(); }
+function _chatAutoPhase(id, k, dur) { _chatAuto.phase = { id, k }; _chatAuto.t0 = Date.now(); _chatAuto.dur = dur || 0; }
+// Message suivant : pause avant, puis écriture et envoi
+function _chatAutoNext(resume) {
+  if (_chatAuto.timer) { clearTimeout(_chatAuto.timer); _chatAuto.timer = null; }
+  if (!_chatAuto.on) return;
+  if (!_chat.open) { chatAutoStop(); renderChatPanel(); return; }
+  const m = _chatNextMsg();
+  if (!m) { chatAutoPause(); _chatAuto.phase = null; _chatAuto.done = true; renderChatPanel(); return; }
+  // Repris au ▶ sur un message déjà en cours d'écriture par le comédien : on attend son envoi
+  if (resume && _chatAuto.type && _chatAuto.type.id === m.id) { _chatAutoPhase(m.id, _chatAuto.type.dur ? 'type' : 'actor', _chatAuto.type.dur); renderChatPanel(); return; }
+  if (m.from === 'contact' && m.send === 'button') { _chatAutoPhase(m.id, 'button'); renderChatPanel(); return; }
+  if (m.from === 'actor' && !m.auto && m.send === 'button') { _chatAutoPhase(m.id, 'actor'); renderChatPanel(); return; }
+  if (m.pause > 0) {
+    _chatAutoPhase(m.id, 'pause', m.pause);
+    _chatAuto.timer = setTimeout(() => { _chatAuto.timer = null; _chatAutoWrite(m.id); }, m.pause * 1000);
+    renderChatPanel();
+    return;
+  }
+  _chatAutoWrite(m.id);
+}
+function _chatAutoWrite(id) {
+  if (!_chatAuto.on || !_chat.open) return;
+  const m = _chat.msgs.find((x) => x.id === id);
+  if (!m || _chatSent(m) || _chatNextMsg() !== m) { _chatAutoNext(); return; }
+  _chatFlushEdits();
+  if (m.from === 'contact') {
+    _chatPost(m, m.write > 0 ? m.write : -1);
+    _chatAutoAfterPost(m);
+    chatSave();
+  } else {
+    // Comédien : le texte s'écrit tout seul (dur) et/ou part tout seul une fois complet (send)
+    const dur = m.auto ? Math.max(1, m.write) : null;
+    _chatAuto.type = { id: m.id, dur, send: m.send === 'auto', t0: Date.now() };
+    sendMsg(Object.assign({ type: 'chat:type', id: m.id, send: m.send === 'auto' }, dur ? { dur } : {}, _chatTarget()));
+    _chatAutoPhase(m.id, dur ? 'type' : 'actor', dur || 0);
+  }
+  renderChatPanel();
+}
+// Contact posté : la bulle arrive après « … écrit » ; le message suivant attend jusque-là
+function _chatAutoAfterPost(m) {
+  const w = m.write > 0 ? m.write : 0;
+  _chatAutoPhase(m.id, 'write', w);
+  if (_chatAuto.timer) clearTimeout(_chatAuto.timer);
+  _chatAuto.timer = setTimeout(() => { _chatAuto.timer = null; _chatAutoNext(); }, w * 1000 + 50);
+}
+// État et avancée affichés (« en cours · 3 / 4 », barre)
+function _chatAutoInfo() {
+  const valid = _chat.msgs.filter(_chatValid), total = valid.length;
+  const a = _chatAuto, ph = a.phase;
+  // « … écrit » en cours : le message posté n'est pas encore affiché, il reste le message en cours
+  const writing = !!ph && ph.k === 'write' && _chat.sent.includes(ph.id) && a.on;
+  const sent = valid.filter(_chatSent).length - (writing ? 1 : 0);
+  let frac = 0;
+  if (a.on && ph && a.dur > 0 && (ph.k === 'pause' || ph.k === 'type' || ph.k === 'write')) frac = Math.min(1, (Date.now() - a.t0) / (a.dur * 1000)) * (ph.k === 'pause' ? 0.3 : 1);
+  const n = a.done || sent >= total ? total : (a.on || ph ? sent + 1 : sent);
+  const v = { n: Math.min(n, total), total, comedien: _chat.actor || 'Comédien' };
+  let text;
+  if (a.done || (total && sent >= total)) text = _tplChat(_CHAT_TXT.autoDone, v);
+  else if (!a.on) text = _tplChat(ph ? _CHAT_TXT.autoPaused : _CHAT_TXT.autoReady, v);
+  else if (ph && ph.k === 'actor') text = _tplChat(_CHAT_TXT.autoActor, v);
+  else if (ph && ph.k === 'button') text = _tplChat(_CHAT_TXT.autoButton, v);
+  else text = _tplChat(_CHAT_TXT.autoRun, v);
+  const pct = total ? Math.round(Math.min(1, (sent + frac) / total) * 1000) / 10 : 0;
+  return { text, pct, live: a.on };
+}
+function _chatRenderAuto() {
+  const st = document.getElementById('dcAutoState'), fill = document.getElementById('dcAutoFill');
+  const info = _chatAutoInfo();
+  if (st) { st.textContent = info.text; st.classList.toggle('on', info.live); }
+  if (fill) fill.style.width = info.pct + '%';
+  const play = document.getElementById('dcAutoPlay'), pause = document.getElementById('dcAutoPause'), back = document.getElementById('dcAutoBack');
+  if (play) play.disabled = !_chatAuto.on && !_chatNextMsg(); // en cours : reste allumé (maquette 26d), sans effet
+  if (pause) pause.disabled = !_chatAuto.on;
+  if (back) back.disabled = !_chat.sent.length;
 }
 // Resynchronisation (24-resync.js) : écrans de la discussion revenus
 function chatOnScreensResync(ids) {
@@ -15505,7 +16019,8 @@ let _chatView = 'thread';
 function chatShowForm(on) {
   const saved = on && _chatView === 'saved';
   const show = (id, v) => { const el = document.getElementById(id); if (el) el.style.display = v ? '' : 'none'; };
-  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcSendPanel']) show(id, on && !saved);
+  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcAutoPanel', 'dcSendPanel']) show(id, on && !saved);
+  if (!on || saved) show('dcTimingPanel', false);
   show('dcTabs', on);
   show('dcSavedPanel', saved);
   // Le style appartient au fil en cours : masqué sur la liste
@@ -15557,6 +16072,7 @@ function _chatRenderHead() {
   if (cb) cb.disabled = !_chat.open;
   const bk = document.getElementById('dcBackBtn');
   if (bk) bk.disabled = !_chat.sent.length;
+  _chatRenderAuto();
 }
 function _chatProgressText(cur) {
   const p = _chat.progress && _chat.progress.id === cur.id ? _chat.progress : null;
@@ -15578,7 +16094,7 @@ function renderChatPanel() {
   rows.textContent = '';
   _chat.msgs.forEach((m, i) => {
     const row = document.createElement('div');
-    row.className = 'dc-row' + (_chatSent(m) ? ' sent' : '') + (cur && cur.id === m.id ? ' cur' : '') + (m.from === 'actor' ? ' actor' : '') + (_chatEditId === m.id ? ' editing' : '');
+    row.className = 'dc-row' + (_chatSent(m) ? ' sent' : '') + (cur && cur.id === m.id ? ' cur' : '') + (m.from === 'actor' ? ' actor' : '') + (_chatEditId === m.id ? ' editing' : '') + (_chatTimingId === m.id ? ' sel' : '');
     row.dataset.id = m.id;
     row.onclick = () => editChatMessage(m.id);
     const num = document.createElement('span'); num.className = 'dc-num'; num.textContent = String(i + 1);
@@ -15586,7 +16102,10 @@ function renderChatPanel() {
     who.textContent = _tplChat('{nom} ›', { nom: m.from === 'actor' ? (_chat.actor || 'Comédien') : chatContactName() });
     const txt = document.createElement('span'); txt.className = 'dc-text';
     txt.textContent = m.text || '…';
-    row.append(num, who, txt);
+    // Pastille des timings (maquette 26d) : pause · écriture
+    const pill = document.createElement('span'); pill.className = 'dc-pill';
+    pill.textContent = _tplChat(m.from === 'actor' ? (m.auto ? _CHAT_TXT.pillAuto : _CHAT_TXT.pillActor) : _CHAT_TXT.pill, { p: m.pause, w: m.write });
+    row.append(num, who, txt, pill);
     rows.appendChild(row);
     if (cur && cur.id === m.id) {
       const pr = document.createElement('div'); pr.className = 'dc-progress'; pr.id = 'dcProgress';
@@ -15605,6 +16124,7 @@ function renderChatPanel() {
   });
   const add = document.getElementById('dcAdd');
   if (add) add.disabled = _chat.msgs.length >= CHAT_MAX;
+  _chatRenderTiming();
 }
 // Éditeur d'un message : côté, texte, supprimer
 function _chatEditor(m) {
@@ -15632,6 +16152,44 @@ function _chatEditor(m) {
   ok.onclick = () => closeChatEditor();
   act.append(res, del, ok);
   box.append(seg, ta, act);
+  return box;
+}
+// Carte des timings du message touché (maquette 26d), sous le fil
+function _chatRenderTiming() {
+  const panel = document.getElementById('dcTimingPanel');
+  if (!panel) return;
+  const m = _chat.msgs.find((x) => x.id === _chatTimingId);
+  panel.textContent = '';
+  panel.style.display = m && callKind === 'discussion' && _chatView === 'thread' ? '' : 'none';
+  if (m) panel.appendChild(_chatTimingEditor(m));
+}
+// Timings du message (maquette 26d) : pause avant, écriture, envoi
+function _chatTimingEditor(m) {
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+  const box = el('div', 'dc-timing');
+  const i = _chat.msgs.indexOf(m) + 1;
+  const head = el('div', 'dc-timing-head');
+  head.append(el('span', 'dc-tlabel', _tplChat(_CHAT_TXT.timingHead, { n: i, nom: m.from === 'actor' ? (_chat.actor || 'Comédien') : chatContactName() })),
+    el('span', 'dc-timing-quote', '« ' + (m.text || '…') + ' »'));
+  const stepper = (label, val, k) => {
+    const r = el('div', 'dc-tstep');
+    const minus = el('button', 'dc-tbtn', '−'), plus = el('button', 'dc-tbtn', '+');
+    minus.type = plus.type = 'button'; minus.setAttribute('aria-label', label + ' −'); plus.setAttribute('aria-label', label + ' +');
+    minus.onclick = () => setChatTiming(m.id, k, -1); plus.onclick = () => setChatTiming(m.id, k, 1);
+    r.append(el('span', '', label), minus, el('b', 'dc-tval', _tplChat(_CHAT_TXT.seconds, { n: val })), plus);
+    return r;
+  };
+  const opts = (items) => {
+    const r = el('div', 'ss-row');
+    for (const [on, label, fn] of items) { const b = el('button', 'ss-opt' + (on ? ' on' : ''), label); b.type = 'button'; b.onclick = fn; r.appendChild(b); }
+    return r;
+  };
+  box.append(head, stepper(_CHAT_TXT.pause, m.pause, 'pause'), el('span', 'dc-tlabel', _CHAT_TXT.writeLabel));
+  if (m.from === 'actor') box.appendChild(opts([[!m.auto, _CHAT_TXT.writeActor, () => setChatTiming(m.id, 'auto', false)], [m.auto, _CHAT_TXT.writeAuto, () => setChatTiming(m.id, 'auto', true)]]));
+  if (m.from === 'contact' || m.auto) box.appendChild(stepper(_CHAT_TXT.writeDur, m.write, 'write'));
+  box.append(el('span', 'dc-tlabel', _CHAT_TXT.sendLabel),
+    opts([[m.send === 'auto', _CHAT_TXT.sendAuto, () => setChatTiming(m.id, 'send', 'auto')], [m.send !== 'auto', _CHAT_TXT.sendButton, () => setChatTiming(m.id, 'send', 'button')]]),
+    el('div', 'dc-timing-note', _CHAT_TXT.timingNote));
   return box;
 }
 
@@ -15735,10 +16293,13 @@ function screenChatOpen(m) {
   _sccStopQueue();
   if (hist) _sccAnim.clear();
   for (const k of [..._scChatMsgs.keys()]) if (!m.ids.includes(k)) _scChatMsgs.delete(k);
+  _sccAutoStop();
   _scChat = {
     name: String(m.name || '').slice(0, 40), style: ['glass', 'tonal', 'minimal'].includes(m.style) ? m.style : 'minimal',
     hasAvatar: !!m.hasAvatar, ids: m.ids.slice(), sent: m.sent.filter((id) => m.ids.includes(id)), typed: 0, curId: null,
     instant: hist || !!(prev && prev.instant), // pas de fondu d'entrée (gardé : le retirer le rejouerait)
+    pend: Array.isArray(m.pend) ? m.pend.filter((id) => m.sent.includes(id)) : [], // « Non distribué » (maquette 34)
+    auto: null,                                                                      // lecture auto : { id, dur, send, t0 }
   };
   // Même message en cours sans rechargement : la frappe locale fait foi (sauf reprise)
   const cur = _sccCur();
@@ -15750,6 +16311,8 @@ function screenChatOpen(m) {
     if (hist && prev && prev.curId === cur.id && prev.typed) _sccProgress();
   }
   _sccRender(!prev);
+  // Frappe automatique en cours (lecture auto, reprise) : repart où elle en était
+  if (m.auto && cur && cur.id === m.auto.id) screenChatType(m.auto, m.auto.el || 0);
 }
 // « ↶ » : retire un message affiché (ou encore derrière « … écrit ») ; drop :
 // message improvisé, retiré du fil. Un message du comédien se retape.
@@ -15769,7 +16332,8 @@ function screenChatRewind(m) {
     changed = true;
   }
   const i = c.sent.indexOf(m.id);
-  if (i >= 0) { c.sent.splice(i, 1); changed = true; }
+  if (i >= 0) { c.sent.splice(i, 1); c.pend = c.pend.filter((x) => x !== m.id); changed = true; }
+  if (changed) _sccAutoStop();
   if (m.drop && c.ids.includes(m.id)) { c.ids = c.ids.filter((x) => x !== m.id); _scChatMsgs.delete(m.id); changed = true; }
   if (!changed) return;
   // Message du comédien en cours changé : sa frappe repart de zéro
@@ -15784,10 +16348,12 @@ function screenChatPost(m) {
   if (!c || !msg || msg.from !== 'contact' || !c.ids.includes(m.id) || c.sent.includes(m.id) || _sccQueue.includes(m.id)) return;
   _sccQueue.push(m.id);
   if (!m.typing) _sccQueueTyping.add(m.id);
+  else if (m.dur) _sccQueueDur.set(m.id, m.dur * 1000); // lecture auto : durée d'écriture du message
   if (!_sccTypingTimer) _sccNextPost();
   else _sccRender();
 }
 const _sccQueueTyping = new Set(); // messages postés sans indicateur
+const _sccQueueDur = new Map();    // durée de « … écrit » propre au message (lecture auto)
 function _sccNextPost() {
   _sccTypingTimer = null;
   const c = _scChat;
@@ -15796,6 +16362,7 @@ function _sccNextPost() {
   const post = () => {
     _sccQueue.shift();
     _sccQueueTyping.delete(id);
+    _sccQueueDur.delete(id);
     _sccTypingOn = false;
     if (!c.sent.includes(id)) { c.sent.push(id); _sccAnim.add(id); }
     _sccRender();
@@ -15804,14 +16371,44 @@ function _sccNextPost() {
   if (_sccQueueTyping.has(id)) { post(); return; }
   _sccTypingOn = true;
   _sccRender();
-  _sccTypingTimer = setTimeout(post, CHAT_TYPING_MS);
+  _sccTypingTimer = setTimeout(post, _sccQueueDur.get(id) || CHAT_TYPING_MS);
 }
 function _sccStopQueue() {
   if (_sccTypingTimer) clearTimeout(_sccTypingTimer);
-  _sccTypingTimer = null; _sccTypingOn = false; _sccQueue = []; _sccQueueTyping.clear();
+  _sccTypingTimer = null; _sccTypingOn = false; _sccQueue = []; _sccQueueTyping.clear(); _sccQueueDur.clear();
+}
+// Lecture auto (chat:type) : le texte du comédien s'écrit tout seul en dur s
+// (sinon il le tape), puis part tout seul une fois complet si send
+let _sccAutoTimer = null;
+function screenChatType(m, el) {
+  const c = _scChat, cur = _sccCur();
+  if (!c || !cur || cur.id !== m.id) return;
+  _sccAutoStop();
+  c.auto = { id: m.id, dur: m.dur ? m.dur * 1000 : 0, send: !!m.send, t0: Date.now() - (el || 0) };
+  if (c.curId !== cur.id) { c.curId = cur.id; c.typed = 0; }
+  if (c.auto.dur) _sccAutoTimer = setInterval(_sccAutoTick, 60);
+  _sccAutoTick();
+}
+function _sccAutoTick() {
+  const c = _scChat, a = c && c.auto, cur = _sccCur();
+  if (!a || !cur || cur.id !== a.id) { _sccAutoStop(); return; }
+  const total = _chatLen(cur.text);
+  if (a.dur) {
+    const n = Math.min(total, Math.floor(total * Math.min(1, (Date.now() - a.t0) / a.dur)));
+    if (n > c.typed) { c.typed = n; _sccRenderCompose(); _sccProgress(); }
+  }
+  if (c.typed >= total) {
+    if (_sccAutoTimer) { clearInterval(_sccAutoTimer); _sccAutoTimer = null; }
+    if (a.send) { c.auto = null; screenChatSend(); }
+  }
+}
+function _sccAutoStop() {
+  if (_sccAutoTimer) { clearInterval(_sccAutoTimer); _sccAutoTimer = null; }
+  if (_scChat) _scChat.auto = null;
 }
 function screenChatClose() { screenChatHide(); }
 function screenChatHide() {
+  _sccAutoStop();
   _sccStopQueue();
   if (_sccProgTimer) { clearTimeout(_sccProgTimer); _sccProgTimer = null; }
   _scChat = null;
@@ -15835,6 +16432,8 @@ function screenChatKey(d) {
   c.typed = n;
   _sccRenderCompose();
   _sccProgress();
+  // Lecture auto, « Envoi automatique » : complet, il part tout seul
+  if (c.auto && c.auto.id === cur.id && !c.auto.dur) _sccAutoTick();
 }
 function screenChatSend() {
   const c = _scChat, cur = _sccCur();
@@ -15842,8 +16441,12 @@ function screenChatSend() {
   c.sent.push(cur.id);
   _sccAnim.add(cur.id);
   c.typed = 0; c.curId = null;
+  _sccAutoStop();
   if (_sccProgTimer) { clearTimeout(_sccProgTimer); _sccProgTimer = null; }
-  sendMsg({ type: 'chat:sent', id: cur.id });
+  // Sans réseau (barre d'état de la séquence, 97-phone-status.js) : non distribué
+  const und = screenPhoneNoNetwork();
+  if (und) c.pend.push(cur.id);
+  sendMsg(Object.assign({ type: 'chat:sent', id: cur.id }, und ? { undelivered: true } : {}));
   _sccRender();
 }
 // Progression vers la télécommande : au plus une fois par CHAT_PROGRESS_MS (dernière valeur gardée)
@@ -15915,6 +16518,7 @@ function _sccRender(first) {
     if (!m) continue;
     const b = _sccEl('div', 'scc-b ' + (m.from === 'actor' ? 'out' : 'in') + (_sccAnim.has(id) ? ' scc-new' : ''), m.text);
     list.appendChild(b);
+    if (c.pend.includes(id)) list.appendChild(_sccEl('div', 'scc-und', _CHAT_TXT.undelivered)); // point rouge (maquette 34)
   }
   _sccAnim.clear();
   if (_sccTypingOn) {
@@ -17372,7 +17976,10 @@ handleLaunchHash();
 // Maquette validée 26c. Deux sous-onglets dans « Discussion » : « Fil en
 // cours » (83-discussion.js) et « Enregistrées (n) ». Une discussion
 // enregistrée garde son nom, le contact (nom, photo), le comédien, le style
-// et tous les messages ; PAS le point de reprise (ni ce qui est posté).
+// et tous les messages avec leurs timings (maquette 26d : pause avant,
+// écriture, envoi) ; PAS le point de reprise (ni ce qui est posté).
+// Migration : une discussion enregistrée avant les timings les reçoit par
+// défaut (pause 0 s, le comédien tape, envoi au bouton) : rien ne change.
 //   • « + Enregistrer le fil en cours » : demande un nom, ajoute en fin de liste.
 //   • Toucher une ligne : la charge dans « Fil en cours » (confirmation si le
 //     fil en cours a des modifications non enregistrées). Ouverte sur un
@@ -17431,7 +18038,7 @@ function _chsvSanitize(e) {
   const seen = new Set();
   const msgs = e.msgs.filter((x) => x && typeof x.id === 'string' && SRP.CHAT_ID_RE.test(x.id) && !seen.has(x.id) && seen.add(x.id)
     && (x.from === 'contact' || x.from === 'actor') && typeof x.text === 'string' && x.text.trim())
-    .slice(0, CHAT_MAX).map((x) => ({ id: x.id, from: x.from, text: x.text.slice(0, CHAT_TEXT_MAX) }));
+    .slice(0, CHAT_MAX).map((x) => Object.assign({ id: x.id, from: x.from, text: x.text.slice(0, CHAT_TEXT_MAX) }, chatTiming(x, x.from)));
   const photoSig = e.hasPhoto === true && typeof e.photoSig === 'string' && _CHSV_SIG_RE.test(e.photoSig) ? e.photoSig : null;
   return {
     id: e.id,
@@ -17454,7 +18061,7 @@ function loadSavedChats() {
 }
 // false : mémoire pleine (rien n'est changé dans le stockage)
 function _chsvPersist() {
-  try { localStorage.setItem(CHAT_SAVED_KEY, JSON.stringify({ v: 1, list: chatSaved })); return true; } catch (_) { return false; }
+  try { localStorage.setItem(CHAT_SAVED_KEY, JSON.stringify({ v: 2, list: chatSaved })); return true; } catch (_) { return false; }
 }
 const _chsvNewId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -17463,11 +18070,11 @@ const _chsvNewId = () => 'c' + Date.now().toString(36) + Math.random().toString(
 function _chsvSnapshot() {
   return {
     contact: _chat.name.slice(0, 40), actor: _chat.actor.slice(0, 40), style: _chat.style,
-    msgs: _chat.msgs.filter(_chatValid).slice(0, CHAT_MAX).map((m) => ({ id: m.id, from: m.from, text: m.text.slice(0, CHAT_TEXT_MAX) })),
+    msgs: _chat.msgs.filter(_chatValid).slice(0, CHAT_MAX).map((m) => Object.assign(chatMsgCopy(m), { text: m.text.slice(0, CHAT_TEXT_MAX) })),
     hasPhoto: !!_chatAvatar, photoSig: _chsvPhotoSig(_chatAvatar),
   };
 }
-const _chsvSig = (e) => JSON.stringify([e.contact, e.actor, e.style, e.msgs.map((m) => [m.from, m.text]), e.photoSig || null]);
+const _chsvSig = (e) => JSON.stringify([e.contact, e.actor, e.style, e.msgs.map((m) => { const t = chatTiming(m, m.from); return [m.from, m.text, t.pause, t.write, t.auto, t.send]; }), e.photoSig || null]);
 // Modifications non enregistrées : différent de l'entrée d'origine ; sans
 // entrée, tout fil non vide différent du fil d'exemple
 function chatHasUnsavedChanges() {
@@ -17508,8 +18115,9 @@ async function loadSavedChat(id) {
   const photo = e.hasPhoto ? safeImageData(await callAssetGet(_chsvPhotoKey(e.id))) : null;
   if (seq !== _chsvLoadSeq) return false; // une autre entrée touchée entre-temps
   _chat.name = e.contact; _chat.actor = e.actor; _chat.style = e.style;
-  _chat.msgs = e.msgs.map((m) => ({ id: m.id, from: m.from, text: m.text }));
-  _chat.sent = []; _chat.progress = null; _chat.resumeAt = null;
+  chatAutoStop();
+  _chat.msgs = e.msgs.map((m) => chatMsgCopy(m));
+  _chat.sent = []; _chat.pend = []; _chat.progress = null; _chat.resumeAt = null;
   _chat.savedId = e.id;
   _chatEditId = null;
   _chatAvatar = photo;
@@ -17540,7 +18148,7 @@ async function duplicateSavedChat(id) {
   const i = chatSaved.findIndex((x) => x.id === id);
   if (i < 0 || chatSaved.length >= CHAT_SAVED_MAX) return null;
   const src = chatSaved[i];
-  const e = Object.assign({}, src, { id: _chsvNewId(), name: _tplChat(_CHSV_TXT.copy, { nom: src.name }).slice(0, CHAT_SAVED_NAME_MAX), msgs: src.msgs.map((m) => Object.assign({}, m)) });
+  const e = Object.assign({}, src, { id: _chsvNewId(), name: _tplChat(_CHSV_TXT.copy, { nom: src.name }).slice(0, CHAT_SAVED_NAME_MAX), msgs: src.msgs.map((m) => chatMsgCopy(m)) });
   const photo = src.hasPhoto ? await callAssetGet(_chsvPhotoKey(src.id)) : null;
   if (photo) await callAssetPut(_chsvPhotoKey(e.id), photo);
   else { e.hasPhoto = false; e.photoSig = null; }
@@ -17737,7 +18345,20 @@ async function installPWA() {
 //   l'onglet Tel), Appel manqué (notification empilée sur l'écran verrouillé,
 //   pour un appel enregistré), Déverrouillage (code 4 ou 6 chiffres, ou
 //   glisser seul ; ensuite l'app visée ou une image d'écran d'accueil),
-//   Discussion (discussion enregistrée).
+//   Discussion (discussion enregistrée ; option « Lecture auto », 83-discussion.js),
+//   Veille (maquette 29b : écran noir verrouillé qui se rallume aux
+//   notifications / appels et/ou au toucher, se rendort après N s),
+//   Batterie faible et Extinction (maquette 33), Réseau perdu / rétabli (34).
+// « Téléphone au départ » (maquette 28b, 98-phone-params.js) : barre d'état
+// propre à la séquence (heure qui avance / figée / réelle, réseau, Wi-Fi,
+// batterie), enregistrée avec elle, affichée partout sur les écrans visés du
+// premier GO à « Recommencer » (STOP compris : rien ne s'éteint) ; elle prime
+// sur la barre de l'onglet Média. Les étapes Batterie faible / Réseau /
+// Extinction la font évoluer ; ↶ rend les valeurs d'avant.
+// Sans réseau : un appel devient « Appel impossible », un message du comédien
+// reste « Non distribué » (notification « Message non envoyé ») jusqu'au
+// retour du réseau, qui le distribue. Téléphone éteint : il ne reçoit plus
+// d'appel ni de son ; une étape « Veille » plus loin (ou ↶) le rallume.
 // Chaque étape RÉFÉRENCE l'élément enregistré (son id), jamais une copie :
 // modifié dans son onglet, il est joué tel quel ; supprimé, l'étape affiche
 // « élément introuvable » et elle est sautée avec un avertissement.
@@ -17767,14 +18388,16 @@ const _SEQ_TXT = {
   all: 'Tous',
   missing: 'élément introuvable',
   noScreen: 'aucun écran',
-  empty: 'Aucune étape. « + ÉTAPE » ajoute la première : couleur, effet, média, appel, SMS, notification, déverrouillage, discussion.',
+  empty: 'Aucune étape. « + ÉTAPE » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.',
   kind: {
     color: 'Couleur', effect: 'Effet', media: 'Média', call: 'Appel', sms: 'SMS', notif: 'Notif',
     missed: 'Manqué', unlock: 'Déverrouil.', chat: 'Discussion',
+    sleep: 'Veille', battery: 'Batterie', off: 'Extinction', net: 'Réseau',
   },
   kindLong: {
     color: 'Couleur', effect: 'Effet', media: 'Média', call: 'Appel entrant', sms: 'SMS', notif: 'Notification',
     missed: 'Appel manqué', unlock: 'Déverrouillage', chat: 'Discussion',
+    sleep: 'Veille', battery: 'Batterie faible', off: 'Extinction', net: 'Réseau',
   },
   rowColor: 'Couleur {spec} ({nom})',
   rowEffect: 'Effet {nom}',
@@ -17790,6 +18413,13 @@ const _SEQ_TXT = {
   rowUnlock0: 'Déverrouillage par glissement',
   rowChat: 'Discussion « {nom} »',
   rowChatReply: 'Discussion « {nom} » → réponse',
+  rowChatAuto: ' · lecture auto',
+  rowSleep: 'Veille (écran noir)',
+  rowBattery: 'Batterie faible {n} %',
+  rowOff: 'Extinction du téléphone',
+  rowNetLost: 'Réseau perdu (pas de service)',
+  rowNetBack: 'Réseau rétabli ({barres} {type})',
+  phoneRow: 'Téléphone au départ',
   rowTargetSuffix: ' ({cible})',
   trigGo: 'GO',
   trigAfter: 'après {n} s',
@@ -17854,6 +18484,26 @@ const _SEQ_TXT = {
   full: 'Séquence pleine ({max} étapes).',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   missedApp: 'Téléphone', missedTitle: 'Appel manqué', smsApp: 'SMS',
+  // Pas de réseau (maquette 34)
+  noCallTitle: 'Appel impossible', noCallMsg: 'Aucun réseau disponible.',
+  unsentTitle: 'Message non envoyé', unsentMsg: '« {texte} » — Toucher pour réessayer',
+  // Éditeur : veille (maquette 29b), batterie faible, extinction, réseau, lecture auto
+  labelSleep: 'Téléphone en veille',
+  sleepText: 'Écran noir, verrouillé. Rien ne s\'affiche tant que rien n\'arrive.',
+  labelWake: 'Se rallume', wakeNotif: 'à chaque notif / appel', wakeTouch: 'au toucher',
+  labelResleep: 'Se rendort après',
+  sleepNote: 'Allumage et extinction en fondu, comme un vrai téléphone. Le déverrouillage le réveille définitivement.',
+  labelBattery: 'Batterie faible',
+  batteryText: 'Alerte « Batterie faible » à fermer, icône de batterie rouge ; la batterie affichée descend à ce niveau.',
+  labelLevel: 'Niveau', percent: '{n} %',
+  labelOff: 'Extinction',
+  offText: 'Fondu, logo neutre, écran noir : le téléphone ne répond plus à rien (ni appel, ni son, ni toucher).',
+  offNote: 'Rallumer : une étape « Veille » plus loin (logo, puis écran verrouillé endormi) ou ↶.',
+  labelNet: 'Réseau', netLost: 'Perdu', netBack: 'Rétabli',
+  labelBars: 'Barres', labelNetType: 'Réseau mobile', labelWifi: 'Wi-Fi', yes: 'Oui', no: 'Non',
+  netLostNote: '« Pas de service » dans la barre d\'état : un appel devient « Appel impossible », un message du comédien reste « Non distribué ».',
+  netBackNote: 'Les messages restés « Non distribué » partent.',
+  labelPlay: 'Lecture', playManual: 'Manuelle', playAuto: '▶ Lecture auto',
 };
 const _seqTpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
 
@@ -17861,10 +18511,15 @@ const SEQ_LS_KEY = 'setremote-seq-v1';
 const SEQ_STEPS_MAX = 60;
 const SEQ_NAME_MAX = 40;
 const SEQ_DELAY_MAX = 600;  // s
-const SEQ_KINDS = ['color', 'effect', 'media', 'call', 'sms', 'notif', 'missed', 'unlock', 'chat'];
-const SEQ_PHONE_KINDS = new Set(['call', 'sms', 'notif', 'missed', 'unlock', 'chat']);
+const SEQ_KINDS = ['color', 'effect', 'media', 'call', 'sms', 'notif', 'missed', 'unlock', 'chat', 'sleep', 'battery', 'off', 'net'];
+const SEQ_PHONE_KINDS = new Set(['call', 'sms', 'notif', 'missed', 'unlock', 'chat', 'sleep', 'battery', 'off', 'net']);
+// Étapes sans élément enregistré : leurs réglages sont dans l'étape (opt)
+const SEQ_OPT_KINDS = new Set(['unlock', 'sleep', 'battery', 'off', 'net']);
+// Grille des types (maquette 29b) : 3, 3, 4 puis les étapes du téléphone
+const SEQ_KIND_ROWS = [['color', 'effect', 'media'], ['call', 'sms', 'notif'], ['sleep', 'missed', 'unlock', 'chat'], ['battery', 'off', 'net']];
+const SEQ_SLEEP_DEF = 8, SEQ_BATTERY_DEF = 5;
 const SEQ_GESTURES = ['touch', 'notif', 'hangup', 'answer', 'unlock', 'chat', 'home'];
-const SEQ_ICONS = { color: '🎨', effect: '✨', media: '🎞', call: '📞', sms: '✉️', notif: '🔔', missed: '📵', unlock: '🔓', chat: '💬' };
+const SEQ_ICONS = { color: '🎨', effect: '✨', media: '🎞', call: '📞', sms: '✉️', notif: '🔔', missed: '📵', unlock: '🔓', chat: '💬', sleep: '😴', battery: '🔋', off: '📴', net: '📶' };
 const _SEQ_ID_RE = /^[A-Za-z0-9_-]{1,40}$/;
 const _SEQ_SIG_RE = /^[0-9a-f]{8}-\d{1,9}$/;
 
@@ -17872,9 +18527,14 @@ const _SEQ_SIG_RE = /^[0-9a-f]{8}-\d{1,9}$/;
 // Étape : { id, kind, ref (id de l'élément ; média : { id, name, kind }),
 //   target ({ k: 'all' } | { k: 'group', id } | { k: 'screen', id }),
 //   trig ({ k: 'go' } | { k: 'after', s } | { k: 'gesture', g, t (secours, 0 = aucun) }),
-//   opt (média : { end } ; déverrouillage : { code: 4 | 6 | 0, then: 'app' | 'home', img, imgName }) }
+//   opt (média : { end } ; déverrouillage : { code: 4 | 6 | 0, then: 'app' | 'home', img, imgName } ;
+//        discussion : { auto } ; veille : { notif, touch, after } ; batterie : { level } ;
+//        réseau : { lost, bars, type, wifi }) }
+// Séquence : { name, steps, savedId, phone (« Téléphone au départ », 97-phone-status.js) }
 let _seq = _seqEmpty();
-function _seqEmpty() { return { name: '', steps: [], savedId: null }; }
+function _seqEmpty() { return { name: '', steps: [], savedId: null, phone: phoneBarDefaults() }; }
+// Réglages « Téléphone au départ » (complétés si la séquence n'en a pas)
+function seqPhoneCfg() { if (!_seq.phone) _seq.phone = phoneBarDefaults(); return _seq.phone; }
 let _seqIdN = 0;
 const _seqNewId = () => 's' + Date.now().toString(36).slice(-6) + (++_seqIdN).toString(36);
 const _seqLine = (v, max) => (typeof v === 'string' ? v.replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, max) : '');
@@ -17908,9 +18568,19 @@ function seqSanitizeStep(s) {
       code: [0, 4, 6].includes(o.code) ? o.code : 4, then: o.then === 'home' ? 'home' : 'app',
       img: typeof o.img === 'string' && _SEQ_SIG_RE.test(o.img) ? o.img : null, imgName: _seqLine(o.imgName, 60),
     };
-  } else if (typeof s.ref === 'string' && _SEQ_ID_RE.test(s.ref)) out.ref = s.ref;
+  } else if (s.kind === 'sleep') {
+    const o = s.opt || {};
+    out.opt = { notif: o.notif !== false, touch: o.touch !== false, after: _seqClampInt(o.after, 1, PROTO.PHONE_SLEEP_MAX, SEQ_SLEEP_DEF) };
+  } else if (s.kind === 'battery') {
+    out.opt = { level: _seqClampInt((s.opt || {}).level, 1, 100, SEQ_BATTERY_DEF) };
+  } else if (s.kind === 'net') {
+    const o = s.opt || {};
+    out.opt = { lost: o.lost !== false, bars: _seqClampInt(o.bars, 1, 4, 4), type: PB_NET_TYPES.includes(o.type) ? o.type : PB_NET_TYPES[1], wifi: o.wifi !== false };
+  } else if (s.kind !== 'off' && typeof s.ref === 'string' && _SEQ_ID_RE.test(s.ref)) out.ref = s.ref;
+  if (s.kind === 'chat') out.opt = { auto: !!(s.opt && s.opt.auto === true) };
   return out;
 }
+function _seqClampInt(v, min, max, def) { const n = Math.round(Number(v)); return Number.isFinite(n) && v !== null && v !== undefined ? Math.min(max, Math.max(min, n)) : def; }
 function seqSanitizeSteps(list) {
   const ids = new Set();
   return (Array.isArray(list) ? list : []).map(seqSanitizeStep).filter((s) => s && !ids.has(s.id) && ids.add(s.id)).slice(0, SEQ_STEPS_MAX);
@@ -17923,10 +18593,11 @@ function seqLoad() {
     _seq.name = _seqLine(o.name, SEQ_NAME_MAX);
     _seq.steps = seqSanitizeSteps(o.steps);
     _seq.savedId = typeof o.savedId === 'string' && _SEQ_ID_RE.test(o.savedId) ? o.savedId : null;
+    _seq.phone = phoneBarSanitize(o.phone);
   }
 }
 function seqSave() {
-  try { localStorage.setItem(SEQ_LS_KEY, JSON.stringify({ v: 1, name: _seq.name, steps: _seq.steps, savedId: _seq.savedId })); return true; } catch (_) { return false; }
+  try { localStorage.setItem(SEQ_LS_KEY, JSON.stringify({ v: 1, name: _seq.name, steps: _seq.steps, savedId: _seq.savedId, phone: seqPhoneCfg() })); return true; } catch (_) { return false; }
 }
 
 // ── Éléments référencés ──
@@ -17944,7 +18615,7 @@ function seqRefItem(s) {
     case 'sms': return callList.sms.find((e) => e.id === s.ref) || null;
     case 'notif': return callList.notif.find((e) => e.id === s.ref) || null;
     case 'chat': return chatSaved.find((e) => e.id === s.ref) || null;
-    case 'unlock': return s.opt;
+    case 'unlock': case 'sleep': case 'battery': case 'off': case 'net': return s.opt;
   }
   return null;
 }
@@ -17970,7 +18641,11 @@ function seqStepLabel(s) {
     case 'notif': t = _seqTpl(_seqNotifLock(it) ? _SEQ_TXT.rowNotifLock : _SEQ_TXT.rowNotif, { nom: it.name || it.appName || '' }); break;
     case 'missed': t = _SEQ_TXT.rowMissed; break;
     case 'unlock': t = _SEQ_TXT['rowUnlock' + it.code]; break;
-    case 'chat': t = _seqTpl(it.msgs.some((m) => m.from === 'actor') ? _SEQ_TXT.rowChatReply : _SEQ_TXT.rowChat, { nom: it.contact || it.name }); break;
+    case 'chat': t = _seqTpl(it.msgs.some((m) => m.from === 'actor') ? _SEQ_TXT.rowChatReply : _SEQ_TXT.rowChat, { nom: it.contact || it.name }) + (s.opt.auto ? _SEQ_TXT.rowChatAuto : ''); break;
+    case 'sleep': t = _SEQ_TXT.rowSleep; break;
+    case 'battery': t = _seqTpl(_SEQ_TXT.rowBattery, { n: it.level }); break;
+    case 'off': t = _SEQ_TXT.rowOff; break;
+    case 'net': t = it.lost ? _SEQ_TXT.rowNetLost : _seqTpl(_SEQ_TXT.rowNetBack, { barres: '▂▄▆█'.slice(0, it.bars), type: it.type }); break;
   }
   const main = seqMainTarget();
   if (main && !_seqSameTarget(main, s.target)) t += _seqTpl(_SEQ_TXT.rowTargetSuffix, { cible: seqTargetName(s.target) });
@@ -18025,7 +18700,8 @@ function seqGestureIds(i) {
 // ── Déroulé ──
 // state : idle (pas commencé) · running · stopped · ended (plus d'étape)
 // noAuto : après ↶, pas de minuterie (GO ou le geste attendu repartent)
-const _seqRun = { state: 'idle', curId: null, started: new Map(), undo: new Map(), timer: null, tick: null, warn: '', noAuto: false };
+// clockT0 : départ de l'horloge du téléphone (premier GO), pour « L'heure avance »
+const _seqRun = { state: 'idle', curId: null, started: new Map(), undo: new Map(), timer: null, tick: null, warn: '', noAuto: false, clockT0: null };
 let _seqChain = Promise.resolve();
 function seqPos() { return _seqRun.curId ? _seq.steps.findIndex((s) => s.id === _seqRun.curId) : -1; }
 function seqPending() { return _seq.steps[seqPos() + 1] || null; }
@@ -18045,6 +18721,7 @@ function seqFlashRisk() {
 function seqGo(acked) {
   if (_seqRun.state === 'ended' || !seqPending()) return;
   if (_seqRun.state === 'idle' && !acked && seqFlashRisk()) { openFlashWarning(() => seqGo(true)); return; }
+  if (_seqRun.state === 'idle') _seqRun.clockT0 = Date.now(); // l'horloge du téléphone part au premier GO
   _seqRun.state = 'running';
   _seqStartNext();
 }
@@ -18109,7 +18786,15 @@ function remoteOnPhoneGesture(m) {
       p.mode = cfg && cfg.then === 'home' ? 'home' : 'unlocked';
       if (p.mode === 'home') p.home = cfg.img || null;
       p.awaitUnlock = null;
+      p.sleep = null; // déverrouillé : réveillé pour de bon (maquette 29b)
     }
+  }
+  // Alerte « Batterie faible » fermée sur l'écran : elle ne revient pas
+  if (m.g === 'dismiss') {
+    const p = sid && _seqPhones.get(sid);
+    if (p) p.alert = null;
+    _seqQueue(() => _seqPushPhones());
+    return;
   }
   seqOnGesture(m.g, sid);
   _seqQueue(() => _seqPushPhones());
@@ -18148,8 +18833,8 @@ function seqRestart() {
   _seqClearTimer();
   const calls = new Set(), chat = [..._seqRun.undo.values()].some((u) => u.chat);
   for (const u of _seqRun.undo.values()) for (const id of u.callIds || []) calls.add(id);
-  _seqRun.state = 'idle'; _seqRun.curId = null; _seqRun.started.clear(); _seqRun.undo.clear(); _seqRun.warn = '';
-  for (const p of _seqPhones.values()) { p.mode = 'off'; p.notifs = []; p.home = null; p.awaitUnlock = null; }
+  _seqRun.state = 'idle'; _seqRun.curId = null; _seqRun.started.clear(); _seqRun.undo.clear(); _seqRun.warn = ''; _seqRun.clockT0 = null;
+  for (const p of _seqPhones.values()) Object.assign(p, _seqPhoneBlank(p.style));
   renderSeq();
   _seqQueue(async () => {
     const live = [...calls].filter((id) => scrKnown(id) && scrState(id).call);
@@ -18157,6 +18842,7 @@ function seqRestart() {
     if (chat && _chat.open) closeChat();
     await _seqPushPhones();
     _seqPhones.clear();
+    renderSeq();
   });
 }
 // Halte quand la télécommande quitte la session (30-navigation.js)
@@ -18188,6 +18874,9 @@ async function _seqExec(s, it, ids) {
   const t = _seqTarget(ids);
   const u = { looks: null, phones: _seqSnapPhones(ids), callIds: null, banner: null, chat: false };
   _seqRun.undo.set(s.id, u);
+  // Écrans de l'étape : la barre d'état de la séquence s'y affiche désormais
+  for (const id of ids) _seqPhone(id);
+  const on = (id) => _seqPhones.get(id).power !== 'off';
   switch (s.kind) {
     case 'color': {
       u.looks = _seqSnapLooks(ids);
@@ -18209,25 +18898,42 @@ async function _seqExec(s, it, ids) {
       mediaShowOn(it, ids);
       _seqRefreshView(ids);
       break;
-    case 'call':
-      u.callIds = ids;
-      await sendCallEntry(it, [t]);
+    case 'call': {
+      // Téléphone éteint : l'appel n'arrive pas ; sans réseau : « Appel impossible » (maquette 34)
+      const ring = [], fail = [], failBanner = [];
+      for (const id of ids) {
+        const p = _seqPhones.get(id);
+        if (!on(id)) continue;
+        if (phoneBarNoNetwork(p.bar)) (p.mode === 'unlocked' || p.mode === 'home' ? failBanner : fail).push(id);
+        else ring.push(id);
+      }
+      if (fail.length) _seqStack(fail, { kind: 'missed', app: _SEQ_TXT.missedApp, name: _SEQ_TXT.noCallTitle, msg: _SEQ_TXT.noCallMsg, color: null, style: it.style }, null);
+      if (failBanner.length) {
+        u.banner = failBanner;
+        sendMsg({ type: 'call:start', kind: 'notif', style: _CALL_STYLE_HINTS[it.style] ? it.style : 'glass', appName: _SEQ_TXT.missedApp, name: _SEQ_TXT.noCallTitle, msg: _SEQ_TXT.noCallMsg,
+          ring: 'silent', present: 'banner', received: { mode: 'now' }, target: _seqTarget(failBanner) });
+      }
+      if (ring.length) { u.callIds = ring; await sendCallEntry(it, [_seqTarget(ring)]); }
       break;
+    }
     case 'sms': case 'notif': {
-      const stack = [], banner = [];
+      const stack = [], banner = [], silent = [];
       const lockEntry = s.kind === 'sms' ? _seqSmsLock(it) : _seqNotifLock(it);
       for (const id of ids) {
         const p = _seqPhones.get(id);
         const mode = p ? p.mode : 'off';
-        if (mode === 'locked' || mode === 'code' || (mode === 'off' && lockEntry)) stack.push(id); else banner.push(id);
+        if (!on(id)) silent.push(id); // éteint : gardée pour le rallumage, sans son
+        else if (mode === 'locked' || mode === 'code' || (mode === 'off' && lockEntry)) stack.push(id); else banner.push(id);
       }
+      const card = {
+        kind: s.kind, app: _seqLine(it.appName, 24) || (s.kind === 'sms' ? _SEQ_TXT.smsApp : ''), name: _seqLine(it.name, 40), msg: String(it.msg || '').slice(0, 200),
+        color: null, style: it.style,
+      };
+      if (silent.length) _seqStack(silent, card, null);
       if (stack.length) {
         const f = ringMsgFields(it.ringId || it.ring, it.ringVolume);
         if (f.ringId) await ensureCallAssets(null, null, [f.ringId], stack);
-        _seqStack(stack, {
-          kind: s.kind, app: _seqLine(it.appName, 24) || (s.kind === 'sms' ? _SEQ_TXT.smsApp : ''), name: _seqLine(it.name, 40), msg: String(it.msg || '').slice(0, 200),
-          color: null, style: it.style,
-        }, { ring: f.ring, ringId: f.ringId || null, vol: f.ringVolume === undefined ? 1 : f.ringVolume });
+        _seqStack(stack, card, { ring: f.ring, ringId: f.ringId || null, vol: f.ringVolume === undefined ? 1 : f.ringVolume });
       }
       if (banner.length) {
         u.banner = banner;
@@ -18240,7 +18946,11 @@ async function _seqExec(s, it, ids) {
       // Appel encore en cours sur ces écrans (étape « Appel » restée sans réponse) : il cesse de sonner
       const live = ids.filter((id) => scrState(id).call);
       if (live.length) sendMsg({ type: 'call:end', target: _seqTarget(live) });
-      _seqStack(ids, { kind: 'missed', app: _SEQ_TXT.missedApp, name: _SEQ_TXT.missedTitle, msg: _seqLine(it.name || 'Inconnu', 40), color: null, style: it.style }, { ring: 'classic', ringId: null, vol: 1 });
+      const card = { kind: 'missed', app: _SEQ_TXT.missedApp, name: _SEQ_TXT.missedTitle, msg: _seqLine(it.name || 'Inconnu', 40), color: null, style: it.style };
+      const off = ids.filter((id) => !on(id));
+      if (off.length) _seqStack(off, card, null);
+      const lit = ids.filter(on);
+      if (lit.length) _seqStack(lit, card, { ring: 'classic', ringId: null, vol: 1 });
       break;
     }
     case 'unlock':
@@ -18254,15 +18964,55 @@ async function _seqExec(s, it, ids) {
       u.chat = true;
       for (const id of ids) {
         const p = _seqPhones.get(id);
-        if (p && p.mode !== 'off') { p.mode = 'unlocked'; p.awaitUnlock = null; }
+        if (p && p.mode !== 'off') { p.mode = 'unlocked'; p.awaitUnlock = null; p.sleep = null; }
       }
       await _seqOpenChat(it, ids);
+      if (s.opt.auto && _chat.open) chatAutoStart(); // Lecture auto (maquette 26d)
+      break;
+    case 'sleep':
+      // Veille (maquette 29b) : verrouillé, écran noir ; rallume un téléphone éteint
+      for (const id of ids) {
+        const p = _seqPhones.get(id);
+        p.power = 'on';
+        if (p.mode !== 'code') p.mode = 'locked';
+        if (p.mode === 'locked' && p.home && !p.awaitUnlock) p.home = null;
+        p.sleep = { notif: it.notif, touch: it.touch, after: it.after };
+      }
+      break;
+    case 'battery':
+      // Batterie faible (maquette 33) : alerte, niveau affiché, icône rouge
+      for (const id of ids) {
+        const p = _seqPhones.get(id);
+        p.bar.bat.level = it.level; p.bar.bat.charging = false; p.bar.bat.low = true;
+        if (!on(id)) continue;
+        if (p.mode === 'off') p.mode = 'locked';
+        p.alert = { id: 'a' + Date.now().toString(36).slice(-5) + (++_seqNotifN).toString(36), level: it.level };
+      }
+      break;
+    case 'off': {
+      // Extinction (maquette 33) : appel en cours coupé, alerte oubliée, plus rien ne répond
+      const live = ids.filter((id) => scrState(id).call);
+      if (live.length) sendMsg({ type: 'call:end', target: _seqTarget(live) });
+      for (const id of ids) { const p = _seqPhones.get(id); p.power = 'off'; p.alert = null; }
+      break;
+    }
+    case 'net':
+      // Réseau (maquette 34) : perdu (« Pas de service », ni Wi-Fi) ou rétabli
+      for (const id of ids) {
+        const n = _seqPhones.get(id).bar.net;
+        if (it.lost) { n.bars = 0; n.wifi = false; } else { n.bars = it.bars; n.type = it.type; n.wifi = it.wifi; n.plane = false; }
+      }
       break;
   }
 }
+// Téléphone neuf (aucune étape jouée) : la barre part des réglages « Téléphone au départ »
+function _seqPhoneBlank(style) {
+  return { mode: 'off', style: _CALL_STYLE_HINTS[style] ? style : 'glass', notifs: [], home: null, awaitUnlock: null,
+    bar: JSON.parse(JSON.stringify(seqPhoneCfg())), sleep: null, alert: null, power: 'on' };
+}
 function _seqPhone(id, style) {
   let p = _seqPhones.get(id);
-  if (!p) { p = { mode: 'off', style: _CALL_STYLE_HINTS[style] ? style : 'glass', notifs: [], home: null, awaitUnlock: null }; _seqPhones.set(id, p); }
+  if (!p) { p = _seqPhoneBlank(style); _seqPhones.set(id, p); }
   return p;
 }
 let _seqNotifN = 0;
@@ -18273,9 +19023,9 @@ function _seqStack(ids, n, chime) {
     const p = _seqPhone(sid, n.style);
     if (!p.notifs.length && p.mode === 'off') p.style = _CALL_STYLE_HINTS[n.style] ? n.style : 'glass'; // style du premier écran verrouillé
     if (p.mode === 'off') p.mode = 'locked'; // déjà déverrouillé : rangée dans la pile, visible au reverrouillage
-    p.notifs.push({ id, kind: n.kind, app: n.app, name: n.name, msg: n.msg, color: n.color, at: Date.now() });
+    p.notifs.push(Object.assign({ id, kind: n.kind, app: n.app, name: n.name, msg: n.msg, color: n.color, at: Date.now() }, n.unsent ? { unsent: n.unsent } : {}));
     if (p.notifs.length > PROTO.PHONE_NOTIFS_MAX) p.notifs.shift();
-    p.chime = Object.assign({ id }, chime);
+    if (chime) p.chime = Object.assign({ id }, chime); else delete p.chime;
   }
 }
 // Discussion enregistrée chargée dans « Fil en cours » (83 / 89) et ouverte sur ces écrans.
@@ -18285,10 +19035,10 @@ async function _seqOpenChat(e, ids) {
   const photo = e.hasPhoto ? safeImageData(await callAssetGet(_chsvPhotoKey(e.id))) : null;
   if (_chat.open) closeChat();
   _chat.name = e.contact; _chat.actor = e.actor; _chat.style = e.style;
-  _chat.msgs = e.msgs.map((m) => ({ id: m.id, from: m.from, text: m.text }));
+  _chat.msgs = e.msgs.map((m) => chatMsgCopy(m));
   const first = _chat.msgs.findIndex((m) => m.from === 'actor');
   _chat.sent = (first < 0 ? [] : _chat.msgs.slice(0, first)).filter(_chatValid).map((m) => m.id);
-  _chat.progress = null; _chat.resumeAt = null; _chat.savedId = e.id;
+  _chat.progress = null; _chat.resumeAt = null; _chat.savedId = e.id; _chat.pend = [];
   _chatEditId = null;
   _chatAvatar = photo;
   _lsSet(CHAT_AVATAR_KEY, photo);
@@ -18307,7 +19057,7 @@ function seqOnChatSent(sid) { seqOnGesture('chat', sid); renderSeq(); }
 async function _seqUndo(s, u) {
   // Téléphone d'avant l'étape
   for (const [id, p] of u.phones) {
-    if (p) _seqPhones.set(id, p); else if (_seqPhones.has(id)) Object.assign(_seqPhones.get(id), { mode: 'off', notifs: [], home: null, awaitUnlock: null });
+    if (p) _seqPhones.set(id, p); else if (_seqPhones.has(id)) Object.assign(_seqPhones.get(id), _seqPhoneBlank(_seqPhones.get(id).style));
   }
   if (u.looks) {
     for (const [id, l] of u.looks) {
@@ -18345,6 +19095,8 @@ function _seqUnlockFor(sid) {
 }
 function _seqWatchFor(sid) {
   if (_seqRun.state !== 'running') return [];
+  const ph = _seqPhones.get(sid);
+  if (ph && ph.power === 'off') return []; // éteint : plus aucun geste
   const i = seqPos() + 1, n = _seq.steps[i];
   if (!n || n.trig.k !== 'gesture' || n.trig.g === 'chat' || n.trig.g === 'unlock') return [];
   return seqGestureIds(i).includes(sid) ? [n.trig.g] : [];
@@ -18372,10 +19124,18 @@ function _seqPhoneMsg(sid, homeOk) {
   if (homeOk) m.home = true;
   const w = _seqWatchFor(sid);
   if (w.length) m.watch = w;
+  // Barre d'état, veille, batterie, extinction : de la séquence commencée seulement
+  if (_seqRun.state !== 'idle' && p.bar) {
+    m.bar = phoneBarMsg(p.bar, _seqRun.clockT0 || now, now);
+    if (p.power === 'off') m.power = 'off';
+    if (p.sleep && (m.mode === 'locked' || m.mode === 'code')) m.sleep = Object.assign({}, p.sleep);
+    if (p.alert && p.power !== 'off') m.alert = Object.assign({}, p.alert);
+  }
   return m;
 }
 // Envoie l'état des écrans dont il a changé (force : tous ceux qu'il concerne, resynchronisation)
 async function _seqPushPhones(only, force) {
+  _seqDeliverPending();
   const sids = new Set([..._seqPhones.keys(), ..._seqPhoneSent.keys()]);
   const i = seqPos() + 1;
   if (_seqRun.state === 'running' && _seq.steps[i]) for (const id of seqGestureIds(i)) sids.add(id);
@@ -18389,14 +19149,35 @@ async function _seqPushPhones(only, force) {
     const m = _seqPhoneMsg(sid, homeOk);
     const chime = p && p.chime && m.notifs.some((n) => n.id === p.chime.id) ? p.chime : null;
     if (p) delete p.chime;
-    const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id), m.unlock, m.home, m.watch]);
+    const b = m.bar;
+    const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id), m.unlock, m.home, m.watch,
+      b ? [b.clock.mode, b.clock.date, b.clock.time, b.net, b.bat] : null, m.sleep, m.alert, m.power]);
     if (!force && !chime && _seqPhoneSent.get(sid) === sig) continue;
     if (!p && !m.watch && !_seqPhoneSent.has(sid)) continue; // rien à dire à cet écran
     _seqPhoneSent.set(sid, sig);
-    if (chime && !force) m.chime = Object.assign({ id: chime.id, ring: chime.ring }, chime.ringId ? { ringId: chime.ringId } : {}, chime.vol < 1 ? { vol: chime.vol } : {});
+    if (chime && !force && m.power !== 'off') m.chime = Object.assign({ id: chime.id, ring: chime.ring }, chime.ringId ? { ringId: chime.ringId } : {}, chime.vol < 1 ? { vol: chime.vol } : {});
     sendMsg(m);
-    if (m.mode === 'off' && !m.watch) _seqPhoneSent.delete(sid);
+    if (m.mode === 'off' && !m.watch && !m.bar) _seqPhoneSent.delete(sid);
   }
+}
+// Messages du comédien restés « Non distribué » : partent dès que les écrans de
+// la discussion ont du réseau (étape « Réseau » rétabli, ↶, séquence finie)
+function _seqDeliverPending() {
+  if (!_chat.pend || !_chat.pend.length) return;
+  const scr = _chat.screens || scrList();
+  const down = _seqRun.state !== 'idle' && scr.some((id) => { const p = _seqPhones.get(id); return !!p && phoneBarNoNetwork(p.bar); });
+  if (down) return;
+  for (const p of _seqPhones.values()) p.notifs = p.notifs.filter((n) => !n.unsent);
+  chatDeliverPending(); // 83-discussion.js
+}
+// Message du comédien envoyé sans réseau (83-discussion.js) : « Message non envoyé »
+// empilé sur le faux téléphone de cet écran (visible sur l'écran verrouillé)
+function seqOnChatUndelivered(sid, msg) {
+  const p = sid && _seqPhones.get(sid);
+  if (!p || _seqRun.state === 'idle') return;
+  const text = _seqLine(msg.text, 160);
+  _seqStack([sid], { kind: 'sms', app: _SEQ_TXT.smsApp, name: _SEQ_TXT.unsentTitle, msg: _seqTpl(_SEQ_TXT.unsentMsg, { texte: text }).slice(0, 200), color: null, style: p.style, unsent: msg.id }, null);
+  _seqQueue(() => _seqPushPhones());
 }
 // Resynchronisation (24-resync.js) : écrans revenus, rechargés
 function seqOnScreensResync(ids) {
@@ -18444,6 +19225,7 @@ function renderSeq() {
   if (empty) empty.style.display = _seq.steps.length ? 'none' : '';
   rows.style.display = _seq.steps.length ? '' : 'none';
   _seqSet('seqName', _seq.name || _SEQ_TXT.untitled);
+  _seqSet('seqPhoneSum', phoneParamsSummary(seqPhoneCfg())); // 98-phone-params.js
   const main = seqMainTarget();
   _seqSet('seqTarget', main ? _seqTpl(_SEQ_TXT.target, { cible: seqTargetName(main) }) : '');
   const add = document.getElementById('seqAddBtn');
@@ -18515,6 +19297,7 @@ function openSeqStep(id) {
   if (!s && _seq.steps.length >= SEQ_STEPS_MAX) return;
   const last = _seq.steps[_seq.steps.length - 1];
   const draft = s ? JSON.parse(JSON.stringify(s)) : { id: _seqNewId(), kind: 'color', ref: null, target: last ? Object.assign({}, last.target) : _seqSanTarget(scrTarget()), trig: { k: 'go' }, opt: {} };
+  if (s) Object.assign(draft, seqSanitizeStep(draft) || {}); // réglages complétés (anciennes étapes)
   _seqEdit = { id: s ? s.id : null, step: draft, err: '' };
   if (!s) _seqEditDefaults(draft);
   const v = document.getElementById('seq-step-view');
@@ -18534,10 +19317,12 @@ function _seqEditDefaults(s) {
   s.ref = null;
   if (s.kind === 'media') { const it = _mediaPool[0]; s.ref = it ? { id: it.id, name: it.name, kind: it.kind } : null; s.opt = { end: 'loop' }; }
   else if (s.kind === 'unlock') s.opt = { code: 4, then: 'app', img: null, imgName: '' };
+  else if (SEQ_OPT_KINDS.has(s.kind)) s.opt = seqSanitizeStep({ id: s.id, kind: s.kind, opt: {} }).opt;
   else {
     s.opt = {};
     const list = _seqRefList(s.kind);
     s.ref = list.length ? list[0].id : null;
+    if (s.kind === 'chat') s.opt = { auto: false };
   }
 }
 // Éléments proposés pour un type : [{ id, label, sw (couleur d'aperçu) }]
@@ -18565,11 +19350,14 @@ function renderSeqStep() {
   const s = e.step;
   const idx = e.id ? _seq.steps.findIndex((x) => x.id === e.id) : -1;
   _seqSet('ssTitle', idx >= 0 ? _seqTpl(_SEQ_TXT.stepTitle, { n: idx + 1 }) : _SEQ_TXT.stepNew);
-  // Type (3 × 3)
-  document.getElementById('ssKinds').innerHTML = SEQ_KINDS.map((k) => _seqOpt(s.kind === k, 'seqEditKind(' + _seqArg(k) + ')', SEQ_ICONS[k] + ' ' + _SEQ_TXT.kind[k])).join('');
+  // Type (maquette 29b : 3, 3, 4, puis les étapes du téléphone)
+  document.getElementById('ssKinds').innerHTML = SEQ_KIND_ROWS.map((r) => '<div class="ss-row">'
+    + r.map((k) => _seqOpt(s.kind === k, 'seqEditKind(' + _seqArg(k) + ')', SEQ_ICONS[k] + ' ' + _SEQ_TXT.kind[k])).join('') + '</div>').join('');
   // Élément enregistré, ou réglages du déverrouillage
   let h = '';
-  if (s.kind === 'unlock') {
+  if (s.kind === 'sleep' || s.kind === 'battery' || s.kind === 'off' || s.kind === 'net') {
+    h += _seqPhoneStepCard(s);
+  } else if (s.kind === 'unlock') {
     const o = s.opt;
     h += '<span class="ss-label">' + escapeHtml(_SEQ_TXT.labelUnlock) + '</span><div class="ss-row">'
       + _seqOpt(o.code === 4, 'seqEditCode(4)', _SEQ_TXT.code4) + _seqOpt(o.code === 6, 'seqEditCode(6)', _SEQ_TXT.code6) + _seqOpt(o.code === 0, 'seqEditCode(0)', _SEQ_TXT.swipe) + '</div>'
@@ -18597,6 +19385,11 @@ function renderSeqStep() {
           + _seqOpt(s.opt.end === 'loop', 'seqEditEnd(\'loop\')', _SEQ_TXT.endLoop) + _seqOpt(s.opt.end === 'pause', 'seqEditEnd(\'pause\')', _SEQ_TXT.endPause)
           + _seqOpt(s.opt.end === 'off', 'seqEditEnd(\'off\')', _SEQ_TXT.endOff) + '</div>';
       }
+    }
+    // Discussion : lecture manuelle ou automatique (maquette 26d), comme « Ensuite »
+    if (s.kind === 'chat') {
+      h += '<span class="ss-label ss-sub">' + escapeHtml(_SEQ_TXT.labelPlay) + '</span><div class="ss-row">'
+        + _seqOpt(!s.opt.auto, 'seqEditOpt(\'auto\',false)', _SEQ_TXT.playManual) + _seqOpt(!!s.opt.auto, 'seqEditOpt(\'auto\',true)', _SEQ_TXT.playAuto) + '</div>';
     }
   }
   document.getElementById('ssRefCard').innerHTML = h;
@@ -18630,6 +19423,53 @@ function _seqStepper(label, n, fn, zeroNever) {
     + '<b class="ss-step-val" id="ssDelayVal">' + escapeHtml(val) + '</b>'
     + '<button type="button" class="ss-step-btn" aria-label="+" onclick="' + fn + '(1)">+</button></div>';
 }
+// Réglages des étapes du téléphone : veille (maquette 29b), batterie faible, extinction, réseau
+function _seqWideStepper(label, val, fn) {
+  return '<span class="ss-label ss-sub">' + escapeHtml(label) + '</span><div class="ss-stepper ss-wide">'
+    + '<button type="button" class="ss-step-btn" aria-label="−" onclick="' + fn + '(-1)">−</button>'
+    + '<b class="ss-step-val" id="ssOptVal">' + escapeHtml(val) + '</b>'
+    + '<button type="button" class="ss-step-btn" aria-label="+" onclick="' + fn + '(1)">+</button></div>';
+}
+function _seqPhoneStepCard(s) {
+  const o = s.opt, lbl = (k) => '<span class="ss-label">' + escapeHtml(_SEQ_TXT[k]) + '</span>';
+  const txt = (t) => '<div class="ss-text">' + escapeHtml(t) + '</div>', note = (t) => '<div class="ss-note">' + escapeHtml(t) + '</div>';
+  const row = (items) => '<div class="ss-row">' + items.join('') + '</div>';
+  const set = (k, v) => 'seqEditOpt(' + _seqArg(k) + ',' + (typeof v === 'string' ? _seqArg(v) : String(v)) + ')';
+  switch (s.kind) {
+    case 'sleep':
+      return lbl('labelSleep') + txt(_SEQ_TXT.sleepText)
+        + '<span class="ss-label ss-sub">' + escapeHtml(_SEQ_TXT.labelWake) + '</span>'
+        + row([_seqOpt(o.notif, set('notif', !o.notif), _SEQ_TXT.wakeNotif), _seqOpt(o.touch, set('touch', !o.touch), _SEQ_TXT.wakeTouch)])
+        + _seqWideStepper(_SEQ_TXT.labelResleep, _seqTpl(_SEQ_TXT.seconds, { n: o.after }), 'seqEditSleepDelay') + note(_SEQ_TXT.sleepNote);
+    case 'battery':
+      return lbl('labelBattery') + txt(_SEQ_TXT.batteryText) + _seqWideStepper(_SEQ_TXT.labelLevel, _seqTpl(_SEQ_TXT.percent, { n: o.level }), 'seqEditLevel');
+    case 'off':
+      return lbl('labelOff') + txt(_SEQ_TXT.offText) + note(_SEQ_TXT.offNote);
+    case 'net': {
+      let h = lbl('labelNet') + row([_seqOpt(o.lost, set('lost', true), _SEQ_TXT.netLost), _seqOpt(!o.lost, set('lost', false), _SEQ_TXT.netBack)]);
+      if (!o.lost) {
+        h += '<span class="ss-label ss-sub">' + escapeHtml(_SEQ_TXT.labelBars) + '</span>'
+          + row([1, 2, 3, 4].map((n) => _seqOpt(o.bars === n, set('bars', n), '▂▄▆█'.slice(0, n), '" aria-label="' + n + ' / 4')))
+          + '<span class="ss-label ss-sub">' + escapeHtml(_SEQ_TXT.labelNetType) + '</span>'
+          + row(PB_NET_TYPES.map((t) => _seqOpt(o.type === t, set('type', t), t)))
+          + '<div class="ss-stepper"><span>' + escapeHtml(_SEQ_TXT.labelWifi) + '</span>'
+          + _seqOpt(o.wifi, set('wifi', true), _SEQ_TXT.yes) + _seqOpt(!o.wifi, set('wifi', false), _SEQ_TXT.no) + '</div>';
+      }
+      return h + note(o.lost ? _SEQ_TXT.netLostNote : _SEQ_TXT.netBackNote);
+    }
+  }
+  return '';
+}
+function seqEditOpt(k, v) {
+  const e = _seqEdit;
+  if (!e) return;
+  const o = Object.assign({}, e.step.opt, { [k]: v });
+  const c = seqSanitizeStep(Object.assign({}, e.step, { opt: o }));
+  if (c) e.step.opt = c.opt;
+  renderSeqStep();
+}
+function seqEditSleepDelay(d) { const e = _seqEdit; if (e && e.step.kind === 'sleep') seqEditOpt('after', e.step.opt.after + d); }
+function seqEditLevel(d) { const e = _seqEdit; if (e && e.step.kind === 'battery') seqEditOpt('level', e.step.opt.level + d); }
 function seqEditKind(k) {
   const e = _seqEdit;
   if (!e || !SEQ_KINDS.includes(k) || e.step.kind === k) return;
@@ -18710,7 +19550,7 @@ function seqStepSave() {
   if (!e) return false;
   const s = seqSanitizeStep(e.step);
   if (!s) return false;
-  if (s.kind !== 'unlock' && !seqRefItem(s)) { e.err = _SEQ_TXT.needRef; renderSeqStep(); return false; }
+  if (!SEQ_OPT_KINDS.has(s.kind) && !seqRefItem(s)) { e.err = _SEQ_TXT.needRef; renderSeqStep(); return false; }
   const i = e.id ? _seq.steps.findIndex((x) => x.id === e.id) : -1;
   const prevImg = i >= 0 && _seq.steps[i].kind === 'unlock' ? _seq.steps[i].opt.img : null;
   if (i >= 0) _seq.steps[i] = s;
@@ -19220,6 +20060,19 @@ async function prepSendVideo(it, sid) {
 //     toutes les 400 ms et 5 par seconde. Refuser, raccrocher, décrocher : les
 //     boutons du faux appel (80-call-simulator.js) passent par screenTap*().
 //   • Trois styles neutres (Verre / Tonal / Épuré), aucune marque.
+//   • Barre d'état (maquette 28b, 97-phone-status.js) : reçue avec l'état ;
+//     l'horloge de l'écran verrouillé et les heures relatives suivent
+//     l'horloge de la séquence (l'heure avance, figée, heure réelle).
+//   • Veille (maquette 29b) : écran noir en fondu sur l'écran verrouillé ; il
+//     se rallume à chaque notification / appel / alerte et/ou au toucher
+//     (le toucher qui le rallume ne fait rien d'autre, sauf rapporter « touche
+//     l'écran » s'il est attendu), puis se rendort après N s sans toucher ; le
+//     déverrouillage le réveille pour de bon.
+//   • Batterie faible (maquette 33) : alerte à fermer (« Fermer » rapporte le
+//     geste dismiss, l'alerte ne revient pas à la resynchronisation).
+//   • Extinction (maquette 33) : fondu au noir, logo neutre, écran noir ; le
+//     téléphone ne répond plus à rien. Rallumé (étape « Veille » ou ↶) : logo
+//     neutre puis l'écran verrouillé (endormi après une « Veille »).
 // Textes affichés regroupés pour la traduction ; contenus reçus en textContent.
 const _SP_TXT = {
   unlockHint: 'Touchez pour déverrouiller',
@@ -19228,10 +20081,19 @@ const _SP_TXT = {
   agoMin: 'il y a {n} min',
   agoH: 'il y a {n} h',
   keypad: 'Clavier du code',
+  batteryTitle: 'Batterie faible',
+  batteryMsg: 'Il reste {n} % de batterie.',
+  batteryClose: 'Fermer',
 };
+const SP_POWER_FADE_MS = 600, SP_LOGO_MS = 1500, SP_BOOT_MS = 1200;
+// Logo neutre (aucune marque) : cercle et trait d'alimentation
+const _SP_LOGO = '<svg class="pp-logo" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" aria-hidden="true"><path d="M20.5 17.5a19 19 0 1 0 23 0"/><path d="M32 9v22"/></svg>';
 const SP_GESTURE_GAP_MS = 400, SP_GESTURE_BURST = 5, SP_RELOCK_GUARD_MS = 1500, SP_REFRESH_MS = 15000;
 
-let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, watch: Set }
+let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, watch: Set, sleep, alert, power }
+let _spSleep = null;          // veille : { cfg, awake, timer, callOn }
+let _spAlertClosed = null;    // alerte fermée ici (id), pas encore confirmée par la télécommande
+let _spPowerSeq = 0;          // jeton des animations d'extinction / rallumage
 let _spTyped = 0;             // points du code remplis (local, jamais envoyés)
 let _spUnlockedAt = 0;        // déverrouillé ici, pas encore confirmé par la télécommande
 let _spRefreshTimer = null;
@@ -19261,8 +20123,16 @@ function screenPhoneState(m) {
   if (m.mode === 'unlocked' || m.mode === 'home') _spUnlockedAt = 0; // elle le sait
   if ((local === 'unlocked' || local === 'home') && (mode === 'locked' || mode === 'code') && _spUnlockedAt && now - _spUnlockedAt < SP_RELOCK_GUARD_MS) mode = local;
   if (mode !== 'code' || local !== 'code') _spTyped = 0;
-  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, watch: new Set(m.watch) };
+  const wasOff = prev ? prev.power === 'off' : null; // null : premier état (écran rechargé)
+  const fresh = !!prev && notifs.some((n) => !prev.notifs.some((o) => o.id === n.id));
+  const alertNew = !!m.alert && !(prev && prev.alert && prev.alert.id === m.alert.id);
+  if (!m.alert || (_spAlertClosed && m.alert.id !== _spAlertClosed)) _spAlertClosed = null;
+  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, watch: new Set(m.watch), sleep: m.sleep || null, alert: m.alert || null, power: m.power === 'off' ? 'off' : 'on' };
+  screenSeqBar(m.bar); // 97-phone-status.js
   _spRender();
+  _spRenderAlert();
+  _spApplySleep(fresh || (alertNew && !!prev) || !!m.chime);
+  _spApplyPower(wasOff);
   if (m.chime) {
     const n = notifs.find((x) => x.id === m.chime.id);
     _playNotifSound({ kind: n && n.kind === 'notif' ? 'notif' : 'sms', ring: m.chime.ring, ringId: m.chime.ringId, ringVolume: m.chime.vol });
@@ -19270,10 +20140,17 @@ function screenPhoneState(m) {
   }
 }
 function screenPhoneHide() {
-  _scPhone = null; _spTyped = 0; _spUnlockedAt = 0;
+  _scPhone = null; _spTyped = 0; _spUnlockedAt = 0; _spAlertClosed = null;
   if (_spRefreshTimer) { clearInterval(_spRefreshTimer); _spRefreshTimer = null; }
   const el = document.getElementById('screen-phone');
   if (el) { el.style.display = 'none'; el.textContent = ''; }
+  if (_spSleep && _spSleep.timer) clearTimeout(_spSleep.timer);
+  _spSleep = null;
+  _spRenderAlert();
+  _spPowerSeq++;
+  const pw = document.getElementById('screen-ppower');
+  if (pw) { pw.style.display = 'none'; pw.className = ''; pw.textContent = ''; }
+  screenBarsHide(); // 97-phone-status.js
 }
 // Image d'accueil arrivée en cache après l'état (75-media-screen.js)
 function screenPhoneOnHomeCached() { if (_scPhone && _scPhone.mode === 'home') _spRender(); }
@@ -19281,11 +20158,13 @@ function screenPhoneOnHomeCached() { if (_scPhone && _scPhone.mode === 'home') _
 // ── Gestes ──
 function phoneGesture(g, n) {
   if (mode !== 'screen' || !_scPhone) return false;
-  if (g !== 'unlock' && !_scPhone.watch.has(g) && !(_scPhone.watch.has('touch') && (g === 'notif' || g === 'home'))) return false;
+  if (_scPhone.power === 'off') return false; // éteint : ne répond plus
+  const always = PROTO.PHONE_GESTURES_ALWAYS.includes(g);
+  if (!always && !_scPhone.watch.has(g) && !(_scPhone.watch.has('touch') && (g === 'notif' || g === 'home'))) return false;
   const now = Date.now();
-  if (now - (_spGestureAt.get(g) || 0) < SP_GESTURE_GAP_MS && g !== 'unlock') return false;
+  if (now - (_spGestureAt.get(g) || 0) < SP_GESTURE_GAP_MS && !always) return false;
   _spBurst = _spBurst.filter((t) => now - t < 1000);
-  if (_spBurst.length >= SP_GESTURE_BURST && g !== 'unlock') return false;
+  if (_spBurst.length >= SP_GESTURE_BURST && !always) return false;
   _spGestureAt.set(g, now);
   _spBurst.push(now);
   sendMsg(Object.assign({ type: 'phone:gesture', g }, g === 'notif' && n ? { n } : {}));
@@ -19301,7 +20180,8 @@ function screenNotifTap() { screenCallEnd(); phoneGesture('notif'); }
 // Toucher l'écran verrouillé (ou une de ses notifications)
 function _spLockTouch(nid) {
   const p = _scPhone;
-  if (!p || p.mode !== 'locked') return;
+  if (!p || p.mode !== 'locked' || _spDark()) return;
+  _spPoke();
   if (nid) phoneGesture('notif', nid); else phoneGesture('touch');
   const u = p.unlock;
   if (!u) return;
@@ -19311,7 +20191,8 @@ function _spLockTouch(nid) {
 // Une touche du pavé : point suivant ; au dernier, déverrouillé
 function _spKey() {
   const p = _scPhone;
-  if (!p || p.mode !== 'code' || !p.unlock || !p.unlock.code) return;
+  if (!p || p.mode !== 'code' || !p.unlock || !p.unlock.code || _spDark()) return;
+  _spPoke();
   _spTyped = Math.min(p.unlock.code, _spTyped + 1);
   if (_spTyped >= p.unlock.code) { _spUnlock(); return; }
   _spRenderDots();
@@ -19322,13 +20203,16 @@ function _spUnlock() {
   p.mode = p.unlock.then === 'home' ? 'home' : 'unlocked';
   _spTyped = 0;
   _spUnlockedAt = Date.now();
+  p.sleep = null; // déverrouillé : réveillé pour de bon
+  _spApplySleep(false);
   _spRender();
   phoneGesture('unlock');
 }
 
 // ── Rendu ──
 function _spWhen(at) {
-  const s = Math.max(0, Math.floor((Date.now() - at) / 1000));
+  // Horloge de la séquence : figée, l'heure n'avance pas (« maintenant »)
+  const s = Math.max(0, Math.floor((phoneClockAt(Date.now()) - phoneClockAt(at)) / 1000));
   if (s < 60) return _SP_TXT.now;
   if (s < 3600) return _spTpl(_SP_TXT.agoMin, { n: Math.floor(s / 60) });
   return _spTpl(_SP_TXT.agoH, { n: Math.floor(s / 3600) });
@@ -19353,7 +20237,7 @@ function _spCard(n) {
   return c;
 }
 function _spClock() {
-  const d = new Date();
+  const d = phoneClockNow(); // 97-phone-status.js
   return { time: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'), date: notifLongDate(d) };
 }
 function _spRender() {
@@ -19440,7 +20324,7 @@ function _spRefresh() {
   el.addEventListener('pointerdown', (e) => { down = { y: e.clientY, t: Date.now() }; });
   el.addEventListener('pointerup', (e) => {
     const d = down; down = null;
-    if (!d || !_scPhone || _scPhone.mode !== 'locked') return;
+    if (!d || !_scPhone || _scPhone.mode !== 'locked' || _spDark()) return;
     if (d.y - e.clientY > 60 && Date.now() - d.t < 1200) { swipedAt = Date.now(); _spLockTouch(null); }
   });
 })();
@@ -19451,11 +20335,135 @@ function _spRefresh() {
 })();
 // Clavier physique sur le pavé du code : chaque touche remplit le point suivant
 document.addEventListener('keydown', (e) => {
-  if (mode !== 'screen' || !_scPhone || _scPhone.mode !== 'code' || _scChat) return;
+  if (mode !== 'screen' || !_scPhone || _scPhone.mode !== 'code' || _scChat || _spDark()) return;
   if (e.ctrlKey || e.metaKey || e.altKey || !e.key || Array.from(e.key).length !== 1) return;
   e.preventDefault();
   _spKey();
 });
+
+// ── Veille (maquette 29b) ──
+// Écran noir : téléphone éteint, ou en veille sans appel visible qui le rallume
+function _spDark() {
+  const p = _scPhone;
+  if (!p) return false;
+  if (p.power === 'off') return true;
+  const s = _spSleep;
+  return !!s && !s.awake && !(s.cfg.notif && s.callOn);
+}
+function _spApplySleep(wake) {
+  const p = _scPhone;
+  const cfg = p && p.power !== 'off' && (p.mode === 'locked' || p.mode === 'code') ? p.sleep : null;
+  if (!cfg) {
+    if (_spSleep && _spSleep.timer) clearTimeout(_spSleep.timer);
+    _spSleep = null;
+  } else if (!_spSleep) {
+    _spSleep = { cfg, awake: false, timer: null, callOn: _spCallOn() };
+  } else _spSleep.cfg = cfg;
+  if (_spSleep && wake && _spSleep.cfg.notif) _spWake();
+  else _spPaint();
+}
+function _spWake() {
+  const s = _spSleep;
+  if (!s) return;
+  s.awake = true;
+  if (s.timer) clearTimeout(s.timer);
+  s.timer = setTimeout(() => { s.timer = null; if (_spSleep === s) { s.awake = false; _spPaint(); } }, s.cfg.after * 1000);
+  _spPaint();
+}
+// Toucher pendant l'éveil : le délai avant la mise en veille repart
+function _spPoke() { if (_spSleep && _spSleep.awake) _spWake(); }
+const _spCallOn = () => { const c = document.getElementById('screen-call'); return !!c && c.style.display === 'block'; };
+// Surfaces changées (97-phone-status.js) : un appel rallume, sa fin relance le délai
+function screenPhoneSurfacesChanged() {
+  const s = _spSleep;
+  if (!s) return;
+  const on = _spCallOn();
+  if (on === s.callOn) return;
+  s.callOn = on;
+  if (!on && s.cfg.notif) _spWake(); else _spPaint();
+}
+
+// ── Extinction et rallumage (maquette 33) ──
+function _spApplyPower(wasOff) {
+  const off = !!_scPhone && _scPhone.power === 'off';
+  const pw = document.getElementById('screen-ppower');
+  if (!pw) return;
+  if (off && wasOff !== true) {
+    const tok = ++_spPowerSeq;
+    pw.innerHTML = _SP_LOGO;
+    pw.style.display = 'flex';
+    if (wasOff === null) { pw.className = 'on instant'; _sbRefresh(); return; } // écran rechargé : déjà éteint
+    // Fondu au noir, logo neutre, puis noir
+    if (!pw.classList.contains('on')) { pw.className = ''; void pw.offsetWidth; }
+    pw.className = 'on';
+    _sbRefresh();
+    setTimeout(() => {
+      if (tok !== _spPowerSeq) return;
+      pw.className = 'on logo';
+      setTimeout(() => { if (tok === _spPowerSeq) pw.className = 'on'; }, SP_LOGO_MS);
+    }, SP_POWER_FADE_MS);
+  } else if (!off && wasOff === true) {
+    // Rallumage : logo neutre sur fond noir, puis le téléphone (endormi s'il est en veille)
+    const tok = ++_spPowerSeq;
+    pw.innerHTML = _SP_LOGO;
+    pw.className = 'on logo'; pw.style.display = 'flex';
+    setTimeout(() => { if (tok !== _spPowerSeq) return; pw.className = 'on'; _spPaint(); }, SP_BOOT_MS);
+  }
+}
+// Écran noir de la veille affiché / retiré en fondu (pas pendant l'extinction ni le rallumage)
+function _spPaint() {
+  const pw = document.getElementById('screen-ppower');
+  if (!pw || !_scPhone || _scPhone.power === 'off' || pw.classList.contains('logo')) { _sbRefresh(); return; }
+  const dark = _spDark();
+  const tok = ++_spPowerSeq;
+  if (dark) {
+    if (pw.style.display !== 'flex') { pw.textContent = ''; pw.className = ''; pw.style.display = 'flex'; void pw.offsetWidth; }
+    pw.classList.add('on');
+  } else if (pw.style.display === 'flex') {
+    pw.classList.remove('on', 'instant');
+    setTimeout(() => { if (tok === _spPowerSeq && !_spDark()) { pw.style.display = 'none'; pw.textContent = ''; } }, SP_POWER_FADE_MS);
+  }
+  _sbRefresh();
+}
+(function initPowerTouch() {
+  const pw = document.getElementById('screen-ppower');
+  if (!pw) return;
+  pw.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const p = _scPhone, s = _spSleep;
+    if (!p || p.power === 'off' || !s || s.awake || !s.cfg.touch) return; // éteint, ou veille sans réveil au toucher
+    _spWake();
+    phoneGesture('touch'); // rapporté seulement s'il est attendu
+  });
+})();
+
+// ── Batterie faible (maquette 33) ──
+function _spRenderAlert() {
+  const el = document.getElementById('screen-palert');
+  if (!el) return;
+  const p = _scPhone, a = p && p.alert;
+  if (!a || p.power === 'off' || _spAlertClosed === a.id) { el.style.display = 'none'; el.textContent = ''; delete el.dataset.id; return; }
+  if (el.dataset.id === a.id && el.style.display === 'flex' && el.dataset.level === String(a.level)) return;
+  el.textContent = '';
+  el.className = p.style;
+  el.dataset.id = a.id; el.dataset.level = String(a.level);
+  const card = _spEl('div', 'pa-card');
+  const close = _spEl('button', 'pa-close', _SP_TXT.batteryClose);
+  close.type = 'button';
+  close.addEventListener('click', (e) => { e.stopPropagation(); _spAlertClose(); });
+  card.append(_spEl('div', 'pa-title', _SP_TXT.batteryTitle), _spEl('div', 'pa-msg', _spTpl(_SP_TXT.batteryMsg, { n: a.level })), close);
+  el.onclick = (e) => e.stopPropagation();
+  el.appendChild(card);
+  el.style.display = 'flex';
+}
+function _spAlertClose() {
+  const p = _scPhone;
+  if (!p || !p.alert) return;
+  _spAlertClosed = p.alert.id;
+  _spRenderAlert();
+  _spPoke();
+  phoneGesture('dismiss');
+}
 // ══════════════════════════ SPLASH — métiers qui défilent ══════════════════════════
 (function () {
   const roles = ['les accessoiristes', 'les électros', 'les pupitreurs', 'la mise en scène', 'les DOP'];
@@ -19478,7 +20486,9 @@ document.addEventListener('keydown', (e) => {
 // Une séquence enregistrée garde son nom et ses étapes : des RÉFÉRENCES aux
 // éléments enregistrés des autres onglets, jamais des copies (une mémoire
 // modifiée est jouée telle quelle, une supprimée devient « élément
-// introuvable »), avec cible, départ et réglages ; pas le déroulé.
+// introuvable »), avec cible, départ et réglages, et ses réglages « Téléphone
+// au départ » (maquette 28b : heure, réseau, batterie) ; pas le déroulé.
+// Anciennes séquences (sans ces réglages) : valeurs par défaut (heure réelle).
 //   • « + Enregistrer la séquence en cours » : demande un nom, ajoute en fin de liste.
 //   • Toucher une ligne : la charge dans « Séquence en cours » (confirmation si
 //     la séquence en cours a des modifications non enregistrées) ; un déroulé
@@ -19504,7 +20514,7 @@ const _SQSV_TXT = {
   full: 'Liste pleine ({max} séquences)',
   empty: 'Aucune séquence enregistrée pour l\'instant.',
   hint: 'Toucher : charger dans « Séquence en cours ». ⋯ : renommer · dupliquer · supprimer.',
-  note: 'Une séquence enregistrée garde ses étapes, leurs cibles et leurs départs. Les couleurs, effets, médias, appels, SMS, notifications et discussions restent ceux de leurs onglets : modifiés là-bas, ils sont joués tels quels.',
+  note: 'Une séquence enregistrée garde ses étapes, leurs cibles et leurs départs, et son « Téléphone au départ ». Les couleurs, effets, médias, appels, SMS, notifications et discussions restent ceux de leurs onglets : modifiés là-bas, ils sont joués tels quels.',
   sheetSave: 'Enregistrer la séquence en cours',
   sheetRename: 'Renommer la séquence',
   nameLabel: 'Nom de la séquence',
@@ -19525,7 +20535,7 @@ let seqSaved = [];
 
 function _sqsvSanitize(e) {
   if (!e || typeof e !== 'object' || typeof e.id !== 'string' || !_SEQ_ID_RE.test(e.id)) return null;
-  return { id: e.id, name: _seqLine(e.name, SEQ_NAME_MAX) || _SQSV_TXT.untitled, steps: seqSanitizeSteps(e.steps) };
+  return { id: e.id, name: _seqLine(e.name, SEQ_NAME_MAX) || _SQSV_TXT.untitled, steps: seqSanitizeSteps(e.steps), phone: phoneBarSanitize(e.phone) };
 }
 function loadSavedSeqs() {
   let o = null;
@@ -19539,11 +20549,11 @@ function _sqsvPersist() {
 }
 const _sqsvNewId = () => 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const _sqsvClone = (steps) => JSON.parse(JSON.stringify(steps));
-const _sqsvSig = (steps) => JSON.stringify(steps);
+const _sqsvSig = (steps, phone) => JSON.stringify([steps, phone]);
 // Modifications non enregistrées : différente de l'entrée d'origine ; sans entrée, toute séquence non vide
 function seqHasUnsavedChanges() {
   const e = seqSaved.find((x) => x.id === _seq.savedId);
-  if (e) return _sqsvSig(e.steps) !== _sqsvSig(_seq.steps);
+  if (e) return _sqsvSig(e.steps, e.phone) !== _sqsvSig(_seq.steps, seqPhoneCfg());
   return _seq.steps.length > 0;
 }
 function _sqsvDefaultName() { return (_seq.name || _SQSV_TXT.untitled).slice(0, SEQ_NAME_MAX); }
@@ -19551,7 +20561,7 @@ function _sqsvDefaultName() { return (_seq.name || _SQSV_TXT.untitled).slice(0, 
 // « + Enregistrer la séquence en cours »
 function saveCurrentSeq(name) {
   if (seqSaved.length >= SEQ_SAVED_MAX) return null;
-  const e = { id: _sqsvNewId(), name: _seqLine(String(name || '').trim(), SEQ_NAME_MAX) || _sqsvDefaultName(), steps: _sqsvClone(_seq.steps) };
+  const e = { id: _sqsvNewId(), name: _seqLine(String(name || '').trim(), SEQ_NAME_MAX) || _sqsvDefaultName(), steps: _sqsvClone(_seq.steps), phone: _sqsvClone(seqPhoneCfg()) };
   seqSaved.push(e);
   if (!_sqsvPersist()) { seqSaved.pop(); alert(_SQSV_TXT.storeFull); return null; }
   _seq.savedId = e.id;
@@ -19569,7 +20579,7 @@ function loadSavedSeq(id) {
   if (dirty && !confirm(_seqTpl(_SQSV_TXT.confirmLoad, { nom: e.name }))) return false;
   if (seqPos() >= 0 || _seqRun.state !== 'idle') seqRestart();
   const dropped = _seq.steps.filter((s) => s.kind === 'unlock' && s.opt.img).map((s) => s.opt.img);
-  _seq = { name: e.name, steps: _sqsvClone(e.steps), savedId: e.id };
+  _seq = { name: e.name, steps: _sqsvClone(e.steps), savedId: e.id, phone: _sqsvClone(e.phone) };
   seqSave();
   seqGcImages(dropped);
   setSeqView('cur');
@@ -19589,7 +20599,7 @@ function duplicateSavedSeq(id) {
   const i = seqSaved.findIndex((x) => x.id === id);
   if (i < 0 || seqSaved.length >= SEQ_SAVED_MAX) return null;
   const src = seqSaved[i];
-  const e = { id: _sqsvNewId(), name: _seqTpl(_SQSV_TXT.copy, { nom: src.name }).slice(0, SEQ_NAME_MAX), steps: _sqsvClone(src.steps) };
+  const e = { id: _sqsvNewId(), name: _seqTpl(_SQSV_TXT.copy, { nom: src.name }).slice(0, SEQ_NAME_MAX), steps: _sqsvClone(src.steps), phone: _sqsvClone(src.phone) };
   seqSaved.splice(i + 1, 0, e);
   if (!_sqsvPersist()) { seqSaved.splice(i + 1, 1); alert(_SQSV_TXT.storeFull); return null; }
   renderSeq();
@@ -19697,6 +20707,428 @@ function seqSheetSave(s, value) {
 function seqMenuRename(id) { openRenameSavedSeq(id); }
 function seqMenuDuplicate(id) { closeSheet(); duplicateSavedSeq(id); }
 function seqMenuDelete(id) { closeSheet(); deleteSavedSeq(id); }
+// ══════════════════════════ BARRE D'ÉTAT DU FAUX TÉLÉPHONE ══════════════════════════
+// Maquette validée 28b (« Téléphone au départ ») : heure, réseau, Wi-Fi,
+// batterie. Partagé par la télécommande (aperçu de l'éditeur, 98-phone-params.js)
+// et l'écran de jeu (barre affichée).
+//   • Réglages (modèle gardé par la télécommande) :
+//       clock { mode: 'run' (l'heure avance depuis date/heure) | 'frozen' (figée)
+//               | 'real' (heure réelle), date AAAA-MM-JJ, time HH:MM }
+//       net { bars 0..4 (0 : « Pas de service »), type 3G/4G/5G, plane, wifi }
+//       bat { level 1..100, charging, pct (pourcentage affiché) }
+//   • Sur le réseau (phone:state.bar, media:bar) : horloge « run » avec el =
+//     secondes écoulées depuis le départ au moment de l'envoi ; l'écran ajoute le
+//     temps écoulé depuis la réception avec sa propre horloge (aucun écart
+//     d'horloge entre appareils ne compte).
+//   • Écran : barre de la Séquence (phone:state.bar) partout sur l'écran visé
+//     pendant la séquence (écran verrouillé, déverrouillé, appel, bandeaux,
+//     discussion, bandeau haut au-dessus des médias) ; sinon barre de l'onglet
+//     Média (media:bar), seulement en bandeau au-dessus d'un média affiché seul.
+//     La barre de la séquence prime toujours. Rien d'affiché sur une couleur ou
+//     un effet seuls, ni sous le noir total (sauf appel), ni téléphone éteint.
+//   • Heures relatives (« il y a 2 min ») et horloge de l'écran verrouillé
+//     suivent l'horloge de la séquence (94-sequence-phone.js : phoneClockAt).
+//   • Trois styles neutres (Verre / Tonal / Épuré), aucune marque.
+// Textes affichés regroupés pour la traduction.
+const _PB_TXT = {
+  noService: 'Pas de service',
+  plane: 'Mode avion',
+  wifi: 'Wi-Fi',
+  battery: 'Batterie {n} %',
+  charging: 'en charge',
+  label: 'Barre d\'état du téléphone',
+};
+const PB_NET_TYPES = ['3G', '4G', '5G'];
+const PB_LOW_BATTERY = 10; // % : icône rouge (hors charge) ; aussi après une étape « Batterie faible » (bat.low)
+
+const _pbPad = (n) => String(n).padStart(2, '0');
+// Valeurs par défaut (séquence ou onglet Média sans réglage) : déclaration de
+// fonction, utilisable dès le chargement des autres fragments
+function phoneBarDefaults() {
+  const net = '4G';
+  return { clock: { mode: 'real', date: '', time: '' }, net: { bars: 4, type: net, plane: false, wifi: true }, bat: { level: 80, charging: false, pct: false } };
+}
+// Réglages relus (stockage) : champs connus, bornés
+function phoneBarSanitize(o) {
+  const d = phoneBarDefaults();
+  if (!o || typeof o !== 'object') return d;
+  const c = o.clock && typeof o.clock === 'object' ? o.clock : {}, n = o.net && typeof o.net === 'object' ? o.net : {}, b = o.bat && typeof o.bat === 'object' ? o.bat : {};
+  const int = (v, min, max, def) => (Number.isInteger(v) && v >= min && v <= max ? v : def);
+  return {
+    clock: {
+      mode: ['run', 'frozen', 'real'].includes(c.mode) ? c.mode : d.clock.mode,
+      date: typeof c.date === 'string' && SRP.DATE_RE.test(c.date) ? c.date : '',
+      time: typeof c.time === 'string' && SRP.TIME_RE.test(c.time) ? c.time : '',
+    },
+    net: { bars: int(n.bars, 0, 4, d.net.bars), type: PB_NET_TYPES.includes(n.type) ? n.type : d.net.type, plane: n.plane === true, wifi: n.wifi === undefined ? d.net.wifi : n.wifi === true },
+    bat: { level: int(b.level, 1, 100, d.bat.level), charging: b.charging === true, pct: b.pct === true },
+  };
+  // (bat.low : posé par une étape « Batterie faible » pendant le déroulé, jamais enregistré)
+}
+// Date et heure locales d'aujourd'hui (préremplissage quand on quitte « Heure réelle »)
+function phoneBarToday(ms) {
+  const d = new Date(ms === undefined ? Date.now() : ms);
+  return { date: d.getFullYear() + '-' + _pbPad(d.getMonth() + 1) + '-' + _pbPad(d.getDate()), time: _pbPad(d.getHours()) + ':' + _pbPad(d.getMinutes()) };
+}
+// Réglages → message (phone:state.bar, media:bar). t0 : départ de l'horloge « run » (ms, horloge locale)
+function phoneBarMsg(cfg, t0, now) {
+  const c = cfg.clock;
+  let clock = { mode: 'real' };
+  if (c.mode !== 'real') {
+    const td = c.date && c.time ? c : Object.assign({}, c, phoneBarToday(t0));
+    clock = { mode: c.mode, date: td.date, time: td.time };
+    if (c.mode === 'run') clock.el = Math.max(0, Math.min(SRP.LIMITS.phoneClockSeconds, Math.floor(((now === undefined ? Date.now() : now) - (t0 || 0)) / 1000)));
+  }
+  const bat = { level: cfg.bat.level, charging: !!cfg.bat.charging, pct: !!cfg.bat.pct };
+  if (cfg.bat.low === true) bat.low = true;
+  return { clock, net: { bars: cfg.net.bars, type: cfg.net.type, plane: !!cfg.net.plane, wifi: !!cfg.net.wifi }, bat };
+}
+// Téléphone sans réseau (ni mobile ni Wi-Fi) : appels impossibles, messages non distribués
+function phoneBarNoNetwork(bar) { return !!bar && (bar.net.plane || bar.net.bars === 0) && !bar.net.wifi; }
+
+// Heure du téléphone (ms) à l'instant local `ms`, d'après une barre reçue à `recvAt`
+function phoneBarClockAt(bar, recvAt, ms) {
+  const c = bar && bar.clock;
+  if (!c || c.mode === 'real') return ms;
+  const [y, mo, d] = c.date.split('-').map(Number), [h, mi] = c.time.split(':').map(Number);
+  const base = new Date(y, mo - 1, d, h, mi, 0, 0).getTime();
+  if (c.mode === 'frozen') return base;
+  return base + (c.el || 0) * 1000 + (ms - recvAt);
+}
+
+// ── Rendu (télécommande : aperçu ; écran : barre) ──
+const _PB_SVG = {
+  wifi: '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 18.6l2.3-2.6a3.3 3.3 0 0 0-4.6 0z"/><path d="M5.9 12.2l1.5 1.7a6.8 6.8 0 0 1 9.2 0l1.5-1.7a9 9 0 0 0-12.2 0z" opacity=".95"/><path d="M2.5 8.4L4 10.1a11.8 11.8 0 0 1 16 0l1.5-1.7a14 14 0 0 0-19 0z" opacity=".95"/></svg>',
+  plane: '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M21 15.5v-1.8l-7.5-4.6V4.2a1.5 1.5 0 0 0-3 0v4.9L3 13.7v1.8l7.5-2.3v4.6l-2 1.5V21l3.5-1 3.5 1v-1.7l-2-1.5v-4.6z"/></svg>',
+  bolt: '<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/></svg>',
+};
+function _pbEl(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+// Remplit `root` avec la barre : heure à gauche ; réseau, Wi-Fi, pourcentage et batterie à droite
+function phoneBarRender(root, bar, timeMs) {
+  root.textContent = '';
+  const d = new Date(timeMs);
+  root.appendChild(_pbEl('span', 'pb-time', _pbPad(d.getHours()) + ':' + _pbPad(d.getMinutes())));
+  const right = _pbEl('span', 'pb-right');
+  const n = bar.net;
+  if (n.plane) {
+    const p = _pbEl('span', 'pb-ic pb-plane'); p.innerHTML = _PB_SVG.plane; p.setAttribute('aria-label', _PB_TXT.plane); right.appendChild(p);
+  } else if (n.bars === 0) {
+    right.appendChild(_pbEl('span', 'pb-nosvc', _PB_TXT.noService));
+  } else {
+    const sig = _pbEl('span', 'pb-sig');
+    sig.setAttribute('aria-label', n.bars + ' / 4');
+    for (let i = 1; i <= 4; i++) sig.appendChild(_pbEl('i', i <= n.bars ? 'on' : ''));
+    right.append(sig, _pbEl('span', 'pb-net', n.type));
+  }
+  if (n.wifi) { const w = _pbEl('span', 'pb-ic pb-wifi'); w.innerHTML = _PB_SVG.wifi; w.setAttribute('aria-label', _PB_TXT.wifi); right.appendChild(w); }
+  const b = bar.bat;
+  if (b.pct) right.appendChild(_pbEl('span', 'pb-pct', b.level + ' %'));
+  const bat = _pbEl('span', 'pb-bat' + (b.charging ? ' chg' : b.low || b.level <= PB_LOW_BATTERY ? ' low' : ''));
+  bat.setAttribute('aria-label', _PB_TXT.battery.replace('{n}', b.level) + (b.charging ? ' · ' + _PB_TXT.charging : ''));
+  const fill = _pbEl('i'); fill.style.width = Math.max(4, b.level) + '%';
+  bat.appendChild(fill);
+  right.appendChild(bat);
+  if (b.charging) { const z = _pbEl('span', 'pb-ic pb-bolt'); z.innerHTML = _PB_SVG.bolt; right.appendChild(z); }
+  root.appendChild(right);
+}
+
+// ── Écran de jeu : barre affichée ──
+// seq : barre de la séquence (phone:state.bar) ; media : barre de l'onglet Média (media:bar)
+const _sb = { seq: null, seqAt: 0, media: null, mediaAt: 0, timer: null, obs: null };
+function screenSeqBar(bar) {
+  const was = _sb.seq;
+  _sb.seq = bar || null;
+  _sb.seqAt = Date.now();
+  if (was || bar) _sbRefresh();
+}
+function screenMediaBar(bar) {
+  _sb.media = bar || null;
+  _sb.mediaAt = Date.now();
+  _sbRefresh();
+}
+function screenBarsHide() { _sb.seq = null; _sb.media = null; _sbRefresh(); }
+// Heure du faux téléphone (séquence) à l'instant local `ms` (heure réelle hors séquence)
+function phoneClockAt(ms) { return _sb.seq ? phoneBarClockAt(_sb.seq, _sb.seqAt, ms) : ms; }
+function phoneClockNow() { return new Date(phoneClockAt(Date.now())); }
+function screenPhoneNoNetwork() { return phoneBarNoNetwork(_sb.seq); }
+
+const _sbShown = (id) => { const e = document.getElementById(id); return !!e && e.style.display !== 'none' && e.style.display !== '' ; };
+// Ce qui est visible sous la barre (du haut vers le bas)
+function _sbSurfaces() {
+  const call = document.getElementById('screen-call');
+  const callOn = !!call && call.style.display === 'block';
+  const chat = document.getElementById('screen-chat');
+  const chatRoot = chat && chat.style.display === 'block' ? chat.querySelector('.scc') : null;
+  const phone = document.getElementById('screen-phone');
+  const phoneOn = !!phone && phone.style.display === 'block';
+  const media = _sbShown('screen-media-img') || _sbShown('screen-media-video');
+  return { callOn, callFull: callOn && !call.classList.contains('notif'), chatOn: !!chatRoot, chatLight: !!chatRoot && chatRoot.classList.contains('minimal'), phoneOn, media };
+}
+function _sbRefresh() {
+  const el = document.getElementById('screen-sbar');
+  const sm = document.getElementById('screen-mode');
+  if (!el) return;
+  const s = _sbSurfaces();
+  const off = typeof _scPhone !== 'undefined' && _scPhone && _scPhone.power === 'off';
+  const blackout = typeof screenBlackoutOn !== 'undefined' && screenBlackoutOn;
+  let bar = null, at = 0, band = false;
+  if (_sb.seq) {
+    if ((s.callOn || s.chatOn || s.phoneOn || s.media) && !off && !(blackout && !s.callOn)) {
+      bar = _sb.seq; at = _sb.seqAt; band = s.media && !s.callFull && !s.chatOn && !s.phoneOn;
+    }
+  } else if (_sb.media && s.media && !s.callOn && !s.chatOn && !s.phoneOn && !blackout) {
+    bar = _sb.media; at = _sb.mediaAt; band = true;
+  }
+  if (!bar) {
+    el.style.display = 'none'; el.textContent = '';
+    if (sm) sm.classList.remove('sb-on');
+    if (_sb.timer) { clearInterval(_sb.timer); _sb.timer = null; }
+    return;
+  }
+  const style = (typeof _scPhone !== 'undefined' && _scPhone && _scPhone.style) || 'glass';
+  el.className = 'pb ' + style + (band ? ' pb-band' : '') + (s.chatLight && !s.callFull ? ' pb-dark' : '');
+  el.style.display = 'flex';
+  phoneBarRender(el, bar, phoneBarClockAt(bar, at, Date.now()));
+  if (sm) sm.classList.add('sb-on');
+  if (!_sb.timer) _sb.timer = setInterval(_sbTick, 1000);
+}
+// Heure à jour (au changement de minute)
+function _sbTick() {
+  const el = document.getElementById('screen-sbar');
+  const bar = _sb.seq || _sb.media;
+  if (!el || !bar || el.style.display === 'none') return;
+  const t = el.querySelector('.pb-time');
+  const d = new Date(phoneBarClockAt(bar, _sb.seq ? _sb.seqAt : _sb.mediaAt, Date.now()));
+  const txt = _pbPad(d.getHours()) + ':' + _pbPad(d.getMinutes());
+  if (t && t.textContent !== txt) t.textContent = txt;
+}
+// Surfaces affichées ou masquées (appel, discussion, téléphone, média, noir) : barre recalculée
+(function initScreenBarWatch() {
+  if (typeof MutationObserver === 'undefined') return;
+  const ids = ['screen-call', 'screen-chat', 'screen-phone', 'screen-media-img', 'screen-media-video', 'screen-blackout'];
+  const obs = new MutationObserver(() => {
+    if (typeof screenPhoneSurfacesChanged === 'function') screenPhoneSurfacesChanged(); // veille : un appel rallume (94)
+    if (_sb.seq || _sb.media) _sbRefresh();
+  });
+  for (const id of ids) { const e = document.getElementById(id); if (e) obs.observe(e, { attributes: true, attributeFilter: ['style', 'class'] }); }
+  const chat = document.getElementById('screen-chat');
+  if (chat) obs.observe(chat, { childList: true });
+  _sb.obs = obs;
+})();
+// ══════════════════════════ TÉLÉPHONE AU DÉPART · BARRE D'ÉTAT (télécommande) ══════════════════════════
+// Maquette validée 28b : réglages de la barre d'état du faux téléphone, avec
+// leur aperçu en direct (97-phone-status.js) :
+//   • Date et heure : « L'heure avance » (depuis la date et l'heure réglées,
+//     au premier GO), « Figée », « Heure réelle » (celle de l'écran) ;
+//   • Réseau : Pas de service / 1 à 4 barres, 3G / 4G / 5G, Mode avion ; Wi-Fi ;
+//   • Batterie : niveau, en charge, pourcentage affiché.
+// Deux usages, même éditeur :
+//   • Séquence (« Téléphone au départ », ligne sous le nom de la séquence) :
+//     réglages enregistrés avec la séquence (91-sequence.js, 96-sequences-saved.js),
+//     pris au premier GO ; modifiés pendant un déroulé, ils valent au prochain
+//     départ (« Recommencer »).
+//   • Onglet Média (« Barre d'état du téléphone ») : bandeau haut au-dessus des
+//     médias affichés seuls, hors séquence. Interrupteur par écran (la cible
+//     de la télécommande, comme les autres ordres média), réglages et écrans
+//     gardés sur la télécommande pour la session appairée (localStorage),
+//     renvoyés à la resynchronisation (media:bar). Pendant une séquence, la
+//     barre de la séquence prime sur ses écrans ; après « Recommencer », celle
+//     de l'onglet Média revient.
+// Les changements s'appliquent aussitôt (pas de bouton « Enregistrer » sur la maquette).
+// Textes affichés, regroupés pour la traduction ({…} : valeurs)
+const _PP_TXT = {
+  titleSeq: 'Téléphone au départ', titleMedia: 'Barre d\'état du téléphone',
+  backSeq: '← Séquence', backMedia: '← Média',
+  preview: 'Aperçu de la barre d\'état du téléphone de jeu',
+  labelClock: 'Date et heure', run: 'L\'heure avance', frozen: 'Figée', real: 'Heure réelle',
+  dateAria: 'Date du téléphone', timeAria: 'Heure du téléphone',
+  labelNet: 'Réseau', noService: 'Pas de service', plane: 'Mode avion', wifi: 'Wi-Fi', yes: 'Oui', no: 'Non',
+  barsAria: '{n} barre(s) sur 4',
+  labelBat: 'Batterie', charging: 'En charge', pct: 'Afficher le %', level: '{n} %', levelAria: 'Niveau de batterie',
+  noteSeq: 'Affiché partout pendant la séquence : écran verrouillé, déverrouillé, SMS, discussion, appels, et en bandeau haut au-dessus des médias. Les étapes « Batterie faible », « Réseau » et « Extinction » le font évoluer.',
+  noteMedia: 'Bandeau haut au-dessus des médias affichés seuls, hors séquence, sur les écrans où la barre est activée (onglet Média). Pendant une séquence, son « Téléphone au départ » prime sur ses écrans.',
+  sumReal: 'Heure réelle', sumFrozen: '{heure} figée', sumPlane: 'Mode avion', sumNoService: 'Pas de service',
+  mediaEdit: 'Régler ›',
+};
+const _ppTpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
+
+// Résumé d'une ligne : « 23:47 · 4G · 18 % »
+function phoneParamsSummary(cfg) {
+  const c = cfg.clock, n = cfg.net;
+  const time = c.mode === 'real' || !c.time ? _PP_TXT.sumReal : c.mode === 'frozen' ? _ppTpl(_PP_TXT.sumFrozen, { heure: c.time }) : c.time;
+  const net = n.plane ? _PP_TXT.sumPlane : n.bars === 0 ? _PP_TXT.sumNoService : n.type;
+  return time + ' · ' + net + ' · ' + cfg.bat.level + ' %';
+}
+
+// ── Éditeur (vue plein écran, comme l'éditeur d'étape) ──
+let _pp = null; // { ctx: 'seq' | 'media', cfg (brouillon appliqué à chaque changement) }
+function openPhoneParams(ctx) {
+  const media = ctx === 'media';
+  _pp = { ctx: media ? 'media' : 'seq', cfg: JSON.parse(JSON.stringify(media ? _mbarState().cfg : seqPhoneCfg())) };
+  const v = document.getElementById('phone-params-view');
+  if (v) { v.style.display = 'flex'; v.scrollTop = 0; }
+  renderPhoneParams();
+}
+function closePhoneParams() {
+  _pp = null;
+  const v = document.getElementById('phone-params-view');
+  if (v) v.style.display = 'none';
+}
+function _ppCommit() {
+  const e = _pp;
+  if (!e) return;
+  e.cfg = phoneBarSanitize(e.cfg);
+  if (e.ctx === 'media') mediaBarSetCfg(e.cfg);
+  else {
+    _seq.phone = JSON.parse(JSON.stringify(e.cfg));
+    if (!seqSave()) alert(_SEQ_TXT.storeFull);
+    renderSeq();
+  }
+  renderPhoneParams();
+}
+const _ppOpt = (on, fn, label, extra) => '<button type="button" class="ss-opt' + (on ? ' on' : '') + '" onclick="' + fn + '"' + (extra || '') + '>' + label + '</button>';
+// Barres de réseau dessinées (même dessin que la barre d'état)
+const _ppBarsIcon = (n) => '<span class="pb-sig pp-sig" aria-hidden="true">' + [1, 2, 3, 4].map((i) => '<i class="' + (i <= n ? 'on' : '') + '"></i>').join('') + '</span>';
+function renderPhoneParams() {
+  const e = _pp;
+  if (!e) return;
+  const cfg = e.cfg, c = cfg.clock, n = cfg.net, b = cfg.bat;
+  const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+  set('ppTitle', e.ctx === 'media' ? _PP_TXT.titleMedia : _PP_TXT.titleSeq);
+  set('ppBack', e.ctx === 'media' ? _PP_TXT.backMedia : _PP_TXT.backSeq);
+  set('ppCap', _PP_TXT.preview);
+  set('ppNote', e.ctx === 'media' ? _PP_TXT.noteMedia : _PP_TXT.noteSeq);
+  // Aperçu : l'heure réglée (ou l'heure réelle)
+  const pv = document.getElementById('ppPreview');
+  if (pv) {
+    const now = Date.now();
+    const msg = phoneBarMsg(cfg, now, now);
+    phoneBarRender(pv, msg, phoneBarClockAt(msg, now, now));
+  }
+  // Date et heure
+  const real = c.mode === 'real';
+  const shown = real || !c.date || !c.time ? phoneBarToday() : c;
+  const ymd = shown.date.split('-');
+  const dateTxt = notifShortDate(shown.date) + ' ' + ymd[0];
+  const box = (cls, txt, type, val, fn, aria) => '<label class="pp-dt ' + cls + (real ? ' off' : '') + '"><span>' + escapeHtml(txt) + '</span>'
+    + '<input type="' + type + '" value="' + escapeHtml(val) + '" aria-label="' + escapeHtml(aria) + '"' + (real ? ' disabled' : '') + ' onchange="' + fn + '(this.value)"></label>';
+  document.getElementById('ppClock').innerHTML = '<span class="ss-label">' + escapeHtml(_PP_TXT.labelClock) + '</span>'
+    + '<div class="pp-dt-row">' + box('pp-date', dateTxt, 'date', shown.date, 'ppSetDate', _PP_TXT.dateAria) + box('pp-time', shown.time, 'time', shown.time, 'ppSetTime', _PP_TXT.timeAria) + '</div>'
+    + '<div class="ss-row">' + _ppOpt(c.mode === 'run', 'ppSetClock(\'run\')', escapeHtml(_PP_TXT.run)) + _ppOpt(c.mode === 'frozen', 'ppSetClock(\'frozen\')', escapeHtml(_PP_TXT.frozen))
+    + _ppOpt(real, 'ppSetClock(\'real\')', escapeHtml(_PP_TXT.real)) + '</div>';
+  // Réseau
+  document.getElementById('ppNet').innerHTML = '<span class="ss-label">' + escapeHtml(_PP_TXT.labelNet) + '</span>'
+    + '<div class="ss-row pp-bars">' + _ppOpt(n.bars === 0, 'ppSetBars(0)', escapeHtml(_PP_TXT.noService))
+    + [1, 2, 3, 4].map((k) => _ppOpt(n.bars === k, 'ppSetBars(' + k + ')', _ppBarsIcon(k), ' aria-label="' + escapeHtml(_ppTpl(_PP_TXT.barsAria, { n: k })) + '"')).join('') + '</div>'
+    + '<div class="ss-row">' + PB_NET_TYPES.map((t) => _ppOpt(n.type === t, 'ppSetType(\'' + t + '\')', t)).join('') + _ppOpt(n.plane, 'ppTogglePlane()', escapeHtml(_PP_TXT.plane)) + '</div>'
+    + '<div class="pp-wifi"><span>' + escapeHtml(_PP_TXT.wifi) + '</span>' + _ppOpt(n.wifi, 'ppSetWifi(true)', escapeHtml(_PP_TXT.yes)) + _ppOpt(!n.wifi, 'ppSetWifi(false)', escapeHtml(_PP_TXT.no)) + '</div>';
+  // Batterie
+  document.getElementById('ppBat').innerHTML = '<span class="ss-label">' + escapeHtml(_PP_TXT.labelBat) + '</span>'
+    + '<div class="pp-level"><input type="range" id="ppLevel" min="1" max="100" step="1" value="' + b.level + '" aria-label="' + escapeHtml(_PP_TXT.levelAria) + '" style="--v:' + b.level + '%" oninput="ppSetLevel(this.value)">'
+    + '<b id="ppLevelVal">' + escapeHtml(_ppTpl(_PP_TXT.level, { n: b.level })) + '</b></div>'
+    + '<div class="ss-row">' + _ppOpt(b.charging, 'ppToggleBat(\'charging\')', escapeHtml(_PP_TXT.charging)) + _ppOpt(b.pct, 'ppToggleBat(\'pct\')', escapeHtml(_PP_TXT.pct)) + '</div>';
+}
+function ppSetClock(m) {
+  const e = _pp;
+  if (!e || !['run', 'frozen', 'real'].includes(m)) return;
+  const c = e.cfg.clock;
+  if (m !== 'real' && (!c.date || !c.time)) Object.assign(c, phoneBarToday()); // préremplies : maintenant
+  c.mode = m;
+  _ppCommit();
+}
+function ppSetDate(v) { if (_pp && typeof v === 'string' && SRP.DATE_RE.test(v)) { _pp.cfg.clock.date = v; if (!_pp.cfg.clock.time) _pp.cfg.clock.time = phoneBarToday().time; _ppCommit(); } }
+function ppSetTime(v) { if (_pp && typeof v === 'string' && SRP.TIME_RE.test(v.slice(0, 5))) { _pp.cfg.clock.time = v.slice(0, 5); if (!_pp.cfg.clock.date) _pp.cfg.clock.date = phoneBarToday().date; _ppCommit(); } }
+function ppSetBars(k) { if (_pp && [0, 1, 2, 3, 4].includes(k)) { _pp.cfg.net.bars = k; _ppCommit(); } }
+function ppSetType(t) { if (_pp && PB_NET_TYPES.includes(t)) { _pp.cfg.net.type = t; _pp.cfg.net.plane = false; _ppCommit(); } }
+function ppTogglePlane() { if (_pp) { _pp.cfg.net.plane = !_pp.cfg.net.plane; _ppCommit(); } }
+function ppSetWifi(on) { if (_pp) { _pp.cfg.net.wifi = !!on; _ppCommit(); } }
+function ppToggleBat(k) { if (_pp && (k === 'charging' || k === 'pct')) { _pp.cfg.bat[k] = !_pp.cfg.bat[k]; _ppCommit(); } }
+// Curseur : aperçu et valeur suivis en direct, sans redessiner le curseur en cours de glisser
+let _ppLevelTimer = null;
+function ppSetLevel(v) {
+  const e = _pp, n = Math.round(Number(v));
+  if (!e || !Number.isFinite(n)) return;
+  e.cfg.bat.level = Math.min(100, Math.max(1, n));
+  const r = document.getElementById('ppLevel');
+  if (r) r.style.setProperty('--v', e.cfg.bat.level + '%');
+  const val = document.getElementById('ppLevelVal');
+  if (val) val.textContent = _ppTpl(_PP_TXT.level, { n: e.cfg.bat.level });
+  const pv = document.getElementById('ppPreview');
+  if (pv) { const now = Date.now(), msg = phoneBarMsg(e.cfg, now, now); phoneBarRender(pv, msg, phoneBarClockAt(msg, now, now)); }
+  if (_ppLevelTimer) clearTimeout(_ppLevelTimer);
+  _ppLevelTimer = setTimeout(() => { _ppLevelTimer = null; if (_pp === e) _ppCommit(); }, 250);
+}
+
+// ── Onglet Média : barre d'état au-dessus des médias, hors séquence ──
+const MBAR_LS_KEY = 'setremote-mediabar-v1';
+let _mbar = null; // { s (session), cfg, t0 (départ de l'horloge « run »), screens (écrans où elle est activée) }
+function _mbarState() {
+  const sid = typeof _session !== 'undefined' && _session ? _session.channelId : '';
+  if (_mbar && _mbar.s === sid) return _mbar;
+  let o = null;
+  try { o = JSON.parse(_lsGet(MBAR_LS_KEY)); } catch (_) { o = null; }
+  _mbar = { s: sid, cfg: phoneBarDefaults(), t0: Date.now(), screens: [] };
+  if (o && typeof o === 'object' && o.s === sid) {
+    _mbar.cfg = phoneBarSanitize(o.cfg);
+    if (Number.isFinite(o.t0) && o.t0 > 0) _mbar.t0 = o.t0;
+    _mbar.screens = Array.isArray(o.screens) ? [...new Set(o.screens.filter((x) => typeof x === 'string' && SRP.SCREEN_ID_RE.test(x)))].slice(0, 64) : [];
+  }
+  return _mbar;
+}
+function _mbarSave() {
+  const st = _mbarState();
+  _lsSet(MBAR_LS_KEY, JSON.stringify({ v: 1, s: st.s, cfg: st.cfg, t0: st.t0, screens: st.screens }));
+}
+function _mbarSend(ids) {
+  if (!ids.length) return;
+  const st = _mbarState();
+  sendMsg({ type: 'media:bar', bar: phoneBarMsg(st.cfg, st.t0), target: { screens: ids.slice() } });
+}
+// Activée sur toute la cible courante ?
+function mediaBarIsOn(ids) { const st = _mbarState(); return ids.length > 0 && ids.every((id) => st.screens.includes(id)); }
+function setMediaBar(on) {
+  const st = _mbarState(), ids = scrTargetIds();
+  if (ids.length) {
+    if (on) {
+      if (!st.screens.length) st.t0 = Date.now(); // l'heure repart de l'heure réglée
+      for (const id of ids) if (!st.screens.includes(id)) st.screens.push(id);
+      _mbarSend(ids);
+    } else {
+      st.screens = st.screens.filter((id) => !ids.includes(id));
+      sendMsg({ type: 'media:bar', bar: null, target: { screens: ids.slice() } });
+    }
+    _mbarSave();
+  }
+  renderMediaBarRow();
+}
+function mediaBarSetCfg(cfg) {
+  const st = _mbarState();
+  st.cfg = phoneBarSanitize(cfg);
+  st.t0 = Date.now();
+  _mbarSave();
+  _mbarSend(st.screens.filter((id) => scrKnown(id)));
+  renderMediaBarRow();
+}
+// Resynchronisation (24-resync.js) : écrans revenus où la barre est activée
+function mediaBarOnScreensResync(ids) {
+  const st = _mbarState();
+  _mbarSend(ids.filter((id) => st.screens.includes(id)));
+}
+function renderMediaBarRow() {
+  if (typeof mode !== 'undefined' && mode !== 'remote') return;
+  const st = _mbarState();
+  const t = document.getElementById('mediaBarToggle');
+  if (t) t.checked = mediaBarIsOn(scrTargetIds());
+  const sum = document.getElementById('mediaBarSum');
+  if (sum) sum.textContent = phoneParamsSummary(st.cfg);
+  const ed = document.getElementById('mediaBarEditLbl');
+  if (ed) ed.textContent = _PP_TXT.mediaEdit;
+}
 // ── Initialisation du laboratoire d'effets ──
 buildEffectCards();
 loadFxMemories();
