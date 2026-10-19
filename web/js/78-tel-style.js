@@ -55,6 +55,7 @@ function telStyleSummary(k) {
 
 let _tsOpen = false;
 function openTelStyle() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   const v = document.getElementById('tel-style-view');
   if (!v) return;
   _tsOpen = true;

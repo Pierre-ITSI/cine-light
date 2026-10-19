@@ -71,14 +71,19 @@ test('documents d\'ouverture présents, liens relatifs valides', () => {
   assert.match(read('README.md'), /confidentialite\.html/);
 });
 
-test('LICENSING : \'off\' par défaut (version libre), constante de build hors de SETREMOTE_DEFAULTS', () => {
+test('LICENSING : \'off\' par défaut (version libre), valeurs de build hors de SETREMOTE_DEFAULTS', () => {
   const cfg = read('web/js/01-config.js');
-  assert.match(cfg, /^const LICENSING = 'off';$/m);
+  assert.match(cfg, /^const LICENCE_BUILD = Object\.freeze\(\{ LICENSING: 'off', LICENCE_PUBKEY: '', LICENCE_API: '', LICENCE_BUY_URL: '' \}\);$/m);
   const defaults = cfg.slice(cfg.indexOf('const SETREMOTE_DEFAULTS'), cfg.indexOf('});', cfg.indexOf('const SETREMOTE_DEFAULTS')));
-  assert.doesNotMatch(defaults, /LICENSING/);
-  // Rien ne la lit encore (préparation)
-  const code = build().html.split('\n').filter((l) => !/^\s*\/\//.test(l) && /\bLICENSING\b/.test(l));
-  assert.deepEqual(code, ["const LICENSING = 'off';"]);
+  assert.doesNotMatch(defaults, /LICEN[CS]/);
+  // Une seule porte d'entrée : LIC_ON (14-licence.js) ; SETREMOTE_CONFIG ne peut
+  // que restreindre (tests/licence.test.mjs)
+  const code = build().html.split('\n').filter((l) => !/^\s*\/\//.test(l) && /\bLICENSING\b/.test(l)).map((l) => l.trim());
+  assert.deepEqual(code, [
+    "const LICENCE_BUILD = Object.freeze({ LICENSING: 'off', LICENCE_PUBKEY: '', LICENCE_API: '', LICENCE_BUY_URL: '' });",
+    "const LICENSING = LICENCE_BUILD.LICENSING === 'on' || _cfgIn.LICENSING === 'on' ? 'on' : 'off';",
+    "const LIC_ON = LICENSING === 'on' && !!LICENCE_PUBKEY && !!LICENCE_API;",
+  ]);
 });
 
 // ── THIRD_PARTY_NOTICES.md ──────────────────────────────────────────────────

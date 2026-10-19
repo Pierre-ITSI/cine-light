@@ -63,12 +63,12 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
 </header>
 <main>
 <h1>Privacy policy</h1>
-<p class="meta">Last updated: 18 October 2026</p>
+<p class="meta">Last updated: 19 October 2026</p>
 
 <section class="card" aria-labelledby="short">
   <h2 class="label" id="short">In short</h2>
   <ul>
-    <li><strong>No account</strong>, no advertising, no analytics, no trackers. We sell no data.</li>
+    <li><strong>No account</strong>, no advertising, no individual analytics, no trackers. We sell no data. Only the licence of the official version uses a random device ID, plus an anonymous count (§ 3.10).</li>
     <li>Everything the remote and the playback screens exchange (colors, effects, photos, videos, sounds, texts) is <strong>end-to-end encrypted</strong> on the sending device (AES-256-GCM). We do not have the keys: <strong>we cannot read your content.</strong></li>
     <li>These encrypted messages travel through a relay server, described in § 3.2, which cannot read them.</li>
     <li>Your settings, cues, saved calls and ringtones <strong>stay on your device</strong>.</li>
@@ -138,12 +138,16 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
 <p>We use your e-mail address and your message only to reply to you.</p>
 
 <h3 id="never">3.9 What we do not do</h3>
-<p>No account, no analytics, no advertising, no tracking across apps, no sale of data, no profiling. SetRemote does <strong>not</strong> access your contacts, location, call log or text messages. Its call and message screens are <strong>entirely fictional</strong>: no real call, text message or system notification is ever sent.</p>
+<p>No account, no individual analytics (only the anonymous counts of § 3.10), no advertising, no tracking across apps, no sale of data, no profiling. SetRemote does <strong>not</strong> access your contacts, location, call log or text messages. Its call and message screens are <strong>entirely fictional</strong>: no real call, text message or system notification is ever sent.</p>
+
+<h3 id="licence">3.10 Licence and anonymous statistics (official version)</h3>
+<p>In ITSI APP's official version (apps and web version), the Tel and Sequence tabs require a licence. To check it, the device creates its own key pair; its <strong>device ID</strong> (for example <code>K7Q2-9XMB</code>) is derived from it at random and says nothing about you or the device. At launch and then every 6 hours, the device sends our licence server this ID, its public key, a signature, its operating system (iOS, Android…), the SetRemote version and the install type (app, installed web app, browser). The server keeps this information (date of the last check, system, version, install type) <strong>only if the ID is attached to a licence</strong>, that is, if you gave it when buying; otherwise it keeps nothing. At most once a day, the app also sends an <strong>anonymous</strong> count: system, version, mode (remote or playback screen) and install type, with no identifier at all; the IP address is only used to derive the country and is then discarded, and only daily totals are kept. The free, self-hosted version sends none of this.</p>
 
 <h2 id="legal">4. Why, and on what legal basis?</h2>
 <ul>
   <li><strong>Carrying your encrypted messages</strong> between your devices (technical connection data, § 3.2 and 3.3): performance of the service you request (GDPR, Art. 6(1)(b)).</li>
   <li><strong>Keeping your settings on your device</strong> (§ 3.5): storage strictly necessary for the service you requested (Article 82 of the French Data Protection Act), with no transmission.</li>
+  <li><strong>Checking a licence</strong> (§ 3.10): performance of the licence contract (Art. 6(1)(b)); <strong>counting usage anonymously</strong> (§ 3.10): legitimate interest (Art. 6(1)(f)).</li>
   <li><strong>Replying to you</strong> (§ 3.8) and <strong>monitoring the app's stability</strong> (§ 3.7): legitimate interest (Art. 6(1)(f)).</li>
 </ul>
 <p>No automated decision with legal effects is made about you.</p>
@@ -153,6 +157,7 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
   <li><strong>Content you send</strong>: never kept by us; in memory on the playback screen for the session.</li>
   <li><strong>Technical data at the providers</strong> (relay, STUN server, web host): under their own policies, which we do not control (§ 3.2, 3.3 and 3.6).</li>
   <li><strong>Data on your device</strong>: until you erase it.</li>
+  <li><strong>Licence</strong> (§ 3.10): attached IDs and their last check, for the duration of the licence and its renewal; anonymous counts: daily totals, with no personal data.</li>
   <li><strong>E-mails</strong>: 3 years after the last exchange.</li>
 </ul>
 
@@ -168,6 +173,7 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
   -->
   <li><strong>GitHub, Inc.</strong> (United States), host of the web version: technical data of visits (§ 3.6);</li>
   <!-- HOSTING § 6: END -->
+  <li><strong>our licence server</strong> (official version, § 3.10): device ID, system, version and install type;</li>
   <li><strong>Apple and Google</strong>, to distribute the apps, as independent controllers (§ 3.7);</li>
   <li><strong>authorities</strong>, upon a legal request only: we hold almost nothing, and no content.</li>
 </ul>

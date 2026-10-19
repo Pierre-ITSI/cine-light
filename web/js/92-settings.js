@@ -13,6 +13,8 @@
 //                                 (21-links.js) ; la ligne ouvre « Tourner sans
 //                                 réseau » (maquette 10, 93-offline.js), où se
 //                                 fait le choix
+// En tête, version officielle seulement (absentes de la version libre) :
+//   Licence, Identifiant de cet appareil   maquettes 37 / 37b, 77-licence-ui.js
 // Laissées de côté tant que la fonction n'existe pas (pas de valeur inventée) :
 //   Relais (« Europe · eu-west »)  en production, broker MQTT public ; le relais
 //                                 auto-hébergé reste désactivé (RELAY_URL vide)
@@ -63,6 +65,7 @@ function renderSettings() {
   val.classList.toggle('off', !warn);
   document.getElementById('stStrobeMax').textContent = PROTO.STROBE_FREQ_MAX + ' Hz';
   renderSettingsLink();
+  renderLicenceSettings(); // Licence (maquettes 37, 37b) : version officielle seulement, 77-licence-ui.js
   document.getElementById('stVersion').textContent = 'SetRemote ' + APP_VERSION + ' · by Pikoo';
 }
 

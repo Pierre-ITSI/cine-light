@@ -48,6 +48,7 @@ function phoneParamsSummary(cfg) {
 let _pp = null; // { ctx: 'seq' | 'media', cfg (brouillon appliqué à chaque changement) }
 function openPhoneParams(ctx) {
   const media = ctx === 'media';
+  if (!media && licLocked('seq')) return; // aperçu sans licence (77-licence-ui.js)
   _pp = { ctx: media ? 'media' : 'seq', cfg: JSON.parse(JSON.stringify(media ? _mbarState().cfg : seqPhoneCfg())) };
   const v = document.getElementById('phone-params-view');
   if (v) { v.style.display = 'flex'; v.scrollTop = 0; }

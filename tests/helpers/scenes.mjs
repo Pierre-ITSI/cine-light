@@ -2,7 +2,8 @@
 // Écrans clés capturés pour la non-régression visuelle. Chaque scène part
 // d'une page neuve, horloge figée (T0) et aléa déterministe : deux rendus du
 // même HTML dans le même environnement sont identiques au pixel près.
-import { openPage } from './harness.mjs';
+import { openPage, waitFor, T0 } from './harness.mjs';
+import { licenceInit, signToken, payloadFor, DEVICE_ID } from './licence.mjs';
 import { buildSacnDataPacket } from '../../packages/dmx/index.js';
 
 // Session et code d'appairage déterministes (QR identique d'un rendu à
@@ -103,6 +104,27 @@ const ringScene = (kind) => remote('call', async (page) => {
     openTelStyle();
   }, kind);
   await scrollView('callRingPanel')(page);
+});
+
+// ── Licence (version officielle) : configuration imposée par la scène ──
+// Identifiant d'appareil fixe (tests/helpers/licence.mjs) ; le service est
+// injoignable (harnais hermétique) : sans licence, aperçu ; « active », jeton
+// gardé de la veille, valable hors ligne (vérifié il y a 2 h).
+const LIC_ACTIVE_TOKEN = {
+  token: await signToken({ ...payloadFor(DEVICE_ID, { features: ['tel', 'seq'], holder: 'Prod Nord', end: Date.parse('2027-04-17T12:00:00+02:00'), devices: { n: 3, max: 5 } }, T0 - 2 * 3600e3) }),
+  checked: T0 - 2 * 3600e3,
+};
+export const SCENE_INIT = {
+  'remote-call-preview': licenceInit({ fixedDevice: true }),
+  'remote-seq-preview': licenceInit({ fixedDevice: true }),
+  'remote-settings-licence': licenceInit({ fixedDevice: true }),
+  'remote-settings-licence-active': licenceInit({ fixedDevice: true, token: LIC_ACTIVE_TOKEN }),
+};
+// Identité prête, première vérification finie (échec réseau silencieux)
+const licScene = (tab, extra) => remote(tab, async (page) => {
+  await waitFor(page, () => !!licDeviceId() && !_lic.busy && !!_lic.error);
+  await page.clock.runFor(100);
+  if (extra) await extra(page);
 });
 
 // ── Passerelle DMX (maquettes 14 à 18) ──
@@ -606,6 +628,11 @@ export const SCENES = {
     await page.evaluate(() => receiveEffect({ name: 'police', active: true, params: { speed: 3, intensity: 100, chaos: 0, drift: 0 } }));
     await page.clock.runFor(250);
   },
+  // ── Licence, version officielle (maquettes 39, 39b, 37, 37b ; sans compteur du jour) ──
+  'remote-call-preview': licScene('call'),
+  'remote-seq-preview': licScene('seq'),
+  'remote-settings-licence': licScene(null, (page) => page.evaluate(() => openSettings())),
+  'remote-settings-licence-active': licScene(null, (page) => page.evaluate(() => openSettings())),
 };
 
 // Fige les effets canvas sur une frame déterministe : chaque moteur actif est
@@ -623,7 +650,8 @@ function freezeCanvasFx() {
 
 // Capture d'une scène pour un fichier HTML donné
 export async function captureScene(browser, file, name) {
-  const { page, errors, close } = await openPage(browser, { file, clock: true, init: NATIVE_SCENES.has(name) ? NATIVE_INIT : null });
+  const init = SCENE_INIT[name] || (NATIVE_SCENES.has(name) ? NATIVE_INIT : null);
+  const { page, errors, close } = await openPage(browser, { file, clock: true, init });
   try {
     await SCENES[name](page);
     await page.evaluate(freezeCanvasFx);

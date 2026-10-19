@@ -56,12 +56,12 @@ function _clSanitize(e) {
 }
 function loadCallList() {
   let o = null;
-  try { o = JSON.parse(localStorage.getItem(CALL_LIST_KEY)); } catch (_) { o = null; }
+  try { o = JSON.parse(_lsGet(CALL_LIST_KEY)); } catch (_) { o = null; }
   const pick = (arr, list) => (Array.isArray(arr) ? arr : []).map(_clSanitize).filter((e) => e && _clListOf(e.kind) === list).slice(0, CALL_LIST_MAX);
   callList = { call: pick(o && o.call, 'call'), sms: pick(o && o.sms, 'sms'), notif: pick(o && o.notif, 'notif') };
 }
 function persistCallList() {
-  try { localStorage.setItem(CALL_LIST_KEY, JSON.stringify({ v: 1, call: callList.call, sms: callList.sms, notif: callList.notif })); } catch (_) {}
+  _lsPut(CALL_LIST_KEY, JSON.stringify({ v: 1, call: callList.call, sms: callList.sms, notif: callList.notif }));
   if (typeof gwSyncTriggerEntries === 'function') gwSyncTriggerEntries();
 }
 
@@ -95,6 +95,7 @@ function _clTx(mode, fn) {
 }
 async function callAssetPut(key, value) {
   _clAssetMem.set(key, value);
+  if (_assetMasked(key)) return; // aperçu sans licence : en mémoire seulement (12-session.js)
   const ok = await _clTx('readwrite', (st) => st.put(value, key));
   if (ok && /:audio$/.test(key)) _clAssetMem.delete(key); // sons : relus à la demande
 }
@@ -107,6 +108,7 @@ async function callAssetGet(key) {
 }
 function callAssetDelete(key) {
   _clAssetMem.delete(key);
+  if (_assetMasked(key)) return Promise.resolve(true);
   return _clTx('readwrite', (st) => st.delete(key));
 }
 
@@ -275,6 +277,7 @@ function setCallListKind(k) {
 
 // ── Actions ──
 async function saveCurrentCall() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   const fields = callFormFields();
   const list = _clListOf(fields.kind);
   if (callList[list].length >= CALL_LIST_MAX) return null;
@@ -369,6 +372,7 @@ async function triggerSelectedCallEntry() {
 }
 
 function deleteSelectedCallEntry() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   const kind = callListKind, e = _clSelected(kind);
   if (!e) return;
   const i = callList[kind].indexOf(e);
@@ -389,8 +393,8 @@ let _clDrag = null, _clSuppressClick = false;
   const blockScroll = (e) => e.preventDefault();
   box.addEventListener('pointerdown', (e) => {
     const row = e.target.closest('.cl-row');
-    if (!row || (e.pointerType === 'mouse' && e.button !== 0)) return;
-    _clDrag = { row, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, active: false, ghost: null };
+    if (!row || (e.pointerType === 'mouse' && e.button !== 0) || licLocked('tel')) return; // aperçu : ordre figé
+    _clDrag ={ row, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, active: false, ghost: null };
     if (e.target.closest('.cl-grip')) { e.preventDefault(); startDrag(); }
     else _clDrag.timer = setTimeout(startDrag, HOLD);
   });

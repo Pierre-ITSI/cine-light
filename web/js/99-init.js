@@ -8,6 +8,9 @@ renderFxMemories();
 // IndexedDB, chargée en arrière-plan), appels, SMS et notifications
 // enregistrés, discussion préparée, appelants enregistrés, rangée « Style et
 // sonnerie » ──
+// Version officielle sans licence : démos à la place des données de
+// l'utilisateur, masquées avant tout chargement (77-licence-ui.js)
+licBootMask();
 _syncCallPhotoRow();
 ringInit();
 loadCallList();
@@ -23,6 +26,8 @@ renderTelStyle();      // 78-tel-style.js
 seqLoad();
 loadSavedSeqs();       // 96-sequences-saved.js
 renderSeq();
+// Aperçu, Réglages › Licence, vérification de la licence (sans effet hors version officielle)
+licBootUi();
 
 // ── Mini-carte sticky : apparaît dès que la preview commence à être masquée ──
 (function initStickyPreview() {

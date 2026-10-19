@@ -2,6 +2,7 @@
 // ══════════════════════════ NAVIGATION ══════════════════════════
 function startMode(m) {
   document.getElementById('splash').style.display = 'none';
+  licStatsPing(m === 'remote' ? 'remote' : 'screen'); // statistiques anonymes, version officielle seulement (14-licence.js)
   if (m === 'remote') {
     mode = 'remote';
     const rm = document.getElementById('remote-mode');

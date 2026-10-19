@@ -1465,6 +1465,45 @@ button.st-row{cursor:pointer}
 .off-note{font-size:.6875rem;color:#c4c4c4;line-height:1.55;text-align:center}
 .off-tip{margin-top:auto;flex-shrink:0;background:rgba(111,180,255,.08);border:1px solid rgba(111,180,255,.3);border-radius:10px;padding:12px 14px;font-size:.6875rem;color:#c9ddf5;line-height:1.6}
 .off-tip b{color:var(--text)}
+/* ══ Licence (version officielle seulement, 77-licence-ui.js) ══
+   Bandeau d'aperçu des onglets Tel et Séquence (maquettes 39, 39b, sans
+   compteur du jour), verrous de l'aperçu, Réglages › Licence (37, 37b).
+   Préfixe lic- (st-lic- dans les réglages). */
+.lic-pv{border:1px solid rgba(255,107,44,.55);background:rgba(255,107,44,.07);border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;flex-direction:column;gap:9px;font-family:'DM Mono',monospace}
+.lic-pv-tag{align-self:flex-start;font-size:.5625rem;letter-spacing:.16em;text-transform:uppercase;color:#FF8a55;border:1px solid rgba(255,107,44,.5);border-radius:10px;padding:3px 8px}
+.lic-pv p{margin:0;font-size:.6875rem;line-height:1.55;color:#c8c8c8}
+.lic-pv-row{display:flex;gap:8px}
+.lic-pv-id,.lic-pv-buy{flex:1;min-width:0;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'DM Mono',monospace;font-size:.6875rem;cursor:pointer;white-space:nowrap}
+.lic-pv-id{border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text)}
+.lic-pv-id span{color:#a8a8a8}
+.lic-pv-id b{font-weight:400}
+.lic-pv-buy{border:none;background:var(--accent);color:#000;font-weight:500;letter-spacing:.04em}
+.lic-pv-id:active,.lic-pv-buy:active{transform:scale(.97)}
+
+/* Verrous de l'aperçu : estompé (réglage), ou figé mais lisible (fil, étapes) */
+.lic-lk{opacity:.55;pointer-events:none}
+.lic-ro{pointer-events:none}
+.lic-ex::after{content:attr(data-lic-ex)}
+
+/* Réglages › Licence */
+.st-lic-state{display:flex;align-items:center;gap:10px;font-size:.875rem}
+.st-lic-dot{width:9px;height:9px;border-radius:50%;background:#777;flex-shrink:0}
+.st-lic-dot.on{background:var(--green)}
+.st-lic-until{margin-left:auto;font-size:.6875rem;color:#a8a8a8;text-align:right}
+.st-lic-until.soon{color:#FF8a55}
+.st-lic-rows{display:flex;flex-direction:column;gap:10px}
+.st-lic-rows:empty{display:none}
+.st-lic-kv{display:flex;justify-content:space-between;gap:12px;font-size:.75rem}
+.st-lic-kv span:first-child{color:#b8b8b8}
+.st-lic-kv span:last-child{text-align:right}
+.st-lic-msg{font-size:.6875rem;color:#FF8a55;line-height:1.5}
+.st-lic-msg:empty{display:none}
+.st-lic-id{font-family:'Lato',sans-serif;font-weight:700;font-size:1.875rem;letter-spacing:.06em;text-align:center;padding:6px 0;user-select:all;-webkit-user-select:all}
+.st-lic-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.st-lic-act,.st-lic-wide{height:46px;flex-shrink:0;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:.6875rem;letter-spacing:.06em;cursor:pointer}
+.st-lic-act.lic-done{color:var(--green)}
+.st-lic-wide:disabled{opacity:.6;cursor:default}
+.st-lic-buy{border:none;background:var(--accent);color:#000;font-weight:500}
 </style>
 </head>
 <body>
@@ -2081,6 +2120,15 @@ button.st-row{cursor:pointer}
   </div>
 
   <div class="tab-content" id="content-call">
+    <!-- Aperçu sans licence (maquettes 39 / 39b) : version officielle seulement, 77-licence-ui.js -->
+    <div class="lic-pv" id="licPvTel" style="display:none">
+      <span class="lic-pv-tag">Aperçu · Tel</span>
+      <p>Exemples prêts à jouer sur l'écran, non modifiables. La licence débloque vos propres appels, SMS et discussions.</p>
+      <div class="lic-pv-row">
+        <button type="button" class="lic-pv-id" aria-label="Copier l'identifiant de cet appareil" onclick="licCopyId(this)"><span>ID</span><b class="lic-id-txt">····-····</b>⧉</button>
+        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
+      </div>
+    </div>
     <div class="panel">
       <div class="panel-label">Type</div>
       <!-- Onglet Tel (maquettes 24 et 26) : appel, SMS, notification d'application, discussion -->
@@ -2103,7 +2151,7 @@ button.st-row{cursor:pointer}
       <input type="text" id="callLabel" class="text-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px" oninput="renderCallerState()">
       <div style="display:flex;gap:10px;align-items:center">
         <div id="callPhotoPreview" style="width:46px;height:46px;border-radius:50%;background:var(--mid2);border:1px solid var(--border);background-size:cover;background-position:center;flex-shrink:0"></div>
-        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()">🖼 Photo (option)</button>
+        <button class="media-btn" id="callPhotoBtn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()">🖼 Photo (option)</button>
         <input type="file" id="callPhotoInput" accept="image/*" style="display:none" onchange="onCallPhoto(this.files);this.value=''">
       </div>
       <button type="button" class="tel-save" id="callerSaveBtn" onclick="saveCurrentCaller()">☆ Enregistrer comme appelant</button>
@@ -2298,6 +2346,15 @@ button.st-row{cursor:pointer}
 
   <!-- Séquence (maquettes 28 et 29) : étapes qui référencent les états enregistrés des autres onglets, GO / ↶ / STOP -->
   <div class="tab-content" id="content-seq">
+    <!-- Aperçu sans licence (maquettes 39 / 39b) : version officielle seulement, 77-licence-ui.js -->
+    <div class="lic-pv" id="licPvSeq" style="display:none">
+      <span class="lic-pv-tag">Aperçu · Séquence</span>
+      <p>Exemples prêts à jouer sur l'écran, non modifiables. La licence débloque vos propres séquences.</p>
+      <div class="lic-pv-row">
+        <button type="button" class="lic-pv-id" aria-label="Copier l'identifiant de cet appareil" onclick="licCopyId(this)"><span>ID</span><b class="lic-id-txt">····-····</b>⧉</button>
+        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
+      </div>
+    </div>
     <div class="dc-tabs">
       <button type="button" class="gw-seg-btn active" id="seqTab-cur" onclick="setSeqView('cur')">Séquence en cours</button>
       <button type="button" class="gw-seg-btn" id="seqTab-saved" onclick="setSeqView('saved')">Enregistrées (0)</button>
@@ -2626,6 +2683,24 @@ button.st-row{cursor:pointer}
     <button type="button" class="st-back" onclick="closeSettings()">← Retour</button>
     <span class="st-title" id="stTitle">Réglages</span>
     <span class="st-spacer"></span>
+  </div>
+  <!-- Licence (maquettes 37, 37b) : version officielle seulement, 77-licence-ui.js -->
+  <div class="st-card" id="stLicCard" style="display:none">
+    <span class="st-label">Licence</span>
+    <div class="st-lic-state"><span class="st-lic-dot" id="stLicDot"></span><span id="stLicState">Aucune licence</span><span class="st-lic-until" id="stLicUntil"></span></div>
+    <div class="st-lic-rows" id="stLicRows"></div>
+    <div class="st-lic-msg" id="stLicMsg" role="status"></div>
+    <button type="button" class="st-lic-wide" id="stLicCheck" onclick="licCheckNow()">VÉRIFIER MAINTENANT</button>
+  </div>
+  <div class="st-card" id="stLicIdCard" style="display:none">
+    <span class="st-label">Identifiant de cet appareil</span>
+    <div class="st-lic-id lic-id-txt" id="stLicId">····-····</div>
+    <div class="st-lic-acts">
+      <button type="button" class="st-lic-act" onclick="licCopyId(this)">COPIER</button>
+      <button type="button" class="st-lic-act" onclick="licShareId(this)">PARTAGER</button>
+    </div>
+    <p class="st-note" id="stLicBuyNote" style="display:none"></p>
+    <button type="button" class="st-lic-wide st-lic-buy" id="stLicBuy" style="display:none" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
   </div>
   <div class="st-card">
     <span class="st-label">Langue</span>
@@ -6778,16 +6853,37 @@ const STUN_URLS = Object.freeze([..._cfgPick('STUN_URLS',
 // requête, ni fragment, ni identifiants) ; '' = location
 const PUBLIC_URL = _cfgPick('PUBLIC_URL',
   (u) => u === '' || (typeof u === 'string' && /^https:\/\/[a-z0-9.-]+(:\d+)?(\/[\w.~%-]*)*$/i.test(u)));
-// Vérification de licence de la future version officielle payante
-// (docs/LICENSING.md) :
-//   LICENSING  'off' = aucune vérification, aucune requête au service de
-//              licence, toutes les fonctions disponibles : version libre et
-//              auto-hébergée (valeur par défaut, à garder dans ce dépôt).
-//              Réservé : 'on' pour le seul build officiel d'ITSI APP.
-// Constante de BUILD, volontairement hors de SETREMOTE_DEFAULTS : ni
-// window.SETREMOTE_CONFIG ni la coque native ne peuvent la modifier.
-// PRÉPARATION : rien ne la lit encore.
-const LICENSING = 'off';
+// Licence Tel + Séquence de la version officielle (docs/LICENSING.md,
+// contrat client : docs/LICENCE-API.md, code : 14-licence.js, 77-licence-ui.js) :
+//   LICENSING        'off' = aucune vérification, aucune requête, toutes les
+//                    fonctions : version libre et auto-hébergée (valeur par
+//                    défaut, à garder dans ce dépôt). 'on' = onglets Tel et
+//                    Séquence en aperçu sans licence (build officiel d'ITSI APP).
+//   LICENCE_PUBKEY   clé publique ECDSA P-256 du service de licence (SPKI,
+//                    base64url) qui signe les jetons ; vide = licence inactive.
+//   LICENCE_API      base du service (https://hôte) ; '' = hôte de RELAY_URL
+//                    (wss://hub… → https://hub…) ; relais vide = inactive.
+//   LICENCE_BUY_URL  page d'achat (version web seulement, jamais dans l'app
+//                    native) ; '' = aucun lien d'achat.
+// Valeurs de BUILD (LICENCE_BUILD). window.SETREMOTE_CONFIG ne peut que
+// RESTREINDRE : passer LICENSING à 'on', et fournir une clé, un service ou
+// une page d'achat seulement si le build n'en fixe pas. Un build officiel
+// (LICENSING 'on', clé fixée) ne peut donc être ni désactivé ni détourné vers
+// une autre clé de signature.
+const LICENCE_BUILD = Object.freeze({ LICENSING: 'off', LICENCE_PUBKEY: '', LICENCE_API: '', LICENCE_BUY_URL: '' });
+const _licPick = (k, ok) => (LICENCE_BUILD[k] === '' && k in _cfgIn && ok(_cfgIn[k]) ? _cfgIn[k] : LICENCE_BUILD[k]);
+const LICENSING = LICENCE_BUILD.LICENSING === 'on' || _cfgIn.LICENSING === 'on' ? 'on' : 'off';
+const LICENCE_PUBKEY = _licPick('LICENCE_PUBKEY', (v) => typeof v === 'string' && /^[A-Za-z0-9_-]{80,200}$/.test(v));
+// https://hôte[:port] (http:// seulement sur la machine locale : développement, tests)
+const _cfgApiOk = (u) => typeof u === 'string' && /^(https:\/\/[a-z0-9.-]+|http:\/\/(localhost|127\.0\.0\.1))(:\d+)?$/i.test(u);
+const LICENCE_API = (() => {
+  const v = _licPick('LICENCE_API', _cfgApiOk);
+  if (v) return v;
+  const m = /^(wss?):\/\/([^/?#]+)/.exec(RELAY_URL);
+  return m ? (m[1] === 'wss' ? 'https://' : 'http://') + m[2] : '';
+})();
+const LICENCE_BUY_URL = _licPick('LICENCE_BUY_URL',
+  (u) => typeof u === 'string' && /^https:\/\/[a-z0-9.-]+(:\d+)?(\/[\w.~%-]*)*$/i.test(u));
 // ══════════════════════════ STATE ══════════════════════════
 let mode = null, mqttClient = null;
 let currentColor = '#ffffff';
@@ -6821,9 +6917,23 @@ const _LS_KEYS = {
 };
 let _session = null; // secret de la session active (télécommande ou écran)
 
-function _lsGet(k) { try { return localStorage.getItem(k); } catch (_) { return null; } }
-function _lsSet(k, v) {
-  try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (_) {}
+// Clés masquées (aperçu sans licence, 77-licence-ui.js) : lues et écrites
+// dans cette copie en mémoire (démos), jamais dans le stockage réel, qui garde
+// intactes les données de l'utilisateur. Map clé → valeur (null : absente).
+const _lsMask = new Map();
+function _lsGet(k) {
+  if (_lsMask.has(k)) return _lsMask.get(k);
+  try { return localStorage.getItem(k); } catch (_) { return null; }
+}
+// Photos et sons (IndexedDB, 82-call-list.js) de même : en aperçu, gardés en
+// mémoire seulement (images d'accueil « seqhome-… » : Séquence ; le reste : Tel)
+const _assetMask = { tel: false, seq: false };
+function _assetMasked(key) { return String(key).startsWith('seqhome-') ? _assetMask.seq : _assetMask.tel; }
+function _lsSet(k, v) { _lsPut(k, v); }
+// Écriture avec compte rendu : false = mémoire pleine (rien n'a changé)
+function _lsPut(k, v) {
+  if (_lsMask.has(k)) { _lsMask.set(k, v == null ? null : String(v)); return true; }
+  try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); return true; } catch (_) { return false; }
 }
 function _readPairing(k) {
   try {
@@ -6919,6 +7029,318 @@ function pairingLink(p) {
 // Efface le fragment de la barre d'adresse (et de l'historique courant)
 function clearLocationHash() {
   if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+}
+// ══════════════════════════ LICENCE TEL + SÉQUENCE : identité, vérification, statistiques ══════════════════════════
+// Version officielle seulement (01-config.js : LICENSING 'on', LICENCE_PUBKEY
+// et un service, LICENCE_API ou l'hôte du relais). Sinon LIC_ON = false : rien
+// ne tourne, aucune clé n'est créée, aucune requête ne part, tout est débloqué.
+// Contrat client complet : docs/LICENCE-API.md ; aperçu et Réglages :
+// 77-licence-ui.js.
+//
+// Identifiant d'appareil : paire ECDSA P-256 créée sur l'appareil (WebCrypto),
+// clé privée NON extractible, rangée dans IndexedDB (setremote-licence). id =
+// base32 de Crockford des 40 premiers bits de SHA-256(SPKI) : « K7Q2-9XMB ».
+// L'id dérive de la clé publique : recopié ailleurs, il ne sert à rien sans la
+// clé privée. Sans IndexedDB utilisable (certaines vues web en file://), repli :
+// clé extractible en localStorage (JWK), pour que l'identifiant reste stable ;
+// elle ne quitte jamais l'appareil.
+//
+// Vérification (POST /api/v1/licence/check) : au lancement, toutes les 6 h tant
+// que l'app est ouverte et en ligne, et sur « Vérifier maintenant ». Requête
+// signée (srlic1|id|ts|nonce). Le jeton reçu est signé par le service (ECDSA
+// P-256 / SHA-256, signature brute r||s) : vérifié avec LICENCE_PUBKEY, gardé
+// en localStorage (il n'a rien de secret), valable hors ligne jusqu'à exp. Un
+// échec réseau garde le dernier jeton valide ; un jeton valide sans
+// fonctionnalité (licence échue, révoquée) le remplace. Jamais d'exception.
+//
+// Statistiques anonymes (POST /api/v1/stats) : au plus une fois par jour et par
+// mode (télécommande, écran), seulement { os, ver, mode, inst } ; ni
+// identifiant, ni clé. L'appareil ne retient que la date du dernier envoi.
+const LIC_ON = LICENSING === 'on' && !!LICENCE_PUBKEY && !!LICENCE_API;
+const LIC_LS_KEY = 'setremote-licence-v1';       // { token, checked } : dernier jeton valide
+const LIC_KEY_LS = 'setremote-licence-key-v1';   // repli sans IndexedDB : { priv, pub } (JWK)
+const LIC_STATS_KEY = 'setremote-stats-v1';      // { remote: 'AAAA-MM-JJ', screen: … }
+const LIC_DB = 'setremote-licence';
+const LIC_EVERY_MS = 6 * 3600e3;
+const LIC_SKEW_MS = 10 * 60e3;
+const LIC_TIMEOUT_MS = 15e3;
+const LIC_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+const LIC_ID_RE = /^[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$/;
+
+// État : identité, jeton vérifié, dernière vérification
+const _lic = {
+  id: null, pub: null, priv: null, idP: null,
+  payload: null, token: null, checked: 0,  // dernier jeton valide et date de sa réception
+  busy: false, error: '',                   // vérification en cours, dernier échec ('offline', 'server', 'invalid')
+  listeners: [], timer: null, tick: null, granted: '',
+};
+
+// ── Base64url, base32 de Crockford ──
+function _licB64u(bytes) {
+  let s = '';
+  for (const b of new Uint8Array(bytes)) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function _licUnB64u(str) {
+  if (typeof str !== 'string' || !/^[A-Za-z0-9_-]*$/.test(str)) return null;
+  try {
+    const s = atob(str.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (str.length % 4)) % 4));
+    return Uint8Array.from(s, (c) => c.charCodeAt(0));
+  } catch (_) { return null; }
+}
+// 40 premiers bits → 8 symboles (5 bits chacun), affichés « XXXX-XXXX »
+function licIdFromHash(hash) {
+  const h = new Uint8Array(hash);
+  let v = 0n;
+  for (let i = 0; i < 5; i++) v = (v << 8n) | BigInt(h[i]);
+  let s = '';
+  for (let i = 7; i >= 0; i--) s += LIC_ALPHABET[Number((v >> BigInt(i * 5)) & 31n)];
+  return s.slice(0, 4) + '-' + s.slice(4);
+}
+// Saisie libre → forme canonique « XXXX-XXXX » (null si invalide) :
+// espaces et tirets retirés, majuscules, O → 0, I et L → 1
+function licNormalizeId(input) {
+  if (typeof input !== 'string') return null;
+  const s = input.replace(/[\s-]/g, '').toUpperCase().replace(/O/g, '0').replace(/[IL]/g, '1');
+  if (!/^[0-9A-HJKMNP-TV-Z]{8}$/.test(s)) return null;
+  return s.slice(0, 4) + '-' + s.slice(4);
+}
+async function licDeriveId(spki) {
+  return licIdFromHash(await crypto.subtle.digest('SHA-256', spki));
+}
+
+// ── Identité de l'appareil (créée à la première demande) ──
+const _LIC_EC = { name: 'ECDSA', namedCurve: 'P-256' };
+function _licDb() {
+  return new Promise((resolve) => {
+    try {
+      if (typeof indexedDB === 'undefined' || !indexedDB) { resolve(null); return; }
+      const req = indexedDB.open(LIC_DB, 1);
+      req.onupgradeneeded = () => { try { req.result.createObjectStore('keys'); } catch (_) {} };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+      req.onblocked = () => resolve(null);
+    } catch (_) { resolve(null); }
+  });
+}
+function _licDbDo(db, mode, fn) {
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction('keys', mode);
+      const r = fn(tx.objectStore('keys'));
+      tx.oncomplete = () => resolve(r && 'result' in r ? r.result : true);
+      tx.onerror = tx.onabort = () => resolve(null);
+    } catch (_) { resolve(null); }
+  });
+}
+async function _licKeysFromLs() {
+  try {
+    const o = JSON.parse(_lsGet(LIC_KEY_LS));
+    if (!o || !o.priv || !o.pub) return null;
+    return {
+      priv: await crypto.subtle.importKey('jwk', o.priv, _LIC_EC, false, ['sign']),
+      pub: await crypto.subtle.importKey('jwk', o.pub, _LIC_EC, true, ['verify']),
+    };
+  } catch (_) { return null; }
+}
+async function _licKeysToLs() {
+  const kp = await crypto.subtle.generateKey(_LIC_EC, true, ['sign', 'verify']);
+  const priv = await crypto.subtle.exportKey('jwk', kp.privateKey), pub = await crypto.subtle.exportKey('jwk', kp.publicKey);
+  if (!_lsPut(LIC_KEY_LS, JSON.stringify({ priv, pub }))) return null;
+  return _licKeysFromLs();
+}
+async function _licLoadKeys() {
+  const db = await _licDb();
+  if (db) {
+    const rec = await _licDbDo(db, 'readonly', (st) => st.get('device'));
+    if (rec && rec.priv && rec.pub) return rec;
+    const ls = await _licKeysFromLs(); // repli d'un lancement précédent
+    if (ls) return ls;
+    const kp = await crypto.subtle.generateKey(_LIC_EC, false, ['sign', 'verify']);
+    const ok = await _licDbDo(db, 'readwrite', (st) => st.put({ priv: kp.privateKey, pub: kp.publicKey }, 'device'));
+    if (ok) {
+      // Relue : une écriture refusée sans erreur (moteur sans clés dans IndexedDB) passe au repli
+      const back = await _licDbDo(db, 'readonly', (st) => st.get('device'));
+      if (back && back.priv && back.pub) return back;
+    }
+  }
+  return (await _licKeysFromLs()) || _licKeysToLs();
+}
+// Promesse de l'identité { id, pub (SPKI b64url) } ; null si WebCrypto manque
+function licIdentity() {
+  if (_lic.idP) return _lic.idP;
+  _lic.idP = (async () => {
+    try {
+      if (!(window.crypto && crypto.subtle)) return null;
+      const k = await _licLoadKeys();
+      if (!k) return null;
+      const spki = await crypto.subtle.exportKey('spki', k.pub);
+      _lic.priv = k.priv;
+      _lic.pub = _licB64u(spki);
+      _lic.id = await licDeriveId(spki);
+      _licEmit();
+      return { id: _lic.id, pub: _lic.pub };
+    } catch (e) {
+      console.warn('SetRemote : identifiant d\'appareil', e && e.message);
+      return null;
+    }
+  })();
+  return _lic.idP;
+}
+function licDeviceId() { return _lic.id; }
+
+// ── Jeton ──
+let _licKeyP = null;
+function _licServerKey() {
+  return (_licKeyP ||= crypto.subtle.importKey('spki', _licUnB64u(LICENCE_PUBKEY), _LIC_EC, false, ['verify']).catch(() => null));
+}
+// Charge utile vérifiée, ou null (signature, forme, appareil)
+async function licVerifyToken(token) {
+  try {
+    if (typeof token !== 'string' || token.length > 4096) return null;
+    const [p, s, extra] = token.split('.');
+    const sig = _licUnB64u(s), raw = _licUnB64u(p);
+    if (extra !== undefined || !raw || !sig || sig.length !== 64) return null;
+    const key = await _licServerKey();
+    if (!key) return null;
+    const ok = await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, sig, new TextEncoder().encode(p));
+    if (!ok) return null;
+    const o = JSON.parse(new TextDecoder().decode(raw));
+    const num = (v) => typeof v === 'number' && Number.isFinite(v);
+    if (!o || o.v !== 1 || typeof o.id !== 'string' || !LIC_ID_RE.test(o.id) || !Array.isArray(o.features) || !num(o.iat) || !num(o.exp)) return null;
+    const dev = o.devices && typeof o.devices === 'object' && num(o.devices.n) && num(o.devices.max) ? { n: o.devices.n, max: o.devices.max } : null;
+    return {
+      id: o.id, features: o.features.filter((f) => f === 'tel' || f === 'seq'),
+      holder: typeof o.holder === 'string' ? o.holder.slice(0, 80) : '', end: num(o.end) ? o.end : null,
+      devices: dev, iat: o.iat, exp: o.exp,
+    };
+  } catch (_) { return null; }
+}
+// Fonctionnalité accordée : jeton valide, pour cet appareil, pas expiré
+function licenceHas(f) {
+  if (!LIC_ON) return true;
+  const p = _lic.payload;
+  return !!p && !!_lic.id && p.id === _lic.id && p.features.includes(f) && Date.now() < p.exp + LIC_SKEW_MS;
+}
+// État pour l'affichage (Réglages, 77-licence-ui.js)
+function licStatus() {
+  const p = _lic.payload && _lic.payload.id === _lic.id ? _lic.payload : null;
+  const active = !!p && p.features.length > 0 && Date.now() < p.exp + LIC_SKEW_MS;
+  return { on: LIC_ON, id: _lic.id, active, payload: p, checked: _lic.checked, busy: _lic.busy, error: _lic.error };
+}
+function licOnChange(fn) { _lic.listeners.push(fn); }
+function _licEmit() {
+  _lic.granted = ['tel', 'seq'].filter(licenceHas).join(',');
+  for (const fn of _lic.listeners) { try { fn(); } catch (e) { console.warn('SetRemote : licence', e && e.message); } }
+}
+async function _licAccept(token, checked) {
+  const p = await licVerifyToken(token);
+  if (!p || p.id !== _lic.id) return false;
+  // Jeton plus ancien que celui qu'on a (réponses croisées) : ignoré
+  if (_lic.payload && p.iat < _lic.payload.iat) return false;
+  _lic.payload = p; _lic.token = token; _lic.checked = checked;
+  return true;
+}
+
+// ── Informations envoyées avec la vérification et les statistiques ──
+function licAppInfo() {
+  const ua = navigator.userAgent || '';
+  const nat = IN_NATIVE_APP && window.SETREMOTE_NATIVE.platform;
+  let os = 'other';
+  if (nat === 'ios' || nat === 'android') os = nat;
+  else if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) os = 'ios';
+  else if (/Android/.test(ua)) os = 'android';
+  else if (/Mac OS X|Macintosh/.test(ua)) os = 'macos';
+  else if (/Windows/.test(ua)) os = 'windows';
+  else if (/Linux|CrOS/.test(ua)) os = 'linux';
+  const inst = IN_NATIVE_APP ? 'native' : _isStandalone() ? 'pwa' : 'browser';
+  return { os, ver: APP_VERSION, inst };
+}
+async function _licPost(path, body) {
+  const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+  const t = ctl ? setTimeout(() => ctl.abort(), LIC_TIMEOUT_MS) : null;
+  try {
+    return await fetch(LICENCE_API + path, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+      cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', signal: ctl ? ctl.signal : undefined,
+    });
+  } finally { if (t) clearTimeout(t); }
+}
+
+// ── Vérification ──
+// Résultat : 'ok' (jeton reçu et valide), 'offline', 'server' (refus, réponse
+// inexploitable), 'invalid' (jeton à la signature invalide), 'off'
+async function licCheck() {
+  if (!LIC_ON) return 'off';
+  if (_lic.busy) return 'busy';
+  _lic.busy = true; _licEmit();
+  let res = 'server';
+  try {
+    const me = await licIdentity();
+    if (!me) { res = 'server'; return res; }
+    const ts = Date.now();
+    const nonce = _licB64u(crypto.getRandomValues(new Uint8Array(16)));
+    const msg = new TextEncoder().encode('srlic1|' + me.id + '|' + ts + '|' + nonce);
+    const sig = _licB64u(await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, _lic.priv, msg));
+    let r;
+    try { r = await _licPost('/api/v1/licence/check', { v: 1, id: me.id, pub: me.pub, ts, nonce, sig, app: licAppInfo() }); } catch (_) { res = 'offline'; return res; }
+    if (!r.ok) { res = 'server'; return res; }
+    let o = null;
+    try { o = await r.json(); } catch (_) { o = null; }
+    if (!o || typeof o.token !== 'string') { res = 'server'; return res; }
+    res = (await _licAccept(o.token, Date.now())) ? 'ok' : 'invalid';
+    if (res === 'ok') _lsPut(LIC_LS_KEY, JSON.stringify({ token: _lic.token, checked: _lic.checked }));
+    return res;
+  } catch (e) {
+    console.warn('SetRemote : vérification de licence', e && e.message);
+    return res;
+  } finally {
+    _lic.busy = false;
+    _lic.error = res === 'ok' ? '' : res;
+    _licEmit();
+  }
+}
+// Démarrage (99-init.js) : identité, jeton gardé, vérification, minuteries
+async function licStart() {
+  if (!LIC_ON) return;
+  await licIdentity();
+  try {
+    const o = JSON.parse(_lsGet(LIC_LS_KEY));
+    if (o && typeof o.token === 'string') await _licAccept(o.token, typeof o.checked === 'number' ? o.checked : 0);
+  } catch (_) {}
+  _licEmit();
+  const due = () => navigator.onLine !== false && Date.now() - _lic.checked >= LIC_EVERY_MS - 60e3;
+  if (!_lic.timer) {
+    _lic.timer = setInterval(() => { if (due()) licCheck(); }, 15 * 60e3);
+    // Échéance du jeton atteinte pendant l'utilisation : l'aperçu revient
+    _lic.tick = setInterval(() => { if (['tel', 'seq'].filter(licenceHas).join(',') !== _lic.granted) _licEmit(); }, 60e3);
+    window.addEventListener('online', () => { if (due()) licCheck(); });
+  }
+  await licCheck();
+}
+
+// ── Statistiques anonymes (30-navigation.js : choix du mode) ──
+const _licStatsBusy = new Set();
+function _licToday() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+async function licStatsPing(mode) {
+  if (!LIC_ON || (mode !== 'remote' && mode !== 'screen') || _licStatsBusy.has(mode)) return false;
+  let o = null;
+  try { o = JSON.parse(_lsGet(LIC_STATS_KEY)); } catch (_) { o = null; }
+  if (!o || typeof o !== 'object') o = {};
+  const day = _licToday();
+  if (o[mode] === day) return false;
+  _licStatsBusy.add(mode);
+  try {
+    const a = licAppInfo();
+    const r = await _licPost('/api/v1/stats', { v: 1, os: a.os, ver: a.ver, mode, inst: a.inst });
+    if (!r.ok) return false;
+    o[mode] = day;
+    _lsPut(LIC_STATS_KEY, JSON.stringify({ remote: o.remote, screen: o.screen }));
+    return true;
+  } catch (_) { return false; } finally { _licStatsBusy.delete(mode); }
 }
 // ══════════════════════════ TRANSPORT : RELAIS WEBSOCKET PRIVÉ ══════════════════════════
 // RELAY_URL configuré (01-config.js) : les MÊMES trames scellées (SRP) passent
@@ -9596,6 +10018,7 @@ function screenRevokedHome() { hideScreenRevoked(); document.getElementById('spl
 // ══════════════════════════ NAVIGATION ══════════════════════════
 function startMode(m) {
   document.getElementById('splash').style.display = 'none';
+  licStatsPing(m === 'remote' ? 'remote' : 'screen'); // statistiques anonymes, version officielle seulement (14-licence.js)
   if (m === 'remote') {
     mode = 'remote';
     const rm = document.getElementById('remote-mode');
@@ -13776,6 +14199,438 @@ function screenVidUploadPlay(msg) {
   } catch (_) { if (up.show) setScreenStatus('⚠ Vidéo illisible'); }
 }
 
+// ══════════════════════════ DÉMOS DE L'APERÇU (Tel, Séquence) ══════════════════════════
+// Contenu fixe des onglets Tel et Séquence sans licence (version officielle,
+// 77-licence-ui.js) : prêt à jouer sur les écrans, sans limite, jamais
+// modifiable ni enregistré. Il est servi à la place des clés de l'utilisateur
+// par le masque du stockage (12-session.js) : les données de l'utilisateur ne
+// sont ni lues ni touchées, et reviennent telles quelles avec la licence.
+//   Tel       un appel, un SMS et une notification (liste enregistrée et
+//             formulaire), une discussion avec Maman (fil en cours, et la
+//             même enregistrée), Maman parmi les appelants enregistrés.
+//   Séquence  « Batterie à plat » : SMS de Maman au GO → déverrouillage quand
+//             le comédien touche l'écran → discussion avec Maman (lecture auto)
+//             une fois déverrouillé → batterie faible → extinction.
+// Textes affichés, regroupés pour la traduction
+const _DEMO_TXT = {
+  contact: 'Maman', label: 'mobile', actor: 'Julie',
+  smsMsg: 'Tu es où ?',
+  notifApp: 'Chatly', notifTitle: 'Maman', notifMsg: 'Tu as vu mes messages ? Rappelle-moi.',
+  chat: ['Tu es où ?', 'Ton père t\'attend depuis une heure', 'je suis chez Léa, j\'arrive', 'Je t\'ai vue avec lui. On en parlera ce soir.', 'pardon maman'],
+  chatName: 'Maman — démo',
+  seqName: 'Démo — « Batterie à plat »',
+};
+// Identifiants réservés aux démos (préfixe « demo- » : jamais tiré par l'app)
+const DEMO_IDS = Object.freeze({ call: 'demo-call', sms: 'demo-sms', notif: 'demo-notif', chat: 'demo-chat', caller: 'demo-maman' });
+
+const _demoCall = () => ({
+  id: DEMO_IDS.call, kind: 'call', style: 'glass', name: _DEMO_TXT.contact, label: _DEMO_TXT.label,
+  ring: 'classic', ringVolume: 1, present: 'full', photoMode: 'avatar', autoAnswer: 0, hasPhoto: false, hasAudio: false,
+});
+const _demoSms = () => ({
+  id: DEMO_IDS.sms, kind: 'sms', style: 'glass', name: _DEMO_TXT.contact, label: _DEMO_TXT.label, msg: _DEMO_TXT.smsMsg,
+  appName: 'SMS', appColor: '#2f8cf0', ring: 'classic', ringVolume: 1, lock: null, autoAnswer: 0, hasPhoto: false, hasAudio: false,
+});
+const _demoNotif = () => ({
+  id: DEMO_IDS.notif, kind: 'notif', style: 'glass', name: _DEMO_TXT.notifTitle, label: '', msg: _DEMO_TXT.notifMsg,
+  appName: _DEMO_TXT.notifApp, ring: 'classic', ringVolume: 1, present: 'banner', phone: {}, received: { mode: 'now' },
+  autoAnswer: 0, hasPhoto: false, hasAudio: false,
+});
+// Messages de la discussion : le contact écrit, le comédien répond (timings par défaut)
+const _demoMsgs = () => _DEMO_TXT.chat.map((text, i) => Object.assign(
+  { id: 'd' + (i + 1), from: i === 2 || i === 4 ? 'actor' : 'contact', text },
+  chatTimingDefaults(i === 2 || i === 4 ? 'actor' : 'contact'),
+));
+const _demoSavedChat = () => ({
+  id: DEMO_IDS.chat, name: _DEMO_TXT.chatName, contact: _DEMO_TXT.contact, actor: _DEMO_TXT.actor,
+  style: 'minimal', msgs: _demoMsgs(), hasPhoto: false, photoSig: null,
+});
+const _demoStep = (id, kind, trig, opt, ref) => ({ id, kind, ref: ref || null, target: { k: 'all' }, trig, opt: opt || {} });
+const _demoSeq = () => ({
+  v: 1, name: _DEMO_TXT.seqName, savedId: null,
+  steps: [
+    _demoStep('demo1', 'sms', { k: 'go' }, {}, DEMO_IDS.sms),
+    _demoStep('demo2', 'unlock', { k: 'gesture', g: 'touch', t: 0 }, { code: 4, then: 'home', img: null, imgName: '' }),
+    _demoStep('demo3', 'chat', { k: 'gesture', g: 'unlock', t: 0 }, { auto: true }, DEMO_IDS.chat),
+    _demoStep('demo4', 'battery', { k: 'after', s: 25 }, { level: 4 }),
+    _demoStep('demo5', 'off', { k: 'after', s: 8 }),
+  ],
+  phone: { clock: { mode: 'real', date: '', time: '' }, net: { bars: 3, type: PB_NET_TYPES[1], plane: false, wifi: false }, bat: { level: 12, charging: false, pct: true } },
+});
+
+// Contenu des clés masquées d'une fonctionnalité (null : clé absente → valeurs par défaut)
+function licDemoStore(f) {
+  const j = (o) => JSON.stringify(o);
+  if (f === 'tel') {
+    return new Map([
+      [CALLERS_KEY, j({ v: 1, list: [{ id: DEMO_IDS.caller, name: _DEMO_TXT.contact, label: _DEMO_TXT.label, hasPhoto: false }] })],
+      [RING_SETTINGS_KEY, null],
+      [CALL_LIST_KEY, j({ v: 1, call: [_demoCall()], sms: [_demoSms()], notif: [_demoNotif()] })],
+      [CHAT_LS_KEY, j({ v: 2, name: _DEMO_TXT.contact, actor: _DEMO_TXT.actor, style: 'minimal', typing: false, msgs: _demoMsgs(), sent: [], open: false, screens: null, resumeAt: null, savedId: DEMO_IDS.chat, pend: [] })],
+      [CHAT_AVATAR_KEY, null],
+      [CHAT_SAVED_KEY, j({ v: 2, list: [_demoSavedChat()] })],
+    ]);
+  }
+  return new Map([[SEQ_LS_KEY, j(_demoSeq())], [SEQ_SAVED_KEY, null]]);
+}
+// Entrées du formulaire Tel, dans l'ordre de chargement (l'appel en dernier : type affiché)
+function licDemoEntries() { return [_demoSms(), _demoNotif(), _demoCall()]; }
+// Élément d'une étape de la démo Séquence (91-sequence.js) quand l'onglet Tel,
+// sous licence, montre les éléments de l'utilisateur
+function licDemoRef(kind, ref) {
+  if (!licLocked('seq') || typeof ref !== 'string' || !ref.startsWith('demo-')) return null;
+  if ((kind === 'call' || kind === 'missed') && ref === DEMO_IDS.call) return _demoCall();
+  if (kind === 'sms' && ref === DEMO_IDS.sms) return _demoSms();
+  if (kind === 'notif' && ref === DEMO_IDS.notif) return _demoNotif();
+  if (kind === 'chat' && ref === DEMO_IDS.chat) return _chsvSanitize(_demoSavedChat());
+  return null;
+}
+// ══════════════════════════ LICENCE : APERÇU TEL / SÉQUENCE ET RÉGLAGES (télécommande) ══════════════════════════
+// Version officielle seulement (LIC_ON, 14-licence.js) ; sinon rien de ce
+// fichier ne s'affiche ni ne change quoi que ce soit.
+// Maquettes validées 39 (Tel en aperçu), 39b (Séquence en aperçu), 37 et 37b
+// (Réglages › Licence), SANS compteur du jour : l'aperçu n'a pas de quota.
+//
+// Aperçu (onglet sans sa fonctionnalité, licenceHas) :
+//   • bandeau « Aperçu · Tel / Séquence », texte, identifiant de l'appareil
+//     (toucher : copier) et « Obtenir une licence › » (version web seulement,
+//     LICENCE_BUY_URL ; jamais dans l'app native, règles des stores) ;
+//   • contenu de démonstration (76-demos.js) servi par le MASQUE du stockage
+//     (12-session.js) : les modules de l'onglet relisent leurs clés et
+//     trouvent la démo ; ce qu'ils écrivent reste en mémoire. Les données de
+//     l'utilisateur ne sont jamais lues ni écrites pendant l'aperçu et
+//     reviennent telles quelles avec la licence (même onglet, sans recharger) ;
+//   • réglages, enregistrements, ajouts et renommages verrouillés (inert,
+//     estompés) ; envoyer, déclencher, GO / ↶ / STOP marchent sans limite.
+// Tel : le formulaire (champs, style, photo, bande son, fonds) est gardé en
+// mémoire à l'entrée de l'aperçu et rendu à la sortie.
+// Fonctionnalités séparées (licence Tel sans Séquence, ou l'inverse) :
+//   • Séquence en aperçu, Tel sous licence : l'onglet Tel montre les éléments
+//     de l'utilisateur ; la démo Séquence joue ses propres SMS et discussion
+//     (licDemoRef). Son étape Discussion prend le « Fil en cours » comme toute
+//     séquence : le fil de l'utilisateur est alors mis de côté (masqué) et
+//     rendu à « Recommencer » ou à l'arrivée de la licence Séquence.
+//   • Tel en aperçu, Séquence sous licence : les étapes Appel / SMS /
+//     Notification / Discussion de l'utilisateur pointent vers ses éléments
+//     Tel, masqués : elles s'affichent « élément introuvable » et sont sautées
+//     jusqu'à la licence Tel (rien n'est perdu).
+// Textes affichés, regroupés pour la traduction ({…} : valeurs)
+const _LIC_TXT = {
+  tagTel: 'Aperçu · Tel', tagSeq: 'Aperçu · Séquence',
+  textTel: 'Exemples prêts à jouer sur l\'écran, non modifiables. La licence débloque vos propres appels, SMS et discussions.',
+  textSeq: 'Exemples prêts à jouer sur l\'écran, non modifiables. La licence débloque vos propres séquences.',
+  idChip: 'ID', idNone: '····-····', copyAria: 'Copier l\'identifiant de cet appareil',
+  buy: 'OBTENIR UNE LICENCE ›', example: ' · exemple 🔒',
+  none: 'Aucune licence', active: 'Active', until: 'jusqu\'au {date}', soon: 'expire dans {n} j',
+  holder: 'Titulaire', devices: 'Appareils', devicesVal: '{n} sur {max}', includes: 'Comprend', checked: 'Vérifiée',
+  offline: 'Hors ligne', offlineVal: 'valable jusqu\'au {date}', feat: { tel: 'Tel', seq: 'Séquence' }, nothing: '—',
+  checkNow: 'VÉRIFIER MAINTENANT', checking: 'VÉRIFICATION…',
+  copy: 'COPIER', share: 'PARTAGER', copied: 'COPIÉ ✓',
+  buyNote: 'Transmettez cet identifiant lors de l\'achat sur {site} : la licence s\'active toute seule, sans rien saisir.',
+  agoNow: 'à l\'instant', agoMin: 'il y a {n} min', agoH: 'il y a {n} h', agoD: 'il y a {n} j',
+  err: {
+    offline: 'Hors ligne : vérification impossible pour l\'instant.',
+    server: 'Service de licence injoignable : réessayez plus tard.',
+    invalid: 'Réponse du service de licence invalide.',
+  },
+  shareText: 'Identifiant SetRemote : {id}',
+  months: ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'],
+  monthsShort: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
+};
+const _licTpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
+const LIC_BUY = LIC_ON && !IN_NATIVE_APP && !!LICENCE_BUY_URL;
+
+// Onglets en aperçu (false partout sans LIC_ON)
+const _licPreview = { tel: false, seq: false };
+function licLocked(f) { return _licPreview[f] === true; }
+
+// Éléments verrouillés : estompés (dim) ou seulement figés (ro, lisibles)
+const _LIC_LOCKS = {
+  tel: {
+    dim: ['telStyleBtn', 'ntStyleBtn', 'callWhoSaved', 'callName', 'callLabel', 'callPhotoBtn', 'callerSaveBtn',
+      'callMsgText', 'callAppName', 'callAppColor', 'callLockPanel', 'ntAppPanel', 'ntShowPanel', 'callAnswerBlock',
+      'callListSave', 'callListDel', 'dcTab-saved', 'dcContactPanel', 'dcAdd', 'dcWriteBtn'],
+    ro: ['dcRows', 'dcTimingPanel'],
+    ex: ['callWhoLabel'],
+    banner: 'licPvTel',
+  },
+  seq: { dim: ['seqAddBtn', 'seqPhoneBtn', 'seqTab-saved'], ro: ['seqRows'], ex: [], banner: 'licPvSeq' },
+};
+function _licLockUi(f, on) {
+  const L = _LIC_LOCKS[f];
+  for (const id of L.dim.concat(L.ro)) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.inert = on;
+    el.classList.toggle(L.ro.includes(id) ? 'lic-ro' : 'lic-lk', on);
+  }
+  for (const id of L.ex) {
+    const el = document.getElementById(id);
+    if (el) { el.dataset.licEx = _LIC_TXT.example; el.classList.toggle('lic-ex', on); }
+  }
+  const b = document.getElementById(L.banner);
+  if (b) b.style.display = on ? '' : 'none';
+}
+
+// ── Masque du stockage (12-session.js) ──
+let _licChatAside = false; // fil de l'utilisateur mis de côté par la démo Séquence (Tel sous licence)
+function _licMask(f, on) {
+  for (const [k, v] of licDemoStore(f)) { if (on) _lsMask.set(k, v); else _lsMask.delete(k); }
+  _assetMask[f] = on;
+}
+// Démo Séquence, étape Discussion (91-sequence.js, _seqOpenChat) : si Tel est
+// sous licence, le fil de l'utilisateur est masqué tel quel avant d'être remplacé
+function licSeqDemoChat() {
+  if (!licLocked('seq') || licLocked('tel') || _licChatAside) return;
+  for (const k of [CHAT_LS_KEY, CHAT_AVATAR_KEY]) _lsMask.set(k, _lsGet(k));
+  _licChatAside = true;
+}
+// « Recommencer » (91-sequence.js) ou licence Séquence : le fil revient
+function licSeqRestarted() {
+  if (!_licChatAside) return;
+  _licChatAside = false;
+  if (licLocked('tel')) return; // le masque Tel (démo) prime
+  _lsMask.delete(CHAT_LS_KEY); _lsMask.delete(CHAT_AVATAR_KEY);
+  chatLoad();
+  renderChatPanel();
+  renderTelStyle();
+}
+
+// ── Rechargement des onglets depuis le stockage (masqué ou réel) ──
+function _licReloadTel() {
+  closeTelStyle();
+  if (_sheet) closeSheet();
+  loadRingSettings();
+  renderRingPanel();
+  loadCallList();
+  for (const k of CALL_LISTS) _callListSel[k] = null;
+  chatLoad();
+  loadSavedChats();
+  callersInit();
+  setChatView('thread');
+  renderCallList();
+  renderNotifForm();
+  renderChatPanel();
+  renderSavedChats();
+  renderCallerState();
+  renderTelStyle();
+}
+function _licReloadSeq() {
+  if (_seqEdit) closeSeqStep();
+  if (_pp && _pp.ctx === 'seq') closePhoneParams();
+  if (_sheet) closeSheet();
+  seqLoad();
+  loadSavedSeqs();
+  setSeqView('cur');
+}
+
+// ── Formulaire Tel : gardé à l'entrée de l'aperçu, rendu à la sortie ──
+let _licTelBak = null, _licTelGen = 0;
+function _licTelBackup() {
+  const inputs = {};
+  document.querySelectorAll('#content-call input, #content-call textarea').forEach((el) => {
+    if (el.id && el.type !== 'file') inputs[el.id] = { v: el.value, c: el.checked, t: el.dataset.touched };
+  });
+  _licTelBak = {
+    inputs, kind: callKind, callStyle, callPresent, callPhotoMode, photo: _callPhoto,
+    audio: [_callAudioData, _callAudioName, _callAudioDur], lockWall: _lockWallData,
+    notifStyle, notifPresent, notifReceived, notifIcon: _notifIcon, notifWall: _notifWallData,
+  };
+}
+function _licBg(id, data) { const el = document.getElementById(id); if (el) el.style.backgroundImage = data ? 'url(' + data + ')' : ''; }
+async function _licTelDemoForm() {
+  const gen = ++_licTelGen, kind = callKind;
+  _callAudioSeq++; _callAudioData = null; _callAudioName = ''; _callAudioDur = 0;
+  _lockWallData = null; _notifWallData = null;
+  _licBg('lockWallPreview', null);
+  for (const e of licDemoEntries()) {
+    await loadCallEntryIntoForm(e);
+    if (gen !== _licTelGen) return; // licence arrivée entre-temps
+  }
+  setCallKind(kind);
+  _callListSel.call = DEMO_IDS.call; _callListSel.sms = DEMO_IDS.sms; _callListSel.notif = DEMO_IDS.notif;
+  renderCallList();
+  renderCallAudioRow();
+}
+function _licTelRestore() {
+  const b = _licTelBak;
+  _licTelGen++;
+  _clLoadSeq++; // chargement d'une entrée de démo encore en cours : abandonné
+  if (!b) return;
+  for (const [id, s] of Object.entries(b.inputs)) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.value = s.v; el.checked = s.c;
+    if (s.t) el.dataset.touched = s.t; else delete el.dataset.touched;
+  }
+  callStyle = b.callStyle; _callPhoto = b.photo;
+  [_callAudioData, _callAudioName, _callAudioDur] = b.audio; _callAudioSeq++;
+  _lockWallData = b.lockWall;
+  notifStyle = b.notifStyle; notifPresent = b.notifPresent; notifReceived = b.notifReceived;
+  _notifIcon = b.notifIcon; _notifWallData = b.notifWall;
+  _licBg('callPhotoPreview', _callPhoto); _licBg('lockWallPreview', _lockWallData);
+  setCallPresent(b.callPresent);
+  setCallPhotoMode(b.callPhotoMode);
+  setCallKind(b.kind);
+  onCallAutoChange();
+  renderNotifForm();
+  renderCallAudioRow();
+  renderTelStyle();
+}
+
+// ── Passage aperçu ↔ licence ──
+function _licSwitch(f, on) {
+  _licPreview[f] = on;
+  if (f === 'tel') {
+    if (on) _licTelBackup();
+    _licChatAside = false;
+    _licMask('tel', on);
+    _licReloadTel();
+    if (on) _licTelDemoForm(); else _licTelRestore();
+    _licLockUi('tel', on);
+  } else {
+    if (_seqRun.state !== 'idle') seqRestart(); // démo ou séquence en cours : remise à zéro
+    _licMask('seq', on);
+    if (!on) licSeqRestarted();
+    _licReloadSeq();
+    _licLockUi('seq', on);
+  }
+}
+function licApply() {
+  if (!LIC_ON) return;
+  for (const f of ['tel', 'seq']) {
+    const want = !licenceHas(f);
+    if (want !== _licPreview[f]) _licSwitch(f, want);
+  }
+  licRender();
+}
+// Démarrage (99-init.js) : masque posé AVANT le chargement des onglets…
+function licBootMask() {
+  if (!LIC_ON) return;
+  _licPreview.tel = true; _licPreview.seq = true;
+  _licMask('tel', true); _licMask('seq', true);
+}
+// … puis formulaire de démo, verrous, bandeaux, vérification
+function licBootUi() {
+  if (!LIC_ON) return;
+  _licTelBackup();
+  _licTelDemoForm();
+  _licLockUi('tel', true); _licLockUi('seq', true);
+  for (const id of ['stLicCard', 'stLicIdCard']) { const el = document.getElementById(id); if (el) el.style.display = ''; }
+  licOnChange(licApply);
+  licRender();
+  licStart();
+}
+
+// ── Affichage : bandeaux et Réglages › Licence (maquettes 37, 37b) ──
+function _licDate(t, short) {
+  const d = new Date(t);
+  return d.getDate() + ' ' + (short ? _LIC_TXT.monthsShort : _LIC_TXT.months)[d.getMonth()] + (short ? '' : ' ' + d.getFullYear());
+}
+function _licAgo(t) {
+  const m = Math.max(0, Math.floor((Date.now() - t) / 60e3));
+  if (m < 1) return _LIC_TXT.agoNow;
+  if (m < 60) return _licTpl(_LIC_TXT.agoMin, { n: m });
+  if (m < 48 * 60) return _licTpl(_LIC_TXT.agoH, { n: Math.floor(m / 60) });
+  return _licTpl(_LIC_TXT.agoD, { n: Math.floor(m / 1440) });
+}
+function licRender() {
+  if (!LIC_ON) return;
+  const id = licDeviceId() || _LIC_TXT.idNone;
+  document.querySelectorAll('.lic-id-txt').forEach((el) => { el.textContent = id; });
+  document.querySelectorAll('.lic-pv-buy').forEach((el) => { el.style.display = LIC_BUY ? '' : 'none'; });
+  renderLicenceSettings();
+}
+function renderLicenceSettings() {
+  const card = document.getElementById('stLicCard');
+  if (!LIC_ON || !card) return;
+  const st = licStatus(), p = st.payload, T = _LIC_TXT;
+  const set = (k, t) => { const el = document.getElementById(k); if (el) el.textContent = t; };
+  set('stLicState', st.active ? T.active : T.none);
+  document.getElementById('stLicDot').classList.toggle('on', st.active);
+  const until = document.getElementById('stLicUntil');
+  const end = p && (p.end || p.exp);
+  const left = end ? Math.ceil((end - Date.now()) / 86400e3) : 0;
+  until.textContent = st.active ? (left <= 7 ? _licTpl(T.soon, { n: Math.max(0, left) }) : _licTpl(T.until, { date: _licDate(end) })) : '';
+  until.classList.toggle('soon', st.active && left <= 7);
+  const rows = [];
+  if (st.active) {
+    if (p.holder) rows.push([T.holder, p.holder]);
+    if (p.devices) rows.push([T.devices, _licTpl(T.devicesVal, { n: p.devices.n, max: p.devices.max })]);
+    rows.push([T.includes, p.features.map((f) => T.feat[f]).join(', ') || T.nothing]);
+  }
+  if (st.checked) rows.push([T.checked, _licAgo(st.checked)]);
+  if (st.active) rows.push([T.offline, _licTpl(T.offlineVal, { date: _licDate(p.exp, true) })]);
+  const box = document.getElementById('stLicRows');
+  box.textContent = '';
+  for (const [k, v] of rows) {
+    const r = document.createElement('div'); r.className = 'st-lic-kv';
+    const a = document.createElement('span'); a.textContent = k;
+    const b = document.createElement('span'); b.textContent = v;
+    r.append(a, b); box.appendChild(r);
+  }
+  set('stLicMsg', _licManual && !st.busy && st.error ? T.err[st.error] || T.err.server : '');
+  const btn = document.getElementById('stLicCheck');
+  btn.disabled = st.busy; btn.textContent = st.busy ? T.checking : T.checkNow;
+  // Version web sans licence : où l'acheter
+  const buy = LIC_BUY && !st.active;
+  const note = document.getElementById('stLicBuyNote');
+  note.style.display = buy ? '' : 'none';
+  if (buy) {
+    note.textContent = '';
+    const [a, b] = T.buyNote.split('{site}');
+    const host = document.createElement('b'); host.textContent = new URL(LICENCE_BUY_URL).host;
+    note.append(a, host, b);
+  }
+  document.getElementById('stLicBuy').style.display = buy ? '' : 'none';
+}
+// « Vérifier maintenant » : seul un échec demandé s'affiche (les vérifications
+// de fond échouées restent discrètes, le dernier jeton valide tient)
+let _licManual = false;
+function licCheckNow() { _licManual = true; licCheck(); }
+
+// ── Identifiant : copier, partager, acheter ──
+function _licFlash(btn, text) {
+  if (!btn) return;
+  const old = btn.dataset.licOld || btn.innerHTML;
+  btn.dataset.licOld = old;
+  btn.classList.add('lic-done');
+  if (text) btn.textContent = text;
+  clearTimeout(btn._licT);
+  btn._licT = setTimeout(() => { btn.innerHTML = old; delete btn.dataset.licOld; btn.classList.remove('lic-done'); }, 1500);
+}
+async function _licCopy(text) {
+  try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; } } catch (_) {}
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  } catch (_) { return false; }
+}
+// btn : bouton touché (retour « Copié »), text : texte affiché (null : garde le libellé, pastille du bandeau)
+async function licCopyId(btn, text) {
+  const id = licDeviceId();
+  if (!id) return false;
+  const ok = await _licCopy(id);
+  if (ok) _licFlash(btn, text === undefined ? _LIC_TXT.copied : text);
+  return ok;
+}
+async function licShareId(btn) {
+  const id = licDeviceId();
+  if (!id) return;
+  if (navigator.share) {
+    try { await navigator.share({ text: _licTpl(_LIC_TXT.shareText, { id }) }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  licCopyId(btn);
+}
+function licOpenBuy() {
+  if (!LIC_BUY) return;
+  const id = licDeviceId();
+  window.open(LICENCE_BUY_URL + (id ? '?id=' + encodeURIComponent(id) : ''), '_blank', 'noopener');
+}
 // ══════════════════════════ STYLE ET SONNERIE (onglet Tel, télécommande) ══════════════════════════
 // Maquettes validées 36 (appel), 36b (vue), 36c (SMS), 36d (discussion) et
 // 36f (notification). Les réglages d'apparence et de son ne s'affichent plus
@@ -13832,6 +14687,7 @@ function telStyleSummary(k) {
 
 let _tsOpen = false;
 function openTelStyle() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   const v = document.getElementById('tel-style-view');
   if (!v) return;
   _tsOpen = true;
@@ -13979,7 +14835,7 @@ function _crSanitize(e) {
 }
 // false : mémoire pleine (rien n'est changé dans le stockage)
 function _crPersist() {
-  try { localStorage.setItem(CALLERS_KEY, JSON.stringify({ v: 1, list: callers })); return true; } catch (_) { return false; }
+  return _lsPut(CALLERS_KEY, JSON.stringify({ v: 1, list: callers }));
 }
 // Chargement ; première fois : reprise des appels, SMS et discussions enregistrés
 // (après loadCallList et loadSavedChats). Promesse résolue une fois les photos reprises.
@@ -14061,6 +14917,7 @@ function callerIsSaved() {
 
 // « ☆ Enregistrer comme appelant » / « + Enregistrer « Nom » (actuel) »
 async function saveCurrentCaller() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   const cur = _crCurrent();
   if (!cur.name) return null;
   const sig = _crSig(cur.photo);
@@ -14155,6 +15012,7 @@ function renderCallerState() {
 
 // ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) ──
 function openCallersSheet() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   _sheet = { kind: 'callers' };
   renderSheet();
   // Photos lues en arrière-plan, puis la liste se redessine
@@ -15684,12 +16542,12 @@ function _clSanitize(e) {
 }
 function loadCallList() {
   let o = null;
-  try { o = JSON.parse(localStorage.getItem(CALL_LIST_KEY)); } catch (_) { o = null; }
+  try { o = JSON.parse(_lsGet(CALL_LIST_KEY)); } catch (_) { o = null; }
   const pick = (arr, list) => (Array.isArray(arr) ? arr : []).map(_clSanitize).filter((e) => e && _clListOf(e.kind) === list).slice(0, CALL_LIST_MAX);
   callList = { call: pick(o && o.call, 'call'), sms: pick(o && o.sms, 'sms'), notif: pick(o && o.notif, 'notif') };
 }
 function persistCallList() {
-  try { localStorage.setItem(CALL_LIST_KEY, JSON.stringify({ v: 1, call: callList.call, sms: callList.sms, notif: callList.notif })); } catch (_) {}
+  _lsPut(CALL_LIST_KEY, JSON.stringify({ v: 1, call: callList.call, sms: callList.sms, notif: callList.notif }));
   if (typeof gwSyncTriggerEntries === 'function') gwSyncTriggerEntries();
 }
 
@@ -15723,6 +16581,7 @@ function _clTx(mode, fn) {
 }
 async function callAssetPut(key, value) {
   _clAssetMem.set(key, value);
+  if (_assetMasked(key)) return; // aperçu sans licence : en mémoire seulement (12-session.js)
   const ok = await _clTx('readwrite', (st) => st.put(value, key));
   if (ok && /:audio$/.test(key)) _clAssetMem.delete(key); // sons : relus à la demande
 }
@@ -15735,6 +16594,7 @@ async function callAssetGet(key) {
 }
 function callAssetDelete(key) {
   _clAssetMem.delete(key);
+  if (_assetMasked(key)) return Promise.resolve(true);
   return _clTx('readwrite', (st) => st.delete(key));
 }
 
@@ -15903,6 +16763,7 @@ function setCallListKind(k) {
 
 // ── Actions ──
 async function saveCurrentCall() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   const fields = callFormFields();
   const list = _clListOf(fields.kind);
   if (callList[list].length >= CALL_LIST_MAX) return null;
@@ -15997,6 +16858,7 @@ async function triggerSelectedCallEntry() {
 }
 
 function deleteSelectedCallEntry() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   const kind = callListKind, e = _clSelected(kind);
   if (!e) return;
   const i = callList[kind].indexOf(e);
@@ -16017,8 +16879,8 @@ let _clDrag = null, _clSuppressClick = false;
   const blockScroll = (e) => e.preventDefault();
   box.addEventListener('pointerdown', (e) => {
     const row = e.target.closest('.cl-row');
-    if (!row || (e.pointerType === 'mouse' && e.button !== 0)) return;
-    _clDrag = { row, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, active: false, ghost: null };
+    if (!row || (e.pointerType === 'mouse' && e.button !== 0) || licLocked('tel')) return; // aperçu : ordre figé
+    _clDrag ={ row, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, active: false, ghost: null };
     if (e.target.closest('.cl-grip')) { e.preventDefault(); startDrag(); }
     else _clDrag.timer = setTimeout(startDrag, HOLD);
   });
@@ -16486,6 +17348,7 @@ function _chatFlushTexts() {
   return true;
 }
 function addChatMessage() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   if (_chat.msgs.length >= CHAT_MAX) return;
   const last = _chat.msgs[_chat.msgs.length - 1];
   const from = last && last.from === 'contact' ? 'actor' : 'contact';
@@ -18717,7 +19580,7 @@ function loadSavedChats() {
 }
 // false : mémoire pleine (rien n'est changé dans le stockage)
 function _chsvPersist() {
-  try { localStorage.setItem(CHAT_SAVED_KEY, JSON.stringify({ v: 2, list: chatSaved })); return true; } catch (_) { return false; }
+  return _lsPut(CHAT_SAVED_KEY, JSON.stringify({ v: 2, list: chatSaved }));
 }
 const _chsvNewId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -18870,6 +19733,7 @@ function renderSavedChats() {
 
 // ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) ──
 function openSaveChatSheet() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   if (chatSaved.length >= CHAT_SAVED_MAX) return;
   _sheet = { kind: 'chatName', id: null }; renderSheet(true);
 }
@@ -19312,7 +20176,7 @@ function seqLoad() {
   }
 }
 function seqSave() {
-  try { localStorage.setItem(SEQ_LS_KEY, JSON.stringify({ v: 1, name: _seq.name, steps: _seq.steps, savedId: _seq.savedId, phone: seqPhoneCfg() })); return true; } catch (_) { return false; }
+  return _lsPut(SEQ_LS_KEY, JSON.stringify({ v: 1, name: _seq.name, steps: _seq.steps, savedId: _seq.savedId, phone: seqPhoneCfg() }));
 }
 
 // ── Éléments référencés ──
@@ -19326,10 +20190,11 @@ function seqRefItem(s) {
     case 'color': return colorMemories.find((m) => m.id === s.ref) || null;
     case 'effect': return fxMemories.find((m) => m.id === s.ref && EFFECT_CONFIG[m.effect]) || null;
     case 'media': return _seqMediaItem(s.ref);
-    case 'call': case 'missed': return callList.call.find((e) => e.id === s.ref) || null;
-    case 'sms': return callList.sms.find((e) => e.id === s.ref) || null;
-    case 'notif': return callList.notif.find((e) => e.id === s.ref) || null;
-    case 'chat': return chatSaved.find((e) => e.id === s.ref) || null;
+    // Démo de l'aperçu sans licence (76-demos.js) : ses éléments, même si Tel est sous licence
+    case 'call': case 'missed': return callList.call.find((e) => e.id === s.ref) || licDemoRef(s.kind, s.ref);
+    case 'sms': return callList.sms.find((e) => e.id === s.ref) || licDemoRef(s.kind, s.ref);
+    case 'notif': return callList.notif.find((e) => e.id === s.ref) || licDemoRef(s.kind, s.ref);
+    case 'chat': return chatSaved.find((e) => e.id === s.ref) || licDemoRef(s.kind, s.ref);
     case 'unlock': case 'sleep': case 'battery': case 'off': case 'net': return s.opt;
   }
   return null;
@@ -19555,6 +20420,7 @@ function seqRestart() {
     const live = [...calls].filter((id) => scrKnown(id) && scrState(id).call);
     if (live.length) sendMsg({ type: 'call:end', target: { screens: live } });
     if (chat && _chat.open) closeChat();
+    licSeqRestarted(); // fil de l'utilisateur rendu (aperçu Séquence, 77-licence-ui.js)
     await _seqPushPhones();
     _seqPhones.clear();
     renderSeq();
@@ -19747,6 +20613,7 @@ function _seqStack(ids, n, chime) {
 // Les messages du contact qui précèdent la première réponse du comédien sont
 // déjà reçus (affichés comme historique) : le comédien n'a plus qu'à répondre.
 async function _seqOpenChat(e, ids) {
+  licSeqDemoChat(); // aperçu Séquence, Tel sous licence : fil de l'utilisateur mis de côté (77-licence-ui.js)
   const photo = e.hasPhoto ? safeImageData(await callAssetGet(_chsvPhotoKey(e.id))) : null;
   if (_chat.open) closeChat();
   _chat.name = e.contact; _chat.actor = e.actor; _chat.style = e.style;
@@ -20007,6 +20874,7 @@ function setSeqView(v) {
 // ── Éditeur d'étape (maquette 29) ──
 let _seqEdit = null; // { id (null : nouvelle), step (brouillon), err }
 function openSeqStep(id) {
+  if (licLocked('seq')) return; // aperçu sans licence (77-licence-ui.js)
   if (_seqSuppressClick) return;
   const s = id ? _seq.steps.find((x) => x.id === id) : null;
   if (id && !s) return;
@@ -20375,6 +21243,8 @@ function seqReorder(order) {
 //                                 (21-links.js) ; la ligne ouvre « Tourner sans
 //                                 réseau » (maquette 10, 93-offline.js), où se
 //                                 fait le choix
+// En tête, version officielle seulement (absentes de la version libre) :
+//   Licence, Identifiant de cet appareil   maquettes 37 / 37b, 77-licence-ui.js
 // Laissées de côté tant que la fonction n'existe pas (pas de valeur inventée) :
 //   Relais (« Europe · eu-west »)  en production, broker MQTT public ; le relais
 //                                 auto-hébergé reste désactivé (RELAY_URL vide)
@@ -20425,6 +21295,7 @@ function renderSettings() {
   val.classList.toggle('off', !warn);
   document.getElementById('stStrobeMax').textContent = PROTO.STROBE_FREQ_MAX + ' Hz';
   renderSettingsLink();
+  renderLicenceSettings(); // Licence (maquettes 37, 37b) : version officielle seulement, 77-licence-ui.js
   document.getElementById('stVersion').textContent = 'SetRemote ' + APP_VERSION + ' · by Pikoo';
 }
 
@@ -21261,7 +22132,7 @@ function loadSavedSeqs() {
   if (_seq.savedId && !ids.has(_seq.savedId)) _seq.savedId = null;
 }
 function _sqsvPersist() {
-  try { localStorage.setItem(SEQ_SAVED_KEY, JSON.stringify({ v: 1, list: seqSaved })); return true; } catch (_) { return false; }
+  return _lsPut(SEQ_SAVED_KEY, JSON.stringify({ v: 1, list: seqSaved }));
 }
 const _sqsvNewId = () => 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const _sqsvClone = (steps) => JSON.parse(JSON.stringify(steps));
@@ -21380,6 +22251,7 @@ function renderSavedSeqs() {
 
 // ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) ──
 function openSaveSeqSheet() {
+  if (licLocked('seq')) return; // aperçu sans licence (77-licence-ui.js)
   if (seqSaved.length >= SEQ_SAVED_MAX) return;
   _sheet = { kind: 'seqName', id: null }; renderSheet(true);
 }
@@ -21685,6 +22557,7 @@ function phoneParamsSummary(cfg) {
 let _pp = null; // { ctx: 'seq' | 'media', cfg (brouillon appliqué à chaque changement) }
 function openPhoneParams(ctx) {
   const media = ctx === 'media';
+  if (!media && licLocked('seq')) return; // aperçu sans licence (77-licence-ui.js)
   _pp = { ctx: media ? 'media' : 'seq', cfg: JSON.parse(JSON.stringify(media ? _mbarState().cfg : seqPhoneCfg())) };
   const v = document.getElementById('phone-params-view');
   if (v) { v.style.display = 'flex'; v.scrollTop = 0; }
@@ -21854,6 +22727,9 @@ renderFxMemories();
 // IndexedDB, chargée en arrière-plan), appels, SMS et notifications
 // enregistrés, discussion préparée, appelants enregistrés, rangée « Style et
 // sonnerie » ──
+// Version officielle sans licence : démos à la place des données de
+// l'utilisateur, masquées avant tout chargement (77-licence-ui.js)
+licBootMask();
 _syncCallPhotoRow();
 ringInit();
 loadCallList();
@@ -21869,6 +22745,8 @@ renderTelStyle();      // 78-tel-style.js
 seqLoad();
 loadSavedSeqs();       // 96-sequences-saved.js
 renderSeq();
+// Aperçu, Réglages › Licence, vérification de la licence (sans effet hors version officielle)
+licBootUi();
 
 // ── Mini-carte sticky : apparaît dès que la preview commence à être masquée ──
 (function initStickyPreview() {

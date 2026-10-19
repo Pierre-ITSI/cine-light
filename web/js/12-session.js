@@ -18,9 +18,23 @@ const _LS_KEYS = {
 };
 let _session = null; // secret de la session active (télécommande ou écran)
 
-function _lsGet(k) { try { return localStorage.getItem(k); } catch (_) { return null; } }
-function _lsSet(k, v) {
-  try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (_) {}
+// Clés masquées (aperçu sans licence, 77-licence-ui.js) : lues et écrites
+// dans cette copie en mémoire (démos), jamais dans le stockage réel, qui garde
+// intactes les données de l'utilisateur. Map clé → valeur (null : absente).
+const _lsMask = new Map();
+function _lsGet(k) {
+  if (_lsMask.has(k)) return _lsMask.get(k);
+  try { return localStorage.getItem(k); } catch (_) { return null; }
+}
+// Photos et sons (IndexedDB, 82-call-list.js) de même : en aperçu, gardés en
+// mémoire seulement (images d'accueil « seqhome-… » : Séquence ; le reste : Tel)
+const _assetMask = { tel: false, seq: false };
+function _assetMasked(key) { return String(key).startsWith('seqhome-') ? _assetMask.seq : _assetMask.tel; }
+function _lsSet(k, v) { _lsPut(k, v); }
+// Écriture avec compte rendu : false = mémoire pleine (rien n'a changé)
+function _lsPut(k, v) {
+  if (_lsMask.has(k)) { _lsMask.set(k, v == null ? null : String(v)); return true; }
+  try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); return true; } catch (_) { return false; }
 }
 function _readPairing(k) {
   try {

@@ -62,12 +62,12 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
 </header>
 <main>
 <h1>Politique de confidentialité</h1>
-<p class="meta">Dernière mise à jour&nbsp;: 18&nbsp;octobre&nbsp;2026</p>
+<p class="meta">Dernière mise à jour&nbsp;: 19&nbsp;octobre&nbsp;2026</p>
 
 <section class="card" aria-labelledby="bref">
   <h2 class="label" id="bref">En bref</h2>
   <ul>
-    <li><strong>Pas de compte</strong>, pas de publicité, pas de mesure d'audience, pas de traceur. Nous ne vendons aucune donnée.</li>
+    <li><strong>Pas de compte</strong>, pas de publicité, pas de mesure d'audience individuelle, pas de traceur. Nous ne vendons aucune donnée. Seule la licence de la version officielle utilise un identifiant d'appareil aléatoire, et un comptage anonyme (§&nbsp;3.10).</li>
     <li>Tout ce que la télécommande et les écrans de jeu s'échangent (couleurs, effets, photos, vidéos, sons, textes) est <strong>chiffré de bout en bout</strong> sur l'appareil qui l'envoie (AES-256-GCM). Nous n'avons pas les clés&nbsp;: <strong>nous ne pouvons pas lire vos contenus.</strong></li>
     <li>Ces messages chiffrés transitent par un serveur relais, décrit au §&nbsp;3.2, qui ne peut pas les lire.</li>
     <li>Vos réglages, mémoires, appels enregistrés et sonneries <strong>restent sur votre appareil</strong>.</li>
@@ -137,12 +137,16 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
 <p>Nous utilisons votre adresse e-mail et votre message uniquement pour vous répondre.</p>
 
 <h3 id="jamais">3.9 Ce que nous ne faisons pas</h3>
-<p>Pas de compte, pas de mesure d'audience, pas de publicité, pas de suivi d'une application à l'autre, pas de revente de données, pas de profilage. SetRemote n'accède <strong>pas</strong> à vos contacts, à votre localisation, à votre journal d'appels ni à vos SMS. Ses écrans d'appel et de message sont <strong>entièrement fictifs</strong>&nbsp;: aucun appel, SMS ou notification système réel n'est émis.</p>
+<p>Pas de compte, pas de mesure d'audience individuelle (seulement les compteurs anonymes du §&nbsp;3.10), pas de publicité, pas de suivi d'une application à l'autre, pas de revente de données, pas de profilage. SetRemote n'accède <strong>pas</strong> à vos contacts, à votre localisation, à votre journal d'appels ni à vos SMS. Ses écrans d'appel et de message sont <strong>entièrement fictifs</strong>&nbsp;: aucun appel, SMS ou notification système réel n'est émis.</p>
+
+<h3 id="licence">3.10 Licence et statistiques anonymes (version officielle)</h3>
+<p>Dans la version officielle d'ITSI APP (applications et version web), les onglets Tel et Séquence demandent une licence. Pour la vérifier, l'appareil crée lui-même une paire de clés&nbsp;; son <strong>identifiant d'appareil</strong> (par exemple <code>K7Q2-9XMB</code>), aléatoire, en est tiré et ne dit rien de vous ni de l'appareil. Au lancement puis toutes les 6&nbsp;heures, l'appareil envoie à notre serveur de licences cet identifiant, sa clé publique, une signature, ainsi que son système (iOS, Android…), la version de SetRemote et le type d'installation (application, web installée, navigateur). Le serveur ne conserve ces informations (date de la dernière vérification, système, version, type d'installation) <strong>que si l'identifiant est rattaché à une licence</strong>, c'est-à-dire si vous l'avez donné à l'achat&nbsp;; sinon il n'en garde rien. Une fois par jour au plus, l'application envoie aussi un comptage <strong>anonyme</strong>&nbsp;: système, version, mode (télécommande ou écran de jeu) et type d'installation, sans aucun identifiant&nbsp;; l'adresse IP sert seulement à en déduire le pays, puis elle est oubliée, et seuls des totaux par jour sont gardés. La version libre et auto-hébergée n'envoie rien de tout cela.</p>
 
 <h2 id="bases">4. Pourquoi, et sur quelle base légale&nbsp;?</h2>
 <ul>
   <li><strong>Acheminer vos messages chiffrés</strong> entre vos appareils (données techniques de connexion, §&nbsp;3.2 et 3.3)&nbsp;: exécution du service que vous demandez (RGPD, art.&nbsp;6.1.b).</li>
   <li><strong>Garder vos réglages sur votre appareil</strong> (§&nbsp;3.5)&nbsp;: stockage strictement nécessaire au service demandé (art.&nbsp;82 de la loi Informatique et Libertés), sans transmission.</li>
+  <li><strong>Vérifier une licence</strong> (§&nbsp;3.10)&nbsp;: exécution du contrat de licence (art.&nbsp;6.1.b)&nbsp;; <strong>compter anonymement les utilisations</strong> (§&nbsp;3.10)&nbsp;: intérêt légitime (art.&nbsp;6.1.f).</li>
   <li><strong>Vous répondre</strong> (§&nbsp;3.8) et <strong>suivre la stabilité de l'application</strong> (§&nbsp;3.7)&nbsp;: intérêt légitime (art.&nbsp;6.1.f).</li>
 </ul>
 <p>Aucune décision automatisée produisant des effets juridiques n'est prise à votre sujet.</p>
@@ -152,6 +156,7 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
   <li><strong>Contenus diffusés</strong>&nbsp;: jamais conservés par nous&nbsp;; en mémoire sur l'écran de jeu le temps de la session.</li>
   <li><strong>Données techniques chez les prestataires</strong> (relais, serveur STUN, hébergeur de la version web)&nbsp;: selon leurs propres politiques, que nous ne maîtrisons pas (§&nbsp;3.2, 3.3 et 3.6).</li>
   <li><strong>Données sur votre appareil</strong>&nbsp;: jusqu'à ce que vous les effaciez.</li>
+  <li><strong>Licence</strong> (§&nbsp;3.10)&nbsp;: identifiants rattachés et leur dernière vérification, le temps de la licence et de son renouvellement&nbsp;; comptages anonymes&nbsp;: totaux par jour, sans donnée personnelle.</li>
   <li><strong>E-mails</strong>&nbsp;: 3&nbsp;ans après le dernier échange.</li>
 </ul>
 
@@ -167,6 +172,7 @@ try { if (window.top !== window.self) document.documentElement.setAttribute('dat
   -->
   <li><strong>GitHub, Inc.</strong> (États-Unis), hébergeur de la version web&nbsp;: données techniques des visites (§&nbsp;3.6)&nbsp;;</li>
   <!-- HÉBERGEMENT § 6 : FIN -->
+  <li><strong>notre serveur de licences</strong> (version officielle, §&nbsp;3.10)&nbsp;: identifiant d'appareil, système, version et type d'installation&nbsp;;</li>
   <li><strong>Apple et Google</strong>, pour la distribution des applications, en responsables indépendants (§&nbsp;3.7)&nbsp;;</li>
   <li>les <strong>autorités</strong>, sur réquisition légale uniquement&nbsp;: nous ne détenons presque rien, et aucun contenu.</li>
 </ul>

@@ -61,7 +61,7 @@ function _crSanitize(e) {
 }
 // false : mémoire pleine (rien n'est changé dans le stockage)
 function _crPersist() {
-  try { localStorage.setItem(CALLERS_KEY, JSON.stringify({ v: 1, list: callers })); return true; } catch (_) { return false; }
+  return _lsPut(CALLERS_KEY, JSON.stringify({ v: 1, list: callers }));
 }
 // Chargement ; première fois : reprise des appels, SMS et discussions enregistrés
 // (après loadCallList et loadSavedChats). Promesse résolue une fois les photos reprises.
@@ -143,6 +143,7 @@ function callerIsSaved() {
 
 // « ☆ Enregistrer comme appelant » / « + Enregistrer « Nom » (actuel) »
 async function saveCurrentCaller() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   const cur = _crCurrent();
   if (!cur.name) return null;
   const sig = _crSig(cur.photo);
@@ -237,6 +238,7 @@ function renderCallerState() {
 
 // ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) ──
 function openCallersSheet() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   _sheet = { kind: 'callers' };
   renderSheet();
   // Photos lues en arrière-plan, puis la liste se redessine

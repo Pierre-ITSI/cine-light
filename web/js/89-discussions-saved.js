@@ -88,7 +88,7 @@ function loadSavedChats() {
 }
 // false : mémoire pleine (rien n'est changé dans le stockage)
 function _chsvPersist() {
-  try { localStorage.setItem(CHAT_SAVED_KEY, JSON.stringify({ v: 2, list: chatSaved })); return true; } catch (_) { return false; }
+  return _lsPut(CHAT_SAVED_KEY, JSON.stringify({ v: 2, list: chatSaved }));
 }
 const _chsvNewId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -241,6 +241,7 @@ function renderSavedChats() {
 
 // ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) ──
 function openSaveChatSheet() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   if (chatSaved.length >= CHAT_SAVED_MAX) return;
   _sheet = { kind: 'chatName', id: null }; renderSheet(true);
 }

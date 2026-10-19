@@ -114,6 +114,20 @@ test('chargement en file:// : aucune requête réseau, polices locales, contexte
   await close();
 });
 
+test('identifiant de licence en file:// : clé non extractible gardée dans IndexedDB (Chromium = WebView Android)', async () => {
+  const { page, errors, close } = await openEmbedded('index.html');
+  // Le chemin de la version officielle, appelé directement (licence inactive dans ce dépôt)
+  const r = await page.evaluate(async () => {
+    const k = await _licLoadKeys();
+    const again = await _licLoadKeys();
+    const spki = (x) => crypto.subtle.exportKey('spki', x.pub).then((b) => _licB64u(b));
+    return { idb: !!(await _licDb()), extractable: k.priv.extractable, same: (await spki(k)) === (await spki(again)), ls: localStorage.getItem(LIC_KEY_LS) };
+  });
+  assert.deepEqual(errors, []);
+  assert.deepEqual(r, { idb: true, extractable: false, same: true, ls: null }, 'IndexedDB utilisable, sans repli localStorage');
+  await close();
+});
+
 test('coque reconnue sans SETREMOTE_NATIVE (injection Android tardive) : luminosité native', async () => {
   const { page, errors, close } = await openEmbedded('index.html', { bridge: true });
   await sleep(100);

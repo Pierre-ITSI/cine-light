@@ -260,7 +260,7 @@ function seqLoad() {
   }
 }
 function seqSave() {
-  try { localStorage.setItem(SEQ_LS_KEY, JSON.stringify({ v: 1, name: _seq.name, steps: _seq.steps, savedId: _seq.savedId, phone: seqPhoneCfg() })); return true; } catch (_) { return false; }
+  return _lsPut(SEQ_LS_KEY, JSON.stringify({ v: 1, name: _seq.name, steps: _seq.steps, savedId: _seq.savedId, phone: seqPhoneCfg() }));
 }
 
 // ── Éléments référencés ──
@@ -274,10 +274,11 @@ function seqRefItem(s) {
     case 'color': return colorMemories.find((m) => m.id === s.ref) || null;
     case 'effect': return fxMemories.find((m) => m.id === s.ref && EFFECT_CONFIG[m.effect]) || null;
     case 'media': return _seqMediaItem(s.ref);
-    case 'call': case 'missed': return callList.call.find((e) => e.id === s.ref) || null;
-    case 'sms': return callList.sms.find((e) => e.id === s.ref) || null;
-    case 'notif': return callList.notif.find((e) => e.id === s.ref) || null;
-    case 'chat': return chatSaved.find((e) => e.id === s.ref) || null;
+    // Démo de l'aperçu sans licence (76-demos.js) : ses éléments, même si Tel est sous licence
+    case 'call': case 'missed': return callList.call.find((e) => e.id === s.ref) || licDemoRef(s.kind, s.ref);
+    case 'sms': return callList.sms.find((e) => e.id === s.ref) || licDemoRef(s.kind, s.ref);
+    case 'notif': return callList.notif.find((e) => e.id === s.ref) || licDemoRef(s.kind, s.ref);
+    case 'chat': return chatSaved.find((e) => e.id === s.ref) || licDemoRef(s.kind, s.ref);
     case 'unlock': case 'sleep': case 'battery': case 'off': case 'net': return s.opt;
   }
   return null;
@@ -503,6 +504,7 @@ function seqRestart() {
     const live = [...calls].filter((id) => scrKnown(id) && scrState(id).call);
     if (live.length) sendMsg({ type: 'call:end', target: { screens: live } });
     if (chat && _chat.open) closeChat();
+    licSeqRestarted(); // fil de l'utilisateur rendu (aperçu Séquence, 77-licence-ui.js)
     await _seqPushPhones();
     _seqPhones.clear();
     renderSeq();
@@ -695,6 +697,7 @@ function _seqStack(ids, n, chime) {
 // Les messages du contact qui précèdent la première réponse du comédien sont
 // déjà reçus (affichés comme historique) : le comédien n'a plus qu'à répondre.
 async function _seqOpenChat(e, ids) {
+  licSeqDemoChat(); // aperçu Séquence, Tel sous licence : fil de l'utilisateur mis de côté (77-licence-ui.js)
   const photo = e.hasPhoto ? safeImageData(await callAssetGet(_chsvPhotoKey(e.id))) : null;
   if (_chat.open) closeChat();
   _chat.name = e.contact; _chat.actor = e.actor; _chat.style = e.style;
@@ -955,6 +958,7 @@ function setSeqView(v) {
 // ── Éditeur d'étape (maquette 29) ──
 let _seqEdit = null; // { id (null : nouvelle), step (brouillon), err }
 function openSeqStep(id) {
+  if (licLocked('seq')) return; // aperçu sans licence (77-licence-ui.js)
   if (_seqSuppressClick) return;
   const s = id ? _seq.steps.find((x) => x.id === id) : null;
   if (id && !s) return;

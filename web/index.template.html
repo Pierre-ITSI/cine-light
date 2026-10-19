@@ -656,6 +656,15 @@
   </div>
 
   <div class="tab-content" id="content-call">
+    <!-- Aperçu sans licence (maquettes 39 / 39b) : version officielle seulement, 77-licence-ui.js -->
+    <div class="lic-pv" id="licPvTel" style="display:none">
+      <span class="lic-pv-tag">Aperçu · Tel</span>
+      <p>Exemples prêts à jouer sur l'écran, non modifiables. La licence débloque vos propres appels, SMS et discussions.</p>
+      <div class="lic-pv-row">
+        <button type="button" class="lic-pv-id" aria-label="Copier l'identifiant de cet appareil" onclick="licCopyId(this)"><span>ID</span><b class="lic-id-txt">····-····</b>⧉</button>
+        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
+      </div>
+    </div>
     <div class="panel">
       <div class="panel-label">Type</div>
       <!-- Onglet Tel (maquettes 24 et 26) : appel, SMS, notification d'application, discussion -->
@@ -678,7 +687,7 @@
       <input type="text" id="callLabel" class="text-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px" oninput="renderCallerState()">
       <div style="display:flex;gap:10px;align-items:center">
         <div id="callPhotoPreview" style="width:46px;height:46px;border-radius:50%;background:var(--mid2);border:1px solid var(--border);background-size:cover;background-position:center;flex-shrink:0"></div>
-        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()">🖼 Photo (option)</button>
+        <button class="media-btn" id="callPhotoBtn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()">🖼 Photo (option)</button>
         <input type="file" id="callPhotoInput" accept="image/*" style="display:none" onchange="onCallPhoto(this.files);this.value=''">
       </div>
       <button type="button" class="tel-save" id="callerSaveBtn" onclick="saveCurrentCaller()">☆ Enregistrer comme appelant</button>
@@ -873,6 +882,15 @@
 
   <!-- Séquence (maquettes 28 et 29) : étapes qui référencent les états enregistrés des autres onglets, GO / ↶ / STOP -->
   <div class="tab-content" id="content-seq">
+    <!-- Aperçu sans licence (maquettes 39 / 39b) : version officielle seulement, 77-licence-ui.js -->
+    <div class="lic-pv" id="licPvSeq" style="display:none">
+      <span class="lic-pv-tag">Aperçu · Séquence</span>
+      <p>Exemples prêts à jouer sur l'écran, non modifiables. La licence débloque vos propres séquences.</p>
+      <div class="lic-pv-row">
+        <button type="button" class="lic-pv-id" aria-label="Copier l'identifiant de cet appareil" onclick="licCopyId(this)"><span>ID</span><b class="lic-id-txt">····-····</b>⧉</button>
+        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
+      </div>
+    </div>
     <div class="dc-tabs">
       <button type="button" class="gw-seg-btn active" id="seqTab-cur" onclick="setSeqView('cur')">Séquence en cours</button>
       <button type="button" class="gw-seg-btn" id="seqTab-saved" onclick="setSeqView('saved')">Enregistrées (0)</button>
@@ -1201,6 +1219,24 @@
     <button type="button" class="st-back" onclick="closeSettings()">← Retour</button>
     <span class="st-title" id="stTitle">Réglages</span>
     <span class="st-spacer"></span>
+  </div>
+  <!-- Licence (maquettes 37, 37b) : version officielle seulement, 77-licence-ui.js -->
+  <div class="st-card" id="stLicCard" style="display:none">
+    <span class="st-label">Licence</span>
+    <div class="st-lic-state"><span class="st-lic-dot" id="stLicDot"></span><span id="stLicState">Aucune licence</span><span class="st-lic-until" id="stLicUntil"></span></div>
+    <div class="st-lic-rows" id="stLicRows"></div>
+    <div class="st-lic-msg" id="stLicMsg" role="status"></div>
+    <button type="button" class="st-lic-wide" id="stLicCheck" onclick="licCheckNow()">VÉRIFIER MAINTENANT</button>
+  </div>
+  <div class="st-card" id="stLicIdCard" style="display:none">
+    <span class="st-label">Identifiant de cet appareil</span>
+    <div class="st-lic-id lic-id-txt" id="stLicId">····-····</div>
+    <div class="st-lic-acts">
+      <button type="button" class="st-lic-act" onclick="licCopyId(this)">COPIER</button>
+      <button type="button" class="st-lic-act" onclick="licShareId(this)">PARTAGER</button>
+    </div>
+    <p class="st-note" id="stLicBuyNote" style="display:none"></p>
+    <button type="button" class="st-lic-wide st-lic-buy" id="stLicBuy" style="display:none" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
   </div>
   <div class="st-card">
     <span class="st-label">Langue</span>

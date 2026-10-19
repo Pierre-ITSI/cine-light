@@ -417,6 +417,7 @@ function _chatFlushTexts() {
   return true;
 }
 function addChatMessage() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
   if (_chat.msgs.length >= CHAT_MAX) return;
   const last = _chat.msgs[_chat.msgs.length - 1];
   const from = last && last.from === 'contact' ? 'actor' : 'contact';

@@ -64,7 +64,7 @@ function loadSavedSeqs() {
   if (_seq.savedId && !ids.has(_seq.savedId)) _seq.savedId = null;
 }
 function _sqsvPersist() {
-  try { localStorage.setItem(SEQ_SAVED_KEY, JSON.stringify({ v: 1, list: seqSaved })); return true; } catch (_) { return false; }
+  return _lsPut(SEQ_SAVED_KEY, JSON.stringify({ v: 1, list: seqSaved }));
 }
 const _sqsvNewId = () => 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const _sqsvClone = (steps) => JSON.parse(JSON.stringify(steps));
@@ -183,6 +183,7 @@ function renderSavedSeqs() {
 
 // ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) ──
 function openSaveSeqSheet() {
+  if (licLocked('seq')) return; // aperçu sans licence (77-licence-ui.js)
   if (seqSaved.length >= SEQ_SAVED_MAX) return;
   _sheet = { kind: 'seqName', id: null }; renderSheet(true);
 }
