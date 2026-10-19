@@ -4,12 +4,13 @@ import { AppState, Linking, Platform, Pressable, StyleSheet, Text, Vibration, Vi
 import { StatusBar } from 'expo-status-bar';
 import { useKeepAwake } from 'expo-keep-awake';
 import * as Brightness from 'expo-brightness';
-import { Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { ShouldStartLoadRequest, WebViewNavigationEvent } from 'react-native-webview/lib/WebViewTypes';
 import SetRemoteLink, { createLinkBridge, type LinkBridge } from '../modules/setremote-link';
 import SetRemoteUdp, { createDmxBridge, type DmxBridge } from '../modules/setremote-udp';
 import { createPdfPreviewer, type PdfPrintFn } from '../src/lib/pdfPreview';
+import { createProjectBridge, PROJECT_MIME, type PickedFile, type TempFile } from '../src/lib/projectFiles';
 import { nativeBootstrapScript } from '../src/config';
 
 // Coque native de SetRemote : la PWA (fonctionnalités de référence) tourne dans
@@ -20,7 +21,9 @@ import { nativeBootstrapScript } from '../src/config';
 // liaisons hors ligne télécommande ↔ écrans en Wi-Fi local et en Bluetooth LE
 // (module local modules/setremote-link, contrat dans docs/OFFLINE-NATIVE.md),
 // aperçu PDF in-app de la table des canaux DMX (expo-print, src/lib/pdfPreview.ts),
-// vibreur de l'écran de jeu (Vibration de React Native, la vue web n'en a pas).
+// vibreur de l'écran de jeu (Vibration de React Native, la vue web n'en a pas),
+// fichiers projet .setremote (feuille de partage, sélecteur de fichier :
+// src/lib/projectFiles.ts, docs/PROJECTS.md § 6).
 // Les anciens écrans 100 % natifs (/native, /remote, /screen) et leurs
 // transports en clair ont été retirés : la vue web est la seule interface.
 //
@@ -149,6 +152,46 @@ export default function AppShell() {
     inject: (script) => webRef.current?.injectJavaScript(script),
   }), []);
 
+  // Fichiers projet .setremote : project:save (morceaux base64 → fichier
+  // temporaire du cache → feuille de partage d'expo-sharing) et project:open
+  // (sélecteur de fichier d'expo-file-system → morceaux renvoyés par
+  // window.SRNative.receive). expo-sharing est chargé à la demande : un
+  // binaire de développement sans lui répond « unavailable ».
+  const project = useMemo(() => createProjectBridge({
+    createTemp: (name) => {
+      const dir = new Directory(Paths.cache, 'projets');
+      if (!dir.exists) dir.create({ intermediates: true, idempotent: true });
+      const f = new File(dir, name);
+      if (f.exists) f.delete();
+      f.create();
+      const t: TempFile = {
+        write: (b64, append) => f.write(b64, { encoding: 'base64', append }),
+        get uri() { return f.uri; },
+        get size() { return f.size ?? 0; },
+        delete: () => { try { f.delete(); } catch { /* déjà supprimé */ } },
+      };
+      return t;
+    },
+    loadShare: () => {
+      const Sharing = require('expo-sharing') as typeof import('expo-sharing');
+      return (uri, o) => Sharing.shareAsync(uri, o);
+    },
+    pick: async () => {
+      const r = await File.pickFileAsync({ mimeTypes: [PROJECT_MIME, 'application/octet-stream', '*/*'] });
+      if (r.canceled || !r.result) return null;
+      const f = r.result;
+      const h = f.open();
+      const p: PickedFile = {
+        name: f.name,
+        size: f.size ?? 0,
+        read: (n) => h.readBytes(n),
+        close: () => h.close(),
+      };
+      return p;
+    },
+    inject: (script) => webRef.current?.injectJavaScript(script),
+  }), []);
+
   // Messages de la PWA → fonctions natives
   const onMessage = useCallback(async (e: WebViewMessageEvent) => {
     let msg: { type?: string; value?: unknown };
@@ -156,6 +199,7 @@ export default function AppShell() {
     if (link.current?.handle(msg)) return;
     if (dmx.current?.handle(msg)) return;
     if (pdf.handle(msg)) return;
+    if (project.handle(msg)) return;
     if (msg.type === 'brightness-restore') { restoreBrightness(); return; }
     // Vibreur de l'écran de jeu (maquette 36b) : la vue web Android ne sait pas
     // vibrer (navigator.vibrate sans effet), iOS non plus. pattern = durées en
@@ -181,7 +225,7 @@ export default function AppShell() {
         await Brightness.setBrightnessAsync(v);
       } catch { /* indisponible : sans effet */ }
     }
-  }, [restoreBrightness, pdf]);
+  }, [restoreBrightness, pdf, project]);
 
   // Les liens externes s'ouvrent dans le navigateur, pas dans la coque.
   // En local, toute page file:// est admise (index.html…) : la

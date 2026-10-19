@@ -39,6 +39,9 @@
  *    réception UDP de la passerelle DMX (docs/DMX-NATIVE.md, contrat du pont) ;
  *  - 'pdf:preview' (PWA → coque) et 'pdf:error' (coque → PWA) : aperçu PDF de
  *    la table des canaux DMX (expo-print, expo-app/src/lib/pdfPreview.ts) ;
+ *  - 'project:save', 'project:open' (PWA → coque) et 'project:saved',
+ *    'project:file', 'project:error' (coque → PWA) : fichiers projet .setremote
+ *    par morceaux base64 (expo-app/src/lib/projectFiles.ts, docs/PROJECTS.md) ;
  *  - 'link:start', 'link:stop', 'link:send', 'link:state?' (PWA → coque) et
  *    'link:frames', 'link:peers', 'link:state', 'link:error' (coque → PWA) :
  *    liaisons locales Wi-Fi / Bluetooth (docs/OFFLINE.md). Elles portent les

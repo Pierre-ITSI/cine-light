@@ -285,3 +285,34 @@ function chatSheetSave(s, value) {
 function chatMenuRename(id) { openRenameSavedChat(id); }
 function chatMenuDuplicate(id) { closeSheet(); duplicateSavedChat(id); }
 function chatMenuDelete(id) { closeSheet(); deleteSavedChat(id); }
+
+// ── Nouvelle discussion (moteur ; bouton et confirmation : maquette 47b, à valider) ──
+// Fil vierge (aucun message, contact sans nom ni photo ; comédien et style
+// gardés), sans toucher aux discussions enregistrées. Modifications non
+// enregistrées (chatHasUnsavedChanges) : refus { ok: false, code: 'dirty', name }
+// tant que l'appelant n'a pas choisi opts.save (nom ; enregistrée d'abord comme
+// NOUVELLE entrée) ou opts.discard. Le nouveau fil n'est lié à aucune entrée
+// (savedId null) : l'enregistrer crée une nouvelle entrée. Discussion ouverte
+// sur les écrans : refus 'live' (la fermer d'abord). Aperçu sans licence : 'locked'.
+async function chatNew(opts = {}) {
+  if (licLocked('tel')) return { ok: false, code: 'locked' };
+  if (_chat.open) return { ok: false, code: 'live' };
+  if (chatHasUnsavedChanges()) {
+    if (typeof opts.save === 'string') {
+      if (chatSaved.length >= CHAT_SAVED_MAX) return { ok: false, code: 'full' };
+      if (!(await saveCurrentChat(opts.save))) return { ok: false, code: 'storage-full' };
+    } else if (opts.discard !== true) return { ok: false, code: 'dirty', name: _chsvDefaultName() };
+  }
+  ++_chsvLoadSeq; // chargement d'une entrée encore en cours : abandonné
+  chatAutoStop();
+  _chat = Object.assign(_chatDefault(), { name: '', actor: _chat.actor, style: _chat.style, msgs: [] });
+  _chatEditId = null; _chatTimingId = null;
+  _chatAvatar = null;
+  _lsSet(CHAT_AVATAR_KEY, null);
+  _chatDefsSent.clear();
+  chatSave();
+  _chatView = 'thread';
+  chatShowForm(callKind === 'discussion');
+  if (typeof renderCallerState === 'function') renderCallerState();
+  return { ok: true };
+}

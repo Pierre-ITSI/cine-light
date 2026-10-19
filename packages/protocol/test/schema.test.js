@@ -252,7 +252,9 @@ const NON_RELAY = new Set(['brightness', 'brightness-restore',
   // aperçu PDF de la table des canaux (expo-print dans la coque)
   'pdf:preview', 'pdf:error',
   // liaisons locales Wi-Fi / Bluetooth : le pont porte des trames déjà scellées (docs/OFFLINE.md)
-  'link:start', 'link:stop', 'link:send', 'link:state', 'link:frames', 'link:peers', 'link:error']);
+  'link:start', 'link:stop', 'link:send', 'link:state', 'link:frames', 'link:peers', 'link:error',
+  // fichiers projet .setremote par morceaux (feuille de partage, sélecteur de la coque, docs/PROJECTS.md)
+  'project:save', 'project:open', 'project:saved', 'project:file', 'project:error']);
 
 /** @param {string} src */
 function extractTypes(src) {
