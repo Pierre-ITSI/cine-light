@@ -193,6 +193,9 @@ function _validPhoneState(m) {
     out.push({
       id: n.id, kind: n.kind, app: _P.text(n.app, PROTO.APP_MAX), name: _P.text(n.name, PROTO.NAME_MAX), msg: _P.text(n.msg, PROTO.MSG_MAX),
       color: _P.hex(n.color) ? n.color : null, ago: _P.int(n.ago, 0, PROTO.PHONE_AGO_MAX) ?? 0,
+      // Maquette 44 : appelant d'un appel manqué (initiales), icône / photo préparée (__ph_…)
+      who: n.kind === 'missed' ? _P.text(n.who, PROTO.NAME_MAX) : '',
+      img: n.kind !== 'sms' && typeof n.img === 'string' && SRP.CALL_PHOTO_ID_RE.test(n.img) ? n.img : null,
     });
   }
   m.notifs = out;
@@ -210,7 +213,10 @@ function _validPhoneState(m) {
   m.sleep = _P.isObj(sl) && (m.mode === 'locked' || m.mode === 'code')
     ? { notif: _P.bool(sl.notif), touch: _P.bool(sl.touch), after: _P.int(sl.after, 1, PROTO.PHONE_SLEEP_MAX) ?? 8 } : null;
   const al = m.alert;
-  m.alert = _P.isObj(al) && _phoneId(al.id) && _P.int(al.level, 1, 100) !== null ? { id: al.id, level: al.level } : null;
+  // « Batterie faible » (niveau) ou « Aucun réseau » (kind net, maquette 44b)
+  m.alert = !_P.isObj(al) || !_phoneId(al.id) ? null
+    : al.kind === 'net' ? { id: al.id, kind: 'net' }
+    : _P.int(al.level, 1, 100) !== null ? { id: al.id, kind: 'battery', level: al.level } : null;
   m.power = m.power === 'off' ? 'off' : 'on';
   if (m.power === 'off') { m.chime = null; m.watch = []; }
   return true;
@@ -497,7 +503,10 @@ function clampOutgoing(m) {
         const line = (v, max) => _P.text(v, max).replace(/[\u0000-\u001F\u007F]/g, ' ');
         m.notifs = m.notifs.slice(0, PROTO.PHONE_NOTIFS_MAX).map((n) => Object.assign({ id: n.id, kind: n.kind, app: line(n.app, PROTO.APP_MAX), name: line(n.name, PROTO.NAME_MAX),
           ago: Math.round(_P.num(n.ago, 0, PROTO.PHONE_AGO_MAX) ?? 0) },
-        n.msg ? { msg: _P.text(n.msg, PROTO.MSG_MAX).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '') } : {}, _P.hex(n.color) ? { color: n.color } : {}));
+        n.msg ? { msg: _P.text(n.msg, PROTO.MSG_MAX).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '') } : {}, _P.hex(n.color) ? { color: n.color } : {},
+        // Maquette 44 : appelant d'un appel manqué, icône / photo préparée (jamais sur un SMS)
+        n.kind === 'missed' && n.who ? { who: line(n.who, PROTO.NAME_MAX) } : {},
+        n.kind !== 'sms' && typeof n.img === 'string' && SRP.CALL_PHOTO_ID_RE.test(n.img) ? { img: n.img } : {}));
       }
       break;
     case 'chat:msg': m.text =_P.text(m.text, PROTO.CHAT_TEXT_MAX).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ''); break;

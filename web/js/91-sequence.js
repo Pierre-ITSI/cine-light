@@ -25,6 +25,14 @@
 // reste « Non distribué » (notification « Message non envoyé ») jusqu'au
 // retour du réseau, qui le distribue. Téléphone éteint : il ne reçoit plus
 // d'appel ni de son ; une étape « Veille » plus loin (ou ↶) le rallume.
+// Réseau perdu (maquette 44b) : alerte « Aucun réseau » une fois par perte
+// (pas en mode avion : choisi au départ, il n'est pas une perte), fermée par
+// « OK », retirée au retour du réseau.
+// Écran verrouillé (maquette 44) : une notification garde l'icône importée de
+// son entrée, un appel manqué la photo de son appel (préparées __ph_…,
+// envoyées à chaque écran qui ne les a pas, renvoyées à la resynchronisation) ;
+// un SMS prend la couleur de son app, un appel manqué les initiales de
+// l'appelant.
 // Chaque étape RÉFÉRENCE l'élément enregistré (son id), jamais une copie :
 // modifié dans son onglet, il est joué tel quel ; supprimé, l'étape affiche
 // « élément introuvable » et elle est sautée avec un avertissement.
@@ -170,7 +178,7 @@ const _SEQ_TXT = {
   offNote: 'Rallumer : une étape « Veille » plus loin (logo, puis écran verrouillé endormi) ou ↶.',
   labelNet: 'Réseau', netLost: 'Perdu', netBack: 'Rétabli',
   labelBars: 'Barres', labelNetType: 'Réseau mobile', labelWifi: 'Wi-Fi', yes: 'Oui', no: 'Non',
-  netLostNote: '« Pas de service » dans la barre d\'état : un appel devient « Appel impossible », un message du comédien reste « Non distribué ».',
+  netLostNote: '« Pas de service » dans la barre d\'état et alerte « Aucun réseau » (une fois, pas en mode avion) : un appel devient « Appel impossible », un message du comédien reste « Non distribué ».',
   netBackNote: 'Les messages restés « Non distribué » partent.',
   // Lecture de l'étape Discussion (maquette 41)
   labelPlay: 'Lecture', playManual: 'Manuelle', playActor: '▶ Auto · le comédien tape', playFull: '▶ Auto · tout automatique',
@@ -474,7 +482,7 @@ function remoteOnPhoneGesture(m) {
       p.sleep = null; // déverrouillé : réveillé pour de bon (maquette 29b)
     }
   }
-  // Alerte « Batterie faible » fermée sur l'écran : elle ne revient pas
+  // Alerte « Batterie faible » ou « Aucun réseau » fermée sur l'écran : elle ne revient pas
   if (m.g === 'dismiss') {
     const p = sid && _seqPhones.get(sid);
     if (p) p.alert = null;
@@ -611,10 +619,11 @@ async function _seqExec(s, it, ids) {
         if (!on(id)) silent.push(id); // éteint : gardée pour le rallumage, sans son
         else if (mode === 'locked' || mode === 'code' || (mode === 'off' && lockEntry)) stack.push(id); else banner.push(id);
       }
-      const card = {
+      // Maquette 44 : SMS sur la couleur de son app (pastille de l'onglet Tel), notification avec son icône importée
+      const card = Object.assign({
         kind: s.kind, app: _seqLine(it.appName, 24) || (s.kind === 'sms' ? _SEQ_TXT.smsApp : ''), name: _seqLine(it.name, 40), msg: String(it.msg || '').slice(0, 200),
-        color: null, style: it.style,
-      };
+        color: s.kind === 'sms' ? safeHexColor(it.appColor, SEQ_SMS_COLOR) : null, style: it.style,
+      }, s.kind === 'notif' ? await _seqEntryImg(it) : null);
       if (silent.length) _seqStack(silent, card, null);
       if (stack.length) {
         const f = ringMsgFields(it.ringId || it.ring, it.ringVolume);
@@ -632,7 +641,9 @@ async function _seqExec(s, it, ids) {
       // Appel encore en cours sur ces écrans (étape « Appel » restée sans réponse) : il cesse de sonner
       const live = ids.filter((id) => scrState(id).call);
       if (live.length) sendMsg({ type: 'call:end', target: _seqTarget(live) });
-      const card = { kind: 'missed', app: _SEQ_TXT.missedApp, name: _SEQ_TXT.missedTitle, msg: _seqLine(it.name || 'Inconnu', 40), color: null, style: it.style };
+      // Maquette 44 : avatar aux initiales de l'appelant, ou la photo de l'appel
+      const who = _seqLine(it.name || 'Inconnu', 40);
+      const card = Object.assign({ kind: 'missed', app: _SEQ_TXT.missedApp, name: _SEQ_TXT.missedTitle, msg: who, who, color: null, style: it.style }, await _seqEntryImg(it));
       const off = ids.filter((id) => !on(id));
       if (off.length) _seqStack(off, card, null);
       const lit = ids.filter(on);
@@ -674,7 +685,7 @@ async function _seqExec(s, it, ids) {
         p.bar.bat.level = it.level; p.bar.bat.charging = false; p.bar.bat.low = true;
         if (!on(id)) continue;
         if (p.mode === 'off') p.mode = 'locked';
-        p.alert = { id: 'a' + Date.now().toString(36).slice(-5) + (++_seqNotifN).toString(36), level: it.level };
+        p.alert = { id: _seqAlertId(), level: it.level };
       }
       break;
     case 'off': {
@@ -685,10 +696,17 @@ async function _seqExec(s, it, ids) {
       break;
     }
     case 'net':
-      // Réseau (maquette 34) : perdu (« Pas de service », ni Wi-Fi) ou rétabli
+      // Réseau (maquette 34) : perdu (« Pas de service », ni Wi-Fi) ou rétabli.
+      // Perdu alors qu'il y en avait (maquette 44b) : alerte « Aucun réseau », une
+      // fois ; en mode avion (choisi au départ), pas d'alerte. Rétabli : retirée.
       for (const id of ids) {
-        const n = _seqPhones.get(id).bar.net;
+        const p = _seqPhones.get(id), n = p.bar.net;
+        const had = !phoneBarNoNetwork(p.bar);
         if (it.lost) { n.bars = 0; n.wifi = false; } else { n.bars = it.bars; n.type = it.type; n.wifi = it.wifi; n.plane = false; }
+        if (it.lost && had && !n.plane && on(id)) {
+          if (p.mode === 'off') p.mode = 'locked';
+          p.alert = { id: _seqAlertId(), kind: 'net' };
+        } else if (!it.lost && p.alert && p.alert.kind === 'net') p.alert = null;
       }
       break;
   }
@@ -704,6 +722,34 @@ function _seqPhone(id, style) {
   return p;
 }
 let _seqNotifN = 0;
+const _seqAlertId = () => 'a' + Date.now().toString(36).slice(-5) + (++_seqNotifN).toString(36);
+// Couleur des SMS sans pastille réglée (comme l'onglet Tel, 80-call-simulator.js)
+const SEQ_SMS_COLOR = '#2f8cf0';
+// Icône importée d'une notification / photo d'un appel enregistré : id préparé
+// (__ph_…, dérivé du contenu, 82-call-list.js) et clé IndexedDB ; {} sans image
+async function _seqEntryImg(e) {
+  if (!e || !e.hasPhoto || !e.id) return {};
+  try {
+    const a = await callEntryAssets(e);
+    if (!a.photo) return {};
+    const ids = await callEntryPrepIds(e, a);
+    return ids.photo ? { img: ids.photo, imgKey: e.id + ':photo' } : {};
+  } catch (_) { return {}; }
+}
+// Images des notifications empilées vers cet écran s'il ne les a pas (chacune à
+// sa place en cache) ; rend celles qu'il a ou vient de recevoir
+async function _seqEnsureNotifImgs(sid, p) {
+  const ok = new Set();
+  for (const n of p.notifs.slice(-PROTO.PHONE_NOTIFS_MAX)) {
+    if (!n.img || ok.has(n.img)) continue;
+    if (scrState(sid).cached.has(n.img)) { ok.add(n.img); continue; } // contenu identique à l'id près
+    const data = safeImageData(await callAssetGet(n.imgKey));
+    if (!data) continue; // entrée supprimée depuis : la lettre / les initiales
+    await ensureSlotImage(n.img, data, [sid]);
+    ok.add(n.img);
+  }
+  return ok;
+}
 // Notification empilée sur l'écran verrouillé de ces écrans (la plus récente en haut)
 function _seqStack(ids, n, chime) {
   const id = 'n' + Date.now().toString(36).slice(-5) + (++_seqNotifN).toString(36);
@@ -711,7 +757,8 @@ function _seqStack(ids, n, chime) {
     const p = _seqPhone(sid, n.style);
     if (!p.notifs.length && p.mode === 'off') p.style = _CALL_STYLE_HINTS[n.style] ? n.style : 'glass'; // style du premier écran verrouillé
     if (p.mode === 'off') p.mode = 'locked'; // déjà déverrouillé : rangée dans la pile, visible au reverrouillage
-    p.notifs.push(Object.assign({ id, kind: n.kind, app: n.app, name: n.name, msg: n.msg, color: n.color, at: Date.now() }, n.unsent ? { unsent: n.unsent } : {}));
+    p.notifs.push(Object.assign({ id, kind: n.kind, app: n.app, name: n.name, msg: n.msg, color: n.color, at: Date.now() }, n.unsent ? { unsent: n.unsent } : {},
+      n.who ? { who: n.who } : {}, n.img ? { img: n.img, imgKey: n.imgKey } : {}));
     if (p.notifs.length > PROTO.PHONE_NOTIFS_MAX) p.notifs.shift();
     if (chime) p.chime = Object.assign({ id }, chime); else delete p.chime;
   }
@@ -806,7 +853,7 @@ async function _seqEnsureWall(sid, sig) {
   if (data) await ensureSlotImage('__seqwall', data, [sid]);
   return !!data;
 }
-function _seqPhoneMsg(sid, homeOk, wallOk) {
+function _seqPhoneMsg(sid, homeOk, wallOk, imgOk) {
   const p = _seqPhones.get(sid) || { mode: 'off', style: 'glass', notifs: [] };
   const u = _seqUnlockFor(sid);
   const now = Date.now();
@@ -814,7 +861,7 @@ function _seqPhoneMsg(sid, homeOk, wallOk) {
     type: 'phone:state', target: { screens: [sid] },
     mode: p.mode === 'code' && !(u && u.code) ? 'locked' : p.mode, style: p.style,
     notifs: p.notifs.slice(-PROTO.PHONE_NOTIFS_MAX).map((n) => Object.assign({ id: n.id, kind: n.kind, app: n.app, name: n.name, ago: Math.max(0, Math.min(PROTO.PHONE_AGO_MAX, Math.round((now - n.at) / 1000))) },
-      n.msg ? { msg: n.msg } : {}, n.color ? { color: n.color } : {})),
+      n.msg ? { msg: n.msg } : {}, n.color ? { color: n.color } : {}, n.who ? { who: n.who } : {}, n.img && imgOk && imgOk.has(n.img) ? { img: n.img } : {})),
   };
   if (u) m.unlock = { code: u.code, then: u.then };
   if (homeOk) m.home = true;
@@ -845,11 +892,12 @@ async function _seqPushPhones(only, force) {
     const homeOk = homeSig ? await _seqEnsureHome(sid, homeSig) : false;
     const wallSig = p && _seq.wall ? _seq.wall.img : null;
     const wallOk = wallSig ? await _seqEnsureWall(sid, wallSig) : false;
-    const m = _seqPhoneMsg(sid, homeOk, wallOk);
+    const imgOk = p ? await _seqEnsureNotifImgs(sid, p) : null;
+    const m = _seqPhoneMsg(sid, homeOk, wallOk, imgOk);
     const chime = p && p.chime && m.notifs.some((n) => n.id === p.chime.id) ? p.chime : null;
     if (p) delete p.chime;
     const b = m.bar;
-    const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id), m.unlock, m.home, m.wall, m.watch,
+    const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id + (n.img ? '/' + n.img : '')), m.unlock, m.home, m.wall, m.watch,
       b ? [b.clock.mode, b.clock.date, b.clock.time, b.net, b.bat] : null, m.sleep, m.alert, m.power]);
     if (!force && !chime && _seqPhoneSent.get(sid) === sig) continue;
     if (!p && !m.watch && !_seqPhoneSent.has(sid)) continue; // rien à dire à cet écran

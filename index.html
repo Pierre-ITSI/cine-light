@@ -1265,6 +1265,15 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 /* SMS : bulle sur fond vert ; appel manqué : combiné sur fond rouge (maquette 30) */
 .sp-icon.sp-sms{background:#3a8f5c}
 .sp-icon.sp-missed{background:#c0453a}
+/* Maquette 44 : icône importée (carré arrondi) ; appel manqué en avatar rond gris
+   aux initiales (ou photo), pastille rouge au combiné bordée de la couleur de la carte */
+.sp-icon.has-img{background:#000 center/cover no-repeat}
+.sp-icon.sp-avatar{position:relative;border-radius:50%;background:#6e7480;font-size:15px;font-weight:600;--sp-ring:#2b3446}
+.sp-icon.sp-avatar.has-img{background:#6e7480 center/cover no-repeat}
+.sp-badge{position:absolute;right:-3px;bottom:-3px;width:15px;height:15px;box-sizing:border-box;border-radius:50%;background:#e5483d;border:1.5px solid var(--sp-ring);display:flex;align-items:center;justify-content:center}
+.sp-card .sp-badge svg{width:8px;height:8px}
+#screen-phone.tonal .sp-icon.sp-avatar{--sp-ring:#2b2e34}
+#screen-phone.minimal .sp-icon.sp-avatar{--sp-ring:#16191f}
 /* Verre : translucide et flouté */
 #screen-phone.glass .sp-card{backdrop-filter:blur(24px) saturate(1.4)}
 /* Tonal : surfaces tonales, heure fine en deux lignes */
@@ -3845,7 +3854,9 @@ const SPECS = {
       + 'verrouillé, déverrouillé, appels, bandeaux, discussion, bandeau haut au-dessus des médias) ; elle prime sur media:bar ; '
       + 'absente : plus de barre de la séquence. sleep : étape « Veille » (maquette 29b), écran noir verrouillé qui se rallume aux '
       + 'notifications / appels et/ou au toucher et se rendort après `after` s ; le déverrouillage le réveille pour de bon. alert : '
-      + '« Batterie faible » (maquette 33) à fermer (geste dismiss). power off : « Extinction » (fondu, logo neutre, écran noir ; '
+      + '« Batterie faible » (maquette 33) ou « Aucun réseau » (kind net, maquette 44b : une fois par perte du réseau, '
+      + 'jamais en mode avion choisi) à fermer (geste dismiss). Notifications (maquette 44) : icône importée d’une notification, '
+      + 'SMS sur la couleur de son app, appel manqué en avatar rond aux initiales de l’appelant (who) ou à sa photo (img). power off : « Extinction » (fondu, logo neutre, écran noir ; '
       + 'le téléphone ne répond plus) jusqu’au rallumage (étape « Veille » ou ↶).',
     fields: {
       mode: req(oneOf('off', 'locked', 'code', 'unlocked', 'home'), 'état du faux téléphone'),
@@ -3856,7 +3867,10 @@ const SPECS = {
         app: req(line(24), 'application affichée en tête (« SMS », « Téléphone », nom fictif)'),
         name: req(line(40), 'expéditeur, titre, « Appel manqué »'),
         msg: opt(text(200), 'texte, contenu, nom de l’appelant'),
-        color: opt(HEX, 'couleur de l’icône'),
+        color: opt(HEX, 'couleur de l’icône (SMS : pastille de l’app réglée)'),
+        who: opt(line(40), 'appel manqué : appelant (avatar rond à ses initiales ; absent : combiné, « Appel impossible »)'),
+        img: opt(str(45, CALL_PHOTO_ID_RE), 'notification : icône importée ; appel manqué : photo de l’appelant (__ph_…, '
+          + 'préchargée en fragments media-img-* ; pas encore arrivée : la lettre / les initiales)'),
         ago: req(int(0, LIMITS.phoneAgoSeconds), 'secondes écoulées depuis l’arrivée, au moment de l’envoi'),
       }), LIMITS.phoneNotifs), 'notifications empilées, dans l’ordre d’arrivée'),
       unlock: opt(object({
@@ -3881,8 +3895,9 @@ const SPECS = {
       }), 'étape « Veille » : écran noir verrouillé'),
       alert: opt(object({
         id: req(PHONE_ID, 'identifiant de l’alerte (fermée : geste dismiss)'),
-        level: req(int(1, 100), 'pourcentage annoncé'),
-      }), 'alerte « Batterie faible »'),
+        kind: opt(oneOf('battery', 'net'), 'battery (absent) : « Batterie faible » ; net : « Aucun réseau » (maquette 44b)'),
+        level: opt(int(1, 100), 'pourcentage annoncé (batterie faible seulement, obligatoire)'),
+      }), 'alerte « Batterie faible » ou « Aucun réseau »'),
       power: opt(oneOf('on', 'off'), 'off : téléphone éteint (absent : allumé)'),
     },
     refine: m => {
@@ -3892,6 +3907,9 @@ const SPECS = {
       if (m.chime && !m.notifs.some((/** @type {any} */ n) => n.id === m.chime.id)) return 'phone:state : son d’une notification absente';
       if (m.sleep && m.mode !== 'locked' && m.mode !== 'code') return 'phone:state : veille hors écran verrouillé';
       if (m.power === 'off' && (m.chime || m.watch)) return 'phone:state : téléphone éteint, ni son ni geste attendu';
+      if (m.alert && (m.alert.kind === 'net') === (m.alert.level !== undefined)) return 'phone:state : niveau pour « Batterie faible » seulement';
+      if (m.notifs.some((/** @type {any} */ n) => n.who !== undefined && n.kind !== 'missed')) return 'phone:state : appelant hors appel manqué';
+      if (m.notifs.some((/** @type {any} */ n) => n.img !== undefined && n.kind === 'sms')) return 'phone:state : image sur un SMS';
       return null;
     },
   },
@@ -8312,6 +8330,9 @@ function _validPhoneState(m) {
     out.push({
       id: n.id, kind: n.kind, app: _P.text(n.app, PROTO.APP_MAX), name: _P.text(n.name, PROTO.NAME_MAX), msg: _P.text(n.msg, PROTO.MSG_MAX),
       color: _P.hex(n.color) ? n.color : null, ago: _P.int(n.ago, 0, PROTO.PHONE_AGO_MAX) ?? 0,
+      // Maquette 44 : appelant d'un appel manqué (initiales), icône / photo préparée (__ph_…)
+      who: n.kind === 'missed' ? _P.text(n.who, PROTO.NAME_MAX) : '',
+      img: n.kind !== 'sms' && typeof n.img === 'string' && SRP.CALL_PHOTO_ID_RE.test(n.img) ? n.img : null,
     });
   }
   m.notifs = out;
@@ -8329,7 +8350,10 @@ function _validPhoneState(m) {
   m.sleep = _P.isObj(sl) && (m.mode === 'locked' || m.mode === 'code')
     ? { notif: _P.bool(sl.notif), touch: _P.bool(sl.touch), after: _P.int(sl.after, 1, PROTO.PHONE_SLEEP_MAX) ?? 8 } : null;
   const al = m.alert;
-  m.alert = _P.isObj(al) && _phoneId(al.id) && _P.int(al.level, 1, 100) !== null ? { id: al.id, level: al.level } : null;
+  // « Batterie faible » (niveau) ou « Aucun réseau » (kind net, maquette 44b)
+  m.alert = !_P.isObj(al) || !_phoneId(al.id) ? null
+    : al.kind === 'net' ? { id: al.id, kind: 'net' }
+    : _P.int(al.level, 1, 100) !== null ? { id: al.id, kind: 'battery', level: al.level } : null;
   m.power = m.power === 'off' ? 'off' : 'on';
   if (m.power === 'off') { m.chime = null; m.watch = []; }
   return true;
@@ -8616,7 +8640,10 @@ function clampOutgoing(m) {
         const line = (v, max) => _P.text(v, max).replace(/[\u0000-\u001F\u007F]/g, ' ');
         m.notifs = m.notifs.slice(0, PROTO.PHONE_NOTIFS_MAX).map((n) => Object.assign({ id: n.id, kind: n.kind, app: line(n.app, PROTO.APP_MAX), name: line(n.name, PROTO.NAME_MAX),
           ago: Math.round(_P.num(n.ago, 0, PROTO.PHONE_AGO_MAX) ?? 0) },
-        n.msg ? { msg: _P.text(n.msg, PROTO.MSG_MAX).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '') } : {}, _P.hex(n.color) ? { color: n.color } : {}));
+        n.msg ? { msg: _P.text(n.msg, PROTO.MSG_MAX).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '') } : {}, _P.hex(n.color) ? { color: n.color } : {},
+        // Maquette 44 : appelant d'un appel manqué, icône / photo préparée (jamais sur un SMS)
+        n.kind === 'missed' && n.who ? { who: line(n.who, PROTO.NAME_MAX) } : {},
+        n.kind !== 'sms' && typeof n.img === 'string' && SRP.CALL_PHOTO_ID_RE.test(n.img) ? { img: n.img } : {}));
       }
       break;
     case 'chat:msg': m.text =_P.text(m.text, PROTO.CHAT_TEXT_MAX).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ''); break;
@@ -14164,6 +14191,7 @@ function mediaImgChunk(msg) {
     if (isRing) screenRingWarm(b.mediaId);
     if (b.mediaId === '__seqhome') screenPhoneOnHomeCached(); // image d'accueil d'une Séquence (94-sequence-phone.js)
     if (b.mediaId === '__seqwall') screenPhoneOnWallCached(); // fond d'écran d'une Séquence (maquette 42)
+    if (SRP.CALL_PHOTO_ID_RE.test(b.mediaId)) screenPhoneOnImgCached(b.mediaId); // icône / photo d'une notification de Séquence (maquette 44)
   }
   if (b.show && !isAudio) {
     const im = document.getElementById('screen-media-img');
@@ -20219,6 +20247,14 @@ async function installPWA() {
 // reste « Non distribué » (notification « Message non envoyé ») jusqu'au
 // retour du réseau, qui le distribue. Téléphone éteint : il ne reçoit plus
 // d'appel ni de son ; une étape « Veille » plus loin (ou ↶) le rallume.
+// Réseau perdu (maquette 44b) : alerte « Aucun réseau » une fois par perte
+// (pas en mode avion : choisi au départ, il n'est pas une perte), fermée par
+// « OK », retirée au retour du réseau.
+// Écran verrouillé (maquette 44) : une notification garde l'icône importée de
+// son entrée, un appel manqué la photo de son appel (préparées __ph_…,
+// envoyées à chaque écran qui ne les a pas, renvoyées à la resynchronisation) ;
+// un SMS prend la couleur de son app, un appel manqué les initiales de
+// l'appelant.
 // Chaque étape RÉFÉRENCE l'élément enregistré (son id), jamais une copie :
 // modifié dans son onglet, il est joué tel quel ; supprimé, l'étape affiche
 // « élément introuvable » et elle est sautée avec un avertissement.
@@ -20364,7 +20400,7 @@ const _SEQ_TXT = {
   offNote: 'Rallumer : une étape « Veille » plus loin (logo, puis écran verrouillé endormi) ou ↶.',
   labelNet: 'Réseau', netLost: 'Perdu', netBack: 'Rétabli',
   labelBars: 'Barres', labelNetType: 'Réseau mobile', labelWifi: 'Wi-Fi', yes: 'Oui', no: 'Non',
-  netLostNote: '« Pas de service » dans la barre d\'état : un appel devient « Appel impossible », un message du comédien reste « Non distribué ».',
+  netLostNote: '« Pas de service » dans la barre d\'état et alerte « Aucun réseau » (une fois, pas en mode avion) : un appel devient « Appel impossible », un message du comédien reste « Non distribué ».',
   netBackNote: 'Les messages restés « Non distribué » partent.',
   // Lecture de l'étape Discussion (maquette 41)
   labelPlay: 'Lecture', playManual: 'Manuelle', playActor: '▶ Auto · le comédien tape', playFull: '▶ Auto · tout automatique',
@@ -20668,7 +20704,7 @@ function remoteOnPhoneGesture(m) {
       p.sleep = null; // déverrouillé : réveillé pour de bon (maquette 29b)
     }
   }
-  // Alerte « Batterie faible » fermée sur l'écran : elle ne revient pas
+  // Alerte « Batterie faible » ou « Aucun réseau » fermée sur l'écran : elle ne revient pas
   if (m.g === 'dismiss') {
     const p = sid && _seqPhones.get(sid);
     if (p) p.alert = null;
@@ -20805,10 +20841,11 @@ async function _seqExec(s, it, ids) {
         if (!on(id)) silent.push(id); // éteint : gardée pour le rallumage, sans son
         else if (mode === 'locked' || mode === 'code' || (mode === 'off' && lockEntry)) stack.push(id); else banner.push(id);
       }
-      const card = {
+      // Maquette 44 : SMS sur la couleur de son app (pastille de l'onglet Tel), notification avec son icône importée
+      const card = Object.assign({
         kind: s.kind, app: _seqLine(it.appName, 24) || (s.kind === 'sms' ? _SEQ_TXT.smsApp : ''), name: _seqLine(it.name, 40), msg: String(it.msg || '').slice(0, 200),
-        color: null, style: it.style,
-      };
+        color: s.kind === 'sms' ? safeHexColor(it.appColor, SEQ_SMS_COLOR) : null, style: it.style,
+      }, s.kind === 'notif' ? await _seqEntryImg(it) : null);
       if (silent.length) _seqStack(silent, card, null);
       if (stack.length) {
         const f = ringMsgFields(it.ringId || it.ring, it.ringVolume);
@@ -20826,7 +20863,9 @@ async function _seqExec(s, it, ids) {
       // Appel encore en cours sur ces écrans (étape « Appel » restée sans réponse) : il cesse de sonner
       const live = ids.filter((id) => scrState(id).call);
       if (live.length) sendMsg({ type: 'call:end', target: _seqTarget(live) });
-      const card = { kind: 'missed', app: _SEQ_TXT.missedApp, name: _SEQ_TXT.missedTitle, msg: _seqLine(it.name || 'Inconnu', 40), color: null, style: it.style };
+      // Maquette 44 : avatar aux initiales de l'appelant, ou la photo de l'appel
+      const who = _seqLine(it.name || 'Inconnu', 40);
+      const card = Object.assign({ kind: 'missed', app: _SEQ_TXT.missedApp, name: _SEQ_TXT.missedTitle, msg: who, who, color: null, style: it.style }, await _seqEntryImg(it));
       const off = ids.filter((id) => !on(id));
       if (off.length) _seqStack(off, card, null);
       const lit = ids.filter(on);
@@ -20868,7 +20907,7 @@ async function _seqExec(s, it, ids) {
         p.bar.bat.level = it.level; p.bar.bat.charging = false; p.bar.bat.low = true;
         if (!on(id)) continue;
         if (p.mode === 'off') p.mode = 'locked';
-        p.alert = { id: 'a' + Date.now().toString(36).slice(-5) + (++_seqNotifN).toString(36), level: it.level };
+        p.alert = { id: _seqAlertId(), level: it.level };
       }
       break;
     case 'off': {
@@ -20879,10 +20918,17 @@ async function _seqExec(s, it, ids) {
       break;
     }
     case 'net':
-      // Réseau (maquette 34) : perdu (« Pas de service », ni Wi-Fi) ou rétabli
+      // Réseau (maquette 34) : perdu (« Pas de service », ni Wi-Fi) ou rétabli.
+      // Perdu alors qu'il y en avait (maquette 44b) : alerte « Aucun réseau », une
+      // fois ; en mode avion (choisi au départ), pas d'alerte. Rétabli : retirée.
       for (const id of ids) {
-        const n = _seqPhones.get(id).bar.net;
+        const p = _seqPhones.get(id), n = p.bar.net;
+        const had = !phoneBarNoNetwork(p.bar);
         if (it.lost) { n.bars = 0; n.wifi = false; } else { n.bars = it.bars; n.type = it.type; n.wifi = it.wifi; n.plane = false; }
+        if (it.lost && had && !n.plane && on(id)) {
+          if (p.mode === 'off') p.mode = 'locked';
+          p.alert = { id: _seqAlertId(), kind: 'net' };
+        } else if (!it.lost && p.alert && p.alert.kind === 'net') p.alert = null;
       }
       break;
   }
@@ -20898,6 +20944,34 @@ function _seqPhone(id, style) {
   return p;
 }
 let _seqNotifN = 0;
+const _seqAlertId = () => 'a' + Date.now().toString(36).slice(-5) + (++_seqNotifN).toString(36);
+// Couleur des SMS sans pastille réglée (comme l'onglet Tel, 80-call-simulator.js)
+const SEQ_SMS_COLOR = '#2f8cf0';
+// Icône importée d'une notification / photo d'un appel enregistré : id préparé
+// (__ph_…, dérivé du contenu, 82-call-list.js) et clé IndexedDB ; {} sans image
+async function _seqEntryImg(e) {
+  if (!e || !e.hasPhoto || !e.id) return {};
+  try {
+    const a = await callEntryAssets(e);
+    if (!a.photo) return {};
+    const ids = await callEntryPrepIds(e, a);
+    return ids.photo ? { img: ids.photo, imgKey: e.id + ':photo' } : {};
+  } catch (_) { return {}; }
+}
+// Images des notifications empilées vers cet écran s'il ne les a pas (chacune à
+// sa place en cache) ; rend celles qu'il a ou vient de recevoir
+async function _seqEnsureNotifImgs(sid, p) {
+  const ok = new Set();
+  for (const n of p.notifs.slice(-PROTO.PHONE_NOTIFS_MAX)) {
+    if (!n.img || ok.has(n.img)) continue;
+    if (scrState(sid).cached.has(n.img)) { ok.add(n.img); continue; } // contenu identique à l'id près
+    const data = safeImageData(await callAssetGet(n.imgKey));
+    if (!data) continue; // entrée supprimée depuis : la lettre / les initiales
+    await ensureSlotImage(n.img, data, [sid]);
+    ok.add(n.img);
+  }
+  return ok;
+}
 // Notification empilée sur l'écran verrouillé de ces écrans (la plus récente en haut)
 function _seqStack(ids, n, chime) {
   const id = 'n' + Date.now().toString(36).slice(-5) + (++_seqNotifN).toString(36);
@@ -20905,7 +20979,8 @@ function _seqStack(ids, n, chime) {
     const p = _seqPhone(sid, n.style);
     if (!p.notifs.length && p.mode === 'off') p.style = _CALL_STYLE_HINTS[n.style] ? n.style : 'glass'; // style du premier écran verrouillé
     if (p.mode === 'off') p.mode = 'locked'; // déjà déverrouillé : rangée dans la pile, visible au reverrouillage
-    p.notifs.push(Object.assign({ id, kind: n.kind, app: n.app, name: n.name, msg: n.msg, color: n.color, at: Date.now() }, n.unsent ? { unsent: n.unsent } : {}));
+    p.notifs.push(Object.assign({ id, kind: n.kind, app: n.app, name: n.name, msg: n.msg, color: n.color, at: Date.now() }, n.unsent ? { unsent: n.unsent } : {},
+      n.who ? { who: n.who } : {}, n.img ? { img: n.img, imgKey: n.imgKey } : {}));
     if (p.notifs.length > PROTO.PHONE_NOTIFS_MAX) p.notifs.shift();
     if (chime) p.chime = Object.assign({ id }, chime); else delete p.chime;
   }
@@ -21000,7 +21075,7 @@ async function _seqEnsureWall(sid, sig) {
   if (data) await ensureSlotImage('__seqwall', data, [sid]);
   return !!data;
 }
-function _seqPhoneMsg(sid, homeOk, wallOk) {
+function _seqPhoneMsg(sid, homeOk, wallOk, imgOk) {
   const p = _seqPhones.get(sid) || { mode: 'off', style: 'glass', notifs: [] };
   const u = _seqUnlockFor(sid);
   const now = Date.now();
@@ -21008,7 +21083,7 @@ function _seqPhoneMsg(sid, homeOk, wallOk) {
     type: 'phone:state', target: { screens: [sid] },
     mode: p.mode === 'code' && !(u && u.code) ? 'locked' : p.mode, style: p.style,
     notifs: p.notifs.slice(-PROTO.PHONE_NOTIFS_MAX).map((n) => Object.assign({ id: n.id, kind: n.kind, app: n.app, name: n.name, ago: Math.max(0, Math.min(PROTO.PHONE_AGO_MAX, Math.round((now - n.at) / 1000))) },
-      n.msg ? { msg: n.msg } : {}, n.color ? { color: n.color } : {})),
+      n.msg ? { msg: n.msg } : {}, n.color ? { color: n.color } : {}, n.who ? { who: n.who } : {}, n.img && imgOk && imgOk.has(n.img) ? { img: n.img } : {})),
   };
   if (u) m.unlock = { code: u.code, then: u.then };
   if (homeOk) m.home = true;
@@ -21039,11 +21114,12 @@ async function _seqPushPhones(only, force) {
     const homeOk = homeSig ? await _seqEnsureHome(sid, homeSig) : false;
     const wallSig = p && _seq.wall ? _seq.wall.img : null;
     const wallOk = wallSig ? await _seqEnsureWall(sid, wallSig) : false;
-    const m = _seqPhoneMsg(sid, homeOk, wallOk);
+    const imgOk = p ? await _seqEnsureNotifImgs(sid, p) : null;
+    const m = _seqPhoneMsg(sid, homeOk, wallOk, imgOk);
     const chime = p && p.chime && m.notifs.some((n) => n.id === p.chime.id) ? p.chime : null;
     if (p) delete p.chime;
     const b = m.bar;
-    const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id), m.unlock, m.home, m.wall, m.watch,
+    const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id + (n.img ? '/' + n.img : '')), m.unlock, m.home, m.wall, m.watch,
       b ? [b.clock.mode, b.clock.date, b.clock.time, b.net, b.bat] : null, m.sleep, m.alert, m.power]);
     if (!force && !chime && _seqPhoneSent.get(sid) === sig) continue;
     if (!p && !m.watch && !_seqPhoneSent.has(sid)) continue; // rien à dire à cet écran
@@ -22009,6 +22085,15 @@ async function prepSendVideo(it, sid) {
 //   • Fond d'écran de la séquence (maquette 42, wall) : image préchargée sous
 //     __seqwall, couvrante sous un voile, sur l'écran verrouillé et le pavé du
 //     code ; absente ou pas encore arrivée : le dégradé sombre.
+//   • Icônes des notifications (maquette 44) : notification d'application,
+//     son icône importée (img, préparée __ph_…, carré arrondi), sinon la
+//     première lettre de l'app ; SMS : la bulle sur la couleur de son app ;
+//     appel manqué : avatar rond gris aux initiales de l'appelant (who) ou sa
+//     photo (img), petite pastille rouge au combiné en bas à droite. Image
+//     arrivée après l'état : posée sans redessiner l'écran.
+//   • Aucun réseau (maquette 44b) : même alerte que « Batterie faible »,
+//     « OK » la ferme (geste dismiss) ; la télécommande ne l'envoie qu'une fois
+//     par perte du réseau.
 // Textes affichés regroupés pour la traduction ; contenus reçus en textContent.
 const _SP_TXT = {
   unlockHint: 'Touchez pour déverrouiller',
@@ -22020,10 +22105,15 @@ const _SP_TXT = {
   batteryTitle: 'Batterie faible',
   batteryMsg: 'Il reste {n} % de batterie.',
   batteryClose: 'Fermer',
+  netTitle: 'Aucun réseau',
+  netMsg: 'Le réseau mobile n\'est plus disponible. Les appels et les SMS ne fonctionneront pas.',
+  netClose: 'OK',
 };
 const SP_POWER_FADE_MS = 600, SP_LOGO_MS = 1500, SP_BOOT_MS = 1200;
 // Logo neutre (aucune marque) : cercle et trait d'alimentation
 const _SP_LOGO = '<svg class="pp-logo" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" aria-hidden="true"><path d="M20.5 17.5a19 19 0 1 0 23 0"/><path d="M32 9v22"/></svg>';
+// Appelant sans lettre (numéro seul) : silhouette neutre
+const _SP_PERSON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5v.5H4z"/></svg>';
 const SP_GESTURE_GAP_MS = 400, SP_GESTURE_BURST = 5, SP_RELOCK_GUARD_MS = 1500, SP_REFRESH_MS = 15000;
 
 let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, wall, watch: Set, sleep, alert, power }
@@ -22168,13 +22258,51 @@ function _spWhen(at) {
   if (s < 3600) return _spTpl(_SP_TXT.agoMin, { n: Math.floor(s / 60) });
   return _spTpl(_SP_TXT.agoH, { n: Math.floor(s / 3600) });
 }
+// Initiales d'un appelant (« Maman » → M, « Paul Martin » → PM) ; '' sans lettre (numéro seul)
+function _spInitials(name) {
+  const w = String(name || '').trim().split(/\s+/).filter((x) => /^\p{L}/u.test(x));
+  if (!w.length) return '';
+  const first = (x) => Array.from(x)[0].toUpperCase();
+  return w.length > 1 ? first(w[0]) + first(w[w.length - 1]) : first(w[0]);
+}
+// Image préparée (icône, photo de l'appelant) déjà en cache, sinon null
+function _spImg(id) {
+  const c = id ? _mediaCache.get(id) : null;
+  return c && c.kind === 'img' ? safeImageData(c.data) : null;
+}
 function _spIcon(n) {
   const i = _spEl('div', 'sp-icon');
+  const img = n.kind === 'sms' ? null : _spImg(n.img);
+  if (n.kind === 'missed' && n.who) {
+    // Appel manqué (maquette 44) : avatar rond, initiales ou photo, pastille rouge au combiné
+    i.classList.add('sp-avatar');
+    if (img) { i.classList.add('has-img'); i.style.backgroundImage = 'url(' + img + ')'; }
+    else {
+      const t = _spInitials(n.who);
+      if (t) i.appendChild(_spEl('span', 'sp-initials', t)); else i.innerHTML = _SP_PERSON;
+    }
+    const b = _spEl('span', 'sp-badge');
+    b.innerHTML = _SCI.handset;
+    i.appendChild(b);
+    return i;
+  }
   if (n.kind === 'missed') { i.classList.add('sp-missed'); i.innerHTML = _SCI.handset; }
   else if (n.kind === 'sms') { i.classList.add('sp-sms'); i.innerHTML = _SCI.bubble; }
-  else i.textContent = (n.app || '?').trim().charAt(0).toUpperCase() || '?';
+  else if (img) { i.classList.add('has-img'); i.style.backgroundImage = 'url(' + img + ')'; return i; } // icône importée
+  else i.textContent = Array.from((n.app || '?').trim())[0]?.toUpperCase() || '?';
   if (n.color) i.style.background = n.color;
   return i;
+}
+// Icône ou photo arrivée en cache après l'état (75-media-screen.js) : posée sans redessiner l'écran
+function screenPhoneOnImgCached(id) {
+  const p = _scPhone;
+  if (!p || p.mode !== 'locked') return;
+  for (const n of p.notifs) {
+    if (n.img !== id) continue;
+    const c = document.querySelector('#screen-phone .sp-card[data-n="' + n.id + '"]'); // id : [A-Za-z0-9_-] (validé)
+    const old = c && c.querySelector('.sp-icon');
+    if (old) old.replaceWith(_spIcon(n));
+  }
 }
 function _spCard(n) {
   const c = _spEl('div', 'sp-card');
@@ -22394,21 +22522,24 @@ function _spPaint() {
   });
 })();
 
-// ── Batterie faible (maquette 33) ──
+// ── Batterie faible (maquette 33), aucun réseau (maquette 44b) ──
 function _spRenderAlert() {
   const el = document.getElementById('screen-palert');
   if (!el) return;
   const p = _scPhone, a = p && p.alert;
   if (!a || p.power === 'off' || _spAlertClosed === a.id) { el.style.display = 'none'; el.textContent = ''; delete el.dataset.id; return; }
-  if (el.dataset.id === a.id && el.style.display === 'flex' && el.dataset.level === String(a.level)) return;
+  const net = a.kind === 'net'; // « Aucun réseau » (maquette 44b)
+  const lv = net ? 'net' : String(a.level);
+  if (el.dataset.id === a.id && el.style.display === 'flex' && el.dataset.level === lv) return;
   el.textContent = '';
   el.className = p.style;
-  el.dataset.id = a.id; el.dataset.level = String(a.level);
-  const card = _spEl('div', 'pa-card');
-  const close = _spEl('button', 'pa-close', _SP_TXT.batteryClose);
+  el.dataset.id = a.id; el.dataset.level = lv;
+  const card = _spEl('div', 'pa-card' + (net ? ' pa-net' : ''));
+  const close = _spEl('button', 'pa-close', net ? _SP_TXT.netClose : _SP_TXT.batteryClose);
   close.type = 'button';
   close.addEventListener('click', (e) => { e.stopPropagation(); _spAlertClose(); });
-  card.append(_spEl('div', 'pa-title', _SP_TXT.batteryTitle), _spEl('div', 'pa-msg', _spTpl(_SP_TXT.batteryMsg, { n: a.level })), close);
+  card.append(_spEl('div', 'pa-title', net ? _SP_TXT.netTitle : _SP_TXT.batteryTitle),
+    _spEl('div', 'pa-msg', net ? _SP_TXT.netMsg : _spTpl(_SP_TXT.batteryMsg, { n: a.level })), close);
   el.onclick = (e) => e.stopPropagation();
   el.appendChild(card);
   el.style.display = 'flex';

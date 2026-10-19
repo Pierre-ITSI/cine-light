@@ -209,7 +209,10 @@ COMPLET du téléphone visé, renvoyé à chaque changement et à la
 resynchronisation : `mode` (`off`, `locked`, `code`, `unlocked`, `home`),
 `style` (Verre / Tonal / Épuré), `notifs` (≤ 8, ids `PHONE_NOTIF_ID_RE` sans
 doublon, `kind` sms / notif / missed, textes bornés, `ago` en secondes ≤ 7 jours :
-l'écran calcule l'heure relative avec sa propre horloge), `unlock { code: 0 | 4
+l'écran calcule l'heure relative avec sa propre horloge ; maquette 44 : `color`
+= pastille de l'app d'un SMS, `who` = appelant d'un appel manqué — avatar rond
+à ses initiales —, `img` = icône importée d'une notification ou photo de
+l'appelant, préparée `__ph_…` et préchargée en fragments), `unlock { code: 0 | 4
 | 6, then: app | home }` (aucun code ne voyage : chaque touche remplit le point
 suivant ; `mode: 'code'` exige un code attendu), `home` (image d'accueil
 préchargée en fragments sous `__seqhome`), `wall` (fond d'écran de la
@@ -230,8 +233,9 @@ réception ; `frozen` : figée ; `real` : heure de l'écran, sans date ni heure 
 `net { bars 0..4 (0 = « Pas de service »), type 3G / 4G / 5G, plane, wifi }`,
 `bat { level 1..100, charging, pct, low? }`) affichée partout sur l'écran visé
 et prioritaire ; `sleep { notif, touch, after 1..120 }` (écran verrouillé
-seulement), `alert { id, level }` (« Batterie faible », fermée par le geste
-`dismiss`, toujours rapporté comme `unlock`), `power: 'off'` (ni `chime` ni
+seulement), `alert { id, kind?, level? }` (« Batterie faible » avec `level` ;
+`kind: 'net'` : « Aucun réseau », maquette 44b, sans `level`, une fois par perte
+du réseau ; fermée par le geste `dismiss`, toujours rapporté comme `unlock`), `power: 'off'` (ni `chime` ni
 `watch` alors). `media:bar { bar | null }` (télécommande → écran) : même barre,
 réglée dans l'onglet Média, en bandeau au-dessus d'un média affiché seul ;
 celle de la séquence prime. Discussion : `chat:post.dur` (durée de « … écrit »,

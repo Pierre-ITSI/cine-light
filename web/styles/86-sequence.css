@@ -118,6 +118,15 @@
 /* SMS : bulle sur fond vert ; appel manqué : combiné sur fond rouge (maquette 30) */
 .sp-icon.sp-sms{background:#3a8f5c}
 .sp-icon.sp-missed{background:#c0453a}
+/* Maquette 44 : icône importée (carré arrondi) ; appel manqué en avatar rond gris
+   aux initiales (ou photo), pastille rouge au combiné bordée de la couleur de la carte */
+.sp-icon.has-img{background:#000 center/cover no-repeat}
+.sp-icon.sp-avatar{position:relative;border-radius:50%;background:#6e7480;font-size:15px;font-weight:600;--sp-ring:#2b3446}
+.sp-icon.sp-avatar.has-img{background:#6e7480 center/cover no-repeat}
+.sp-badge{position:absolute;right:-3px;bottom:-3px;width:15px;height:15px;box-sizing:border-box;border-radius:50%;background:#e5483d;border:1.5px solid var(--sp-ring);display:flex;align-items:center;justify-content:center}
+.sp-card .sp-badge svg{width:8px;height:8px}
+#screen-phone.tonal .sp-icon.sp-avatar{--sp-ring:#2b2e34}
+#screen-phone.minimal .sp-icon.sp-avatar{--sp-ring:#16191f}
 /* Verre : translucide et flouté */
 #screen-phone.glass .sp-card{backdrop-filter:blur(24px) saturate(1.4)}
 /* Tonal : surfaces tonales, heure fine en deux lignes */

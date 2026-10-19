@@ -8,6 +8,10 @@
 // extinction → ↶, appel impossible et message non distribué puis distribué
 // au retour du réseau, la resynchronisation d'un écran rechargé en pleine
 // séquence et les séquences enregistrées qui gardent leurs réglages.
+// Maquette 44 : icônes de l'écran verrouillé (icône importée d'une
+// notification, SMS à la couleur de son app, appel manqué aux initiales ou à
+// la photo, renvoyées à l'écran rechargé) et alerte « Aucun réseau » (une
+// fois par perte, pas en mode avion).
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { launchBrowser, openPage, waitFor, sleep, FakeBroker, pairingHash } from './helpers/harness.mjs';
@@ -263,6 +267,13 @@ describe('pas de réseau (34) et resynchronisation en pleine séquence', () => {
     await go(rp);
     await waitFor(sp, () => !!document.querySelector('#screen-sbar .pb-nosvc'));
     assert.equal((await bar(sp)).nosvc, 'Pas de service');
+    // Alerte « Aucun réseau » (maquette 44b) : « OK » la ferme, la télécommande l'apprend
+    await waitFor(sp, () => document.getElementById('screen-palert').style.display === 'flex');
+    assert.deepEqual(await sp.evaluate(() => [...document.querySelectorAll('#screen-palert .pa-title, #screen-palert .pa-msg, #screen-palert .pa-close')].map((e) => e.textContent)),
+      ['Aucun réseau', 'Le réseau mobile n\'est plus disponible. Les appels et les SMS ne fonctionneront pas.', 'OK']);
+    await sp.locator('#screen-palert .pa-close').click();
+    await waitFor(rp, () => !_seqPhones.values().next().value.alert);
+    assert.equal(await sp.evaluate(() => document.getElementById('screen-palert').style.display), 'none');
     await go(rp); // appel : impossible
     await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 2);
     assert.equal(await sp.evaluate(() => _callState), 'idle', 'ne sonne pas');
@@ -282,6 +293,7 @@ describe('pas de réseau (34) et resynchronisation en pleine séquence', () => {
     await sp.evaluate(() => { if (mode !== 'screen') startMode('screen'); });
     await connected(sp);
     await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-und') && !!document.querySelector('#screen-sbar .pb-nosvc'), null, { timeout: 8000 });
+    assert.equal(await sp.evaluate(() => [!!_scPhone.alert, document.getElementById('screen-palert').style.display].join()), 'false,none', 'alerte fermée : ne revient pas');
     // Réseau rétabli : distribué, notification retirée
     await go(rp);
     await waitFor(sp, () => !document.querySelector('#screen-chat .scc-und'));
@@ -311,6 +323,129 @@ describe('pas de réseau (34) et resynchronisation en pleine séquence', () => {
     await waitFor(sp, () => !!_scPhone && _scPhone.power === 'off', null, { timeout: 8000 });
     assert.equal(await sp.evaluate(() => document.getElementById('screen-ppower').className), 'on instant', 'déjà éteint : sans animation');
     await rp.evaluate(async () => { seqRestart(); await _seqChain; });
+  });
+});
+
+describe('aucun réseau (44b) : une fois par perte, retirée au retour, jamais en mode avion', () => {
+  let r, rp, sp, T;
+  before(async () => {
+    r = await rig(1, 79);
+    rp = r.rp; sp = r.screens[0].page; T = { k: 'screen', id: r.screens[0].id };
+    await fixtures(rp);
+  });
+  after(async () => { noErrors(r); await r?.close(); });
+  const shown = () => sp.evaluate(() => (document.getElementById('screen-palert').style.display === 'flex' ? document.querySelector('#screen-palert .pa-title').textContent : null));
+  const lost = (id) => st(id, 'net', null, T, { lost: true });
+  const back4 = (id) => st(id, 'net', null, T, { lost: false, bars: 4, type: '4G', wifi: false });
+
+  test('perdu deux fois de suite : une seule alerte ; rétabli : retirée ; reperdu : de nouveau ; ↶ : défaite', async () => {
+    await setSeq(rp, [lost('a1'), lost('a2'), back4('a3'), lost('a4')]);
+    await go(rp);
+    await waitFor(sp, () => document.getElementById('screen-palert').style.display === 'flex');
+    assert.equal(await shown(), 'Aucun réseau');
+    assert.equal(await sp.evaluate(() => _scPhone.mode), 'locked', 'sur l\'écran verrouillé');
+    const id1 = await sp.evaluate(() => _scPhone.alert.id);
+    await go(rp); // déjà sans réseau : la même alerte, rien de nouveau
+    await sleep(300);
+    assert.equal(await sp.evaluate(() => _scPhone.alert.id), id1);
+    await go(rp); // rétabli : l'alerte encore ouverte disparaît
+    await waitFor(sp, () => !_scPhone.alert && document.getElementById('screen-palert').style.display === 'none');
+    await go(rp); // reperdu : nouvelle alerte
+    await waitFor(sp, () => !!_scPhone.alert && _scPhone.alert.kind === 'net');
+    assert.notEqual(await sp.evaluate(() => _scPhone.alert.id), id1);
+    await back(rp);
+    await waitFor(sp, () => !_scPhone.alert);
+    await rp.evaluate(async () => { seqRestart(); await _seqChain; });
+  });
+
+  test('mode avion choisi au départ : pas d\'alerte ; téléphone éteint : pas d\'alerte', async () => {
+    await setSeq(rp, [lost('b1'), st('b2', 'off', null, T), back4('b3'), lost('b4')], Object.assign({}, PHONE, { net: { bars: 0, type: '4G', plane: true, wifi: true } }));
+    await go(rp);
+    await waitFor(sp, () => !!_sb.seq && _sb.seq.net.plane && _sb.seq.net.bars === 0 && !_sb.seq.net.wifi);
+    await sleep(300);
+    assert.equal(await shown(), null, 'mode avion');
+    await go(rp); await go(rp); await go(rp); // éteint : rétabli puis perdu sans alerte
+    await waitFor(rp, () => _seqRun.curId === 'b4');
+    await sleep(300);
+    assert.equal(await rp.evaluate(() => _seqPhones.values().next().value.alert), null);
+    await rp.evaluate(async () => { seqRestart(); await _seqChain; });
+  });
+});
+
+describe('écran verrouillé (44) : icône importée, couleur du SMS, appel manqué aux initiales ou à la photo', () => {
+  let r, rp, sp, T;
+  before(async () => {
+    r = await rig(1, 83);
+    rp = r.rp; sp = r.screens[0].page; T = { k: 'screen', id: r.screens[0].id };
+    await fixtures(rp);
+    await rp.evaluate(async () => {
+      const img = (color) => { const c = document.createElement('canvas'); c.width = 40; c.height = 40; const g = c.getContext('2d'); g.fillStyle = color; g.fillRect(0, 0, 40, 40); return c.toDataURL('image/png'); };
+      callList.notif = [{ id: 'b1', kind: 'notif', style: 'glass', name: 'Virement reçu', label: '', msg: 'Vous avez reçu 2 400,00 €.', appName: 'Banque Atlas', ring: 'silent', ringVolume: 1, present: 'lock', phone: {}, received: { mode: 'now' }, hasPhoto: true, hasAudio: false }];
+      callList.sms[0].appColor = '#2d8cff';
+      callList.call.push({ id: 'c2', kind: 'call', style: 'glass', name: 'Paul Martin', label: 'mobile', ring: 'silent', ringVolume: 1, present: 'full', photoMode: 'avatar', autoAnswer: 0, hasPhoto: true, hasAudio: false });
+      persistCallList();
+      await callAssetPut('b1:photo', img('#1e6fd9'));
+      await callAssetPut('c2:photo', img('#c08040'));
+    });
+  });
+  after(async () => { noErrors(r); await r?.close(); });
+  // Icônes affichées, de la plus récente à la plus ancienne
+  const icons = () => sp.evaluate(() => [...document.querySelectorAll('#screen-phone .sp-card .sp-icon')].map((i) => ({
+    cls: [...i.classList].filter((c) => c !== 'sp-icon').sort().join(' '), text: (i.querySelector('.sp-initials') || i).textContent,
+    img: /url\("?data:image/.test(i.style.backgroundImage), bg: getComputedStyle(i).backgroundColor, bgImg: getComputedStyle(i).backgroundImage, radius: getComputedStyle(i).borderRadius, badge: !!i.querySelector('.sp-badge svg'),
+  })));
+
+  test('notification, SMS, appels manqués ; écran rechargé : images renvoyées', async () => {
+    await setSeq(rp, [st('i1', 'notif', 'b1', T), st('i2', 'sms', 's1', T), st('i3', 'missed', 'c1', T), st('i4', 'missed', 'c2', T)]);
+    for (let i = 0; i < 4; i++) await go(rp);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 4);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-icon.has-img').length === 2, null, { timeout: 8000 });
+    const want = [
+      { cls: 'has-img sp-avatar', text: '', img: true, radius: '50%', badge: true },
+      { cls: 'sp-avatar', text: 'M', img: false, bg: 'rgb(110, 116, 128)', bgImg: 'none', radius: '50%', badge: true },
+      { cls: 'sp-sms', img: false, bg: 'rgb(45, 140, 255)', radius: '9px', badge: false },
+      { cls: 'has-img', text: '', img: true, radius: '9px', badge: false },
+    ];
+    const check = (got) => got.forEach((g, i) => { for (const k of Object.keys(want[i])) assert.equal(g[k], want[i][k], i + ' ' + k); });
+    check(await icons());
+    // Une image par entrée, chacune à sa place en cache (préparée __ph_…)
+    const ids = await sp.evaluate(() => _scPhone.notifs.map((n) => n.img || null));
+    assert.equal(ids.filter(Boolean).length, 2);
+    assert.notEqual(ids[0], ids[3]);
+    for (const id of ids.filter(Boolean)) assert.match(id, /^__ph_[0-9a-f]{40}$/);
+    assert.equal(await sp.evaluate((l) => l.filter(Boolean).every((id) => _mediaCache.has(id)), ids), true);
+    // Écran rechargé : images perdues, renvoyées avec l'état
+    await sp.reload();
+    await sp.evaluate(() => { if (mode !== 'screen') startMode('screen'); });
+    await connected(sp);
+    await waitFor(sp, () => !!_scPhone && document.querySelectorAll('#screen-phone .sp-icon.has-img').length === 2, null, { timeout: 8000 });
+    check(await icons());
+    await rp.evaluate(async () => { seqRestart(); await _seqChain; });
+  });
+
+  test('écran : initiales (1 ou 2 lettres), image arrivée après l\'état, « Appel impossible » inchangé', async () => {
+    assert.deepEqual(await sp.evaluate(() => ['Maman', 'Paul Martin', 'jean-paul de la tour', '  élise ', '+33 6 12', ''].map(_spInitials)), ['M', 'PM', 'JT', 'É', '', '']);
+    const id = '__ph_' + 'e'.repeat(40);
+    await sp.evaluate((id) => {
+      _mediaCache.delete(id);
+      screenPhoneState({ mode: 'locked', style: 'tonal', notifs: [
+        { id: 'x1', kind: 'missed', app: 'Téléphone', name: 'Appel impossible', msg: 'Aucun réseau disponible.', color: null, who: '', img: null, ago: 0 },
+        { id: 'x2', kind: 'notif', app: 'Banque', name: 'A', msg: '', color: null, who: '', img: id, ago: 0 },
+        { id: 'x3', kind: 'missed', app: 'Téléphone', name: 'Appel manqué', msg: '0612', color: null, who: '0612', img: null, ago: 0 },
+      ], unlock: null, home: false, watch: [], chime: null, bar: null, sleep: null, alert: null, power: 'on' });
+    }, id);
+    const got = await icons();
+    assert.deepEqual(got.map((g) => g.cls), ['sp-avatar', '', 'sp-missed']);
+    assert.equal(got[1].text, 'B', 'icône pas encore arrivée : la lettre');
+    assert.equal(await sp.evaluate(() => !!document.querySelector('#screen-phone .sp-avatar > svg')), true, 'numéro seul : silhouette');
+    // L'icône arrive : posée sans redessiner l'écran
+    await sp.evaluate((id) => {
+      window.__c = document.querySelector('#screen-phone .sp-card[data-n="x2"]');
+      const c = document.createElement('canvas'); c.width = 8; c.height = 8;
+      _mediaCache.set(id, { kind: 'img', data: c.toDataURL('image/png') });
+      screenPhoneOnImgCached(id);
+    }, id);
+    assert.equal(await sp.evaluate(() => window.__c.isConnected && window.__c.querySelector('.sp-icon').classList.contains('has-img')), true);
   });
 });
 

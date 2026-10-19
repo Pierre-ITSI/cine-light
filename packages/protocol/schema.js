@@ -790,7 +790,9 @@ const SPECS = {
       + 'verrouillé, déverrouillé, appels, bandeaux, discussion, bandeau haut au-dessus des médias) ; elle prime sur media:bar ; '
       + 'absente : plus de barre de la séquence. sleep : étape « Veille » (maquette 29b), écran noir verrouillé qui se rallume aux '
       + 'notifications / appels et/ou au toucher et se rendort après `after` s ; le déverrouillage le réveille pour de bon. alert : '
-      + '« Batterie faible » (maquette 33) à fermer (geste dismiss). power off : « Extinction » (fondu, logo neutre, écran noir ; '
+      + '« Batterie faible » (maquette 33) ou « Aucun réseau » (kind net, maquette 44b : une fois par perte du réseau, '
+      + 'jamais en mode avion choisi) à fermer (geste dismiss). Notifications (maquette 44) : icône importée d’une notification, '
+      + 'SMS sur la couleur de son app, appel manqué en avatar rond aux initiales de l’appelant (who) ou à sa photo (img). power off : « Extinction » (fondu, logo neutre, écran noir ; '
       + 'le téléphone ne répond plus) jusqu’au rallumage (étape « Veille » ou ↶).',
     fields: {
       mode: req(oneOf('off', 'locked', 'code', 'unlocked', 'home'), 'état du faux téléphone'),
@@ -801,7 +803,10 @@ const SPECS = {
         app: req(line(24), 'application affichée en tête (« SMS », « Téléphone », nom fictif)'),
         name: req(line(40), 'expéditeur, titre, « Appel manqué »'),
         msg: opt(text(200), 'texte, contenu, nom de l’appelant'),
-        color: opt(HEX, 'couleur de l’icône'),
+        color: opt(HEX, 'couleur de l’icône (SMS : pastille de l’app réglée)'),
+        who: opt(line(40), 'appel manqué : appelant (avatar rond à ses initiales ; absent : combiné, « Appel impossible »)'),
+        img: opt(str(45, CALL_PHOTO_ID_RE), 'notification : icône importée ; appel manqué : photo de l’appelant (__ph_…, '
+          + 'préchargée en fragments media-img-* ; pas encore arrivée : la lettre / les initiales)'),
         ago: req(int(0, LIMITS.phoneAgoSeconds), 'secondes écoulées depuis l’arrivée, au moment de l’envoi'),
       }), LIMITS.phoneNotifs), 'notifications empilées, dans l’ordre d’arrivée'),
       unlock: opt(object({
@@ -826,8 +831,9 @@ const SPECS = {
       }), 'étape « Veille » : écran noir verrouillé'),
       alert: opt(object({
         id: req(PHONE_ID, 'identifiant de l’alerte (fermée : geste dismiss)'),
-        level: req(int(1, 100), 'pourcentage annoncé'),
-      }), 'alerte « Batterie faible »'),
+        kind: opt(oneOf('battery', 'net'), 'battery (absent) : « Batterie faible » ; net : « Aucun réseau » (maquette 44b)'),
+        level: opt(int(1, 100), 'pourcentage annoncé (batterie faible seulement, obligatoire)'),
+      }), 'alerte « Batterie faible » ou « Aucun réseau »'),
       power: opt(oneOf('on', 'off'), 'off : téléphone éteint (absent : allumé)'),
     },
     refine: m => {
@@ -837,6 +843,9 @@ const SPECS = {
       if (m.chime && !m.notifs.some((/** @type {any} */ n) => n.id === m.chime.id)) return 'phone:state : son d’une notification absente';
       if (m.sleep && m.mode !== 'locked' && m.mode !== 'code') return 'phone:state : veille hors écran verrouillé';
       if (m.power === 'off' && (m.chime || m.watch)) return 'phone:state : téléphone éteint, ni son ni geste attendu';
+      if (m.alert && (m.alert.kind === 'net') === (m.alert.level !== undefined)) return 'phone:state : niveau pour « Batterie faible » seulement';
+      if (m.notifs.some((/** @type {any} */ n) => n.who !== undefined && n.kind !== 'missed')) return 'phone:state : appelant hors appel manqué';
+      if (m.notifs.some((/** @type {any} */ n) => n.img !== undefined && n.kind === 'sms')) return 'phone:state : image sur un SMS';
       return null;
     },
   },

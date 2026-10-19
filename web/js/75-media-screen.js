@@ -118,6 +118,7 @@ function mediaImgChunk(msg) {
     if (isRing) screenRingWarm(b.mediaId);
     if (b.mediaId === '__seqhome') screenPhoneOnHomeCached(); // image d'accueil d'une Séquence (94-sequence-phone.js)
     if (b.mediaId === '__seqwall') screenPhoneOnWallCached(); // fond d'écran d'une Séquence (maquette 42)
+    if (SRP.CALL_PHOTO_ID_RE.test(b.mediaId)) screenPhoneOnImgCached(b.mediaId); // icône / photo d'une notification de Séquence (maquette 44)
   }
   if (b.show && !isAudio) {
     const im = document.getElementById('screen-media-img');

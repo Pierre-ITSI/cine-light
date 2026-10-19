@@ -217,6 +217,26 @@ export const REAL_MESSAGES = [
     },
   },
   {
+    direction: 'r2s', where: '_seqPushPhones (maquette 44 : icône importée, SMS à sa couleur, appel manqué aux initiales / à la photo)',
+    msg: {
+      type: 'phone:state', mode: 'locked', style: 'glass',
+      notifs: [
+        { id: 'nk3x1', kind: 'sms', app: 'SMS', name: 'Maman', msg: 'Tu es où ?', color: '#2d8cff', ago: 120 },
+        { id: 'nk3x2', kind: 'missed', app: 'Téléphone', name: 'Appel manqué', msg: 'Maman', who: 'Maman', ago: 60 },
+        { id: 'nk3x3', kind: 'missed', app: 'Téléphone', name: 'Appel manqué', msg: 'Paul Martin', who: 'Paul Martin', img: '__ph_' + 'c'.repeat(40), ago: 30 },
+        { id: 'nk3x4', kind: 'notif', app: 'Banque Atlas', name: 'Virement reçu', msg: 'Vous avez reçu 2 400,00 €.', img: '__ph_' + 'a'.repeat(40), ago: 0 },
+      ],
+    },
+  },
+  {
+    direction: 'r2s', where: '_seqPushPhones (réseau perdu : « Aucun réseau », maquette 44b)',
+    msg: {
+      type: 'phone:state', mode: 'locked', style: 'glass', notifs: [],
+      bar: { clock: { mode: 'frozen', date: '2026-10-17', time: '23:47' }, net: { bars: 0, type: '4G', plane: false, wifi: false }, bat: { level: 52, charging: false, pct: false } },
+      alert: { id: 'ak3x1', kind: 'net' },
+    },
+  },
+  {
     direction: 'r2s', where: '_seqPushPhones (extinction, pas de service, heure réelle)',
     msg: {
       type: 'phone:state', mode: 'off', style: 'minimal', notifs: [], power: 'off',
@@ -373,6 +393,13 @@ export const ATTACKS = [
   { why: 'veille : délai hors bornes', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [], sleep: { notif: true, touch: true, after: 0 } } },
   { why: 'veille incomplète', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [], sleep: { notif: true, after: 8 } } },
   { why: 'alerte batterie 0 %', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [], alert: { id: 'a1', level: 0 } } },
+  { why: 'alerte batterie sans niveau', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [], alert: { id: 'a1', kind: 'battery' } } },
+  { why: 'alerte réseau avec un niveau', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [], alert: { id: 'a1', kind: 'net', level: 5 } } },
+  { why: 'alerte : type inconnu', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [], alert: { id: 'a1', kind: 'wifi' } } },
+  { why: 'téléphone : image hors format préparé', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [{ id: 'n', kind: 'notif', app: 'X', name: 'A', ago: 0, img: '__notificon' }] } },
+  { why: 'téléphone : image sur un SMS', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [{ id: 'n', kind: 'sms', app: 'SMS', name: 'A', ago: 0, img: '__ph_' + 'a'.repeat(40) }] } },
+  { why: 'téléphone : appelant hors appel manqué', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [{ id: 'n', kind: 'sms', app: 'SMS', name: 'A', ago: 0, who: 'Maman' }] } },
+  { why: 'téléphone : appelant sur deux lignes', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [{ id: 'n', kind: 'missed', app: 'Téléphone', name: 'A', ago: 0, who: 'A\nB' }] } },
   { why: 'alerte : texte libre', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [], alert: { id: 'a1', level: 5, text: 'x' } } },
   { why: 'téléphone éteint qui sonne', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [{ id: 'n1', kind: 'sms', app: 'SMS', name: 'A', ago: 0 }], power: 'off', chime: { id: 'n1', ring: 'classic' } } },
   { why: 'téléphone éteint qui attend un geste', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [], power: 'off', watch: ['touch'] } },

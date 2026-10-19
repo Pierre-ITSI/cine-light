@@ -324,6 +324,25 @@ const SEQ_NOTIFS = [
   { id: 'n2', kind: 'missed', app: 'Téléphone', name: 'Appel manqué', msg: 'Maman', ago: 65 },
   { id: 'n3', kind: 'sms', app: 'SMS', name: 'Maman', msg: 'Rappelle-moi stp', ago: 0 },
 ];
+// Maquette 44 : notification avec son icône importée (préparée __ph_…), SMS à la
+// couleur de leur app, appel manqué aux initiales de l'appelant
+const SEQ_ICON_ID = '__ph_' + '4'.repeat(40);
+const SEQ_NOTIFS_44 = [
+  { id: 'n1', kind: 'sms', app: 'SMS', name: 'Maman', msg: 'Tu es où ?', color: '#2d8cff', ago: 125 },
+  { id: 'n2', kind: 'missed', app: 'Téléphone', name: 'Appel manqué', msg: 'Maman', who: 'Maman', ago: 65 },
+  { id: 'n3', kind: 'sms', app: 'SMS', name: 'Maman', msg: 'Rappelle-moi stp', color: '#2d8cff', ago: 0 },
+  { id: 'n4', kind: 'notif', app: 'Banque Atlas', name: 'Virement reçu', msg: 'Vous avez reçu 2 400,00 €.', img: SEQ_ICON_ID, ago: 0 },
+];
+// Icône d'application de test : carré dégradé bleu, « B » blanc
+const seqAppIcon = (n) => {
+  const c = document.createElement('canvas'); c.width = n; c.height = n;
+  const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, n, n);
+  gr.addColorStop(0, '#1e6fd9'); gr.addColorStop(1, '#12b5e8');
+  g.fillStyle = gr; g.fillRect(0, 0, n, n);
+  g.fillStyle = '#fff'; g.font = '700 ' + Math.round(n * 0.46) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('B', n / 2, n * 0.54);
+  return c.toDataURL('image/png');
+};
 const screenPhone = (m, after) => async (page) => {
   await joinScreen(page);
   await page.evaluate((m) => screenPhoneState(Object.assign({ unlock: null, home: false, watch: [], chime: null }, m)), m);
@@ -590,7 +609,15 @@ export const SCENES = {
   // 29 · Éditer l'étape 6 : code 4 chiffres, puis écran d'accueil (image), au toucher de l'écran, téléphone de Julie
   'remote-seq-step': seqScene((page) => page.evaluate(async () => { openSeqStep('a6'); await _seqPaintHomeThumb(_seqEdit.step.opt.img); })),
   // 30 · Écran verrouillé : trois notifications empilées, la plus récente en haut
-  'screen-seq-lock': screenPhone({ mode: 'locked', style: 'glass', notifs: SEQ_NOTIFS, unlock: { code: 4, then: 'home' } }),
+  // 44 · Icône importée de la notification, SMS à la couleur de leur app, appel manqué aux initiales
+  'screen-seq-lock': async (page) => {
+    await joinScreen(page);
+    await page.evaluate(([imgFn, id, notifs]) => {
+      _mediaCache.set(id, { kind: 'img', data: (0, eval)('(' + imgFn + ')')(80) });
+      screenPhoneState({ mode: 'locked', style: 'glass', notifs, unlock: { code: 4, then: 'home' }, home: false, watch: [], chime: null });
+    }, [seqAppIcon.toString(), SEQ_ICON_ID, SEQ_NOTIFS_44]);
+    await page.clock.runFor(600);
+  },
   // 31 · Pavé du code : deux touches, deux points remplis
   'screen-seq-code': screenPhone({ mode: 'code', style: 'glass', notifs: SEQ_NOTIFS, unlock: { code: 4, then: 'home' } }, (page) => page.evaluate(() => { _spKey(); _spKey(); })),
   // 42 · Écran verrouillé sur le fond d'écran de la séquence (__seqwall), sous le voile
@@ -673,6 +700,11 @@ export const SCENES = {
       { id: 'n1', kind: 'sms', app: 'SMS', name: 'Message non envoyé', msg: '« j\'arrive » — Toucher pour réessayer', ago: 40 },
       { id: 'n2', kind: 'missed', app: 'Téléphone', name: 'Appel impossible', msg: 'Aucun réseau disponible.', ago: 0 },
     ],
+    bar: { clock: { mode: 'frozen', date: '2026-10-17', time: '23:47' }, net: { bars: 0, type: '4G', plane: false, wifi: false }, bat: { level: 52, charging: false, pct: false } },
+  }),
+  // 44b · Réseau perdu : alerte « Aucun réseau » (même allure que « Batterie faible »)
+  'screen-seq-nonetwork-popup': screenPhone({
+    mode: 'locked', style: 'glass', notifs: [], alert: { id: 'r1', kind: 'net' },
     bar: { clock: { mode: 'frozen', date: '2026-10-17', time: '23:47' }, net: { bars: 0, type: '4G', plane: false, wifi: false }, bat: { level: 52, charging: false, pct: false } },
   }),
   // Barre d'état en bandeau au-dessus d'un média du pool (photo), réglée dans l'onglet Média

@@ -37,6 +37,15 @@
 //   • Fond d'écran de la séquence (maquette 42, wall) : image préchargée sous
 //     __seqwall, couvrante sous un voile, sur l'écran verrouillé et le pavé du
 //     code ; absente ou pas encore arrivée : le dégradé sombre.
+//   • Icônes des notifications (maquette 44) : notification d'application,
+//     son icône importée (img, préparée __ph_…, carré arrondi), sinon la
+//     première lettre de l'app ; SMS : la bulle sur la couleur de son app ;
+//     appel manqué : avatar rond gris aux initiales de l'appelant (who) ou sa
+//     photo (img), petite pastille rouge au combiné en bas à droite. Image
+//     arrivée après l'état : posée sans redessiner l'écran.
+//   • Aucun réseau (maquette 44b) : même alerte que « Batterie faible »,
+//     « OK » la ferme (geste dismiss) ; la télécommande ne l'envoie qu'une fois
+//     par perte du réseau.
 // Textes affichés regroupés pour la traduction ; contenus reçus en textContent.
 const _SP_TXT = {
   unlockHint: 'Touchez pour déverrouiller',
@@ -48,10 +57,15 @@ const _SP_TXT = {
   batteryTitle: 'Batterie faible',
   batteryMsg: 'Il reste {n} % de batterie.',
   batteryClose: 'Fermer',
+  netTitle: 'Aucun réseau',
+  netMsg: 'Le réseau mobile n\'est plus disponible. Les appels et les SMS ne fonctionneront pas.',
+  netClose: 'OK',
 };
 const SP_POWER_FADE_MS = 600, SP_LOGO_MS = 1500, SP_BOOT_MS = 1200;
 // Logo neutre (aucune marque) : cercle et trait d'alimentation
 const _SP_LOGO = '<svg class="pp-logo" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" aria-hidden="true"><path d="M20.5 17.5a19 19 0 1 0 23 0"/><path d="M32 9v22"/></svg>';
+// Appelant sans lettre (numéro seul) : silhouette neutre
+const _SP_PERSON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5v.5H4z"/></svg>';
 const SP_GESTURE_GAP_MS = 400, SP_GESTURE_BURST = 5, SP_RELOCK_GUARD_MS = 1500, SP_REFRESH_MS = 15000;
 
 let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, wall, watch: Set, sleep, alert, power }
@@ -196,13 +210,51 @@ function _spWhen(at) {
   if (s < 3600) return _spTpl(_SP_TXT.agoMin, { n: Math.floor(s / 60) });
   return _spTpl(_SP_TXT.agoH, { n: Math.floor(s / 3600) });
 }
+// Initiales d'un appelant (« Maman » → M, « Paul Martin » → PM) ; '' sans lettre (numéro seul)
+function _spInitials(name) {
+  const w = String(name || '').trim().split(/\s+/).filter((x) => /^\p{L}/u.test(x));
+  if (!w.length) return '';
+  const first = (x) => Array.from(x)[0].toUpperCase();
+  return w.length > 1 ? first(w[0]) + first(w[w.length - 1]) : first(w[0]);
+}
+// Image préparée (icône, photo de l'appelant) déjà en cache, sinon null
+function _spImg(id) {
+  const c = id ? _mediaCache.get(id) : null;
+  return c && c.kind === 'img' ? safeImageData(c.data) : null;
+}
 function _spIcon(n) {
   const i = _spEl('div', 'sp-icon');
+  const img = n.kind === 'sms' ? null : _spImg(n.img);
+  if (n.kind === 'missed' && n.who) {
+    // Appel manqué (maquette 44) : avatar rond, initiales ou photo, pastille rouge au combiné
+    i.classList.add('sp-avatar');
+    if (img) { i.classList.add('has-img'); i.style.backgroundImage = 'url(' + img + ')'; }
+    else {
+      const t = _spInitials(n.who);
+      if (t) i.appendChild(_spEl('span', 'sp-initials', t)); else i.innerHTML = _SP_PERSON;
+    }
+    const b = _spEl('span', 'sp-badge');
+    b.innerHTML = _SCI.handset;
+    i.appendChild(b);
+    return i;
+  }
   if (n.kind === 'missed') { i.classList.add('sp-missed'); i.innerHTML = _SCI.handset; }
   else if (n.kind === 'sms') { i.classList.add('sp-sms'); i.innerHTML = _SCI.bubble; }
-  else i.textContent = (n.app || '?').trim().charAt(0).toUpperCase() || '?';
+  else if (img) { i.classList.add('has-img'); i.style.backgroundImage = 'url(' + img + ')'; return i; } // icône importée
+  else i.textContent = Array.from((n.app || '?').trim())[0]?.toUpperCase() || '?';
   if (n.color) i.style.background = n.color;
   return i;
+}
+// Icône ou photo arrivée en cache après l'état (75-media-screen.js) : posée sans redessiner l'écran
+function screenPhoneOnImgCached(id) {
+  const p = _scPhone;
+  if (!p || p.mode !== 'locked') return;
+  for (const n of p.notifs) {
+    if (n.img !== id) continue;
+    const c = document.querySelector('#screen-phone .sp-card[data-n="' + n.id + '"]'); // id : [A-Za-z0-9_-] (validé)
+    const old = c && c.querySelector('.sp-icon');
+    if (old) old.replaceWith(_spIcon(n));
+  }
 }
 function _spCard(n) {
   const c = _spEl('div', 'sp-card');
@@ -422,21 +474,24 @@ function _spPaint() {
   });
 })();
 
-// ── Batterie faible (maquette 33) ──
+// ── Batterie faible (maquette 33), aucun réseau (maquette 44b) ──
 function _spRenderAlert() {
   const el = document.getElementById('screen-palert');
   if (!el) return;
   const p = _scPhone, a = p && p.alert;
   if (!a || p.power === 'off' || _spAlertClosed === a.id) { el.style.display = 'none'; el.textContent = ''; delete el.dataset.id; return; }
-  if (el.dataset.id === a.id && el.style.display === 'flex' && el.dataset.level === String(a.level)) return;
+  const net = a.kind === 'net'; // « Aucun réseau » (maquette 44b)
+  const lv = net ? 'net' : String(a.level);
+  if (el.dataset.id === a.id && el.style.display === 'flex' && el.dataset.level === lv) return;
   el.textContent = '';
   el.className = p.style;
-  el.dataset.id = a.id; el.dataset.level = String(a.level);
-  const card = _spEl('div', 'pa-card');
-  const close = _spEl('button', 'pa-close', _SP_TXT.batteryClose);
+  el.dataset.id = a.id; el.dataset.level = lv;
+  const card = _spEl('div', 'pa-card' + (net ? ' pa-net' : ''));
+  const close = _spEl('button', 'pa-close', net ? _SP_TXT.netClose : _SP_TXT.batteryClose);
   close.type = 'button';
   close.addEventListener('click', (e) => { e.stopPropagation(); _spAlertClose(); });
-  card.append(_spEl('div', 'pa-title', _SP_TXT.batteryTitle), _spEl('div', 'pa-msg', _spTpl(_SP_TXT.batteryMsg, { n: a.level })), close);
+  card.append(_spEl('div', 'pa-title', net ? _SP_TXT.netTitle : _SP_TXT.batteryTitle),
+    _spEl('div', 'pa-msg', net ? _SP_TXT.netMsg : _spTpl(_SP_TXT.batteryMsg, { n: a.level })), close);
   el.onclick = (e) => e.stopPropagation();
   el.appendChild(card);
   el.style.display = 'flex';
