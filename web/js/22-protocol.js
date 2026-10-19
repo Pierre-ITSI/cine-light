@@ -200,6 +200,7 @@ function _validPhoneState(m) {
   m.unlock = _P.isObj(u) && [0, 4, 6].includes(u.code) ? { code: u.code, then: u.then === 'home' ? 'home' : 'app' } : null;
   if (m.mode === 'code' && !(m.unlock && m.unlock.code)) return false;
   m.home = _P.bool(m.home);
+  m.wall = _P.bool(m.wall);
   m.watch = Array.isArray(m.watch) ? m.watch.filter((g, i, a) => _P.oneOf(g, PROTO.PHONE_GESTURES) && !PROTO.PHONE_GESTURES_ALWAYS.includes(g) && a.indexOf(g) === i) : [];
   const c = m.chime;
   m.chime = _P.isObj(c) && seen.has(c.id) ? { id: c.id, ring: _P.oneOf(c.ring, PROTO.CALL_RINGS) ? c.ring : 'classic', ringId: _P.ringId(c.ringId) ? c.ringId : null, vol: _P.num(c.vol, 0, 1) ?? 1, vib: c.vib === true } : null;

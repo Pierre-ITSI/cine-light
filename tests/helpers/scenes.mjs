@@ -250,6 +250,15 @@ const seqHomeImage = (w, h) => {
   for (let i = 0; i < 16; i++) g.fillRect(w * (0.1 + (i % 4) * 0.22), h * (0.12 + Math.floor(i / 4) * 0.12), w * 0.14, w * 0.14);
   return c.toDataURL('image/jpeg', 0.85);
 };
+// Fond d'écran de test (maquette 42) : dégradé chaud de plage, horizon clair
+const seqWallImage = (w, h) => {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, w * 0.4, h);
+  gr.addColorStop(0, '#e8c9a0'); gr.addColorStop(0.45, '#c9a27a'); gr.addColorStop(1, '#5a3d2b');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(0, h * 0.42, w, h * 0.02);
+  return c.toDataURL('image/jpeg', 0.85);
+};
 const seqScene = (extra) => multiScreen(async (page) => {
   await page.evaluate(async ([julie, tv, imgFn]) => {
     const T = { k: 'screen', id: julie };
@@ -276,6 +285,37 @@ const seqScene = (extra) => multiScreen(async (page) => {
     ]) };
     switchTab('seq');
   }, [SCR_IDS[0], SCR_IDS[1], seqHomeImage.toString()]);
+  if (extra) await extra(page);
+});
+// Onglet Tel, liste enregistrée (maquettes 18, 43) : cinq appels, trois SMS, enregistrés
+// par le chemin de l'app ; titles : noms des appels (maquette 43), sinon nom par défaut
+const CALL_TITLES = ['Maman — scène 12', 'Agence — appel du matin', 'Inconnu — nuit', 'Hôpital — annonce', 'Julien — rappel'];
+const callListScene = (titles, extra) => remote('call', async (page) => {
+  await page.evaluate(async (titles) => {
+    const photo = (c) => { const k = document.createElement('canvas'); k.width = k.height = 8; const g = k.getContext('2d'); g.fillStyle = c; g.fillRect(0, 0, 8, 8); return k.toDataURL('image/jpeg', 0.7); };
+    let i = 0;
+    const add = async (f) => {
+      setCallKind(f.kind || 'call'); setCallStyle(f.style); setCallPresent(f.present || 'full');
+      document.getElementById('callName').value = f.name;
+      document.getElementById('callAutoSlider').value = String(f.auto || 0); onCallAutoChange();
+      document.getElementById('lockToggle').checked = !!f.lock;
+      _callPhoto = f.photo ? photo(f.photo) : null;
+      _callAudioData = f.audio ? 'data:audio/mpeg;base64,AAAA' : null;
+      await saveCurrentCall(titles && !f.kind ? titles[i++] : '');
+    };
+    await add({ name: 'Maman', style: 'glass', photo: '#c08060', audio: true });
+    await add({ name: 'Agence immobilière', style: 'tonal', auto: 8 });
+    await add({ name: 'Numéro masqué', style: 'minimal' });
+    await add({ name: 'Hôpital Saint-Louis', style: 'glass', present: 'banner' });
+    await add({ name: 'Julien', style: 'tonal', photo: '#406080' });
+    await add({ kind: 'sms', name: 'Léa', style: 'glass', lock: true });
+    await add({ kind: 'sms', name: 'Régie', style: 'tonal' });
+    await add({ kind: 'sms', name: 'Tom', style: 'minimal' });
+    setCallKind('call');
+    _callListSel.call = callList.call[0].id;
+    setCallListKind('call');
+  }, titles || null);
+  await scrollTo('callListPanel')(page);
   if (extra) await extra(page);
 });
 // Faux téléphone sur l'écran de jeu (maquettes 30 à 32) : état tel que l'envoie la télécommande
@@ -459,32 +499,22 @@ export const SCENES = {
     await page.evaluate(() => gwOpenChannels('extended16'));
   }),
   // 18 · Onglet Appel : appels et SMS numérotés (plages DMX)
-  'remote-call-list': remote('call', async (page) => {
-    await page.evaluate(async () => {
-      const photo = (c) => { const k = document.createElement('canvas'); k.width = k.height = 8; const g = k.getContext('2d'); g.fillStyle = c; g.fillRect(0, 0, 8, 8); return k.toDataURL('image/jpeg', 0.7); };
-      const add = async (f) => {
-        setCallKind(f.kind || 'call'); setCallStyle(f.style); setCallPresent(f.present || 'full');
-        document.getElementById('callName').value = f.name;
-        document.getElementById('callAutoSlider').value = String(f.auto || 0); onCallAutoChange();
-        document.getElementById('lockToggle').checked = !!f.lock;
-        _callPhoto = f.photo ? photo(f.photo) : null;
-        _callAudioData = f.audio ? 'data:audio/mpeg;base64,AAAA' : null;
-        await saveCurrentCall();
-      };
-      await add({ name: 'Maman', style: 'glass', photo: '#c08060', audio: true });
-      await add({ name: 'Agence immobilière', style: 'tonal', auto: 8 });
-      await add({ name: 'Numéro masqué', style: 'minimal' });
-      await add({ name: 'Hôpital Saint-Louis', style: 'glass', present: 'banner' });
-      await add({ name: 'Julien', style: 'tonal', photo: '#406080' });
-      await add({ kind: 'sms', name: 'Léa', style: 'glass', lock: true });
-      await add({ kind: 'sms', name: 'Régie', style: 'tonal' });
-      await add({ kind: 'sms', name: 'Tom', style: 'minimal' });
-      setCallKind('call');
-      _callListSel.call = callList.call[0].id;
-      setCallListKind('call');
-    });
-    await scrollTo('callListPanel')(page);
+  'remote-call-list': callListScene(),
+  // 43 · Entrées nommées ; la n° 1, chargée : « Mettre à jour » / « Enregistrer comme nouveau »
+  'remote-call-list-loaded': callListScene(CALL_TITLES, async (page) => {
+    await page.evaluate(() => selectCallEntry(callList.call[0].id));
+    await scrollTo('callListRows', 60)(page);
   }),
+  // 43b · Nommer l'enregistrement (sixième appel : n° 6, DMX 60–69)
+  'remote-call-list-name': callListScene(null, async (page) => {
+    await page.evaluate(() => {
+      document.getElementById('callName').value = 'Maman';
+      openSaveCallSheet();
+      document.getElementById('srName').value = 'Maman — scène 12';
+    });
+  }),
+  // 43c · Menu « ⋯ » d'une entrée nommée
+  'remote-call-list-menu': callListScene(CALL_TITLES, (page) => page.evaluate(() => openCallEntryMenu(callList.call[0].id))),
   // 11 · Avertissement stroboscope : interrupteur ouvert derrière la boîte
   'remote-strobe-warning': remote(null, async (page) => {
     await scrollTo('strobeToggle', 96)(page);
@@ -563,6 +593,15 @@ export const SCENES = {
   'screen-seq-lock': screenPhone({ mode: 'locked', style: 'glass', notifs: SEQ_NOTIFS, unlock: { code: 4, then: 'home' } }),
   // 31 · Pavé du code : deux touches, deux points remplis
   'screen-seq-code': screenPhone({ mode: 'code', style: 'glass', notifs: SEQ_NOTIFS, unlock: { code: 4, then: 'home' } }, (page) => page.evaluate(() => { _spKey(); _spKey(); })),
+  // 42 · Écran verrouillé sur le fond d'écran de la séquence (__seqwall), sous le voile
+  'screen-seq-lock-wall': async (page) => {
+    await joinScreen(page);
+    await page.evaluate(([imgFn, notifs]) => {
+      _mediaCache.set('__seqwall', { kind: 'img', data: (0, eval)('(' + imgFn + ')')(390, 844) });
+      screenPhoneState({ mode: 'locked', style: 'glass', notifs, unlock: { code: 4, then: 'home' }, home: false, wall: true, watch: [], chime: null });
+    }, [seqWallImage.toString(), SEQ_NOTIFS]);
+    await page.clock.runFor(600);
+  },
   // 32 · Écran d'accueil : image importée, plein écran
   'screen-seq-home': async (page) => {
     await joinScreen(page);
@@ -577,6 +616,29 @@ export const SCENES = {
     _seq.phone = { clock: { mode: 'run', date: '2026-10-17', time: '23:47' }, net: { bars: 2, type: '4G', plane: false, wifi: true }, bat: { level: 18, charging: false, pct: true } };
     openPhoneParams('seq');
   })),
+  // 42 · Téléphone au départ : fond d'écran choisi (vignette, nom, CHANGER… / RETIRER)
+  'remote-seq-phone-wall': seqScene(async (page) => {
+    await page.evaluate(async (imgFn) => {
+      const img = (0, eval)('(' + imgFn + ')')(180, 320);
+      const sig = seqImageSig(img);
+      await callAssetPut(seqHomeKey(sig), img);
+      _seq.wall = { img: sig, name: 'plage-julie.jpg' };
+      _seq.phone = { clock: { mode: 'frozen', date: '2026-07-17', time: '14:32' }, net: { bars: 4, type: '4G', plane: false, wifi: true }, bat: { level: 80, charging: false, pct: true } };
+      openPhoneParams('seq');
+      await _seqHomeData(sig);
+    }, seqWallImage.toString());
+    await page.clock.runFor(100);
+    await page.evaluate(() => { const v = document.getElementById('phone-params-view'); v.scrollTop = v.scrollHeight; });
+  }),
+  // 41 · Étape Discussion : lecture « tout automatique » (trois choix, note avec le comédien)
+  'remote-seq-step-chat': seqScene(async (page) => {
+    await page.evaluate(() => {
+      _seq.steps.find((s) => s.id === 'a7').opt = { auto: true, full: true };
+      openSeqStep('a7');
+      const v = document.getElementById('seq-step-view');
+      v.scrollTop += document.getElementById('ssRefCard').getBoundingClientRect().top - 360;
+    });
+  }),
   // 29b · Étape « Veille » en tête de séquence : se rallume aux notifications et au toucher, se rendort après 8 s
   'remote-seq-step-sleep': seqScene((page) => page.evaluate(() => {
     _seq.steps.unshift(seqSanitizeStep({ id: 'a0', kind: 'sleep', target: _seq.steps[0].target, trig: { k: 'go' }, opt: { notif: true, touch: true, after: 8 } }));

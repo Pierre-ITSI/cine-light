@@ -100,7 +100,8 @@ jour** qu'elles montraient :
     d'une application fictive, une discussion avec Maman ;
   - Séquence « Démo — « Batterie à plat » » : SMS de Maman au GO →
     déverrouillage quand le comédien touche l'écran → discussion avec Maman
-    (lecture auto) une fois déverrouillé → batterie faible après 25 s →
+    (lecture tout automatique : elle se joue sans personne) une fois
+    déverrouillé → batterie faible après 25 s →
     extinction 8 s plus tard ;
 - **verrouillé** : style et sonnerie (« Régler › » visible, non modifiable),
   champs, photos, sons, appelants enregistrés, enregistrer / supprimer /

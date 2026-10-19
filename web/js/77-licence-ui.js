@@ -63,7 +63,7 @@ const _LIC_LOCKS = {
   tel: {
     dim: ['telStyleBtn', 'ntStyleBtn', 'callWhoSaved', 'callName', 'callLabel', 'callPhotoBtn', 'callerSaveBtn',
       'callMsgText', 'callAppName', 'callAppColor', 'callLockPanel', 'ntAppPanel', 'ntShowPanel', 'callAnswerBlock',
-      'callListSave', 'callListDel', 'dcTab-saved', 'dcContactPanel', 'dcAdd', 'dcWriteBtn'],
+      'callListSave', 'callListUpd', 'callListDel', 'dcTab-saved', 'dcContactPanel', 'dcAdd', 'dcWriteBtn'],
     ro: ['dcRows', 'dcTimingPanel'],
     ex: ['callWhoLabel'],
     banner: 'licPvTel',
@@ -118,6 +118,7 @@ function _licReloadTel() {
   renderRingPanel();
   loadCallList();
   for (const k of CALL_LISTS) _callListSel[k] = null;
+  _clLoadedId = null; // plus d'entrée chargée (82-call-list.js)
   chatLoad();
   loadSavedChats();
   callersInit();

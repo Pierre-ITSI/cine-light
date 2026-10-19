@@ -168,12 +168,25 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
   const played = await p.page.evaluate(async () => {
     for (let i = 0; i < 8; i++) await triggerCall();
     await triggerSelectedCallEntry();
-    openTelStyle(); openCallersSheet(); addChatMessage(); await saveCurrentCall();
-    return { starts: __sent.filter((m) => m.type === 'call:start').map((m) => m.name), style: telStyleIsOpen(), sheet: !!_sheet, msgs: _chat.msgs.length, calls: callList.call.length };
+    openTelStyle(); openCallersSheet(); addChatMessage(); await saveCurrentCall(); openSaveCallSheet();
+    // Liste (maquettes 43, 43c) : entrée chargée (boutons verrouillés), menu « ⋯ » réduit à « Charger » ;
+    // mettre à jour, renommer, dupliquer, supprimer : sans effet
+    const id = callList.call[0].id;
+    await selectCallEntry(id);
+    const upd = [getComputedStyle(document.getElementById('callListUpd')).display !== 'none', document.getElementById('callListUpd').inert];
+    openCallEntryMenu(id);
+    const menu = [...document.querySelectorAll('#srSheetBody button')].map((b) => b.textContent);
+    closeSheet();
+    const r = [await updateCallEntry(id), renameCallEntry(id, 'X'), await duplicateCallEntry(id), deleteCallEntry(id)];
+    return { starts: __sent.filter((m) => m.type === 'call:start').map((m) => m.name), style: telStyleIsOpen(), sheet: !!_sheet, msgs: _chat.msgs.length, calls: callList.call.length,
+      upd, menu, r, title: callList.call[0].title };
   });
   assert.equal(played.starts.length, 9);
   assert.ok(played.starts.every((n) => n === 'Maman'));
   assert.deepEqual([played.style, played.sheet, played.msgs, played.calls], [false, false, 5, 1]);
+  assert.deepEqual(played.upd, [true, true], '« Mettre à jour » affiché mais verrouillé');
+  assert.deepEqual(played.menu, ['Charger dans l\'onglet', 'Fermer']);
+  assert.deepEqual([...played.r, played.title], [false, undefined, null, false, undefined]);
   // Séquence : démo « Batterie à plat », GO joue le SMS de Maman
   await p.page.evaluate(() => switchTab('seq'));
   const seq = await p.page.evaluate(async () => {
@@ -181,13 +194,13 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
     remoteNoteScreen('s0SCRAAAAA', { type: 'caps', screenId: 'JulieScreen00001' });
     seqGo();
     await _seqChain;
-    openSeqStep(_seq.steps[0].id); openPhoneParams('seq'); openSaveSeqSheet();
+    openSeqStep(_seq.steps[0].id); openPhoneParams('seq'); openSaveSeqSheet(); ppRemoveWall(); ppPickWall();
     return {
       name: _seq.name, kinds: _seq.steps.map((s) => s.kind), trig: _seq.steps.map((s) => s.trig.k + (s.trig.g ? ':' + s.trig.g : '')),
       missing: _seq.steps.filter((s) => !seqRefItem(s)).length, banner: document.getElementById('licPvSeq').style.display,
       text: document.querySelector('#licPvSeq p').textContent,
       sms: __sent.filter((m) => m.type === 'call:start' && m.kind === 'sms').map((m) => m.msg),
-      editor: !!_seqEdit, pp: !!_pp, sheet: !!_sheet, saved: seqSaved.length,
+      editor: !!_seqEdit, pp: !!_pp, sheet: !!_sheet, saved: seqSaved.length, chatOpt: _seq.steps[2].opt, label: seqStepLabel(_seq.steps[2]),
       inert: ['seqAddBtn', 'seqPhoneBtn', 'seqTab-saved', 'seqRows'].map((id) => document.getElementById(id).inert),
       ctl: ['seqGoBtn', 'seqBackBtn', 'seqStopBtn'].map((id) => document.getElementById(id).inert),
     };
@@ -200,6 +213,8 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
   assert.match(seq.text, /vos propres séquences\.$/);
   assert.deepEqual(seq.sms, ['Tu es où ?'], 'GO : SMS de Maman sur l\'écran');
   assert.deepEqual([seq.editor, seq.pp, seq.sheet, seq.saved], [false, false, false, 0]);
+  assert.deepEqual(seq.chatOpt, { auto: true, full: true }, 'démo : discussion tout automatique (maquette 41), jouée sans personne');
+  assert.equal(seq.label, 'Discussion « Maman » → réponse · auto complète');
   assert.ok(seq.inert.every(Boolean));
   assert.ok(seq.ctl.every((v) => !v), 'GO / ↶ / STOP libres');
   // Rien n'a touché les données de l'utilisateur

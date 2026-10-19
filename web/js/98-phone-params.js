@@ -5,7 +5,12 @@
 //   • Date et heure : « L'heure avance » (depuis la date et l'heure réglées,
 //     au premier GO), « Figée », « Heure réelle » (celle de l'écran) ;
 //   • Réseau : Pas de service / 1 à 4 barres, 3G / 4G / 5G, Mode avion ; Wi-Fi ;
-//   • Batterie : niveau, en charge, pourcentage affiché.
+//   • Batterie : niveau, en charge, pourcentage affiché ;
+//   • Fond d'écran (maquette 42, Séquence seulement) : image de l'écran
+//     verrouillé et du pavé du code pendant toute la séquence, importée comme
+//     l'image d'accueil d'un déverrouillage (91-sequence.js : seqImportImage,
+//     IndexedDB par empreinte), envoyée aux écrans sous __seqwall. Sans fond :
+//     le dégradé sombre.
 // Deux usages, même éditeur :
 //   • Séquence (« Téléphone au départ », ligne sous le nom de la séquence) :
 //     réglages enregistrés avec la séquence (91-sequence.js, 96-sequences-saved.js),
@@ -33,6 +38,10 @@ const _PP_TXT = {
   noteMedia: 'Bandeau haut au-dessus des médias affichés seuls, hors séquence, sur les écrans où la barre est activée (onglet Média). Pendant une séquence, son « Téléphone au départ » prime sur ses écrans.',
   sumReal: 'Heure réelle', sumFrozen: '{heure} figée', sumPlane: 'Mode avion', sumNoService: 'Pas de service',
   mediaEdit: 'Régler ›',
+  // Fond d'écran (maquette 42)
+  labelWall: 'Fond d\'écran', wallNote: 'Écran verrouillé et code du téléphone, pendant toute la séquence.',
+  wallNone: 'Aucun fond : dégradé sombre', wallChange: 'CHANGER…', wallPick: 'CHOISIR…', wallRemove: 'RETIRER',
+  wallBad: '⚠ Image illisible', wallThumbAria: 'Aperçu du fond d\'écran',
 };
 const _ppTpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
 
@@ -45,7 +54,7 @@ function phoneParamsSummary(cfg) {
 }
 
 // ── Éditeur (vue plein écran, comme l'éditeur d'étape) ──
-let _pp = null; // { ctx: 'seq' | 'media', cfg (brouillon appliqué à chaque changement) }
+let _pp = null; // { ctx: 'seq' | 'media', cfg (brouillon appliqué à chaque changement), wallErr }
 function openPhoneParams(ctx) {
   const media = ctx === 'media';
   if (!media && licLocked('seq')) return; // aperçu sans licence (77-licence-ui.js)
@@ -112,6 +121,58 @@ function renderPhoneParams() {
     + '<div class="pp-level"><input type="range" id="ppLevel" min="1" max="100" step="1" value="' + b.level + '" aria-label="' + escapeHtml(_PP_TXT.levelAria) + '" style="--v:' + b.level + '%" oninput="ppSetLevel(this.value)">'
     + '<b id="ppLevelVal">' + escapeHtml(_ppTpl(_PP_TXT.level, { n: b.level })) + '</b></div>'
     + '<div class="ss-row">' + _ppOpt(b.charging, 'ppToggleBat(\'charging\')', escapeHtml(_PP_TXT.charging)) + _ppOpt(b.pct, 'ppToggleBat(\'pct\')', escapeHtml(_PP_TXT.pct)) + '</div>';
+  _ppRenderWall();
+}
+// Fond d'écran (maquette 42) : séquence seulement (pas la barre de l'onglet Média)
+function _ppRenderWall() {
+  const box = document.getElementById('ppWall');
+  if (!box) return;
+  const e = _pp;
+  if (!e || e.ctx !== 'seq') { box.textContent = ''; return; }
+  const w = _seq.wall;
+  const btn = (cls, fn, label) => '<button type="button" class="pp-wall-btn' + cls + '" onclick="' + fn + '">' + escapeHtml(label) + '</button>';
+  box.innerHTML = '<span class="ss-label">' + escapeHtml(_PP_TXT.labelWall) + '</span>'
+    + '<div class="pp-wall"><button type="button" class="pp-wall-thumb" id="ppWallThumb" aria-label="' + escapeHtml(_PP_TXT.wallThumbAria) + '" onclick="ppPickWall()"><span>' + escapeHtml(e.cfg.clock.mode !== 'real' && e.cfg.clock.time ? e.cfg.clock.time : phoneBarToday().time) + '</span></button>'
+    + '<div class="pp-wall-col"><span class="pp-wall-name">' + escapeHtml(w ? w.name || 'image' : _PP_TXT.wallNone) + '</span>'
+    + '<span class="pp-wall-note">' + escapeHtml(_PP_TXT.wallNote) + '</span>'
+    + (e.wallErr ? '<span class="pp-wall-note ss-warn">' + escapeHtml(e.wallErr) + '</span>' : '')
+    + '<div class="pp-wall-btns">' + btn('', 'ppPickWall()', w ? _PP_TXT.wallChange : _PP_TXT.wallPick) + (w ? btn(' danger', 'ppRemoveWall()', _PP_TXT.wallRemove) : '') + '</div></div></div>';
+  if (w) {
+    const sig = w.img;
+    _seqHomeData(sig).then((d) => {
+      const th = document.getElementById('ppWallThumb');
+      if (th && _seq.wall && _seq.wall.img === sig) { th.style.backgroundImage = d ? 'url(' + d + ')' : ''; th.classList.toggle('has-img', !!d); }
+    });
+  }
+}
+function ppPickWall() {
+  if (!_pp || _pp.ctx !== 'seq' || licLocked('seq')) return; // aperçu sans licence (77-licence-ui.js)
+  const inp = document.getElementById('ppWallInput');
+  if (inp) inp.click();
+}
+// Fond choisi : remplace l'ancien (effacé si plus rien ne s'en sert), renvoyé aux écrans de la séquence
+function onPhoneWallImage(files) {
+  const f = files && files[0];
+  const e = _pp;
+  if (!f || !e || e.ctx !== 'seq' || licLocked('seq')) return;
+  seqImportImage(f, (sig) => {
+    if (!sig) { if (_pp === e) { e.wallErr = _PP_TXT.wallBad; _ppRenderWall(); } return; }
+    _ppSetWall({ img: sig, name: _seqLine(f.name || 'image', 60) });
+  });
+}
+function ppRemoveWall() {
+  if (!_pp || _pp.ctx !== 'seq' || licLocked('seq')) return;
+  _ppSetWall(null);
+}
+function _ppSetWall(w) {
+  const old = _seq.wall;
+  _seq.wall = w;
+  if (_pp) _pp.wallErr = '';
+  if (!seqSave()) alert(_SEQ_TXT.storeFull);
+  if (old && (!w || old.img !== w.img)) seqGcImages([old.img]);
+  _ppRenderWall();
+  renderSeq();
+  _seqQueue(() => _seqPushPhones()); // déroulé commencé : les écrans prennent le nouveau fond
 }
 function ppSetClock(m) {
   const e = _pp;

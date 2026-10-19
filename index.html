@@ -1115,7 +1115,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .call-list .panel-label{margin-bottom:0}
 .cl-kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .cl-kinds .gw-seg-btn{height:42px}
-.cl-head,.cl-row{display:grid;grid-template-columns:30px minmax(0,1fr) 62px 30px;gap:8px}
+.cl-head,.cl-row{display:grid;grid-template-columns:30px minmax(0,1fr) 62px 28px 24px;gap:6px}
 .cl-head{padding:0 10px;font-size:.5625rem;letter-spacing:.12em;color:#a8a8a8;text-transform:uppercase}
 .cl-head span:nth-child(3){text-align:right}
 .cl-rows{display:flex;flex-direction:column;gap:12px}
@@ -1130,10 +1130,17 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .cl-meta{font-size:.625rem;color:#a8a8a8;margin-top:3px}
 .cl-dmx{font-size:.6875rem;text-align:right;color:#d0d0d0;font-variant-numeric:tabular-nums}
 .cl-grip{display:flex;justify-content:center;color:#8f8f8f;cursor:grab;touch-action:none}
+/* « ⋯ » : menu de l'entrée (maquette 43c) */
+.cl-more{width:28px;height:44px;padding:0;border:none;border-radius:6px;background:transparent;color:#8f8f8f;font-family:'DM Mono',monospace;font-size:1.1rem;cursor:pointer}
 /* Glisser-déposer (même principe que le pool média) */
 .cl-row.cl-drag-src{opacity:.35;border-style:dashed;border-color:var(--accent)}
 .cl-ghost{position:fixed;z-index:1000;pointer-events:none;margin:0;opacity:.93;box-shadow:0 12px 32px rgba(0,0,0,.65);border-color:var(--accent)}
 .cl-save{height:46px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:transparent;color:#d0d0d0;font-family:'DM Mono',monospace;font-size:.6875rem;letter-spacing:.04em;cursor:pointer}
+/* Entrée chargée (maquette 43) : « ↻ Mettre à jour » et « + Enregistrer comme nouveau » */
+.cl-upd{display:flex;gap:8px}
+.cl-upd-btn,.cl-upd .cl-save{flex:1;min-width:0;min-height:46px;height:auto;padding:4px 8px;border-radius:8px;font-family:'DM Mono',monospace;font-size:.6875rem;line-height:1.35;text-align:center;cursor:pointer;overflow:hidden;word-break:break-word}
+.cl-upd-btn{border:1px solid var(--accent);background:rgba(255,107,44,.08);color:#FF8a55}
+.cl-upd .cl-save:disabled{opacity:.4;cursor:default}
 .cl-note{background:var(--mid2);border-radius:8px;padding:10px 12px;font-size:.6875rem;color:#c4c4c4;line-height:1.55}
 .cl-actions{display:flex;gap:10px}
 .cl-go{flex:1;height:50px;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
@@ -1215,6 +1222,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .ss-opt[style*="--sw"]::before{content:'';flex:none;width:10px;height:10px;border-radius:3px;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
 .ss-note{font-size:.625rem;color:#a8a8a8;line-height:1.5}
 .ss-note.ss-warn{color:#ff8f86}
+.ss-note.ss-play-note{font-size:.6875rem;margin-top:2px}
 .ss-home{display:flex;align-items:center;gap:10px}
 .ss-home-thumb{width:44px;height:78px;border-radius:6px;border:none;padding:0;flex:none;background:linear-gradient(160deg,#3d5a80,#98c1d9);background-size:cover;background-position:center;cursor:pointer}
 .ss-home-txt{font-size:.625rem;color:#c4c4c4;line-height:1.5;min-width:0;word-break:break-word}
@@ -1235,6 +1243,9 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .sp-lock,.sp-code,.sp-home,.sp-unlocked{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
 .sp-lock,.sp-code{background:linear-gradient(180deg,#24324a 0%,#0e1420 100%)}
 .sp-lock.sp-enter,.sp-code.sp-enter{animation:scFadeIn .35s ease}
+/* Fond d'écran de la séquence (maquette 42, __seqwall) : couvrant, centré, voile pour la lisibilité ; plus sombre sous le pavé */
+.sp-lock.has-wall{background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,0) 32%,rgba(0,0,0,0) 62%,rgba(0,0,0,.32)),var(--sp-wall) center/cover no-repeat,#0e1420}
+.sp-code.has-wall{background:linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)),var(--sp-wall) center/cover no-repeat,#0e1420}
 .sp-lock{gap:10px;padding:calc(60px + env(safe-area-inset-top)) 14px calc(22px + env(safe-area-inset-bottom))}
 .sp-lock-head{text-align:center}
 .sp-date{font-size:15px;opacity:.85}
@@ -1360,6 +1371,17 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .pp-level input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:transparent;border:none;cursor:pointer}
 .pp-level input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:transparent;border:none;cursor:pointer}
 .pp-note{font-size:.625rem;color:#a8a8a8;line-height:1.6}
+/* Fond d'écran de la séquence (maquette 42) : vignette portrait, nom, note, CHANGER… / RETIRER */
+.pp-wall{display:flex;gap:12px;align-items:center}
+.pp-wall-thumb{position:relative;width:54px;height:96px;flex:none;border-radius:10px;padding:0;border:1px solid rgba(255,255,255,.2);background:linear-gradient(180deg,#24324a 0%,#0e1420 100%);background-size:cover;background-position:center;overflow:hidden;cursor:pointer}
+.pp-wall-thumb span{position:absolute;top:14px;left:0;right:0;text-align:center;color:#fff;font:600 13px -apple-system,system-ui,Roboto,'Segoe UI',sans-serif;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+.pp-wall-col{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
+.pp-wall-name{font-size:.75rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp-wall-note{font-size:.6875rem;color:#a8a8a8;line-height:1.5}
+.pp-wall-note.ss-warn{color:#ff8f86}
+.pp-wall-btns{display:flex;gap:8px}
+.pp-wall-btn{flex:1;height:38px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:.6875rem;cursor:pointer}
+.pp-wall-btn.danger{flex:none;padding:0 12px;color:#ff8f86;border-color:rgba(255,90,79,.45);background:transparent}
 .mbar{display:flex;flex-direction:column;gap:6px;margin:6px 2px 10px}
 .mbar-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.72rem;color:var(--text);cursor:pointer}
 .mbar-edit{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:#a8a8a8;font-family:'DM Mono',monospace;font-size:.625rem;cursor:pointer;text-align:left}
@@ -2345,7 +2367,11 @@ button.st-row{cursor:pointer}
       <div class="cl-head"><span>N°</span><span id="callListWho">Appelant</span><span>DMX</span><span></span></div>
       <div class="cl-rows" id="callListRows"></div>
       <div class="media-pool-empty" id="callListEmpty">Réglez l'appel ci-dessus puis enregistrez-le : il prend le numéro suivant.</div>
-      <button type="button" class="cl-save" id="callListSave" onclick="saveCurrentCall()">+ Enregistrer l'appel actuel</button>
+      <button type="button" class="cl-save" id="callListSave" onclick="openSaveCallSheet()">+ Enregistrer l'appel actuel</button>
+      <div class="cl-upd" id="callListUpd" style="display:none">
+        <button type="button" class="cl-upd-btn" id="callListUpdate" onclick="updateLoadedCallEntry()"></button>
+        <button type="button" class="cl-save cl-save-new" id="callListSaveNew" onclick="openSaveCallSheet()">+ Enregistrer comme nouveau</button>
+      </div>
       <div class="cl-note" id="callListNote">Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16). Valeur 0 : raccrocher. Glissez pour changer l'ordre.</div>
       <div class="cl-actions" id="callListActions">
         <button type="button" class="cl-go" id="callListGo" onclick="triggerSelectedCallEntry()">Appeler n°1</button>
@@ -2470,6 +2496,8 @@ button.st-row{cursor:pointer}
   <div class="ss-card" id="ppClock"></div>
   <div class="ss-card" id="ppNet"></div>
   <div class="ss-card" id="ppBat"></div>
+  <div class="ss-card" id="ppWall"></div>
+  <input type="file" id="ppWallInput" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onPhoneWallImage(this.files);this.value=''">
   <div class="pp-note" id="ppNote"></div>
 </div>
 
@@ -3808,7 +3836,7 @@ const SPECS = {
       + '(un écran rechargé retrouve son écran verrouillé, ses notifications empilées, le déverrouillage, l’écran d’accueil). '
       + 'mode : off (rien d’affiché), locked (écran verrouillé, notifications empilées, la plus récente en haut), code (pavé du code), '
       + 'unlocked (déverrouillé : l’app visée, la discussion, s’ouvre par-dessus), home (image d’écran d’accueil, préchargée en '
-      + 'fragments media-img-* sous __seqhome). notifs : dans l’ordre d’arrivée ; ago = secondes écoulées à l’envoi (l’écran calcule '
+      + 'fragments media-img-* sous __seqhome). wall : fond d’écran de la séquence (maquette 42, préchargé sous __seqwall), sur l’écran verrouillé et le pavé du code. notifs : dans l’ordre d’arrivée ; ago = secondes écoulées à l’envoi (l’écran calcule '
       + 'l’heure relative avec sa propre horloge). unlock : déverrouillage attendu (code 4 ou 6 chiffres, 0 = glisser seul ; '
       + 'aucun code n’est transmis : chaque touche remplit le point suivant). watch : gestes que la télécommande attend de cet écran '
       + '(seuls ceux-là sont rapportés, avec « unlock » toujours). chime : son de la notification qui vient d’arriver (jamais à la '
@@ -3836,6 +3864,7 @@ const SPECS = {
         then: req(oneOf('app', 'home'), 'ensuite : l’app visée ou l’écran d’accueil (image)'),
       }), 'déverrouillage attendu : toucher l’écran verrouillé demande le code'),
       home: opt(bool, 'image d’écran d’accueil préchargée (__seqhome)'),
+      wall: opt(bool, 'fond d’écran de la séquence préchargé (__seqwall) : écran verrouillé et pavé du code'),
       watch: opt(arrayOf(oneOf(...PHONE_GESTURES.filter((g) => !PHONE_GESTURES_ALWAYS.includes(g))), PHONE_GESTURES.length), 'gestes attendus de cet écran'),
       chime: opt(object({
         id: req(PHONE_ID, 'notification qui vient d’arriver'),
@@ -8290,6 +8319,7 @@ function _validPhoneState(m) {
   m.unlock = _P.isObj(u) && [0, 4, 6].includes(u.code) ? { code: u.code, then: u.then === 'home' ? 'home' : 'app' } : null;
   if (m.mode === 'code' && !(m.unlock && m.unlock.code)) return false;
   m.home = _P.bool(m.home);
+  m.wall = _P.bool(m.wall);
   m.watch = Array.isArray(m.watch) ? m.watch.filter((g, i, a) => _P.oneOf(g, PROTO.PHONE_GESTURES) && !PROTO.PHONE_GESTURES_ALWAYS.includes(g) && a.indexOf(g) === i) : [];
   const c = m.chime;
   m.chime = _P.isObj(c) && seen.has(c.id) ? { id: c.id, ring: _P.oneOf(c.ring, PROTO.CALL_RINGS) ? c.ring : 'classic', ringId: _P.ringId(c.ringId) ? c.ringId : null, vol: _P.num(c.vol, 0, 1) ?? 1, vib: c.vib === true } : null;
@@ -10690,7 +10720,7 @@ function screenIdentify() {
 // confirmation ; le retrait lui-même : 29-revoke.js.
 // Modèle (registre, cible, état de chaque écran) : 28-screens.js.
 let _svOpen = false;
-let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group' | 'chatName' | 'chatMenu' | 'seqName' | 'seqMenu' | 'install' | 'callers' | 'callerMenu' | 'callerName', … }
+let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group' | 'chatName' | 'chatMenu' | 'seqName' | 'seqMenu' | 'install' | 'callers' | 'callerMenu' | 'callerName' | 'callName' | 'callMenu', … }
 const _uiHtml = new Map();   // dernier HTML posé par conteneur (pas de re-rendu inutile pendant un geste)
 
 function _setHtml(el, html) {
@@ -10765,6 +10795,11 @@ function renderSheet(focus) {
   if (s.kind === 'chatName' || s.kind === 'chatMenu' || s.kind === 'seqName' || s.kind === 'seqMenu') {
     // Discussions enregistrées (89-discussions-saved.js), séquences enregistrées (96-sequences-saved.js) : nom, menu « ⋯ »
     const c = s.kind.startsWith('seq') ? seqSheetContent(s) : chatSheetContent(s);
+    if (!c) { closeSheet(); return; }
+    t = c.title; h = c.html; form = c.form;
+  } else if (s.kind === 'callName' || s.kind === 'callMenu') {
+    // Appels, SMS et notifications enregistrés (maquettes 43b, 43c, 82-call-list.js) : nom, menu « ⋯ »
+    const c = callListSheetContent(s);
     if (!c) { closeSheet(); return; }
     t = c.title; h = c.html; form = c.form;
   } else if (s.kind === 'callers' || s.kind === 'callerMenu' || s.kind === 'callerName') {
@@ -10853,6 +10888,7 @@ function sheetSave() {
   if (s.kind === 'chatName') { chatSheetSave(s, inp.value); return; } // 89-discussions-saved.js
   if (s.kind === 'seqName') { seqSheetSave(s, inp.value); return; }   // 96-sequences-saved.js
   if (s.kind === 'callerName') { callerSheetSave(s, inp.value); return; } // 79-callers.js
+  if (s.kind === 'callName') { callListSheetSave(s, inp.value); return; } // 82-call-list.js
   if (s.kind === 'rename') scrRenameScreen(s.id, inp.value);
   else if (s.kind === 'group') {
     const members = [...s.members].filter(scrKnown);
@@ -14127,6 +14163,7 @@ function mediaImgChunk(msg) {
     // Décodé dès réception : la sonnerie part sans délai au prochain appel
     if (isRing) screenRingWarm(b.mediaId);
     if (b.mediaId === '__seqhome') screenPhoneOnHomeCached(); // image d'accueil d'une Séquence (94-sequence-phone.js)
+    if (b.mediaId === '__seqwall') screenPhoneOnWallCached(); // fond d'écran d'une Séquence (maquette 42)
   }
   if (b.show && !isAudio) {
     const im = document.getElementById('screen-media-img');
@@ -14219,7 +14256,8 @@ function screenVidUploadPlay(msg) {
 //             formulaire), une discussion avec Maman (fil en cours, et la
 //             même enregistrée), Maman parmi les appelants enregistrés.
 //   Séquence  « Batterie à plat » : SMS de Maman au GO → déverrouillage quand
-//             le comédien touche l'écran → discussion avec Maman (lecture auto)
+//             le comédien touche l'écran → discussion avec Maman (lecture tout
+//             automatique : elle se joue sans personne)
 //             une fois déverrouillé → batterie faible → extinction.
 // Textes affichés, regroupés pour la traduction
 const _DEMO_TXT = {
@@ -14261,7 +14299,7 @@ const _demoSeq = () => ({
   steps: [
     _demoStep('demo1', 'sms', { k: 'go' }, {}, DEMO_IDS.sms),
     _demoStep('demo2', 'unlock', { k: 'gesture', g: 'touch', t: 0 }, { code: 4, then: 'home', img: null, imgName: '' }),
-    _demoStep('demo3', 'chat', { k: 'gesture', g: 'unlock', t: 0 }, { auto: true }, DEMO_IDS.chat),
+    _demoStep('demo3', 'chat', { k: 'gesture', g: 'unlock', t: 0 }, { auto: true, full: true }, DEMO_IDS.chat),
     _demoStep('demo4', 'battery', { k: 'after', s: 25 }, { level: 4 }),
     _demoStep('demo5', 'off', { k: 'after', s: 8 }),
   ],
@@ -14359,7 +14397,7 @@ const _LIC_LOCKS = {
   tel: {
     dim: ['telStyleBtn', 'ntStyleBtn', 'callWhoSaved', 'callName', 'callLabel', 'callPhotoBtn', 'callerSaveBtn',
       'callMsgText', 'callAppName', 'callAppColor', 'callLockPanel', 'ntAppPanel', 'ntShowPanel', 'callAnswerBlock',
-      'callListSave', 'callListDel', 'dcTab-saved', 'dcContactPanel', 'dcAdd', 'dcWriteBtn'],
+      'callListSave', 'callListUpd', 'callListDel', 'dcTab-saved', 'dcContactPanel', 'dcAdd', 'dcWriteBtn'],
     ro: ['dcRows', 'dcTimingPanel'],
     ex: ['callWhoLabel'],
     banner: 'licPvTel',
@@ -14414,6 +14452,7 @@ function _licReloadTel() {
   renderRingPanel();
   loadCallList();
   for (const k of CALL_LISTS) _callListSel[k] = null;
+  _clLoadedId = null; // plus d'entrée chargée (82-call-list.js)
   chatLoad();
   loadSavedChats();
   callersInit();
@@ -16519,6 +16558,26 @@ function ringInit() {
 // son volume ringVolume ; un son importé supprimé depuis → son Classique.
 // Vibreur du type (vib, maquette 36b) : true seulement ; entrée d'avant le
 // vibreur : ne vibre pas.
+//
+// Noms et mise à jour (maquettes validées 43, 43b, 43c) :
+//   • Chaque entrée peut avoir un nom (title, 40 caractères) ; sans nom (ancienne
+//     entrée, champ vidé) : « nom · sous-titre » (notification : titre, sinon
+//     application). Ce nom sert partout où les entrées sont listées : la liste,
+//     les étapes de la Séquence et leurs choix (callEntryName).
+//   • « + Enregistrer … » ouvre la feuille « Nom de l'enregistrement »
+//     (proposition préremplie ; laissée telle quelle ou vidée : pas de nom propre).
+//   • Entrée CHARGÉE (touchée dans la liste, ou « Charger dans l'onglet ») :
+//     « ↻ Mettre à jour « nom » » (réglages actuels du formulaire, même id,
+//     même numéro donc même plage DMX, même nom) et « + Enregistrer comme
+//     nouveau » remplacent le bouton d'enregistrement. L'état « chargée » prend
+//     fin quand le type du formulaire change, quand on change d'onglet de liste,
+//     quand l'entrée est supprimée, après « Enregistrer comme nouveau » et au
+//     rechargement des listes (licence) : le bouton unique revient.
+//   • « ⋯ » d'une ligne (la poignée reste) : charger, renommer, mettre à jour
+//     avec les réglages actuels (formulaire du même type), dupliquer (en fin de
+//     liste, photo et bande son copiées), supprimer (confirmation).
+// Aperçu sans licence (77-licence-ui.js) : enregistrer, renommer, mettre à
+// jour, dupliquer et supprimer sont verrouillés ; charger et déclencher restent.
 const CALL_LIST_KEY = 'setremote-call-list-v1';
 const CALL_LIST_MAX = 99;           // par liste
 const CALL_LIST_DMX_ITEMS = 20;     // entrées accessibles depuis la console
@@ -16528,7 +16587,33 @@ let callList = { call: [], sms: [], notif: [] };
 let callListKind = 'call';
 const _callListSel = { call: null, sms: null, notif: null };
 
+const CALL_TITLE_MAX = 40;
 const _CALL_STYLE_NAMES = { glass: 'Verre', tonal: 'Tonal', minimal: 'Épuré' };
+// Textes affichés (maquettes 43 à 43c), regroupés pour la traduction ({…} : valeurs)
+const _CL_TXT = {
+  unknown: 'Inconnu', notifDefault: 'Notification',
+  sheetCall: 'Enregistrer l\'appel', sheetSms: 'Enregistrer le SMS', sheetNotif: 'Enregistrer la notification',
+  sheetRename: 'Renommer l\'enregistrement',
+  nameLabel: 'Nom de l\'enregistrement',
+  nameNote: 'Vide : « {defaut} ». Le nom sert dans la liste, la Séquence et la console (n° {n}, DMX {plage}).',
+  nameNoteNoDmx: 'Vide : « {defaut} ». Le nom sert dans la liste et la Séquence (n° {n}).',
+  cancel: 'Annuler', ok: 'Enregistrer', close: 'Fermer',
+  update: '↻ Mettre à jour « {nom} »', saveNew: '+ Enregistrer comme nouveau',
+  menuLoad: 'Charger dans l\'onglet', menuRename: 'Renommer', menuUpdate: 'Mettre à jour avec les réglages actuels',
+  menuDuplicate: 'Dupliquer', menuDelete: 'Supprimer', menuAria: 'Charger, renommer, mettre à jour, dupliquer, supprimer',
+  menuTitle: '« {nom} »', copy: '{nom} (copie)',
+  confirmDelete: 'Supprimer « {nom} » (n°{n}) ? Les numéros suivants avancent d\'un rang.',
+};
+const _clTpl = (t, v) => t.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
+const _clLine = (v) => (typeof v === 'string' ? v.replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, CALL_TITLE_MAX).trim() : '');
+// Nom par défaut d'une entrée (ou du formulaire) : « nom · sous-titre » ; notification : titre, sinon application
+function callEntryDefaultName(e) {
+  if (e.kind === 'notif') return String(e.name || e.appName || _CL_TXT.notifDefault);
+  const n = e.name || _CL_TXT.unknown;
+  return e.label ? n + ' · ' + e.label : n;
+}
+// Nom affiché d'une entrée : son nom propre, sinon le nom par défaut
+function callEntryName(e) { return (e && e.title) || callEntryDefaultName(e || {}); }
 const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'vib', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio', 'phone', 'received'];
 
 // ── Persistance ──
@@ -16551,6 +16636,9 @@ function _clSanitize(e) {
     else delete out.ringVolume;
   }
   if (out.vib !== true) delete out.vib;
+  // Nom de l'enregistrement (maquette 43b) : facultatif (ancienne entrée : aucun)
+  const title = _clLine(e.title);
+  if (title) out.title = title;
   return out;
 }
 function loadCallList() {
@@ -16748,8 +16836,9 @@ function renderCallList() {
   if (rows) {
     rows.innerHTML = list.map((e, i) => '<div class="cl-row' + (sel && e.id === sel.id ? ' selected' : '') + '" data-id="' + e.id + '" onclick="selectCallEntry(\'' + e.id + '\')">'
       + '<span class="cl-num">' + (i + 1) + '</span>'
-      + '<span class="cl-main"><span class="cl-name">' + escapeHtml(e.name || 'Inconnu') + '</span><span class="cl-meta">' + escapeHtml(_clMeta(e)) + '</span></span>'
+      + '<span class="cl-main"><span class="cl-name">' + escapeHtml(callEntryName(e)) + '</span><span class="cl-meta">' + escapeHtml(_clMeta(e)) + '</span></span>'
       + '<span class="cl-dmx">' + callEntryDmxRange(i, kind) + '</span>'
+      + '<button type="button" class="cl-more" aria-label="' + escapeHtml(_CL_TXT.menuAria) + '" onclick="event.stopPropagation();openCallEntryMenu(\'' + e.id + '\')">⋯</button>'
       + '<span class="cl-grip" aria-label="Déplacer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 9h14M5 15h14"/></svg></span>'
       + '</div>').join('');
   }
@@ -16764,23 +16853,46 @@ function renderCallList() {
   }
   renderCallListSaveLabel();
 }
+// Bouton d'enregistrement, ou « Mettre à jour » / « Enregistrer comme nouveau » (entrée chargée)
 function renderCallListSaveLabel() {
+  const loaded = callListLoadedEntry();
   const b = document.getElementById('callListSave');
-  if (b) b.textContent = callKind === 'call' ? '+ Enregistrer l\'appel actuel' : callKind === 'notif' ? '+ Enregistrer la notification actuelle' : '+ Enregistrer le SMS actuel';
+  if (b) {
+    b.textContent = callKind === 'call' ? '+ Enregistrer l\'appel actuel' : callKind === 'notif' ? '+ Enregistrer la notification actuelle' : '+ Enregistrer le SMS actuel';
+    b.style.display = loaded ? 'none' : '';
+  }
+  const upd = document.getElementById('callListUpd');
+  if (upd) upd.style.display = loaded ? '' : 'none';
+  const u = document.getElementById('callListUpdate');
+  if (u && loaded) u.textContent = _clTpl(_CL_TXT.update, { nom: callEntryName(loaded) });
+  const n = document.getElementById('callListSaveNew');
+  if (n) { n.textContent = _CL_TXT.saveNew; n.disabled = !!loaded && callList[_clListOf(loaded.kind)].length >= CALL_LIST_MAX; }
 }
 
 function setCallListKind(k) {
   callListKind = CALL_LISTS.includes(k) ? k : 'call';
-  renderCallList();
+  renderCallList(); // autre onglet de liste : l'entrée chargée ne l'est plus (callListLoadedEntry)
+}
+
+// ── Entrée chargée dans le formulaire (maquette 43) ──
+let _clLoadedId = null;
+// L'entrée chargée, tant que le formulaire et l'onglet de liste lui correspondent
+// (même type) ; sinon l'état prend fin pour de bon
+function callListLoadedEntry() {
+  if (!_clLoadedId) return null;
+  const kind = CALL_LISTS.find((k) => callList[k].some((e) => e.id === _clLoadedId));
+  const e = kind ? callList[kind].find((x) => x.id === _clLoadedId) : null;
+  if (!e || e.kind !== callKind || kind !== callListKind) { _clLoadedId = null; return null; }
+  return e;
 }
 
 // ── Actions ──
-async function saveCurrentCall() {
-  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
-  const fields = callFormFields();
-  const list = _clListOf(fields.kind);
-  if (callList[list].length >= CALL_LIST_MAX) return null;
-  const e = Object.assign({ id: 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }, fields);
+const _clNewId = () => 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const _clKindOf = (id) => CALL_LISTS.find((k) => callList[k].some((x) => x.id === id)) || null;
+// Réglages actuels du formulaire sous la forme d'une entrée (sans id ni nom),
+// avec la photo (icône d'une notification) et la bande son qui l'accompagnent
+function _clFormEntry() {
+  const e = callFormFields();
   // Son du type au moment de l'enregistrement : volume toujours noté (100 % compris)
   e.ringVolume = ringSettings[_ringKind(e.kind)].vol;
   // Réglages masqués pour ce type : non enregistrés (bande son et décroché
@@ -16790,9 +16902,26 @@ async function saveCurrentCall() {
   else { e.autoAnswer = 0; e.hasAudio = false; delete e.present; delete e.photoMode; }
   // Notification : l'icône est rangée comme la photo de l'entrée
   const photo = e.kind === 'notif' ? _notifIcon : _callPhoto, audio = e.hasAudio ? _callAudioData : null;
+  return { e, photo, audio };
+}
+// Nom saisi : gardé seulement s'il diffère du nom par défaut (sinon le nom suit l'entrée)
+function _clTitleFor(e, value) {
+  const t = _clLine(value);
+  return t && t !== callEntryDefaultName(e) ? t : '';
+}
+// « + Enregistrer … » (après la feuille du nom, maquette 43b) ; title : nom de l'enregistrement (facultatif)
+async function saveCurrentCall(title) {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
+  const { e: fields, photo, audio } = _clFormEntry();
+  const list = _clListOf(fields.kind);
+  if (callList[list].length >= CALL_LIST_MAX) return null;
+  const e = Object.assign({ id: _clNewId() }, fields);
+  const t = _clTitleFor(e, title);
+  if (t) e.title = t;
   callList[list].push(e);
   _callListSel[list] = e.id;
   callListKind = list;
+  _clLoadedId = null; // enregistrée comme nouvelle : plus d'entrée chargée
   persistCallList();
   renderCallList();
   await Promise.all([
@@ -16800,6 +16929,75 @@ async function saveCurrentCall() {
     audio ? callAssetPut(e.id + ':audio', audio) : null,
   ]);
   return e.id;
+}
+// « ↻ Mettre à jour » : réglages actuels du formulaire dans l'entrée (même id,
+// même place donc même numéro et même plage DMX, même nom). Photo et bande son
+// réécrites sous les clés de l'entrée, ou effacées si elle n'en a plus (rien
+// d'ancien ne reste) ; ids préparés oubliés (contenu changé). Le formulaire doit
+// être du même type de liste ; false : impossible.
+async function updateCallEntry(id) {
+  if (licLocked('tel')) return false; // aperçu sans licence (77-licence-ui.js)
+  const kind = _clKindOf(id);
+  if (!kind) return false;
+  const { e: fields, photo, audio } = _clFormEntry();
+  if (_clListOf(fields.kind) !== kind || callKind === 'discussion') return false;
+  const list = callList[kind], i = list.findIndex((x) => x.id === id);
+  const e = Object.assign({ id }, fields);
+  if (list[i].title) e.title = list[i].title;
+  list[i] = e;
+  _callListSel[kind] = id;
+  _clPrepIds.delete(id);
+  persistCallList();
+  renderCallList();
+  await Promise.all([
+    photo ? callAssetPut(id + ':photo', photo) : callAssetDelete(id + ':photo'),
+    audio ? callAssetPut(id + ':audio', audio) : callAssetDelete(id + ':audio'),
+  ]);
+  return true;
+}
+function updateLoadedCallEntry() { const e = callListLoadedEntry(); return e ? updateCallEntry(e.id) : Promise.resolve(false); }
+// Renommer : vide (ou le nom par défaut) → plus de nom propre
+function renameCallEntry(id, value) {
+  if (licLocked('tel')) return;
+  const kind = _clKindOf(id);
+  const e = kind && callList[kind].find((x) => x.id === id);
+  if (!e) return;
+  const t = _clTitleFor(e, value);
+  if (t) e.title = t; else delete e.title;
+  persistCallList();
+  renderCallList();
+}
+// Copie en fin de liste, nommée « … (copie) » (photo et bande son copiées sous ses propres clés)
+async function duplicateCallEntry(id) {
+  if (licLocked('tel')) return null;
+  const kind = _clKindOf(id);
+  if (!kind || callList[kind].length >= CALL_LIST_MAX) return null;
+  const src = callList[kind].find((x) => x.id === id);
+  const e = Object.assign(JSON.parse(JSON.stringify(src)), { id: _clNewId(), title: _clLine(_clTpl(_CL_TXT.copy, { nom: callEntryName(src) })) });
+  const [photo, audio] = await Promise.all([src.hasPhoto ? callAssetGet(src.id + ':photo') : null, src.hasAudio ? callAssetGet(src.id + ':audio') : null]);
+  if (callList[kind].length >= CALL_LIST_MAX) return null; // la liste a pu se remplir pendant la lecture
+  e.hasPhoto = !!photo; e.hasAudio = !!audio;
+  await Promise.all([photo ? callAssetPut(e.id + ':photo', photo) : null, audio ? callAssetPut(e.id + ':audio', audio) : null]);
+  callList[kind].push(e);
+  persistCallList();
+  renderCallList();
+  return e.id;
+}
+// Supprimer (confirmation) : les numéros suivants avancent ; photo et bande son effacées
+function deleteCallEntry(id) {
+  if (licLocked('tel')) return false; // aperçu sans licence (77-licence-ui.js)
+  const kind = _clKindOf(id);
+  if (!kind) return false;
+  const i = callList[kind].findIndex((x) => x.id === id), e = callList[kind][i];
+  if (!confirm(_clTpl(_CL_TXT.confirmDelete, { nom: callEntryName(e), n: i + 1 }))) return false;
+  callList[kind].splice(i, 1);
+  if (_callListSel[kind] === id || !callList[kind].some((x) => x.id === _callListSel[kind])) _callListSel[kind] = (callList[kind][Math.min(i, callList[kind].length - 1)] || {}).id || null;
+  if (_clLoadedId === id) _clLoadedId = null;
+  callAssetDelete(e.id + ':photo'); callAssetDelete(e.id + ':audio');
+  _clPrepIds.delete(e.id);
+  persistCallList();
+  renderCallList();
+  return true;
 }
 
 // Toucher une entrée : la sélectionne et la recharge dans le formulaire
@@ -16812,7 +17010,10 @@ async function selectCallEntry(id) {
   _callListSel[kind] = id;
   callListKind = kind;
   renderCallList();
-  await loadCallEntryIntoForm(e);
+  const done = loadCallEntryIntoForm(e); // partie immédiate : type du formulaire = celui de l'entrée
+  _clLoadedId = id; // chargée : « Mettre à jour » / « Enregistrer comme nouveau »
+  renderCallListSaveLabel();
+  await done;
 }
 
 async function loadCallEntryIntoForm(e) {
@@ -16871,16 +17072,69 @@ async function triggerSelectedCallEntry() {
 }
 
 function deleteSelectedCallEntry() {
+  const e = _clSelected(callListKind);
+  if (e) deleteCallEntry(e.id);
+}
+
+// ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) : nom (43b), menu « ⋯ » (43c) ──
+function openSaveCallSheet() {
   if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
-  const kind = callListKind, e = _clSelected(kind);
-  if (!e) return;
-  const i = callList[kind].indexOf(e);
-  if (!confirm('Supprimer « ' + (e.name || 'Inconnu') + ' » (n°' + (i + 1) + ') ? Les numéros suivants avancent d\'un rang.')) return;
-  callList[kind].splice(i, 1);
-  _callListSel[kind] = (callList[kind][Math.min(i, callList[kind].length - 1)] || {}).id || null;
-  callAssetDelete(e.id + ':photo'); callAssetDelete(e.id + ':audio');
-  persistCallList();
-  renderCallList();
+  if (callKind === 'discussion' || callList[_clListOf(callKind)].length >= CALL_LIST_MAX) return;
+  _sheet = { kind: 'callName', id: null }; renderSheet(true);
+}
+function openCallEntryMenu(id) {
+  if (!_clKindOf(id)) return;
+  _sheet = { kind: 'callMenu', id }; renderSheet();
+}
+function callMenuLoad(id) { closeSheet(); selectCallEntry(id); }
+function callMenuRename(id) { if (!licLocked('tel') && _clKindOf(id)) { _sheet = { kind: 'callName', id }; renderSheet(true); } }
+function callMenuUpdate(id) { closeSheet(); updateCallEntry(id); }
+function callMenuDuplicate(id) { closeSheet(); duplicateCallEntry(id); }
+function callMenuDelete(id) { closeSheet(); deleteCallEntry(id); }
+// Contenu d'une feuille : { title, html, form } ; null : entrée disparue
+function callListSheetContent(s) {
+  const kind = s.id ? _clKindOf(s.id) : null;
+  const e = kind ? callList[kind].find((x) => x.id === s.id) : null;
+  if (s.id && !e) return null;
+  if (s.kind === 'callMenu') {
+    const b = (cls, fn, label) => '<button type="button" class="dc-menu-btn' + cls + '" onclick="' + fn + '(\'' + e.id + '\')">' + escapeHtml(label) + '</button>';
+    // Aperçu sans licence : charger seulement ; « Mettre à jour » : formulaire du même type de liste
+    const edit = !licLocked('tel'), canUpdate = callKind !== 'discussion' && _clListOf(callKind) === kind;
+    return {
+      title: _clTpl(_CL_TXT.menuTitle, { nom: callEntryName(e) }), form: false,
+      html: b('', 'callMenuLoad', _CL_TXT.menuLoad)
+        + (edit ? b('', 'callMenuRename', _CL_TXT.menuRename)
+          + (canUpdate ? b('', 'callMenuUpdate', _CL_TXT.menuUpdate) : '')
+          + (callList[kind].length < CALL_LIST_MAX ? b('', 'callMenuDuplicate', _CL_TXT.menuDuplicate) : '')
+          + b(' danger', 'callMenuDelete', _CL_TXT.menuDelete) : '')
+        + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CL_TXT.close) + '</button></div>',
+    };
+  }
+  // Nom : de l'enregistrement à venir (proposition préremplie) ou de l'entrée à renommer
+  let def, val, n, list, title;
+  if (e) {
+    def = callEntryDefaultName(e); val = e.title || def; list = kind; n = callList[kind].indexOf(e) + 1; title = _CL_TXT.sheetRename;
+  } else {
+    const f = _clFormEntry().e;
+    def = callEntryDefaultName(f); val = def; list = _clListOf(f.kind); n = callList[list].length + 1;
+    title = f.kind === 'call' ? _CL_TXT.sheetCall : f.kind === 'notif' ? _CL_TXT.sheetNotif : _CL_TXT.sheetSms;
+  }
+  const dmx = callEntryDmxRange(n - 1, list);
+  const note = _clTpl(dmx === '—' ? _CL_TXT.nameNoteNoDmx : _CL_TXT.nameNote, { defaut: def, n, plage: dmx });
+  return {
+    title, form: true,
+    html: '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
+      + '<label class="sr-sublabel" for="srName">' + escapeHtml(_CL_TXT.nameLabel) + '</label>'
+      + '<input type="text" id="srName" class="text-input sr-input" maxlength="' + CALL_TITLE_MAX + '" autocomplete="off" placeholder="' + escapeHtml(def) + '" value="' + escapeHtml(val.slice(0, CALL_TITLE_MAX)) + '">'
+      + '<p class="sr-sheet-note">' + escapeHtml(note) + '</p>'
+      + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CL_TXT.cancel) + '</button>'
+      + '<button type="submit" class="sr-ok">' + escapeHtml(_CL_TXT.ok) + '</button></div></form>',
+  };
+}
+function callListSheetSave(s, value) {
+  closeSheet();
+  if (s.id) renameCallEntry(s.id, value);
+  else saveCurrentCall(value);
 }
 
 // ── Réordonnancement par glisser-déposer (poignée, ou appui maintenu sur la ligne) ──
@@ -16893,6 +17147,7 @@ let _clDrag = null, _clSuppressClick = false;
   box.addEventListener('pointerdown', (e) => {
     const row = e.target.closest('.cl-row');
     if (!row || (e.pointerType === 'mouse' && e.button !== 0) || licLocked('tel')) return; // aperçu : ordre figé
+    if (e.target.closest('.cl-more')) return; // « ⋯ » : le menu, pas de glisser
     _clDrag ={ row, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, active: false, ghost: null };
     if (e.target.closest('.cl-grip')) { e.preventDefault(); startDrag(); }
     else _clDrag.timer = setTimeout(startDrag, HOLD);
@@ -17460,13 +17715,17 @@ function chatDeliverPending() {
 // ── Lecture automatique (maquette 26d) ──
 // phase : { id, k: 'pause' | 'write' (contact) | 'type' (texte automatique) | 'actor' (le comédien tape) | 'button' (« Envoyer n° X ») }
 // type : frappe automatique envoyée à l'écran (chat:type), pour la reprise après rechargement
-const _chatAuto = { on: false, done: false, timer: null, tick: null, phase: null, t0: 0, dur: 0, type: null, seq: false };
+const _chatAuto = { on: false, done: false, timer: null, tick: null, phase: null, t0: 0, dur: 0, type: null, seq: false, full: false };
 const _chatNextMsg = () => _chat.msgs.find((x) => _chatValid(x) && !_chatSent(x)) || null;
 // fromSeq : lancée par une étape de Séquence → les messages du contact suivent
 // leurs durées enregistrées, même réglés « au bouton » (seul le comédien est attendu)
-function chatAutoStart(fromSeq) {
+// full (étape « Auto · tout automatique », maquette 41) : les réponses du comédien
+// s'écrivent aussi toutes seules (durée d'écriture enregistrée, 1 s au moins) et
+// partent une fois complètes : personne n'est attendu
+function chatAutoStart(fromSeq, full) {
   if (_chatAuto.on || !_chatNextMsg()) return;
   _chatAuto.seq = fromSeq === true;
+  _chatAuto.full = _chatAuto.seq && full === true;
   if (!_chat.open) openChatOnTarget();
   _chatAuto.on = true; _chatAuto.done = false;
   if (!_chatAuto.tick) _chatAuto.tick = setInterval(_chatRenderAuto, 500);
@@ -17481,7 +17740,7 @@ function chatAutoPause() {
 }
 function chatAutoStop() {
   chatAutoPause();
-  _chatAuto.phase = null; _chatAuto.type = null; _chatAuto.done = false; _chatAuto.seq = false;
+  _chatAuto.phase = null; _chatAuto.type = null; _chatAuto.done = false; _chatAuto.seq = false; _chatAuto.full = false;
 }
 // « ↶ » de la lecture : pause, puis le dernier message affiché est retiré
 function chatAutoBack() { chatAutoPause(); rewindChat(); }
@@ -17496,7 +17755,7 @@ function _chatAutoNext(resume) {
   // Repris au ▶ sur un message déjà en cours d'écriture par le comédien : on attend son envoi
   if (resume && _chatAuto.type && _chatAuto.type.id === m.id) { _chatAutoPhase(m.id, _chatAuto.type.dur ? 'type' : 'actor', _chatAuto.type.dur); renderChatPanel(); return; }
   if (m.from === 'contact' && m.send === 'button' && !_chatAuto.seq) { _chatAutoPhase(m.id, 'button'); renderChatPanel(); return; }
-  if (m.from === 'actor' && !m.auto && m.send === 'button') { _chatAutoPhase(m.id, 'actor'); renderChatPanel(); return; }
+  if (m.from === 'actor' && !m.auto && m.send === 'button' && !_chatAuto.full) { _chatAutoPhase(m.id, 'actor'); renderChatPanel(); return; }
   if (m.pause > 0) {
     _chatAutoPhase(m.id, 'pause', m.pause);
     _chatAuto.timer = setTimeout(() => { _chatAuto.timer = null; _chatAutoWrite(m.id); }, m.pause * 1000);
@@ -17515,10 +17774,12 @@ function _chatAutoWrite(id) {
     _chatAutoAfterPost(m);
     chatSave();
   } else {
-    // Comédien : le texte s'écrit tout seul (dur) et/ou part tout seul une fois complet (send)
-    const dur = m.auto ? Math.max(1, m.write) : null;
-    _chatAuto.type = { id: m.id, dur, send: m.send === 'auto', t0: Date.now() };
-    sendMsg(Object.assign({ type: 'chat:type', id: m.id, send: m.send === 'auto' }, dur ? { dur } : {}, _chatTarget()));
+    // Comédien : le texte s'écrit tout seul (dur) et/ou part tout seul une fois complet (send) ;
+    // lecture « tout automatique » d'une Séquence : les deux, quels que soient ses réglages
+    const full = _chatAuto.full;
+    const dur = m.auto || full ? Math.max(1, m.write) : null, send = m.send === 'auto' || full;
+    _chatAuto.type = { id: m.id, dur, send, t0: Date.now() };
+    sendMsg(Object.assign({ type: 'chat:type', id: m.id, send }, dur ? { dur } : {}, _chatTarget()));
     _chatAutoPhase(m.id, dur ? 'type' : 'actor', dur || 0);
   }
   renderChatPanel();
@@ -19941,7 +20202,8 @@ async function installPWA() {
 //   l'onglet Tel), Appel manqué (notification empilée sur l'écran verrouillé,
 //   pour un appel enregistré), Déverrouillage (code 4 ou 6 chiffres, ou
 //   glisser seul ; ensuite l'app visée ou une image d'écran d'accueil),
-//   Discussion (discussion enregistrée ; option « Lecture auto », 83-discussion.js),
+//   Discussion (discussion enregistrée ; lecture manuelle, « Auto · le comédien
+//   tape » ou « Auto · tout automatique », maquette 41, 83-discussion.js),
 //   Veille (maquette 29b : écran noir verrouillé qui se rallume aux
 //   notifications / appels et/ou au toucher, se rendort après N s),
 //   Batterie faible et Extinction (maquette 33), Réseau perdu / rétabli (34).
@@ -19950,7 +20212,9 @@ async function installPWA() {
 // batterie), enregistrée avec elle, affichée partout sur les écrans visés du
 // premier GO à « Recommencer » (STOP compris : rien ne s'éteint) ; elle prime
 // sur la barre de l'onglet Média. Les étapes Batterie faible / Réseau /
-// Extinction la font évoluer ; ↶ rend les valeurs d'avant.
+// Extinction la font évoluer ; ↶ rend les valeurs d'avant. Avec elle, un fond
+// d'écran facultatif (maquette 42) : écran verrouillé et pavé du code, pendant
+// toute la séquence (sans fond : le dégradé sombre).
 // Sans réseau : un appel devient « Appel impossible », un message du comédien
 // reste « Non distribué » (notification « Message non envoyé ») jusqu'au
 // retour du réseau, qui le distribue. Téléphone éteint : il ne reçoit plus
@@ -19974,7 +20238,8 @@ async function installPWA() {
 // séquence qui allume le strobe ou un effet à flashs rapides.
 // La console DMX ne pilote pas la Séquence. Séquences enregistrées :
 // 96-sequences-saved.js. Stockage : séquence en cours en localStorage, images
-// d'accueil dans IndexedDB (callAssetPut, clé « seqhome-<empreinte>:photo »).
+// d'accueil et fonds d'écran dans IndexedDB (callAssetPut, clé
+// « seqhome-<empreinte>:photo », partagée par empreinte).
 
 // Textes affichés, regroupés pour la traduction ({…} : valeurs)
 const _SEQ_TXT = {
@@ -20009,7 +20274,8 @@ const _SEQ_TXT = {
   rowUnlock0: 'Déverrouillage par glissement',
   rowChat: 'Discussion « {nom} »',
   rowChatReply: 'Discussion « {nom} » → réponse',
-  rowChatAuto: ' · lecture auto',
+  rowChatActor: ' · auto (comédien tape)',
+  rowChatFull: ' · auto complète',
   chatNext: 'Prochain : {qui} « {texte} »',
   rowSleep: 'Veille (écran noir)',
   rowBattery: 'Batterie faible {n} %',
@@ -20100,7 +20366,10 @@ const _SEQ_TXT = {
   labelBars: 'Barres', labelNetType: 'Réseau mobile', labelWifi: 'Wi-Fi', yes: 'Oui', no: 'Non',
   netLostNote: '« Pas de service » dans la barre d\'état : un appel devient « Appel impossible », un message du comédien reste « Non distribué ».',
   netBackNote: 'Les messages restés « Non distribué » partent.',
-  labelPlay: 'Lecture', playManual: 'Manuelle', playAuto: '▶ Lecture auto',
+  // Lecture de l'étape Discussion (maquette 41)
+  labelPlay: 'Lecture', playManual: 'Manuelle', playActor: '▶ Auto · le comédien tape', playFull: '▶ Auto · tout automatique',
+  playNote: 'Tout automatique : les réponses de {comedien} s\'écrivent aussi toutes seules, avec leurs durées enregistrées. « Le comédien tape » : le fil attend que {comedien} tape sur l\'écran.',
+  actorDefault: 'le comédien',
 };
 const _seqTpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
 
@@ -20125,11 +20394,17 @@ const _SEQ_SIG_RE = /^[0-9a-f]{8}-\d{1,9}$/;
 //   target ({ k: 'all' } | { k: 'group', id } | { k: 'screen', id }),
 //   trig ({ k: 'go' } | { k: 'after', s } | { k: 'gesture', g, t (secours, 0 = aucun) }),
 //   opt (média : { end } ; déverrouillage : { code: 4 | 6 | 0, then: 'app' | 'home', img, imgName } ;
-//        discussion : { auto } ; veille : { notif, touch, after } ; batterie : { level } ;
+//        discussion : { auto, full } (lecture : manuelle, auto le comédien tape, auto complète :
+//        auto ET full ; ancienne étape { auto: true } : le comédien tape) ; veille : { notif, touch, after } ; batterie : { level } ;
 //        réseau : { lost, bars, type, wifi }) }
-// Séquence : { name, steps, savedId, phone (« Téléphone au départ », 97-phone-status.js) }
+// Séquence : { name, steps, savedId, phone (« Téléphone au départ », 97-phone-status.js),
+//   wall (fond d'écran du téléphone, maquette 42 : { img (empreinte), name } ou null) }
 let _seq = _seqEmpty();
-function _seqEmpty() { return { name: '', steps: [], savedId: null, phone: phoneBarDefaults() }; }
+function _seqEmpty() { return { name: '', steps: [], savedId: null, phone: phoneBarDefaults(), wall: null }; }
+// Fond d'écran relu (stockage, séquence enregistrée) ; null : aucun (ancienne séquence comprise)
+function seqWallSanitize(w) {
+  return w && typeof w === 'object' && typeof w.img === 'string' && _SEQ_SIG_RE.test(w.img) ? { img: w.img, name: _seqLine(w.name, 60) } : null;
+}
 // Réglages « Téléphone au départ » (complétés si la séquence n'en a pas)
 function seqPhoneCfg() { if (!_seq.phone) _seq.phone = phoneBarDefaults(); return _seq.phone; }
 let _seqIdN = 0;
@@ -20174,7 +20449,10 @@ function seqSanitizeStep(s) {
     const o = s.opt || {};
     out.opt = { lost: o.lost !== false, bars: _seqClampInt(o.bars, 1, 4, 4), type: PB_NET_TYPES.includes(o.type) ? o.type : PB_NET_TYPES[1], wifi: o.wifi !== false };
   } else if (s.kind !== 'off' && typeof s.ref === 'string' && _SEQ_ID_RE.test(s.ref)) out.ref = s.ref;
-  if (s.kind === 'chat') out.opt = { auto: !!(s.opt && s.opt.auto === true) };
+  if (s.kind === 'chat') {
+    const auto = !!(s.opt && s.opt.auto === true);
+    out.opt = { auto, full: auto && s.opt.full === true };
+  }
   return out;
 }
 function _seqClampInt(v, min, max, def) { const n = Math.round(Number(v)); return Number.isFinite(n) && v !== null && v !== undefined ? Math.min(max, Math.max(min, n)) : def; }
@@ -20191,10 +20469,11 @@ function seqLoad() {
     _seq.steps = seqSanitizeSteps(o.steps);
     _seq.savedId = typeof o.savedId === 'string' && _SEQ_ID_RE.test(o.savedId) ? o.savedId : null;
     _seq.phone = phoneBarSanitize(o.phone);
+    _seq.wall = seqWallSanitize(o.wall);
   }
 }
 function seqSave() {
-  return _lsPut(SEQ_LS_KEY, JSON.stringify({ v: 1, name: _seq.name, steps: _seq.steps, savedId: _seq.savedId, phone: seqPhoneCfg() }));
+  return _lsPut(SEQ_LS_KEY, JSON.stringify({ v: 1, name: _seq.name, steps: _seq.steps, savedId: _seq.savedId, phone: seqPhoneCfg(), wall: _seq.wall || null }));
 }
 
 // ── Éléments référencés ──
@@ -20234,12 +20513,14 @@ function seqStepLabel(s) {
     case 'color': t = _seqTpl(_SEQ_TXT.rowColor, { spec: _seqColorSpecText(it.spec), nom: it.name }); break;
     case 'effect': t = _seqTpl(_SEQ_TXT.rowEffect, { nom: it.name }); break;
     case 'media': t = _seqTpl(_SEQ_TXT.rowMedia, { nom: it.name }); break;
-    case 'call': t = _seqTpl(_SEQ_TXT.rowCall, { nom: it.name || 'Inconnu' }); break;
-    case 'sms': t = _seqSmsLock(it) ? _seqTpl(_SEQ_TXT.rowSmsLock, { nom: it.name || 'Inconnu' }) : _seqTpl(_SEQ_TXT.rowSms, { texte: it.msg || it.name || '' }); break;
-    case 'notif': t = _seqTpl(_seqNotifLock(it) ? _SEQ_TXT.rowNotifLock : _SEQ_TXT.rowNotif, { nom: it.name || it.appName || '' }); break;
+    // Appels, SMS, notifications : nom de l'enregistrement (maquette 43, callEntryName) ;
+    // SMS non verrouillé sans nom propre : son texte
+    case 'call': t = _seqTpl(_SEQ_TXT.rowCall, { nom: callEntryName(it) }); break;
+    case 'sms': t = _seqSmsLock(it) ? _seqTpl(_SEQ_TXT.rowSmsLock, { nom: callEntryName(it) }) : _seqTpl(_SEQ_TXT.rowSms, { texte: it.title || it.msg || it.name || '' }); break;
+    case 'notif': t = _seqTpl(_seqNotifLock(it) ? _SEQ_TXT.rowNotifLock : _SEQ_TXT.rowNotif, { nom: callEntryName(it) }); break;
     case 'missed': t = _SEQ_TXT.rowMissed; break;
     case 'unlock': t = _SEQ_TXT['rowUnlock' + it.code]; break;
-    case 'chat': t = _seqTpl(it.msgs.some((m) => m.from === 'actor') ? _SEQ_TXT.rowChatReply : _SEQ_TXT.rowChat, { nom: it.contact || it.name }) + (s.opt.auto ? _SEQ_TXT.rowChatAuto : ''); break;
+    case 'chat': t = _seqTpl(it.msgs.some((m) => m.from === 'actor') ? _SEQ_TXT.rowChatReply : _SEQ_TXT.rowChat, { nom: it.contact || it.name }) + (s.opt.full ? _SEQ_TXT.rowChatFull : s.opt.auto ? _SEQ_TXT.rowChatActor : ''); break;
     case 'sleep': t = _SEQ_TXT.rowSleep; break;
     case 'battery': t = _seqTpl(_SEQ_TXT.rowBattery, { n: it.level }); break;
     case 'off': t = _SEQ_TXT.rowOff; break;
@@ -20566,7 +20847,9 @@ async function _seqExec(s, it, ids) {
         if (p && p.mode !== 'off') { p.mode = 'unlocked'; p.awaitUnlock = null; p.sleep = null; }
       }
       await _seqOpenChat(it, ids);
-      if (s.opt.auto && _chat.open) chatAutoStart(true); // Lecture auto (maquette 26d) : durées enregistrées, sans attendre « Envoyer »
+      // Lecture auto (maquettes 26d, 41) : durées enregistrées, sans attendre « Envoyer » ;
+      // tout automatique : les réponses du comédien s'écrivent et partent toutes seules
+      if (s.opt.auto && _chat.open) chatAutoStart(true, s.opt.full);
       break;
     case 'sleep':
       // Veille (maquette 29b) : verrouillé, écran noir ; rallume un téléphone éteint
@@ -20711,7 +20994,13 @@ async function _seqEnsureHome(sid, sig) {
   if (data) await ensureSlotImage('__seqhome', data, [sid]);
   return !!data;
 }
-function _seqPhoneMsg(sid, homeOk) {
+// Fond d'écran de la séquence (maquette 42) vers cet écran s'il ne l'a pas (emplacement unique __seqwall)
+async function _seqEnsureWall(sid, sig) {
+  const data = await _seqHomeData(sig);
+  if (data) await ensureSlotImage('__seqwall', data, [sid]);
+  return !!data;
+}
+function _seqPhoneMsg(sid, homeOk, wallOk) {
   const p = _seqPhones.get(sid) || { mode: 'off', style: 'glass', notifs: [] };
   const u = _seqUnlockFor(sid);
   const now = Date.now();
@@ -20723,6 +21012,7 @@ function _seqPhoneMsg(sid, homeOk) {
   };
   if (u) m.unlock = { code: u.code, then: u.then };
   if (homeOk) m.home = true;
+  if (wallOk) m.wall = true;
   const w = _seqWatchFor(sid);
   if (w.length) m.watch = w;
   // Barre d'état, veille, batterie, extinction : de la séquence commencée seulement
@@ -20747,11 +21037,13 @@ async function _seqPushPhones(only, force) {
     const u = _seqUnlockFor(sid);
     const homeSig = p && p.mode === 'home' ? p.home : u && u.then === 'home' ? u.img : null;
     const homeOk = homeSig ? await _seqEnsureHome(sid, homeSig) : false;
-    const m = _seqPhoneMsg(sid, homeOk);
+    const wallSig = p && _seq.wall ? _seq.wall.img : null;
+    const wallOk = wallSig ? await _seqEnsureWall(sid, wallSig) : false;
+    const m = _seqPhoneMsg(sid, homeOk, wallOk);
     const chime = p && p.chime && m.notifs.some((n) => n.id === p.chime.id) ? p.chime : null;
     if (p) delete p.chime;
     const b = m.bar;
-    const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id), m.unlock, m.home, m.watch,
+    const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id), m.unlock, m.home, m.wall, m.watch,
       b ? [b.clock.mode, b.clock.date, b.clock.time, b.net, b.bat] : null, m.sleep, m.alert, m.power]);
     if (!force && !chime && _seqPhoneSent.get(sid) === sig) continue;
     if (!p && !m.watch && !_seqPhoneSent.has(sid)) continue; // rien à dire à cet écran
@@ -20786,15 +21078,15 @@ function seqOnScreensResync(ids) {
   if (l.length) _seqQueue(() => _seqPushPhones(l, true));
 }
 
-// ── Images d'accueil : IndexedDB, clé dérivée du contenu (partagée entre séquences) ──
+// ── Images d'accueil et fonds d'écran : IndexedDB, clé dérivée du contenu (partagée entre séquences) ──
 function seqHomeKey(sig) { return 'seqhome-' + sig + ':photo'; }
 function seqImageSig(data) { return _chsvPhotoSig(data); }
 // Images encore utilisées (séquence en cours et enregistrées) : les autres sont effacées
 function seqGcImages(dropped) {
   const used = new Set();
-  const scan = (steps) => { for (const s of steps) if (s.kind === 'unlock' && s.opt.img) used.add(s.opt.img); };
-  scan(_seq.steps);
-  if (typeof seqSaved !== 'undefined') for (const e of seqSaved) scan(e.steps);
+  const scan = (steps, wall) => { for (const s of steps) if (s.kind === 'unlock' && s.opt.img) used.add(s.opt.img); if (wall) used.add(wall.img); };
+  scan(_seq.steps, _seq.wall);
+  if (typeof seqSaved !== 'undefined') for (const e of seqSaved) scan(e.steps, e.wall);
   if (_seqEdit && _seqEdit.step.kind === 'unlock' && _seqEdit.step.opt.img) used.add(_seqEdit.step.opt.img);
   for (const sig of dropped) if (sig && !used.has(sig)) callAssetDelete(seqHomeKey(sig));
 }
@@ -20943,7 +21235,7 @@ function _seqEditDefaults(s) {
     s.opt = {};
     const list = _seqRefList(s.kind);
     s.ref = list.length ? list[0].id : null;
-    if (s.kind === 'chat') s.opt = { auto: false };
+    if (s.kind === 'chat') s.opt = { auto: false, full: false };
   }
 }
 // Éléments proposés pour un type : [{ id, label, sw (couleur d'aperçu) }]
@@ -20952,9 +21244,8 @@ function _seqRefList(kind) {
     case 'color': return colorMemories.map((m) => ({ id: m.id, label: m.name, sw: memorySwatch(m.spec) }));
     case 'effect': return fxMemories.filter((m) => EFFECT_CONFIG[m.effect]).map((m) => ({ id: m.id, label: (EFFECT_CONFIG[m.effect].icon || '') + ' ' + m.name }));
     case 'media': return _mediaPool.map((m) => ({ id: m.id, label: (m.kind === 'vid' ? '🎬 ' : '🖼 ') + m.name }));
-    case 'call': case 'missed': return callList.call.map((e, i) => ({ id: e.id, label: (i + 1) + ' · ' + (e.name || 'Inconnu') }));
-    case 'sms': return callList.sms.map((e, i) => ({ id: e.id, label: (i + 1) + ' · ' + (e.name || 'Inconnu') }));
-    case 'notif': return callList.notif.map((e, i) => ({ id: e.id, label: (i + 1) + ' · ' + (e.name || e.appName || '') }));
+    case 'call': case 'missed': case 'sms': case 'notif':
+      return callList[kind === 'missed' ? 'call' : kind].map((e, i) => ({ id: e.id, label: (i + 1) + ' · ' + callEntryName(e) })); // nom de l'enregistrement (maquette 43)
     case 'chat': return chatSaved.map((e) => ({ id: e.id, label: e.name }));
   }
   return [];
@@ -21007,10 +21298,13 @@ function renderSeqStep() {
           + _seqOpt(s.opt.end === 'off', 'seqEditEnd(\'off\')', _SEQ_TXT.endOff) + '</div>';
       }
     }
-    // Discussion : lecture manuelle ou automatique (maquette 26d), comme « Ensuite »
+    // Discussion : lecture manuelle, auto (le comédien tape) ou tout automatique (maquette 41)
     if (s.kind === 'chat') {
-      h += '<span class="ss-label ss-sub">' + escapeHtml(_SEQ_TXT.labelPlay) + '</span><div class="ss-row">'
-        + _seqOpt(!s.opt.auto, 'seqEditOpt(\'auto\',false)', _SEQ_TXT.playManual) + _seqOpt(!!s.opt.auto, 'seqEditOpt(\'auto\',true)', _SEQ_TXT.playAuto) + '</div>';
+      const o = s.opt, it = seqRefItem(s);
+      h += '<span class="ss-label ss-sub">' + escapeHtml(_SEQ_TXT.labelPlay) + '</span><div class="ss-row ss-play">'
+        + _seqOpt(!o.auto, 'seqEditPlay(\'manual\')', _SEQ_TXT.playManual) + _seqOpt(o.auto && !o.full, 'seqEditPlay(\'actor\')', _SEQ_TXT.playActor)
+        + _seqOpt(!!o.full, 'seqEditPlay(\'full\')', _SEQ_TXT.playFull) + '</div>'
+        + '<div class="ss-note ss-play-note">' + escapeHtml(_seqTpl(_SEQ_TXT.playNote, { comedien: (it && it.actor) || _SEQ_TXT.actorDefault })) + '</div>';
     }
   }
   document.getElementById('ssRefCard').innerHTML = h;
@@ -21089,6 +21383,13 @@ function seqEditOpt(k, v) {
   if (c) e.step.opt = c.opt;
   renderSeqStep();
 }
+// Lecture de l'étape Discussion : 'manual' | 'actor' (le comédien tape) | 'full' (tout automatique)
+function seqEditPlay(v) {
+  const e = _seqEdit;
+  if (!e || e.step.kind !== 'chat') return;
+  e.step.opt = { auto: v === 'actor' || v === 'full', full: v === 'full' };
+  renderSeqStep();
+}
 function seqEditSleepDelay(d) { const e = _seqEdit; if (e && e.step.kind === 'sleep') seqEditOpt('after', e.step.opt.after + d); }
 function seqEditLevel(d) { const e = _seqEdit; if (e && e.step.kind === 'battery') seqEditOpt('level', e.step.opt.level + d); }
 function seqEditKind(k) {
@@ -21141,11 +21442,9 @@ function _seqPaintHomeThumb(sig) {
     if (th && _seqEdit && _seqEdit.step.opt.img === sig) th.style.backgroundImage = d ? 'url(' + d + ')' : '';
   });
 }
-// Image d'écran d'accueil : redimensionnée (1280 px), vérifiée (safeImageData), gardée sur l'appareil
-function onSeqHomeImage(files) {
-  const f = files && files[0];
-  const e = _seqEdit;
-  if (!f || !e || e.step.kind !== 'unlock') return;
+// Image importée (écran d'accueil, fond d'écran) : redimensionnée (1280 px),
+// vérifiée (safeImageData), gardée sur l'appareil par empreinte ; done(sig) ou done(null) : illisible
+function seqImportImage(f, done) {
   const img = new Image();
   img.onload = async () => {
     URL.revokeObjectURL(img.src);
@@ -21153,18 +21452,28 @@ function onSeqHomeImage(files) {
     const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * s)); c.height = Math.max(1, Math.round(img.height * s));
     c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
     const data = safeImageData(c.toDataURL('image/jpeg', 0.8));
-    if (!data) { e.err = _SEQ_TXT.homeBad; renderSeqStep(); return; }
-    const sig = seqImageSig(data), old = e.step.opt.img;
+    if (!data) { done(null); return; }
+    const sig = seqImageSig(data);
     await callAssetPut(seqHomeKey(sig), data);
-    if (_seqEdit !== e) return;
+    done(sig);
+  };
+  img.onerror = () => { URL.revokeObjectURL(img.src); done(null); };
+  img.src = URL.createObjectURL(f);
+}
+function onSeqHomeImage(files) {
+  const f = files && files[0];
+  const e = _seqEdit;
+  if (!f || !e || e.step.kind !== 'unlock') return;
+  seqImportImage(f, (sig) => {
+    if (_seqEdit !== e) { if (sig) seqGcImages([sig]); return; }
+    if (!sig) { e.err = _SEQ_TXT.homeBad; renderSeqStep(); return; }
+    const old = e.step.opt.img;
     e.step.opt.img = sig;
     e.step.opt.imgName = _seqLine(f.name || 'image', 60);
     e.err = '';
     renderSeqStep();
     if (old && old !== sig) seqGcImages([old]);
-  };
-  img.onerror = () => { URL.revokeObjectURL(img.src); if (_seqEdit === e) { e.err = _SEQ_TXT.homeBad; renderSeqStep(); } };
-  img.src = URL.createObjectURL(f);
+  });
 }
 function seqStepSave() {
   const e = _seqEdit;
@@ -21697,6 +22006,9 @@ async function prepSendVideo(it, sid) {
 //   • Extinction (maquette 33) : fondu au noir, logo neutre, écran noir ; le
 //     téléphone ne répond plus à rien. Rallumé (étape « Veille » ou ↶) : logo
 //     neutre puis l'écran verrouillé (endormi après une « Veille »).
+//   • Fond d'écran de la séquence (maquette 42, wall) : image préchargée sous
+//     __seqwall, couvrante sous un voile, sur l'écran verrouillé et le pavé du
+//     code ; absente ou pas encore arrivée : le dégradé sombre.
 // Textes affichés regroupés pour la traduction ; contenus reçus en textContent.
 const _SP_TXT = {
   unlockHint: 'Touchez pour déverrouiller',
@@ -21714,7 +22026,7 @@ const SP_POWER_FADE_MS = 600, SP_LOGO_MS = 1500, SP_BOOT_MS = 1200;
 const _SP_LOGO = '<svg class="pp-logo" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" aria-hidden="true"><path d="M20.5 17.5a19 19 0 1 0 23 0"/><path d="M32 9v22"/></svg>';
 const SP_GESTURE_GAP_MS = 400, SP_GESTURE_BURST = 5, SP_RELOCK_GUARD_MS = 1500, SP_REFRESH_MS = 15000;
 
-let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, watch: Set, sleep, alert, power }
+let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, wall, watch: Set, sleep, alert, power }
 let _spSleep = null;          // veille : { cfg, awake, timer, callOn }
 let _spAlertClosed = null;    // alerte fermée ici (id), pas encore confirmée par la télécommande
 let _spPowerSeq = 0;          // jeton des animations d'extinction / rallumage
@@ -21754,7 +22066,7 @@ function screenPhoneState(m) {
   const fresh = !!prev && notifs.some((n) => !prev.notifs.some((o) => o.id === n.id));
   const alertNew = !!m.alert && !(prev && prev.alert && prev.alert.id === m.alert.id);
   if (!m.alert || (_spAlertClosed && m.alert.id !== _spAlertClosed)) _spAlertClosed = null;
-  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, watch: new Set(m.watch), sleep: m.sleep || null, alert: m.alert || null, power: m.power === 'off' ? 'off' : 'on' };
+  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, wall: !!m.wall, watch: new Set(m.watch), sleep: m.sleep || null, alert: m.alert || null, power: m.power === 'off' ? 'off' : 'on' };
   screenSeqBar(m.bar); // 97-phone-status.js
   _spRender();
   _spRenderAlert();
@@ -21782,6 +22094,17 @@ function screenPhoneHide() {
 }
 // Image d'accueil arrivée en cache après l'état (75-media-screen.js)
 function screenPhoneOnHomeCached() { if (_scPhone && _scPhone.mode === 'home') _spRender(); }
+// Fond d'écran arrivé (ou remplacé) en cache après l'état : posé sans redessiner l'écran
+function screenPhoneOnWallCached() { _spPaintWall(); }
+function _spPaintWall() {
+  const p = _scPhone;
+  const root = document.querySelector('#screen-phone .sp-lock, #screen-phone .sp-code');
+  if (!root) return;
+  const c = p && p.wall ? _mediaCache.get('__seqwall') : null;
+  const img = c && c.kind === 'img' ? safeImageData(c.data) : null;
+  if (img) root.style.setProperty('--sp-wall', 'url(' + img + ')'); else root.style.removeProperty('--sp-wall');
+  root.classList.toggle('has-wall', !!img);
+}
 
 // ── Gestes ──
 function phoneGesture(g, n) {
@@ -21890,6 +22213,7 @@ function _spRender() {
     for (const n of p.notifs.slice().reverse()) { const c = _spCard(n); if (!seen.has(n.id)) c.classList.add('sp-new'); stack.appendChild(c); } // la plus récente en haut
     root.append(head, stack, _spEl('div', 'sp-hint', _SP_TXT.unlockHint));
     el.appendChild(root);
+    _spPaintWall();
     if (!_spRefreshTimer) _spRefreshTimer = setInterval(_spRefresh, SP_REFRESH_MS);
   } else if (p.mode === 'code') {
     const root = _spEl('div', 'sp-code' + (enter ? ' sp-enter' : ''));
@@ -21905,6 +22229,7 @@ function _spRender() {
     }
     root.appendChild(keys);
     el.appendChild(root);
+    _spPaintWall();
     _spRenderDots();
   } else if (p.mode === 'home') {
     const root = _spEl('div', 'sp-home');
@@ -22119,15 +22444,16 @@ function _spAlertClose() {
 // éléments enregistrés des autres onglets, jamais des copies (une mémoire
 // modifiée est jouée telle quelle, une supprimée devient « élément
 // introuvable »), avec cible, départ et réglages, et ses réglages « Téléphone
-// au départ » (maquette 28b : heure, réseau, batterie) ; pas le déroulé.
-// Anciennes séquences (sans ces réglages) : valeurs par défaut (heure réelle).
+// au départ » (maquette 28b : heure, réseau, batterie ; maquette 42 : fond
+// d'écran) ; pas le déroulé.
+// Anciennes séquences (sans ces réglages) : valeurs par défaut (heure réelle, sans fond).
 //   • « + Enregistrer la séquence en cours » : demande un nom, ajoute en fin de liste.
 //   • Toucher une ligne : la charge dans « Séquence en cours » (confirmation si
 //     la séquence en cours a des modifications non enregistrées) ; un déroulé
 //     commencé repart de zéro (Recommencer).
 //   • « ⋯ » : renommer, dupliquer, supprimer (avec confirmation).
 // Stockage : localStorage (au plus SEQ_SAVED_MAX séquences, revalidées au
-// chargement) ; les images d'accueil restent dans IndexedDB, partagées par
+// chargement) ; les images d'accueil et fonds d'écran restent dans IndexedDB, partagés par
 // empreinte (seqGcImages efface celles que plus rien n'utilise). Aucun export
 // pour l'instant. Jamais déclenchées par la console DMX.
 const SEQ_SAVED_KEY = 'setremote-seq-saved-v1';
@@ -22146,7 +22472,7 @@ const _SQSV_TXT = {
   full: 'Liste pleine ({max} séquences)',
   empty: 'Aucune séquence enregistrée pour l\'instant.',
   hint: 'Toucher : charger dans « Séquence en cours ». ⋯ : renommer · dupliquer · supprimer.',
-  note: 'Une séquence enregistrée garde ses étapes, leurs cibles et leurs départs, et son « Téléphone au départ ». Les couleurs, effets, médias, appels, SMS, notifications et discussions restent ceux de leurs onglets : modifiés là-bas, ils sont joués tels quels.',
+  note: 'Une séquence enregistrée garde ses étapes, leurs cibles et leurs départs, et son « Téléphone au départ » (fond d\'écran compris). Les couleurs, effets, médias, appels, SMS, notifications et discussions restent ceux de leurs onglets : modifiés là-bas, ils sont joués tels quels.',
   sheetSave: 'Enregistrer la séquence en cours',
   sheetRename: 'Renommer la séquence',
   nameLabel: 'Nom de la séquence',
@@ -22167,7 +22493,7 @@ let seqSaved = [];
 
 function _sqsvSanitize(e) {
   if (!e || typeof e !== 'object' || typeof e.id !== 'string' || !_SEQ_ID_RE.test(e.id)) return null;
-  return { id: e.id, name: _seqLine(e.name, SEQ_NAME_MAX) || _SQSV_TXT.untitled, steps: seqSanitizeSteps(e.steps), phone: phoneBarSanitize(e.phone) };
+  return { id: e.id, name: _seqLine(e.name, SEQ_NAME_MAX) || _SQSV_TXT.untitled, steps: seqSanitizeSteps(e.steps), phone: phoneBarSanitize(e.phone), wall: seqWallSanitize(e.wall) };
 }
 function loadSavedSeqs() {
   let o = null;
@@ -22181,11 +22507,13 @@ function _sqsvPersist() {
 }
 const _sqsvNewId = () => 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const _sqsvClone = (steps) => JSON.parse(JSON.stringify(steps));
-const _sqsvSig = (steps, phone) => JSON.stringify([steps, phone]);
+const _sqsvSig = (steps, phone, wall) => JSON.stringify([steps, phone, wall ? wall.img : null]);
+// Images d'une séquence (accueil des déverrouillages, fond d'écran) : pour seqGcImages
+const _sqsvImages = (steps, wall) => steps.filter((s) => s.kind === 'unlock' && s.opt.img).map((s) => s.opt.img).concat(wall ? [wall.img] : []);
 // Modifications non enregistrées : différente de l'entrée d'origine ; sans entrée, toute séquence non vide
 function seqHasUnsavedChanges() {
   const e = seqSaved.find((x) => x.id === _seq.savedId);
-  if (e) return _sqsvSig(e.steps, e.phone) !== _sqsvSig(_seq.steps, seqPhoneCfg());
+  if (e) return _sqsvSig(e.steps, e.phone, e.wall) !== _sqsvSig(_seq.steps, seqPhoneCfg(), _seq.wall);
   return _seq.steps.length > 0;
 }
 function _sqsvDefaultName() { return (_seq.name || _SQSV_TXT.untitled).slice(0, SEQ_NAME_MAX); }
@@ -22193,7 +22521,7 @@ function _sqsvDefaultName() { return (_seq.name || _SQSV_TXT.untitled).slice(0, 
 // « + Enregistrer la séquence en cours »
 function saveCurrentSeq(name) {
   if (seqSaved.length >= SEQ_SAVED_MAX) return null;
-  const e = { id: _sqsvNewId(), name: _seqLine(String(name || '').trim(), SEQ_NAME_MAX) || _sqsvDefaultName(), steps: _sqsvClone(_seq.steps), phone: _sqsvClone(seqPhoneCfg()) };
+  const e = { id: _sqsvNewId(), name: _seqLine(String(name || '').trim(), SEQ_NAME_MAX) || _sqsvDefaultName(), steps: _sqsvClone(_seq.steps), phone: _sqsvClone(seqPhoneCfg()), wall: _seq.wall ? Object.assign({}, _seq.wall) : null };
   seqSaved.push(e);
   if (!_sqsvPersist()) { seqSaved.pop(); alert(_SQSV_TXT.storeFull); return null; }
   _seq.savedId = e.id;
@@ -22210,8 +22538,8 @@ function loadSavedSeq(id) {
   if (e.id === _seq.savedId && !dirty) { setSeqView('cur'); return true; }
   if (dirty && !confirm(_seqTpl(_SQSV_TXT.confirmLoad, { nom: e.name }))) return false;
   if (seqPos() >= 0 || _seqRun.state !== 'idle') seqRestart();
-  const dropped = _seq.steps.filter((s) => s.kind === 'unlock' && s.opt.img).map((s) => s.opt.img);
-  _seq = { name: e.name, steps: _sqsvClone(e.steps), savedId: e.id, phone: _sqsvClone(e.phone) };
+  const dropped = _sqsvImages(_seq.steps, _seq.wall);
+  _seq = { name: e.name, steps: _sqsvClone(e.steps), savedId: e.id, phone: _sqsvClone(e.phone), wall: e.wall ? Object.assign({}, e.wall) : null };
   seqSave();
   seqGcImages(dropped);
   setSeqView('cur');
@@ -22226,12 +22554,12 @@ function renameSavedSeq(id, name) {
   if (_seq.savedId === id) { _seq.name = e.name; seqSave(); }
   renderSeq();
 }
-// Copie placée juste après l'original (images d'accueil partagées par empreinte)
+// Copie placée juste après l'original (images d'accueil et fond partagés par empreinte)
 function duplicateSavedSeq(id) {
   const i = seqSaved.findIndex((x) => x.id === id);
   if (i < 0 || seqSaved.length >= SEQ_SAVED_MAX) return null;
   const src = seqSaved[i];
-  const e = { id: _sqsvNewId(), name: _seqTpl(_SQSV_TXT.copy, { nom: src.name }).slice(0, SEQ_NAME_MAX), steps: _sqsvClone(src.steps), phone: _sqsvClone(src.phone) };
+  const e = { id: _sqsvNewId(), name: _seqTpl(_SQSV_TXT.copy, { nom: src.name }).slice(0, SEQ_NAME_MAX), steps: _sqsvClone(src.steps), phone: _sqsvClone(src.phone), wall: src.wall ? Object.assign({}, src.wall) : null };
   seqSaved.splice(i + 1, 0, e);
   if (!_sqsvPersist()) { seqSaved.splice(i + 1, 1); alert(_SQSV_TXT.storeFull); return null; }
   renderSeq();
@@ -22244,7 +22572,7 @@ function deleteSavedSeq(id) {
   const [e] = seqSaved.splice(i, 1);
   _sqsvPersist();
   if (_seq.savedId === id) { _seq.savedId = null; seqSave(); }
-  seqGcImages(e.steps.filter((s) => s.kind === 'unlock' && s.opt.img).map((s) => s.opt.img));
+  seqGcImages(_sqsvImages(e.steps, e.wall));
   renderSeq();
   return true;
 }
@@ -22559,7 +22887,12 @@ function _sbTick() {
 //   • Date et heure : « L'heure avance » (depuis la date et l'heure réglées,
 //     au premier GO), « Figée », « Heure réelle » (celle de l'écran) ;
 //   • Réseau : Pas de service / 1 à 4 barres, 3G / 4G / 5G, Mode avion ; Wi-Fi ;
-//   • Batterie : niveau, en charge, pourcentage affiché.
+//   • Batterie : niveau, en charge, pourcentage affiché ;
+//   • Fond d'écran (maquette 42, Séquence seulement) : image de l'écran
+//     verrouillé et du pavé du code pendant toute la séquence, importée comme
+//     l'image d'accueil d'un déverrouillage (91-sequence.js : seqImportImage,
+//     IndexedDB par empreinte), envoyée aux écrans sous __seqwall. Sans fond :
+//     le dégradé sombre.
 // Deux usages, même éditeur :
 //   • Séquence (« Téléphone au départ », ligne sous le nom de la séquence) :
 //     réglages enregistrés avec la séquence (91-sequence.js, 96-sequences-saved.js),
@@ -22587,6 +22920,10 @@ const _PP_TXT = {
   noteMedia: 'Bandeau haut au-dessus des médias affichés seuls, hors séquence, sur les écrans où la barre est activée (onglet Média). Pendant une séquence, son « Téléphone au départ » prime sur ses écrans.',
   sumReal: 'Heure réelle', sumFrozen: '{heure} figée', sumPlane: 'Mode avion', sumNoService: 'Pas de service',
   mediaEdit: 'Régler ›',
+  // Fond d'écran (maquette 42)
+  labelWall: 'Fond d\'écran', wallNote: 'Écran verrouillé et code du téléphone, pendant toute la séquence.',
+  wallNone: 'Aucun fond : dégradé sombre', wallChange: 'CHANGER…', wallPick: 'CHOISIR…', wallRemove: 'RETIRER',
+  wallBad: '⚠ Image illisible', wallThumbAria: 'Aperçu du fond d\'écran',
 };
 const _ppTpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
 
@@ -22599,7 +22936,7 @@ function phoneParamsSummary(cfg) {
 }
 
 // ── Éditeur (vue plein écran, comme l'éditeur d'étape) ──
-let _pp = null; // { ctx: 'seq' | 'media', cfg (brouillon appliqué à chaque changement) }
+let _pp = null; // { ctx: 'seq' | 'media', cfg (brouillon appliqué à chaque changement), wallErr }
 function openPhoneParams(ctx) {
   const media = ctx === 'media';
   if (!media && licLocked('seq')) return; // aperçu sans licence (77-licence-ui.js)
@@ -22666,6 +23003,58 @@ function renderPhoneParams() {
     + '<div class="pp-level"><input type="range" id="ppLevel" min="1" max="100" step="1" value="' + b.level + '" aria-label="' + escapeHtml(_PP_TXT.levelAria) + '" style="--v:' + b.level + '%" oninput="ppSetLevel(this.value)">'
     + '<b id="ppLevelVal">' + escapeHtml(_ppTpl(_PP_TXT.level, { n: b.level })) + '</b></div>'
     + '<div class="ss-row">' + _ppOpt(b.charging, 'ppToggleBat(\'charging\')', escapeHtml(_PP_TXT.charging)) + _ppOpt(b.pct, 'ppToggleBat(\'pct\')', escapeHtml(_PP_TXT.pct)) + '</div>';
+  _ppRenderWall();
+}
+// Fond d'écran (maquette 42) : séquence seulement (pas la barre de l'onglet Média)
+function _ppRenderWall() {
+  const box = document.getElementById('ppWall');
+  if (!box) return;
+  const e = _pp;
+  if (!e || e.ctx !== 'seq') { box.textContent = ''; return; }
+  const w = _seq.wall;
+  const btn = (cls, fn, label) => '<button type="button" class="pp-wall-btn' + cls + '" onclick="' + fn + '">' + escapeHtml(label) + '</button>';
+  box.innerHTML = '<span class="ss-label">' + escapeHtml(_PP_TXT.labelWall) + '</span>'
+    + '<div class="pp-wall"><button type="button" class="pp-wall-thumb" id="ppWallThumb" aria-label="' + escapeHtml(_PP_TXT.wallThumbAria) + '" onclick="ppPickWall()"><span>' + escapeHtml(e.cfg.clock.mode !== 'real' && e.cfg.clock.time ? e.cfg.clock.time : phoneBarToday().time) + '</span></button>'
+    + '<div class="pp-wall-col"><span class="pp-wall-name">' + escapeHtml(w ? w.name || 'image' : _PP_TXT.wallNone) + '</span>'
+    + '<span class="pp-wall-note">' + escapeHtml(_PP_TXT.wallNote) + '</span>'
+    + (e.wallErr ? '<span class="pp-wall-note ss-warn">' + escapeHtml(e.wallErr) + '</span>' : '')
+    + '<div class="pp-wall-btns">' + btn('', 'ppPickWall()', w ? _PP_TXT.wallChange : _PP_TXT.wallPick) + (w ? btn(' danger', 'ppRemoveWall()', _PP_TXT.wallRemove) : '') + '</div></div></div>';
+  if (w) {
+    const sig = w.img;
+    _seqHomeData(sig).then((d) => {
+      const th = document.getElementById('ppWallThumb');
+      if (th && _seq.wall && _seq.wall.img === sig) { th.style.backgroundImage = d ? 'url(' + d + ')' : ''; th.classList.toggle('has-img', !!d); }
+    });
+  }
+}
+function ppPickWall() {
+  if (!_pp || _pp.ctx !== 'seq' || licLocked('seq')) return; // aperçu sans licence (77-licence-ui.js)
+  const inp = document.getElementById('ppWallInput');
+  if (inp) inp.click();
+}
+// Fond choisi : remplace l'ancien (effacé si plus rien ne s'en sert), renvoyé aux écrans de la séquence
+function onPhoneWallImage(files) {
+  const f = files && files[0];
+  const e = _pp;
+  if (!f || !e || e.ctx !== 'seq' || licLocked('seq')) return;
+  seqImportImage(f, (sig) => {
+    if (!sig) { if (_pp === e) { e.wallErr = _PP_TXT.wallBad; _ppRenderWall(); } return; }
+    _ppSetWall({ img: sig, name: _seqLine(f.name || 'image', 60) });
+  });
+}
+function ppRemoveWall() {
+  if (!_pp || _pp.ctx !== 'seq' || licLocked('seq')) return;
+  _ppSetWall(null);
+}
+function _ppSetWall(w) {
+  const old = _seq.wall;
+  _seq.wall = w;
+  if (_pp) _pp.wallErr = '';
+  if (!seqSave()) alert(_SEQ_TXT.storeFull);
+  if (old && (!w || old.img !== w.img)) seqGcImages([old.img]);
+  _ppRenderWall();
+  renderSeq();
+  _seqQueue(() => _seqPushPhones()); // déroulé commencé : les écrans prennent le nouveau fond
 }
 function ppSetClock(m) {
   const e = _pp;

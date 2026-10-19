@@ -212,7 +212,9 @@ doublon, `kind` sms / notif / missed, textes bornés, `ago` en secondes ≤ 7 jo
 l'écran calcule l'heure relative avec sa propre horloge), `unlock { code: 0 | 4
 | 6, then: app | home }` (aucun code ne voyage : chaque touche remplit le point
 suivant ; `mode: 'code'` exige un code attendu), `home` (image d'accueil
-préchargée en fragments sous `__seqhome`), `watch` (gestes attendus de cet
+préchargée en fragments sous `__seqhome`), `wall` (fond d'écran de la
+séquence, maquette 42, préchargé sous `__seqwall` : écran verrouillé et pavé
+du code), `watch` (gestes attendus de cet
 écran, sans `unlock`) et `chime` (son de la notification qui vient d'arriver,
 jamais à la resynchronisation). `phone:gesture { g, n? }` (écran →
 télécommande, `PHONE_GESTURES` : touch, notif, hangup, answer, unlock, home ;

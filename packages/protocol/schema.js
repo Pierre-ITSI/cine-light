@@ -781,7 +781,7 @@ const SPECS = {
       + '(un écran rechargé retrouve son écran verrouillé, ses notifications empilées, le déverrouillage, l’écran d’accueil). '
       + 'mode : off (rien d’affiché), locked (écran verrouillé, notifications empilées, la plus récente en haut), code (pavé du code), '
       + 'unlocked (déverrouillé : l’app visée, la discussion, s’ouvre par-dessus), home (image d’écran d’accueil, préchargée en '
-      + 'fragments media-img-* sous __seqhome). notifs : dans l’ordre d’arrivée ; ago = secondes écoulées à l’envoi (l’écran calcule '
+      + 'fragments media-img-* sous __seqhome). wall : fond d’écran de la séquence (maquette 42, préchargé sous __seqwall), sur l’écran verrouillé et le pavé du code. notifs : dans l’ordre d’arrivée ; ago = secondes écoulées à l’envoi (l’écran calcule '
       + 'l’heure relative avec sa propre horloge). unlock : déverrouillage attendu (code 4 ou 6 chiffres, 0 = glisser seul ; '
       + 'aucun code n’est transmis : chaque touche remplit le point suivant). watch : gestes que la télécommande attend de cet écran '
       + '(seuls ceux-là sont rapportés, avec « unlock » toujours). chime : son de la notification qui vient d’arriver (jamais à la '
@@ -809,6 +809,7 @@ const SPECS = {
         then: req(oneOf('app', 'home'), 'ensuite : l’app visée ou l’écran d’accueil (image)'),
       }), 'déverrouillage attendu : toucher l’écran verrouillé demande le code'),
       home: opt(bool, 'image d’écran d’accueil préchargée (__seqhome)'),
+      wall: opt(bool, 'fond d’écran de la séquence préchargé (__seqwall) : écran verrouillé et pavé du code'),
       watch: opt(arrayOf(oneOf(...PHONE_GESTURES.filter((g) => !PHONE_GESTURES_ALWAYS.includes(g))), PHONE_GESTURES.length), 'gestes attendus de cet écran'),
       chime: opt(object({
         id: req(PHONE_ID, 'notification qui vient d’arriver'),

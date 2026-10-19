@@ -117,6 +117,7 @@ function mediaImgChunk(msg) {
     // Décodé dès réception : la sonnerie part sans délai au prochain appel
     if (isRing) screenRingWarm(b.mediaId);
     if (b.mediaId === '__seqhome') screenPhoneOnHomeCached(); // image d'accueil d'une Séquence (94-sequence-phone.js)
+    if (b.mediaId === '__seqwall') screenPhoneOnWallCached(); // fond d'écran d'une Séquence (maquette 42)
   }
   if (b.show && !isAudio) {
     const im = document.getElementById('screen-media-img');

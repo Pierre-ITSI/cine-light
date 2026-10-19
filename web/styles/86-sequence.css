@@ -75,6 +75,7 @@
 .ss-opt[style*="--sw"]::before{content:'';flex:none;width:10px;height:10px;border-radius:3px;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
 .ss-note{font-size:.625rem;color:#a8a8a8;line-height:1.5}
 .ss-note.ss-warn{color:#ff8f86}
+.ss-note.ss-play-note{font-size:.6875rem;margin-top:2px}
 .ss-home{display:flex;align-items:center;gap:10px}
 .ss-home-thumb{width:44px;height:78px;border-radius:6px;border:none;padding:0;flex:none;background:linear-gradient(160deg,#3d5a80,#98c1d9);background-size:cover;background-position:center;cursor:pointer}
 .ss-home-txt{font-size:.625rem;color:#c4c4c4;line-height:1.5;min-width:0;word-break:break-word}
@@ -95,6 +96,9 @@
 .sp-lock,.sp-code,.sp-home,.sp-unlocked{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
 .sp-lock,.sp-code{background:linear-gradient(180deg,#24324a 0%,#0e1420 100%)}
 .sp-lock.sp-enter,.sp-code.sp-enter{animation:scFadeIn .35s ease}
+/* Fond d'écran de la séquence (maquette 42, __seqwall) : couvrant, centré, voile pour la lisibilité ; plus sombre sous le pavé */
+.sp-lock.has-wall{background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,0) 32%,rgba(0,0,0,0) 62%,rgba(0,0,0,.32)),var(--sp-wall) center/cover no-repeat,#0e1420}
+.sp-code.has-wall{background:linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)),var(--sp-wall) center/cover no-repeat,#0e1420}
 .sp-lock{gap:10px;padding:calc(60px + env(safe-area-inset-top)) 14px calc(22px + env(safe-area-inset-bottom))}
 .sp-lock-head{text-align:center}
 .sp-date{font-size:15px;opacity:.85}

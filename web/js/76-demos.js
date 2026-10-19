@@ -9,7 +9,8 @@
 //             formulaire), une discussion avec Maman (fil en cours, et la
 //             même enregistrée), Maman parmi les appelants enregistrés.
 //   Séquence  « Batterie à plat » : SMS de Maman au GO → déverrouillage quand
-//             le comédien touche l'écran → discussion avec Maman (lecture auto)
+//             le comédien touche l'écran → discussion avec Maman (lecture tout
+//             automatique : elle se joue sans personne)
 //             une fois déverrouillé → batterie faible → extinction.
 // Textes affichés, regroupés pour la traduction
 const _DEMO_TXT = {
@@ -51,7 +52,7 @@ const _demoSeq = () => ({
   steps: [
     _demoStep('demo1', 'sms', { k: 'go' }, {}, DEMO_IDS.sms),
     _demoStep('demo2', 'unlock', { k: 'gesture', g: 'touch', t: 0 }, { code: 4, then: 'home', img: null, imgName: '' }),
-    _demoStep('demo3', 'chat', { k: 'gesture', g: 'unlock', t: 0 }, { auto: true }, DEMO_IDS.chat),
+    _demoStep('demo3', 'chat', { k: 'gesture', g: 'unlock', t: 0 }, { auto: true, full: true }, DEMO_IDS.chat),
     _demoStep('demo4', 'battery', { k: 'after', s: 25 }, { level: 4 }),
     _demoStep('demo5', 'off', { k: 'after', s: 8 }),
   ],

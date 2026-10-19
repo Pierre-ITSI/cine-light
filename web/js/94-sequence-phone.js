@@ -34,6 +34,9 @@
 //   • Extinction (maquette 33) : fondu au noir, logo neutre, écran noir ; le
 //     téléphone ne répond plus à rien. Rallumé (étape « Veille » ou ↶) : logo
 //     neutre puis l'écran verrouillé (endormi après une « Veille »).
+//   • Fond d'écran de la séquence (maquette 42, wall) : image préchargée sous
+//     __seqwall, couvrante sous un voile, sur l'écran verrouillé et le pavé du
+//     code ; absente ou pas encore arrivée : le dégradé sombre.
 // Textes affichés regroupés pour la traduction ; contenus reçus en textContent.
 const _SP_TXT = {
   unlockHint: 'Touchez pour déverrouiller',
@@ -51,7 +54,7 @@ const SP_POWER_FADE_MS = 600, SP_LOGO_MS = 1500, SP_BOOT_MS = 1200;
 const _SP_LOGO = '<svg class="pp-logo" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" aria-hidden="true"><path d="M20.5 17.5a19 19 0 1 0 23 0"/><path d="M32 9v22"/></svg>';
 const SP_GESTURE_GAP_MS = 400, SP_GESTURE_BURST = 5, SP_RELOCK_GUARD_MS = 1500, SP_REFRESH_MS = 15000;
 
-let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, watch: Set, sleep, alert, power }
+let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, wall, watch: Set, sleep, alert, power }
 let _spSleep = null;          // veille : { cfg, awake, timer, callOn }
 let _spAlertClosed = null;    // alerte fermée ici (id), pas encore confirmée par la télécommande
 let _spPowerSeq = 0;          // jeton des animations d'extinction / rallumage
@@ -91,7 +94,7 @@ function screenPhoneState(m) {
   const fresh = !!prev && notifs.some((n) => !prev.notifs.some((o) => o.id === n.id));
   const alertNew = !!m.alert && !(prev && prev.alert && prev.alert.id === m.alert.id);
   if (!m.alert || (_spAlertClosed && m.alert.id !== _spAlertClosed)) _spAlertClosed = null;
-  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, watch: new Set(m.watch), sleep: m.sleep || null, alert: m.alert || null, power: m.power === 'off' ? 'off' : 'on' };
+  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, wall: !!m.wall, watch: new Set(m.watch), sleep: m.sleep || null, alert: m.alert || null, power: m.power === 'off' ? 'off' : 'on' };
   screenSeqBar(m.bar); // 97-phone-status.js
   _spRender();
   _spRenderAlert();
@@ -119,6 +122,17 @@ function screenPhoneHide() {
 }
 // Image d'accueil arrivée en cache après l'état (75-media-screen.js)
 function screenPhoneOnHomeCached() { if (_scPhone && _scPhone.mode === 'home') _spRender(); }
+// Fond d'écran arrivé (ou remplacé) en cache après l'état : posé sans redessiner l'écran
+function screenPhoneOnWallCached() { _spPaintWall(); }
+function _spPaintWall() {
+  const p = _scPhone;
+  const root = document.querySelector('#screen-phone .sp-lock, #screen-phone .sp-code');
+  if (!root) return;
+  const c = p && p.wall ? _mediaCache.get('__seqwall') : null;
+  const img = c && c.kind === 'img' ? safeImageData(c.data) : null;
+  if (img) root.style.setProperty('--sp-wall', 'url(' + img + ')'); else root.style.removeProperty('--sp-wall');
+  root.classList.toggle('has-wall', !!img);
+}
 
 // ── Gestes ──
 function phoneGesture(g, n) {
@@ -227,6 +241,7 @@ function _spRender() {
     for (const n of p.notifs.slice().reverse()) { const c = _spCard(n); if (!seen.has(n.id)) c.classList.add('sp-new'); stack.appendChild(c); } // la plus récente en haut
     root.append(head, stack, _spEl('div', 'sp-hint', _SP_TXT.unlockHint));
     el.appendChild(root);
+    _spPaintWall();
     if (!_spRefreshTimer) _spRefreshTimer = setInterval(_spRefresh, SP_REFRESH_MS);
   } else if (p.mode === 'code') {
     const root = _spEl('div', 'sp-code' + (enter ? ' sp-enter' : ''));
@@ -242,6 +257,7 @@ function _spRender() {
     }
     root.appendChild(keys);
     el.appendChild(root);
+    _spPaintWall();
     _spRenderDots();
   } else if (p.mode === 'home') {
     const root = _spEl('div', 'sp-home');

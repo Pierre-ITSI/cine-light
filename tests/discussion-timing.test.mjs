@@ -169,7 +169,7 @@ test('timings réglés dans le fil, enregistrés avec la discussion ; anciennes 
   await close();
 });
 
-test('Séquence : étape « Discussion » avec « ▶ Lecture auto »', async () => {
+test('Séquence : étape « Discussion » avec « ▶ Auto · le comédien tape »', async () => {
   const r = await rig(89);
   const { rp, sp, sid } = r;
   await rp.evaluate((id) => {
@@ -181,10 +181,10 @@ test('Séquence : étape « Discussion » avec « ▶ Lecture auto »', async ()
   await rp.click('#seqAddBtn');
   await rp.locator('#ssKinds .ss-opt', { hasText: 'Discussion' }).click();
   assert.match(await rp.textContent('#ssRefCard'), /Lecture/);
-  await rp.locator('#ssRefCard .ss-opt', { hasText: '▶ Lecture auto' }).click();
+  await rp.locator('#ssRefCard .ss-opt', { hasText: '▶ Auto · le comédien tape' }).click();
   await rp.locator('#ssTrigCard .ss-opt', { hasText: 'Téléphone' }).or(rp.locator('#ssTrigCard .ss-opt').last()).first().click();
   await rp.click('#ssSave');
-  assert.equal(await rp.textContent('#seqRows .sq-label'), 'Discussion « Maman » · lecture auto');
+  assert.equal(await rp.textContent('#seqRows .sq-label'), 'Discussion « Maman » · auto (comédien tape)');
   await rp.evaluate(async () => { seqGo(); await _seqChain; });
   await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b:not(.scc-typing)').length === 2, null, { timeout: 6000 });
   assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '< Réponds.']);
@@ -192,7 +192,7 @@ test('Séquence : étape « Discussion » avec « ▶ Lecture auto »', async ()
   await r.close();
 });
 
-test('Séquence, « ▶ Lecture auto » : messages du contact « au bouton » partis avec leurs durées, état sous l\'étape (maquette 40)', async () => {
+test('Séquence, « ▶ Auto · le comédien tape » : messages du contact « au bouton » partis avec leurs durées, état sous l\'étape (maquette 40)', async () => {
   const r = await rig(91);
   const { rp, sp } = r;
   await rp.evaluate(() => {
@@ -204,13 +204,53 @@ test('Séquence, « ▶ Lecture auto » : messages du contact « au bouton » pa
   });
   await rp.click('#seqAddBtn');
   await rp.locator('#ssKinds .ss-opt', { hasText: 'Discussion' }).click();
-  await rp.locator('#ssRefCard .ss-opt', { hasText: '▶ Lecture auto' }).click();
+  await rp.locator('#ssRefCard .ss-opt', { hasText: '▶ Auto · le comédien tape' }).click();
   await rp.click('#ssSave');
   await rp.evaluate(async () => { seqGo(); await _seqChain; });
   await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b:not(.scc-typing)').length === 2, null, { timeout: 6000 });
   assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '< Réponds.']);
   await waitFor(rp, () => /attend Julie · 3 \/ 3/.test(document.getElementById('seqChatStatus').textContent));
   assert.match(await rp.textContent('#seqChatStatus'), /Prochain : Julie « ici »/);
+  for (const e of r.errs) assert.deepEqual(e, []);
+  await r.close();
+});
+
+test('Séquence, « ▶ Auto · tout automatique » (maquette 41) : les réponses du comédien s\'écrivent et partent toutes seules ; anciennes étapes relues', async () => {
+  const r = await rig(93);
+  const { rp, sp, broker } = r;
+  await rp.evaluate(() => {
+    chatSaved = [{ id: 'cf', name: 'Tout auto', contact: 'Maman', actor: 'Julie', style: 'glass', hasPhoto: false, photoSig: null,
+      msgs: [{ id: 'd1', from: 'contact', text: 'Tu es où ?', pause: 0, write: 1, send: 'button' },
+        { id: 'd2', from: 'actor', text: 'ici', pause: 0, write: 0, send: 'button' },
+        { id: 'd3', from: 'contact', text: 'Rentre.', pause: 0, write: 0, send: 'button' }] }];
+    _chsvPersist();
+    switchTab('seq');
+  });
+  await rp.click('#seqAddBtn');
+  await rp.locator('#ssKinds .ss-opt', { hasText: 'Discussion' }).click();
+  assert.deepEqual(await rp.$$eval('#ssRefCard .ss-play .ss-opt', (b) => b.map((x) => [x.textContent, x.classList.contains('on')])),
+    [['Manuelle', true], ['▶ Auto · le comédien tape', false], ['▶ Auto · tout automatique', false]]);
+  assert.equal(await rp.textContent('#ssRefCard .ss-play-note'), 'Tout automatique : les réponses de Julie s\'écrivent aussi toutes seules, avec leurs durées enregistrées. « Le comédien tape » : le fil attend que Julie tape sur l\'écran.');
+  await rp.locator('#ssRefCard .ss-opt', { hasText: '▶ Auto · tout automatique' }).click();
+  assert.deepEqual(await rp.evaluate(() => _seqEdit.step.opt), { auto: true, full: true });
+  await rp.click('#ssSave');
+  assert.equal(await rp.textContent('#seqRows .sq-label'), 'Discussion « Maman » → réponse · auto complète');
+  broker.clear();
+  await rp.evaluate(async () => { seqGo(); await _seqChain; });
+  // Personne ne tape : la réponse « au bouton », tapée par le comédien d'habitude, s'écrit (1 s au moins) et part
+  await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b:not(.scc-typing)').length === 3, null, { timeout: 8000 });
+  assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '> ici', '< Rentre.']);
+  await broker.flush();
+  const type = (await broker.sent(rp)).find((m) => m.type === 'chat:type');
+  assert.deepEqual([type.id, type.dur, type.send], ['d2', 1, true]);
+  await waitFor(rp, () => /terminée · 3 \/ 3/.test(document.getElementById('seqChatStatus').textContent));
+  // Données : « auto » seul (ancienne étape) = le comédien tape ; « full » sans « auto » ignoré ; aller-retour enregistré
+  assert.deepEqual(await rp.evaluate(() => [
+    seqSanitizeStep({ id: 'x', kind: 'chat', ref: 'cf', opt: { auto: true } }).opt,
+    seqSanitizeStep({ id: 'x', kind: 'chat', ref: 'cf', opt: { full: true } }).opt,
+    seqSanitizeStep({ id: 'x', kind: 'chat', ref: 'cf' }).opt,
+  ]), [{ auto: true, full: false }, { auto: false, full: false }, { auto: false, full: false }]);
+  assert.deepEqual(await rp.evaluate(() => { seqLoad(); return _seq.steps[0].opt; }), { auto: true, full: true });
   for (const e of r.errs) assert.deepEqual(e, []);
   await r.close();
 });

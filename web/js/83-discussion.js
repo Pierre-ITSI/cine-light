@@ -516,13 +516,17 @@ function chatDeliverPending() {
 // ── Lecture automatique (maquette 26d) ──
 // phase : { id, k: 'pause' | 'write' (contact) | 'type' (texte automatique) | 'actor' (le comédien tape) | 'button' (« Envoyer n° X ») }
 // type : frappe automatique envoyée à l'écran (chat:type), pour la reprise après rechargement
-const _chatAuto = { on: false, done: false, timer: null, tick: null, phase: null, t0: 0, dur: 0, type: null, seq: false };
+const _chatAuto = { on: false, done: false, timer: null, tick: null, phase: null, t0: 0, dur: 0, type: null, seq: false, full: false };
 const _chatNextMsg = () => _chat.msgs.find((x) => _chatValid(x) && !_chatSent(x)) || null;
 // fromSeq : lancée par une étape de Séquence → les messages du contact suivent
 // leurs durées enregistrées, même réglés « au bouton » (seul le comédien est attendu)
-function chatAutoStart(fromSeq) {
+// full (étape « Auto · tout automatique », maquette 41) : les réponses du comédien
+// s'écrivent aussi toutes seules (durée d'écriture enregistrée, 1 s au moins) et
+// partent une fois complètes : personne n'est attendu
+function chatAutoStart(fromSeq, full) {
   if (_chatAuto.on || !_chatNextMsg()) return;
   _chatAuto.seq = fromSeq === true;
+  _chatAuto.full = _chatAuto.seq && full === true;
   if (!_chat.open) openChatOnTarget();
   _chatAuto.on = true; _chatAuto.done = false;
   if (!_chatAuto.tick) _chatAuto.tick = setInterval(_chatRenderAuto, 500);
@@ -537,7 +541,7 @@ function chatAutoPause() {
 }
 function chatAutoStop() {
   chatAutoPause();
-  _chatAuto.phase = null; _chatAuto.type = null; _chatAuto.done = false; _chatAuto.seq = false;
+  _chatAuto.phase = null; _chatAuto.type = null; _chatAuto.done = false; _chatAuto.seq = false; _chatAuto.full = false;
 }
 // « ↶ » de la lecture : pause, puis le dernier message affiché est retiré
 function chatAutoBack() { chatAutoPause(); rewindChat(); }
@@ -552,7 +556,7 @@ function _chatAutoNext(resume) {
   // Repris au ▶ sur un message déjà en cours d'écriture par le comédien : on attend son envoi
   if (resume && _chatAuto.type && _chatAuto.type.id === m.id) { _chatAutoPhase(m.id, _chatAuto.type.dur ? 'type' : 'actor', _chatAuto.type.dur); renderChatPanel(); return; }
   if (m.from === 'contact' && m.send === 'button' && !_chatAuto.seq) { _chatAutoPhase(m.id, 'button'); renderChatPanel(); return; }
-  if (m.from === 'actor' && !m.auto && m.send === 'button') { _chatAutoPhase(m.id, 'actor'); renderChatPanel(); return; }
+  if (m.from === 'actor' && !m.auto && m.send === 'button' && !_chatAuto.full) { _chatAutoPhase(m.id, 'actor'); renderChatPanel(); return; }
   if (m.pause > 0) {
     _chatAutoPhase(m.id, 'pause', m.pause);
     _chatAuto.timer = setTimeout(() => { _chatAuto.timer = null; _chatAutoWrite(m.id); }, m.pause * 1000);
@@ -571,10 +575,12 @@ function _chatAutoWrite(id) {
     _chatAutoAfterPost(m);
     chatSave();
   } else {
-    // Comédien : le texte s'écrit tout seul (dur) et/ou part tout seul une fois complet (send)
-    const dur = m.auto ? Math.max(1, m.write) : null;
-    _chatAuto.type = { id: m.id, dur, send: m.send === 'auto', t0: Date.now() };
-    sendMsg(Object.assign({ type: 'chat:type', id: m.id, send: m.send === 'auto' }, dur ? { dur } : {}, _chatTarget()));
+    // Comédien : le texte s'écrit tout seul (dur) et/ou part tout seul une fois complet (send) ;
+    // lecture « tout automatique » d'une Séquence : les deux, quels que soient ses réglages
+    const full = _chatAuto.full;
+    const dur = m.auto || full ? Math.max(1, m.write) : null, send = m.send === 'auto' || full;
+    _chatAuto.type = { id: m.id, dur, send, t0: Date.now() };
+    sendMsg(Object.assign({ type: 'chat:type', id: m.id, send }, dur ? { dur } : {}, _chatTarget()));
     _chatAutoPhase(m.id, dur ? 'type' : 'actor', dur || 0);
   }
   renderChatPanel();

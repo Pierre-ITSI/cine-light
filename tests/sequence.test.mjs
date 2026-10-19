@@ -103,7 +103,7 @@ describe('exemple du propriétaire, de bout en bout', () => {
     assert.deepEqual(await rows(rp), [
       ['1', 'Couleur 3200 K · 40 % (ambiance nuit)', 'GO', 'next'],
       ['2', 'Notif SMS « Maman » (verrouillé)', 'GO', ''],
-      ['3', 'Appel entrant « Maman »', 'après 1 s', ''],
+      ['3', 'Appel entrant « Maman · mobile »', 'après 1 s', ''],
       ['4', 'Notif « Appel manqué »', 'refuse / 12 s', ''],
       ['5', 'SMS « Rappelle-moi stp »', 'après 1 s', ''],
       ['6', 'Déverrouillage code 4 chiffres', 'touche l\'écran', ''],
@@ -342,7 +342,7 @@ describe('plusieurs écrans : cible de chaque étape, resynchronisation d\'un é
     await waitFor(A.page, () => _callState === 'ringing');
     await waitFor(B.page, () => _callState === 'ringing');
     assert.equal(await rp.textContent('#seqTarget'), 'Cible : Écran 2');
-    assert.match((await rows(rp))[2][1], /^Appel entrant « Maman » \(Tous les écrans\)$/);
+    assert.match((await rows(rp))[2][1], /^Appel entrant « Maman · mobile » \(Tous les écrans\)$/);
   });
 
   test('écran rechargé en pleine séquence : écran verrouillé, notifications et déverrouillage attendu retrouvés', async () => {
@@ -481,6 +481,62 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     assert.equal((await rows(page))[0][1], 'Notif SMS « Papa » (verrouillé)');
     assert.deepEqual(errors, []);
     await close();
+  });
+
+  test('fond d\'écran (maquette 42) : choisi dans « Téléphone au départ », sur l\'écran verrouillé et le pavé, renvoyé à l\'écran rechargé, gardé par les séquences enregistrées', async () => {
+    const r = await rig(1, 59);
+    const { rp } = r, S = r.screens[0], T = { k: 'screen', id: S.id };
+    await fixtures(rp);
+    await setSteps(rp, [st('w1', 'sms', 's1', { k: 'go' }, T), st('w2', 'unlock', null, { k: 'gesture', g: 'touch' }, T, { code: 4, then: 'app' })]);
+    // Onglet Média : pas de fond (barre d'état seulement)
+    await rp.evaluate(() => openPhoneParams('media'));
+    assert.equal(await rp.textContent('#ppWall'), '');
+    await rp.evaluate(() => { closePhoneParams(); openPhoneParams('seq'); });
+    assert.match(await rp.textContent('#ppWall'), /Fond d'écran.*Aucun fond : dégradé sombre.*Écran verrouillé et code du téléphone, pendant toute la séquence\.CHOISIR…$/);
+    // Image importée (comme l'image d'accueil) : réduite, gardée hors localStorage
+    await rp.evaluate(async () => {
+      const c = document.createElement('canvas'); c.width = 1600; c.height = 3200;
+      const g = c.getContext('2d'); g.fillStyle = '#c9a27a'; g.fillRect(0, 0, 1600, 3200);
+      const blob = await new Promise((res) => c.toBlob(res, 'image/png'));
+      onPhoneWallImage([new File([blob], 'plage-julie.png', { type: 'image/png' })]);
+    });
+    await waitFor(rp, () => !!_seq.wall && !!document.querySelector('#ppWallThumb.has-img'));
+    assert.deepEqual(await rp.$$eval('#ppWall .pp-wall-btn', (b) => b.map((x) => x.textContent)), ['CHANGER…', 'RETIRER']);
+    assert.equal(await rp.textContent('#ppWall .pp-wall-name'), 'plage-julie.png');
+    const stored = await rp.evaluate(() => localStorage.getItem('setremote-seq-v1'));
+    assert.match(stored, /"wall":\{"img":"[0-9a-f]{8}-\d+","name":"plage-julie.png"\}/);
+    assert.doesNotMatch(stored, /data:image/);
+    const wall = await rp.evaluate(() => _seqHomeData(_seq.wall.img));
+    assert.equal(await rp.evaluate((d) => new Promise((res) => { const i = new Image(); i.onload = () => res([i.width, i.height]); i.src = d; }), wall).then((s) => s.join('×')), '640×1280');
+    await rp.evaluate(() => closePhoneParams());
+    // Déroulé : écran verrouillé puis pavé du code sur le fond (préchargé sous __seqwall)
+    await rp.click('#seqGoBtn');
+    await waitFor(S.page, () => !!document.querySelector('#screen-phone .sp-lock.has-wall'));
+    assert.equal(await S.page.evaluate(() => _mediaCache.get('__seqwall').data), wall);
+    await rp.click('#seqGoBtn'); // déverrouillage par code : le pavé s'affiche
+    await waitFor(S.page, () => !!document.querySelector('#screen-phone .sp-code.has-wall'));
+    // Écran rechargé : le fond revient avec l'état
+    await S.page.reload();
+    await S.page.evaluate(() => { if (mode !== 'screen') startMode('screen'); });
+    await connected(S.page);
+    await waitFor(S.page, () => !!document.querySelector('#screen-phone .sp-lock.has-wall, #screen-phone .sp-code.has-wall'), null, { timeout: 8000 });
+    // Séquence enregistrée : garde son fond ; chargée, elle le rend ; fond retiré : dégradé
+    await rp.evaluate(() => saveCurrentSeq('Avec fond'));
+    assert.equal(await rp.evaluate(() => JSON.parse(localStorage.getItem('setremote-seq-saved-v1')).list[0].wall.name), 'plage-julie.png');
+    await rp.evaluate(() => { openPhoneParams('seq'); ppRemoveWall(); });
+    await waitFor(S.page, () => !!document.querySelector('#screen-phone .sp-lock, #screen-phone .sp-code') && !document.querySelector('#screen-phone .has-wall'));
+    assert.equal(await rp.evaluate(() => _seq.wall), null);
+    assert.ok(await rp.evaluate((d) => callAssetGet(seqHomeKey(seqImageSig(d))), wall), 'encore utilisé par la séquence enregistrée');
+    rp.on('dialog', (d) => d.accept());
+    await rp.evaluate(() => { closePhoneParams(); loadSavedSeq(seqSaved[0].id); });
+    assert.equal(await rp.evaluate(() => _seq.wall && _seq.wall.name), 'plage-julie.png');
+    // Plus rien ne s'en sert : l'image est effacée
+    await rp.evaluate(() => { deleteSavedSeq(seqSaved[0].id); openPhoneParams('seq'); ppRemoveWall(); closePhoneParams(); });
+    await waitFor(rp, (d) => callAssetGet(seqHomeKey(seqImageSig(d))).then((v) => v === null), wall);
+    // Ancienne séquence (sans fond) : relue sans fond
+    assert.equal(await rp.evaluate(() => { localStorage.setItem('setremote-seq-v1', JSON.stringify({ v: 1, name: 'x', steps: [] })); seqLoad(); return _seq.wall; }), null);
+    noErrors(r);
+    await r.close();
   });
 
   test('avertissement stroboscope : au premier GO d\'une séquence qui allume le strobe ; « Annuler » ne lance rien', async () => {

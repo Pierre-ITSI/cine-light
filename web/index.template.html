@@ -871,7 +871,11 @@
       <div class="cl-head"><span>N°</span><span id="callListWho">Appelant</span><span>DMX</span><span></span></div>
       <div class="cl-rows" id="callListRows"></div>
       <div class="media-pool-empty" id="callListEmpty">Réglez l'appel ci-dessus puis enregistrez-le : il prend le numéro suivant.</div>
-      <button type="button" class="cl-save" id="callListSave" onclick="saveCurrentCall()">+ Enregistrer l'appel actuel</button>
+      <button type="button" class="cl-save" id="callListSave" onclick="openSaveCallSheet()">+ Enregistrer l'appel actuel</button>
+      <div class="cl-upd" id="callListUpd" style="display:none">
+        <button type="button" class="cl-upd-btn" id="callListUpdate" onclick="updateLoadedCallEntry()"></button>
+        <button type="button" class="cl-save cl-save-new" id="callListSaveNew" onclick="openSaveCallSheet()">+ Enregistrer comme nouveau</button>
+      </div>
       <div class="cl-note" id="callListNote">Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16). Valeur 0 : raccrocher. Glissez pour changer l'ordre.</div>
       <div class="cl-actions" id="callListActions">
         <button type="button" class="cl-go" id="callListGo" onclick="triggerSelectedCallEntry()">Appeler n°1</button>
@@ -996,6 +1000,8 @@
   <div class="ss-card" id="ppClock"></div>
   <div class="ss-card" id="ppNet"></div>
   <div class="ss-card" id="ppBat"></div>
+  <div class="ss-card" id="ppWall"></div>
+  <input type="file" id="ppWallInput" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onPhoneWallImage(this.files);this.value=''">
   <div class="pp-note" id="ppNote"></div>
 </div>
 

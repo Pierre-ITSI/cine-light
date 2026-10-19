@@ -20,6 +20,26 @@
 // son volume ringVolume ; un son importé supprimé depuis → son Classique.
 // Vibreur du type (vib, maquette 36b) : true seulement ; entrée d'avant le
 // vibreur : ne vibre pas.
+//
+// Noms et mise à jour (maquettes validées 43, 43b, 43c) :
+//   • Chaque entrée peut avoir un nom (title, 40 caractères) ; sans nom (ancienne
+//     entrée, champ vidé) : « nom · sous-titre » (notification : titre, sinon
+//     application). Ce nom sert partout où les entrées sont listées : la liste,
+//     les étapes de la Séquence et leurs choix (callEntryName).
+//   • « + Enregistrer … » ouvre la feuille « Nom de l'enregistrement »
+//     (proposition préremplie ; laissée telle quelle ou vidée : pas de nom propre).
+//   • Entrée CHARGÉE (touchée dans la liste, ou « Charger dans l'onglet ») :
+//     « ↻ Mettre à jour « nom » » (réglages actuels du formulaire, même id,
+//     même numéro donc même plage DMX, même nom) et « + Enregistrer comme
+//     nouveau » remplacent le bouton d'enregistrement. L'état « chargée » prend
+//     fin quand le type du formulaire change, quand on change d'onglet de liste,
+//     quand l'entrée est supprimée, après « Enregistrer comme nouveau » et au
+//     rechargement des listes (licence) : le bouton unique revient.
+//   • « ⋯ » d'une ligne (la poignée reste) : charger, renommer, mettre à jour
+//     avec les réglages actuels (formulaire du même type), dupliquer (en fin de
+//     liste, photo et bande son copiées), supprimer (confirmation).
+// Aperçu sans licence (77-licence-ui.js) : enregistrer, renommer, mettre à
+// jour, dupliquer et supprimer sont verrouillés ; charger et déclencher restent.
 const CALL_LIST_KEY = 'setremote-call-list-v1';
 const CALL_LIST_MAX = 99;           // par liste
 const CALL_LIST_DMX_ITEMS = 20;     // entrées accessibles depuis la console
@@ -29,7 +49,33 @@ let callList = { call: [], sms: [], notif: [] };
 let callListKind = 'call';
 const _callListSel = { call: null, sms: null, notif: null };
 
+const CALL_TITLE_MAX = 40;
 const _CALL_STYLE_NAMES = { glass: 'Verre', tonal: 'Tonal', minimal: 'Épuré' };
+// Textes affichés (maquettes 43 à 43c), regroupés pour la traduction ({…} : valeurs)
+const _CL_TXT = {
+  unknown: 'Inconnu', notifDefault: 'Notification',
+  sheetCall: 'Enregistrer l\'appel', sheetSms: 'Enregistrer le SMS', sheetNotif: 'Enregistrer la notification',
+  sheetRename: 'Renommer l\'enregistrement',
+  nameLabel: 'Nom de l\'enregistrement',
+  nameNote: 'Vide : « {defaut} ». Le nom sert dans la liste, la Séquence et la console (n° {n}, DMX {plage}).',
+  nameNoteNoDmx: 'Vide : « {defaut} ». Le nom sert dans la liste et la Séquence (n° {n}).',
+  cancel: 'Annuler', ok: 'Enregistrer', close: 'Fermer',
+  update: '↻ Mettre à jour « {nom} »', saveNew: '+ Enregistrer comme nouveau',
+  menuLoad: 'Charger dans l\'onglet', menuRename: 'Renommer', menuUpdate: 'Mettre à jour avec les réglages actuels',
+  menuDuplicate: 'Dupliquer', menuDelete: 'Supprimer', menuAria: 'Charger, renommer, mettre à jour, dupliquer, supprimer',
+  menuTitle: '« {nom} »', copy: '{nom} (copie)',
+  confirmDelete: 'Supprimer « {nom} » (n°{n}) ? Les numéros suivants avancent d\'un rang.',
+};
+const _clTpl = (t, v) => t.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
+const _clLine = (v) => (typeof v === 'string' ? v.replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, CALL_TITLE_MAX).trim() : '');
+// Nom par défaut d'une entrée (ou du formulaire) : « nom · sous-titre » ; notification : titre, sinon application
+function callEntryDefaultName(e) {
+  if (e.kind === 'notif') return String(e.name || e.appName || _CL_TXT.notifDefault);
+  const n = e.name || _CL_TXT.unknown;
+  return e.label ? n + ' · ' + e.label : n;
+}
+// Nom affiché d'une entrée : son nom propre, sinon le nom par défaut
+function callEntryName(e) { return (e && e.title) || callEntryDefaultName(e || {}); }
 const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'vib', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio', 'phone', 'received'];
 
 // ── Persistance ──
@@ -52,6 +98,9 @@ function _clSanitize(e) {
     else delete out.ringVolume;
   }
   if (out.vib !== true) delete out.vib;
+  // Nom de l'enregistrement (maquette 43b) : facultatif (ancienne entrée : aucun)
+  const title = _clLine(e.title);
+  if (title) out.title = title;
   return out;
 }
 function loadCallList() {
@@ -249,8 +298,9 @@ function renderCallList() {
   if (rows) {
     rows.innerHTML = list.map((e, i) => '<div class="cl-row' + (sel && e.id === sel.id ? ' selected' : '') + '" data-id="' + e.id + '" onclick="selectCallEntry(\'' + e.id + '\')">'
       + '<span class="cl-num">' + (i + 1) + '</span>'
-      + '<span class="cl-main"><span class="cl-name">' + escapeHtml(e.name || 'Inconnu') + '</span><span class="cl-meta">' + escapeHtml(_clMeta(e)) + '</span></span>'
+      + '<span class="cl-main"><span class="cl-name">' + escapeHtml(callEntryName(e)) + '</span><span class="cl-meta">' + escapeHtml(_clMeta(e)) + '</span></span>'
       + '<span class="cl-dmx">' + callEntryDmxRange(i, kind) + '</span>'
+      + '<button type="button" class="cl-more" aria-label="' + escapeHtml(_CL_TXT.menuAria) + '" onclick="event.stopPropagation();openCallEntryMenu(\'' + e.id + '\')">⋯</button>'
       + '<span class="cl-grip" aria-label="Déplacer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 9h14M5 15h14"/></svg></span>'
       + '</div>').join('');
   }
@@ -265,23 +315,46 @@ function renderCallList() {
   }
   renderCallListSaveLabel();
 }
+// Bouton d'enregistrement, ou « Mettre à jour » / « Enregistrer comme nouveau » (entrée chargée)
 function renderCallListSaveLabel() {
+  const loaded = callListLoadedEntry();
   const b = document.getElementById('callListSave');
-  if (b) b.textContent = callKind === 'call' ? '+ Enregistrer l\'appel actuel' : callKind === 'notif' ? '+ Enregistrer la notification actuelle' : '+ Enregistrer le SMS actuel';
+  if (b) {
+    b.textContent = callKind === 'call' ? '+ Enregistrer l\'appel actuel' : callKind === 'notif' ? '+ Enregistrer la notification actuelle' : '+ Enregistrer le SMS actuel';
+    b.style.display = loaded ? 'none' : '';
+  }
+  const upd = document.getElementById('callListUpd');
+  if (upd) upd.style.display = loaded ? '' : 'none';
+  const u = document.getElementById('callListUpdate');
+  if (u && loaded) u.textContent = _clTpl(_CL_TXT.update, { nom: callEntryName(loaded) });
+  const n = document.getElementById('callListSaveNew');
+  if (n) { n.textContent = _CL_TXT.saveNew; n.disabled = !!loaded && callList[_clListOf(loaded.kind)].length >= CALL_LIST_MAX; }
 }
 
 function setCallListKind(k) {
   callListKind = CALL_LISTS.includes(k) ? k : 'call';
-  renderCallList();
+  renderCallList(); // autre onglet de liste : l'entrée chargée ne l'est plus (callListLoadedEntry)
+}
+
+// ── Entrée chargée dans le formulaire (maquette 43) ──
+let _clLoadedId = null;
+// L'entrée chargée, tant que le formulaire et l'onglet de liste lui correspondent
+// (même type) ; sinon l'état prend fin pour de bon
+function callListLoadedEntry() {
+  if (!_clLoadedId) return null;
+  const kind = CALL_LISTS.find((k) => callList[k].some((e) => e.id === _clLoadedId));
+  const e = kind ? callList[kind].find((x) => x.id === _clLoadedId) : null;
+  if (!e || e.kind !== callKind || kind !== callListKind) { _clLoadedId = null; return null; }
+  return e;
 }
 
 // ── Actions ──
-async function saveCurrentCall() {
-  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
-  const fields = callFormFields();
-  const list = _clListOf(fields.kind);
-  if (callList[list].length >= CALL_LIST_MAX) return null;
-  const e = Object.assign({ id: 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }, fields);
+const _clNewId = () => 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const _clKindOf = (id) => CALL_LISTS.find((k) => callList[k].some((x) => x.id === id)) || null;
+// Réglages actuels du formulaire sous la forme d'une entrée (sans id ni nom),
+// avec la photo (icône d'une notification) et la bande son qui l'accompagnent
+function _clFormEntry() {
+  const e = callFormFields();
   // Son du type au moment de l'enregistrement : volume toujours noté (100 % compris)
   e.ringVolume = ringSettings[_ringKind(e.kind)].vol;
   // Réglages masqués pour ce type : non enregistrés (bande son et décroché
@@ -291,9 +364,26 @@ async function saveCurrentCall() {
   else { e.autoAnswer = 0; e.hasAudio = false; delete e.present; delete e.photoMode; }
   // Notification : l'icône est rangée comme la photo de l'entrée
   const photo = e.kind === 'notif' ? _notifIcon : _callPhoto, audio = e.hasAudio ? _callAudioData : null;
+  return { e, photo, audio };
+}
+// Nom saisi : gardé seulement s'il diffère du nom par défaut (sinon le nom suit l'entrée)
+function _clTitleFor(e, value) {
+  const t = _clLine(value);
+  return t && t !== callEntryDefaultName(e) ? t : '';
+}
+// « + Enregistrer … » (après la feuille du nom, maquette 43b) ; title : nom de l'enregistrement (facultatif)
+async function saveCurrentCall(title) {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
+  const { e: fields, photo, audio } = _clFormEntry();
+  const list = _clListOf(fields.kind);
+  if (callList[list].length >= CALL_LIST_MAX) return null;
+  const e = Object.assign({ id: _clNewId() }, fields);
+  const t = _clTitleFor(e, title);
+  if (t) e.title = t;
   callList[list].push(e);
   _callListSel[list] = e.id;
   callListKind = list;
+  _clLoadedId = null; // enregistrée comme nouvelle : plus d'entrée chargée
   persistCallList();
   renderCallList();
   await Promise.all([
@@ -301,6 +391,75 @@ async function saveCurrentCall() {
     audio ? callAssetPut(e.id + ':audio', audio) : null,
   ]);
   return e.id;
+}
+// « ↻ Mettre à jour » : réglages actuels du formulaire dans l'entrée (même id,
+// même place donc même numéro et même plage DMX, même nom). Photo et bande son
+// réécrites sous les clés de l'entrée, ou effacées si elle n'en a plus (rien
+// d'ancien ne reste) ; ids préparés oubliés (contenu changé). Le formulaire doit
+// être du même type de liste ; false : impossible.
+async function updateCallEntry(id) {
+  if (licLocked('tel')) return false; // aperçu sans licence (77-licence-ui.js)
+  const kind = _clKindOf(id);
+  if (!kind) return false;
+  const { e: fields, photo, audio } = _clFormEntry();
+  if (_clListOf(fields.kind) !== kind || callKind === 'discussion') return false;
+  const list = callList[kind], i = list.findIndex((x) => x.id === id);
+  const e = Object.assign({ id }, fields);
+  if (list[i].title) e.title = list[i].title;
+  list[i] = e;
+  _callListSel[kind] = id;
+  _clPrepIds.delete(id);
+  persistCallList();
+  renderCallList();
+  await Promise.all([
+    photo ? callAssetPut(id + ':photo', photo) : callAssetDelete(id + ':photo'),
+    audio ? callAssetPut(id + ':audio', audio) : callAssetDelete(id + ':audio'),
+  ]);
+  return true;
+}
+function updateLoadedCallEntry() { const e = callListLoadedEntry(); return e ? updateCallEntry(e.id) : Promise.resolve(false); }
+// Renommer : vide (ou le nom par défaut) → plus de nom propre
+function renameCallEntry(id, value) {
+  if (licLocked('tel')) return;
+  const kind = _clKindOf(id);
+  const e = kind && callList[kind].find((x) => x.id === id);
+  if (!e) return;
+  const t = _clTitleFor(e, value);
+  if (t) e.title = t; else delete e.title;
+  persistCallList();
+  renderCallList();
+}
+// Copie en fin de liste, nommée « … (copie) » (photo et bande son copiées sous ses propres clés)
+async function duplicateCallEntry(id) {
+  if (licLocked('tel')) return null;
+  const kind = _clKindOf(id);
+  if (!kind || callList[kind].length >= CALL_LIST_MAX) return null;
+  const src = callList[kind].find((x) => x.id === id);
+  const e = Object.assign(JSON.parse(JSON.stringify(src)), { id: _clNewId(), title: _clLine(_clTpl(_CL_TXT.copy, { nom: callEntryName(src) })) });
+  const [photo, audio] = await Promise.all([src.hasPhoto ? callAssetGet(src.id + ':photo') : null, src.hasAudio ? callAssetGet(src.id + ':audio') : null]);
+  if (callList[kind].length >= CALL_LIST_MAX) return null; // la liste a pu se remplir pendant la lecture
+  e.hasPhoto = !!photo; e.hasAudio = !!audio;
+  await Promise.all([photo ? callAssetPut(e.id + ':photo', photo) : null, audio ? callAssetPut(e.id + ':audio', audio) : null]);
+  callList[kind].push(e);
+  persistCallList();
+  renderCallList();
+  return e.id;
+}
+// Supprimer (confirmation) : les numéros suivants avancent ; photo et bande son effacées
+function deleteCallEntry(id) {
+  if (licLocked('tel')) return false; // aperçu sans licence (77-licence-ui.js)
+  const kind = _clKindOf(id);
+  if (!kind) return false;
+  const i = callList[kind].findIndex((x) => x.id === id), e = callList[kind][i];
+  if (!confirm(_clTpl(_CL_TXT.confirmDelete, { nom: callEntryName(e), n: i + 1 }))) return false;
+  callList[kind].splice(i, 1);
+  if (_callListSel[kind] === id || !callList[kind].some((x) => x.id === _callListSel[kind])) _callListSel[kind] = (callList[kind][Math.min(i, callList[kind].length - 1)] || {}).id || null;
+  if (_clLoadedId === id) _clLoadedId = null;
+  callAssetDelete(e.id + ':photo'); callAssetDelete(e.id + ':audio');
+  _clPrepIds.delete(e.id);
+  persistCallList();
+  renderCallList();
+  return true;
 }
 
 // Toucher une entrée : la sélectionne et la recharge dans le formulaire
@@ -313,7 +472,10 @@ async function selectCallEntry(id) {
   _callListSel[kind] = id;
   callListKind = kind;
   renderCallList();
-  await loadCallEntryIntoForm(e);
+  const done = loadCallEntryIntoForm(e); // partie immédiate : type du formulaire = celui de l'entrée
+  _clLoadedId = id; // chargée : « Mettre à jour » / « Enregistrer comme nouveau »
+  renderCallListSaveLabel();
+  await done;
 }
 
 async function loadCallEntryIntoForm(e) {
@@ -372,16 +534,69 @@ async function triggerSelectedCallEntry() {
 }
 
 function deleteSelectedCallEntry() {
+  const e = _clSelected(callListKind);
+  if (e) deleteCallEntry(e.id);
+}
+
+// ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) : nom (43b), menu « ⋯ » (43c) ──
+function openSaveCallSheet() {
   if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
-  const kind = callListKind, e = _clSelected(kind);
-  if (!e) return;
-  const i = callList[kind].indexOf(e);
-  if (!confirm('Supprimer « ' + (e.name || 'Inconnu') + ' » (n°' + (i + 1) + ') ? Les numéros suivants avancent d\'un rang.')) return;
-  callList[kind].splice(i, 1);
-  _callListSel[kind] = (callList[kind][Math.min(i, callList[kind].length - 1)] || {}).id || null;
-  callAssetDelete(e.id + ':photo'); callAssetDelete(e.id + ':audio');
-  persistCallList();
-  renderCallList();
+  if (callKind === 'discussion' || callList[_clListOf(callKind)].length >= CALL_LIST_MAX) return;
+  _sheet = { kind: 'callName', id: null }; renderSheet(true);
+}
+function openCallEntryMenu(id) {
+  if (!_clKindOf(id)) return;
+  _sheet = { kind: 'callMenu', id }; renderSheet();
+}
+function callMenuLoad(id) { closeSheet(); selectCallEntry(id); }
+function callMenuRename(id) { if (!licLocked('tel') && _clKindOf(id)) { _sheet = { kind: 'callName', id }; renderSheet(true); } }
+function callMenuUpdate(id) { closeSheet(); updateCallEntry(id); }
+function callMenuDuplicate(id) { closeSheet(); duplicateCallEntry(id); }
+function callMenuDelete(id) { closeSheet(); deleteCallEntry(id); }
+// Contenu d'une feuille : { title, html, form } ; null : entrée disparue
+function callListSheetContent(s) {
+  const kind = s.id ? _clKindOf(s.id) : null;
+  const e = kind ? callList[kind].find((x) => x.id === s.id) : null;
+  if (s.id && !e) return null;
+  if (s.kind === 'callMenu') {
+    const b = (cls, fn, label) => '<button type="button" class="dc-menu-btn' + cls + '" onclick="' + fn + '(\'' + e.id + '\')">' + escapeHtml(label) + '</button>';
+    // Aperçu sans licence : charger seulement ; « Mettre à jour » : formulaire du même type de liste
+    const edit = !licLocked('tel'), canUpdate = callKind !== 'discussion' && _clListOf(callKind) === kind;
+    return {
+      title: _clTpl(_CL_TXT.menuTitle, { nom: callEntryName(e) }), form: false,
+      html: b('', 'callMenuLoad', _CL_TXT.menuLoad)
+        + (edit ? b('', 'callMenuRename', _CL_TXT.menuRename)
+          + (canUpdate ? b('', 'callMenuUpdate', _CL_TXT.menuUpdate) : '')
+          + (callList[kind].length < CALL_LIST_MAX ? b('', 'callMenuDuplicate', _CL_TXT.menuDuplicate) : '')
+          + b(' danger', 'callMenuDelete', _CL_TXT.menuDelete) : '')
+        + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CL_TXT.close) + '</button></div>',
+    };
+  }
+  // Nom : de l'enregistrement à venir (proposition préremplie) ou de l'entrée à renommer
+  let def, val, n, list, title;
+  if (e) {
+    def = callEntryDefaultName(e); val = e.title || def; list = kind; n = callList[kind].indexOf(e) + 1; title = _CL_TXT.sheetRename;
+  } else {
+    const f = _clFormEntry().e;
+    def = callEntryDefaultName(f); val = def; list = _clListOf(f.kind); n = callList[list].length + 1;
+    title = f.kind === 'call' ? _CL_TXT.sheetCall : f.kind === 'notif' ? _CL_TXT.sheetNotif : _CL_TXT.sheetSms;
+  }
+  const dmx = callEntryDmxRange(n - 1, list);
+  const note = _clTpl(dmx === '—' ? _CL_TXT.nameNoteNoDmx : _CL_TXT.nameNote, { defaut: def, n, plage: dmx });
+  return {
+    title, form: true,
+    html: '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
+      + '<label class="sr-sublabel" for="srName">' + escapeHtml(_CL_TXT.nameLabel) + '</label>'
+      + '<input type="text" id="srName" class="text-input sr-input" maxlength="' + CALL_TITLE_MAX + '" autocomplete="off" placeholder="' + escapeHtml(def) + '" value="' + escapeHtml(val.slice(0, CALL_TITLE_MAX)) + '">'
+      + '<p class="sr-sheet-note">' + escapeHtml(note) + '</p>'
+      + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CL_TXT.cancel) + '</button>'
+      + '<button type="submit" class="sr-ok">' + escapeHtml(_CL_TXT.ok) + '</button></div></form>',
+  };
+}
+function callListSheetSave(s, value) {
+  closeSheet();
+  if (s.id) renameCallEntry(s.id, value);
+  else saveCurrentCall(value);
 }
 
 // ── Réordonnancement par glisser-déposer (poignée, ou appui maintenu sur la ligne) ──
@@ -394,6 +609,7 @@ let _clDrag = null, _clSuppressClick = false;
   box.addEventListener('pointerdown', (e) => {
     const row = e.target.closest('.cl-row');
     if (!row || (e.pointerType === 'mouse' && e.button !== 0) || licLocked('tel')) return; // aperçu : ordre figé
+    if (e.target.closest('.cl-more')) return; // « ⋯ » : le menu, pas de glisser
     _clDrag ={ row, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, active: false, ghost: null };
     if (e.target.closest('.cl-grip')) { e.preventDefault(); startDrag(); }
     else _clDrag.timer = setTimeout(startDrag, HOLD);
