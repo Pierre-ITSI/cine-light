@@ -15,8 +15,16 @@
 .splash-btn.primary{background:#F5F2EC;color:var(--dark);border-color:#F5F2EC;font-weight:500}
 .install-btn{margin-top:8px;padding:12px 28px;border:1px dashed var(--accent);background:rgba(232,201,122,.08);color:var(--accent);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.12em;cursor:pointer;border-radius:30px;transition:all .2s;text-transform:uppercase}
 .install-btn:hover{background:rgba(232,201,122,.16)}
-.install-hint{margin-top:4px;max-width:320px;text-align:center;font-size:.62rem;line-height:1.6;color:var(--muted);letter-spacing:.04em}
-.install-hint strong{color:var(--text)}
+/* Installer l'application : feuille du bas (maquettes 35) */
+.pwa-sub{margin:-2px 0 10px;font-size:.6875rem;color:#a8a8a8}
+.pwa-why{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.pwa-why span{font-size:.625rem;padding:5px 9px;border-radius:12px;background:var(--mid2);color:#d0d0d0}
+.pwa-steps{list-style:none;margin:0 0 6px;padding:0;display:flex;flex-direction:column;gap:10px}
+.pwa-steps li{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:center;font-size:.75rem;line-height:1.5;color:#d8d8d8}
+.pwa-steps b,.pwa-warn b{color:var(--text)}
+.pwa-n{width:26px;height:26px;border-radius:50%;border:1px solid var(--accent);color:#FF8a55;display:flex;align-items:center;justify-content:center;font-size:.6875rem}
+.pwa-ico{display:inline-flex;vertical-align:-4px;padding:2px 5px;border-radius:5px;background:#2e2e32;margin:0 2px}
+.pwa-warn{margin-top:4px;background:rgba(255,196,64,.08);border:1px solid rgba(255,196,64,.35);border-radius:8px;padding:10px 12px;font-size:.6875rem;color:#f0dca8;line-height:1.55}
 .flash-unavail-notice{background:rgba(220,120,80,.1);border:1px solid rgba(220,120,80,.35);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:.66rem;line-height:1.6;color:var(--muted);letter-spacing:.03em}
 .flash-unavail-notice strong{display:block;color:#FF6B2C;font-size:.72rem;margin-bottom:5px;letter-spacing:.06em}
 #content-flash.torch-unavailable .torch-onoff-btn,

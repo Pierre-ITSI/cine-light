@@ -12,7 +12,7 @@
 // confirmation ; le retrait lui-même : 29-revoke.js.
 // Modèle (registre, cible, état de chaque écran) : 28-screens.js.
 let _svOpen = false;
-let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group' | 'chatName' | 'chatMenu' | 'seqName' | 'seqMenu', … }
+let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group' | 'chatName' | 'chatMenu' | 'seqName' | 'seqMenu' | 'install', … }
 const _uiHtml = new Map();   // dernier HTML posé par conteneur (pas de re-rendu inutile pendant un geste)
 
 function _setHtml(el, html) {
@@ -89,6 +89,10 @@ function renderSheet(focus) {
     const c = s.kind.startsWith('seq') ? seqSheetContent(s) : chatSheetContent(s);
     if (!c) { closeSheet(); return; }
     t = c.title; h = c.html; form = c.form;
+  } else if (s.kind === 'install') {
+    // Installer l'application (maquettes 35, 90-pwa.js)
+    const c = pwaSheetContent();
+    t = c.title; h = c.html;
   } else if (s.kind === 'target') {
     // Maquette 6 : Tous, chaque groupe (vide : non sélectionnable), chaque écran
     t = 'Envoyer les commandes à…';
