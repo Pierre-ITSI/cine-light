@@ -516,10 +516,13 @@ function chatDeliverPending() {
 // ── Lecture automatique (maquette 26d) ──
 // phase : { id, k: 'pause' | 'write' (contact) | 'type' (texte automatique) | 'actor' (le comédien tape) | 'button' (« Envoyer n° X ») }
 // type : frappe automatique envoyée à l'écran (chat:type), pour la reprise après rechargement
-const _chatAuto = { on: false, done: false, timer: null, tick: null, phase: null, t0: 0, dur: 0, type: null };
+const _chatAuto = { on: false, done: false, timer: null, tick: null, phase: null, t0: 0, dur: 0, type: null, seq: false };
 const _chatNextMsg = () => _chat.msgs.find((x) => _chatValid(x) && !_chatSent(x)) || null;
-function chatAutoStart() {
+// fromSeq : lancée par une étape de Séquence → les messages du contact suivent
+// leurs durées enregistrées, même réglés « au bouton » (seul le comédien est attendu)
+function chatAutoStart(fromSeq) {
   if (_chatAuto.on || !_chatNextMsg()) return;
+  _chatAuto.seq = fromSeq === true;
   if (!_chat.open) openChatOnTarget();
   _chatAuto.on = true; _chatAuto.done = false;
   if (!_chatAuto.tick) _chatAuto.tick = setInterval(_chatRenderAuto, 500);
@@ -534,7 +537,7 @@ function chatAutoPause() {
 }
 function chatAutoStop() {
   chatAutoPause();
-  _chatAuto.phase = null; _chatAuto.type = null; _chatAuto.done = false;
+  _chatAuto.phase = null; _chatAuto.type = null; _chatAuto.done = false; _chatAuto.seq = false;
 }
 // « ↶ » de la lecture : pause, puis le dernier message affiché est retiré
 function chatAutoBack() { chatAutoPause(); rewindChat(); }
@@ -548,7 +551,7 @@ function _chatAutoNext(resume) {
   if (!m) { chatAutoPause(); _chatAuto.phase = null; _chatAuto.done = true; renderChatPanel(); return; }
   // Repris au ▶ sur un message déjà en cours d'écriture par le comédien : on attend son envoi
   if (resume && _chatAuto.type && _chatAuto.type.id === m.id) { _chatAutoPhase(m.id, _chatAuto.type.dur ? 'type' : 'actor', _chatAuto.type.dur); renderChatPanel(); return; }
-  if (m.from === 'contact' && m.send === 'button') { _chatAutoPhase(m.id, 'button'); renderChatPanel(); return; }
+  if (m.from === 'contact' && m.send === 'button' && !_chatAuto.seq) { _chatAutoPhase(m.id, 'button'); renderChatPanel(); return; }
   if (m.from === 'actor' && !m.auto && m.send === 'button') { _chatAutoPhase(m.id, 'actor'); renderChatPanel(); return; }
   if (m.pause > 0) {
     _chatAutoPhase(m.id, 'pause', m.pause);
@@ -608,6 +611,7 @@ function _chatRenderAuto() {
   const info = _chatAutoInfo();
   if (st) { st.textContent = info.text; st.classList.toggle('on', info.live); }
   if (fill) fill.style.width = info.pct + '%';
+  if (typeof seqRenderChatStatus === 'function') seqRenderChatStatus(); // 91-sequence.js : état sous l'étape en cours
   const play = document.getElementById('dcAutoPlay'), pause = document.getElementById('dcAutoPause'), back = document.getElementById('dcAutoBack');
   if (play) play.disabled = !_chatAuto.on && !_chatNextMsg(); // en cours : reste allumé (maquette 26d), sans effet
   if (pause) pause.disabled = !_chatAuto.on;

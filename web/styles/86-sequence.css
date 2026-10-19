@@ -18,6 +18,13 @@
 .sq-row.done{opacity:.45}
 .sq-row.cur{border-color:var(--accent);background:rgba(255,107,44,.08)}
 .sq-row.next{border:1px dashed rgba(255,255,255,.3)}
+/* Discussion en cours sous son étape (maquette 40) */
+.sq-chat{margin:-2px 8px 6px 46px;display:flex;flex-direction:column;gap:6px;font-size:.6875rem;line-height:1.5}
+.sq-chat:empty{display:none}
+.sq-chat-st{color:#a8a8a8}.sq-chat-st.on{color:#FF8a55}
+.sq-chat-next{color:#d0d0d0}
+.sq-chat-bar{height:4px;border-radius:2px;background:rgba(255,255,255,.1);overflow:hidden}
+.sq-chat-bar i{display:block;height:100%;background:var(--accent);transition:width .4s linear}
 .sq-num{font-size:.625rem;color:#8f8f8f}
 .sq-label{font-size:.6875rem;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sq-row.missing .sq-label{color:#ff8f86}
@@ -86,13 +93,15 @@
 /* Écran — faux téléphone (maquettes 30 à 32), sous la discussion (85) et l'appel (95) */
 #screen-phone{display:none;position:absolute;inset:0;z-index:84;color:#fff;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif;cursor:default}
 .sp-lock,.sp-code,.sp-home,.sp-unlocked{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
-.sp-lock,.sp-code{background:linear-gradient(180deg,#24324a 0%,#0e1420 100%);animation:scFadeIn .35s ease}
+.sp-lock,.sp-code{background:linear-gradient(180deg,#24324a 0%,#0e1420 100%)}
+.sp-lock.sp-enter,.sp-code.sp-enter{animation:scFadeIn .35s ease}
 .sp-lock{gap:10px;padding:calc(60px + env(safe-area-inset-top)) 14px calc(22px + env(safe-area-inset-bottom))}
 .sp-lock-head{text-align:center}
 .sp-date{font-size:15px;opacity:.85}
 .sp-time{font-size:80px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
 .sp-stack{margin-top:14px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden}
-.sp-card{display:flex;gap:10px;padding:10px 12px;border-radius:20px;background:rgba(255,255,255,.16);text-align:left;cursor:pointer;flex:none;animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
+.sp-card{display:flex;gap:10px;padding:10px 12px;border-radius:20px;background:rgba(255,255,255,.16);text-align:left;cursor:pointer;flex:none}
+.sp-card.sp-new{animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
 .sp-icon{width:34px;height:34px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#3a7bd5,#00d2ff);font-size:16px;font-weight:700}
 .sp-card .sp-icon svg{width:18px;height:18px}
 .sp-body{flex:1;min-width:0}

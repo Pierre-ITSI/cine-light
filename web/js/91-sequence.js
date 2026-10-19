@@ -77,6 +77,7 @@ const _SEQ_TXT = {
   rowChat: 'Discussion « {nom} »',
   rowChatReply: 'Discussion « {nom} » → réponse',
   rowChatAuto: ' · lecture auto',
+  chatNext: 'Prochain : {qui} « {texte} »',
   rowSleep: 'Veille (écran noir)',
   rowBattery: 'Batterie faible {n} %',
   rowOff: 'Extinction du téléphone',
@@ -632,7 +633,7 @@ async function _seqExec(s, it, ids) {
         if (p && p.mode !== 'off') { p.mode = 'unlocked'; p.awaitUnlock = null; p.sleep = null; }
       }
       await _seqOpenChat(it, ids);
-      if (s.opt.auto && _chat.open) chatAutoStart(); // Lecture auto (maquette 26d)
+      if (s.opt.auto && _chat.open) chatAutoStart(true); // Lecture auto (maquette 26d) : durées enregistrées, sans attendre « Envoyer »
       break;
     case 'sleep':
       // Veille (maquette 29b) : verrouillé, écran noir ; rallume un téléphone éteint
@@ -887,7 +888,13 @@ function renderSeq() {
     const bd = document.createElement('span'); bd.className = 'sq-badge ' + b.cls; bd.textContent = b.text;
     row.append(num, ic, lb, bd);
     rows.appendChild(row);
+    // Discussion en cours (maquette 40) : où en est le fil, sous son étape
+    if (i === pos && s.kind === 'chat' && (_seqRun.state === 'running' || _seqRun.state === 'ended')) {
+      const st = document.createElement('div'); st.className = 'sq-chat'; st.id = 'seqChatStatus';
+      rows.appendChild(st);
+    }
   });
+  seqRenderChatStatus();
   const empty = document.getElementById('seqEmpty');
   if (empty) empty.style.display = _seq.steps.length ? 'none' : '';
   rows.style.display = _seq.steps.length ? '' : 'none';
@@ -909,6 +916,19 @@ function renderSeq() {
   const live = pos >= 0 && (_seqRun.state === 'running' || _seqRun.state === 'ended');
   if (live && !_seqRun.tick) _seqRun.tick = setInterval(_seqRenderNow, 1000);
   if (!live && _seqRun.tick) { clearInterval(_seqRun.tick); _seqRun.tick = null; }
+}
+function seqRenderChatStatus() {
+  const box = document.getElementById('seqChatStatus');
+  if (!box) return;
+  box.textContent = '';
+  if (!_chat.open) return;
+  const info = _chatAutoInfo(), m = _chatNextMsg(); // 83-discussion.js
+  const add = (cls, text) => { const d = document.createElement('div'); d.className = cls; if (text) d.textContent = text; box.appendChild(d); return d; };
+  add('sq-chat-st' + (info.live ? ' on' : ''), info.text);
+  if (m) add('sq-chat-next', _seqTpl(_SEQ_TXT.chatNext, { qui: m.from === 'actor' ? (_chat.actor || 'Comédien') : (_chat.name || 'Contact'), texte: m.text }));
+  const bar = add('sq-chat-bar'), fill = document.createElement('i');
+  fill.style.width = info.pct + '%';
+  bar.appendChild(fill);
 }
 function _seqRenderNow() {
   const box = document.getElementById('seqNow');

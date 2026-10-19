@@ -742,6 +742,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .sc-notif.sc-out,.sc-callbar.sc-out{animation:notifOut .35s ease-in forwards}
 @keyframes scFadeOut{to{opacity:0}}
 .sc-lock.sc-lockout{animation:scFadeOut .4s ease forwards}
+.sc-lock.sc-still{animation:none}
 
 /* Écran verrouillé simulé */
 .sc-lock{position:absolute;inset:0;background:linear-gradient(180deg,#2a3140,#0c0f16);background-size:cover;background-position:center;display:flex;flex-direction:column;align-items:center;color:#fff;padding:calc(46px + env(safe-area-inset-top)) 18px calc(14px + env(safe-area-inset-bottom));overflow:hidden;cursor:pointer;animation:scFadeIn .5s ease}
@@ -1157,6 +1158,13 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .sq-row.done{opacity:.45}
 .sq-row.cur{border-color:var(--accent);background:rgba(255,107,44,.08)}
 .sq-row.next{border:1px dashed rgba(255,255,255,.3)}
+/* Discussion en cours sous son étape (maquette 40) */
+.sq-chat{margin:-2px 8px 6px 46px;display:flex;flex-direction:column;gap:6px;font-size:.6875rem;line-height:1.5}
+.sq-chat:empty{display:none}
+.sq-chat-st{color:#a8a8a8}.sq-chat-st.on{color:#FF8a55}
+.sq-chat-next{color:#d0d0d0}
+.sq-chat-bar{height:4px;border-radius:2px;background:rgba(255,255,255,.1);overflow:hidden}
+.sq-chat-bar i{display:block;height:100%;background:var(--accent);transition:width .4s linear}
 .sq-num{font-size:.625rem;color:#8f8f8f}
 .sq-label{font-size:.6875rem;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sq-row.missing .sq-label{color:#ff8f86}
@@ -1225,13 +1233,15 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 /* Écran — faux téléphone (maquettes 30 à 32), sous la discussion (85) et l'appel (95) */
 #screen-phone{display:none;position:absolute;inset:0;z-index:84;color:#fff;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif;cursor:default}
 .sp-lock,.sp-code,.sp-home,.sp-unlocked{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
-.sp-lock,.sp-code{background:linear-gradient(180deg,#24324a 0%,#0e1420 100%);animation:scFadeIn .35s ease}
+.sp-lock,.sp-code{background:linear-gradient(180deg,#24324a 0%,#0e1420 100%)}
+.sp-lock.sp-enter,.sp-code.sp-enter{animation:scFadeIn .35s ease}
 .sp-lock{gap:10px;padding:calc(60px + env(safe-area-inset-top)) 14px calc(22px + env(safe-area-inset-bottom))}
 .sp-lock-head{text-align:center}
 .sp-date{font-size:15px;opacity:.85}
 .sp-time{font-size:80px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
 .sp-stack{margin-top:14px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden}
-.sp-card{display:flex;gap:10px;padding:10px 12px;border-radius:20px;background:rgba(255,255,255,.16);text-align:left;cursor:pointer;flex:none;animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
+.sp-card{display:flex;gap:10px;padding:10px 12px;border-radius:20px;background:rgba(255,255,255,.16);text-align:left;cursor:pointer;flex:none}
+.sp-card.sp-new{animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
 .sp-icon{width:34px;height:34px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#3a7bd5,#00d2ff);font-size:16px;font-weight:700}
 .sp-card .sp-icon svg{width:18px;height:18px}
 .sp-body{flex:1;min-width:0}
@@ -15686,7 +15696,10 @@ function screenCallStart(m) {
     if (_callCfg.lock) {
       // Notification sur faux écran verrouillé (plein écran)
       el.classList.remove('notif');
+      // Écran verrouillé déjà affiché : pas de nouveau fondu (flash de la couleur de fond), seule la notification glisse
+      const again = !!el.querySelector('.sc-lock:not(.sc-lockout)');
       _scRenderLock();
+      if (again) el.querySelector('.sc-lock').classList.add('sc-still');
       // Comme un vrai téléphone : l'écran se rendort tout seul après ~10 s
       _callAutoTimer = setTimeout(() => { if (_callState === 'notif') screenCallEnd(); }, 10000);
     } else {
@@ -17447,10 +17460,13 @@ function chatDeliverPending() {
 // ── Lecture automatique (maquette 26d) ──
 // phase : { id, k: 'pause' | 'write' (contact) | 'type' (texte automatique) | 'actor' (le comédien tape) | 'button' (« Envoyer n° X ») }
 // type : frappe automatique envoyée à l'écran (chat:type), pour la reprise après rechargement
-const _chatAuto = { on: false, done: false, timer: null, tick: null, phase: null, t0: 0, dur: 0, type: null };
+const _chatAuto = { on: false, done: false, timer: null, tick: null, phase: null, t0: 0, dur: 0, type: null, seq: false };
 const _chatNextMsg = () => _chat.msgs.find((x) => _chatValid(x) && !_chatSent(x)) || null;
-function chatAutoStart() {
+// fromSeq : lancée par une étape de Séquence → les messages du contact suivent
+// leurs durées enregistrées, même réglés « au bouton » (seul le comédien est attendu)
+function chatAutoStart(fromSeq) {
   if (_chatAuto.on || !_chatNextMsg()) return;
+  _chatAuto.seq = fromSeq === true;
   if (!_chat.open) openChatOnTarget();
   _chatAuto.on = true; _chatAuto.done = false;
   if (!_chatAuto.tick) _chatAuto.tick = setInterval(_chatRenderAuto, 500);
@@ -17465,7 +17481,7 @@ function chatAutoPause() {
 }
 function chatAutoStop() {
   chatAutoPause();
-  _chatAuto.phase = null; _chatAuto.type = null; _chatAuto.done = false;
+  _chatAuto.phase = null; _chatAuto.type = null; _chatAuto.done = false; _chatAuto.seq = false;
 }
 // « ↶ » de la lecture : pause, puis le dernier message affiché est retiré
 function chatAutoBack() { chatAutoPause(); rewindChat(); }
@@ -17479,7 +17495,7 @@ function _chatAutoNext(resume) {
   if (!m) { chatAutoPause(); _chatAuto.phase = null; _chatAuto.done = true; renderChatPanel(); return; }
   // Repris au ▶ sur un message déjà en cours d'écriture par le comédien : on attend son envoi
   if (resume && _chatAuto.type && _chatAuto.type.id === m.id) { _chatAutoPhase(m.id, _chatAuto.type.dur ? 'type' : 'actor', _chatAuto.type.dur); renderChatPanel(); return; }
-  if (m.from === 'contact' && m.send === 'button') { _chatAutoPhase(m.id, 'button'); renderChatPanel(); return; }
+  if (m.from === 'contact' && m.send === 'button' && !_chatAuto.seq) { _chatAutoPhase(m.id, 'button'); renderChatPanel(); return; }
   if (m.from === 'actor' && !m.auto && m.send === 'button') { _chatAutoPhase(m.id, 'actor'); renderChatPanel(); return; }
   if (m.pause > 0) {
     _chatAutoPhase(m.id, 'pause', m.pause);
@@ -17539,6 +17555,7 @@ function _chatRenderAuto() {
   const info = _chatAutoInfo();
   if (st) { st.textContent = info.text; st.classList.toggle('on', info.live); }
   if (fill) fill.style.width = info.pct + '%';
+  if (typeof seqRenderChatStatus === 'function') seqRenderChatStatus(); // 91-sequence.js : état sous l'étape en cours
   const play = document.getElementById('dcAutoPlay'), pause = document.getElementById('dcAutoPause'), back = document.getElementById('dcAutoBack');
   if (play) play.disabled = !_chatAuto.on && !_chatNextMsg(); // en cours : reste allumé (maquette 26d), sans effet
   if (pause) pause.disabled = !_chatAuto.on;
@@ -19993,6 +20010,7 @@ const _SEQ_TXT = {
   rowChat: 'Discussion « {nom} »',
   rowChatReply: 'Discussion « {nom} » → réponse',
   rowChatAuto: ' · lecture auto',
+  chatNext: 'Prochain : {qui} « {texte} »',
   rowSleep: 'Veille (écran noir)',
   rowBattery: 'Batterie faible {n} %',
   rowOff: 'Extinction du téléphone',
@@ -20548,7 +20566,7 @@ async function _seqExec(s, it, ids) {
         if (p && p.mode !== 'off') { p.mode = 'unlocked'; p.awaitUnlock = null; p.sleep = null; }
       }
       await _seqOpenChat(it, ids);
-      if (s.opt.auto && _chat.open) chatAutoStart(); // Lecture auto (maquette 26d)
+      if (s.opt.auto && _chat.open) chatAutoStart(true); // Lecture auto (maquette 26d) : durées enregistrées, sans attendre « Envoyer »
       break;
     case 'sleep':
       // Veille (maquette 29b) : verrouillé, écran noir ; rallume un téléphone éteint
@@ -20803,7 +20821,13 @@ function renderSeq() {
     const bd = document.createElement('span'); bd.className = 'sq-badge ' + b.cls; bd.textContent = b.text;
     row.append(num, ic, lb, bd);
     rows.appendChild(row);
+    // Discussion en cours (maquette 40) : où en est le fil, sous son étape
+    if (i === pos && s.kind === 'chat' && (_seqRun.state === 'running' || _seqRun.state === 'ended')) {
+      const st = document.createElement('div'); st.className = 'sq-chat'; st.id = 'seqChatStatus';
+      rows.appendChild(st);
+    }
   });
+  seqRenderChatStatus();
   const empty = document.getElementById('seqEmpty');
   if (empty) empty.style.display = _seq.steps.length ? 'none' : '';
   rows.style.display = _seq.steps.length ? '' : 'none';
@@ -20825,6 +20849,19 @@ function renderSeq() {
   const live = pos >= 0 && (_seqRun.state === 'running' || _seqRun.state === 'ended');
   if (live && !_seqRun.tick) _seqRun.tick = setInterval(_seqRenderNow, 1000);
   if (!live && _seqRun.tick) { clearInterval(_seqRun.tick); _seqRun.tick = null; }
+}
+function seqRenderChatStatus() {
+  const box = document.getElementById('seqChatStatus');
+  if (!box) return;
+  box.textContent = '';
+  if (!_chat.open) return;
+  const info = _chatAutoInfo(), m = _chatNextMsg(); // 83-discussion.js
+  const add = (cls, text) => { const d = document.createElement('div'); d.className = cls; if (text) d.textContent = text; box.appendChild(d); return d; };
+  add('sq-chat-st' + (info.live ? ' on' : ''), info.text);
+  if (m) add('sq-chat-next', _seqTpl(_SEQ_TXT.chatNext, { qui: m.from === 'actor' ? (_chat.actor || 'Comédien') : (_chat.name || 'Contact'), texte: m.text }));
+  const bar = add('sq-chat-bar'), fill = document.createElement('i');
+  fill.style.width = info.pct + '%';
+  bar.appendChild(fill);
 }
 function _seqRenderNow() {
   const box = document.getElementById('seqNow');
@@ -21684,6 +21721,9 @@ let _spPowerSeq = 0;          // jeton des animations d'extinction / rallumage
 let _spTyped = 0;             // points du code remplis (local, jamais envoyés)
 let _spUnlockedAt = 0;        // déverrouillé ici, pas encore confirmé par la télécommande
 let _spRefreshTimer = null;
+// Dernier rendu : le fondu ne joue qu'à l'apparition d'un écran (mode changé),
+// seules les nouvelles notifications glissent (sinon flash de la couleur de fond)
+const _spShown = { mode: null, ids: new Set() };
 const _spGestureAt = new Map(); // geste → dernier envoi
 let _spBurst = [];
 
@@ -21728,6 +21768,7 @@ function screenPhoneState(m) {
 }
 function screenPhoneHide() {
   _scPhone = null; _spTyped = 0; _spUnlockedAt = 0; _spAlertClosed = null;
+  _spShown.mode = null; _spShown.ids.clear();
   if (_spRefreshTimer) { clearInterval(_spRefreshTimer); _spRefreshTimer = null; }
   const el = document.getElementById('screen-phone');
   if (el) { el.style.display = 'none'; el.textContent = ''; }
@@ -21832,22 +21873,26 @@ function _spRender() {
   const p = _scPhone;
   if (!el) return;
   if (_spRefreshTimer && (!p || p.mode !== 'locked')) { clearInterval(_spRefreshTimer); _spRefreshTimer = null; }
-  if (!p || p.mode === 'off') { el.style.display = 'none'; el.textContent = ''; return; }
+  if (!p || p.mode === 'off') { el.style.display = 'none'; el.textContent = ''; _spShown.mode = null; _spShown.ids.clear(); return; }
+  const enter = _spShown.mode !== p.mode || el.style.display !== 'block';
+  const seen = enter ? new Set() : _spShown.ids;
+  _spShown.mode = p.mode;
+  _spShown.ids = new Set(p.mode === 'locked' ? p.notifs.map((n) => n.id) : []);
   el.textContent = '';
   el.className = p.style;
   el.style.display = 'block';
   if (p.mode === 'locked') {
-    const root = _spEl('div', 'sp-lock');
+    const root = _spEl('div', 'sp-lock' + (enter ? ' sp-enter' : ''));
     const head = _spEl('div', 'sp-lock-head');
     const k = _spClock();
     head.append(_spEl('div', 'sp-date', k.date), _spEl('div', 'sp-time', k.time));
     const stack = _spEl('div', 'sp-stack');
-    for (const n of p.notifs.slice().reverse()) stack.appendChild(_spCard(n)); // la plus récente en haut
+    for (const n of p.notifs.slice().reverse()) { const c = _spCard(n); if (!seen.has(n.id)) c.classList.add('sp-new'); stack.appendChild(c); } // la plus récente en haut
     root.append(head, stack, _spEl('div', 'sp-hint', _SP_TXT.unlockHint));
     el.appendChild(root);
     if (!_spRefreshTimer) _spRefreshTimer = setInterval(_spRefresh, SP_REFRESH_MS);
   } else if (p.mode === 'code') {
-    const root = _spEl('div', 'sp-code');
+    const root = _spEl('div', 'sp-code' + (enter ? ' sp-enter' : ''));
     root.appendChild(_spEl('div', 'sp-code-title', _SP_TXT.codeTitle));
     root.appendChild(_spEl('div', 'sp-dots'));
     const keys = _spEl('div', 'sp-keys');

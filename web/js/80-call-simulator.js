@@ -616,7 +616,10 @@ function screenCallStart(m) {
     if (_callCfg.lock) {
       // Notification sur faux écran verrouillé (plein écran)
       el.classList.remove('notif');
+      // Écran verrouillé déjà affiché : pas de nouveau fondu (flash de la couleur de fond), seule la notification glisse
+      const again = !!el.querySelector('.sc-lock:not(.sc-lockout)');
       _scRenderLock();
+      if (again) el.querySelector('.sc-lock').classList.add('sc-still');
       // Comme un vrai téléphone : l'écran se rendort tout seul après ~10 s
       _callAutoTimer = setTimeout(() => { if (_callState === 'notif') screenCallEnd(); }, 10000);
     } else {

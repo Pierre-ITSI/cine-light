@@ -191,3 +191,26 @@ test('Séquence : étape « Discussion » avec « ▶ Lecture auto »', async ()
   for (const e of r.errs) assert.deepEqual(e, []);
   await r.close();
 });
+
+test('Séquence, « ▶ Lecture auto » : messages du contact « au bouton » partis avec leurs durées, état sous l\'étape (maquette 40)', async () => {
+  const r = await rig(91);
+  const { rp, sp } = r;
+  await rp.evaluate(() => {
+    chatSaved = [{ id: 'cb', name: 'Bouton', contact: 'Maman', actor: 'Julie', style: 'glass', hasPhoto: false, photoSig: null,
+      msgs: [{ id: 'd1', from: 'contact', text: 'Tu es où ?', pause: 0, write: 1, send: 'button' }, { id: 'd2', from: 'contact', text: 'Réponds.', pause: 1, write: 0, send: 'button' },
+        { id: 'd3', from: 'actor', text: 'ici', pause: 0, write: 3, send: 'button' }] }];
+    _chsvPersist();
+    switchTab('seq');
+  });
+  await rp.click('#seqAddBtn');
+  await rp.locator('#ssKinds .ss-opt', { hasText: 'Discussion' }).click();
+  await rp.locator('#ssRefCard .ss-opt', { hasText: '▶ Lecture auto' }).click();
+  await rp.click('#ssSave');
+  await rp.evaluate(async () => { seqGo(); await _seqChain; });
+  await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b:not(.scc-typing)').length === 2, null, { timeout: 6000 });
+  assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '< Réponds.']);
+  await waitFor(rp, () => /attend Julie · 3 \/ 3/.test(document.getElementById('seqChatStatus').textContent));
+  assert.match(await rp.textContent('#seqChatStatus'), /Prochain : Julie « ici »/);
+  for (const e of r.errs) assert.deepEqual(e, []);
+  await r.close();
+});

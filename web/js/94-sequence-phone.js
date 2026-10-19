@@ -58,6 +58,9 @@ let _spPowerSeq = 0;          // jeton des animations d'extinction / rallumage
 let _spTyped = 0;             // points du code remplis (local, jamais envoyés)
 let _spUnlockedAt = 0;        // déverrouillé ici, pas encore confirmé par la télécommande
 let _spRefreshTimer = null;
+// Dernier rendu : le fondu ne joue qu'à l'apparition d'un écran (mode changé),
+// seules les nouvelles notifications glissent (sinon flash de la couleur de fond)
+const _spShown = { mode: null, ids: new Set() };
 const _spGestureAt = new Map(); // geste → dernier envoi
 let _spBurst = [];
 
@@ -102,6 +105,7 @@ function screenPhoneState(m) {
 }
 function screenPhoneHide() {
   _scPhone = null; _spTyped = 0; _spUnlockedAt = 0; _spAlertClosed = null;
+  _spShown.mode = null; _spShown.ids.clear();
   if (_spRefreshTimer) { clearInterval(_spRefreshTimer); _spRefreshTimer = null; }
   const el = document.getElementById('screen-phone');
   if (el) { el.style.display = 'none'; el.textContent = ''; }
@@ -206,22 +210,26 @@ function _spRender() {
   const p = _scPhone;
   if (!el) return;
   if (_spRefreshTimer && (!p || p.mode !== 'locked')) { clearInterval(_spRefreshTimer); _spRefreshTimer = null; }
-  if (!p || p.mode === 'off') { el.style.display = 'none'; el.textContent = ''; return; }
+  if (!p || p.mode === 'off') { el.style.display = 'none'; el.textContent = ''; _spShown.mode = null; _spShown.ids.clear(); return; }
+  const enter = _spShown.mode !== p.mode || el.style.display !== 'block';
+  const seen = enter ? new Set() : _spShown.ids;
+  _spShown.mode = p.mode;
+  _spShown.ids = new Set(p.mode === 'locked' ? p.notifs.map((n) => n.id) : []);
   el.textContent = '';
   el.className = p.style;
   el.style.display = 'block';
   if (p.mode === 'locked') {
-    const root = _spEl('div', 'sp-lock');
+    const root = _spEl('div', 'sp-lock' + (enter ? ' sp-enter' : ''));
     const head = _spEl('div', 'sp-lock-head');
     const k = _spClock();
     head.append(_spEl('div', 'sp-date', k.date), _spEl('div', 'sp-time', k.time));
     const stack = _spEl('div', 'sp-stack');
-    for (const n of p.notifs.slice().reverse()) stack.appendChild(_spCard(n)); // la plus récente en haut
+    for (const n of p.notifs.slice().reverse()) { const c = _spCard(n); if (!seen.has(n.id)) c.classList.add('sp-new'); stack.appendChild(c); } // la plus récente en haut
     root.append(head, stack, _spEl('div', 'sp-hint', _SP_TXT.unlockHint));
     el.appendChild(root);
     if (!_spRefreshTimer) _spRefreshTimer = setInterval(_spRefresh, SP_REFRESH_MS);
   } else if (p.mode === 'code') {
-    const root = _spEl('div', 'sp-code');
+    const root = _spEl('div', 'sp-code' + (enter ? ' sp-enter' : ''));
     root.appendChild(_spEl('div', 'sp-code-title', _SP_TXT.codeTitle));
     root.appendChild(_spEl('div', 'sp-dots'));
     const keys = _spEl('div', 'sp-keys');
