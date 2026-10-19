@@ -6,15 +6,18 @@ renderFxMemories();
 
 // ── Onglet Tel : état initial des options, sons par type (bibliothèque en
 // IndexedDB, chargée en arrière-plan), appels, SMS et notifications
-// enregistrés, discussion préparée ──
+// enregistrés, discussion préparée, appelants enregistrés, rangée « Style et
+// sonnerie » ──
 _syncCallPhotoRow();
 ringInit();
 loadCallList();
 renderCallList();
 chatLoad();
 loadSavedChats();      // discussions enregistrées (89-discussions-saved.js)
+callersInit();         // appelants enregistrés (79-callers.js) ; 1re fois : repris des listes ci-dessus
 renderNotifForm();
 renderChatPanel();
+renderTelStyle();      // 78-tel-style.js
 
 // ── Onglet Séquence : séquence en cours, séquences enregistrées ──
 seqLoad();

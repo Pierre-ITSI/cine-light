@@ -63,6 +63,11 @@ const rows = (page) => page.evaluate(() => [...document.querySelectorAll('#ringL
 const activeChips = (page) => page.evaluate(() => [...document.querySelectorAll('#callRingPanel .chip.active')].map((c) => c.id));
 const setVolume = (page, pct) => page.evaluate((v) => { document.getElementById('ringVolSlider').value = String(v); onRingVolume(); }, pct);
 const shown = (page, id) => page.evaluate((id) => getComputedStyle(document.getElementById(id)).display !== 'none', id);
+// Sons choisis dans la vue « Style et sonnerie » (maquette 36b) : ouverte le temps du geste
+async function inView(page, fn) {
+  await page.evaluate(() => openTelStyle());
+  try { await fn(); } finally { await page.evaluate(() => closeTelStyle()); }
+}
 
 test('import : bon fichier (nom, durée, IndexedDB), 5 Mo au plus, pas un son, illisible, doublon ; suppression', async () => {
   const { page, errors, close } = await openPage(browser);
@@ -103,15 +108,15 @@ test('import : bon fichier (nom, durée, IndexedDB), 5 Mo au plus, pas un son, i
   assert.equal(await page.evaluate(async () => (await ringLibData(ringLib[0].id)).slice(0, 22)), 'data:audio/wav;base64,');
   // Supprimer le son choisi : l'appel revient à Classique
   page.once('dialog', (d) => d.accept());
-  await page.locator('#ringLibRows .rt-row').nth(1).locator('.rt-del').click();
+  await inView(page, () => page.locator('#ringLibRows .rt-row').nth(1).locator('.rt-del').click());
   await waitFor(page, () => ringLib.length === 1);
   assert.equal(await page.evaluate(() => ringSettings.call.sound), 'classic');
   assert.deepEqual(await activeChips(page), ['callring-classic']);
   page.once('dialog', (d) => d.dismiss()); // annuler : rien ne change
-  await page.locator('#ringLibRows .rt-del').click();
+  await inView(page, () => page.locator('#ringLibRows .rt-del').click());
   assert.equal(await page.evaluate(() => ringLib.length), 1);
   page.once('dialog', (d) => d.accept());
-  await page.locator('#ringLibRows .rt-del').click();
+  await inView(page, () => page.locator('#ringLibRows .rt-del').click());
   await waitFor(page, () => ringLib.length === 0);
   assert.equal(await shown(page, 'ringLibLabel'), false);
   // La suppression IndexedDB se termine après la mise à jour de l'interface :
@@ -152,10 +157,10 @@ test('choix par type : libellés, décroché, volume ; mémorisés au rechargeme
   assert.notEqual(A, B);
   await setVolume(page, 60);
   // La sonnerie de l'appel n'a pas bougé ; l'appel est sélectionnable depuis la ligne
-  assert.deepEqual(await page.evaluate(() => ringSettings.call), { sound: A, vol: 0.8 });
+  assert.deepEqual(await page.evaluate(() => ringSettings.call), { sound: A, vol: 0.8, vib: false });
   // Notification : Silencieux (panneau du son sous la tuile « Son »)
-  await page.evaluate(() => { _ntDetail = 'sound'; setCallKind('notif'); });
-  await page.click('#callring-silent');
+  await page.evaluate(() => { setCallKind('notif'); });
+  await inView(page, () => page.click('#callring-silent'));
   assert.equal(await shown(page, 'callAnswerBlock'), false);
   // Champs envoyés selon le type
   const fields = await page.evaluate(() => ['call', 'sms', 'notif'].map((k) => { setCallKind(k); const f = callFormFields(); return [f.ring, f.ringId, f.ringVolume]; }));
@@ -165,17 +170,18 @@ test('choix par type : libellés, décroché, volume ; mémorisés au rechargeme
   await page.evaluate(() => { startMode('remote'); switchTab('call'); });
   await waitFor(page, () => _ringLibLoaded && ringLib.length === 2);
   assert.deepEqual(await page.evaluate(() => ringSettings), {
-    call: { sound: A, vol: 0.8 }, sms: { sound: B, vol: 0.6 }, notif: { sound: 'silent', vol: 1 },
+    call: { sound: A, vol: 0.8, vib: false }, sms: { sound: B, vol: 0.6, vib: false }, notif: { sound: 'silent', vol: 1, vib: false },
+    discussion: { sound: 'silent', vol: 1, vib: false },
   });
   assert.deepEqual((await rows(page)).map((r) => [r.name, r.sel]), [['appel.wav', true], ['sms.wav', false]]);
   assert.equal(await page.evaluate(() => document.getElementById('ringVolVal').textContent), '80 %');
   await page.evaluate(() => setCallKind('sms'));
   assert.deepEqual((await rows(page)).map((r) => [r.meta, r.sel]), [['0:01', false], ['0:01 · sélectionnée', true]]);
   assert.equal(await page.evaluate(() => document.getElementById('ringVolSlider').value), '60');
-  await page.evaluate(() => { _ntDetail = 'sound'; setCallKind('notif'); });
+  await page.evaluate(() => { setCallKind('notif'); });
   assert.deepEqual(await activeChips(page).then((c) => c.filter((x) => x.startsWith('callring'))), ['callring-silent']);
   // Toucher une ligne choisit ce son pour le type affiché
-  await page.locator('#ringLibRows .rt-row').nth(0).click();
+  await inView(page, () => page.locator('#ringLibRows .rt-row').nth(0).click());
   assert.equal(await page.evaluate(() => ringSettings.notif.sound), A);
   assert.deepEqual(errors, []);
   await close();
@@ -204,7 +210,7 @@ test('liste : l\'entrée garde le son et le volume de son type ; ancien SMS et s
   // Toucher l'entrée : le formulaire reprend son son et son volume
   await page.locator('#callListRows .cl-row').nth(0).click();
   await waitFor(page, () => ringSettings.call.sound !== 'silent');
-  assert.deepEqual(await page.evaluate(() => ringSettings.call), { sound: A, vol: 0.6 });
+  assert.deepEqual(await page.evaluate(() => ringSettings.call), { sound: A, vol: 0.6, vib: false });
   // Rechargement : entrées intactes ; un SMS enregistré par une version
   // précédente (sonnerie de l'appel, sans volume) garde son son d'origine
   await page.evaluate(() => {
@@ -219,7 +225,7 @@ test('liste : l\'entrée garde le son et le volume de son type ; ancien SMS et s
     [['classic', A, 0.6], ['digital', undefined, 0.4], ['classic', undefined, undefined]]);
   // Son supprimé de la bibliothèque : l'entrée sonne en Classique (volume gardé)
   page.once('dialog', (d) => d.accept());
-  await page.locator('#ringLibRows .rt-del').click();
+  await inView(page, () => page.locator('#ringLibRows .rt-del').click());
   await waitFor(page, () => ringLib.length === 0);
   const after = await page.evaluate(() => callEntryMessage(callList.call[0], {}));
   assert.deepEqual([after.ring, 'ringId' in after, after.ringVolume], ['classic', false, 0.6]);
@@ -307,7 +313,7 @@ describe('télécommande et écran reliés', () => {
 
   test('SMS et notification : son importé joué une fois (bannière et écran verrouillé), son intégré sinon', async () => {
     await rp.evaluate(() => { setCallKind('sms'); document.getElementById('lockToggle').checked = false; });
-    await rp.locator('#ringLibRows .rt-row').nth(0).click(); // même son, choisi aussi pour les SMS
+    await inView(rp, () => rp.locator('#ringLibRows .rt-row').nth(0).click()); // même son, choisi aussi pour les SMS
     assert.equal(await rp.evaluate(() => ringSettings.sms.sound), A);
     await clearAudio(sp);
     await rp.click('#callTriggerBtn');
@@ -321,8 +327,8 @@ describe('télécommande et écran reliés', () => {
     await sp.evaluate(() => screenCallEnd());
     await sleep(400);
     // Notification sur faux écran verrouillé
-    await rp.evaluate(() => { _ntDetail = 'sound'; setCallKind('notif'); setNotifPresent('lock'); });
-    await rp.locator('#ringLibRows .rt-row').nth(0).click();
+    await rp.evaluate(() => { setCallKind('notif'); setNotifPresent('lock'); });
+    await inView(rp, () => rp.locator('#ringLibRows .rt-row').nth(0).click());
     await clearAudio(sp);
     await rp.click('#ntSendBtn');
     await waitFor(sp, () => _callState === 'notif' && !!document.querySelector('#screen-call .sc-lock'));
@@ -400,7 +406,7 @@ describe('télécommande et écran reliés', () => {
     assert.deepEqual(await imgStarts(A), []);
     assert.equal(await rp.evaluate((id) => _ringOnScreens.has(id), A), false, 'renverra au prochain choix');
     // Choisi de nouveau : renvoyé aussitôt
-    await rp.locator('#ringLibRows .rt-row').nth(0).click();
+    await inView(rp, () => rp.locator('#ringLibRows .rt-row').nth(0).click());
     await waitFor(sp, (id) => _mediaCache.has(id), A);
   });
 

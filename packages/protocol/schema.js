@@ -32,6 +32,8 @@
  *
  * Hors périmètre MQTT (non listés ici, ne transitent pas par le relais) :
  *  - 'brightness', 'brightness-restore' : pont WebView → shell natif (expo-app/app/index.tsx) ;
+ *  - 'vibrate' { pattern } (même forme que le message relayé) et 'vibrate:stop' :
+ *    vibreur de l'écran de jeu par la coque (Vibration de React Native) ;
  *  - 'dmx:listen', 'dmx:stop', 'udp:send', 'net:info' (PWA → coque) et
  *    'dmx:packets', 'net:info', 'dmx:error' (coque → PWA, window.SRNative.receive) :
  *    réception UDP de la passerelle DMX (docs/DMX-NATIVE.md, contrat du pont) ;
@@ -621,6 +623,8 @@ const SPECS = {
         + '(SMS / notification, une fois) ; repli quand le son importé ringId manque à l’écran'),
       ringId: opt(str(23, RING_ID_RE), 'son importé préchargé en fragments (media-img-*, mediaId = cet id) ; absent = son intégré'),
       ringVolume: opt(num(0, 1), 'volume du son 0..1 (absent = 1)'),
+      vib: opt(bool, 'vibreur du type (maquette 36b) : appel = motif répété tant que ça sonne ; SMS / notification = motif court '
+        + 'à l’arrivée ; absent = ne vibre pas'),
       present: opt(oneOf('full', 'banner', 'lock'), 'appel : plein écran ou bandeau ; notification : bandeau ou écran verrouillé'),
       photoMode: opt(oneOf('avatar', 'full'), 'photo en avatar ou plein écran'),
       hasAudio: opt(bool, 'bande son préchargée (__callaudio) à jouer au décroché'),
@@ -679,6 +683,11 @@ const SPECS = {
       history: opt(bool, '« Reprendre ici » / « Repartir de zéro » : sent = les messages du fil AVANT le point de reprise (début exact de ids), '
         + 'affichés d’un coup comme historique (ni « … écrit », ni animation, ni son) ; frappe locale et file d’attente de l’écran remises à zéro'),
       pend: opt(arrayOf(CHAT_ID, LIMITS.chatMessages), 'messages du comédien postés sans réseau : « Non distribué » (point rouge) jusqu’au retour du réseau'),
+      ring: opt(RINGS, 'son des messages du contact (maquette 36d), joué à l’arrivée de chacun (jamais pour l’historique) ; '
+        + 'absent = aucun son ; repli quand le son importé ringId manque à l’écran'),
+      ringId: opt(str(23, RING_ID_RE), 'son des messages importé, préchargé en fragments (__ring_…, comme les sonneries)'),
+      ringVolume: opt(num(0, 1), 'volume du son des messages 0..1 (absent = 1)'),
+      vib: opt(bool, 'vibreur : motif court à l’arrivée de chaque message du contact (absent = non)'),
       auto: opt(object({
         ...CHAT_TYPE_FIELDS,
         el: opt(int(0, LIMITS.chatWriteSeconds[1] * 1000), 'ms déjà écoulées de la frappe automatique (reprise)'),
@@ -806,6 +815,7 @@ const SPECS = {
         ring: req(RINGS, 'son intégré (repli)'),
         ringId: opt(str(23, RING_ID_RE), 'son importé préchargé (__ring_…)'),
         vol: opt(num(0, 1), 'volume 0..1'),
+        vib: opt(bool, 'vibreur de l’entrée (motif court ; absent = non)'),
       }), 'son de la notification arrivée (une fois)'),
       bar: opt(PHONE_BAR, 'barre d’état de la séquence (absente : aucune ; l’écran revient à media:bar)'),
       sleep: opt(object({

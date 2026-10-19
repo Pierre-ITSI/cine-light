@@ -768,6 +768,77 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .sc-lock.tonal .sc-lock-home{width:110px;height:4px}
 .sc-lock.minimal .sc-lock-home{display:none}
 
+/* ══ Onglet Tel : « Style et sonnerie » / « Style et son », appelants enregistrés (maquettes validées 36) ══
+   Rangée résumé (comme la barre d'état de l'onglet Média) ouvrant la vue
+   plein écran #tel-style-view (présentation de #phone-params-view : ss-head,
+   ss-card, pp-cap) ; aperçu simplifié de l'écran de jeu ; vibreur ; en-tête
+   « Enregistrés (n) › » et feuille des appelants enregistrés. */
+.tel-sum-row{margin-top:14px}
+.tel-sum{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#252528;color:#d8d8d8;font-family:'DM Mono',monospace;font-size:.6875rem;text-align:left;line-height:1.5;cursor:pointer}
+.tel-sum b{color:#FF8a55;font-weight:500;white-space:nowrap}
+.tel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.tel-head .panel-label{margin:0}
+.tel-link{background:none;border:none;color:#FF8a55;font-family:'DM Mono',monospace;font-size:.6875rem;padding:0;cursor:pointer;white-space:nowrap}
+.tel-save{width:100%;margin-top:10px;min-height:42px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:transparent;color:#d0d0d0;font-family:'DM Mono',monospace;font-size:.6875rem;cursor:pointer}
+.tel-saved{width:100%;margin-top:10px;font-size:.6875rem;color:#5fdf8a;text-align:center}
+
+/* Vue « Style et sonnerie » */
+#tel-style-view .ss-card .panel-label{margin-bottom:8px}
+#tel-style-view #callRingPanel .rt-note{margin-top:8px}
+.ts-vib{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.8125rem;color:#F5F2EC;cursor:pointer}
+.ts-note{font-size:.6875rem;color:#a8a8a8;line-height:1.55}
+/* Aperçu : simple maquette de l'écran de jeu, selon le style */
+.ts-prev{margin:4px 0 0;height:150px;flex:none;border-radius:14px;background:linear-gradient(160deg,#3a4656,#12161c);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-family:-apple-system,system-ui,sans-serif;position:relative;overflow:hidden}
+.ts-prev.tonal{background:linear-gradient(160deg,#2c3a3a,#161c1c)}
+.ts-prev.minimal{background:#0c0c0e}
+.ts-prev.photo{background-size:cover;background-position:center}
+.ts-prev.photo::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.ts-prev>*{position:relative}
+.ts-prev .tp-av{width:42px;height:42px;border-radius:50%;background-color:rgba(255,255,255,.25);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:600;flex:none}
+.ts-prev .tp-nm{font-size:17px;font-weight:600;max-width:90%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ts-prev .tp-lb{font-size:11px;opacity:.7}
+.ts-prev .tp-bt{display:flex;gap:60px;margin-top:6px}
+.ts-prev .tp-bt span{width:30px;height:30px;border-radius:50%;background:#ff3b30}
+.ts-prev .tp-bt span+span{background:#34c759}
+.ts-prev.tonal .tp-bt{gap:14px}
+.ts-prev.tonal .tp-bt span{width:62px;height:24px;border-radius:12px}
+.ts-prev .tp-vib{position:absolute;top:8px;right:10px;font-size:10px;font-family:'DM Mono',monospace;color:#FF8a55}
+/* Bandeau (appel en bandeau haut, SMS, notification) */
+.ts-prev.banner{justify-content:flex-start;padding-top:24px}
+.ts-prev .tp-card{display:flex;align-items:center;gap:10px;width:86%;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.16);text-align:left}
+.ts-prev.tonal .tp-card{background:#2f3b3b;border-radius:20px}
+.ts-prev.minimal .tp-card{background:#1c1c1f;border:1px solid rgba(255,255,255,.12);border-radius:8px}
+.ts-prev .tp-card .tp-av{width:32px;height:32px;font-size:13px}
+.ts-prev .tp-ic{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#3a7bd5,#00d2ff);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
+.ts-prev .tp-txt{min-width:0;flex:1}
+.ts-prev .tp-txt b,.ts-prev .tp-txt span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ts-prev .tp-txt b{font-size:13px}
+.ts-prev .tp-txt span{font-size:11px;opacity:.75}
+.ts-prev .tp-cardbt{display:flex;gap:6px;flex:none}
+.ts-prev .tp-cardbt span{width:22px;height:22px;border-radius:50%;background:#ff3b30}
+.ts-prev .tp-cardbt span+span{background:#34c759}
+/* Discussion : en-tête et deux bulles */
+.ts-prev.chat{justify-content:flex-start;align-items:stretch;padding:12px 14px;gap:8px}
+.ts-prev.chat.minimal{background:#f2f2f4;color:#111}
+.ts-prev .tp-head{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.ts-prev .tp-head .tp-av{width:26px;height:26px;font-size:11px}
+.ts-prev .tp-b{max-width:70%;padding:6px 10px;border-radius:14px;font-size:12px;background:rgba(255,255,255,.18);align-self:flex-start}
+.ts-prev .tp-b.out{align-self:flex-end;background:#2f8cf0;color:#fff}
+.ts-prev.chat.minimal .tp-b{background:#e2e2e6}
+.ts-prev.chat.minimal .tp-b.out{background:#111;color:#fff}
+.ts-prev.chat .tp-vib{top:14px}
+
+/* Feuille « Appelants enregistrés » (maquette 36e) */
+.cr-row{display:flex;align-items:center;gap:12px;min-height:56px;border-bottom:1px solid rgba(255,255,255,.06);padding:0 4px;cursor:pointer}
+.cr-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.8125rem;color:#fff;background-size:cover;background-position:center}
+.cr-main{min-width:0;flex:1}
+.cr-name,.cr-meta{display:block}
+.cr-name{font-size:.8125rem;color:#F5F2EC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-row.on .cr-name{color:#FF8a55}
+.cr-meta{font-size:.6875rem;color:#a8a8a8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-more{margin-left:auto;min-width:36px;min-height:36px;border:none;background:transparent;color:#8f8f8f;font-size:1.1rem;cursor:pointer}
+.cr-empty{font-size:.6875rem;color:#a8a8a8;padding:12px 4px}
+.sr-add:disabled{opacity:.5;cursor:default}
 /* ══ Onglet Appel : sonnerie / son de notification, sons importés (maquette validée 12) ══
    Lignes « Vos sonneries » et « Bande son au décroché » : mêmes surfaces que
    les appels enregistrés (85-call-list.css). */
@@ -1020,17 +1091,10 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .nt-title{width:100%;height:42px;box-sizing:border-box;font-size:.8125rem;border-color:rgba(255,255,255,.14);border-radius:6px}
 .nt-body{display:block;width:100%;height:58px;box-sizing:border-box;margin-top:10px;font-size:.8125rem;padding:8px 12px;resize:none;border-color:rgba(255,255,255,.14);border-radius:6px;line-height:1.35}
 
-/* Télécommande — Envoi, tuiles Style / Fond / Son (réglages propres aux notifications) */
+/* Télécommande — Envoi, rangée « Style et son » (réglages propres aux notifications, maquette 36f) */
 .nt-actions{margin-bottom:12px}
 .nt-send{width:100%;height:46px;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
-.nt-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px}
-.nt-tile{height:40px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);font-family:'DM Mono',monospace;font-size:.625rem;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#d0d0d0;cursor:pointer;padding:0 4px;min-width:0}
-.nt-tile span{color:#a8a8a8}
-.nt-tile b{font-weight:400;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nt-tile.open{border-color:var(--accent);color:#FF8a55}
 .nt-note{font-size:.625rem;color:#a8a8a8;text-align:center;margin-top:12px}
-.nt-detail{margin-top:12px;margin-bottom:0}
-#ntSoundSlot>.panel{margin-top:12px;margin-bottom:0}
 .nt-wall-preview{width:36px;height:62px;border-radius:8px;background:var(--mid2);background-size:cover;background-position:center;border:1px solid var(--border);flex-shrink:0}
 
 /* Écran — carte de notification d'application (bandeau / écran verrouillé) */
@@ -1122,7 +1186,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .sq-phone-v{min-width:0;color:#a8a8a8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* Télécommande — éditer une étape (maquette 29) */
-#seq-step-view,#phone-params-view{display:none;position:fixed;inset:0;z-index:300;overflow-y:auto;overflow-x:hidden;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);color:var(--text);font-family:'DM Mono',monospace;padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));flex-direction:column;gap:10px}
+#seq-step-view,#phone-params-view,#tel-style-view{display:none;position:fixed;inset:0;z-index:300;overflow-y:auto;overflow-x:hidden;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);color:var(--text);font-family:'DM Mono',monospace;padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));flex-direction:column;gap:10px}
 .ss-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .ss-back{width:90px;text-align:left;padding:0;border:none;background:none;font-family:'DM Mono',monospace;font-size:.75rem;color:#c8c8c8;cursor:pointer}
 .ss-title{font-family:'Lato',sans-serif;font-weight:600;font-size:1.125rem}
@@ -2026,39 +2090,24 @@ button.st-row{cursor:pointer}
         <button type="button" class="gw-seg-btn" id="callkind-notif" onclick="setCallKind('notif')">🔔 Notification</button>
         <button type="button" class="gw-seg-btn tel-kind-wide" id="callkind-discussion" onclick="setCallKind('discussion')">💬 Discussion</button>
       </div>
-      <div id="callStyleRow" style="margin-top:14px">
-        <div class="panel-label">Style</div>
-        <div class="chips-wrap">
-          <button class="chip active" id="callstyle-glass" onclick="setCallStyle('glass')">Verre</button>
-          <button class="chip" id="callstyle-tonal" onclick="setCallStyle('tonal')">Tonal</button>
-          <button class="chip" id="callstyle-minimal" onclick="setCallStyle('minimal')">Épuré</button>
-        </div>
-        <div class="media-status" id="callStyleHint" style="text-align:left;margin-top:8px">Translucide et flouté, boutons ronds.</div>
-      </div>
-      <div id="callPresentRow" style="margin-top:14px">
-        <div class="panel-label">Présentation</div>
-        <div class="chips-wrap">
-          <button class="chip active" id="callpres-full" onclick="setCallPresent('full')">Plein écran</button>
-          <button class="chip" id="callpres-banner" onclick="setCallPresent('banner')">Bandeau haut</button>
-        </div>
-      </div>
-      <div id="callPhotoModeRow" style="margin-top:14px">
-        <div class="panel-label">Photo de l'appelant</div>
-        <div class="chips-wrap">
-          <button class="chip active" id="callphoto-avatar" onclick="setCallPhotoMode('avatar')">Avatar</button>
-          <button class="chip" id="callphoto-full" onclick="setCallPhotoMode('full')">Plein écran</button>
-        </div>
+      <!-- Style et sonnerie / Style et son (maquette 36) : résumé, réglages dans la vue #tel-style-view -->
+      <div class="tel-sum-row" id="telStyleRow">
+        <div class="panel-label" id="telStyleLabel">Style et sonnerie</div>
+        <button type="button" class="tel-sum" id="telStyleBtn" onclick="openTelStyle()"><span id="telStyleSum"></span><b>Régler ›</b></button>
       </div>
     </div>
     <div class="panel" id="callWhoPanel">
-      <div class="panel-label">Appelant</div>
-      <input type="text" id="callName" class="text-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%;margin-bottom:10px">
-      <input type="text" id="callLabel" class="text-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px">
+      <!-- Appelants enregistrés (maquette 36e) : feuille « Enregistrés (n) › », 79-callers.js -->
+      <div class="tel-head"><div class="panel-label" id="callWhoLabel">Appelant</div><button type="button" class="tel-link" id="callWhoSaved" onclick="openCallersSheet()">Enregistrés (0) ›</button></div>
+      <input type="text" id="callName" class="text-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%;margin-bottom:10px" oninput="renderCallerState()">
+      <input type="text" id="callLabel" class="text-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px" oninput="renderCallerState()">
       <div style="display:flex;gap:10px;align-items:center">
         <div id="callPhotoPreview" style="width:46px;height:46px;border-radius:50%;background:var(--mid2);border:1px solid var(--border);background-size:cover;background-position:center;flex-shrink:0"></div>
         <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()">🖼 Photo (option)</button>
         <input type="file" id="callPhotoInput" accept="image/*" style="display:none" onchange="onCallPhoto(this.files);this.value=''">
       </div>
+      <button type="button" class="tel-save" id="callerSaveBtn" onclick="saveCurrentCaller()">☆ Enregistrer comme appelant</button>
+      <div class="tel-saved" id="callerSavedNote" style="display:none">✓ Appelant enregistré</div>
     </div>
     <div class="panel" id="callMsgPanel" style="display:none">
       <div class="panel-label">Message</div>
@@ -2132,67 +2181,28 @@ button.st-row{cursor:pointer}
     </div>
     <div class="nt-actions" id="ntSendPanel" style="display:none">
       <button type="button" class="nt-send" id="ntSendBtn" onclick="triggerCall()">🔔 Envoyer la notification</button>
-      <div class="nt-tiles">
-        <button type="button" class="nt-tile" id="ntTile-style" onclick="toggleNotifDetail('style')"><span>Style</span><b id="ntTileStyle"></b></button>
-        <button type="button" class="nt-tile" id="ntTile-wall" onclick="toggleNotifDetail('wall')"><span>Fond</span><b id="ntTileWall"></b></button>
-        <button type="button" class="nt-tile" id="ntTile-sound" onclick="toggleNotifDetail('sound')"><span>Son</span><b id="ntTileSound"></b></button>
+      <div class="tel-sum-row nt-sum-row">
+        <div class="panel-label">Style et son</div>
+        <button type="button" class="tel-sum" id="ntStyleBtn" onclick="openTelStyle()"><span id="ntStyleSum"></span><b>Régler ›</b></button>
       </div>
       <div class="nt-note">Réglages propres aux notifications, indépendants des SMS.</div>
-      <div class="panel nt-detail" id="ntDetail-style" style="display:none">
-        <div class="panel-label">Style de la notification</div>
-        <div class="chips-wrap">
-          <button class="chip active" id="ntstyle-glass" onclick="setNotifStyle('glass')">Verre</button>
-          <button class="chip" id="ntstyle-tonal" onclick="setNotifStyle('tonal')">Tonal</button>
-          <button class="chip" id="ntstyle-minimal" onclick="setNotifStyle('minimal')">Épuré</button>
-        </div>
-        <div class="media-status" id="ntStyleHint" style="text-align:left;margin-top:8px"></div>
-      </div>
-      <div class="panel nt-detail" id="ntDetail-wall" style="display:none">
-        <div class="panel-label">Fond de l'écran verrouillé</div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <div id="ntWallPreview" class="nt-wall-preview"></div>
-          <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('ntWallInput').click()">🖼 Fond d'écran</button>
-          <input type="file" id="ntWallInput" accept="image/*" style="display:none" onchange="onNotifWall(this.files);this.value=''">
-        </div>
-        <div class="media-status" id="ntWallStatus">Sans fond : dégradé sombre. Propre aux notifications.</div>
-      </div>
-      <div id="ntSoundSlot"></div>
     </div>
-    <!-- Sonnerie (appel) / son de notification (SMS, notification) : sons intégrés ou importés (maquette 12) -->
-    <div class="panel" id="callRingPanel">
-      <div class="panel-label" id="ringPanelLabel">Sonnerie</div>
-      <div class="chips-wrap" style="margin-bottom:14px">
-        <button class="chip active" id="callring-classic" onclick="setCallRing('classic')">Classique</button>
-        <button class="chip" id="callring-digital" onclick="setCallRing('digital')">Digitale</button>
-        <button class="chip" id="callring-soft" onclick="setCallRing('soft')">Douce</button>
-        <button class="chip" id="callring-silent" onclick="setCallRing('silent')">Silencieux</button>
+    <!-- Au décroché (appel) : bande son et décroché automatique ; la sonnerie est dans « Style et sonnerie » -->
+    <div class="panel" id="callAnswerBlock">
+      <div class="panel-label">Au décroché · bande son</div>
+      <div class="rt-row rt-answer" id="callAudioRow" style="display:none">
+        <svg class="rt-wave" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 10v4"/></svg>
+        <span class="rt-main"><span class="rt-name"><span id="callAudioName"></span><span class="rt-dim" id="callAudioDur"></span></span></span>
+        <span class="rt-onscreen" id="callAudioState"></span>
+        <button type="button" class="rt-del" id="callAudioClear" aria-label="Retirer la bande son" onclick="clearCallAudio()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
-      <div class="panel-label" id="ringLibLabel" style="display:none">Vos sonneries</div>
-      <div class="rt-list" id="ringLibRows"></div>
-      <button type="button" class="rt-import" id="ringImportBtn" onclick="document.getElementById('ringImportInput').click()">+ Importer une sonnerie (MP3, M4A, WAV · 5 Mo)</button>
-      <input type="file" id="ringImportInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onRingImport(this.files);this.value=''">
-      <div class="media-status rt-status" id="ringStatus" style="display:none"></div>
-      <div class="slider-block rt-vol">
-        <div class="slider-header"><label id="ringVolLabel">Volume de la sonnerie</label><div class="slider-val" id="ringVolVal">100<span> %</span></div></div>
-        <input type="range" id="ringVolSlider" min="0" max="100" step="5" value="100" oninput="onRingVolume()">
+      <button type="button" class="rt-import" id="callAudioPick" onclick="document.getElementById('callAudioInput').click()">+ Choisir la voix du correspondant (8 Mo)</button>
+      <input type="file" id="callAudioInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onCallAudio(this.files);this.value=''">
+      <div class="media-status rt-status" id="callAudioStatus">Aucune bande son — le décroché reste silencieux.</div>
+      <div class="slider-block rt-auto">
+        <div class="slider-header"><label>Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
+        <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
       </div>
-      <div id="callAnswerBlock">
-        <div class="panel-label rt-sub">Bande son au décroché</div>
-        <div class="rt-row rt-answer" id="callAudioRow" style="display:none">
-          <svg class="rt-wave" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 10v4"/></svg>
-          <span class="rt-main"><span class="rt-name"><span id="callAudioName"></span><span class="rt-dim" id="callAudioDur"></span></span></span>
-          <span class="rt-onscreen" id="callAudioState"></span>
-          <button type="button" class="rt-del" id="callAudioClear" aria-label="Retirer la bande son" onclick="clearCallAudio()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-        </div>
-        <button type="button" class="rt-import" id="callAudioPick" onclick="document.getElementById('callAudioInput').click()">+ Choisir la voix du correspondant (8 Mo)</button>
-        <input type="file" id="callAudioInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onCallAudio(this.files);this.value=''">
-        <div class="media-status rt-status" id="callAudioStatus">Aucune bande son — le décroché reste silencieux.</div>
-        <div class="slider-block rt-auto">
-          <div class="slider-header"><label>Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
-          <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
-        </div>
-      </div>
-      <div class="rt-note">Les sonneries importées sont envoyées et gardées sur l'écran de jeu : elles sonnent même sans réseau.</div>
     </div>
     <div class="panel" id="callTriggerPanel">
       <button class="media-btn" id="callTriggerBtn" onclick="triggerCall()"><span class="media-icon">📞</span> Faire sonner</button>
@@ -2216,6 +2226,7 @@ button.st-row{cursor:pointer}
       <div class="cl-note">Une discussion enregistrée garde le contact (nom, photo), le comédien, le style et tous les messages. Le point de reprise n'est pas enregistré.</div>
     </div>
     <div class="panel dc-contact" id="dcContactPanel" style="display:none">
+      <div class="tel-head dc-contact-head"><div class="panel-label">Contact</div><button type="button" class="tel-link" id="dcCallersLink" onclick="openCallersSheet()">Enregistrés (0) ›</button></div>
       <div class="dc-contact-row">
         <button type="button" class="dc-avatar" id="dcAvatar" aria-label="Photo du contact" onclick="document.getElementById('dcAvatarInput').click()"></button>
         <input type="file" id="dcAvatarInput" accept="image/*" style="display:none" onchange="onChatAvatar(this.files);this.value=''">
@@ -2393,6 +2404,90 @@ button.st-row{cursor:pointer}
   <div class="ss-card" id="ppNet"></div>
   <div class="ss-card" id="ppBat"></div>
   <div class="pp-note" id="ppNote"></div>
+</div>
+
+<!-- Style et sonnerie / Style et son de l'onglet Tel (maquette 36b) : aperçu, style, son, vibreur (78-tel-style.js) -->
+<div id="tel-style-view" role="dialog" aria-modal="true" aria-labelledby="tsTitle">
+  <div class="ss-head">
+    <button type="button" class="ss-back" id="tsBack" onclick="closeTelStyle()">← Tel</button>
+    <span class="ss-title" id="tsTitle">Style et sonnerie</span>
+    <span class="ss-spacer"></span>
+  </div>
+  <div class="ts-prev" id="tsPreview" aria-hidden="true"></div>
+  <div class="pp-cap" id="tsCap"></div>
+  <div class="ss-card" id="tsStyleCard">
+    <div id="callStyleRow">
+      <div class="panel-label">Style</div>
+      <div class="chips-wrap">
+        <button class="chip active" id="callstyle-glass" onclick="setCallStyle('glass')">Verre</button>
+        <button class="chip" id="callstyle-tonal" onclick="setCallStyle('tonal')">Tonal</button>
+        <button class="chip" id="callstyle-minimal" onclick="setCallStyle('minimal')">Épuré</button>
+      </div>
+      <div class="media-status" id="callStyleHint" style="text-align:left;margin-top:8px">Translucide et flouté, boutons ronds.</div>
+    </div>
+    <div id="callPresentRow" style="margin-top:14px">
+      <div class="panel-label">Présentation</div>
+      <div class="chips-wrap">
+        <button class="chip active" id="callpres-full" onclick="setCallPresent('full')">Plein écran</button>
+        <button class="chip" id="callpres-banner" onclick="setCallPresent('banner')">Bandeau haut</button>
+      </div>
+    </div>
+    <div id="callPhotoModeRow" style="margin-top:14px">
+      <div class="panel-label">Photo de l'appelant</div>
+      <div class="chips-wrap">
+        <button class="chip active" id="callphoto-avatar" onclick="setCallPhotoMode('avatar')">Avatar</button>
+        <button class="chip" id="callphoto-full" onclick="setCallPhotoMode('full')">Plein écran</button>
+      </div>
+    </div>
+    <div id="ntDetail-style" style="display:none">
+      <div class="panel-label">Style de la notification</div>
+      <div class="chips-wrap">
+        <button class="chip active" id="ntstyle-glass" onclick="setNotifStyle('glass')">Verre</button>
+        <button class="chip" id="ntstyle-tonal" onclick="setNotifStyle('tonal')">Tonal</button>
+        <button class="chip" id="ntstyle-minimal" onclick="setNotifStyle('minimal')">Épuré</button>
+      </div>
+      <div class="media-status" id="ntStyleHint" style="text-align:left;margin-top:8px"></div>
+    </div>
+    <div id="ntDetail-wall" style="display:none;margin-top:14px">
+      <div class="panel-label">Fond de l'écran verrouillé</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div id="ntWallPreview" class="nt-wall-preview"></div>
+        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('ntWallInput').click()">🖼 Fond d'écran</button>
+        <input type="file" id="ntWallInput" accept="image/*" style="display:none" onchange="onNotifWall(this.files);this.value=''">
+      </div>
+      <div class="media-status" id="ntWallStatus">Sans fond : dégradé sombre. Propre aux notifications.</div>
+    </div>
+  </div>
+  <!-- Sonnerie (appel) / son de notification (SMS, notification) / son des messages (discussion) : sons intégrés ou importés (maquette 12) -->
+  <div class="ss-card" id="callRingPanel">
+    <div class="panel-label" id="ringPanelLabel">Sonnerie</div>
+    <div class="chips-wrap" style="margin-bottom:14px">
+      <button class="chip active" id="callring-classic" onclick="setCallRing('classic')">Classique</button>
+      <button class="chip" id="callring-digital" onclick="setCallRing('digital')">Digitale</button>
+      <button class="chip" id="callring-soft" onclick="setCallRing('soft')">Douce</button>
+      <button class="chip" id="callring-silent" onclick="setCallRing('silent')">Silencieux</button>
+    </div>
+    <div class="panel-label" id="ringLibLabel" style="display:none">Vos sonneries</div>
+    <div class="rt-list" id="ringLibRows"></div>
+    <button type="button" class="rt-import" id="ringImportBtn" onclick="document.getElementById('ringImportInput').click()">+ Importer une sonnerie (MP3, M4A, WAV · 5 Mo)</button>
+    <input type="file" id="ringImportInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onRingImport(this.files);this.value=''">
+    <div class="media-status rt-status" id="ringStatus" style="display:none"></div>
+    <div class="slider-block rt-vol">
+      <div class="slider-header"><label id="ringVolLabel">Volume de la sonnerie</label><div class="slider-val" id="ringVolVal">100<span> %</span></div></div>
+      <input type="range" id="ringVolSlider" min="0" max="100" step="5" value="100" oninput="onRingVolume()">
+    </div>
+    <div class="rt-note">Les sonneries importées sont envoyées et gardées sur l'écran de jeu : elles sonnent même sans réseau.</div>
+  </div>
+  <div class="ss-card" id="tsVibCard">
+    <label class="ts-vib">
+      <span>Vibreur</span>
+      <span class="toggle-switch" style="flex-shrink:0">
+        <input type="checkbox" id="telVibToggle" onchange="setTelVib(this.checked)">
+        <span class="toggle-track"></span><span class="toggle-thumb"></span>
+      </span>
+    </label>
+    <div class="ts-note" id="tsVibNote"></div>
+  </div>
 </div>
 
 <!-- Feuille : cible des commandes (maquette 6), renommer, groupes -->
@@ -3474,6 +3569,8 @@ const SPECS = {
         + '(SMS / notification, une fois) ; repli quand le son importé ringId manque à l’écran'),
       ringId: opt(str(23, RING_ID_RE), 'son importé préchargé en fragments (media-img-*, mediaId = cet id) ; absent = son intégré'),
       ringVolume: opt(num(0, 1), 'volume du son 0..1 (absent = 1)'),
+      vib: opt(bool, 'vibreur du type (maquette 36b) : appel = motif répété tant que ça sonne ; SMS / notification = motif court '
+        + 'à l’arrivée ; absent = ne vibre pas'),
       present: opt(oneOf('full', 'banner', 'lock'), 'appel : plein écran ou bandeau ; notification : bandeau ou écran verrouillé'),
       photoMode: opt(oneOf('avatar', 'full'), 'photo en avatar ou plein écran'),
       hasAudio: opt(bool, 'bande son préchargée (__callaudio) à jouer au décroché'),
@@ -3530,6 +3627,11 @@ const SPECS = {
       history: opt(bool, '« Reprendre ici » / « Repartir de zéro » : sent = les messages du fil AVANT le point de reprise (début exact de ids), '
         + 'affichés d’un coup comme historique (ni « … écrit », ni animation, ni son) ; frappe locale et file d’attente de l’écran remises à zéro'),
       pend: opt(arrayOf(CHAT_ID, LIMITS.chatMessages), 'messages du comédien postés sans réseau : « Non distribué » (point rouge) jusqu’au retour du réseau'),
+      ring: opt(RINGS, 'son des messages du contact (maquette 36d), joué à l’arrivée de chacun (jamais pour l’historique) ; '
+        + 'absent = aucun son ; repli quand le son importé ringId manque à l’écran'),
+      ringId: opt(str(23, RING_ID_RE), 'son des messages importé, préchargé en fragments (__ring_…, comme les sonneries)'),
+      ringVolume: opt(num(0, 1), 'volume du son des messages 0..1 (absent = 1)'),
+      vib: opt(bool, 'vibreur : motif court à l’arrivée de chaque message du contact (absent = non)'),
       auto: opt(object({
         ...CHAT_TYPE_FIELDS,
         el: opt(int(0, LIMITS.chatWriteSeconds[1] * 1000), 'ms déjà écoulées de la frappe automatique (reprise)'),
@@ -3655,6 +3757,7 @@ const SPECS = {
         ring: req(RINGS, 'son intégré (repli)'),
         ringId: opt(str(23, RING_ID_RE), 'son importé préchargé (__ring_…)'),
         vol: opt(num(0, 1), 'volume 0..1'),
+        vib: opt(bool, 'vibreur de l’entrée (motif court ; absent = non)'),
       }), 'son de la notification arrivée (une fois)'),
       bar: opt(PHONE_BAR, 'barre d’état de la séquence (absente : aucune ; l’écran revient à media:bar)'),
       sleep: opt(object({
@@ -6591,6 +6694,14 @@ if (!window.SETREMOTE_NATIVE && location.protocol === 'file:' && window.ReactNat
   window.SETREMOTE_NATIVE = { platform: /Android/i.test(navigator.userAgent) ? 'android' : 'ios', bridge: 1 };
 }
 const IN_NATIVE_APP = !!(window.SETREMOTE_NATIVE && window.ReactNativeWebView);
+// PWA → coque : nativePost(msg) (sans effet hors de l'app). Messages :
+//   brightness { value 0..1 } / brightness-restore      luminosité matérielle (68-blackout.js, 30-navigation.js)
+//   vibrate { pattern: [ms vibre, ms pause, …] }         vibreur de l'écran de jeu (appel qui sonne, répété
+//                                                       par la page ; SMS, notification, message de
+//                                                       discussion), maquette 36b, 80-call-simulator.js
+//   vibrate:stop                                        arrête la vibration (décroché, refus, fin d'appel)
+//   dmx:listen, dmx:stop, udp:send, net:info, pdf:preview : docs/DMX-NATIVE.md
+//   link:start, link:stop, link:send, link:state?     : docs/OFFLINE-NATIVE.md
 function nativePost(msg) {
   if (!IN_NATIVE_APP) return;
   try { window.ReactNativeWebView.postMessage(JSON.stringify(msg)); } catch (_) {}
@@ -7646,6 +7757,7 @@ function _validCallStart(m) {
   // Son importé (__ring_…, préchargé en fragments) et volume du son
   if (!_P.ringId(m.ringId)) m.ringId = null;
   m.ringVolume = _P.num(m.ringVolume, 0, 1) ?? 1;
+  m.vib = m.vib === true; // vibreur du type (maquette 36b) ; absent : ne vibre pas
   m.lock = _P.isObj(m.lock)
     ? { time: _P.text(m.lock.time, PROTO.LOCK_TIME_MAX), date: _P.text(m.lock.date, PROTO.LOCK_DATE_MAX) }
     : null;
@@ -7683,6 +7795,12 @@ function _validChatOpen(m) {
   m.pend = Array.isArray(m.pend) ? m.pend.filter((id, i, a) => _chatId(id) && m.sent.includes(id) && a.indexOf(id) === i) : [];
   m.auto = m.history ? null : _validChatType(m.auto, true);
   if (m.auto && (!m.ids.includes(m.auto.id) || m.sent.includes(m.auto.id))) m.auto = null;
+  // Son des messages du contact (absent : aucun) et vibreur (maquette 36d)
+  if (m.ring !== undefined && !_P.oneOf(m.ring, PROTO.CALL_RINGS)) m.ring = 'classic';
+  if (!_P.ringId(m.ringId)) m.ringId = null;
+  if (m.ringId && !m.ring) m.ring = 'classic';
+  m.ringVolume = _P.num(m.ringVolume, 0, 1) ?? 1;
+  m.vib = m.vib === true;
   return true;
 }
 function _validChatMsg(m) {
@@ -7742,7 +7860,7 @@ function _validPhoneState(m) {
   m.home = _P.bool(m.home);
   m.watch = Array.isArray(m.watch) ? m.watch.filter((g, i, a) => _P.oneOf(g, PROTO.PHONE_GESTURES) && !PROTO.PHONE_GESTURES_ALWAYS.includes(g) && a.indexOf(g) === i) : [];
   const c = m.chime;
-  m.chime = _P.isObj(c) && seen.has(c.id) ? { id: c.id, ring: _P.oneOf(c.ring, PROTO.CALL_RINGS) ? c.ring : 'classic', ringId: _P.ringId(c.ringId) ? c.ringId : null, vol: _P.num(c.vol, 0, 1) ?? 1 } : null;
+  m.chime = _P.isObj(c) && seen.has(c.id) ? { id: c.id, ring: _P.oneOf(c.ring, PROTO.CALL_RINGS) ? c.ring : 'classic', ringId: _P.ringId(c.ringId) ? c.ringId : null, vol: _P.num(c.vol, 0, 1) ?? 1, vib: c.vib === true } : null;
   // Barre d'état, veille, batterie faible, extinction (maquettes 28b, 29b, 33)
   m.bar = m.bar === undefined ? null : _validPhoneBar(m.bar);
   const sl = m.sleep;
@@ -10139,7 +10257,7 @@ function screenIdentify() {
 // confirmation ; le retrait lui-même : 29-revoke.js.
 // Modèle (registre, cible, état de chaque écran) : 28-screens.js.
 let _svOpen = false;
-let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group' | 'chatName' | 'chatMenu' | 'seqName' | 'seqMenu' | 'install', … }
+let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group' | 'chatName' | 'chatMenu' | 'seqName' | 'seqMenu' | 'install' | 'callers' | 'callerMenu' | 'callerName', … }
 const _uiHtml = new Map();   // dernier HTML posé par conteneur (pas de re-rendu inutile pendant un geste)
 
 function _setHtml(el, html) {
@@ -10214,6 +10332,11 @@ function renderSheet(focus) {
   if (s.kind === 'chatName' || s.kind === 'chatMenu' || s.kind === 'seqName' || s.kind === 'seqMenu') {
     // Discussions enregistrées (89-discussions-saved.js), séquences enregistrées (96-sequences-saved.js) : nom, menu « ⋯ »
     const c = s.kind.startsWith('seq') ? seqSheetContent(s) : chatSheetContent(s);
+    if (!c) { closeSheet(); return; }
+    t = c.title; h = c.html; form = c.form;
+  } else if (s.kind === 'callers' || s.kind === 'callerMenu' || s.kind === 'callerName') {
+    // Appelants enregistrés (maquette 36e, 79-callers.js) : liste, menu « ⋯ », renommer
+    const c = callersSheetContent(s);
     if (!c) { closeSheet(); return; }
     t = c.title; h = c.html; form = c.form;
   } else if (s.kind === 'install') {
@@ -10296,6 +10419,7 @@ function sheetSave() {
   if (!s || !inp) return;
   if (s.kind === 'chatName') { chatSheetSave(s, inp.value); return; } // 89-discussions-saved.js
   if (s.kind === 'seqName') { seqSheetSave(s, inp.value); return; }   // 96-sequences-saved.js
+  if (s.kind === 'callerName') { callerSheetSave(s, inp.value); return; } // 79-callers.js
   if (s.kind === 'rename') scrRenameScreen(s.id, inp.value);
   else if (s.kind === 'group') {
     const members = [...s.members].filter(scrKnown);
@@ -13652,13 +13776,451 @@ function screenVidUploadPlay(msg) {
   } catch (_) { if (up.show) setScreenStatus('⚠ Vidéo illisible'); }
 }
 
+// ══════════════════════════ STYLE ET SONNERIE (onglet Tel, télécommande) ══════════════════════════
+// Maquettes validées 36 (appel), 36b (vue), 36c (SMS), 36d (discussion) et
+// 36f (notification). Les réglages d'apparence et de son ne s'affichent plus
+// dans l'onglet : une rangée résumé (comme la barre d'état de l'onglet Média),
+// « Verre · Plein écran · Avatar / Sonnerie Classique · 100 % · Vibreur oui
+// · Régler › », ouvre une vue plein écran (présentation de « Téléphone au
+// départ », #phone-params-view) :
+//   • aperçu simplifié de l'écran de jeu (style, appelant, « 〰 vibreur ») ;
+//   • Style : style (Verre / Tonal / Épuré), et pour un appel présentation et
+//     photo de l'appelant ; notification : son style et son fond d'écran
+//     verrouillé (84-notification.js) ;
+//   • Son : sonnerie, son de notification ou son des messages (81-ringtones.js) ;
+//   • Vibreur : propre à chaque type (ringSettings[type].vib), envoyé à
+//     l'écran (vib) qui vibre s'il le peut (80-call-simulator.js).
+// Titre : « Style et sonnerie » (appel), « Style et son » (SMS, notification,
+// discussion). Les réglages s'appliquent aussitôt (pas de bouton « Enregistrer »).
+// Les éléments du style et du son vivent dans la vue (#tel-style-view) : leurs
+// fonctions (setCallStyle, setCallRing…) restent celles d'avant.
+// Textes affichés, regroupés pour la traduction ({…} : valeurs)
+const _TS_TXT = {
+  titleCall: 'Style et sonnerie', titleOther: 'Style et son', back: '← Tel',
+  capCall: 'Aperçu de l\'appel sur l\'écran de jeu', capSms: 'Aperçu du SMS sur l\'écran de jeu',
+  capNotif: 'Aperçu de la notification sur l\'écran de jeu', capChat: 'Aperçu de la discussion sur l\'écran de jeu',
+  vibNote: 'Vibre avec la sonnerie, même en Silencieux. Écran de jeu Android ou app SetRemote : iPhone dans Safari ne sait pas vibrer.',
+  vibBadge: '〰 vibreur',
+  presFull: 'Plein écran', presBanner: 'Bandeau haut', photoAvatar: 'Avatar', photoFull: 'Photo plein écran',
+  ring: 'Sonnerie {son}', sound: 'Son {son}', chatSound: 'Son des messages {son}', vol: '{n} %',
+  vibYes: 'Vibreur oui', vibNo: 'Vibreur non', wall: 'Fond {fond}', wallPhoto: 'Photo', wallGradient: 'Dégradé',
+  sep: ' · ', unknown: 'Inconnu', label: 'mobile', smsMsg: 'Tu es où ??', chatIn: 'Tu es où ?', chatOut: 'j\'arrive',
+};
+const _TS_SOUNDS = { classic: 'Classique', digital: 'Digitale', soft: 'Douce', silent: 'Silencieux' };
+const _tsTpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
+
+// Nom du son choisi : son intégré, ou nom du son importé
+function telSoundName(sound) { return _TS_SOUNDS[sound] || ringName(sound) || _TS_SOUNDS.classic; }
+// Style affiché du type (la discussion a le sien, la notification aussi)
+function _tsStyle(k) { return k === 'discussion' ? chatStyleNow() : k === 'notif' ? notifStyle : callStyle; }
+
+// Résumé de la rangée, en lignes (maquettes 36, 36c, 36d, 36f)
+function telStyleSummary(k) {
+  const r = ringSettings[_ringKind(k)], T = _TS_TXT;
+  const style = _CALL_STYLE_NAMES[_tsStyle(k)] || _CALL_STYLE_NAMES.glass;
+  const son = telSoundName(r.sound), vol = _tsTpl(T.vol, { n: Math.round(r.vol * 100) }), vib = r.vib ? T.vibYes : T.vibNo;
+  const j = (a) => a.join(T.sep);
+  if (k === 'call') {
+    const first = [style, callPresent === 'banner' ? T.presBanner : T.presFull];
+    if (callStyle !== 'minimal') first.push(callPhotoMode === 'full' ? T.photoFull : T.photoAvatar);
+    return [j(first), j([_tsTpl(T.ring, { son }), vol, vib])];
+  }
+  if (k === 'notif') return [j([style, _tsTpl(T.wall, { fond: _notifWallData ? T.wallPhoto : T.wallGradient })]), j([_tsTpl(T.sound, { son }), vol, vib])];
+  if (k === 'discussion') return [j([style, _tsTpl(T.chatSound, { son }), vib])];
+  return [j([style, _tsTpl(T.sound, { son }), vol, vib])];
+}
+
+let _tsOpen = false;
+function openTelStyle() {
+  const v = document.getElementById('tel-style-view');
+  if (!v) return;
+  _tsOpen = true;
+  v.style.display = 'flex';
+  v.scrollTop = 0;
+  renderTelStyle();
+}
+function closeTelStyle() {
+  _tsOpen = false;
+  const v = document.getElementById('tel-style-view');
+  if (v) v.style.display = 'none';
+  if (_ringPrev) { _ringPrevStop(); renderRingPanel(); } // écoute d'un son importé en cours
+}
+function telStyleIsOpen() { return _tsOpen; }
+
+// Rangées résumé (onglet) et, ouverte, la vue
+function renderTelStyle() {
+  const k = callKind, T = _TS_TXT;
+  const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+  const title = k === 'call' ? T.titleCall : T.titleOther;
+  set('telStyleLabel', title);
+  const sum = telStyleSummary(k).map(escapeHtml).join('<br>');
+  const el = document.getElementById(k === 'notif' ? 'ntStyleSum' : 'telStyleSum');
+  if (el && el.innerHTML !== sum) el.innerHTML = sum;
+  if (!_tsOpen) return;
+  set('tsTitle', title);
+  set('tsBack', T.back);
+  set('tsCap', k === 'call' ? T.capCall : k === 'notif' ? T.capNotif : k === 'discussion' ? T.capChat : T.capSms);
+  set('tsVibNote', T.vibNote);
+  const tg = document.getElementById('telVibToggle');
+  if (tg) tg.checked = !!ringSettings[_ringKind(k)].vib;
+  _tsRenderPreview();
+}
+
+// ── Aperçu (maquette 36b) : simple maquette de l'écran de jeu ──
+// Textes échappés ; images : data-URL déjà validées (safeImageData)
+const _tsImg = (data) => (data ? ' style="background-image:url(' + data + ')"' : '');
+const _tsInitial = (name) => escapeHtml(String(name || '?').trim().charAt(0).toUpperCase() || '?');
+function _tsAvatar(name, photo, cls) {
+  return '<span class="tp-av' + (cls ? ' ' + cls : '') + '"' + _tsImg(photo) + '>' + (photo ? '' : _tsInitial(name)) + '</span>';
+}
+function _tsPreviewHtml(k) {
+  const T = _TS_TXT, val = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const style = _tsStyle(k);
+  const vib = ringSettings[_ringKind(k)].vib ? '<span class="tp-vib">' + escapeHtml(T.vibBadge) + '</span>' : '';
+  if (k === 'discussion') {
+    const first = (from, def) => { const m = _chat.msgs.find((x) => x.from === from && _chatValid(x)); return m ? m.text : def; };
+    return { cls: style + ' chat', html: vib + '<span class="tp-head">' + _tsAvatar(chatContactName(), _chatAvatar) + escapeHtml(chatContactName()) + '</span>'
+      + '<span class="tp-b">' + escapeHtml(first('contact', T.chatIn)) + '</span><span class="tp-b out">' + escapeHtml(first('actor', T.chatOut)) + '</span>' };
+  }
+  if (k === 'notif') {
+    const app = val('ntAppName');
+    const icon = '<span class="tp-ic"' + _tsImg(_notifIcon) + '>' + (_notifIcon ? '' : _tsInitial(app)) + '</span>';
+    const wall = notifPresent === 'lock' ? _notifWallData : null;
+    return { cls: style + ' banner' + (wall ? ' photo' : ''), bg: wall, html: vib + '<span class="tp-card">' + icon
+      + '<span class="tp-txt"><b>' + escapeHtml(val('ntTitle')) + '</b><span>' + escapeHtml(val('ntBody')) + '</span></span></span>' };
+  }
+  const name = val('callName') || T.unknown, label = val('callLabel') || T.label;
+  if (k === 'sms') {
+    return { cls: style + ' banner', html: vib + '<span class="tp-card">' + _tsAvatar(name, style === 'minimal' ? null : _callPhoto)
+      + '<span class="tp-txt"><b>' + escapeHtml(name) + '</b><span>' + escapeHtml(val('callMsgText') || T.smsMsg) + '</span></span></span>' };
+  }
+  if (callPresent === 'banner') {
+    return { cls: style + ' banner', html: vib + '<span class="tp-card">' + _tsAvatar(name, _callPhoto)
+      + '<span class="tp-txt"><b>' + escapeHtml(name) + '</b><span>' + escapeHtml(label) + '</span></span><span class="tp-cardbt"><span></span><span></span></span></span>' };
+  }
+  // Appel plein écran : photo plein écran (Verre, Tonal) ou avatar
+  const full = !!_callPhoto && style !== 'minimal' && callPhotoMode === 'full';
+  return { cls: style + (full ? ' photo' : ''), bg: full ? _callPhoto : null, html: vib + (full ? '' : _tsAvatar(name, _callPhoto))
+    + '<span class="tp-nm">' + escapeHtml(name) + '</span><span class="tp-lb">' + escapeHtml(label) + '</span><span class="tp-bt"><span></span><span></span></span>' };
+}
+function _tsRenderPreview() {
+  const pv = document.getElementById('tsPreview');
+  if (!pv) return;
+  const p = _tsPreviewHtml(callKind);
+  pv.className = 'ts-prev ' + p.cls;
+  pv.style.backgroundImage = p.bg ? 'url(' + p.bg + ')' : '';
+  if (pv.innerHTML !== p.html) pv.innerHTML = p.html;
+}
+
+// Échap : ferme la vue (une feuille ouverte passe d'abord, 39-screens-ui.js :
+// écouté en capture, avant que la feuille ne se ferme)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && _tsOpen && !_sheet) closeTelStyle();
+}, true);
+// ══════════════════════════ APPELANTS ENREGISTRÉS (onglet Tel, télécommande) ══════════════════════════
+// Maquettes validées 36, 36c, 36d et 36e. Un appelant enregistré (nom,
+// sous-titre, photo) sert aux appels, SMS et discussions :
+//   • « Enregistrés (n) › » en tête du panneau Appelant / Contact (appel, SMS)
+//     et du contact de la discussion ouvre la feuille « Appelants enregistrés » :
+//     toucher une ligne applique nom, sous-titre et photo au type affiché
+//     (discussion : nom et photo du contact) ; « ⋯ » : renommer, supprimer ;
+//     « + Enregistrer « Nom » (actuel) ». L'appelant du formulaire est en orange.
+//   • Sous la photo (appel, SMS) : « ☆ Enregistrer comme appelant », ou
+//     « ✓ Appelant enregistré » quand nom, sous-titre et photo du formulaire
+//     sont ceux d'un appelant enregistré.
+// Même nom et même sous-titre (sans tenir compte des majuscules) : un seul
+// appelant ; l'enregistrer à nouveau remplace sa photo.
+// Stockage (comme la liste des appels, 82-call-list.js) : textes en
+// localStorage (setremote-callers-v1), photos dans IndexedDB (callAssetPut /
+// Get / Delete, clé « caller-<id>:photo »), à défaut en mémoire le temps de la
+// session. Au plus CALLERS_MAX appelants, revalidés au chargement.
+// Migration : au premier chargement (clé absente), les appelants des appels
+// et SMS enregistrés (setremote-call-list-v1) et les contacts des discussions
+// enregistrées sont repris, sans doublon (nom + sous-titre), photos comprises.
+// Les listes d'origine ne changent pas.
+const CALLERS_KEY = 'setremote-callers-v1';
+const CALLERS_MAX = 50;
+const _CR_NAME_MAX = 40;
+const _CR_ID_RE = /^[A-Za-z0-9_-]{1,40}$/;
+// Textes affichés (maquettes 36, 36e), regroupés pour la traduction ({…} : valeurs)
+const _CR_TXT = {
+  title: 'Appelants enregistrés',
+  link: 'Enregistrés ({n}) ›',
+  photo: 'photo', noLabel: '—', sep: ' · ',
+  add: '+ Enregistrer « {nom} » (actuel)', added: '✓ « {nom} » enregistré', full: 'Liste pleine ({max} appelants)',
+  note: 'Un appelant enregistré sert aux appels, SMS et discussions : nom, sous-titre et photo. « ⋯ » : renommer, supprimer.',
+  empty: 'Aucun appelant enregistré pour l\'instant.',
+  close: 'Fermer', cancel: 'Annuler', ok: 'Enregistrer',
+  rename: 'Renommer', remove: 'Supprimer', more: 'Renommer, supprimer',
+  sheetRename: 'Renommer l\'appelant', nameLabel: 'Nom affiché',
+  confirmDelete: 'Supprimer l\'appelant « {nom} » ? Les appels, SMS et discussions déjà réglés ne changent pas.',
+  saveBtn: '☆ Enregistrer comme appelant', savedNote: '✓ Appelant enregistré',
+  storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
+};
+const _crTpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
+// Pastilles sans photo : couleur stable dérivée du nom
+const _CR_COLORS = ['#8a6a5a', '#3d5a80', '#5a7a5a', '#7a5a8a', '#80603d', '#4a6a7a'];
+
+let callers = [];                 // [{ id, name, label, hasPhoto, photoSig }] dans l'ordre d'enregistrement
+const _crPhotos = new Map();      // id → photo (data-URL) ou null, lue à la demande
+const _crPhotoKey = (id) => 'caller-' + id + ':photo';
+const _crLine = (v) => (typeof v === 'string' ? v.replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, _CR_NAME_MAX) : '');
+const _crKey = (name, label) => (_crLine(name) + '\u0000' + _crLine(label)).toLowerCase();
+let _crIdN = 0;
+const _crNewId = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + (++_crIdN).toString(36);
+
+// ── Persistance ──
+function _crSanitize(e) {
+  if (!e || typeof e !== 'object' || typeof e.id !== 'string' || !_CR_ID_RE.test(e.id)) return null;
+  const name = _crLine(e.name);
+  if (!name) return null;
+  const photoSig = e.hasPhoto === true && typeof e.photoSig === 'string' && _CHSV_SIG_RE.test(e.photoSig) ? e.photoSig : null;
+  return { id: e.id, name, label: _crLine(e.label), hasPhoto: !!photoSig, photoSig };
+}
+// false : mémoire pleine (rien n'est changé dans le stockage)
+function _crPersist() {
+  try { localStorage.setItem(CALLERS_KEY, JSON.stringify({ v: 1, list: callers })); return true; } catch (_) { return false; }
+}
+// Chargement ; première fois : reprise des appels, SMS et discussions enregistrés
+// (après loadCallList et loadSavedChats). Promesse résolue une fois les photos reprises.
+function callersInit() {
+  const raw = _lsGet(CALLERS_KEY);
+  if (raw === null) return _crMigrate();
+  let o = null;
+  try { o = JSON.parse(raw); } catch (_) { o = null; }
+  const ids = new Set(), keys = new Set();
+  callers = (o && Array.isArray(o.list) ? o.list : []).map(_crSanitize)
+    .filter((e) => e && !ids.has(e.id) && ids.add(e.id) && !keys.has(_crKey(e.name, e.label)) && keys.add(_crKey(e.name, e.label)))
+    .slice(0, CALLERS_MAX);
+  renderCallerState();
+  return Promise.resolve();
+}
+function _crMigrate() {
+  const keys = new Set(), copies = [];
+  callers = [];
+  const add = (name, label, photoKey) => {
+    const e = _crSanitize({ id: _crNewId(), name, label });
+    if (!e || callers.length >= CALLERS_MAX || keys.has(_crKey(e.name, e.label))) return;
+    keys.add(_crKey(e.name, e.label));
+    callers.push(e);
+    if (photoKey) copies.push([e, photoKey]);
+  };
+  for (const e of callList.call.concat(callList.sms)) add(e.name, e.label, e.hasPhoto ? e.id + ':photo' : null);
+  for (const c of chatSaved) add(c.contact, '', c.hasPhoto ? _chsvPhotoKey(c.id) : null);
+  _crPersist();
+  renderCallerState();
+  // Photos copiées (IndexedDB) ; absente ou illisible : sans photo
+  return Promise.all(copies.map(async ([e, key]) => {
+    const data = safeImageData(await callAssetGet(key));
+    if (!data || !callers.includes(e)) return;
+    await callAssetPut(_crPhotoKey(e.id), data);
+    if (!callers.includes(e)) { callAssetDelete(_crPhotoKey(e.id)); return; }
+    e.hasPhoto = true; e.photoSig = _chsvPhotoSig(data);
+    _crPhotos.set(e.id, data);
+  })).then(() => { _crPersist(); renderCallerState(); });
+}
+// Photo d'un appelant (null : aucune, ou illisible)
+async function callerPhoto(e) {
+  if (!e || !e.hasPhoto) return null;
+  if (_crPhotos.has(e.id)) return _crPhotos.get(e.id);
+  const data = safeImageData(await callAssetGet(_crPhotoKey(e.id)));
+  _crPhotos.set(e.id, data);
+  return data;
+}
+
+// ── Formulaire du type affiché ↔ appelant ──
+// Empreinte de la dernière photo calculée (le formulaire la redemande à chaque frappe)
+let _crSigMemo = { data: null, sig: null };
+function _crSig(data) {
+  if (!data) return null;
+  if (_crSigMemo.data !== data) _crSigMemo = { data, sig: _chsvPhotoSig(data) };
+  return _crSigMemo.sig;
+}
+// Nom, sous-titre et photo du formulaire (discussion : le contact, sans sous-titre)
+function _crCurrent() {
+  if (callKind === 'discussion') return { name: _crLine(_chat.name), label: '', photo: _chatAvatar, chat: true };
+  const v = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+  return { name: _crLine(v('callName')), label: _crLine(v('callLabel')), photo: _callPhoto, chat: false };
+}
+// Appelant du formulaire : même nom et sous-titre (discussion : même nom)
+function _crMatch(cur) {
+  if (!cur.name) return null;
+  if (cur.chat) {
+    const n = cur.name.toLowerCase();
+    const same = callers.filter((e) => e.name.toLowerCase() === n);
+    return same.find((e) => (e.photoSig || null) === _crSig(cur.photo)) || same[0] || null;
+  }
+  const k = _crKey(cur.name, cur.label);
+  return callers.find((e) => _crKey(e.name, e.label) === k) || null;
+}
+// Enregistré tel quel (photo comprise) ?
+function callerIsSaved() {
+  const cur = _crCurrent(), e = _crMatch(cur);
+  return !!e && (e.photoSig || null) === _crSig(cur.photo);
+}
+
+// « ☆ Enregistrer comme appelant » / « + Enregistrer « Nom » (actuel) »
+async function saveCurrentCaller() {
+  const cur = _crCurrent();
+  if (!cur.name) return null;
+  const sig = _crSig(cur.photo);
+  let e = _crMatch(cur);
+  if (e && (e.photoSig || null) === sig) return e.id;
+  const prev = e ? { hasPhoto: e.hasPhoto, photoSig: e.photoSig } : null;
+  if (!e) {
+    if (callers.length >= CALLERS_MAX) return null;
+    e = { id: _crNewId(), name: cur.name, label: cur.label, hasPhoto: false, photoSig: null };
+    callers.push(e);
+  }
+  e.hasPhoto = !!sig; e.photoSig = sig;
+  if (!_crPersist()) {
+    if (prev) Object.assign(e, prev); else callers.splice(callers.indexOf(e), 1);
+    alert(_CR_TXT.storeFull);
+    return null;
+  }
+  _crPhotos.set(e.id, cur.photo || null);
+  renderCallerState();
+  if (cur.photo) await callAssetPut(_crPhotoKey(e.id), cur.photo);
+  else callAssetDelete(_crPhotoKey(e.id));
+  return e.id;
+}
+
+// Toucher une ligne : nom, sous-titre et photo appliqués au type affiché
+let _crApplySeq = 0;
+async function applyCaller(id) {
+  const e = callers.find((x) => x.id === id);
+  if (!e) return false;
+  const seq = ++_crApplySeq;
+  const photo = await callerPhoto(e);
+  if (seq !== _crApplySeq || !callers.includes(e)) return false;
+  closeSheet();
+  if (callKind === 'discussion') {
+    // Discussion : nom et photo du contact ; ouverte, l'écran suit
+    _chat.name = e.name;
+    _chatAvatar = photo;
+    _lsSet(CHAT_AVATAR_KEY, photo);
+    _chatChanged();
+    if (_chat.open && _chatAvatar) _chatSendAvatar().then(() => { if (_chat.open) _chatSendOpen(); });
+  } else {
+    const set = (k, v) => { const el = document.getElementById(k); if (el) el.value = v; };
+    set('callName', e.name); set('callLabel', e.label);
+    _callPhoto = photo;
+    const pv = document.getElementById('callPhotoPreview');
+    if (pv) pv.style.backgroundImage = photo ? 'url(' + photo + ')' : '';
+    _callPhotoSending = photo ? ensureCallAssets(photo, null) : null; // envoyée dès le choix, comme une photo importée
+  }
+  renderCallerState();
+  renderTelStyle();
+  return true;
+}
+
+function renameCaller(id, name) {
+  const e = callers.find((x) => x.id === id);
+  const n = _crLine(name);
+  if (!e || !n) return false;
+  // Nom déjà pris (même sous-titre) : refusé, il n'y aurait plus qu'un appelant
+  if (callers.some((x) => x !== e && _crKey(x.name, x.label) === _crKey(n, e.label))) return false;
+  const prev = e.name;
+  e.name = n;
+  if (!_crPersist()) { e.name = prev; alert(_CR_TXT.storeFull); return false; }
+  renderCallerState();
+  return true;
+}
+function deleteCaller(id) {
+  const i = callers.findIndex((x) => x.id === id);
+  if (i < 0) return false;
+  if (!confirm(_crTpl(_CR_TXT.confirmDelete, { nom: callers[i].name }))) return false;
+  callers.splice(i, 1);
+  _crPersist();
+  _crPhotos.delete(id);
+  callAssetDelete(_crPhotoKey(id));
+  renderCallerState();
+  return true;
+}
+
+// ── Rendu dans l'onglet ──
+function renderCallerState() {
+  const link = _crTpl(_CR_TXT.link, { n: callers.length });
+  for (const id of ['callWhoSaved', 'dcCallersLink']) { const el = document.getElementById(id); if (el) el.textContent = link; }
+  const saved = callerIsSaved(), named = !!_crCurrent().name;
+  const btn = document.getElementById('callerSaveBtn'), note = document.getElementById('callerSavedNote');
+  if (btn) {
+    btn.textContent = _CR_TXT.saveBtn;
+    btn.style.display = saved ? 'none' : '';
+    btn.disabled = !named || (!_crMatch(_crCurrent()) && callers.length >= CALLERS_MAX);
+  }
+  if (note) { note.textContent = _CR_TXT.savedNote; note.style.display = saved ? '' : 'none'; }
+  if (_sheet && _sheet.kind === 'callers') renderSheet();
+}
+
+// ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) ──
+function openCallersSheet() {
+  _sheet = { kind: 'callers' };
+  renderSheet();
+  // Photos lues en arrière-plan, puis la liste se redessine
+  Promise.all(callers.filter((e) => e.hasPhoto && !_crPhotos.has(e.id)).map(callerPhoto)).then(() => {
+    if (_sheet && _sheet.kind === 'callers') renderSheet();
+  });
+}
+function openCallerMenu(id) {
+  if (!callers.some((x) => x.id === id)) return;
+  _sheet = { kind: 'callerMenu', id }; renderSheet();
+}
+function callerMenuRename(id) { if (callers.some((x) => x.id === id)) { _sheet = { kind: 'callerName', id }; renderSheet(true); } }
+function callerMenuDelete(id) { deleteCaller(id); openCallersSheet(); }
+async function callersSheetAdd() { await saveCurrentCaller(); if (_sheet && _sheet.kind === 'callers') renderSheet(); }
+function callerSheetSave(s, value) { renameCaller(s.id, value); openCallersSheet(); }
+
+function _crAvatarHtml(e) {
+  const photo = e.hasPhoto ? _crPhotos.get(e.id) : null;
+  if (photo) return '<span class="cr-av" style="background-image:url(' + photo + ')"></span>';
+  let h = 0;
+  for (const c of e.name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return '<span class="cr-av" style="background-color:' + _CR_COLORS[h % _CR_COLORS.length] + '">' + escapeHtml(e.name.charAt(0).toUpperCase() || '?') + '</span>';
+}
+function _crMeta(e) { return (e.label || _CR_TXT.noLabel) + (e.hasPhoto ? _CR_TXT.sep + _CR_TXT.photo : ''); }
+// Contenu d'une feuille d'appelants : { title, html, form } ; null : appelant disparu
+function callersSheetContent(s) {
+  const T = _CR_TXT, esc = escapeHtml;
+  const cancel = (fn, label) => '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="' + fn + '">' + esc(label) + '</button></div>';
+  if (s.kind === 'callers') {
+    const cur = _crCurrent(), on = _crMatch(cur), saved = callerIsSaved();
+    const rows = callers.map((e) => '<div class="cr-row' + (on === e ? ' on' : '') + '" data-id="' + e.id + '" onclick="applyCaller(\'' + e.id + '\')">'
+      + _crAvatarHtml(e) + '<span class="cr-main"><span class="cr-name">' + esc(e.name) + '</span><span class="cr-meta">' + esc(_crMeta(e)) + '</span></span>'
+      + '<button type="button" class="cr-more" aria-label="' + esc(T.more) + '" onclick="event.stopPropagation();openCallerMenu(\'' + e.id + '\')">⋯</button></div>').join('');
+    const full = !on && callers.length >= CALLERS_MAX;
+    const add = !cur.name ? '' : '<button type="button" class="sr-add" id="crAdd" onclick="callersSheetAdd()"' + (saved || full ? ' disabled' : '') + '>'
+      + esc(saved ? _crTpl(T.added, { nom: cur.name }) : full ? _crTpl(T.full, { max: CALLERS_MAX }) : _crTpl(T.add, { nom: cur.name })) + '</button>';
+    return {
+      title: T.title, form: false,
+      html: (rows || '<div class="cr-empty">' + esc(T.empty) + '</div>') + add + '<p class="sr-sheet-note">' + esc(T.note) + '</p>' + cancel('closeSheet()', T.close),
+    };
+  }
+  const e = callers.find((x) => x.id === s.id);
+  if (!e) return null;
+  if (s.kind === 'callerMenu') {
+    const b = (cls, fn, label) => '<button type="button" class="dc-menu-btn' + cls + '" onclick="' + fn + '(\'' + e.id + '\')">' + esc(label) + '</button>';
+    return { title: e.name, form: false, html: b('', 'callerMenuRename', T.rename) + b(' danger', 'callerMenuDelete', T.remove) + cancel('openCallersSheet()', T.cancel) };
+  }
+  return {
+    title: T.sheetRename, form: true,
+    html: '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
+      + '<label class="sr-sublabel" for="srName">' + esc(T.nameLabel) + '</label>'
+      + '<input type="text" id="srName" class="text-input sr-input" maxlength="' + _CR_NAME_MAX + '" autocomplete="off" placeholder="' + esc(e.name) + '" value="' + esc(e.name) + '">'
+      + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="openCallersSheet()">' + esc(T.cancel) + '</button>'
+      + '<button type="submit" class="sr-ok">' + esc(T.ok) + '</button></div></form>',
+  };
+}
 // ══════════════════════════ SIMULATEUR D'APPEL ══════════════════════════
 // Télécommande (onglet Tel) : configure et déclenche. Écran : affiche l'overlay
 // (appel, SMS, notification d'application — 84-notification.js ; styles
 // Verre / Tonal / Épuré), sonne (WebAudio : sons intégrés synthétisés, ou son
-// importé mis en cache — 81-ringtones.js), vibre (Android) et renvoie son état
+// importé mis en cache — 81-ringtones.js), vibre si le vibreur du type est
+// activé (vib, maquette 36b : Android, ou la coque native) et renvoie son état
 // (ringing/incall/declined/ended). La discussion (fil de messages) est à part :
 // 83-discussion.js. L'ancienne « messagerie » (kind chat) est devenue SMS.
+// Style, présentation, photo, son et vibreur se règlent dans la vue « Style et
+// sonnerie » (78-tel-style.js) ; appelants enregistrés : 79-callers.js.
 
 // — Télécommande —
 // callKind : 'call' | 'sms' | 'notif' | 'discussion'
@@ -13693,7 +14255,12 @@ function setCallKind(k) {
   if (def && an && !an.dataset.touched) an.value = def.name;
   if (def && ac && !ac.dataset.touched) ac.value = def.color;
   const call = k === 'call', sms = k === 'sms', notif = k === 'notif', disc = k === 'discussion';
+  // Vue « Style et sonnerie » : style commun (appel, SMS, discussion) ou
+  // style et fond propres à la notification
+  _callShow('telStyleRow', !notif); // notification : sa rangée est sous « Envoyer la notification »
   _callShow('callStyleRow', !notif);
+  _callShow('ntDetail-style', notif);
+  _callShow('ntDetail-wall', notif);
   _callShow('callPresentRow', call);
   _callShow('callWhoPanel', call || sms);
   _callShow('callMsgPanel', sms);
@@ -13702,11 +14269,15 @@ function setCallKind(k) {
   _callShow('callTriggerBtn', !notif, 'flex');
   _callShow('callAnswerBtn', !notif, 'flex');
   _callShow('callListPanel', !disc, 'flex');
-  notifShowForm(notif);       // 84-notification.js (son : panneau déplacé sous la tuile « Son »)
+  const who = document.getElementById('callWhoLabel');
+  if (who) who.textContent = call ? 'Appelant' : 'Contact';
+  notifShowForm(notif);       // 84-notification.js
   chatShowForm(disc);         // 83-discussion.js
   _syncCallStyleChips();
-  renderRingPanel(); // « Sonnerie » (appel) ou « Son de notification » : choix propre au type
+  renderRingPanel(); // « Sonnerie », « Son de notification » ou « Son des messages » : choix propre au type
   _syncCallPhotoRow();
+  renderTelStyle();           // 78-tel-style.js : rangée résumé, vue ouverte
+  renderCallerState();        // 79-callers.js : « Enregistrés (n) », appelant enregistré ?
   const btn = document.getElementById('callTriggerBtn');
   if (btn) btn.innerHTML = call
     ? '<span class="media-icon">📞</span> Faire sonner'
@@ -13714,13 +14285,14 @@ function setCallKind(k) {
   renderCallListSaveLabel(); // « + Enregistrer l'appel / le SMS / la notification actuel(le) »
 }
 // Style : commun à l'appel et au SMS ; la discussion a le sien (83-discussion.js),
-// la notification aussi (84-notification.js, tuile « Style »)
+// la notification aussi (84-notification.js)
 function setCallStyle(s) {
   if (!_CALL_STYLE_HINTS[s]) s = 'glass';
   if (callKind === 'discussion') chatSetStyle(s);
   else callStyle = s;
   _syncCallStyleChips();
   _syncCallPhotoRow();
+  renderTelStyle();
 }
 function _syncCallStyleChips() {
   const s = callKind === 'discussion' ? chatStyleNow() : callStyle;
@@ -13740,6 +14312,7 @@ function setCallPresent(v) {
     const b = document.getElementById('callpres-' + x);
     if (b) b.classList.toggle('active', x === v);
   });
+  renderTelStyle();
 }
 function setCallPhotoMode(v) {
   callPhotoMode = v;
@@ -13747,6 +14320,7 @@ function setCallPhotoMode(v) {
     const b = document.getElementById('callphoto-' + x);
     if (b) b.classList.toggle('active', x === v);
   });
+  renderTelStyle();
 }
 function _syncCallPhotoRow() {
   const r = document.getElementById('callPhotoModeRow');
@@ -13848,6 +14422,8 @@ function onCallPhoto(files) {
     const pv = document.getElementById('callPhotoPreview');
     if (pv) pv.style.backgroundImage = 'url(' + _callPhoto + ')';
     _callPhotoSending = ensureCallAssets(_callPhoto, null);
+    renderCallerState();
+    renderTelStyle();
   };
   img.onerror = () => URL.revokeObjectURL(img.src);
   img.src = URL.createObjectURL(files[0]);
@@ -14010,7 +14586,7 @@ function remoteOnCallState(m) {
 // pour une notification. Volume = ringVolume (1 = niveau des sons intégrés
 // d'origine). Son importé absent du cache ou illisible : son intégré « ring »,
 // et l'écran le redemande à la télécommande (media:need).
-let _audioCtx = null, _callRingTimer = null, _callVibTimer = null;
+let _audioCtx = null, _callRingTimer = null, _callVibTimer = null, _callVibOn = false;
 let _callClockTimer = null, _callAutoTimer = null, _callT0Scr = 0;
 let _callState = 'idle', _callCfg = null;
 
@@ -14228,6 +14804,7 @@ function screenCallStart(m) {
     audioId: typeof m.audioId === 'string' && SRP.CALL_AUDIO_ID_RE.test(m.audioId) ? m.audioId : null,
     autoAnswer: Math.max(0, Math.min(60, Number(m.autoAnswer) || 0)),
     lock: m.lock ? { time: String(m.lock.time || '').slice(0, 8), date: String(m.lock.date || '').slice(0, 30) } : null,
+    vib: m.vib === true, // vibreur du type (maquette 36b) ; absent : ne vibre pas
   };
   if (kind === 'notif') Object.assign(_callCfg, notifScreenCfg(m)); // 84-notification.js : lock, phone, received
   const el = document.getElementById('screen-call'); if (!el) return;
@@ -14238,9 +14815,11 @@ function screenCallStart(m) {
     if (_callCfg.present === 'banner') { el.classList.add('notif'); _scRenderCallBar(); }
     else { el.classList.remove('notif'); _scRenderIncoming(); }
     _startRinging(_callCfg);
-    if (navigator.vibrate) {
-      navigator.vibrate([700, 300, 700]);
-      _callVibTimer = setInterval(() => navigator.vibrate([700, 300, 700]), 2200);
+    // Vibreur : motif répété tant que ça sonne (arrêté au décroché, au refus, à la fin)
+    if (_callCfg.vib) {
+      _callVibOn = true;
+      screenVibrate(SCREEN_VIB_RING);
+      _callVibTimer = setInterval(() => screenVibrate(SCREEN_VIB_RING), SCREEN_VIB_RING_EVERY);
     }
     if (_callCfg.autoAnswer > 0) _callAutoTimer = setTimeout(screenCallAnswer, _callCfg.autoAnswer * 1000);
     sendMsg({ type: 'call:state', state: 'ringing' });
@@ -14257,8 +14836,27 @@ function screenCallStart(m) {
       el.innerHTML = _scNotifCard(_callCfg, '');
     }
     _playNotifSound(_callCfg);
-    if (navigator.vibrate) navigator.vibrate([200, 120, 200]);
+    if (_callCfg.vib) screenVibrate(SCREEN_VIB_SHORT);
   }
+}
+
+// Vibreur de l'écran de jeu (maquette 36b) : navigator.vibrate (Android) ou,
+// dans l'app SetRemote, la coque native (pont « vibrate » / « vibrate:stop »,
+// 00-native-bridge.js) ; iPhone dans Safari ne sait pas vibrer : sans effet.
+// Ne lève jamais d'erreur.
+const SCREEN_VIB_RING = [700, 300, 700], SCREEN_VIB_RING_EVERY = 2200; // appel qui sonne (répété)
+const SCREEN_VIB_SHORT = [200, 120, 200];                             // SMS, notification, message de discussion
+function screenVibrate(pattern) {
+  try {
+    if (IN_NATIVE_APP) nativePost({ type: 'vibrate', pattern });
+    else if (navigator.vibrate) navigator.vibrate(pattern);
+  } catch (_) {}
+}
+function screenVibrateStop() {
+  try {
+    if (IN_NATIVE_APP) nativePost({ type: 'vibrate:stop' });
+    else if (navigator.vibrate) navigator.vibrate(0);
+  } catch (_) {}
 }
 
 // Application fictive affichée sur les notifications (nom + couleur réglables)
@@ -14536,7 +15134,7 @@ function _scStopRing() {
   if (_callRingTimer) { clearInterval(_callRingTimer); _callRingTimer = null; }
   if (_callVibTimer) { clearInterval(_callVibTimer); _callVibTimer = null; }
   if (_callAutoTimer) { clearTimeout(_callAutoTimer); _callAutoTimer = null; }
-  if (navigator.vibrate) navigator.vibrate(0);
+  if (_callVibOn) { _callVibOn = false; screenVibrateStop(); }
 }
 function screenCallStopTimers() {
   _scStopRing();
@@ -14544,13 +15142,16 @@ function screenCallStopTimers() {
 }
 
 // ══════════════════════════ SONNERIES ET SONS DE NOTIFICATION (télécommande) ══════════════════════════
-// Onglet Tel, panneau « Sonnerie » (appel) / « Son de notification » (SMS,
-// notification d'application) — maquette validée 12 : sons intégrés (Classique,
-// Digitale, Douce, Silencieux) ou sons importés par l'utilisateur (MP3, M4A,
-// WAV… ≤ 5 Mo, vérifiés par WebAudio). Chaque type garde son choix et son
-// volume ; la bibliothèque « Vos sonneries » est commune aux trois types. Par
-// défaut : Classique à 100 %, c.-à-d. les sons d'avant (sonnerie classique,
-// son SMS ; pour la notification, l'ancien son de la messagerie).
+// Onglet Tel, carte « Sonnerie » (appel) / « Son de notification » (SMS,
+// notification d'application) / « Son des messages » (discussion) de la vue
+// « Style et sonnerie » (78-tel-style.js, maquettes validées 12 et 36b) : sons
+// intégrés (Classique, Digitale, Douce, Silencieux) ou sons importés par
+// l'utilisateur (MP3, M4A, WAV… ≤ 5 Mo, vérifiés par WebAudio). Chaque type
+// garde son choix, son volume et son vibreur (vib, maquette 36b) ; la
+// bibliothèque « Vos sonneries » est commune aux quatre types. Par défaut :
+// Classique à 100 %, c.-à-d. les sons d'avant (sonnerie classique, son SMS ;
+// pour la notification, l'ancien son de la messagerie) ; discussion :
+// Silencieux (elle n'avait pas de son) ; vibreur : non, pour tous les types.
 // Migration : le choix enregistré pour l'ancienne « messagerie » (clé chat)
 // passe à la notification, qui la remplace (même son, même volume).
 //
@@ -14566,15 +15167,16 @@ function screenCallStopTimers() {
 // l'écran (24-resync.js), sur demande de l'écran (media:need) et, passerelle
 // DMX en marche, pour les entrées 1 à 20 des listes (déclenchement instantané
 // depuis la console).
-const RING_KINDS = ['call', 'sms', 'notif'];
+const RING_KINDS = ['call', 'sms', 'notif', 'discussion'];
 const RING_BUILTINS = ['classic', 'digital', 'soft', 'silent'];
 const RING_MAX_BYTES = 5 * 1024 * 1024;
 const RING_SETTINGS_KEY = 'setremote-ring-v1';
 const RING_DB = 'setremote-ringtones';
 const RING_NAME_MAX = 80;
 
-// ── Choix par type : { sound: son intégré ou id importé, vol: 0..1 } ──
-const ringSettings = { call: { sound: 'classic', vol: 1 }, sms: { sound: 'classic', vol: 1 }, notif: { sound: 'classic', vol: 1 } };
+// ── Choix par type : { sound: son intégré ou id importé, vol: 0..1, vib: vibreur } ──
+const _ringDefault = (k) => ({ sound: k === 'discussion' ? 'silent' : 'classic', vol: 1, vib: false });
+const ringSettings = { call: _ringDefault('call'), sms: _ringDefault('sms'), notif: _ringDefault('notif'), discussion: _ringDefault('discussion') };
 function _ringKind(k) { return k === 'chat' || k === 'whatsapp' ? 'sms' : (RING_KINDS.includes(k) ? k : 'call'); }
 function _ringIsId(s) { return typeof s === 'string' && SRP.RING_ID_RE.test(s); }
 function _ringVol(v) {
@@ -14587,12 +15189,13 @@ function loadRingSettings() {
   if (o && typeof o === 'object' && o.notif === undefined && o.chat !== undefined) o.notif = o.chat;
   for (const k of RING_KINDS) {
     const s = o && typeof o === 'object' ? o[k] : null;
-    const ok = s && typeof s === 'object' && (RING_BUILTINS.includes(s.sound) || _ringIsId(s.sound));
-    ringSettings[k] = { sound: ok ? s.sound : 'classic', vol: s && typeof s === 'object' ? _ringVol(s.vol) : 1 };
+    const obj = !!s && typeof s === 'object';
+    const ok = obj && (RING_BUILTINS.includes(s.sound) || _ringIsId(s.sound));
+    ringSettings[k] = { sound: ok ? s.sound : _ringDefault(k).sound, vol: obj ? _ringVol(s.vol) : 1, vib: obj && s.vib === true };
   }
 }
 function persistRingSettings() {
-  _lsSet(RING_SETTINGS_KEY, JSON.stringify({ v: 1, call: ringSettings.call, sms: ringSettings.sms, notif: ringSettings.notif }));
+  _lsSet(RING_SETTINGS_KEY, JSON.stringify({ v: 1, call: ringSettings.call, sms: ringSettings.sms, notif: ringSettings.notif, discussion: ringSettings.discussion }));
 }
 
 // Champs « son » d'un call:start pour un choix { sound, vol } :
@@ -14607,9 +15210,16 @@ function ringMsgFields(sound, vol) {
   if (v < 1) out.ringVolume = v;
   return out;
 }
+// Son du type et son vibreur (vib : présent seulement s'il est activé)
 function ringFormFields(kind) {
   const s = ringSettings[_ringKind(kind)];
-  return ringMsgFields(s.sound, s.vol);
+  return Object.assign(ringMsgFields(s.sound, s.vol), s.vib ? { vib: true } : {});
+}
+// Discussion (chat:open) : son des messages du contact, absent quand il est
+// silencieux (rien à jouer), et vibreur
+function ringChatFields() {
+  const s = ringSettings.discussion;
+  return Object.assign(s.sound === 'silent' ? {} : ringMsgFields(s.sound, s.vol), s.vib ? { vib: true } : {});
 }
 
 // ── Bibliothèque : IndexedDB, repli en mémoire ──
@@ -14673,6 +15283,7 @@ async function ringLibLoad() {
   if (changed) persistRingSettings();
   renderRingPanel();
   if (typeof renderCallList === 'function') renderCallList();
+  if (typeof renderTelStyle === 'function') renderTelStyle(); // noms des sons importés dans les résumés
 }
 async function ringLibData(id) {
   if (_ringMem.has(id)) return _ringMem.get(id).data;
@@ -14772,12 +15383,24 @@ async function onRingImport(files) {
 }
 
 // ── Choix du son du type affiché ──
+// Après un changement : rangée résumé et vue « Style et sonnerie »
+// (78-tel-style.js) ; discussion ouverte : son renvoyé à l'écran (83-discussion.js)
+function _ringChanged() {
+  if (typeof renderTelStyle === 'function') renderTelStyle();
+  if (_ringKind(callKind) === 'discussion' && typeof chatOnSoundChange === 'function') chatOnSoundChange();
+}
 function setCallRing(r) {
   ringSettings[_ringKind(callKind)].sound = RING_BUILTINS.includes(r) ? r : 'classic';
   persistRingSettings();
   _ringSetStatus('');
   renderRingPanel();
-  if (callKind === 'notif') renderNotifForm(); // tuile « Son »
+  _ringChanged();
+}
+// Vibreur du type affiché (maquette 36b)
+function setTelVib(on) {
+  ringSettings[_ringKind(callKind)].vib = !!on;
+  persistRingSettings();
+  _ringChanged();
 }
 function selectRingTone(id) {
   if (!ringLibHas(id)) return;
@@ -14788,8 +15411,8 @@ function _ringSelect(id) {
   ringSettings[_ringKind(callKind)].sound = id;
   persistRingSettings();
   renderRingPanel();
-  if (callKind === 'notif') renderNotifForm();
   ensureCallAssets(null, null, [id]); // envoyé dès le choix, comme la photo
+  _ringChanged();
 }
 function onRingVolume() {
   const sl = document.getElementById('ringVolSlider');
@@ -14798,25 +15421,29 @@ function onRingVolume() {
   ringSettings[_ringKind(callKind)].vol = v;
   persistRingSettings();
   _ringRenderVol();
+  _ringChanged();
   if (_ringPrev && _ringPrev.gain) { try { _ringPrev.gain.gain.value = v; } catch (_) {} }
 }
-// Entrée de la liste rechargée dans le formulaire : son et volume enregistrés
+// Entrée de la liste rechargée dans le formulaire : son, volume et vibreur
+// enregistrés (entrée d'avant le vibreur : non)
 function ringApplyEntry(e) {
   const k = _ringKind(e && e.kind);
   const sound = e && ringLibHas(e.ringId) ? e.ringId : (e && RING_BUILTINS.includes(e.ring) ? e.ring : 'classic');
-  ringSettings[k] = { sound, vol: e && e.ringVolume !== undefined ? _ringVol(e.ringVolume) : 1 };
+  ringSettings[k] = { sound, vol: e && e.ringVolume !== undefined ? _ringVol(e.ringVolume) : 1, vib: !!(e && e.vib === true) };
   persistRingSettings();
   _ringSetStatus('');
   renderRingPanel();
+  if (typeof renderTelStyle === 'function') renderTelStyle();
   if (ringLibHas(sound)) ensureCallAssets(null, null, [sound]);
 }
 
 async function deleteRingTone(id) {
   const t = ringLib.find((x) => x.id === id);
   if (!t) return false;
-  if (!confirm('Supprimer « ' + t.name + ' » ? Les appels, SMS et notifications qui l\'utilisent reviennent au son Classique.')) return false;
+  if (!confirm('Supprimer « ' + t.name + ' » ? Les appels, SMS, notifications et discussions qui l\'utilisent reviennent au son Classique.')) return false;
   if (_ringPrev && _ringPrev.id === id) _ringPrevStop();
   ringLib = ringLib.filter((x) => x.id !== id);
+  const chatHad = ringSettings.discussion.sound === id;
   for (const k of RING_KINDS) if (ringSettings[k].sound === id) ringSettings[k].sound = 'classic';
   persistRingSettings();
   _screenCached.delete(id);
@@ -14824,7 +15451,8 @@ async function deleteRingTone(id) {
   _ringSetStatus('« ' + t.name + ' » supprimée.');
   renderRingPanel();
   if (typeof renderCallList === 'function') renderCallList();
-  if (callKind === 'notif') renderNotifForm();
+  if (typeof renderTelStyle === 'function') renderTelStyle();
+  if (chatHad && typeof chatOnSoundChange === 'function') chatOnSoundChange();
   await _ringLibDelete(id);
   return true;
 }
@@ -14952,6 +15580,13 @@ const _RING_ICON = {
   stop: '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>',
   del: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
 };
+// Libellés de la carte du son selon le type (regroupés pour la traduction)
+const _RING_TXT = {
+  call: { label: 'Sonnerie', vol: 'Volume de la sonnerie' },
+  sms: { label: 'Son de notification', vol: 'Volume de la notification' },
+  notif: { label: 'Son de notification', vol: 'Volume de la notification' },
+  discussion: { label: 'Son des messages', vol: 'Volume des messages' },
+};
 let _ringRenderedKind = null;
 function renderRingPanel() {
   const k = _ringKind(callKind), s = ringSettings[k], isCall = k === 'call';
@@ -14959,8 +15594,8 @@ function renderRingPanel() {
   if (_ringRenderedKind !== null && _ringRenderedKind !== k) _ringSetStatus('');
   _ringRenderedKind = k;
   const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
-  set('ringPanelLabel', isCall ? 'Sonnerie' : 'Son de notification');
-  set('ringVolLabel', isCall ? 'Volume de la sonnerie' : 'Volume de la notification');
+  set('ringPanelLabel', _RING_TXT[k].label);
+  set('ringVolLabel', _RING_TXT[k].vol);
   RING_BUILTINS.forEach((x) => {
     const b = document.getElementById('callring-' + x);
     if (b) b.classList.toggle('active', s.sound === x);
@@ -14981,7 +15616,7 @@ function renderRingPanel() {
     }).join('');
   }
   _ringRenderVol();
-  // Décroché (bande son, décroché automatique) : appel seulement
+  // Panneau « Au décroché » (bande son, décroché automatique) : appel seulement
   const ans = document.getElementById('callAnswerBlock');
   if (ans) ans.style.display = isCall ? 'block' : 'none';
 }
@@ -15011,6 +15646,8 @@ function ringInit() {
 // Son de l'entrée : choix du type au moment de l'enregistrement (son intégré
 // ring, ou son importé ringId de la bibliothèque commune 81-ringtones.js) et
 // son volume ringVolume ; un son importé supprimé depuis → son Classique.
+// Vibreur du type (vib, maquette 36b) : true seulement ; entrée d'avant le
+// vibreur : ne vibre pas.
 const CALL_LIST_KEY = 'setremote-call-list-v1';
 const CALL_LIST_MAX = 99;           // par liste
 const CALL_LIST_DMX_ITEMS = 20;     // entrées accessibles depuis la console
@@ -15021,7 +15658,7 @@ let callListKind = 'call';
 const _callListSel = { call: null, sms: null, notif: null };
 
 const _CALL_STYLE_NAMES = { glass: 'Verre', tonal: 'Tonal', minimal: 'Épuré' };
-const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio', 'phone', 'received'];
+const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'vib', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio', 'phone', 'received'];
 
 // ── Persistance ──
 function _clListOf(kind) { return kind === 'call' || kind === 'notif' ? kind : 'sms'; }
@@ -15042,6 +15679,7 @@ function _clSanitize(e) {
     if (typeof out.ringVolume === 'number' && Number.isFinite(out.ringVolume)) out.ringVolume = Math.min(1, Math.max(0, out.ringVolume));
     else delete out.ringVolume;
   }
+  if (out.vib !== true) delete out.vib;
   return out;
 }
 function loadCallList() {
@@ -15320,6 +15958,7 @@ async function loadCallEntryIntoForm(e) {
   setCallPhotoMode(e.photoMode === 'full' ? 'full' : 'avatar');
   ringApplyEntry(e); // son et volume de l'entrée pour son type
   val('callName', e.name || ''); val('callLabel', e.label || ''); val('callMsgText', e.msg || '');
+  renderCallerState();
   if (e.kind !== 'call') {
     val('callAppName', e.appName || ''); val('callAppColor', safeHexColor(e.appColor, '#2f8cf0'));
     for (const id of ['callAppName', 'callAppColor']) { const el = document.getElementById(id); if (el) el.dataset.touched = '1'; }
@@ -15344,6 +15983,8 @@ async function loadCallEntryIntoForm(e) {
   }
   renderCallAudioRow();
   if (_callAudioData) ensureCallAssets(null, _callAudioData);
+  renderCallerState(); // 79-callers.js : appelant enregistré ?
+  renderTelStyle();
 }
 
 // « Appeler n° X » / « Envoyer le SMS n° X »
@@ -15472,9 +16113,16 @@ let _clDrag = null, _clSuppressClick = false;
 //   • Pas de réseau (maquette 34) : le message du comédien envoyé quand la
 //     barre d'état de la séquence dit « Pas de service » reste « Non
 //     distribué » (point rouge) ; le retour du réseau le distribue (91-sequence.js).
+//   • Son des messages et vibreur (maquettes validées 36b et 36d, vue « Style
+//     et son », 78-tel-style.js) : réglages du type Discussion
+//     (ringSettings.discussion, 81-ringtones.js), portés par chat:open ;
+//     l'écran les joue à l'arrivée de chaque message du contact (jamais pour
+//     l'historique d'une reprise). Son importé : en cache sur l'écran comme
+//     les sonneries. Contact : « Enregistrés (n) › » (79-callers.js).
 // Protocole (packages/protocol/schema.js) : chat:msg (texte d'un message),
 // chat:open (contact, style, ordre, messages postés ; history : reprise ;
-// pend : non distribués ; auto : frappe automatique en cours), chat:rewind
+// pend : non distribués ; auto : frappe automatique en cours ; ring, ringId,
+// ringVolume, vib : son des messages et vibreur), chat:rewind
 // (« ↶ »), chat:post (dur : « … écrit » de la lecture auto), chat:type
 // (lecture auto, message du comédien), chat:close ; retour chat:progress,
 // chat:sent (undelivered : sans réseau). Textes affichés par textContent.
@@ -15622,7 +16270,26 @@ function _chatSendOpen(only, history) {
     type: 'chat:open', name: _chat.name.slice(0, 40), style: _chat.style, hasAvatar: !!_chatAvatar,
     ids, sent,
     typed: !history && cur && p && p.id === cur.id ? Math.min(p.typed, _chatLen(cur.text)) : 0,
-  }, history ? { history: true } : {}, pend.length ? { pend } : {}, auto ? { auto } : {}, _chatTarget(only)));
+  }, history ? { history: true } : {}, pend.length ? { pend } : {}, auto ? { auto } : {}, ringChatFields(), _chatTarget(only)));
+}
+// Son des messages importé : envoyé aux écrans de la discussion qui ne l'ont pas
+function _chatSendRing() {
+  const f = ringChatFields();
+  if (f.ringId && _chat.screens && _chat.screens.length) ensureCallAssets(null, null, [f.ringId], _chat.screens);
+  else if (f.ringId) ensureCallAssets(null, null, [f.ringId]);
+}
+// Son des messages ou vibreur changés (81-ringtones.js) : renvoyés à l'écran
+// (le curseur du volume n'envoie qu'une fois arrêté)
+let _chatSoundTimer = null;
+function chatOnSoundChange() {
+  if (_chatSoundTimer) clearTimeout(_chatSoundTimer);
+  _chatSoundTimer = setTimeout(() => {
+    _chatSoundTimer = null;
+    if (!_chat.open) return;
+    _chatSendRing();
+    _chatFlushTexts();
+    _chatSendOpen();
+  }, 300);
 }
 function _chatSendAvatar(only) {
   if (!_chatAvatar || linkBleOnly()) return Promise.resolve();
@@ -15634,6 +16301,7 @@ function openChatOnTarget(history) {
   const ids = scrTargetIds();
   _chat.screens = ids.length ? ids : null;
   _chat.open = true;
+  _chatSendRing();
   _chatSyncTexts(undefined, history === true);
   _chatSendAvatar().then(() => { if (_chat.open && _chatAvatar) _chatSendOpen(); });
   chatSave();
@@ -16032,8 +16700,8 @@ function chatShowForm(on) {
   if (!on || saved) show('dcTimingPanel', false);
   show('dcTabs', on);
   show('dcSavedPanel', saved);
-  // Le style appartient au fil en cours : masqué sur la liste
-  if (on) show('callStyleRow', !saved);
+  // Le style appartient au fil en cours : rangée « Style et son » masquée sur la liste
+  if (on) show('telStyleRow', !saved);
   for (const v of ['thread', 'saved']) {
     const b = document.getElementById('dcTab-' + v);
     if (b) b.classList.toggle('active', _chatView === v);
@@ -16309,6 +16977,9 @@ function screenChatOpen(m) {
     instant: hist || !!(prev && prev.instant), // pas de fondu d'entrée (gardé : le retirer le rejouerait)
     pend: Array.isArray(m.pend) ? m.pend.filter((id) => m.sent.includes(id)) : [], // « Non distribué » (maquette 34)
     auto: null,                                                                      // lecture auto : { id, dur, send, t0 }
+    // Son des messages du contact (absent : aucun) et vibreur (maquette 36d)
+    sound: m.ring ? { kind: 'discussion', ring: m.ring, ringId: m.ringId || null, ringVolume: typeof m.ringVolume === 'number' ? m.ringVolume : 1 } : null,
+    vib: m.vib === true,
   };
   // Même message en cours sans rechargement : la frappe locale fait foi (sauf reprise)
   const cur = _sccCur();
@@ -16373,7 +17044,7 @@ function _sccNextPost() {
     _sccQueueTyping.delete(id);
     _sccQueueDur.delete(id);
     _sccTypingOn = false;
-    if (!c.sent.includes(id)) { c.sent.push(id); _sccAnim.add(id); }
+    if (!c.sent.includes(id)) { c.sent.push(id); _sccAnim.add(id); _sccChime(c); }
     _sccRender();
     if (_sccQueue.length) _sccTypingTimer = setTimeout(_sccNextPost, 300);
   };
@@ -16381,6 +17052,11 @@ function _sccNextPost() {
   _sccTypingOn = true;
   _sccRender();
   _sccTypingTimer = setTimeout(post, _sccQueueDur.get(id) || CHAT_TYPING_MS);
+}
+// Message du contact arrivé : son des messages et vibreur de la discussion
+function _sccChime(c) {
+  if (c.sound) _playNotifSound(c.sound); // 80-call-simulator.js : son importé (cache) ou intégré
+  if (c.vib) screenVibrate(SCREEN_VIB_SHORT);
 }
 function _sccStopQueue() {
   if (_sccTypingTimer) clearTimeout(_sccTypingTimer);
@@ -16597,7 +17273,9 @@ if (window.visualViewport) {
 // « messagerie » : une application fictive (icône importée, nom), un titre et
 // un contenu, affichés en bandeau sur un écran allumé ou en carte sur le faux
 // écran verrouillé. Style (Verre / Tonal / Épuré), fond d'écran verrouillé
-// (__notifwall) et son (ringSettings.notif) PROPRES, indépendants des SMS.
+// (__notifwall), son et vibreur (ringSettings.notif) PROPRES, indépendants des
+// SMS, réglés dans la vue « Style et son » (rangée sous « Envoyer la
+// notification », maquette validée 36f, 78-tel-style.js).
 //
 // « Heure du téléphone » : date et heure du faux téléphone (écran verrouillé,
 // calcul de « Reçue ») ; vides : celles de l'écran. « Reçue » : maintenant,
@@ -16613,9 +17291,8 @@ if (window.visualViewport) {
 
 // — Télécommande —
 let notifStyle = 'glass', notifPresent = 'banner', notifReceived = 'now';
-let _notifIcon = null, _notifWallData = null, _ntDetail = null;
+let _notifIcon = null, _notifWallData = null;
 const NOTIF_ICON_PX = 160;
-const _NOTIF_RING_NAMES = { classic: 'Classique', digital: 'Digitale', soft: 'Douce', silent: 'Silencieux' };
 
 const _NT_DAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const _NT_DAYS_SHORT = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
@@ -16705,23 +17382,11 @@ function notifFormFields() {
   });
 }
 
-// Formulaire affiché (type Notification) ; le panneau du son se range sous la tuile « Son »
+// Formulaire affiché (type Notification)
 function notifShowForm(on) {
   for (const id of ['ntAppPanel', 'ntShowPanel', 'ntSendPanel']) {
     const el = document.getElementById(id);
     if (el) el.style.display = on ? '' : 'none';
-  }
-  const ring = document.getElementById('callRingPanel');
-  if (ring) {
-    if (on) {
-      const slot = document.getElementById('ntSoundSlot');
-      if (slot && ring.parentNode !== slot) slot.appendChild(ring);
-      ring.style.display = _ntDetail === 'sound' ? 'block' : 'none';
-    } else {
-      const trig = document.getElementById('callTriggerPanel');
-      if (trig && ring.nextElementSibling !== trig) trig.parentNode.insertBefore(ring, trig);
-      ring.style.display = callKind === 'discussion' ? 'none' : 'block';
-    }
   }
   if (on) renderNotifForm();
 }
@@ -16737,10 +17402,6 @@ function setNotifReceived(v) {
   renderNotifForm();
 }
 function setNotifStyle(s) { notifStyle = _CALL_STYLE_HINTS[s] ? s : 'glass'; renderNotifForm(); }
-function toggleNotifDetail(k) {
-  _ntDetail = _ntDetail === k ? null : k;
-  renderNotifForm();
-}
 // Ouvre le sélecteur de date du système (champ date transparent par-dessus le libellé)
 function ntOpenPicker(ev, id) {
   const el = document.getElementById(id);
@@ -16748,10 +17409,6 @@ function ntOpenPicker(ev, id) {
   try { if (el.showPicker) el.showPicker(); else el.focus(); } catch (_) { el.focus(); }
 }
 
-function _ntRingLabel() {
-  const s = ringSettings.notif || { sound: 'classic' };
-  return _NOTIF_RING_NAMES[s.sound] || ringName(s.sound) || 'Classique';
-}
 function renderNotifForm() {
   const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
   const act = (pre, list, v) => list.forEach((x) => { const b = document.getElementById(pre + x); if (b) b.classList.toggle('active', x === v); });
@@ -16779,22 +17436,12 @@ function renderNotifForm() {
   }
   const at = document.getElementById('ntAtRow');
   if (at) at.style.display = notifReceived === 'at' ? 'flex' : 'none';
-  // Tuiles Style / Fond / Son et leur détail
-  set('ntTileStyle', (_CALL_STYLE_NAMES[notifStyle] || 'Verre') + ' ›');
-  set('ntTileWall', (_notifWallData ? 'Photo' : 'Dégradé') + ' ›');
-  set('ntTileSound', _ntRingLabel() + ' ›');
-  for (const k of ['style', 'wall', 'sound']) {
-    const t = document.getElementById('ntTile-' + k);
-    if (t) t.classList.toggle('open', _ntDetail === k);
-  }
-  _callShow('ntDetail-style', _ntDetail === 'style');
-  _callShow('ntDetail-wall', _ntDetail === 'wall');
-  const ring = document.getElementById('callRingPanel');
-  if (ring && callKind === 'notif') ring.style.display = _ntDetail === 'sound' ? 'block' : 'none';
+  // Style et fond (vue « Style et son ») ; résumé de la rangée
   act('ntstyle-', ['glass', 'tonal', 'minimal'], notifStyle);
   set('ntStyleHint', _CALL_STYLE_HINTS[notifStyle] || '');
   const wp = document.getElementById('ntWallPreview');
   if (wp) wp.style.backgroundImage = _notifWallData ? 'url(' + _notifWallData + ')' : '';
+  if (typeof renderTelStyle === 'function') renderTelStyle();
 }
 function _ntIconStatus(t) {
   const el = document.getElementById('ntIconStatus');
@@ -19001,7 +19648,7 @@ async function _seqExec(s, it, ids) {
       if (stack.length) {
         const f = ringMsgFields(it.ringId || it.ring, it.ringVolume);
         if (f.ringId) await ensureCallAssets(null, null, [f.ringId], stack);
-        _seqStack(stack, card, { ring: f.ring, ringId: f.ringId || null, vol: f.ringVolume === undefined ? 1 : f.ringVolume });
+        _seqStack(stack, card, { ring: f.ring, ringId: f.ringId || null, vol: f.ringVolume === undefined ? 1 : f.ringVolume, vib: it.vib === true });
       }
       if (banner.length) {
         u.banner = banner;
@@ -19018,7 +19665,7 @@ async function _seqExec(s, it, ids) {
       const off = ids.filter((id) => !on(id));
       if (off.length) _seqStack(off, card, null);
       const lit = ids.filter(on);
-      if (lit.length) _seqStack(lit, card, { ring: 'classic', ringId: null, vol: 1 });
+      if (lit.length) _seqStack(lit, card, { ring: 'classic', ringId: null, vol: 1, vib: it.vib === true }); // vibreur de l'appel manqué
       break;
     }
     case 'unlock':
@@ -19113,6 +19760,7 @@ async function _seqOpenChat(e, ids) {
   _chatDefsSent.clear();
   _chat.screens = ids.slice();
   _chat.open = true;
+  _chatSendRing(); // son des messages importé (83-discussion.js)
   _chatSyncTexts(undefined, true);
   chatSave();
   if (callKind === 'discussion') chatShowForm(true);
@@ -19223,7 +19871,7 @@ async function _seqPushPhones(only, force) {
     if (!force && !chime && _seqPhoneSent.get(sid) === sig) continue;
     if (!p && !m.watch && !_seqPhoneSent.has(sid)) continue; // rien à dire à cet écran
     _seqPhoneSent.set(sid, sig);
-    if (chime && !force && m.power !== 'off') m.chime = Object.assign({ id: chime.id, ring: chime.ring }, chime.ringId ? { ringId: chime.ringId } : {}, chime.vol < 1 ? { vol: chime.vol } : {});
+    if (chime && !force && m.power !== 'off') m.chime = Object.assign({ id: chime.id, ring: chime.ring }, chime.ringId ? { ringId: chime.ringId } : {}, chime.vol < 1 ? { vol: chime.vol } : {}, chime.vib ? { vib: true } : {});
     sendMsg(m);
     if (m.mode === 'off' && !m.watch && !m.bar) _seqPhoneSent.delete(sid);
   }
@@ -20204,7 +20852,7 @@ function screenPhoneState(m) {
   if (m.chime) {
     const n = notifs.find((x) => x.id === m.chime.id);
     _playNotifSound({ kind: n && n.kind === 'notif' ? 'notif' : 'sms', ring: m.chime.ring, ringId: m.chime.ringId, ringVolume: m.chime.vol });
-    if (navigator.vibrate) navigator.vibrate([200, 120, 200]);
+    if (m.chime.vib) screenVibrate(SCREEN_VIB_SHORT); // vibreur de l'entrée (maquette 36b, 80-call-simulator.js)
   }
 }
 function screenPhoneHide() {
@@ -21204,15 +21852,18 @@ renderFxMemories();
 
 // ── Onglet Tel : état initial des options, sons par type (bibliothèque en
 // IndexedDB, chargée en arrière-plan), appels, SMS et notifications
-// enregistrés, discussion préparée ──
+// enregistrés, discussion préparée, appelants enregistrés, rangée « Style et
+// sonnerie » ──
 _syncCallPhotoRow();
 ringInit();
 loadCallList();
 renderCallList();
 chatLoad();
 loadSavedChats();      // discussions enregistrées (89-discussions-saved.js)
+callersInit();         // appelants enregistrés (79-callers.js) ; 1re fois : repris des listes ci-dessus
 renderNotifForm();
 renderChatPanel();
+renderTelStyle();      // 78-tel-style.js
 
 // ── Onglet Séquence : séquence en cours, séquences enregistrées ──
 seqLoad();

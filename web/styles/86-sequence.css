@@ -47,7 +47,7 @@
 .sq-phone-v{min-width:0;color:#a8a8a8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* Télécommande — éditer une étape (maquette 29) */
-#seq-step-view,#phone-params-view{display:none;position:fixed;inset:0;z-index:300;overflow-y:auto;overflow-x:hidden;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);color:var(--text);font-family:'DM Mono',monospace;padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));flex-direction:column;gap:10px}
+#seq-step-view,#phone-params-view,#tel-style-view{display:none;position:fixed;inset:0;z-index:300;overflow-y:auto;overflow-x:hidden;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);color:var(--text);font-family:'DM Mono',monospace;padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));flex-direction:column;gap:10px}
 .ss-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .ss-back{width:90px;text-align:left;padding:0;border:none;background:none;font-family:'DM Mono',monospace;font-size:.75rem;color:#c8c8c8;cursor:pointer}
 .ss-title{font-family:'Lato',sans-serif;font-weight:600;font-size:1.125rem}

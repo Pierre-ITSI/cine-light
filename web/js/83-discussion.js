@@ -44,9 +44,16 @@
 //   • Pas de réseau (maquette 34) : le message du comédien envoyé quand la
 //     barre d'état de la séquence dit « Pas de service » reste « Non
 //     distribué » (point rouge) ; le retour du réseau le distribue (91-sequence.js).
+//   • Son des messages et vibreur (maquettes validées 36b et 36d, vue « Style
+//     et son », 78-tel-style.js) : réglages du type Discussion
+//     (ringSettings.discussion, 81-ringtones.js), portés par chat:open ;
+//     l'écran les joue à l'arrivée de chaque message du contact (jamais pour
+//     l'historique d'une reprise). Son importé : en cache sur l'écran comme
+//     les sonneries. Contact : « Enregistrés (n) › » (79-callers.js).
 // Protocole (packages/protocol/schema.js) : chat:msg (texte d'un message),
 // chat:open (contact, style, ordre, messages postés ; history : reprise ;
-// pend : non distribués ; auto : frappe automatique en cours), chat:rewind
+// pend : non distribués ; auto : frappe automatique en cours ; ring, ringId,
+// ringVolume, vib : son des messages et vibreur), chat:rewind
 // (« ↶ »), chat:post (dur : « … écrit » de la lecture auto), chat:type
 // (lecture auto, message du comédien), chat:close ; retour chat:progress,
 // chat:sent (undelivered : sans réseau). Textes affichés par textContent.
@@ -194,7 +201,26 @@ function _chatSendOpen(only, history) {
     type: 'chat:open', name: _chat.name.slice(0, 40), style: _chat.style, hasAvatar: !!_chatAvatar,
     ids, sent,
     typed: !history && cur && p && p.id === cur.id ? Math.min(p.typed, _chatLen(cur.text)) : 0,
-  }, history ? { history: true } : {}, pend.length ? { pend } : {}, auto ? { auto } : {}, _chatTarget(only)));
+  }, history ? { history: true } : {}, pend.length ? { pend } : {}, auto ? { auto } : {}, ringChatFields(), _chatTarget(only)));
+}
+// Son des messages importé : envoyé aux écrans de la discussion qui ne l'ont pas
+function _chatSendRing() {
+  const f = ringChatFields();
+  if (f.ringId && _chat.screens && _chat.screens.length) ensureCallAssets(null, null, [f.ringId], _chat.screens);
+  else if (f.ringId) ensureCallAssets(null, null, [f.ringId]);
+}
+// Son des messages ou vibreur changés (81-ringtones.js) : renvoyés à l'écran
+// (le curseur du volume n'envoie qu'une fois arrêté)
+let _chatSoundTimer = null;
+function chatOnSoundChange() {
+  if (_chatSoundTimer) clearTimeout(_chatSoundTimer);
+  _chatSoundTimer = setTimeout(() => {
+    _chatSoundTimer = null;
+    if (!_chat.open) return;
+    _chatSendRing();
+    _chatFlushTexts();
+    _chatSendOpen();
+  }, 300);
 }
 function _chatSendAvatar(only) {
   if (!_chatAvatar || linkBleOnly()) return Promise.resolve();
@@ -206,6 +232,7 @@ function openChatOnTarget(history) {
   const ids = scrTargetIds();
   _chat.screens = ids.length ? ids : null;
   _chat.open = true;
+  _chatSendRing();
   _chatSyncTexts(undefined, history === true);
   _chatSendAvatar().then(() => { if (_chat.open && _chatAvatar) _chatSendOpen(); });
   chatSave();
@@ -604,8 +631,8 @@ function chatShowForm(on) {
   if (!on || saved) show('dcTimingPanel', false);
   show('dcTabs', on);
   show('dcSavedPanel', saved);
-  // Le style appartient au fil en cours : masqué sur la liste
-  if (on) show('callStyleRow', !saved);
+  // Le style appartient au fil en cours : rangée « Style et son » masquée sur la liste
+  if (on) show('telStyleRow', !saved);
   for (const v of ['thread', 'saved']) {
     const b = document.getElementById('dcTab-' + v);
     if (b) b.classList.toggle('active', _chatView === v);
@@ -881,6 +908,9 @@ function screenChatOpen(m) {
     instant: hist || !!(prev && prev.instant), // pas de fondu d'entrée (gardé : le retirer le rejouerait)
     pend: Array.isArray(m.pend) ? m.pend.filter((id) => m.sent.includes(id)) : [], // « Non distribué » (maquette 34)
     auto: null,                                                                      // lecture auto : { id, dur, send, t0 }
+    // Son des messages du contact (absent : aucun) et vibreur (maquette 36d)
+    sound: m.ring ? { kind: 'discussion', ring: m.ring, ringId: m.ringId || null, ringVolume: typeof m.ringVolume === 'number' ? m.ringVolume : 1 } : null,
+    vib: m.vib === true,
   };
   // Même message en cours sans rechargement : la frappe locale fait foi (sauf reprise)
   const cur = _sccCur();
@@ -945,7 +975,7 @@ function _sccNextPost() {
     _sccQueueTyping.delete(id);
     _sccQueueDur.delete(id);
     _sccTypingOn = false;
-    if (!c.sent.includes(id)) { c.sent.push(id); _sccAnim.add(id); }
+    if (!c.sent.includes(id)) { c.sent.push(id); _sccAnim.add(id); _sccChime(c); }
     _sccRender();
     if (_sccQueue.length) _sccTypingTimer = setTimeout(_sccNextPost, 300);
   };
@@ -953,6 +983,11 @@ function _sccNextPost() {
   _sccTypingOn = true;
   _sccRender();
   _sccTypingTimer = setTimeout(post, _sccQueueDur.get(id) || CHAT_TYPING_MS);
+}
+// Message du contact arrivé : son des messages et vibreur de la discussion
+function _sccChime(c) {
+  if (c.sound) _playNotifSound(c.sound); // 80-call-simulator.js : son importé (cache) ou intégré
+  if (c.vib) screenVibrate(SCREEN_VIB_SHORT);
 }
 function _sccStopQueue() {
   if (_sccTypingTimer) clearTimeout(_sccTypingTimer);

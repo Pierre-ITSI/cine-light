@@ -4,7 +4,9 @@
 // « messagerie » : une application fictive (icône importée, nom), un titre et
 // un contenu, affichés en bandeau sur un écran allumé ou en carte sur le faux
 // écran verrouillé. Style (Verre / Tonal / Épuré), fond d'écran verrouillé
-// (__notifwall) et son (ringSettings.notif) PROPRES, indépendants des SMS.
+// (__notifwall), son et vibreur (ringSettings.notif) PROPRES, indépendants des
+// SMS, réglés dans la vue « Style et son » (rangée sous « Envoyer la
+// notification », maquette validée 36f, 78-tel-style.js).
 //
 // « Heure du téléphone » : date et heure du faux téléphone (écran verrouillé,
 // calcul de « Reçue ») ; vides : celles de l'écran. « Reçue » : maintenant,
@@ -20,9 +22,8 @@
 
 // — Télécommande —
 let notifStyle = 'glass', notifPresent = 'banner', notifReceived = 'now';
-let _notifIcon = null, _notifWallData = null, _ntDetail = null;
+let _notifIcon = null, _notifWallData = null;
 const NOTIF_ICON_PX = 160;
-const _NOTIF_RING_NAMES = { classic: 'Classique', digital: 'Digitale', soft: 'Douce', silent: 'Silencieux' };
 
 const _NT_DAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const _NT_DAYS_SHORT = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
@@ -112,23 +113,11 @@ function notifFormFields() {
   });
 }
 
-// Formulaire affiché (type Notification) ; le panneau du son se range sous la tuile « Son »
+// Formulaire affiché (type Notification)
 function notifShowForm(on) {
   for (const id of ['ntAppPanel', 'ntShowPanel', 'ntSendPanel']) {
     const el = document.getElementById(id);
     if (el) el.style.display = on ? '' : 'none';
-  }
-  const ring = document.getElementById('callRingPanel');
-  if (ring) {
-    if (on) {
-      const slot = document.getElementById('ntSoundSlot');
-      if (slot && ring.parentNode !== slot) slot.appendChild(ring);
-      ring.style.display = _ntDetail === 'sound' ? 'block' : 'none';
-    } else {
-      const trig = document.getElementById('callTriggerPanel');
-      if (trig && ring.nextElementSibling !== trig) trig.parentNode.insertBefore(ring, trig);
-      ring.style.display = callKind === 'discussion' ? 'none' : 'block';
-    }
   }
   if (on) renderNotifForm();
 }
@@ -144,10 +133,6 @@ function setNotifReceived(v) {
   renderNotifForm();
 }
 function setNotifStyle(s) { notifStyle = _CALL_STYLE_HINTS[s] ? s : 'glass'; renderNotifForm(); }
-function toggleNotifDetail(k) {
-  _ntDetail = _ntDetail === k ? null : k;
-  renderNotifForm();
-}
 // Ouvre le sélecteur de date du système (champ date transparent par-dessus le libellé)
 function ntOpenPicker(ev, id) {
   const el = document.getElementById(id);
@@ -155,10 +140,6 @@ function ntOpenPicker(ev, id) {
   try { if (el.showPicker) el.showPicker(); else el.focus(); } catch (_) { el.focus(); }
 }
 
-function _ntRingLabel() {
-  const s = ringSettings.notif || { sound: 'classic' };
-  return _NOTIF_RING_NAMES[s.sound] || ringName(s.sound) || 'Classique';
-}
 function renderNotifForm() {
   const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
   const act = (pre, list, v) => list.forEach((x) => { const b = document.getElementById(pre + x); if (b) b.classList.toggle('active', x === v); });
@@ -186,22 +167,12 @@ function renderNotifForm() {
   }
   const at = document.getElementById('ntAtRow');
   if (at) at.style.display = notifReceived === 'at' ? 'flex' : 'none';
-  // Tuiles Style / Fond / Son et leur détail
-  set('ntTileStyle', (_CALL_STYLE_NAMES[notifStyle] || 'Verre') + ' ›');
-  set('ntTileWall', (_notifWallData ? 'Photo' : 'Dégradé') + ' ›');
-  set('ntTileSound', _ntRingLabel() + ' ›');
-  for (const k of ['style', 'wall', 'sound']) {
-    const t = document.getElementById('ntTile-' + k);
-    if (t) t.classList.toggle('open', _ntDetail === k);
-  }
-  _callShow('ntDetail-style', _ntDetail === 'style');
-  _callShow('ntDetail-wall', _ntDetail === 'wall');
-  const ring = document.getElementById('callRingPanel');
-  if (ring && callKind === 'notif') ring.style.display = _ntDetail === 'sound' ? 'block' : 'none';
+  // Style et fond (vue « Style et son ») ; résumé de la rangée
   act('ntstyle-', ['glass', 'tonal', 'minimal'], notifStyle);
   set('ntStyleHint', _CALL_STYLE_HINTS[notifStyle] || '');
   const wp = document.getElementById('ntWallPreview');
   if (wp) wp.style.backgroundImage = _notifWallData ? 'url(' + _notifWallData + ')' : '';
+  if (typeof renderTelStyle === 'function') renderTelStyle();
 }
 function _ntIconStatus(t) {
   const el = document.getElementById('ntIconStatus');

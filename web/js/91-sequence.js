@@ -596,7 +596,7 @@ async function _seqExec(s, it, ids) {
       if (stack.length) {
         const f = ringMsgFields(it.ringId || it.ring, it.ringVolume);
         if (f.ringId) await ensureCallAssets(null, null, [f.ringId], stack);
-        _seqStack(stack, card, { ring: f.ring, ringId: f.ringId || null, vol: f.ringVolume === undefined ? 1 : f.ringVolume });
+        _seqStack(stack, card, { ring: f.ring, ringId: f.ringId || null, vol: f.ringVolume === undefined ? 1 : f.ringVolume, vib: it.vib === true });
       }
       if (banner.length) {
         u.banner = banner;
@@ -613,7 +613,7 @@ async function _seqExec(s, it, ids) {
       const off = ids.filter((id) => !on(id));
       if (off.length) _seqStack(off, card, null);
       const lit = ids.filter(on);
-      if (lit.length) _seqStack(lit, card, { ring: 'classic', ringId: null, vol: 1 });
+      if (lit.length) _seqStack(lit, card, { ring: 'classic', ringId: null, vol: 1, vib: it.vib === true }); // vibreur de l'appel manqué
       break;
     }
     case 'unlock':
@@ -708,6 +708,7 @@ async function _seqOpenChat(e, ids) {
   _chatDefsSent.clear();
   _chat.screens = ids.slice();
   _chat.open = true;
+  _chatSendRing(); // son des messages importé (83-discussion.js)
   _chatSyncTexts(undefined, true);
   chatSave();
   if (callKind === 'discussion') chatShowForm(true);
@@ -818,7 +819,7 @@ async function _seqPushPhones(only, force) {
     if (!force && !chime && _seqPhoneSent.get(sid) === sig) continue;
     if (!p && !m.watch && !_seqPhoneSent.has(sid)) continue; // rien à dire à cet écran
     _seqPhoneSent.set(sid, sig);
-    if (chime && !force && m.power !== 'off') m.chime = Object.assign({ id: chime.id, ring: chime.ring }, chime.ringId ? { ringId: chime.ringId } : {}, chime.vol < 1 ? { vol: chime.vol } : {});
+    if (chime && !force && m.power !== 'off') m.chime = Object.assign({ id: chime.id, ring: chime.ring }, chime.ringId ? { ringId: chime.ringId } : {}, chime.vol < 1 ? { vol: chime.vol } : {}, chime.vib ? { vib: true } : {});
     sendMsg(m);
     if (m.mode === 'off' && !m.watch && !m.bar) _seqPhoneSent.delete(sid);
   }

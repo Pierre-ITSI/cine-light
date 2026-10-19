@@ -28,7 +28,7 @@ test('fil préparé : ajouter, modifier (texte, côté), glisser, supprimer ; ga
   const { page, errors, close } = await openPage(browser);
   await page.evaluate(() => { startMode('remote'); switchTab('call'); setCallKind('discussion'); });
   for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcSendPanel']) assert.notEqual(await page.evaluate((id) => getComputedStyle(document.getElementById(id)).display, id), 'none', id);
-  for (const id of ['callWhoPanel', 'callTriggerPanel', 'callListPanel', 'callRingPanel']) assert.equal(await page.evaluate((id) => getComputedStyle(document.getElementById(id)).display, id), 'none', id);
+  for (const id of ['callWhoPanel', 'callTriggerPanel', 'callListPanel', 'callAnswerBlock']) assert.equal(await page.evaluate((id) => getComputedStyle(document.getElementById(id)).display, id), 'none', id);
   // Fil par défaut (maquette 26)
   assert.deepEqual(await rows(page), [
     ['1', 'Maman ›', 'Tu es où ?', ''], ['2', 'Maman ›', 'Ton père t\'attend depuis une heure', ''],
@@ -77,8 +77,13 @@ test('fil préparé : ajouter, modifier (texte, côté), glisser, supprimer ; ga
   await page.evaluate(() => { startMode('remote'); switchTab('call'); setCallKind('discussion'); });
   assert.equal((await rows(page)).length, 5);
   assert.deepEqual(await page.evaluate(() => [_chat.name, _chat.actor, document.getElementById('dcName').value]), ['Papa', 'Léo', 'Papa']);
-  // Style propre à la discussion (l'appel garde le sien)
+  // Style propre à la discussion (l'appel garde le sien), dans la vue « Style et son » (maquette 36d)
+  assert.equal(await page.innerHTML('#telStyleSum'), 'Épuré · Son des messages Silencieux · Vibreur non');
+  await page.click('#telStyleBtn');
+  assert.deepEqual(await page.evaluate(() => [document.getElementById('tsTitle').textContent, document.getElementById('ringPanelLabel').textContent]), ['Style et son', 'Son des messages']);
   await page.click('#callstyle-glass');
+  await page.click('#tsBack');
+  assert.equal(await page.innerHTML('#telStyleSum'), 'Verre · Son des messages Silencieux · Vibreur non');
   assert.equal(await page.evaluate(() => [_chat.style, callStyle].join()), 'glass,glass');
   await page.evaluate(() => { setCallKind('call'); setCallStyle('tonal'); setCallKind('discussion'); });
   assert.equal(await page.evaluate(() => [_chat.style, callStyle].join()), 'glass,tonal');

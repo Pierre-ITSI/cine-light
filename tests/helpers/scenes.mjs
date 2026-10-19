@@ -67,6 +67,11 @@ const scrollTo = (id, top = 120) => (page) => page.evaluate(([id, top]) => {
   const el = document.getElementById(id);
   document.getElementById('remote-mode').scrollTop += el.getBoundingClientRect().top - top;
 }, [id, top]);
+// Vue « Style et sonnerie » de l'onglet Tel (maquette 36b), défilée jusqu'à un élément
+const scrollView = (id, top = 120) => (page) => page.evaluate(([id, top]) => {
+  const el = document.getElementById(id);
+  document.getElementById('tel-style-view').scrollTop += el.getBoundingClientRect().top - top;
+}, [id, top]);
 
 // ── Sonneries importées (maquette 12) ──
 // Vrais sons WAV (sinusoïdes) importés par le chemin de l'app (type, décodage,
@@ -95,8 +100,9 @@ const ringScene = (kind) => remote('call', async (page) => {
     _callAudioData = 'data:audio/mpeg;base64,AAAA'; _callAudioName = 'voix-maman.m4a'; _callAudioDur = 34;
     _screenCached.add('__callaudio'); renderCallAudioRow();
     _ringSetStatus('');
+    openTelStyle();
   }, kind);
-  await scrollTo('callRingPanel')(page);
+  await scrollView('callRingPanel')(page);
 });
 
 // ── Passerelle DMX (maquettes 14 à 18) ──
@@ -290,10 +296,38 @@ export const SCENES = {
     });
     await scrollTo('callkind-call', 80)(page);
   }),
-  // Tuile « Son » ouverte : son de notification propre (indépendant des SMS)
+  // 36f · Vue « Style et son » de la notification : style, fond, son de notification propre (indépendant des SMS), vibreur
   'remote-call-notif-sound': remote('call', async (page) => {
-    await page.evaluate(() => { setCallKind('notif'); toggleNotifDetail('sound'); });
-    await scrollTo('ntSendBtn', 80)(page);
+    await page.evaluate(() => { setCallKind('notif'); setCallRing('digital'); openTelStyle(); });
+    await scrollView('callRingPanel', 200)(page);
+  }),
+  // 36f · Rangée « Style et son » sous « Envoyer la notification » (plus de tuiles)
+  'remote-call-notif-style': remote('call', async (page) => {
+    await page.evaluate(() => { setCallKind('notif'); setTelVib(true); });
+    await scrollTo('ntShowPanel', 80)(page);
+  }),
+  // 36b · Vue « Style et sonnerie » de l'appel : aperçu (vibreur), style, présentation, photo, sonnerie, vibreur
+  'remote-call-style': remote('call', (page) => page.evaluate(() => { setTelVib(true); openTelStyle(); })),
+  // 36d · Discussion : rangée « Style et son » (son des messages, vibreur), contact « Enregistrés (n) › »
+  'remote-call-discussion-style': remote('call', async (page) => {
+    await page.evaluate(() => {
+      callers = [{ id: 'p1', name: 'Maman', label: 'mobile', hasPhoto: false, photoSig: null }, { id: 'p2', name: 'Agence immobilière', label: 'bureau', hasPhoto: false, photoSig: null }];
+      setCallKind('discussion'); setCallRing('soft'); setTelVib(true);
+    });
+    await scrollTo('callkind-call', 80)(page);
+  }),
+  // 36e · Appelants enregistrés (SMS) : l'appelant du formulaire en orange, « + Enregistrer » de l'actuel
+  'remote-call-callers': remote('call', async (page) => {
+    await page.evaluate(async () => {
+      const k = document.createElement('canvas'); k.width = k.height = 8; const g = k.getContext('2d'); g.fillStyle = '#8a6a5a'; g.fillRect(0, 0, 8, 8);
+      const photo = k.toDataURL('image/jpeg', 0.7);
+      setCallKind('sms');
+      const add = async (name, label, p) => { document.getElementById('callName').value = name; document.getElementById('callLabel').value = label; _callPhoto = p; await saveCurrentCaller(); };
+      await add('Maman', 'mobile', photo); await add('Agence immobilière', 'bureau', null); await add('Numéro masqué', '', null);
+      document.getElementById('callName').value = 'Maman'; document.getElementById('callLabel').value = 'mobile'; _callPhoto = null;
+      openCallersSheet();
+    });
+    await page.clock.runFor(100);
   }),
   // 26 · Discussion : 2 messages postés, réponse de Julie en frappe sur l'écran (14 / 26)
   'remote-call-discussion': multiScreen(async (page) => {

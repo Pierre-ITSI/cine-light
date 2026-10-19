@@ -99,6 +99,7 @@ function _validCallStart(m) {
   // Son importé (__ring_…, préchargé en fragments) et volume du son
   if (!_P.ringId(m.ringId)) m.ringId = null;
   m.ringVolume = _P.num(m.ringVolume, 0, 1) ?? 1;
+  m.vib = m.vib === true; // vibreur du type (maquette 36b) ; absent : ne vibre pas
   m.lock = _P.isObj(m.lock)
     ? { time: _P.text(m.lock.time, PROTO.LOCK_TIME_MAX), date: _P.text(m.lock.date, PROTO.LOCK_DATE_MAX) }
     : null;
@@ -136,6 +137,12 @@ function _validChatOpen(m) {
   m.pend = Array.isArray(m.pend) ? m.pend.filter((id, i, a) => _chatId(id) && m.sent.includes(id) && a.indexOf(id) === i) : [];
   m.auto = m.history ? null : _validChatType(m.auto, true);
   if (m.auto && (!m.ids.includes(m.auto.id) || m.sent.includes(m.auto.id))) m.auto = null;
+  // Son des messages du contact (absent : aucun) et vibreur (maquette 36d)
+  if (m.ring !== undefined && !_P.oneOf(m.ring, PROTO.CALL_RINGS)) m.ring = 'classic';
+  if (!_P.ringId(m.ringId)) m.ringId = null;
+  if (m.ringId && !m.ring) m.ring = 'classic';
+  m.ringVolume = _P.num(m.ringVolume, 0, 1) ?? 1;
+  m.vib = m.vib === true;
   return true;
 }
 function _validChatMsg(m) {
@@ -195,7 +202,7 @@ function _validPhoneState(m) {
   m.home = _P.bool(m.home);
   m.watch = Array.isArray(m.watch) ? m.watch.filter((g, i, a) => _P.oneOf(g, PROTO.PHONE_GESTURES) && !PROTO.PHONE_GESTURES_ALWAYS.includes(g) && a.indexOf(g) === i) : [];
   const c = m.chime;
-  m.chime = _P.isObj(c) && seen.has(c.id) ? { id: c.id, ring: _P.oneOf(c.ring, PROTO.CALL_RINGS) ? c.ring : 'classic', ringId: _P.ringId(c.ringId) ? c.ringId : null, vol: _P.num(c.vol, 0, 1) ?? 1 } : null;
+  m.chime = _P.isObj(c) && seen.has(c.id) ? { id: c.id, ring: _P.oneOf(c.ring, PROTO.CALL_RINGS) ? c.ring : 'classic', ringId: _P.ringId(c.ringId) ? c.ringId : null, vol: _P.num(c.vol, 0, 1) ?? 1, vib: c.vib === true } : null;
   // Barre d'état, veille, batterie faible, extinction (maquettes 28b, 29b, 33)
   m.bar = m.bar === undefined ? null : _validPhoneBar(m.bar);
   const sl = m.sleep;

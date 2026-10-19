@@ -11,6 +11,14 @@ if (!window.SETREMOTE_NATIVE && location.protocol === 'file:' && window.ReactNat
   window.SETREMOTE_NATIVE = { platform: /Android/i.test(navigator.userAgent) ? 'android' : 'ios', bridge: 1 };
 }
 const IN_NATIVE_APP = !!(window.SETREMOTE_NATIVE && window.ReactNativeWebView);
+// PWA → coque : nativePost(msg) (sans effet hors de l'app). Messages :
+//   brightness { value 0..1 } / brightness-restore      luminosité matérielle (68-blackout.js, 30-navigation.js)
+//   vibrate { pattern: [ms vibre, ms pause, …] }         vibreur de l'écran de jeu (appel qui sonne, répété
+//                                                       par la page ; SMS, notification, message de
+//                                                       discussion), maquette 36b, 80-call-simulator.js
+//   vibrate:stop                                        arrête la vibration (décroché, refus, fin d'appel)
+//   dmx:listen, dmx:stop, udp:send, net:info, pdf:preview : docs/DMX-NATIVE.md
+//   link:start, link:stop, link:send, link:state?     : docs/OFFLINE-NATIVE.md
 function nativePost(msg) {
   if (!IN_NATIVE_APP) return;
   try { window.ReactNativeWebView.postMessage(JSON.stringify(msg)); } catch (_) {}

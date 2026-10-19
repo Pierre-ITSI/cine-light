@@ -665,39 +665,24 @@
         <button type="button" class="gw-seg-btn" id="callkind-notif" onclick="setCallKind('notif')">🔔 Notification</button>
         <button type="button" class="gw-seg-btn tel-kind-wide" id="callkind-discussion" onclick="setCallKind('discussion')">💬 Discussion</button>
       </div>
-      <div id="callStyleRow" style="margin-top:14px">
-        <div class="panel-label">Style</div>
-        <div class="chips-wrap">
-          <button class="chip active" id="callstyle-glass" onclick="setCallStyle('glass')">Verre</button>
-          <button class="chip" id="callstyle-tonal" onclick="setCallStyle('tonal')">Tonal</button>
-          <button class="chip" id="callstyle-minimal" onclick="setCallStyle('minimal')">Épuré</button>
-        </div>
-        <div class="media-status" id="callStyleHint" style="text-align:left;margin-top:8px">Translucide et flouté, boutons ronds.</div>
-      </div>
-      <div id="callPresentRow" style="margin-top:14px">
-        <div class="panel-label">Présentation</div>
-        <div class="chips-wrap">
-          <button class="chip active" id="callpres-full" onclick="setCallPresent('full')">Plein écran</button>
-          <button class="chip" id="callpres-banner" onclick="setCallPresent('banner')">Bandeau haut</button>
-        </div>
-      </div>
-      <div id="callPhotoModeRow" style="margin-top:14px">
-        <div class="panel-label">Photo de l'appelant</div>
-        <div class="chips-wrap">
-          <button class="chip active" id="callphoto-avatar" onclick="setCallPhotoMode('avatar')">Avatar</button>
-          <button class="chip" id="callphoto-full" onclick="setCallPhotoMode('full')">Plein écran</button>
-        </div>
+      <!-- Style et sonnerie / Style et son (maquette 36) : résumé, réglages dans la vue #tel-style-view -->
+      <div class="tel-sum-row" id="telStyleRow">
+        <div class="panel-label" id="telStyleLabel">Style et sonnerie</div>
+        <button type="button" class="tel-sum" id="telStyleBtn" onclick="openTelStyle()"><span id="telStyleSum"></span><b>Régler ›</b></button>
       </div>
     </div>
     <div class="panel" id="callWhoPanel">
-      <div class="panel-label">Appelant</div>
-      <input type="text" id="callName" class="text-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%;margin-bottom:10px">
-      <input type="text" id="callLabel" class="text-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px">
+      <!-- Appelants enregistrés (maquette 36e) : feuille « Enregistrés (n) › », 79-callers.js -->
+      <div class="tel-head"><div class="panel-label" id="callWhoLabel">Appelant</div><button type="button" class="tel-link" id="callWhoSaved" onclick="openCallersSheet()">Enregistrés (0) ›</button></div>
+      <input type="text" id="callName" class="text-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%;margin-bottom:10px" oninput="renderCallerState()">
+      <input type="text" id="callLabel" class="text-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px" oninput="renderCallerState()">
       <div style="display:flex;gap:10px;align-items:center">
         <div id="callPhotoPreview" style="width:46px;height:46px;border-radius:50%;background:var(--mid2);border:1px solid var(--border);background-size:cover;background-position:center;flex-shrink:0"></div>
         <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()">🖼 Photo (option)</button>
         <input type="file" id="callPhotoInput" accept="image/*" style="display:none" onchange="onCallPhoto(this.files);this.value=''">
       </div>
+      <button type="button" class="tel-save" id="callerSaveBtn" onclick="saveCurrentCaller()">☆ Enregistrer comme appelant</button>
+      <div class="tel-saved" id="callerSavedNote" style="display:none">✓ Appelant enregistré</div>
     </div>
     <div class="panel" id="callMsgPanel" style="display:none">
       <div class="panel-label">Message</div>
@@ -771,67 +756,28 @@
     </div>
     <div class="nt-actions" id="ntSendPanel" style="display:none">
       <button type="button" class="nt-send" id="ntSendBtn" onclick="triggerCall()">🔔 Envoyer la notification</button>
-      <div class="nt-tiles">
-        <button type="button" class="nt-tile" id="ntTile-style" onclick="toggleNotifDetail('style')"><span>Style</span><b id="ntTileStyle"></b></button>
-        <button type="button" class="nt-tile" id="ntTile-wall" onclick="toggleNotifDetail('wall')"><span>Fond</span><b id="ntTileWall"></b></button>
-        <button type="button" class="nt-tile" id="ntTile-sound" onclick="toggleNotifDetail('sound')"><span>Son</span><b id="ntTileSound"></b></button>
+      <div class="tel-sum-row nt-sum-row">
+        <div class="panel-label">Style et son</div>
+        <button type="button" class="tel-sum" id="ntStyleBtn" onclick="openTelStyle()"><span id="ntStyleSum"></span><b>Régler ›</b></button>
       </div>
       <div class="nt-note">Réglages propres aux notifications, indépendants des SMS.</div>
-      <div class="panel nt-detail" id="ntDetail-style" style="display:none">
-        <div class="panel-label">Style de la notification</div>
-        <div class="chips-wrap">
-          <button class="chip active" id="ntstyle-glass" onclick="setNotifStyle('glass')">Verre</button>
-          <button class="chip" id="ntstyle-tonal" onclick="setNotifStyle('tonal')">Tonal</button>
-          <button class="chip" id="ntstyle-minimal" onclick="setNotifStyle('minimal')">Épuré</button>
-        </div>
-        <div class="media-status" id="ntStyleHint" style="text-align:left;margin-top:8px"></div>
-      </div>
-      <div class="panel nt-detail" id="ntDetail-wall" style="display:none">
-        <div class="panel-label">Fond de l'écran verrouillé</div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <div id="ntWallPreview" class="nt-wall-preview"></div>
-          <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('ntWallInput').click()">🖼 Fond d'écran</button>
-          <input type="file" id="ntWallInput" accept="image/*" style="display:none" onchange="onNotifWall(this.files);this.value=''">
-        </div>
-        <div class="media-status" id="ntWallStatus">Sans fond : dégradé sombre. Propre aux notifications.</div>
-      </div>
-      <div id="ntSoundSlot"></div>
     </div>
-    <!-- Sonnerie (appel) / son de notification (SMS, notification) : sons intégrés ou importés (maquette 12) -->
-    <div class="panel" id="callRingPanel">
-      <div class="panel-label" id="ringPanelLabel">Sonnerie</div>
-      <div class="chips-wrap" style="margin-bottom:14px">
-        <button class="chip active" id="callring-classic" onclick="setCallRing('classic')">Classique</button>
-        <button class="chip" id="callring-digital" onclick="setCallRing('digital')">Digitale</button>
-        <button class="chip" id="callring-soft" onclick="setCallRing('soft')">Douce</button>
-        <button class="chip" id="callring-silent" onclick="setCallRing('silent')">Silencieux</button>
+    <!-- Au décroché (appel) : bande son et décroché automatique ; la sonnerie est dans « Style et sonnerie » -->
+    <div class="panel" id="callAnswerBlock">
+      <div class="panel-label">Au décroché · bande son</div>
+      <div class="rt-row rt-answer" id="callAudioRow" style="display:none">
+        <svg class="rt-wave" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 10v4"/></svg>
+        <span class="rt-main"><span class="rt-name"><span id="callAudioName"></span><span class="rt-dim" id="callAudioDur"></span></span></span>
+        <span class="rt-onscreen" id="callAudioState"></span>
+        <button type="button" class="rt-del" id="callAudioClear" aria-label="Retirer la bande son" onclick="clearCallAudio()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
-      <div class="panel-label" id="ringLibLabel" style="display:none">Vos sonneries</div>
-      <div class="rt-list" id="ringLibRows"></div>
-      <button type="button" class="rt-import" id="ringImportBtn" onclick="document.getElementById('ringImportInput').click()">+ Importer une sonnerie (MP3, M4A, WAV · 5 Mo)</button>
-      <input type="file" id="ringImportInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onRingImport(this.files);this.value=''">
-      <div class="media-status rt-status" id="ringStatus" style="display:none"></div>
-      <div class="slider-block rt-vol">
-        <div class="slider-header"><label id="ringVolLabel">Volume de la sonnerie</label><div class="slider-val" id="ringVolVal">100<span> %</span></div></div>
-        <input type="range" id="ringVolSlider" min="0" max="100" step="5" value="100" oninput="onRingVolume()">
+      <button type="button" class="rt-import" id="callAudioPick" onclick="document.getElementById('callAudioInput').click()">+ Choisir la voix du correspondant (8 Mo)</button>
+      <input type="file" id="callAudioInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onCallAudio(this.files);this.value=''">
+      <div class="media-status rt-status" id="callAudioStatus">Aucune bande son — le décroché reste silencieux.</div>
+      <div class="slider-block rt-auto">
+        <div class="slider-header"><label>Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
+        <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
       </div>
-      <div id="callAnswerBlock">
-        <div class="panel-label rt-sub">Bande son au décroché</div>
-        <div class="rt-row rt-answer" id="callAudioRow" style="display:none">
-          <svg class="rt-wave" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 10v4"/></svg>
-          <span class="rt-main"><span class="rt-name"><span id="callAudioName"></span><span class="rt-dim" id="callAudioDur"></span></span></span>
-          <span class="rt-onscreen" id="callAudioState"></span>
-          <button type="button" class="rt-del" id="callAudioClear" aria-label="Retirer la bande son" onclick="clearCallAudio()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-        </div>
-        <button type="button" class="rt-import" id="callAudioPick" onclick="document.getElementById('callAudioInput').click()">+ Choisir la voix du correspondant (8 Mo)</button>
-        <input type="file" id="callAudioInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onCallAudio(this.files);this.value=''">
-        <div class="media-status rt-status" id="callAudioStatus">Aucune bande son — le décroché reste silencieux.</div>
-        <div class="slider-block rt-auto">
-          <div class="slider-header"><label>Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
-          <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
-        </div>
-      </div>
-      <div class="rt-note">Les sonneries importées sont envoyées et gardées sur l'écran de jeu : elles sonnent même sans réseau.</div>
     </div>
     <div class="panel" id="callTriggerPanel">
       <button class="media-btn" id="callTriggerBtn" onclick="triggerCall()"><span class="media-icon">📞</span> Faire sonner</button>
@@ -855,6 +801,7 @@
       <div class="cl-note">Une discussion enregistrée garde le contact (nom, photo), le comédien, le style et tous les messages. Le point de reprise n'est pas enregistré.</div>
     </div>
     <div class="panel dc-contact" id="dcContactPanel" style="display:none">
+      <div class="tel-head dc-contact-head"><div class="panel-label">Contact</div><button type="button" class="tel-link" id="dcCallersLink" onclick="openCallersSheet()">Enregistrés (0) ›</button></div>
       <div class="dc-contact-row">
         <button type="button" class="dc-avatar" id="dcAvatar" aria-label="Photo du contact" onclick="document.getElementById('dcAvatarInput').click()"></button>
         <input type="file" id="dcAvatarInput" accept="image/*" style="display:none" onchange="onChatAvatar(this.files);this.value=''">
@@ -1032,6 +979,90 @@
   <div class="ss-card" id="ppNet"></div>
   <div class="ss-card" id="ppBat"></div>
   <div class="pp-note" id="ppNote"></div>
+</div>
+
+<!-- Style et sonnerie / Style et son de l'onglet Tel (maquette 36b) : aperçu, style, son, vibreur (78-tel-style.js) -->
+<div id="tel-style-view" role="dialog" aria-modal="true" aria-labelledby="tsTitle">
+  <div class="ss-head">
+    <button type="button" class="ss-back" id="tsBack" onclick="closeTelStyle()">← Tel</button>
+    <span class="ss-title" id="tsTitle">Style et sonnerie</span>
+    <span class="ss-spacer"></span>
+  </div>
+  <div class="ts-prev" id="tsPreview" aria-hidden="true"></div>
+  <div class="pp-cap" id="tsCap"></div>
+  <div class="ss-card" id="tsStyleCard">
+    <div id="callStyleRow">
+      <div class="panel-label">Style</div>
+      <div class="chips-wrap">
+        <button class="chip active" id="callstyle-glass" onclick="setCallStyle('glass')">Verre</button>
+        <button class="chip" id="callstyle-tonal" onclick="setCallStyle('tonal')">Tonal</button>
+        <button class="chip" id="callstyle-minimal" onclick="setCallStyle('minimal')">Épuré</button>
+      </div>
+      <div class="media-status" id="callStyleHint" style="text-align:left;margin-top:8px">Translucide et flouté, boutons ronds.</div>
+    </div>
+    <div id="callPresentRow" style="margin-top:14px">
+      <div class="panel-label">Présentation</div>
+      <div class="chips-wrap">
+        <button class="chip active" id="callpres-full" onclick="setCallPresent('full')">Plein écran</button>
+        <button class="chip" id="callpres-banner" onclick="setCallPresent('banner')">Bandeau haut</button>
+      </div>
+    </div>
+    <div id="callPhotoModeRow" style="margin-top:14px">
+      <div class="panel-label">Photo de l'appelant</div>
+      <div class="chips-wrap">
+        <button class="chip active" id="callphoto-avatar" onclick="setCallPhotoMode('avatar')">Avatar</button>
+        <button class="chip" id="callphoto-full" onclick="setCallPhotoMode('full')">Plein écran</button>
+      </div>
+    </div>
+    <div id="ntDetail-style" style="display:none">
+      <div class="panel-label">Style de la notification</div>
+      <div class="chips-wrap">
+        <button class="chip active" id="ntstyle-glass" onclick="setNotifStyle('glass')">Verre</button>
+        <button class="chip" id="ntstyle-tonal" onclick="setNotifStyle('tonal')">Tonal</button>
+        <button class="chip" id="ntstyle-minimal" onclick="setNotifStyle('minimal')">Épuré</button>
+      </div>
+      <div class="media-status" id="ntStyleHint" style="text-align:left;margin-top:8px"></div>
+    </div>
+    <div id="ntDetail-wall" style="display:none;margin-top:14px">
+      <div class="panel-label">Fond de l'écran verrouillé</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div id="ntWallPreview" class="nt-wall-preview"></div>
+        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('ntWallInput').click()">🖼 Fond d'écran</button>
+        <input type="file" id="ntWallInput" accept="image/*" style="display:none" onchange="onNotifWall(this.files);this.value=''">
+      </div>
+      <div class="media-status" id="ntWallStatus">Sans fond : dégradé sombre. Propre aux notifications.</div>
+    </div>
+  </div>
+  <!-- Sonnerie (appel) / son de notification (SMS, notification) / son des messages (discussion) : sons intégrés ou importés (maquette 12) -->
+  <div class="ss-card" id="callRingPanel">
+    <div class="panel-label" id="ringPanelLabel">Sonnerie</div>
+    <div class="chips-wrap" style="margin-bottom:14px">
+      <button class="chip active" id="callring-classic" onclick="setCallRing('classic')">Classique</button>
+      <button class="chip" id="callring-digital" onclick="setCallRing('digital')">Digitale</button>
+      <button class="chip" id="callring-soft" onclick="setCallRing('soft')">Douce</button>
+      <button class="chip" id="callring-silent" onclick="setCallRing('silent')">Silencieux</button>
+    </div>
+    <div class="panel-label" id="ringLibLabel" style="display:none">Vos sonneries</div>
+    <div class="rt-list" id="ringLibRows"></div>
+    <button type="button" class="rt-import" id="ringImportBtn" onclick="document.getElementById('ringImportInput').click()">+ Importer une sonnerie (MP3, M4A, WAV · 5 Mo)</button>
+    <input type="file" id="ringImportInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onRingImport(this.files);this.value=''">
+    <div class="media-status rt-status" id="ringStatus" style="display:none"></div>
+    <div class="slider-block rt-vol">
+      <div class="slider-header"><label id="ringVolLabel">Volume de la sonnerie</label><div class="slider-val" id="ringVolVal">100<span> %</span></div></div>
+      <input type="range" id="ringVolSlider" min="0" max="100" step="5" value="100" oninput="onRingVolume()">
+    </div>
+    <div class="rt-note">Les sonneries importées sont envoyées et gardées sur l'écran de jeu : elles sonnent même sans réseau.</div>
+  </div>
+  <div class="ss-card" id="tsVibCard">
+    <label class="ts-vib">
+      <span>Vibreur</span>
+      <span class="toggle-switch" style="flex-shrink:0">
+        <input type="checkbox" id="telVibToggle" onchange="setTelVib(this.checked)">
+        <span class="toggle-track"></span><span class="toggle-thumb"></span>
+      </span>
+    </label>
+    <div class="ts-note" id="tsVibNote"></div>
+  </div>
 </div>
 
 <!-- Feuille : cible des commandes (maquette 6), renommer, groupes -->

@@ -138,7 +138,7 @@ test('migration : entrées « messagerie » → SMS, son de la messagerie → no
   const st = await page.evaluate(() => ({ sms: callList.sms.map((e) => [e.id, e.kind, e.appName || '', e.ring || '']), notif: callList.notif.length, ring: ringSettings }));
   assert.deepEqual(st.sms, [['s1', 'sms', '', ''], ['w1', 'sms', 'Chatly', 'digital'], ['w2', 'sms', '', 'classic']]);
   assert.equal(st.notif, 0, 'aucune notification inventée');
-  assert.deepEqual(st.ring, { call: { sound: 'classic', vol: 1 }, sms: { sound: 'soft', vol: 0.5 }, notif: { sound: 'digital', vol: 0.3 } });
+  assert.deepEqual(st.ring, { call: { sound: 'classic', vol: 1, vib: false }, sms: { sound: 'soft', vol: 0.5, vib: false }, notif: { sound: 'digital', vol: 0.3, vib: false }, discussion: { sound: 'silent', vol: 1, vib: false } });
   // L'entrée migrée se recharge et part comme un SMS
   await page.locator('#callListRows .cl-row').nth(1).click();
   await waitFor(page, () => document.getElementById('callName').value === 'Tom');
@@ -236,30 +236,34 @@ describe('télécommande et écran reliés', () => {
     await rp.evaluate(() => setNotifReceived('ago'));
   });
 
-  test('style, fond verrouillé et son propres, indépendants des SMS', async () => {
+  test('style, fond verrouillé et son propres, indépendants des SMS (vue « Style et son », maquette 36f)', async () => {
     // SMS : Tonal, son Douce, fond d'écran SMS ; notification : Épuré, Digitale, son propre fond
     await rp.evaluate(() => { setCallKind('sms'); setCallStyle('tonal'); setCallRing('soft'); });
     await rp.setInputFiles('#lockWallInput', await pngFile(rp, 'sms.png', '#aa0000'));
     await waitFor(sp, () => _mediaCache.has('__lockwall'));
-    await rp.evaluate(() => { setCallKind('notif'); toggleNotifDetail('style'); });
-    assert.equal(await rp.evaluate(() => getComputedStyle(document.getElementById('ntDetail-style')).display), 'block');
+    await rp.evaluate(() => setCallKind('notif'));
+    const shown = (id) => rp.evaluate((id) => getComputedStyle(document.getElementById(id)).display !== 'none', id);
+    // Plus de tuiles : une rangée « Style et son » sous « Envoyer la notification »
+    assert.equal(await rp.evaluate(() => !!document.querySelector('.nt-tiles, #ntSoundSlot')), false);
+    assert.equal(await shown('telStyleRow'), false, 'rangée du type Notification sous l\'envoi');
+    assert.equal(await rp.innerHTML('#ntStyleSum'), 'Verre · Fond Dégradé<br>Son Classique · 100 % · Vibreur non');
+    await rp.click('#ntStyleBtn');
+    assert.equal(await shown('tel-style-view'), true);
+    assert.equal(await rp.textContent('#tsTitle'), 'Style et son');
+    assert.equal(await rp.textContent('#ringPanelLabel'), 'Son de notification');
+    for (const id of ['ntDetail-style', 'ntDetail-wall']) assert.equal(await shown(id), true, id);
+    for (const id of ['callStyleRow', 'callPresentRow', 'callPhotoModeRow']) assert.equal(await shown(id), false, id);
     await rp.click('#ntstyle-minimal');
-    await rp.evaluate(() => toggleNotifDetail('sound'));
-    assert.equal(await rp.evaluate(() => getComputedStyle(document.getElementById('ntDetail-style')).display), 'none', 'un détail à la fois');
-    assert.equal(await rp.evaluate(() => document.getElementById('callRingPanel').parentNode.id), 'ntSoundSlot');
     await rp.click('#callring-digital');
-    assert.equal(await rp.textContent('#ntTileSound'), 'Digitale ›');
-    assert.equal(await rp.textContent('#ntTileStyle'), 'Épuré ›');
-    assert.equal(await rp.textContent('#ntTileWall'), 'Dégradé ›');
-    await rp.evaluate(() => toggleNotifDetail('wall'));
     await rp.setInputFiles('#ntWallInput', await pngFile(rp, 'notif.png', '#00aa00'));
     await waitFor(sp, () => _mediaCache.has('__notifwall'));
-    assert.equal(await rp.textContent('#ntTileWall'), 'Photo ›');
+    await rp.click('#tsBack');
+    assert.equal(await shown('tel-style-view'), false);
+    assert.equal(await rp.innerHTML('#ntStyleSum'), 'Épuré · Fond Photo<br>Son Digitale · 100 % · Vibreur non');
     const f = await rp.evaluate(() => { const n = callFormFields(); setCallKind('sms'); const s = callFormFields(); setCallKind('notif'); return { n: [n.style, n.ring], s: [s.style, s.ring] }; });
     assert.deepEqual(f, { n: ['minimal', 'digital'], s: ['tonal', 'soft'] });
-    assert.equal(await rp.evaluate(() => document.getElementById('callRingPanel').parentNode.id), 'ntSoundSlot', 'revenu sous la tuile');
     await rp.evaluate(() => setCallKind('sms'));
-    assert.equal(await rp.evaluate(() => document.getElementById('callRingPanel').nextElementSibling.id), 'callTriggerPanel', 'panneau du son rendu aux SMS');
+    assert.equal(await rp.innerHTML('#telStyleSum'), 'Tonal · Son Douce · 100 % · Vibreur non', 'SMS : ses propres réglages');
     // Sur l'écran : chaque type a son fond
     const walls = await sp.evaluate(() => [_mediaCache.get('__lockwall').data, _mediaCache.get('__notifwall').data]);
     assert.notEqual(walls[0], walls[1]);

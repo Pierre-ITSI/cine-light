@@ -3,9 +3,12 @@
 // Télécommande (onglet Tel) : configure et déclenche. Écran : affiche l'overlay
 // (appel, SMS, notification d'application — 84-notification.js ; styles
 // Verre / Tonal / Épuré), sonne (WebAudio : sons intégrés synthétisés, ou son
-// importé mis en cache — 81-ringtones.js), vibre (Android) et renvoie son état
+// importé mis en cache — 81-ringtones.js), vibre si le vibreur du type est
+// activé (vib, maquette 36b : Android, ou la coque native) et renvoie son état
 // (ringing/incall/declined/ended). La discussion (fil de messages) est à part :
 // 83-discussion.js. L'ancienne « messagerie » (kind chat) est devenue SMS.
+// Style, présentation, photo, son et vibreur se règlent dans la vue « Style et
+// sonnerie » (78-tel-style.js) ; appelants enregistrés : 79-callers.js.
 
 // — Télécommande —
 // callKind : 'call' | 'sms' | 'notif' | 'discussion'
@@ -40,7 +43,12 @@ function setCallKind(k) {
   if (def && an && !an.dataset.touched) an.value = def.name;
   if (def && ac && !ac.dataset.touched) ac.value = def.color;
   const call = k === 'call', sms = k === 'sms', notif = k === 'notif', disc = k === 'discussion';
+  // Vue « Style et sonnerie » : style commun (appel, SMS, discussion) ou
+  // style et fond propres à la notification
+  _callShow('telStyleRow', !notif); // notification : sa rangée est sous « Envoyer la notification »
   _callShow('callStyleRow', !notif);
+  _callShow('ntDetail-style', notif);
+  _callShow('ntDetail-wall', notif);
   _callShow('callPresentRow', call);
   _callShow('callWhoPanel', call || sms);
   _callShow('callMsgPanel', sms);
@@ -49,11 +57,15 @@ function setCallKind(k) {
   _callShow('callTriggerBtn', !notif, 'flex');
   _callShow('callAnswerBtn', !notif, 'flex');
   _callShow('callListPanel', !disc, 'flex');
-  notifShowForm(notif);       // 84-notification.js (son : panneau déplacé sous la tuile « Son »)
+  const who = document.getElementById('callWhoLabel');
+  if (who) who.textContent = call ? 'Appelant' : 'Contact';
+  notifShowForm(notif);       // 84-notification.js
   chatShowForm(disc);         // 83-discussion.js
   _syncCallStyleChips();
-  renderRingPanel(); // « Sonnerie » (appel) ou « Son de notification » : choix propre au type
+  renderRingPanel(); // « Sonnerie », « Son de notification » ou « Son des messages » : choix propre au type
   _syncCallPhotoRow();
+  renderTelStyle();           // 78-tel-style.js : rangée résumé, vue ouverte
+  renderCallerState();        // 79-callers.js : « Enregistrés (n) », appelant enregistré ?
   const btn = document.getElementById('callTriggerBtn');
   if (btn) btn.innerHTML = call
     ? '<span class="media-icon">📞</span> Faire sonner'
@@ -61,13 +73,14 @@ function setCallKind(k) {
   renderCallListSaveLabel(); // « + Enregistrer l'appel / le SMS / la notification actuel(le) »
 }
 // Style : commun à l'appel et au SMS ; la discussion a le sien (83-discussion.js),
-// la notification aussi (84-notification.js, tuile « Style »)
+// la notification aussi (84-notification.js)
 function setCallStyle(s) {
   if (!_CALL_STYLE_HINTS[s]) s = 'glass';
   if (callKind === 'discussion') chatSetStyle(s);
   else callStyle = s;
   _syncCallStyleChips();
   _syncCallPhotoRow();
+  renderTelStyle();
 }
 function _syncCallStyleChips() {
   const s = callKind === 'discussion' ? chatStyleNow() : callStyle;
@@ -87,6 +100,7 @@ function setCallPresent(v) {
     const b = document.getElementById('callpres-' + x);
     if (b) b.classList.toggle('active', x === v);
   });
+  renderTelStyle();
 }
 function setCallPhotoMode(v) {
   callPhotoMode = v;
@@ -94,6 +108,7 @@ function setCallPhotoMode(v) {
     const b = document.getElementById('callphoto-' + x);
     if (b) b.classList.toggle('active', x === v);
   });
+  renderTelStyle();
 }
 function _syncCallPhotoRow() {
   const r = document.getElementById('callPhotoModeRow');
@@ -195,6 +210,8 @@ function onCallPhoto(files) {
     const pv = document.getElementById('callPhotoPreview');
     if (pv) pv.style.backgroundImage = 'url(' + _callPhoto + ')';
     _callPhotoSending = ensureCallAssets(_callPhoto, null);
+    renderCallerState();
+    renderTelStyle();
   };
   img.onerror = () => URL.revokeObjectURL(img.src);
   img.src = URL.createObjectURL(files[0]);
@@ -357,7 +374,7 @@ function remoteOnCallState(m) {
 // pour une notification. Volume = ringVolume (1 = niveau des sons intégrés
 // d'origine). Son importé absent du cache ou illisible : son intégré « ring »,
 // et l'écran le redemande à la télécommande (media:need).
-let _audioCtx = null, _callRingTimer = null, _callVibTimer = null;
+let _audioCtx = null, _callRingTimer = null, _callVibTimer = null, _callVibOn = false;
 let _callClockTimer = null, _callAutoTimer = null, _callT0Scr = 0;
 let _callState = 'idle', _callCfg = null;
 
@@ -575,6 +592,7 @@ function screenCallStart(m) {
     audioId: typeof m.audioId === 'string' && SRP.CALL_AUDIO_ID_RE.test(m.audioId) ? m.audioId : null,
     autoAnswer: Math.max(0, Math.min(60, Number(m.autoAnswer) || 0)),
     lock: m.lock ? { time: String(m.lock.time || '').slice(0, 8), date: String(m.lock.date || '').slice(0, 30) } : null,
+    vib: m.vib === true, // vibreur du type (maquette 36b) ; absent : ne vibre pas
   };
   if (kind === 'notif') Object.assign(_callCfg, notifScreenCfg(m)); // 84-notification.js : lock, phone, received
   const el = document.getElementById('screen-call'); if (!el) return;
@@ -585,9 +603,11 @@ function screenCallStart(m) {
     if (_callCfg.present === 'banner') { el.classList.add('notif'); _scRenderCallBar(); }
     else { el.classList.remove('notif'); _scRenderIncoming(); }
     _startRinging(_callCfg);
-    if (navigator.vibrate) {
-      navigator.vibrate([700, 300, 700]);
-      _callVibTimer = setInterval(() => navigator.vibrate([700, 300, 700]), 2200);
+    // Vibreur : motif répété tant que ça sonne (arrêté au décroché, au refus, à la fin)
+    if (_callCfg.vib) {
+      _callVibOn = true;
+      screenVibrate(SCREEN_VIB_RING);
+      _callVibTimer = setInterval(() => screenVibrate(SCREEN_VIB_RING), SCREEN_VIB_RING_EVERY);
     }
     if (_callCfg.autoAnswer > 0) _callAutoTimer = setTimeout(screenCallAnswer, _callCfg.autoAnswer * 1000);
     sendMsg({ type: 'call:state', state: 'ringing' });
@@ -604,8 +624,27 @@ function screenCallStart(m) {
       el.innerHTML = _scNotifCard(_callCfg, '');
     }
     _playNotifSound(_callCfg);
-    if (navigator.vibrate) navigator.vibrate([200, 120, 200]);
+    if (_callCfg.vib) screenVibrate(SCREEN_VIB_SHORT);
   }
+}
+
+// Vibreur de l'écran de jeu (maquette 36b) : navigator.vibrate (Android) ou,
+// dans l'app SetRemote, la coque native (pont « vibrate » / « vibrate:stop »,
+// 00-native-bridge.js) ; iPhone dans Safari ne sait pas vibrer : sans effet.
+// Ne lève jamais d'erreur.
+const SCREEN_VIB_RING = [700, 300, 700], SCREEN_VIB_RING_EVERY = 2200; // appel qui sonne (répété)
+const SCREEN_VIB_SHORT = [200, 120, 200];                             // SMS, notification, message de discussion
+function screenVibrate(pattern) {
+  try {
+    if (IN_NATIVE_APP) nativePost({ type: 'vibrate', pattern });
+    else if (navigator.vibrate) navigator.vibrate(pattern);
+  } catch (_) {}
+}
+function screenVibrateStop() {
+  try {
+    if (IN_NATIVE_APP) nativePost({ type: 'vibrate:stop' });
+    else if (navigator.vibrate) navigator.vibrate(0);
+  } catch (_) {}
 }
 
 // Application fictive affichée sur les notifications (nom + couleur réglables)
@@ -883,7 +922,7 @@ function _scStopRing() {
   if (_callRingTimer) { clearInterval(_callRingTimer); _callRingTimer = null; }
   if (_callVibTimer) { clearInterval(_callVibTimer); _callVibTimer = null; }
   if (_callAutoTimer) { clearTimeout(_callAutoTimer); _callAutoTimer = null; }
-  if (navigator.vibrate) navigator.vibrate(0);
+  if (_callVibOn) { _callVibOn = false; screenVibrateStop(); }
 }
 function screenCallStopTimers() {
   _scStopRing();

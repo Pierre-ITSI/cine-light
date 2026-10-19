@@ -97,7 +97,7 @@ function screenPhoneState(m) {
   if (m.chime) {
     const n = notifs.find((x) => x.id === m.chime.id);
     _playNotifSound({ kind: n && n.kind === 'notif' ? 'notif' : 'sms', ring: m.chime.ring, ringId: m.chime.ringId, ringVolume: m.chime.vol });
-    if (navigator.vibrate) navigator.vibrate([200, 120, 200]);
+    if (m.chime.vib) screenVibrate(SCREEN_VIB_SHORT); // vibreur de l'entrée (maquette 36b, 80-call-simulator.js)
   }
 }
 function screenPhoneHide() {

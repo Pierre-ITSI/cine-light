@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Linking, Platform, Pressable, StyleSheet, Text, Vibration, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useKeepAwake } from 'expo-keep-awake';
 import * as Brightness from 'expo-brightness';
@@ -19,7 +19,8 @@ import { nativeBootstrapScript } from '../src/config';
 // local modules/setremote-udp, contrat du pont dans docs/DMX-NATIVE.md § 9),
 // liaisons hors ligne télécommande ↔ écrans en Wi-Fi local et en Bluetooth LE
 // (module local modules/setremote-link, contrat dans docs/OFFLINE-NATIVE.md),
-// aperçu PDF in-app de la table des canaux DMX (expo-print, src/lib/pdfPreview.ts).
+// aperçu PDF in-app de la table des canaux DMX (expo-print, src/lib/pdfPreview.ts),
+// vibreur de l'écran de jeu (Vibration de React Native, la vue web n'en a pas).
 // Les anciens écrans 100 % natifs (/native, /remote, /screen) et leurs
 // transports en clair ont été retirés : la vue web est la seule interface.
 //
@@ -156,6 +157,21 @@ export default function AppShell() {
     if (dmx.current?.handle(msg)) return;
     if (pdf.handle(msg)) return;
     if (msg.type === 'brightness-restore') { restoreBrightness(); return; }
+    // Vibreur de l'écran de jeu (maquette 36b) : la vue web Android ne sait pas
+    // vibrer (navigator.vibrate sans effet), iOS non plus. pattern = durées en
+    // ms (vibre, pause, vibre…), bornées ; la page répète elle-même le motif
+    // d'un appel qui sonne. Indisponible : sans effet.
+    if (msg.type === 'vibrate') {
+      const p = (msg as { pattern?: unknown }).pattern;
+      const list = Array.isArray(p) ? p : [p];
+      const ms = list.slice(0, 20).map((v) => (typeof v === 'number' && isFinite(v) ? Math.min(2000, Math.max(0, Math.round(v))) : 0));
+      try {
+        if (ms.length === 1) Vibration.vibrate(ms[0]);
+        else if (ms.length > 1) Vibration.vibrate([0, ...ms]); // Android : le motif commence par une attente
+      } catch { /* indisponible : sans effet */ }
+      return;
+    }
+    if (msg.type === 'vibrate:stop') { try { Vibration.cancel(); } catch { /* sans effet */ } return; }
     if (msg.type === 'brightness' && typeof msg.value === 'number' && isFinite(msg.value)) {
       const v = Math.min(1, Math.max(0, msg.value));
       try {

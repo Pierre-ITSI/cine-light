@@ -18,6 +18,8 @@
 // Son de l'entrée : choix du type au moment de l'enregistrement (son intégré
 // ring, ou son importé ringId de la bibliothèque commune 81-ringtones.js) et
 // son volume ringVolume ; un son importé supprimé depuis → son Classique.
+// Vibreur du type (vib, maquette 36b) : true seulement ; entrée d'avant le
+// vibreur : ne vibre pas.
 const CALL_LIST_KEY = 'setremote-call-list-v1';
 const CALL_LIST_MAX = 99;           // par liste
 const CALL_LIST_DMX_ITEMS = 20;     // entrées accessibles depuis la console
@@ -28,7 +30,7 @@ let callListKind = 'call';
 const _callListSel = { call: null, sms: null, notif: null };
 
 const _CALL_STYLE_NAMES = { glass: 'Verre', tonal: 'Tonal', minimal: 'Épuré' };
-const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio', 'phone', 'received'];
+const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'vib', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio', 'phone', 'received'];
 
 // ── Persistance ──
 function _clListOf(kind) { return kind === 'call' || kind === 'notif' ? kind : 'sms'; }
@@ -49,6 +51,7 @@ function _clSanitize(e) {
     if (typeof out.ringVolume === 'number' && Number.isFinite(out.ringVolume)) out.ringVolume = Math.min(1, Math.max(0, out.ringVolume));
     else delete out.ringVolume;
   }
+  if (out.vib !== true) delete out.vib;
   return out;
 }
 function loadCallList() {
@@ -327,6 +330,7 @@ async function loadCallEntryIntoForm(e) {
   setCallPhotoMode(e.photoMode === 'full' ? 'full' : 'avatar');
   ringApplyEntry(e); // son et volume de l'entrée pour son type
   val('callName', e.name || ''); val('callLabel', e.label || ''); val('callMsgText', e.msg || '');
+  renderCallerState();
   if (e.kind !== 'call') {
     val('callAppName', e.appName || ''); val('callAppColor', safeHexColor(e.appColor, '#2f8cf0'));
     for (const id of ['callAppName', 'callAppColor']) { const el = document.getElementById(id); if (el) el.dataset.touched = '1'; }
@@ -351,6 +355,8 @@ async function loadCallEntryIntoForm(e) {
   }
   renderCallAudioRow();
   if (_callAudioData) ensureCallAssets(null, _callAudioData);
+  renderCallerState(); // 79-callers.js : appelant enregistré ?
+  renderTelStyle();
 }
 
 // « Appeler n° X » / « Envoyer le SMS n° X »

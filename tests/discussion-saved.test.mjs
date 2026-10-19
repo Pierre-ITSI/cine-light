@@ -47,7 +47,7 @@ test('enregistrer, charger, renommer, dupliquer, supprimer ; photo gardée ; con
   assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#dcTabs .gw-seg-btn')].map((b) => b.textContent + (b.classList.contains('active') ? ' *' : ''))), ['Fil en cours *', 'Enregistrées (0)']);
   assert.equal(await shown(page, 'dcSavedPanel'), false);
   await page.click('#dcTab-saved');
-  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcSendPanel', 'callStyleRow']) assert.equal(await shown(page, id), false, id);
+  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcSendPanel', 'telStyleRow']) assert.equal(await shown(page, id), false, id);
   assert.equal(await shown(page, 'dcSavedPanel'), true);
   assert.equal(await shown(page, 'dcSavedEmpty'), true);
   assert.equal(await page.textContent('#dcSaveBtn'), '+ Enregistrer le fil en cours');
@@ -66,7 +66,10 @@ test('enregistrer, charger, renommer, dupliquer, supprimer ; photo gardée ; con
   await waitFor(page, () => !!_chatAvatar);
   const photo = await avatar(page);
   await page.fill('#dcName', 'Thomas');
+  // Style dans la vue « Style et son » (maquette 36d)
+  await page.click('#telStyleBtn');
   await page.click('#callstyle-glass');
+  await page.click('#tsBack');
   await page.click('#dcAdd');
   await page.fill('#dcRows .dc-edit textarea', 'C\'est fini.');
   await page.locator('#dcRows .dc-edit .dc-edit-ok').click();
