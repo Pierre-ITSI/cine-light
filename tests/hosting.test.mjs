@@ -6,7 +6,7 @@
 // L'essai complet (Docker, Caddy, navigateur) est décrit dans docs/HOSTING.md.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, readFileSync, writeFileSync, symlinkSync, cpSync, statSync, unlinkSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync, writeFileSync, symlinkSync, cpSync, statSync, unlinkSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { ROOT } from './helpers/harness.mjs';
@@ -84,7 +84,7 @@ test('Caddyfile : en-têtes, cache cohérent avec verify-app.mjs, aucun journal 
   for (const p of ['/', '/index.html', '/sw.js', '/manifest.webmanifest', '/confidentialite.html', '/privacy.html']) assert.ok(nocache.includes(p), p);
   const csp = /Content-Security-Policy "([^"]+)"/.exec(caddy)[1];
   assert.doesNotMatch(csp, /unsafe-eval|\*/);
-  assert.match(csp, /connect-src 'self' wss:\/\/\{\$RELAY_DOMAIN\} \{\$APP_CONNECT_EXTRA\};/);
+  assert.match(csp, /connect-src 'self' wss:\/\/\{\$RELAY_DOMAIN\} https:\/\/\{\$RELAY_DOMAIN\} \{\$APP_CONNECT_EXTRA\};/);
   for (const d of ["default-src 'self'", "object-src 'none'", "base-uri 'none'", "frame-ancestors 'self'", 'img-src \'self\' data: blob:', 'media-src \'self\' data: blob:']) assert.ok(csp.includes(d), d);
   assert.match(caddy, /Referrer-Policy "no-referrer"/);
   assert.match(caddy, /Permissions-Policy "camera=\(self\)/);
@@ -96,6 +96,17 @@ test('Caddyfile : en-têtes, cache cohérent avec verify-app.mjs, aucun journal 
   // Seul le bloc global déclare des journaux (WARN, sans erreurs de requêtes)
   const logs = caddy.split('\n').filter((l) => /^\s*log\b/.test(l));
   assert.deepEqual(logs, ['\tlog default {']);
+  // Extensions privées : deux points d'import génériques, vides par défaut, rien de nommé
+  const imports = caddy.split('\n').filter((l) => /^\s*import\s+\//.test(l)).map((l) => l.trim());
+  assert.deepEqual(imports, ['import /etc/caddy/extra/sites/*.caddy', 'import /etc/caddy/extra/*.caddy']);
+  const hub = caddy.slice(caddy.indexOf('{$RELAY_DOMAIN} {'), caddy.indexOf('(app_headers)'));
+  assert.ok(hub.indexOf('import /etc/caddy/extra/*.caddy') >= 0 && hub.indexOf('import /etc/caddy/extra/*.caddy') < hub.indexOf('reverse_proxy'), 'dans le bloc du relais, avant le relais');
+  assert.ok(caddy.indexOf('import /etc/caddy/extra/sites/*.caddy') < caddy.indexOf('{$RELAY_DOMAIN} {'), 'au niveau supérieur');
+  // Par défaut : un commentaire seul dans chaque glob (jamais d'import sans correspondance)
+  assert.deepEqual(readdirSync(path.join(DEPLOY, 'extra')).sort(), ['00-vide.caddy', 'sites']);
+  assert.deepEqual(readdirSync(path.join(DEPLOY, 'extra', 'sites')), ['00-vide.caddy']);
+  for (const f of ['extra/00-vide.caddy', 'extra/sites/00-vide.caddy']) assert.ok(read(f).split('\n').every((l) => !l.trim() || l.startsWith('#')), f + ' : commentaires seulement');
+  assert.doesNotMatch(caddy + read('docker-compose.yml'), /admin\.|back.?office|backoffice/i);
 });
 
 test('docker-compose : APP_ROOT en lecture seule pour Caddy, images officielles, scripts exécutables', () => {
@@ -105,6 +116,12 @@ test('docker-compose : APP_ROOT en lecture seule pour Caddy, images officielles,
   assert.match(dc, /image: caddy:2\.11-alpine/);
   assert.match(dc, /image: coturn\/coturn:4\.18-alpine/);
   assert.doesNotMatch(dc, /mirror\.gcr\.io/);
+  assert.match(dc, /- \.\/extra:\/etc\/caddy\/extra:ro/);
+  // Compteur interne du relais : réseau Docker seulement, port jamais publié
+  assert.match(dc, /RELAY_METRICS_PORT: \$\{RELAY_METRICS_PORT:-9090\}/);
+  assert.match(dc, /RELAY_METRICS_HOST: 0\.0\.0\.0/);
+  assert.doesNotMatch(dc, /9090:/);
+  assert.match(dc, /^  relay:$/m, 'service « relay » : http://relay:9090/metrics dans le réseau');
   const env = read('.env.example');
   assert.match(env, /^APP_DOMAIN=set-remote\.itsi-app\.com$/m);
   assert.match(env, /^RELAY_DOMAIN=hub\.itsi-app\.com$/m);

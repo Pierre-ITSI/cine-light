@@ -19,9 +19,18 @@
 	}
 }
 
+# Extensions privées facultatives : sites supplémentaires (dossier extra/ du
+# kit monté en lecture seule sur /etc/caddy/extra ; sites/00-vide.caddy, un
+# simple commentaire, garantit que l'import n'est jamais sans correspondance)
+import /etc/caddy/extra/sites/*.caddy
+
 {$RELAY_DOMAIN} {
 	# Aucune directive « log » ici : aucun journal d'accès.
 	header -Server
+	# Extensions privées facultatives : routes supplémentaires de ce nom
+	# (extra/*.caddy, ex. « handle /api/… { … } »), placées avant le relais ;
+	# par défaut un fichier de commentaire seul : tout va au relais
+	import /etc/caddy/extra/*.caddy
 	# WebSocket pris en charge d'office. X-Forwarded-For = adresse vue par Caddy
 	# (un en-tête X-Forwarded-For envoyé par le client est ignoré).
 	reverse_proxy 127.0.0.1:{$RELAY_LOCAL_PORT:8080}
@@ -45,8 +54,10 @@
 		# (script et style assemblés par web/build.mjs) avec des gestionnaires
 		# onclick="…" ; data: et blob: pour les médias diffusés ; wss vers le
 		# relais, et vers le broker MQTT public tant que l'app l'utilise
-		# (APP_CONNECT_EXTRA). WebRTC (STUN) et la caméra ne relèvent pas de la CSP.
-		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self'; connect-src 'self' wss://{$RELAY_DOMAIN} {$APP_CONNECT_EXTRA}; worker-src 'self'; manifest-src 'self'; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'none'; form-action 'self'"
+		# (APP_CONNECT_EXTRA) ; https vers ce même nom pour la vérification de
+		# licence de la version officielle (docs/LICENCE-API.md). WebRTC (STUN)
+		# et la caméra ne relèvent pas de la CSP.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self'; connect-src 'self' wss://{$RELAY_DOMAIN} https://{$RELAY_DOMAIN} {$APP_CONNECT_EXTRA}; worker-src 'self'; manifest-src 'self'; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'none'; form-action 'self'"
 	}
 }
 

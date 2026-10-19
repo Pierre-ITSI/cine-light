@@ -4,7 +4,10 @@
 #   docker compose up -d --build
 #
 # relay : relais WebSocket (Node 22, non root, système de fichiers en lecture seule),
-#         joignable seulement depuis la machine (127.0.0.1), derrière le proxy TLS
+#         joignable seulement depuis la machine (127.0.0.1), derrière le proxy TLS ;
+#         compteur interne GET /metrics ({ channels, clients }) sur le port 9090 du
+#         réseau relaynet SEULEMENT (ni publié, ni routé par Caddy), pour un service
+#         voisin du même réseau ; RELAY_METRICS_PORT=0 dans .env pour le couper
 # caddy : certificats Let's Encrypt automatiques pour RELAY_DOMAIN (proxy WebSocket)
 #         et APP_DOMAIN (fichiers de la PWA, APP_ROOT en lecture seule, en-têtes de
 #         sécurité et de cache), aucun journal d'accès (profil « caddy » : à
@@ -36,6 +39,9 @@ services:
       RELAY_MAX_ROOMS: ${RELAY_MAX_ROOMS:-2000}
       RELAY_MEM_LIMIT_MB: ${RELAY_MEM_LIMIT_MB:-384}
       RELAY_IP_MAX_SOCKETS: ${RELAY_IP_MAX_SOCKETS:-64}
+      # Écoute interne (port non publié) : joignable des seuls conteneurs de relaynet
+      RELAY_METRICS_PORT: ${RELAY_METRICS_PORT:-9090}
+      RELAY_METRICS_HOST: 0.0.0.0
     volumes:
       - relay-data:/data
     ports:
@@ -65,6 +71,9 @@ services:
       APP_CONNECT_EXTRA: ${APP_CONNECT_EXTRA-wss://broker.hivemq.com:8884}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Extensions privées facultatives (*.caddy, sites/*.caddy), vides par défaut :
+      # voir Caddyfile ; une surcharge compose peut monter son propre dossier ici
+      - ./extra:/etc/caddy/extra:ro
       # Fichiers de la PWA, déposés par update-app.sh
       - ${APP_ROOT:-/srv/setremote-app}:/srv/app:ro
       - caddy-data:/data

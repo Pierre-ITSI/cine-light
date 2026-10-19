@@ -409,3 +409,26 @@ test('arrêt propre, origines autorisées, configuration par variables d\'enviro
   assert.throws(() => configFromEnv({ RELAY_RATE_FRAMES: 'beaucoup' }), /RELAY_RATE_FRAMES/);
   assert.throws(() => createRelay({ trustProxy: 'proxy.local' }), /RELAY_TRUST_PROXY/);
 });
+
+test('métriques internes : écoute séparée désactivée par défaut, GET /metrics seulement, comptes agrégés', async () => {
+  const r = await start();
+  assert.equal((await fetch(r.http + '/metrics')).status, 404, 'jamais sur l\'écoute publique');
+  assert.equal(r.relay.config.metricsPort, 0, 'désactivée par défaut');
+  const { port } = await r.relay.listenMetrics(0, '127.0.0.1');
+  const m = `http://127.0.0.1:${port}`;
+  const get = async () => { const res = await fetch(m + '/metrics'); assert.equal(res.headers.get('cache-control'), 'no-store'); return res.json(); };
+  assert.deepEqual(await get(), { channels: 0, clients: 0 });
+  const t1 = topic(), t2 = topic();
+  const a = await connect(`${r.ws}/v2/s/${t1}`), b = await connect(`${r.ws}/v2/s/${t1}`), c = await connect(`${r.ws}/v2/s/${t2}`);
+  const d = await connect(`${r.ws}/v2/rdv/${topic()}`);
+  assert.deepEqual(await get(), { channels: 2, clients: 4 }, 'rendez-vous : socket compté, pas de tournage');
+  for (const [p, method] of [['/healthz', 'GET'], ['/metrics', 'POST'], ['/metrics?x=1', 'GET'], ['/v2/s/' + t1, 'GET']]) {
+    assert.equal((await fetch(m + p, { method })).status, 404, `${method} ${p}`);
+  }
+  await closeAll(a, b, c, d);
+  await sleep(50);
+  assert.deepEqual(await get(), { channels: 0, clients: 0 });
+  assert.deepEqual(configFromEnv({ RELAY_METRICS_PORT: '9090', RELAY_METRICS_HOST: '0.0.0.0' }), { metricsPort: 9090, metricsHost: '0.0.0.0' });
+  await r.close();
+  await assert.rejects(fetch(m + '/metrics'), 'écoute interne fermée avec le relais');
+});

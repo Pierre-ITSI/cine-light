@@ -7,6 +7,9 @@
  *   GET /v2/s/<topic>  salle de session (topic : 22 car. base64url canoniques, packages/protocol)
  *   GET /v2/rdv/<id>   rendez-vous d'appairage par code : 4 sockets, trames ≤ 4 Kio, 5 min
  *   GET /healthz       état et compteurs AGRÉGÉS (JSON)
+ *   GET /metrics       { channels, clients } : salles de session actives et sockets connectés,
+ *                      sur une écoute INTERNE séparée (RELAY_METRICS_PORT, désactivée par
+ *                      défaut), jamais routée par le proxy : lue dans le réseau Docker
  *
  * Chaque trame TEXTE est rediffusée telle quelle aux autres sockets de la salle :
  * le contenu est chiffré de bout en bout, le relais ne lit rien. Refus : binaire,
@@ -38,6 +41,8 @@ export const DEFAULTS = Object.freeze({
   requireAuth: false, authTtlMs: 30 * 86_400_000, authMaxEntries: 100_000, authFile: '',
   trustProxy: '',  // IP ou CIDR du proxy inverse (virgules) : seul cru pour X-Forwarded-For
   origins: '',     // origines autorisées (virgules ; vide = toutes)
+  metricsPort: 0,  // écoute interne de GET /metrics (0 = désactivée)
+  metricsHost: '127.0.0.1', // son adresse (Docker : 0.0.0.0, port NON publié)
   now: Date.now,   // horloge des échéances (tests)
 });
 export const PROTOCOL = 'setremote.v2';
@@ -114,6 +119,12 @@ export function createRelay(options = {}) {
     socket.once('finish', () => socket.destroy());
     socket.end(`HTTP/1.1 ${v} ${http.STATUS_CODES[v]}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
   });
+  // Écoute interne : seulement GET /metrics, rien d'autre (ni WebSocket, ni /healthz)
+  const metricsServer = http.createServer((req, res) => {
+    if (req.method !== 'GET' || req.url !== '/metrics') return res.writeHead(404).end();
+    res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }).end(JSON.stringify(metrics()));
+  });
+  metricsServer.on('upgrade', (req, socket) => socket.destroy());
   const timer = setInterval(sweep, cfg.pingMs);
   timer.unref();
 
@@ -299,6 +310,13 @@ export function createRelay(options = {}) {
     saveAuth();
   }
 
+  /** Tournages en cours : salles de session occupées, sockets connectés (rendez-vous compris). */
+  function metrics() {
+    let channels = 0;
+    for (const r of rooms.values()) if (r.kind === 's' && r.sockets.size) channels++;
+    return { channels, clients: sockets };
+  }
+
   function stats() {
     let rdv = 0;
     for (const r of rooms.values()) if (r.kind === 'rdv') rdv++;
@@ -308,11 +326,16 @@ export function createRelay(options = {}) {
   }
 
   return {
-    server, stats, sweep, config: cfg,
+    server, stats, metrics, sweep, config: cfg,
     /** @returns {Promise<import('node:net').AddressInfo>} */
     listen: (port = cfg.port, host = cfg.host) => new Promise((resolve, reject) => {
       server.once('error', reject);
       server.listen(port, host, () => resolve(/** @type {any} */ (server.address())));
+    }),
+    /** Écoute interne de GET /metrics. @returns {Promise<import('node:net').AddressInfo>} */
+    listenMetrics: (port = cfg.metricsPort, host = cfg.metricsHost) => new Promise((resolve, reject) => {
+      metricsServer.once('error', reject);
+      metricsServer.listen(port, host, () => resolve(/** @type {any} */ (metricsServer.address())));
     }),
     /** Arrêt propre : plus de connexions, sockets fermés en 1001 (les clients se reconnectent), TOFU écrit. */
     async close(graceMs = 3000) {
@@ -320,11 +343,13 @@ export function createRelay(options = {}) {
       closing = true;
       clearInterval(timer);
       server.close();
+      metricsServer.close();
       const all = [...rooms.values()].flatMap((r) => (clearTimeout(r.timer), [...r.sockets]));
       for (const ws of all) ws.close(1001, 'restart');
       for (let t = 0; sockets > 0 && t < graceMs; t += 50) await new Promise((r) => setTimeout(r, 50));
       for (const ws of all) ws.terminate();
       server.closeAllConnections();
+      metricsServer.closeAllConnections();
       authDirty ||= auth.size > 0;
       saveAuth();
     },
@@ -338,6 +363,10 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     console.log(`relais SetRemote : port ${a.port}, preuve ${cfg.requireAuth ? 'exigée' : 'facultative'}, TOFU `
       + `${cfg.authFile ? 'persistant' : 'en mémoire (réarmé au redémarrage)'}, proxy de confiance ${cfg.trustProxy ? 'oui' : 'non'}`);
   }, (e) => { console.error('relais SetRemote :', e.message); process.exit(1); });
+  if (cfg.metricsPort > 0) {
+    relay.listenMetrics().then((a) => console.log(`relais SetRemote : métriques internes sur ${a.address}:${a.port}`),
+      (e) => { console.error('relais SetRemote : métriques', e.message); process.exit(1); });
+  }
   for (const sig of ['SIGTERM', 'SIGINT']) {
     process.once(sig, () => relay.close().then(() => { console.log('relais SetRemote : arrêté'); process.exit(0); }));
   }

@@ -219,6 +219,30 @@ la version web et le relais) et § 8 (prestataires des § 3.2, 3.3 et 3.6) ;
   script qu'elles lancent a été exécuté directement), `install-app-update.sh`,
   Let's Encrypt réel, iOS/Android réels.
 
+## Extensions privées et compteur du relais
+
+Le kit public prévoit deux points d'extension Caddy, inertes par défaut, pour
+des services privés hébergés à côté (par exemple le service de licence de la
+version officielle, [LICENSING.md](LICENSING.md)) sans modifier ce dépôt :
+
+- `import /etc/caddy/extra/*.caddy` **dans** le site du relais
+  (`RELAY_DOMAIN`), avant le relais : routes supplémentaires de ce nom
+  (`handle /api/… { … }`) ;
+- `import /etc/caddy/extra/sites/*.caddy` au niveau supérieur : sites
+  supplémentaires (autres noms).
+
+Le dossier `relay/deploy/extra/` du kit est monté sur `/etc/caddy/extra` ; il
+ne contient qu'un fichier de commentaire par emplacement, pour que chaque
+import trouve toujours un fichier. Une surcharge compose privée peut monter
+son propre dossier à la place.
+
+Le relais expose aussi `GET /metrics` → `{ "channels": n, "clients": n }`
+(salles de session actives, sockets connectés ; aucun identifiant) sur une
+écoute **interne** séparée : port 9090 du conteneur `relay`, joignable des
+seuls conteneurs du réseau Docker `relaynet` (`http://relay:9090/metrics`),
+jamais publié ni routé par Caddy. `RELAY_METRICS_PORT=0` dans `.env` la coupe ;
+hors Docker, elle est désactivée par défaut.
+
 ## Risques
 
 - **Données locales perdues au changement d'adresse** (voir ci-dessus) :

@@ -385,6 +385,14 @@ Ces variantes ne couvrent que le relais. Pour la version web, servez le
 dossier `/srv/setremote-app/current` (mis à jour par le minuteur, qui reste
 valable) en reprenant les en-têtes du site `{$APP_DOMAIN}` du `Caddyfile`.
 
+## Extensions privées (facultatif)
+
+Le `Caddyfile` importe `extra/*.caddy` dans le site du relais et
+`extra/sites/*.caddy` au niveau supérieur (dossier `extra/` du kit, monté en
+lecture seule) : par défaut, des commentaires seulement, rien ne change. Le
+relais publie aussi un compteur interne (`http://relay:9090/metrics`, réseau
+Docker seulement). Voir `docs/HOSTING.md`, « Extensions privées ».
+
 ## Activer TURN plus tard
 
 STUN suffit quand les appareils peuvent se joindre directement. Sur certains
