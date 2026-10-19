@@ -40,6 +40,14 @@ dans son `package.json`.
 - **Provenance** : npm jsqr@1.4.0, dist/jsQR.js
 - **Fichiers** : `vendor/jsqr-1.4.0.js`
 
+### fflate 0.8.2
+
+- **Licence** : MIT — texte : [`vendor/fflate-LICENSE.txt`](vendor/fflate-LICENSE.txt)
+- **Copyright** : Copyright (c) 2023 Arjun Barrett
+- **Provenance** : npm fflate@0.8.2, umd/index.js (déjà minifié, non modifié)
+- **Fichiers** : `vendor/fflate-0.8.2.min.js`
+- **Note** : Compression deflate des fichiers projet .setremote (web/js/72-project.js), chargé à la demande.
+
 ### DM Mono (via @fontsource/dm-mono) 5.3.0
 
 - **Licence** : OFL-1.1 — texte : [`vendor/fonts/dm-mono-OFL.txt`](vendor/fonts/dm-mono-OFL.txt)
@@ -80,7 +88,7 @@ depuis leurs éditeurs et ne sont pas redistribuées par SetRemote.
 
 ### Dépendances npm de production de l'app native
 
-590 paquets — licences : MIT : 510 · ISC : 24 · Apache-2.0 : 13 · MPL-2.0 : 12 · BSD-3-Clause : 9 · BlueOak-1.0.0 : 6 · BSD-2-Clause : 4 · (MIT OR CC0-1.0) : 3 · 0BSD : 2 · Unlicense : 2 · (BSD-3-Clause OR GPL-2.0) : 1 · (MIT OR Apache-2.0) : 1 · CC-BY-4.0 : 1 · MIT AND Apache-2.0 : 1 · Python-2.0 : 1.
+591 paquets — licences : MIT : 511 · ISC : 24 · Apache-2.0 : 13 · MPL-2.0 : 12 · BSD-3-Clause : 9 · BlueOak-1.0.0 : 6 · BSD-2-Clause : 4 · (MIT OR CC0-1.0) : 3 · 0BSD : 2 · Unlicense : 2 · (BSD-3-Clause OR GPL-2.0) : 1 · (MIT OR Apache-2.0) : 1 · CC-BY-4.0 : 1 · MIT AND Apache-2.0 : 1 · Python-2.0 : 1.
 
 Ensemble large : il inclut les outils de build tirés par `expo` (Metro, Babel,
 lightningcss, `@expo/cli`…), qui ne sont pas embarqués dans le binaire. La liste
@@ -169,8 +177,8 @@ compatible par défaut, examinée au §4.
 | `@expo/cli` | 56.1.16 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) |  |
 | `@expo/code-signing-certificates` | 0.0.6 | MIT | Copyright (c) 2020-present 650 Industries, Inc. (aka Expo) |  |
 | `@expo/config` | 56.0.9 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) |  |
-| `@expo/config-plugins` | 56.0.9 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) |  |
-| `@expo/config-types` | 56.0.6 | MIT | Copyright (c) 2020-present 650 Industries, Inc. (aka Expo) |  |
+| `@expo/config-plugins` | 56.0.16 | MIT | — |  |
+| `@expo/config-types` | 56.0.7 | MIT | — |  |
 | `@expo/devcert` | 1.2.1 | MIT | — |  |
 | `@expo/devtools` | 56.0.2 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) |  |
 | `@expo/dom-webview` | 56.0.5 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) |  |
@@ -190,7 +198,7 @@ compatible par défaut, examinée au §4.
 | `@expo/package-manager` | 1.12.1 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) |  |
 | `@expo/plist` | 0.7.0 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) |  |
 | `@expo/prebuild-config` | 56.0.16 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) |  |
-| `@expo/require-utils` | 56.1.3 | MIT | Copyright (c) 2025-present 650 Industries, Inc. (aka Expo) |  |
+| `@expo/require-utils` | 56.1.7 | MIT | — |  |
 | `@expo/router-server` | 56.0.14 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) |  |
 | `@expo/schema-utils` | 56.0.2 | MIT | Copyright (c) 2025-present 650 Industries, Inc. (aka Expo) |  |
 | `@expo/sdk-runtime-versions` | 1.0.0 | MIT | — |  |
@@ -388,6 +396,7 @@ compatible par défaut, examinée au §4.
 | `expo-print` | 56.0.4 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) | oui |
 | `expo-router` | 56.2.11 | MIT | — | oui |
 | `expo-server` | 56.0.5 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) |  |
+| `expo-sharing` | 56.0.26 | MIT | — | oui |
 | `expo-status-bar` | 56.0.4 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) | oui |
 | `expo-symbols` | 56.0.6 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) |  |
 | `expo-system-ui` | 56.0.5 | MIT | Copyright (c) 2015-present 650 Industries, Inc. (aka Expo) | oui |

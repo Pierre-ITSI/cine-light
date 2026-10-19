@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 /* Service Worker — SetRemote PWA */
-const CACHE = 'setremote-v77';
+const CACHE = 'setremote-v78';
 const SHELL = [
   './',
   './index.html',
@@ -17,6 +17,8 @@ const SHELL = [
   './vendor/qrcode-generator-2.0.4.js',
   // Décodeur de QR (jsQR, Apache-2.0, figé) : scan sans BarcodeDetector (iPhone…)
   './vendor/jsqr-1.4.0.js',
+  // Compression des fichiers projet .setremote (fflate, MIT, figé ; chargé à la demande, 72-project.js)
+  './vendor/fflate-0.8.2.min.js',
   // Polices auto-hébergées (plus de Google Fonts) : disponibles hors ligne
   './vendor/fonts/dm-mono-latin-300-normal.woff2',
   './vendor/fonts/dm-mono-latin-ext-300-normal.woff2',

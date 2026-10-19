@@ -16,8 +16,8 @@
 //   • « ⋯ » : renommer, dupliquer, supprimer (avec confirmation).
 // Stockage : localStorage (au plus SEQ_SAVED_MAX séquences, revalidées au
 // chargement) ; les images d'accueil et fonds d'écran restent dans IndexedDB, partagés par
-// empreinte (seqGcImages efface celles que plus rien n'utilise). Aucun export
-// pour l'instant. Jamais déclenchées par la console DMX.
+// empreinte (seqGcImages efface celles que plus rien n'utilise). Export et
+// import : projets (72-project.js). Jamais déclenchées par la console DMX.
 const SEQ_SAVED_KEY = 'setremote-seq-saved-v1';
 const SEQ_SAVED_MAX = 100;
 // Textes affichés, regroupés pour la traduction ({…} : valeurs)
@@ -230,3 +230,30 @@ function seqSheetSave(s, value) {
 function seqMenuRename(id) { openRenameSavedSeq(id); }
 function seqMenuDuplicate(id) { closeSheet(); duplicateSavedSeq(id); }
 function seqMenuDelete(id) { closeSheet(); deleteSavedSeq(id); }
+
+// ── Nouvelle séquence (moteur ; bouton et confirmation : maquette 47, à valider) ──
+// Repart d'une séquence vide sans toucher aux enregistrées. La séquence en cours
+// a des modifications non enregistrées (seqHasUnsavedChanges) : refus
+// { ok: false, code: 'dirty', name } tant que l'appelant n'a pas choisi :
+//   opts.save (nom, '' = nom par défaut) : enregistrée d'abord comme NOUVELLE entrée ;
+//   opts.discard : modifications abandonnées.
+// La nouvelle séquence n'est liée à aucune entrée (savedId null) : l'enregistrer
+// crée une nouvelle entrée, l'entrée chargée auparavant reste telle quelle.
+// Un déroulé commencé repart de zéro (Recommencer). Aperçu sans licence : 'locked'.
+function seqNew(opts = {}) {
+  if (licLocked('seq')) return { ok: false, code: 'locked' };
+  if (seqHasUnsavedChanges()) {
+    if (typeof opts.save === 'string') {
+      if (seqSaved.length >= SEQ_SAVED_MAX) return { ok: false, code: 'full' };
+      if (!saveCurrentSeq(opts.save)) return { ok: false, code: 'storage-full' };
+    } else if (opts.discard !== true) return { ok: false, code: 'dirty', name: _sqsvDefaultName() };
+  }
+  if (_seqEdit) closeSeqStep();
+  if (seqPos() >= 0 || _seqRun.state !== 'idle') seqRestart();
+  const dropped = _sqsvImages(_seq.steps, _seq.wall);
+  _seq = _seqEmpty();
+  seqSave();
+  seqGcImages(dropped);
+  setSeqView('cur');
+  return { ok: true };
+}

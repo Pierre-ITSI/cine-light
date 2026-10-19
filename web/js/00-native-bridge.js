@@ -19,6 +19,12 @@ const IN_NATIVE_APP = !!(window.SETREMOTE_NATIVE && window.ReactNativeWebView);
 //   vibrate:stop                                        arrête la vibration (décroché, refus, fin d'appel)
 //   dmx:listen, dmx:stop, udp:send, net:info, pdf:preview : docs/DMX-NATIVE.md
 //   link:start, link:stop, link:send, link:state?     : docs/OFFLINE-NATIVE.md
+//   project:save { id, name, size, i, n, data }        fichier .setremote par morceaux (data : base64,
+//                                                       PRJ_CHUNK = 512 Kio de caractères, multiple de 4
+//                                                       sauf le dernier) ; au dernier (i = n − 1), la coque
+//                                                       l'écrit puis ouvre la feuille de partage
+//   project:open { id }                                 sélecteur de fichier de la coque (projet à importer)
+//                                                       docs/PROJECTS.md § 6, 72-project.js
 function nativePost(msg) {
   if (!IN_NATIVE_APP) return;
   try { window.ReactNativeWebView.postMessage(JSON.stringify(msg)); } catch (_) {}
@@ -36,6 +42,11 @@ if (IN_NATIVE_APP) document.documentElement.classList.add('in-app');
 //   link:peers  { peers: [{ peer, mode, name? }] }            pairs locaux (à chaque changement)
 //   link:state  { lan: { available, active, error? }, ble }   état des liaisons locales
 //   link:error  { mode, reason }                              erreur d'une liaison locale
+//   project:saved { id, ok, shared? }                         fichier écrit, feuille de partage fermée
+//   project:file  { id, name, size, i, n, data }              fichier choisi, par morceaux base64 (mêmes
+//                                                             règles que project:save) ; { id, cancelled: true }
+//   project:error { id, reason }                              too-large, unavailable, read-failed,
+//                                                             write-failed, share-failed, bad-chunk
 // Tout le reste est ignoré ; une erreur de traitement ne remonte jamais à la coque.
 window.SRNative = window.SRNative || {};
 window.SRNative.receive = function (msg) {
@@ -51,6 +62,7 @@ window.SRNative.receive = function (msg) {
     if (m.type === 'link:peers') return linkOnPeers(m.peers);
     if (m.type === 'link:state') return linkOnState(m);
     if (m.type === 'link:error') return linkOnError(m.mode, m.reason);
+    if (m.type === 'project:saved' || m.type === 'project:file' || m.type === 'project:error') return projectOnNative(m);
   } catch (e) { console.warn('SetRemote : message natif', m.type, e); }
   return false;
 };
