@@ -417,4 +417,4 @@
 .pp-off.ph-minimal .pp-spin i{animation-delay:.15s;order:1}
 @keyframes ppDot{0%,100%{opacity:.25}50%{opacity:1}}
 /* Mouvement réduit : liseré et indicateur fixes */
-@media (prefers-reduced-motion:reduce){.pp-offbat .sliver,.pp-spin,.pp-spin::before,.pp-spin::after,.pp-spin i{animation:none!important}}
+@media (prefers-reduced-motion:reduce){#screen-ppower .pp-offbat .sliver,#screen-ppower .pp-spin,#screen-ppower .pp-spin::before,#screen-ppower .pp-spin::after,#screen-ppower .pp-spin i{animation:none}}
