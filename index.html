@@ -207,7 +207,8 @@ input[type="range"]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;b
 .ps-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ps-link{font-size:.6875rem;color:#a0a0a0}
 .pair-screen.off .ps-link{color:#ff7a70}
-.pair-renew{border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)}
+/* .media-btn.pair-renew : plus spécifique que .media-btn (70-media.css, chargé après) — reste rouge */
+.media-btn.pair-renew,.media-btn.pair-renew:hover{border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)}
 .pair-e2e{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px 4px 4px;font-size:.6875rem;color:#a0a0a0;text-align:center;line-height:1.5}
 .pair-e2e svg{flex-shrink:0}
 
@@ -316,8 +317,9 @@ input[type="range"]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;b
 
 /* — Retirer un écran (maquette 5b) : bouton rouge et confirmation — */
 .sv-icon.sv-revoke{border-color:rgba(255,122,112,.45);color:#ff7a70}
-#sr-revoke{display:none;position:fixed;inset:0;z-index:550;background:rgba(0,0,0,.78);font-family:'DM Mono',monospace;color:var(--text)}
-#sr-revoke.open{display:block}
+/* Même boîte pour les confirmations de l'app (#app-confirm : accueil, brouillon d'étape) */
+#sr-revoke,#app-confirm{display:none;position:fixed;inset:0;z-index:550;background:rgba(0,0,0,.78);font-family:'DM Mono',monospace;color:var(--text)}
+#sr-revoke.open,#app-confirm.open{display:block}
 .rv-dialog{position:absolute;left:18px;right:18px;top:230px;max-width:420px;margin:0 auto;background:var(--mid);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:24px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
 .rv-dialog svg{align-self:center;flex-shrink:0}
 .rv-dialog h2{margin:0;text-align:center;font-family:'Lato',sans-serif;font-weight:600;font-size:1.25rem;overflow-wrap:anywhere}
@@ -445,17 +447,17 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 #screen-bar.ui-hidden,#screen-status.ui-hidden{opacity:0;pointer-events:none}
 #screen-mode.cursor-hidden{cursor:none}
 
-/* Écran de jeu épuré : aucune information visible. Seul un double-clic dans le
-   coin haut-gauche (zone = 1/5 de l'écran) ouvre le menu (comme l'app native). */
+/* Écran de jeu épuré : aucune information visible. Le menu s'ouvre par un geste
+   dans le coin haut-gauche, lu sans calque bloquant (30-navigation.js). */
 #screen-bar,#screen-status{display:none!important}
 /* Confirmation temporaire de connexion (affichée ~5 s puis fondu) */
 #screen-notice{display:none;position:absolute;top:calc(28px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.25);border-radius:24px;padding:12px 24px;font-size:.85rem;letter-spacing:.08em;color:#F5F2EC;z-index:350;opacity:0;transition:opacity .5s ease;pointer-events:none;white-space:nowrap}
-#screen-menu-hotspot{position:absolute;top:0;left:0;width:45vw;height:45vh;z-index:300;background:transparent}
 #screen-menu{display:none;position:absolute;inset:0;z-index:400;background:rgba(0,0,0,.92);flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px}
 .screen-menu-info{color:rgba(255,255,255,.5);font-size:.82rem;letter-spacing:.06em;margin-bottom:8px}
 .screen-menu-btn{width:100%;max-width:300px;padding:16px;border:1px solid rgba(255,255,255,.15);border-radius:8px;background:transparent;color:#F5F2EC;font-size:.95rem;font-family:inherit;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .screen-menu-btn:active{background:rgba(255,255,255,.06)}
 .screen-menu-btn.danger{border-color:rgba(255,100,100,.3);color:#ff8080}
+.screen-menu-hint{max-width:300px;margin-top:6px;text-align:center;color:rgba(255,255,255,.5);font-size:.75rem;line-height:1.5}
 
 /* SCREEN MEDIA (image / vidéo diffusée) */
 #screen-media-img,#screen-media-video{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:50}
@@ -768,6 +770,26 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .sc-lock-home{position:absolute;bottom:calc(9px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:132px;height:5px;border-radius:3px;background:rgba(255,255,255,.92)}
 .sc-lock.tonal .sc-lock-home{width:110px;height:4px}
 .sc-lock.minimal .sc-lock-home{display:none}
+
+/* Paysage (téléphone couché, ex. 844 × 390) : Accepter / Refuser, Raccrocher
+   et la notification de l'écran verrouillé restent entiers. Marges réduites,
+   avatar et horloge plus petits, grille de l'appel en cours sur une ligne. */
+@media (orientation:landscape) and (max-height:500px){
+  .sc-call{padding:calc(14px + env(safe-area-inset-top)) 30px calc(14px + env(safe-area-inset-bottom))}
+  .sc-avatar,.sc-call.glass .sc-avatar,.sc-call.tonal .sc-avatar,.sc-call.tonal .sc-head .sc-avatar,.sc-call.minimal .sc-avatar{width:56px;height:56px;font-size:1.5rem;margin-bottom:6px}
+  .sc-name,.sc-call.tonal .sc-name,.sc-call.minimal .sc-name{font-size:1.5rem}
+  .sc-call.tonal .sc-kicker{margin-bottom:6px}
+  .sc-bottom{gap:10px;padding-top:8px}
+  .sc-grid,.sc-call.tonal .sc-grid{grid-template-columns:repeat(6,1fr);max-width:620px;gap:10px;margin-top:12px}
+  .sc-lock{padding-top:calc(12px + env(safe-area-inset-top))}
+  .sc-lock-date{font-size:.95rem}
+  .sc-lock-time,.sc-lock.tonal .sc-lock-time,.sc-lock.minimal .sc-lock-time{font-size:3.4rem;margin-top:0}
+  .sc-lock-bottom{bottom:calc(20px + env(safe-area-inset-bottom))}
+  .sc-notif.in-lock,.sc-notif.minimal.in-lock{bottom:calc(84px + env(safe-area-inset-bottom))}
+  .sc-notif.tonal.in-lock{top:auto;bottom:calc(84px + env(safe-area-inset-bottom))}
+  /* Barre d'état du téléphone affichée (87-phone-status.css) : contenu dessous */
+  #screen-mode.sb-on .sc-call,#screen-mode.sb-on .sc-lock{padding-top:calc(44px + env(safe-area-inset-top))}
+}
 
 /* ══ Onglet Tel : « Style et sonnerie » / « Style et son », appelants enregistrés (maquettes validées 36) ══
    Rangée résumé (comme la barre d'état de l'onglet Média) ouvrant la vue
@@ -1193,6 +1215,8 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .sq-ctl button:disabled{opacity:.4;cursor:default}
 .sq-go{flex:2;border:none;background:var(--accent);color:#000;font-size:1rem;font-weight:500;letter-spacing:.1em}
 .sq-back{flex:1;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-size:.75rem}
+/* ↶ à 16 px du GO (8 px d'écart + 8 px de marge) : un GO un peu à côté ne revient pas d'une étape */
+.sq-ctl .sq-back{margin-left:8px}
 .sq-stop{flex:1;border:1px solid rgba(255,122,112,.5);background:var(--mid2);color:#ff8f86;font-size:.75rem}
 
 /* Téléphone au départ (maquette 28b) : ligne sous le nom de la séquence */
@@ -1236,6 +1260,8 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .ss-actions{display:flex;gap:8px;margin-top:auto;position:sticky;bottom:calc(-22px - env(safe-area-inset-bottom));padding:10px 0 calc(22px + env(safe-area-inset-bottom));margin-bottom:calc(-22px - env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(10,10,15,.96) 75%,rgba(10,10,15,0))}
 .ss-actions button{height:46px;border-radius:8px;font-family:'DM Mono',monospace;cursor:pointer}
 .ss-del{flex:1;border:1px solid rgba(255,122,112,.5);background:var(--mid2);color:#ff8f86;font-size:.6875rem}
+/* Nouvelle étape (pas encore enregistrée) : ANNULER, bouton neutre */
+.ss-del.ss-cancel{border-color:rgba(255,255,255,.14);color:var(--text)}
 .ss-save{flex:1.6;border:none;background:var(--accent);color:#000;font-size:.75rem}
 
 /* Écran — faux téléphone (maquettes 30 à 32), sous la discussion (85) et l'appel (95) */
@@ -1298,6 +1324,18 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 /* Écran d'accueil (maquette 32) : image importée plein écran */
 .sp-home{background:linear-gradient(160deg,#3d5a80 0%,#98c1d9 60%,#e0fbfc 100%);background-size:cover;background-position:center;cursor:pointer}
 .sp-unlocked{background:#000}
+/* Paysage (ex. 844 × 390) : horloge réduite, pile de notifications qui défile
+   (comme un vrai écran verrouillé) au lieu d'être coupée ; pavé du code compact */
+@media (orientation:landscape) and (max-height:500px){
+  .sp-lock{gap:6px;padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+  .sp-time,#screen-phone.tonal .sp-time,#screen-phone.minimal .sp-time{font-size:44px;margin-top:0}
+  .sp-stack{margin-top:4px;overflow-y:auto;overscroll-behavior:contain;width:100%;max-width:560px;align-self:center}
+  .sp-code{gap:4px;padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+  .sp-dots{margin:4px 0 10px}
+  .sp-keys{grid-template-columns:repeat(3,52px);gap:8px 22px}
+  .sp-key{width:52px;height:52px;font-size:22px}
+  #screen-mode.sb-on .sp-lock,#screen-mode.sb-on .sp-code{padding-top:calc(44px + env(safe-area-inset-top))}
+}
 /* ══ Faux téléphone : barre d'état (28b), veille (29b), batterie faible et extinction (33), pas de réseau (34) ══
    Barre : heure à gauche ; réseau, Wi-Fi, pourcentage, batterie à droite. Trois
    styles neutres .glass .tonal .minimal ; .pb-band : bandeau au-dessus d'un
@@ -1717,8 +1755,7 @@ button.st-row{cursor:pointer}
     <button class="screen-bar-btn" onclick="event.stopPropagation();suspendScreen()">⏸ Suspendre</button>
     <button class="screen-bar-btn" id="screenBlackoutBtn" onclick="event.stopPropagation();toggleScreenBlackout()">⚫ Off</button>
   </div>
-  <!-- Zone tactile (haut-gauche, 1/5 de l'écran) : double-clic OU appui long = menu -->
-  <div id="screen-menu-hotspot" onclick="event.stopPropagation()" ondblclick="event.stopPropagation();openScreenMenu()"></div>
+  <!-- Menu : geste lu sur le document sans calque bloquant (30-navigation.js) — le comédien touche toute la scène -->
   <!-- Menu plein écran identique à l'app native -->
   <div id="screen-menu" onclick="event.stopPropagation()">
     <div class="screen-menu-info" id="screenMenuInfo">Liaison chiffrée de bout en bout</div>
@@ -1726,6 +1763,7 @@ button.st-row{cursor:pointer}
     <button class="screen-menu-btn" onclick="closeScreenMenu();suspendScreen()">Changer de télécommande</button>
     <button class="screen-menu-btn" onclick="closeScreenMenu();goBackToSplash()">Retour à l'accueil</button>
     <button class="screen-menu-btn danger" onclick="screenDisconnect()">Se déconnecter</button>
+    <div class="screen-menu-hint">Rouvrir ce menu : appui long dans le coin haut-gauche (1,5 s tout au bord quand un faux téléphone est affiché)</div>
   </div>
 </div>
 
@@ -1739,7 +1777,7 @@ button.st-row{cursor:pointer}
     <h2>SetRemote</h2>
     <div class="remote-header-end">
       <button type="button" class="link-pill reconnecting" id="linkPill" onclick="openLinkDetail()" aria-label="État de la liaison — détail par écran"><span class="link-dot"></span><span id="linkPillLabel">Connexion…</span></button>
-      <button type="button" class="hdr-gear" id="homeBtn" aria-label="Menu principal" title="Menu principal" onclick="goBack()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></button>
+      <button type="button" class="hdr-gear" id="homeBtn" aria-label="Menu principal" title="Menu principal" onclick="askGoBack()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></button>
       <button type="button" class="hdr-gear" id="settingsBtn" aria-label="Réglages" onclick="openSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     </div>
   </div>
@@ -2306,8 +2344,8 @@ button.st-row{cursor:pointer}
         </label>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:10px">
-        <input type="text" id="lockTime" class="text-input" placeholder="Heure (ex : 00:10)" style="flex:1">
-        <input type="text" id="lockDate" class="text-input" placeholder="Ven. 17 juil." style="flex:1">
+        <input type="text" id="lockTime" class="text-input" placeholder="Heure (ex : 00:10)" style="flex:1;min-width:0">
+        <input type="text" id="lockDate" class="text-input" placeholder="Ven. 17 juil." style="flex:1;min-width:0">
       </div>
       <div style="display:flex;gap:10px;align-items:center">
         <div id="lockWallPreview" style="width:36px;height:62px;border-radius:8px;background:var(--mid2);background-size:cover;background-position:center;border:1px solid var(--border);flex-shrink:0"></div>
@@ -2508,7 +2546,7 @@ button.st-row{cursor:pointer}
       <div class="sq-now" id="seqNow" role="status"></div>
       <div class="sq-warn" id="seqWarn" role="alert" style="display:none"></div>
       <div class="sq-ctl">
-        <button type="button" class="sq-go" id="seqGoBtn" onclick="seqGo()">GO</button>
+        <button type="button" class="sq-go" id="seqGoBtn" onclick="seqGoTap()">GO</button>
         <button type="button" class="sq-back" id="seqBackBtn" aria-label="Revenir d'une étape" title="Revenir d'une étape" onclick="seqBack()">↶</button>
         <button type="button" class="sq-stop" id="seqStopBtn" onclick="seqStop()">STOP</button>
       </div>
@@ -2571,7 +2609,7 @@ button.st-row{cursor:pointer}
 <!-- Séquence : éditer une étape (maquette 29) -->
 <div id="seq-step-view" role="dialog" aria-modal="true" aria-labelledby="ssTitle">
   <div class="ss-head">
-    <button type="button" class="ss-back" onclick="closeSeqStep()">← Séquence</button>
+    <button type="button" class="ss-back" onclick="seqStepLeave()">← Séquence</button>
     <span class="ss-title" id="ssTitle">Étape</span>
     <span class="ss-spacer"></span>
   </div>
@@ -2707,6 +2745,18 @@ button.st-row{cursor:pointer}
     <div class="rv-actions">
       <button type="button" class="rv-cancel" onclick="closeRevokeDialog()">Annuler</button>
       <button type="button" class="rv-ok" id="rvOk" onclick="confirmRevoke()">Retirer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation de l'app (retour à l'accueil, brouillon d'étape abandonné) : même boîte que « Retirer cet écran ? » -->
+<div id="app-confirm" onclick="if(event.target===this)closeAppConfirm()">
+  <div class="rv-dialog" role="alertdialog" aria-modal="true" aria-labelledby="acTitle" aria-describedby="acText">
+    <h2 id="acTitle"></h2>
+    <p class="rv-text" id="acText"></p>
+    <div class="rv-actions">
+      <button type="button" class="rv-cancel" id="acCancel" onclick="closeAppConfirm()">Annuler</button>
+      <button type="button" class="rv-ok" id="acOk" onclick="appConfirmOk()"></button>
     </div>
   </div>
 </div>
@@ -10366,53 +10416,67 @@ function suspendScreen() {
   showScreenPairing();
 }
 
-// ── Menu de l'écran de jeu (double-clic OU appui long, coin haut-gauche) ──
+// ── Menu de l'écran de jeu ──
 function openScreenMenu() {
   const m = document.getElementById('screen-menu');
   if (m) m.style.display = 'flex';
 }
 
-// Appui long (~600 ms) sur le hotspot : fiable sur mobile, où le double-clic
-// est souvent intercepté/ignoré par le navigateur. On gère aussi un double-tap
-// manuel (deux contacts rapprochés) en secours.
-(function setupScreenMenuHotspot() {
-  const hot = document.getElementById('screen-menu-hotspot');
-  if (!hot) return;
-  let pressTimer = null;
-  let startX = 0, startY = 0;
-  let lastTap = 0;
-  const LONG_MS = 600;
-  const MOVE_TOL = 14; // px de tolérance avant d'annuler l'appui long
-
-  const cancel = () => {
-    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-  };
-
-  hot.addEventListener('touchstart', (e) => {
-    e.stopPropagation();
-    const t = e.touches[0];
-    startX = t.clientX; startY = t.clientY;
-    cancel();
-    pressTimer = setTimeout(() => { pressTimer = null; openScreenMenu(); }, LONG_MS);
-  }, { passive: true });
-
-  hot.addEventListener('touchmove', (e) => {
-    const t = e.touches[0];
-    if (Math.abs(t.clientX - startX) > MOVE_TOL || Math.abs(t.clientY - startY) > MOVE_TOL) cancel();
-  }, { passive: true });
-
-  hot.addEventListener('touchend', (e) => {
-    e.stopPropagation();
-    const wasLong = pressTimer === null; // le timer a déjà déclenché le menu
-    cancel();
-    if (wasLong) return;
-    // Double-tap manuel en secours (deux contacts à moins de 300 ms).
-    const now = Date.now();
-    if (now - lastTap < 300) { lastTap = 0; openScreenMenu(); }
-    else lastTap = now;
+// Geste d'ouverture du menu, SANS calque au-dessus de la scène : il est lu sur
+// le document, en phase de capture, sans preventDefault ni stopPropagation.
+// Chaque toucher atteint donc aussi ce qui est dessous (faux téléphone,
+// discussion, appel) : le comédien peut toucher toute la scène.
+//  · Écran simple (lumière, couleur, média) : appui long (600 ms) ou double
+//    toucher / double-clic dans le quart haut-gauche (45 vw × 45 vh).
+//  · Scène du faux téléphone affichée (écran verrouillé, appel, notification,
+//    discussion, alerte, extinction) : seul un appui long de 1,5 s tout au
+//    bord, dans un carré de 72 px au coin haut-gauche, ouvre le menu.
+const SCREEN_MENU_LONG_MS = 600;        // écran simple
+const SCREEN_MENU_SCENE_LONG_MS = 1500; // scène du faux téléphone
+const SCREEN_MENU_CORNER = 72;          // px : coin réservé pendant une scène
+const SCREEN_MENU_DOUBLE_MS = 300;
+const SCREEN_MENU_MOVE_TOL = 14;        // px de tolérance avant d'annuler l'appui long
+const _SCREEN_SCENE_LAYERS = ['screen-phone', 'screen-chat', 'screen-call', 'screen-palert', 'screen-ppower'];
+function screenSceneShown() {
+  return _SCREEN_SCENE_LAYERS.some((id) => {
+    const el = document.getElementById(id);
+    return !!el && getComputedStyle(el).display !== 'none';
   });
-
-  hot.addEventListener('touchcancel', cancel, { passive: true });
+}
+function _screenMenuZone(x, y, scene) {
+  if (scene) return x <= SCREEN_MENU_CORNER && y <= SCREEN_MENU_CORNER;
+  return x <= window.innerWidth * 0.45 && y <= window.innerHeight * 0.45;
+}
+(function setupScreenMenuGesture() {
+  let timer = null, pid = null, sx = 0, sy = 0, scene = false, lastTap = 0;
+  const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } pid = null; };
+  const armed = () => {
+    if (mode !== 'screen') return false;
+    const sm = document.getElementById('screen-mode'), m = document.getElementById('screen-menu');
+    return !!sm && getComputedStyle(sm).display !== 'none' && !(m && m.style.display === 'flex');
+  };
+  document.addEventListener('pointerdown', (e) => {
+    cancel();
+    if (!e.isPrimary || !armed()) { lastTap = 0; return; } // second doigt : pas un geste du menu
+    scene = screenSceneShown();
+    if (!_screenMenuZone(e.clientX, e.clientY, scene)) { lastTap = 0; return; }
+    pid = e.pointerId; sx = e.clientX; sy = e.clientY;
+    timer = setTimeout(() => { timer = null; pid = null; lastTap = 0; openScreenMenu(); }, scene ? SCREEN_MENU_SCENE_LONG_MS : SCREEN_MENU_LONG_MS);
+  }, true);
+  document.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== pid) return;
+    if (Math.abs(e.clientX - sx) > SCREEN_MENU_MOVE_TOL || Math.abs(e.clientY - sy) > SCREEN_MENU_MOVE_TOL) { cancel(); lastTap = 0; }
+  }, true);
+  document.addEventListener('pointerup', (e) => {
+    if (e.pointerId !== pid) return;
+    const pending = !!timer; // sinon : l'appui long a déjà ouvert le menu
+    cancel();
+    if (!pending || scene) return; // pendant une scène : appui long seulement
+    const now = Date.now();
+    if (now - lastTap < SCREEN_MENU_DOUBLE_MS) { lastTap = 0; openScreenMenu(); }
+    else lastTap = now;
+  }, true);
+  document.addEventListener('pointercancel', (e) => { if (e.pointerId === pid) { cancel(); lastTap = 0; } }, true);
 })();
 function closeScreenMenu() {
   const m = document.getElementById('screen-menu');
@@ -10454,7 +10518,46 @@ function goBackToSplash() {
   applyPendingUpdate();
 }
 
+// ── Boîte de confirmation de l'app (#app-confirm, même boîte que « Retirer cet écran ? ») ──
+let _appConfirmOk = null;
+function openAppConfirm(o, onOk) {
+  document.getElementById('acTitle').textContent = o.title;
+  document.getElementById('acText').textContent = o.text;
+  document.getElementById('acCancel').textContent = o.cancel || 'Annuler';
+  document.getElementById('acOk').textContent = o.ok;
+  _appConfirmOk = onOk;
+  document.getElementById('app-confirm').classList.add('open');
+}
+function appConfirmShown() { const d = document.getElementById('app-confirm'); return !!d && d.classList.contains('open'); }
+function closeAppConfirm() {
+  _appConfirmOk = null;
+  const d = document.getElementById('app-confirm');
+  if (d) d.classList.remove('open');
+}
+function appConfirmOk() {
+  const f = _appConfirmOk;
+  closeAppConfirm();
+  if (f) f();
+}
+// Échap : ferme la confirmation seule (pas la vue qui est dessous)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && appConfirmShown()) { e.stopImmediatePropagation(); closeAppConfirm(); }
+}, true);
+
+// Bouton Accueil (en-tête) et « Retour à l'accueil » (Réglages) : toujours
+// confirmés — un doigt qui glisse pendant une prise couperait tous les écrans.
+// Pas d'exception « rien en cours » : la boîte reste la même, prévisible.
+const _HOME_CONFIRM = {
+  title: 'Revenir à l\'accueil ?',
+  text: 'Les écrans restent appairés ; ce qui est en cours (stroboscope, média, passerelle DMX, séquence) s\'arrête.',
+  ok: 'Revenir à l\'accueil',
+};
+function askGoBack(then) {
+  openAppConfirm(_HOME_CONFIRM, () => { if (then) then(); goBack(); });
+}
+
 function goBack() {
+  closeAppConfirm();
   closeScreensUi(); // vue « Écrans connectés », choix de la cible (39-screens-ui.js)
   closeOfflineView(); // tourner sans réseau : préparation en cours arrêtée (93-offline.js)
   if (_prep) _prep.running = false;
@@ -17514,7 +17617,7 @@ function setCallKind(k) {
   _callShow('callLockPanel', sms);
   _callShow('callTriggerPanel', !disc);
   _callShow('callTriggerBtn', !notif, 'flex');
-  _callShow('callAnswerBtn', !notif, 'flex');
+  _callShow('callAnswerBtn', call, 'flex'); // « Décrocher » : appel seulement (pas de sens pour un SMS)
   _callShow('callListPanel', !disc, 'flex');
   const who = document.getElementById('callWhoLabel');
   if (who) who.textContent = call ? 'Appelant' : 'Contact';
@@ -17529,6 +17632,8 @@ function setCallKind(k) {
   if (btn) btn.innerHTML = call
     ? '<span class="media-icon">📞</span> Faire sonner'
     : '<span class="media-icon">💬</span> Envoyer la notification';
+  // Liste enregistrée : l'onglet suit le type choisi (Appels, SMS, Notifs)
+  if (CALL_LISTS.includes(k) && callListKind !== k) setCallListKind(k);
   renderCallListSaveLabel(); // « + Enregistrer l'appel / le SMS / la notification actuel(le) »
 }
 // Style : commun à l'appel et au SMS ; la discussion a le sien (83-discussion.js),
@@ -19183,7 +19288,10 @@ function renderCallList() {
       + '</div>').join('');
   }
   const empty = document.getElementById('callListEmpty');
-  if (empty) empty.style.display = list.length ? 'none' : 'block';
+  if (empty) {
+    empty.style.display = list.length ? 'none' : 'block';
+    empty.textContent = 'Réglez ' + (kind === 'call' ? 'l\'appel' : kind === 'notif' ? 'la notification' : 'le SMS') + ' ci-dessus puis enregistrez-' + (kind === 'notif' ? 'la' : 'le') + ' : ' + (kind === 'notif' ? 'elle' : 'il') + ' prend le numéro suivant.';
+  }
   const actions = document.getElementById('callListActions');
   if (actions) actions.style.display = list.length ? 'flex' : 'none';
   const go = document.getElementById('callListGo');
@@ -22766,8 +22874,11 @@ const _SEQ_TXT = {
   },
   refMissing: 'L\'élément de cette étape a été supprimé : choisissez-en un autre.',
   needRef: 'Choisissez l\'élément à jouer.',
-  del: 'SUPPRIMER', save: 'ENREGISTRER',
+  del: 'SUPPRIMER', cancel: 'ANNULER', save: 'ENREGISTRER',
   confirmDel: 'Supprimer l\'étape {n} ?',
+  leaveTitle: 'Abandonner les modifications ?', leaveNewTitle: 'Abandonner cette étape ?',
+  leaveText: 'Les réglages de l\'étape n\'ont pas été enregistrés.',
+  leaveOk: 'Abandonner', leaveCancel: 'Continuer',
   full: 'Séquence pleine ({max} étapes).',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   missedApp: 'Téléphone', missedTitle: 'Appel manqué', smsApp: 'SMS',
@@ -23027,6 +23138,19 @@ function seqGo(acked) {
   if (_seqRun.state === 'idle') _seqRun.clockT0 = Date.now(); // l'horloge du téléphone part au premier GO
   _seqRun.state = 'running';
   _seqStartNext();
+}
+// GO touché sur la télécommande : un second GO dans les 600 ms qui suivent un
+// départ d'étape est ignoré (un double toucher ne saute pas d'étape), et une
+// vibration courte confirme le départ. Les autres déclencheurs (minuterie,
+// geste, console) appellent seqGo directement.
+let SEQ_GO_GUARD_MS = 600;
+let _seqGoAt = -Infinity;
+function seqGoTap() {
+  const now = Date.now();
+  if (now - _seqGoAt < SEQ_GO_GUARD_MS) return;
+  const before = _seqRun.curId;
+  seqGo();
+  if (_seqRun.curId !== before) { _seqGoAt = now; screenVibrate([20]); } // 80-call-simulator.js : navigator.vibrate ou pont natif
 }
 function _seqClearTimer() { if (_seqRun.timer) { clearTimeout(_seqRun.timer); _seqRun.timer = null; } }
 // Démarre l'étape suivante (GO, minuterie, geste)
@@ -23680,6 +23804,15 @@ function openSeqStep(id) {
   const v = document.getElementById('seq-step-view');
   if (v) { v.style.display = 'flex'; v.scrollTop = 0; }
   renderSeqStep();
+  _seqEdit.orig = JSON.stringify(_seqEdit.step); // brouillon de départ : « modifié ? » à la sortie
+}
+function seqStepDirty() { return !!_seqEdit && JSON.stringify(_seqEdit.step) !== _seqEdit.orig; }
+// « ← Séquence » et ANNULER (nouvelle étape) : le brouillon modifié n'est
+// abandonné qu'après confirmation
+function seqStepLeave() {
+  if (!_seqEdit) return;
+  if (!seqStepDirty()) { closeSeqStep(); return; }
+  openAppConfirm({ title: _seqEdit.id ? _SEQ_TXT.leaveTitle : _SEQ_TXT.leaveNewTitle, text: _SEQ_TXT.leaveText, ok: _SEQ_TXT.leaveOk, cancel: _SEQ_TXT.leaveCancel }, closeSeqStep);
 }
 function closeSeqStep() {
   const e = _seqEdit;
@@ -23793,7 +23926,7 @@ function renderSeqStep() {
   const err = document.getElementById('ssErr');
   if (err) { err.textContent = e.err; err.style.display = e.err ? '' : 'none'; }
   const del = document.getElementById('ssDel');
-  if (del) del.textContent = _SEQ_TXT.del;
+  if (del) { del.textContent = e.id ? _SEQ_TXT.del : _SEQ_TXT.cancel; del.classList.toggle('ss-cancel', !e.id); }
 }
 function _seqStepper(label, n, fn, zeroNever) {
   const val = zeroNever && !n ? _SEQ_TXT.never : _seqTpl(_SEQ_TXT.seconds, { n });
@@ -23961,7 +24094,7 @@ function seqStepSave() {
 function seqStepDelete() {
   const e = _seqEdit;
   if (!e) return;
-  if (!e.id) { closeSeqStep(); return; }
+  if (!e.id) { seqStepLeave(); return; } // nouvelle étape : ANNULER
   const i = _seq.steps.findIndex((x) => x.id === e.id);
   if (i < 0) { closeSeqStep(); return; }
   if (!confirm(_seqTpl(_SEQ_TXT.confirmDel, { n: i + 1 }))) return;
@@ -24135,9 +24268,9 @@ function settingsForgetScreens() {
   document.getElementById('remote-mode').scrollTop = 0;
 }
 
+// Confirmé comme le bouton Accueil de l'en-tête (30-navigation.js)
 function settingsGoHome() {
-  closeSettings();
-  goBack();
+  askGoBack(closeSettings);
 }
 
 // Politique de confidentialité : page statique embarquée (confidentialite.html,

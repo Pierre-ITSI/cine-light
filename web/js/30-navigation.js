@@ -151,53 +151,67 @@ function suspendScreen() {
   showScreenPairing();
 }
 
-// ── Menu de l'écran de jeu (double-clic OU appui long, coin haut-gauche) ──
+// ── Menu de l'écran de jeu ──
 function openScreenMenu() {
   const m = document.getElementById('screen-menu');
   if (m) m.style.display = 'flex';
 }
 
-// Appui long (~600 ms) sur le hotspot : fiable sur mobile, où le double-clic
-// est souvent intercepté/ignoré par le navigateur. On gère aussi un double-tap
-// manuel (deux contacts rapprochés) en secours.
-(function setupScreenMenuHotspot() {
-  const hot = document.getElementById('screen-menu-hotspot');
-  if (!hot) return;
-  let pressTimer = null;
-  let startX = 0, startY = 0;
-  let lastTap = 0;
-  const LONG_MS = 600;
-  const MOVE_TOL = 14; // px de tolérance avant d'annuler l'appui long
-
-  const cancel = () => {
-    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-  };
-
-  hot.addEventListener('touchstart', (e) => {
-    e.stopPropagation();
-    const t = e.touches[0];
-    startX = t.clientX; startY = t.clientY;
-    cancel();
-    pressTimer = setTimeout(() => { pressTimer = null; openScreenMenu(); }, LONG_MS);
-  }, { passive: true });
-
-  hot.addEventListener('touchmove', (e) => {
-    const t = e.touches[0];
-    if (Math.abs(t.clientX - startX) > MOVE_TOL || Math.abs(t.clientY - startY) > MOVE_TOL) cancel();
-  }, { passive: true });
-
-  hot.addEventListener('touchend', (e) => {
-    e.stopPropagation();
-    const wasLong = pressTimer === null; // le timer a déjà déclenché le menu
-    cancel();
-    if (wasLong) return;
-    // Double-tap manuel en secours (deux contacts à moins de 300 ms).
-    const now = Date.now();
-    if (now - lastTap < 300) { lastTap = 0; openScreenMenu(); }
-    else lastTap = now;
+// Geste d'ouverture du menu, SANS calque au-dessus de la scène : il est lu sur
+// le document, en phase de capture, sans preventDefault ni stopPropagation.
+// Chaque toucher atteint donc aussi ce qui est dessous (faux téléphone,
+// discussion, appel) : le comédien peut toucher toute la scène.
+//  · Écran simple (lumière, couleur, média) : appui long (600 ms) ou double
+//    toucher / double-clic dans le quart haut-gauche (45 vw × 45 vh).
+//  · Scène du faux téléphone affichée (écran verrouillé, appel, notification,
+//    discussion, alerte, extinction) : seul un appui long de 1,5 s tout au
+//    bord, dans un carré de 72 px au coin haut-gauche, ouvre le menu.
+const SCREEN_MENU_LONG_MS = 600;        // écran simple
+const SCREEN_MENU_SCENE_LONG_MS = 1500; // scène du faux téléphone
+const SCREEN_MENU_CORNER = 72;          // px : coin réservé pendant une scène
+const SCREEN_MENU_DOUBLE_MS = 300;
+const SCREEN_MENU_MOVE_TOL = 14;        // px de tolérance avant d'annuler l'appui long
+const _SCREEN_SCENE_LAYERS = ['screen-phone', 'screen-chat', 'screen-call', 'screen-palert', 'screen-ppower'];
+function screenSceneShown() {
+  return _SCREEN_SCENE_LAYERS.some((id) => {
+    const el = document.getElementById(id);
+    return !!el && getComputedStyle(el).display !== 'none';
   });
-
-  hot.addEventListener('touchcancel', cancel, { passive: true });
+}
+function _screenMenuZone(x, y, scene) {
+  if (scene) return x <= SCREEN_MENU_CORNER && y <= SCREEN_MENU_CORNER;
+  return x <= window.innerWidth * 0.45 && y <= window.innerHeight * 0.45;
+}
+(function setupScreenMenuGesture() {
+  let timer = null, pid = null, sx = 0, sy = 0, scene = false, lastTap = 0;
+  const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } pid = null; };
+  const armed = () => {
+    if (mode !== 'screen') return false;
+    const sm = document.getElementById('screen-mode'), m = document.getElementById('screen-menu');
+    return !!sm && getComputedStyle(sm).display !== 'none' && !(m && m.style.display === 'flex');
+  };
+  document.addEventListener('pointerdown', (e) => {
+    cancel();
+    if (!e.isPrimary || !armed()) { lastTap = 0; return; } // second doigt : pas un geste du menu
+    scene = screenSceneShown();
+    if (!_screenMenuZone(e.clientX, e.clientY, scene)) { lastTap = 0; return; }
+    pid = e.pointerId; sx = e.clientX; sy = e.clientY;
+    timer = setTimeout(() => { timer = null; pid = null; lastTap = 0; openScreenMenu(); }, scene ? SCREEN_MENU_SCENE_LONG_MS : SCREEN_MENU_LONG_MS);
+  }, true);
+  document.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== pid) return;
+    if (Math.abs(e.clientX - sx) > SCREEN_MENU_MOVE_TOL || Math.abs(e.clientY - sy) > SCREEN_MENU_MOVE_TOL) { cancel(); lastTap = 0; }
+  }, true);
+  document.addEventListener('pointerup', (e) => {
+    if (e.pointerId !== pid) return;
+    const pending = !!timer; // sinon : l'appui long a déjà ouvert le menu
+    cancel();
+    if (!pending || scene) return; // pendant une scène : appui long seulement
+    const now = Date.now();
+    if (now - lastTap < SCREEN_MENU_DOUBLE_MS) { lastTap = 0; openScreenMenu(); }
+    else lastTap = now;
+  }, true);
+  document.addEventListener('pointercancel', (e) => { if (e.pointerId === pid) { cancel(); lastTap = 0; } }, true);
 })();
 function closeScreenMenu() {
   const m = document.getElementById('screen-menu');
@@ -239,7 +253,46 @@ function goBackToSplash() {
   applyPendingUpdate();
 }
 
+// ── Boîte de confirmation de l'app (#app-confirm, même boîte que « Retirer cet écran ? ») ──
+let _appConfirmOk = null;
+function openAppConfirm(o, onOk) {
+  document.getElementById('acTitle').textContent = o.title;
+  document.getElementById('acText').textContent = o.text;
+  document.getElementById('acCancel').textContent = o.cancel || 'Annuler';
+  document.getElementById('acOk').textContent = o.ok;
+  _appConfirmOk = onOk;
+  document.getElementById('app-confirm').classList.add('open');
+}
+function appConfirmShown() { const d = document.getElementById('app-confirm'); return !!d && d.classList.contains('open'); }
+function closeAppConfirm() {
+  _appConfirmOk = null;
+  const d = document.getElementById('app-confirm');
+  if (d) d.classList.remove('open');
+}
+function appConfirmOk() {
+  const f = _appConfirmOk;
+  closeAppConfirm();
+  if (f) f();
+}
+// Échap : ferme la confirmation seule (pas la vue qui est dessous)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && appConfirmShown()) { e.stopImmediatePropagation(); closeAppConfirm(); }
+}, true);
+
+// Bouton Accueil (en-tête) et « Retour à l'accueil » (Réglages) : toujours
+// confirmés — un doigt qui glisse pendant une prise couperait tous les écrans.
+// Pas d'exception « rien en cours » : la boîte reste la même, prévisible.
+const _HOME_CONFIRM = {
+  title: 'Revenir à l\'accueil ?',
+  text: 'Les écrans restent appairés ; ce qui est en cours (stroboscope, média, passerelle DMX, séquence) s\'arrête.',
+  ok: 'Revenir à l\'accueil',
+};
+function askGoBack(then) {
+  openAppConfirm(_HOME_CONFIRM, () => { if (then) then(); goBack(); });
+}
+
 function goBack() {
+  closeAppConfirm();
   closeScreensUi(); // vue « Écrans connectés », choix de la cible (39-screens-ui.js)
   closeOfflineView(); // tourner sans réseau : préparation en cours arrêtée (93-offline.js)
   if (_prep) _prep.running = false;

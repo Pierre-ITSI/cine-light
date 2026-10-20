@@ -846,6 +846,31 @@ export const SCENES = {
   'remote-seq-preview': licScene('seq'),
   'remote-settings-licence': licScene(null, (page) => page.evaluate(() => openSettings())),
   'remote-settings-licence-active': licScene(null, (page) => page.evaluate(() => openSettings())),
+  // ── Garde-fous du plateau ──
+  // Accueil (en-tête) : confirmation avant de tout arrêter
+  'remote-home-confirm': remote(null, (page) => page.evaluate(() => askGoBack())),
+  // Nouvelle étape modifiée puis « ← Séquence » : abandon confirmé
+  'remote-seq-step-leave': seqScene((page) => page.evaluate(() => { openSeqStep(null); seqEditKind('sms'); seqStepLeave(); })),
+  // Paysage (844 × 390, SCENE_VIEWPORT) : Accepter / Refuser entiers, notifications de l'écran verrouillé visibles
+  'screen-call-glass-landscape': screenCall({ kind: 'call', style: 'glass', name: 'Maman', label: 'mobile' }),
+  'screen-incall-tonal-landscape': screenCall({ kind: 'call', style: 'tonal', name: 'Maman' }, (page) => page.evaluate(() => screenCallAnswer())),
+  'screen-notif-lock-glass-landscape': screenCall({ ...NOTIF, style: 'glass', present: 'lock' }),
+  'screen-seq-lock-landscape': async (page) => {
+    await joinScreen(page);
+    await page.evaluate(([imgFn, id, notifs]) => {
+      _mediaCache.set(id, { kind: 'img', data: (0, eval)('(' + imgFn + ')')(80) });
+      screenPhoneState({ mode: 'locked', style: 'glass', notifs, unlock: { code: 4, then: 'home' }, home: false, watch: [], chime: null });
+    }, [seqAppIcon.toString(), SEQ_ICON_ID, SEQ_NOTIFS_44]);
+    await page.clock.runFor(600);
+  },
+};
+// Fenêtre propre à une scène (sinon 390 × 844)
+const LANDSCAPE = { width: 844, height: 390 };
+export const SCENE_VIEWPORT = {
+  'screen-call-glass-landscape': LANDSCAPE,
+  'screen-incall-tonal-landscape': LANDSCAPE,
+  'screen-notif-lock-glass-landscape': LANDSCAPE,
+  'screen-seq-lock-landscape': LANDSCAPE,
 };
 
 // Fige les effets canvas sur une frame déterministe : chaque moteur actif est
@@ -864,7 +889,7 @@ function freezeCanvasFx() {
 // Capture d'une scène pour un fichier HTML donné
 export async function captureScene(browser, file, name) {
   const init = SCENE_INIT[name] || (NATIVE_SCENES.has(name) ? NATIVE_INIT : null);
-  const { page, errors, close } = await openPage(browser, { file, clock: true, init });
+  const { page, errors, close } = await openPage(browser, { file, clock: true, init, ...(SCENE_VIEWPORT[name] ? { viewport: SCENE_VIEWPORT[name] } : {}) });
   try {
     await SCENES[name](page);
     await page.evaluate(freezeCanvasFx);

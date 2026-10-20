@@ -46,6 +46,8 @@
 .sq-ctl button:disabled{opacity:.4;cursor:default}
 .sq-go{flex:2;border:none;background:var(--accent);color:#000;font-size:1rem;font-weight:500;letter-spacing:.1em}
 .sq-back{flex:1;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-size:.75rem}
+/* ↶ à 16 px du GO (8 px d'écart + 8 px de marge) : un GO un peu à côté ne revient pas d'une étape */
+.sq-ctl .sq-back{margin-left:8px}
 .sq-stop{flex:1;border:1px solid rgba(255,122,112,.5);background:var(--mid2);color:#ff8f86;font-size:.75rem}
 
 /* Téléphone au départ (maquette 28b) : ligne sous le nom de la séquence */
@@ -89,6 +91,8 @@
 .ss-actions{display:flex;gap:8px;margin-top:auto;position:sticky;bottom:calc(-22px - env(safe-area-inset-bottom));padding:10px 0 calc(22px + env(safe-area-inset-bottom));margin-bottom:calc(-22px - env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(10,10,15,.96) 75%,rgba(10,10,15,0))}
 .ss-actions button{height:46px;border-radius:8px;font-family:'DM Mono',monospace;cursor:pointer}
 .ss-del{flex:1;border:1px solid rgba(255,122,112,.5);background:var(--mid2);color:#ff8f86;font-size:.6875rem}
+/* Nouvelle étape (pas encore enregistrée) : ANNULER, bouton neutre */
+.ss-del.ss-cancel{border-color:rgba(255,255,255,.14);color:var(--text)}
 .ss-save{flex:1.6;border:none;background:var(--accent);color:#000;font-size:.75rem}
 
 /* Écran — faux téléphone (maquettes 30 à 32), sous la discussion (85) et l'appel (95) */
@@ -151,3 +155,15 @@
 /* Écran d'accueil (maquette 32) : image importée plein écran */
 .sp-home{background:linear-gradient(160deg,#3d5a80 0%,#98c1d9 60%,#e0fbfc 100%);background-size:cover;background-position:center;cursor:pointer}
 .sp-unlocked{background:#000}
+/* Paysage (ex. 844 × 390) : horloge réduite, pile de notifications qui défile
+   (comme un vrai écran verrouillé) au lieu d'être coupée ; pavé du code compact */
+@media (orientation:landscape) and (max-height:500px){
+  .sp-lock{gap:6px;padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+  .sp-time,#screen-phone.tonal .sp-time,#screen-phone.minimal .sp-time{font-size:44px;margin-top:0}
+  .sp-stack{margin-top:4px;overflow-y:auto;overscroll-behavior:contain;width:100%;max-width:560px;align-self:center}
+  .sp-code{gap:4px;padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+  .sp-dots{margin:4px 0 10px}
+  .sp-keys{grid-template-columns:repeat(3,52px);gap:8px 22px}
+  .sp-key{width:52px;height:52px;font-size:22px}
+  #screen-mode.sb-on .sp-lock,#screen-mode.sb-on .sp-code{padding-top:calc(44px + env(safe-area-inset-top))}
+}

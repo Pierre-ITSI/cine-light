@@ -55,7 +55,7 @@ function setCallKind(k) {
   _callShow('callLockPanel', sms);
   _callShow('callTriggerPanel', !disc);
   _callShow('callTriggerBtn', !notif, 'flex');
-  _callShow('callAnswerBtn', !notif, 'flex');
+  _callShow('callAnswerBtn', call, 'flex'); // « Décrocher » : appel seulement (pas de sens pour un SMS)
   _callShow('callListPanel', !disc, 'flex');
   const who = document.getElementById('callWhoLabel');
   if (who) who.textContent = call ? 'Appelant' : 'Contact';
@@ -70,6 +70,8 @@ function setCallKind(k) {
   if (btn) btn.innerHTML = call
     ? '<span class="media-icon">📞</span> Faire sonner'
     : '<span class="media-icon">💬</span> Envoyer la notification';
+  // Liste enregistrée : l'onglet suit le type choisi (Appels, SMS, Notifs)
+  if (CALL_LISTS.includes(k) && callListKind !== k) setCallListKind(k);
   renderCallListSaveLabel(); // « + Enregistrer l'appel / le SMS / la notification actuel(le) »
 }
 // Style : commun à l'appel et au SMS ; la discussion a le sien (83-discussion.js),

@@ -123,8 +123,7 @@
     <button class="screen-bar-btn" onclick="event.stopPropagation();suspendScreen()">⏸ Suspendre</button>
     <button class="screen-bar-btn" id="screenBlackoutBtn" onclick="event.stopPropagation();toggleScreenBlackout()">⚫ Off</button>
   </div>
-  <!-- Zone tactile (haut-gauche, 1/5 de l'écran) : double-clic OU appui long = menu -->
-  <div id="screen-menu-hotspot" onclick="event.stopPropagation()" ondblclick="event.stopPropagation();openScreenMenu()"></div>
+  <!-- Menu : geste lu sur le document sans calque bloquant (30-navigation.js) — le comédien touche toute la scène -->
   <!-- Menu plein écran identique à l'app native -->
   <div id="screen-menu" onclick="event.stopPropagation()">
     <div class="screen-menu-info" id="screenMenuInfo">Liaison chiffrée de bout en bout</div>
@@ -132,6 +131,7 @@
     <button class="screen-menu-btn" onclick="closeScreenMenu();suspendScreen()">Changer de télécommande</button>
     <button class="screen-menu-btn" onclick="closeScreenMenu();goBackToSplash()">Retour à l'accueil</button>
     <button class="screen-menu-btn danger" onclick="screenDisconnect()">Se déconnecter</button>
+    <div class="screen-menu-hint">Rouvrir ce menu : appui long dans le coin haut-gauche (1,5 s tout au bord quand un faux téléphone est affiché)</div>
   </div>
 </div>
 
@@ -145,7 +145,7 @@
     <h2>SetRemote</h2>
     <div class="remote-header-end">
       <button type="button" class="link-pill reconnecting" id="linkPill" onclick="openLinkDetail()" aria-label="État de la liaison — détail par écran"><span class="link-dot"></span><span id="linkPillLabel">Connexion…</span></button>
-      <button type="button" class="hdr-gear" id="homeBtn" aria-label="Menu principal" title="Menu principal" onclick="goBack()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></button>
+      <button type="button" class="hdr-gear" id="homeBtn" aria-label="Menu principal" title="Menu principal" onclick="askGoBack()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></button>
       <button type="button" class="hdr-gear" id="settingsBtn" aria-label="Réglages" onclick="openSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     </div>
   </div>
@@ -712,8 +712,8 @@
         </label>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:10px">
-        <input type="text" id="lockTime" class="text-input" placeholder="Heure (ex : 00:10)" style="flex:1">
-        <input type="text" id="lockDate" class="text-input" placeholder="Ven. 17 juil." style="flex:1">
+        <input type="text" id="lockTime" class="text-input" placeholder="Heure (ex : 00:10)" style="flex:1;min-width:0">
+        <input type="text" id="lockDate" class="text-input" placeholder="Ven. 17 juil." style="flex:1;min-width:0">
       </div>
       <div style="display:flex;gap:10px;align-items:center">
         <div id="lockWallPreview" style="width:36px;height:62px;border-radius:8px;background:var(--mid2);background-size:cover;background-position:center;border:1px solid var(--border);flex-shrink:0"></div>
@@ -914,7 +914,7 @@
       <div class="sq-now" id="seqNow" role="status"></div>
       <div class="sq-warn" id="seqWarn" role="alert" style="display:none"></div>
       <div class="sq-ctl">
-        <button type="button" class="sq-go" id="seqGoBtn" onclick="seqGo()">GO</button>
+        <button type="button" class="sq-go" id="seqGoBtn" onclick="seqGoTap()">GO</button>
         <button type="button" class="sq-back" id="seqBackBtn" aria-label="Revenir d'une étape" title="Revenir d'une étape" onclick="seqBack()">↶</button>
         <button type="button" class="sq-stop" id="seqStopBtn" onclick="seqStop()">STOP</button>
       </div>
@@ -977,7 +977,7 @@
 <!-- Séquence : éditer une étape (maquette 29) -->
 <div id="seq-step-view" role="dialog" aria-modal="true" aria-labelledby="ssTitle">
   <div class="ss-head">
-    <button type="button" class="ss-back" onclick="closeSeqStep()">← Séquence</button>
+    <button type="button" class="ss-back" onclick="seqStepLeave()">← Séquence</button>
     <span class="ss-title" id="ssTitle">Étape</span>
     <span class="ss-spacer"></span>
   </div>
@@ -1113,6 +1113,18 @@
     <div class="rv-actions">
       <button type="button" class="rv-cancel" onclick="closeRevokeDialog()">Annuler</button>
       <button type="button" class="rv-ok" id="rvOk" onclick="confirmRevoke()">Retirer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation de l'app (retour à l'accueil, brouillon d'étape abandonné) : même boîte que « Retirer cet écran ? » -->
+<div id="app-confirm" onclick="if(event.target===this)closeAppConfirm()">
+  <div class="rv-dialog" role="alertdialog" aria-modal="true" aria-labelledby="acTitle" aria-describedby="acText">
+    <h2 id="acTitle"></h2>
+    <p class="rv-text" id="acText"></p>
+    <div class="rv-actions">
+      <button type="button" class="rv-cancel" id="acCancel" onclick="closeAppConfirm()">Annuler</button>
+      <button type="button" class="rv-ok" id="acOk" onclick="appConfirmOk()"></button>
     </div>
   </div>
 </div>

@@ -151,7 +151,7 @@ The French source contains no `aria-label`, no `alt` text other than empty strin
    `setSacnStatus` / `updateDmxGrid` (`web/js/60-sacn.js`) target elements that are absent from
    `web/index.template.html` (`#torchBtn`, `#vibrateBtn`, `#sacnLabel`, `#sacnConnectBtn`,
    `#dmxChannelGrid`). Their strings are under `legacy.*`. Delete them or wire them back up.
-7. **Accessibility.** Icon-only buttons (`✕`, `×`, `−`, `+`, `TAP`, the screen-menu hotspot) have
+7. **Accessibility.** Icon-only buttons (`✕`, `×`, `−`, `+`, `TAP`) have
    no `aria-label`.
 8. **Features not on `main` yet, which will need new keys.** None of these exists in
    `main@5e0323d`; add keys when they land:

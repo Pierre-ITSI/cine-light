@@ -22,7 +22,9 @@ async function rig(n, seed) {
   const broker = new FakeBroker();
   const remote = await openPage(browser, { broker, seed, autoConnect: true });
   const rp = remote.page;
-  await rp.evaluate(() => { startMode('remote'); switchTab('seq'); });
+  // Les tests enchaînent les GO plus vite qu'un doigt : anti-rebond levé ici
+  // (il a son propre test, « GO : anti-rebond… »)
+  await rp.evaluate(() => { startMode('remote'); switchTab('seq'); SEQ_GO_GUARD_MS = 0; });
   await connected(rp);
   const hash = await pairingHash(rp);
   const screens = [];
@@ -429,7 +431,9 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     await page.locator('#ssKinds .ss-opt', { hasText: 'Appel' }).first().click();
     await page.click('#ssSave');
     assert.equal(await page.textContent('#ssErr'), 'Choisissez l\'élément à jouer.');
+    assert.equal(await page.textContent('#ssDel'), 'ANNULER', 'nouvelle étape : rien à supprimer');
     await page.click('#ssDel');
+    await page.click('#acOk'); // brouillon modifié : abandon confirmé
     assert.equal((await rows(page)).length, 1);
     assert.deepEqual(errors, []);
     await close();
@@ -567,5 +571,77 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     assert.equal(await shown(), false);
     noErrors(r);
     await r.close();
+  });
+});
+
+describe('garde-fous du plateau : GO, éditeur d\'étape', () => {
+  test('GO : anti-rebond de 600 ms (un double toucher ne saute pas d\'étape), vibration courte, ↶ à 16 px', async () => {
+    const { page, errors, close } = await openPage(browser);
+    await page.evaluate(() => {
+      startMode('remote'); switchTab('seq');
+      window.__vib = [];
+      navigator.vibrate = (p) => { window.__vib.push(p); return true; };
+    });
+    await fixtures(page);
+    await setSteps(page, [st('v1', 'sms', 's1', { k: 'go' }, { k: 'all' }), st('v2', 'sms', 's2', { k: 'go' }, { k: 'all' }), st('v3', 'call', 'c1', { k: 'go' }, { k: 'all' })]);
+    assert.equal(await page.evaluate(() => SEQ_GO_GUARD_MS), 600);
+    await page.click('#seqGoBtn');
+    await page.click('#seqGoBtn'); // double toucher
+    assert.equal(await pos(page), 1, 'le second GO est ignoré');
+    assert.deepEqual(await page.evaluate(() => window.__vib), [[20]]);
+    await sleep(650);
+    await page.click('#seqGoBtn');
+    assert.equal(await pos(page), 2);
+    assert.deepEqual(await page.evaluate(() => window.__vib), [[20], [20]]);
+    // seqGo (minuterie, console) n'est pas freiné
+    await page.evaluate(() => seqGo());
+    assert.equal(await pos(page), 3);
+    const gap = await page.evaluate(() => document.getElementById('seqBackBtn').getBoundingClientRect().left - document.getElementById('seqGoBtn').getBoundingClientRect().right);
+    assert.ok(gap >= 16, 'écart GO / ↶ : ' + gap);
+    assert.deepEqual(errors, []);
+    await close();
+  });
+
+  test('éditeur d\'étape : ANNULER pour une nouvelle étape ; quitter avec des modifications demande confirmation', async () => {
+    const { page, errors, close } = await openPage(browser);
+    await page.evaluate(() => { startMode('remote'); switchTab('seq'); });
+    await fixtures(page);
+    await setSteps(page, [st('w1', 'sms', 's1', { k: 'go' }, { k: 'all' })]);
+    const editor = () => page.evaluate(() => getComputedStyle(document.getElementById('seq-step-view')).display !== 'none');
+    const confirmShown = () => page.evaluate(() => getComputedStyle(document.getElementById('app-confirm')).display === 'block');
+    // Nouvelle étape intacte : ANNULER (neutre) ferme sans question
+    await page.click('#seqAddBtn');
+    assert.equal(await page.textContent('#ssDel'), 'ANNULER');
+    assert.equal(await page.evaluate(() => document.getElementById('ssDel').classList.contains('ss-cancel')), true);
+    await page.click('#ssDel');
+    assert.deepEqual([await editor(), await confirmShown()], [false, false]);
+    // Nouvelle étape modifiée : « ← Séquence » demande confirmation ; Continuer garde le brouillon
+    await page.click('#seqAddBtn');
+    await page.locator('#ssKinds .ss-opt', { hasText: 'SMS' }).click();
+    await page.click('.ss-back');
+    assert.equal(await confirmShown(), true);
+    assert.equal(await page.textContent('#acTitle'), 'Abandonner cette étape ?');
+    assert.deepEqual([await page.textContent('#acCancel'), await page.textContent('#acOk')], ['Continuer', 'Abandonner']);
+    await page.click('#acCancel');
+    assert.deepEqual([await editor(), await confirmShown()], [true, false]);
+    assert.equal(await page.evaluate(() => _seqEdit.step.kind), 'sms', 'brouillon gardé');
+    await page.click('.ss-back');
+    await page.click('#acOk');
+    assert.equal(await editor(), false);
+    assert.equal((await rows(page)).length, 1, 'rien d\'ajouté');
+    // Étape existante : SUPPRIMER ; intacte, « ← Séquence » ferme directement ; modifiée, confirmation
+    await page.locator('#seqRows .sq-row').nth(0).click();
+    assert.equal(await page.textContent('#ssDel'), 'SUPPRIMER');
+    await page.click('.ss-back');
+    assert.deepEqual([await editor(), await confirmShown()], [false, false]);
+    await page.locator('#seqRows .sq-row').nth(0).click();
+    await page.locator('#ssTrigCard .ss-opt', { hasText: 'Après N s' }).click();
+    await page.click('.ss-back');
+    assert.equal(await page.textContent('#acTitle'), 'Abandonner les modifications ?');
+    await page.click('#acOk');
+    assert.equal(await editor(), false);
+    assert.deepEqual((await rows(page))[0].slice(0, 3), ['1', 'Notif SMS « Maman » (verrouillé)', 'GO'], 'étape inchangée');
+    assert.deepEqual(errors, []);
+    await close();
   });
 });

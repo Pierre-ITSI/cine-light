@@ -156,8 +156,11 @@ const _SEQ_TXT = {
   },
   refMissing: 'L\'élément de cette étape a été supprimé : choisissez-en un autre.',
   needRef: 'Choisissez l\'élément à jouer.',
-  del: 'SUPPRIMER', save: 'ENREGISTRER',
+  del: 'SUPPRIMER', cancel: 'ANNULER', save: 'ENREGISTRER',
   confirmDel: 'Supprimer l\'étape {n} ?',
+  leaveTitle: 'Abandonner les modifications ?', leaveNewTitle: 'Abandonner cette étape ?',
+  leaveText: 'Les réglages de l\'étape n\'ont pas été enregistrés.',
+  leaveOk: 'Abandonner', leaveCancel: 'Continuer',
   full: 'Séquence pleine ({max} étapes).',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   missedApp: 'Téléphone', missedTitle: 'Appel manqué', smsApp: 'SMS',
@@ -417,6 +420,19 @@ function seqGo(acked) {
   if (_seqRun.state === 'idle') _seqRun.clockT0 = Date.now(); // l'horloge du téléphone part au premier GO
   _seqRun.state = 'running';
   _seqStartNext();
+}
+// GO touché sur la télécommande : un second GO dans les 600 ms qui suivent un
+// départ d'étape est ignoré (un double toucher ne saute pas d'étape), et une
+// vibration courte confirme le départ. Les autres déclencheurs (minuterie,
+// geste, console) appellent seqGo directement.
+let SEQ_GO_GUARD_MS = 600;
+let _seqGoAt = -Infinity;
+function seqGoTap() {
+  const now = Date.now();
+  if (now - _seqGoAt < SEQ_GO_GUARD_MS) return;
+  const before = _seqRun.curId;
+  seqGo();
+  if (_seqRun.curId !== before) { _seqGoAt = now; screenVibrate([20]); } // 80-call-simulator.js : navigator.vibrate ou pont natif
 }
 function _seqClearTimer() { if (_seqRun.timer) { clearTimeout(_seqRun.timer); _seqRun.timer = null; } }
 // Démarre l'étape suivante (GO, minuterie, geste)
@@ -1070,6 +1086,15 @@ function openSeqStep(id) {
   const v = document.getElementById('seq-step-view');
   if (v) { v.style.display = 'flex'; v.scrollTop = 0; }
   renderSeqStep();
+  _seqEdit.orig = JSON.stringify(_seqEdit.step); // brouillon de départ : « modifié ? » à la sortie
+}
+function seqStepDirty() { return !!_seqEdit && JSON.stringify(_seqEdit.step) !== _seqEdit.orig; }
+// « ← Séquence » et ANNULER (nouvelle étape) : le brouillon modifié n'est
+// abandonné qu'après confirmation
+function seqStepLeave() {
+  if (!_seqEdit) return;
+  if (!seqStepDirty()) { closeSeqStep(); return; }
+  openAppConfirm({ title: _seqEdit.id ? _SEQ_TXT.leaveTitle : _SEQ_TXT.leaveNewTitle, text: _SEQ_TXT.leaveText, ok: _SEQ_TXT.leaveOk, cancel: _SEQ_TXT.leaveCancel }, closeSeqStep);
 }
 function closeSeqStep() {
   const e = _seqEdit;
@@ -1183,7 +1208,7 @@ function renderSeqStep() {
   const err = document.getElementById('ssErr');
   if (err) { err.textContent = e.err; err.style.display = e.err ? '' : 'none'; }
   const del = document.getElementById('ssDel');
-  if (del) del.textContent = _SEQ_TXT.del;
+  if (del) { del.textContent = e.id ? _SEQ_TXT.del : _SEQ_TXT.cancel; del.classList.toggle('ss-cancel', !e.id); }
 }
 function _seqStepper(label, n, fn, zeroNever) {
   const val = zeroNever && !n ? _SEQ_TXT.never : _seqTpl(_SEQ_TXT.seconds, { n });
@@ -1351,7 +1376,7 @@ function seqStepSave() {
 function seqStepDelete() {
   const e = _seqEdit;
   if (!e) return;
-  if (!e.id) { closeSeqStep(); return; }
+  if (!e.id) { seqStepLeave(); return; } // nouvelle étape : ANNULER
   const i = _seq.steps.findIndex((x) => x.id === e.id);
   if (i < 0) { closeSeqStep(); return; }
   if (!confirm(_seqTpl(_SEQ_TXT.confirmDel, { n: i + 1 }))) return;

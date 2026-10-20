@@ -229,7 +229,8 @@ test('nom de l\'enregistrement (feuille), entrée chargée : mettre à jour / en
   assert.equal(await page.evaluate((id) => callAssetGet(id + ':photo'), dupId), null);
   assert.equal(await page.evaluate(() => callAssetGet(callList.call[1].id + ':photo')), blue);
   // « Charger dans l'onglet » : comme toucher la ligne ; « Mettre à jour » absent si le formulaire est d'un autre type
-  await page.evaluate(() => setCallKind('sms'));
+  // (le formulaire passé en SMS emmène la liste sur « SMS » : on revient sur « Appels »)
+  await page.evaluate(() => { setCallKind('sms'); setCallListKind('call'); });
   await page.locator('#callListRows .cl-row').nth(2).locator('.cl-more').click();
   assert.deepEqual(await menu(page), ['Charger dans l\'onglet', 'Renommer', 'Dupliquer', 'Supprimer', 'Fermer']);
   await page.locator('#srSheetBody .dc-menu-btn', { hasText: 'Charger dans l\'onglet' }).click();

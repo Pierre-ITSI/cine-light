@@ -72,8 +72,9 @@
 
 /* — Retirer un écran (maquette 5b) : bouton rouge et confirmation — */
 .sv-icon.sv-revoke{border-color:rgba(255,122,112,.45);color:#ff7a70}
-#sr-revoke{display:none;position:fixed;inset:0;z-index:550;background:rgba(0,0,0,.78);font-family:'DM Mono',monospace;color:var(--text)}
-#sr-revoke.open{display:block}
+/* Même boîte pour les confirmations de l'app (#app-confirm : accueil, brouillon d'étape) */
+#sr-revoke,#app-confirm{display:none;position:fixed;inset:0;z-index:550;background:rgba(0,0,0,.78);font-family:'DM Mono',monospace;color:var(--text)}
+#sr-revoke.open,#app-confirm.open{display:block}
 .rv-dialog{position:absolute;left:18px;right:18px;top:230px;max-width:420px;margin:0 auto;background:var(--mid);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:24px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
 .rv-dialog svg{align-self:center;flex-shrink:0}
 .rv-dialog h2{margin:0;text-align:center;font-family:'Lato',sans-serif;font-weight:600;font-size:1.25rem;overflow-wrap:anywhere}

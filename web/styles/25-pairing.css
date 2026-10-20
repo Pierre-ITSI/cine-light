@@ -39,7 +39,8 @@
 .ps-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ps-link{font-size:.6875rem;color:#a0a0a0}
 .pair-screen.off .ps-link{color:#ff7a70}
-.pair-renew{border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)}
+/* .media-btn.pair-renew : plus spécifique que .media-btn (70-media.css, chargé après) — reste rouge */
+.media-btn.pair-renew,.media-btn.pair-renew:hover{border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)}
 .pair-e2e{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px 4px 4px;font-size:.6875rem;color:#a0a0a0;text-align:center;line-height:1.5}
 .pair-e2e svg{flex-shrink:0}
 

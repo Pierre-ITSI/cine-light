@@ -193,10 +193,11 @@ test('« Oublier tous les écrans appairés » : confirmation, puis nouvelle ses
   await close();
 });
 
-test('« Retour à l\'accueil » : fin de la télécommande, accueil affiché', async () => {
+test('« Retour à l\'accueil » : confirmé, puis fin de la télécommande, accueil affiché', async () => {
   const { page, errors, close } = await remote();
   await page.click('#settingsBtn');
   await page.click('#settings-view .st-btn:not(.st-danger)');
+  await page.click('#acOk'); // confirmation (30-navigation.js)
   const st = await page.evaluate(() => ({
     mode, client: mqttClient, splash: getComputedStyle(document.getElementById('splash')).display,
     remote: getComputedStyle(document.getElementById('remote-mode')).display,

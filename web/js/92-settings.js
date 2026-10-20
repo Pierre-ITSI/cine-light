@@ -95,9 +95,9 @@ function settingsForgetScreens() {
   document.getElementById('remote-mode').scrollTop = 0;
 }
 
+// Confirmé comme le bouton Accueil de l'en-tête (30-navigation.js)
 function settingsGoHome() {
-  closeSettings();
-  goBack();
+  askGoBack(closeSettings);
 }
 
 // Politique de confidentialité : page statique embarquée (confidentialite.html,

@@ -305,7 +305,10 @@ function renderCallList() {
       + '</div>').join('');
   }
   const empty = document.getElementById('callListEmpty');
-  if (empty) empty.style.display = list.length ? 'none' : 'block';
+  if (empty) {
+    empty.style.display = list.length ? 'none' : 'block';
+    empty.textContent = 'Réglez ' + (kind === 'call' ? 'l\'appel' : kind === 'notif' ? 'la notification' : 'le SMS') + ' ci-dessus puis enregistrez-' + (kind === 'notif' ? 'la' : 'le') + ' : ' + (kind === 'notif' ? 'elle' : 'il') + ' prend le numéro suivant.';
+  }
   const actions = document.getElementById('callListActions');
   if (actions) actions.style.display = list.length ? 'flex' : 'none';
   const go = document.getElementById('callListGo');
