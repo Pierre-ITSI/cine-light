@@ -69,7 +69,7 @@ test('Internet coupé, Wi-Fi local actif : commandes et médias continuent, past
   assert.deepEqual(start, { type: 'link:start', modes: ['lan', 'ble'], role: 'remote', room: await rp.evaluate(() => _sec.topic) });
   assert.equal(start.room.length, 22);
   assert.deepEqual(hub.posted(A.page, 'link:start').at(-1).role, 'screen');
-  assert.deepEqual(await pill(rp), ['online', 'Internet · chiffré']);
+  assert.deepEqual(await pill(rp), ['online', 'Internet']);
   // Internet coupé partout
   for (const p of [rp, A.page, B.page]) await cutInternet(p);
   await waitFor(rp, () => document.getElementById('linkPillLabel').textContent === 'Wi-Fi local');
@@ -325,7 +325,7 @@ test('Auto : Internet, puis Wi-Fi local, puis Bluetooth, puis retour d\'Internet
     const c = await rp.evaluate(() => currentColor);
     await waitFor(A.page, (c) => screenBaseColor === c, c);
   };
-  assert.deepEqual(await pill(rp), ['online', 'Internet · chiffré']);
+  assert.deepEqual(await pill(rp), ['online', 'Internet']);
   await color(3200);
   for (const p of [rp, A.page]) await cutInternet(p);
   await waitFor(rp, () => document.getElementById('linkPillLabel').textContent === 'Wi-Fi local');
@@ -335,7 +335,7 @@ test('Auto : Internet, puis Wi-Fi local, puis Bluetooth, puis retour d\'Internet
   await color(5600);
   hub.setUp('lan', true);
   for (const p of [rp, A.page]) await restoreInternet(p);
-  await waitFor(rp, () => document.getElementById('linkPillLabel').textContent === 'Internet · chiffré');
+  await waitFor(rp, () => document.getElementById('linkPillLabel').textContent === 'Internet');
   await color(6500);
   // Forcé « Wi-Fi local » : Internet fermé, Bluetooth fermé (vue « Tourner sans réseau »)
   hub.clear();
@@ -455,7 +455,7 @@ test('coque sans liaisons locales (jamais de link:state) : un choix « Wi-Fi loc
   })), {
     posted: ['link:state?', 'link:start:lan', 'link:state?'],
     seg: [['offLink-auto', false, false], ['offLink-internet', false, false], ['offLink-lan', true, true], ['offLink-ble', true, false]],
-    pill: 'Internet · chiffré', select: false,
+    pill: 'Internet', select: false,
   });
   // La coque répond enfin : Wi-Fi local disponible, Internet fermé comme demandé
   await page.evaluate(() => window.SRNative.receive({ type: 'link:state', lan: { available: true, active: true }, ble: { available: false, active: false } }));

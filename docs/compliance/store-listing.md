@@ -272,7 +272,7 @@ Reprendre `desc.fr` / `desc.en` (section 1.5) à l'identique. Les puces « • �
 - **Ne jamais montrer** l'onglet Appel ni les écrans d'appel, de notification ou d'écran verrouillé fictifs.
 - Aucun logo ou nom de marque : ni dans les médias affichés, ni dans le décor, ni sur les projecteurs à l'image. Pas de barre d'état indiquant un opérateur.
 - N'utiliser que des images et vidéos **dont l'éditeur détient les droits**. Aucune personne identifiable sans autorisation écrite.
-- **Ne pas capturer** l'encart « Non disponible sur iPhone » de l'onglet Flash : il nomme des plateformes (guideline 2.3.10).
+- **Ne pas capturer** l'encart « Non disponible sur iPhone » de la vue Flash de l'onglet Lumière : il nomme des plateformes (guideline 2.3.10).
 - Pas de stroboscope en action. Si l'onglet strobe est montré, l'avertissement photosensibilité doit être visible ou mentionné dans la légende.
 - Play : pas de cadre d'appareil d'une autre plateforme. Le plus simple est de ne mettre aucun cadre.
 - Légendes courtes, au-dessus de l'image, en FR et en EN (ci-dessous).

@@ -104,10 +104,12 @@ async function policyFrameReady(page, file) {
   }
   throw new Error('cadre absent : ' + file);
 }
-const scrollTo = (id, top = 120) => (page) => page.evaluate(([id, top]) => {
-  const el = document.getElementById(id);
-  document.getElementById('remote-mode').scrollTop += el.getBoundingClientRect().top - top;
-}, [id, top]);
+// Seul #nv-scroll défile (en-tête et barre d'onglets fixes) : top = distance voulue du haut du contenu,
+// jamais sous le segmenté collant (≈ 64 px)
+const scrollTo = (id, top = 72) => (page) => page.evaluate(([id, top]) => {
+  const el = document.getElementById(id), sc = document.getElementById('nv-scroll');
+  sc.scrollTop += el.getBoundingClientRect().top - sc.getBoundingClientRect().top - top;
+}, [id, Math.max(top, 72)]);
 // Vue « Style et sonnerie » de l'onglet Tel (maquette 36b), défilée jusqu'à un élément
 const scrollView = (id, top = 120) => (page) => page.evaluate(([id, top]) => {
   const el = document.getElementById(id);
@@ -233,6 +235,13 @@ const multiScreen = (extra) => remote(null, async (page) => {
   if (extra) await extra(page);
 });
 const E16 = (universe, address) => ({ universe, address, personality: 'extended16' });
+// Scènes de navigation (phase 3) : trois écrans en ligne puis le troisième muet depuis plus de 40 s
+const navScene = (tab, extra) => multiScreen(async (page) => {
+  await page.evaluate((id) => { _pairedScreens.get(id).lastSeen -= 60000; renderLinkStatus(); }, SCR_IDS[2]);
+  await page.evaluate((t) => switchTab(t), tab);
+  if (extra) await extra(page);
+  await page.clock.runFor(300);
+});
 
 // ── Tourner sans réseau (maquettes 4, 5 et 10) ──
 // Liaison locale simulée côté télécommande : pairs annoncés par la coque, et
@@ -394,7 +403,7 @@ export const SCENES = {
   'splash': async (page) => { await page.clock.runFor(1000); },
   'screen-connect': async (page) => { await page.evaluate(() => startMode('screen')); await page.clock.runFor(600); },
   'remote-color': remote(null),
-  'remote-color-strobe': remote(null, scrollTo('strobeToggle')),
+  'remote-color-strobe': remote('flash', scrollTo('strobeToggle')),
   'remote-color-rgb': remote(null, async (page) => {
     await page.evaluate(() => { setColorPickMode('rgb'); document.getElementById('rgbBlueSlider').value = 40; onRgbChange(); setCrossfade(70); onCrossfadeChange(); });
   }),
@@ -526,6 +535,18 @@ export const SCENES = {
     await page.evaluate(() => { setConnStatus('connected'); remoteNoteScreen('sAAAAAAAA', { type: 'caps', screenId: 'ScreenOne0000001' }); renderLinkStatus(); });
     await scrollTo('gwEntryBtn')(page);
   }),
+  // ── Phase 3 : navigation. Trois écrans (dont un hors ligne : badge « 1 » de l'onglet Écrans), effet TV en cours ──
+  'nav-light-color': navScene('color'),
+  'nav-light-flash': navScene('flash'),
+  'nav-scenario-tel': navScene('call'),
+  'nav-scenario-seq': navScene('seq', (page) => page.evaluate(() => { _seq = { name: 'Séq. 12', savedId: null, steps: [] }; renderSeq(); })),
+  'nav-screens': navScene('screens'),
+  // En-tête avec la barre « Stroboscope actif · 2 Hz · +1 » et « Tout arrêter »
+  'nav-header-strip': navScene('color', (page) => page.evaluate(() => { setFlashWarningSkipped(true); document.getElementById('strobeToggle').checked = true; onStrobeToggle(); })),
+  'nav-target-sheet': navScene('color', (page) => page.evaluate(() => openTargetSheet())),
+  'nav-screen-sheet': navScene('screens', (page) => page.evaluate((id) => openScreenSheet(id), SCR_IDS[1])),
+  'nav-rail-tablet': navScene('color'),
+  'nav-rail-landscape': navScene('color'),
   // 14 · Passerelle : univers 1 reçu (≈ 44 Hz), univers 2 perdu depuis 6 s
   'dmx-gateway': gateway(async (page) => {
     await patchAll(page, [E16(1, 1), E16(1, 17), E16(2, 1)]);
@@ -575,7 +596,7 @@ export const SCENES = {
   // 43c · Menu « ⋯ » d'une entrée nommée
   'remote-call-list-menu': callListScene(CALL_TITLES, (page) => page.evaluate(() => openCallEntryMenu(callList.call[0].id))),
   // 11 · Avertissement stroboscope : interrupteur ouvert derrière la boîte
-  'remote-strobe-warning': remote(null, async (page) => {
+  'remote-strobe-warning': remote('flash', async (page) => {
     await scrollTo('strobeToggle', 96)(page);
     await page.evaluate(() => { document.getElementById('strobeToggle').checked = true; onStrobeToggle(); });
   }),
@@ -867,6 +888,8 @@ export const SCENES = {
 // Fenêtre propre à une scène (sinon 390 × 844)
 const LANDSCAPE = { width: 844, height: 390 };
 export const SCENE_VIEWPORT = {
+  'nav-rail-tablet': { width: 1024, height: 768 },
+  'nav-rail-landscape': LANDSCAPE,
   'screen-call-glass-landscape': LANDSCAPE,
   'screen-incall-tonal-landscape': LANDSCAPE,
   'screen-notif-lock-glass-landscape': LANDSCAPE,
@@ -881,7 +904,6 @@ function freezeCanvasFx() {
   if (typeof _pvFxMain !== 'undefined' && _pvFxMain && _pvFxMain.current()) {
     const n = _pvFxMain.current();
     _pvFxMain.start(n, { ..._lastEffectParams });
-    _pvFxSticky.start(n, { ..._lastEffectParams });
   }
   if (typeof _screenFxR !== 'undefined' && _screenFxR.current()) _screenFxR.start(_screenFxR.current(), { ...(_screenFxParams || {}) });
 }

@@ -50,29 +50,31 @@ test("télécommande : startMode('remote') puis chaque onglet", async () => {
   assert.deepEqual(base.stored, base.session, 'persisté jusqu\'à « Nouvelle session »');
   assert.match(String(base.topic), /^setremote\/v2\/s\/[A-Za-z0-9_-]{22}$/, 'topic opaque dérivé');
   assert.ok(!String(base.topic).includes(base.session.channelId));
-  assert.equal(base.remote, 'block');
+  assert.equal(base.remote, 'flex');
   assert.equal(base.splash, 'none');
   assert.equal(base.pill, 'Connexion…');
   assert.equal(base.oldInput, false, 'plus de saisie de code canal');
-  for (const t of ['color', 'effects', 'flash', 'media', 'call', 'seq', 'qr', 'color']) {
-    await page.click('#tab-' + t);
-    const r = await page.evaluate((t) => {
-      const c = document.getElementById('content-' + t);
+  // 5 onglets (Lumière, Effets, Média, Scénario, Écrans) ; les vues internes se choisissent au segmenté
+  for (const [tab, seg, content] of [['light', 'lightSeg-color', 'content-color'], ['effects', null, 'content-effects'], ['light', 'lightSeg-flash', 'content-flash'], ['media', null, 'content-media'],
+    ['scenario', 'scnSeg-call', 'content-call'], ['scenario', 'scnSeg-seq', 'content-seq'], ['screens', null, 'content-screens'], ['light', 'lightSeg-color', 'content-color']]) {
+    await page.click('#tab-' + tab);
+    if (seg) await page.click('#' + seg);
+    const r = await page.evaluate(([tab, content]) => {
+      const c = document.getElementById(content);
       return {
-        active: document.querySelectorAll('.tab-content.active').length,
         mine: c.classList.contains('active'),
         visible: c.offsetHeight > 0,
-        btn: document.getElementById('tab-' + t).classList.contains('active'),
-        others: [...document.querySelectorAll('.tab-content')].filter((x) => x !== c && x.offsetHeight > 0).length,
+        btn: document.getElementById('tab-' + tab).getAttribute('aria-selected'),
+        others: [...document.querySelectorAll('.tab-content')].filter((x) => x !== c && !x.contains(c) && x.offsetHeight > 0).length,
       };
-    }, t);
-    assert.deepEqual(r, { active: 1, mine: true, visible: true, btn: true, others: 0 }, 'onglet ' + t);
+    }, [tab, content]);
+    assert.deepEqual(r, { mine: true, visible: true, btn: 'true', others: 0 }, 'onglet ' + tab + ' › ' + content);
   }
   // Onglet d'appairage : QR local et code de rendez-vous
-  await page.click('#tab-qr');
+  await page.click('#tab-screens');
   const pair = await page.evaluate(() => ({
     svg: !!document.querySelector('#pairQr svg path'), code: document.getElementById('pairCode').textContent,
-    rdv: _rdv && _rdv.role, text: document.getElementById('content-qr').textContent,
+    rdv: _rdv && _rdv.role, text: document.getElementById('content-screens').textContent,
   }));
   assert.ok(pair.svg, 'QR dessiné localement');
   assert.match(pair.code, /^[A-HJKMNP-Z2-9]{3}·[A-HJKMNP-Z2-9]{3}$/);

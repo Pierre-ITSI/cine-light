@@ -237,7 +237,7 @@ describe('écran : validation des messages reçus', () => {
 });
 
 describe('cycle de vie MQTT', () => {
-  test('télécommande : coupure → « Reconnexion… », reconnexion → « Internet · chiffré », réabonnement + hello', async () => {
+  test('télécommande : coupure → « Reconnexion… », reconnexion → « Internet », réabonnement + hello', async () => {
     const { page, errors, close } = await openPage(browser);
     await page.evaluate(() => startMode('remote'));
     await waitFor(page, () => !!mqttClient);
@@ -245,7 +245,7 @@ describe('cycle de vie MQTT', () => {
     assert.deepEqual(await status(), { pill: 'link-pill reconnecting', label: 'Connexion…' });
     await connectFakeClients(page);
     await waitFor(page, () => document.getElementById('linkPill').classList.contains('online'));
-    assert.equal((await status()).label, 'Internet · chiffré');
+    assert.equal((await status()).label, 'Internet');
     const hellos = async () => (await publishedBy(page, 'hello')).length;
     assert.equal(await hellos(), 1);
     // Coupure réseau : close + offline + reconnect
@@ -432,7 +432,7 @@ describe('resynchronisation télécommande → écran', () => {
     assert.equal(await screen.page.evaluate(() => screenBlackoutOn), true, 'écran toujours éteint');
     assert.ok(!(await broker.sent(rp, 'blackout')).length, 'aucun ordre OFF/ON envoyé');
     assert.equal(await rp.evaluate(() => remoteBlackout), true, 'la télécommande affiche l\'état réel');
-    assert.equal(await rp.evaluate(() => document.getElementById('stickyBlackoutBtn').textContent), 'Écran OFF');
+    assert.equal(await rp.evaluate(() => [document.getElementById('blackoutOff').getAttribute('aria-checked'), document.getElementById('blackoutOn').getAttribute('aria-checked')].join()), 'true,false', 'segment « Noir » coché');
     // L'utilisateur rallume : l'ordre passe, puis reste imposé aux resynchronisations
     await rp.evaluate(() => toggleBlackout());
     await sleep(300); await broker.flush();

@@ -313,7 +313,7 @@ autorisation n'est pas obtenue :
   elle répond en unicast avec un ArtPollReply qui annonce un port de sortie par
   univers patché.
 
-L'IP de la passerelle est affichée dans son écran (télécommande, onglet QR →
+L'IP de la passerelle est affichée dans son écran (télécommande, onglet Écrans →
 « Passerelle DMX »), avec un voyant qui clignote à chaque paquet reçu et la
 liste des univers reçus (source, IP, cadence, ou délai depuis le dernier
 paquet) : vérifier là la numérotation des univers Art-Net (0 ou 1 selon la

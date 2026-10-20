@@ -73,9 +73,9 @@ describe('trois écrans : noms, groupes, cible', () => {
 
   test('« Écrans connectés » : renommer (l\'écran apprend son nom), créer des groupes', async () => {
     const { rp } = r;
-    // Accès par « Gérer » (panneau « Écrans appairés » de l'onglet QR)
+    // Vue plein écran « Écrans connectés » (plus de bouton « Gérer » : l'onglet Écrans montre lui-même les écrans)
     await rp.evaluate(() => switchTab('qr'));
-    await rp.click('#pairScreens .pair-manage');
+    await rp.evaluate(() => openScreensView());
     await waitFor(rp, () => document.querySelectorAll('#svList .sv-card').length === 3);
     assert.deepEqual(await rp.$$eval('#svList .sv-name', (els) => els.map((e) => e.textContent)), ['Écran 1', 'Écran 2', 'Écran 3']);
     assert.deepEqual(await rp.$$eval('#svList .sv-link', (els) => els.map((e) => e.textContent)), ['Internet', 'Internet', 'Internet']);
@@ -137,9 +137,9 @@ describe('trois écrans : noms, groupes, cible', () => {
   test('cible : un groupe, un écran, tous — seuls les écrans visés changent ; l\'aperçu suit la cible', async () => {
     const { rp } = r;
     await settle(r);
-    // Bouton « Cible » visible dès deux écrans, sous l'aperçu
+    // Puce « Cible » toujours visible, dans l'en-tête
     assert.equal(await rp.evaluate(() => getComputedStyle(document.getElementById('targetBtn')).display), 'flex');
-    assert.equal(await rp.textContent('#targetBtnLabel'), 'Cible : Tous les écrans (3)');
+    assert.equal(await rp.textContent('#targetBtnLabel'), 'Cible : Tous · 3');
     const c0 = await base(C);
     // Feuille « Envoyer les commandes à… » : Tous, groupes, écrans
     await rp.click('#targetBtn');
@@ -150,7 +150,7 @@ describe('trois écrans : noms, groupes, cible', () => {
     ]);
     await rp.locator('#srSheetBody .sr-row').nth(1).click();
     assert.equal(await rp.evaluate(() => document.getElementById('sr-sheet').classList.contains('open')), false);
-    assert.equal(await rp.textContent('#targetBtnLabel'), 'Cible : Salon (2 écrans)');
+    assert.equal(await rp.textContent('#targetBtnLabel'), 'Cible : Salon · 2');
     assert.equal(await rp.evaluate(() => document.getElementById('targetBtn').classList.contains('subset')), true);
     // Groupe Salon : A et B seulement
     r.broker.clear();
@@ -203,7 +203,7 @@ describe('trois écrans : noms, groupes, cible', () => {
     for (const s of r.screens) await waitFor(s.page, () => screenBlackoutOn === false);
     await r.broker.flush();
     assert.ok((await sentBy(r, 'blackout')).every((m) => m.target === undefined), 'Tous : comportement historique, sans target');
-    assert.equal(await rp.textContent('#targetBtnLabel'), 'Cible : Tous les écrans (3)');
+    assert.equal(await rp.textContent('#targetBtnLabel'), 'Cible : Tous · 3');
   });
 
   test('chaque écran ignore les ordres adressés à d\'autres (écran ou groupe)', async () => {
@@ -368,7 +368,7 @@ test('persistance : noms, groupes et cible retrouvés après rechargement de la 
   await waitFor(rp, () => getComputedStyle(document.getElementById('targetBtn')).display === 'flex');
   assert.deepEqual(await rp.evaluate(([a, b]) => [scrName(a), scrName(b), _scrReg.groups.map((x) => x.name), scrTarget()], [A.id, B.id]),
     ['Régie', 'Fenêtre', ['Plateau'], { k: 'group', id: g }]);
-  assert.equal(await rp.textContent('#targetBtnLabel'), 'Cible : Plateau (1 écran)');
+  assert.equal(await rp.textContent('#targetBtnLabel'), 'Cible : Plateau · 1');
   assert.deepEqual(await rp.evaluate(() => { switchTab('qr'); return [...document.querySelectorAll('#pairScreensList .ps-name')].map((e) => e.textContent); }), ['Régie', 'Fenêtre']);
   // La cible retenue s'applique aux ordres
   r.broker.clear();
@@ -386,7 +386,7 @@ test('persistance : noms, groupes et cible retrouvés après rechargement de la 
   await rp.evaluate(() => newRemoteSession());
   await connected(rp);
   assert.deepEqual(await rp.evaluate(() => [_scrReg.screens.size, _scrReg.groups.length, scrTarget()]), [0, 0, { k: 'all' }]);
-  await waitFor(rp, () => getComputedStyle(document.getElementById('targetBtn')).display === 'none');
+  await waitFor(rp, () => document.getElementById('targetBtnLabel').textContent === 'Cible : Aucun écran'); // puce toujours visible
   const stored = await rp.evaluate((sid) => JSON.parse(localStorage.getItem('setremote-screens-v1')).sessions[sid], old);
   assert.deepEqual(Object.values(stored.screens).map((e) => e.name).sort(), ['Fenêtre', 'Régie'], 'registre par session');
   noErrors(r);

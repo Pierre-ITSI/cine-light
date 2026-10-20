@@ -61,7 +61,7 @@ test('QR : deux écrans rejoignent la même session par le lien et reçoivent le
   // La télécommande voit les deux écrans (identifiants distincts)
   await waitFor(rp, () => _pairedScreens.size === 2);
   assert.equal(await rp.evaluate(() => document.getElementById('pairScreensCount').textContent), '2');
-  assert.equal(await rp.evaluate(() => document.getElementById('linkPillLabel').textContent), 'Internet · chiffré');
+  assert.equal(await rp.evaluate(() => document.getElementById('linkPillLabel').textContent), 'Internet');
   const ids = await Promise.all([A, B].map((s) => s.page.evaluate(() => localStorage.getItem('setremote-screen-id'))));
   assert.notEqual(ids[0], ids[1]);
   // Même commande, mêmes effets sur les deux écrans
@@ -176,7 +176,7 @@ test('« Nouvelle session » : les écrans appairés sont révoqués', async () 
   await screen.close(); await remote.close();
 });
 
-test('liaison : écran muet depuis 40 s → « Hors ligne · 1 écran », signe de vie → « Internet · chiffré »', async () => {
+test('liaison : écran muet depuis 40 s → badge « 1 » de l\'onglet Écrans et ligne « Hors ligne », signe de vie → « Internet »', async () => {
   const broker = new FakeBroker();
   const remote = await startRemote(broker, 61);
   const rp = remote.page;
@@ -185,16 +185,19 @@ test('liaison : écran muet depuis 40 s → « Hors ligne · 1 écran », signe 
   assert.ok(await screen.page.evaluate(() => _screenAliveTimer !== null), 'signe de vie programmé côté écran');
   // Écran muet : on vieillit sa dernière trame
   await rp.evaluate(() => { for (const s of _pairedScreens.values()) s.lastSeen -= SCREEN_OFFLINE_MS + 1000; renderLinkStatus(); });
+  // La pastille ne dit plus que la liaison ; l'écran muet : badge de l'onglet Écrans et ligne de la liste
   assert.deepEqual(await rp.evaluate(() => [document.getElementById('linkPill').className, document.getElementById('linkPillLabel').textContent]),
-    ['link-pill offline', 'Hors ligne · 1 écran']);
-  assert.match(await rp.evaluate(() => document.getElementById('pairScreensList').textContent), /Écran 1Hors ligne/);
-  // Toucher la pastille ouvre le détail (onglet d'appairage)
+    ['link-pill online', 'Internet']);
+  assert.equal(await rp.evaluate(() => document.getElementById('screensBadge').textContent), '1');
+  assert.match(await rp.evaluate(() => document.getElementById('pairScreensList').textContent), /Écran 1.*Hors ligne/);
+  // Toucher la pastille ouvre le détail (onglet Écrans)
   await rp.click('#linkPill');
-  assert.equal(await rp.evaluate(() => document.getElementById('content-qr').classList.contains('active')), true);
+  assert.equal(await rp.evaluate(() => document.getElementById('content-screens').classList.contains('active')), true);
   // Signe de vie de l'écran : de retour en ligne
   await screen.page.evaluate(() => sendMsg({ type: 'screen:alive' }));
-  await waitFor(rp, () => document.getElementById('linkPillLabel').textContent === 'Internet · chiffré');
-  assert.match(await rp.evaluate(() => document.getElementById('pairScreensList').textContent), /Écran 1Internet/);
+  await waitFor(rp, () => document.getElementById('linkPillLabel').textContent === 'Internet');
+  assert.match(await rp.evaluate(() => document.getElementById('pairScreensList').textContent), /Écran 1.*Internet/);
+  assert.equal(await rp.evaluate(() => getComputedStyle(document.getElementById('screensBadge')).display), 'none');
   assert.deepEqual(remote.errors, []); assert.deepEqual(screen.errors, []);
   await screen.close(); await remote.close();
 });

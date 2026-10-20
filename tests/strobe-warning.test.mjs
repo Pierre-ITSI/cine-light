@@ -16,7 +16,8 @@ after(async () => { await browser?.close(); });
 
 const connected = (page) => waitFor(page, () => !!mqttClient && mqttClient.connected && !!_sec, null, { timeout: 8000 });
 const shown = (page) => page.evaluate(() => getComputedStyle(document.getElementById('strobe-warn')).display === 'block');
-const toggle = (page) => page.locator('label.toggle-switch:has(#strobeToggle)').click();
+// L'interrupteur est dans la vue « Flash » de Lumière (phase 3)
+const toggle = async (page) => { await page.evaluate(() => switchTab('flash')); await page.locator('label.toggle-switch:has(#strobeToggle)').click(); };
 const strobeState = (page) => page.evaluate(() => ({
   active: strobeActive, checked: document.getElementById('strobeToggle').checked,
   badge: document.getElementById('strobeActiveBadge').style.display,

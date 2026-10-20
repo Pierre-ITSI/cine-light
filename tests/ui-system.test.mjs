@@ -12,6 +12,7 @@ let browser;
 before(async () => { browser = await launchBrowser(); });
 after(async () => { await browser?.close(); });
 
+// Les 7 vues, ouvertes par leurs identifiants historiques (alias des 5 onglets de la phase 3)
 const TABS = ['color', 'effects', 'flash', 'media', 'call', 'seq', 'qr'];
 async function remote(viewport) {
   const p = await openPage(browser, viewport ? { viewport } : {});
@@ -58,14 +59,14 @@ test('polices : Lato pour le texte, DM Mono réservé aux valeurs ; casse de phr
   const r = await page.evaluate(() => {
     const ff = (s) => getComputedStyle(document.querySelector(s)).fontFamily.split(',')[0].replace(/["']/g, '');
     const tt = new Set([...document.querySelectorAll('#remote-mode *')].filter((e) => !e.closest('.ts-prev,.sp-card,.pp-prev')).map((e) => getComputedStyle(e).textTransform));
-    return { label: ff('.panel-label'), tab: ff('.tab-btn'), btn: ff('.screen-toggle-btn'), hex: ff('#previewHex'), val: ff('#dimmerVal'), transforms: [...tt] };
+    return { label: ff('.panel-label'), tab: ff('#nv-tabs button'), btn: ff('#blackoutOn'), hex: ff('#previewHex'), val: ff('#dimmerVal'), transforms: [...tt] };
   });
   assert.deepEqual(r, { label: 'Lato', tab: 'Lato', btn: 'Lato', hex: 'DM Mono', val: 'DM Mono', transforms: ['none'] });
   assert.deepEqual(errors, []);
   await close();
 });
 
-for (const width of [375, 390]) {
+for (const width of [360, 375, 390]) {
   test(`aucun débordement horizontal à ${width} px (7 onglets, Réglages, Projets, Écrans)`, async () => {
     const { page, errors, close } = await remote({ width, height: 844 });
     const wide = [];
@@ -94,7 +95,7 @@ test('focus clavier : anneau visible (fond + accent) sur boutons, puces, onglets
   await page.keyboard.press('Tab'); // active la modalité clavier (:focus-visible)
   const rings = await page.evaluate(() => {
     const out = {};
-    for (const [k, sel] of [['onglet', '#tab-effects'], ['réglages', '#settingsBtn'], ['commande', '#blackoutBtn'], ['puce', '#chip-hue'], ['curseur', '#dimmerSlider']]) {
+    for (const [k, sel] of [['onglet', '#tab-effects'], ['réglages', '#settingsBtn'], ['commande', '#blackoutOn'], ['puce', '#chip-hue'], ['curseur', '#dimmerSlider']]) {
       const e = document.querySelector(sel); e.focus();
       const cs = getComputedStyle(e);
       out[k] = cs.boxShadow !== 'none' && cs.boxShadow.includes('255, 107, 44') ? 'anneau' : cs.boxShadow + ' / ' + cs.outlineStyle;
@@ -107,7 +108,7 @@ test('focus clavier : anneau visible (fond + accent) sur boutons, puces, onglets
   assert.deepEqual(rings, { onglet: 'anneau', réglages: 'anneau', commande: 'anneau', puce: 'anneau', curseur: 'anneau' });
   // Interrupteur : l'anneau est sur la piste
   const tog = await page.evaluate(() => {
-    switchTab('color'); document.getElementById('strobeToggle').focus();
+    switchTab('flash'); document.getElementById('strobeToggle').focus();
     return getComputedStyle(document.getElementById('strobeToggle').parentElement.querySelector('.toggle-track')).boxShadow;
   });
   assert.match(tog, /255, 107, 44/);
@@ -117,13 +118,13 @@ test('focus clavier : anneau visible (fond + accent) sur boutons, puces, onglets
 
 // Commandes principales de chaque onglet : cibles ≥ 44 px dans les deux dimensions
 const PRIMARY = {
-  color: ['.tab-btn', '.hdr-gear', '.screen-toggle-btn', '#content-color .slider-btn', '#content-color input[type=range]', '#chip-wheel'],
+  color: ['#nv-tabs button', '.hdr-gear', '#blackoutOn', '#blackoutOff', '#content-color .slider-btn', '#content-color input[type=range]', '#chip-wheel'],
   effects: ['#content-effects .effect-card', '#content-effects .slider-btn', '#content-effects input[type=range]', '.fx-dice-btn'],
   flash: ['.torch-onoff-btn', '#content-flash .effect-btn', '#content-flash .slider-btn'],
   media: ['#content-media .media-btn', '#content-media .slider-btn', '#content-media input[type=range]'],
   call: ['#content-call .gw-seg-btn', '#content-call .tel-sum', '#content-call .media-btn', '#content-call .tel-save'],
   seq: ['#content-seq .sq-add', '#content-seq .prj-newbtn', '#content-seq .sq-ctl button'],
-  qr: ['#content-qr .media-btn', '#content-qr .pair-refresh', '#content-qr .pair-manage'],
+  qr: ['#content-screens .st-btn', '#content-screens .nv-lead', '#content-screens .pair-refresh', '#content-screens .pair-manage'],
 };
 test('cibles tactiles : commandes principales d\'au moins 44 px dans chaque onglet', async () => {
   const { page, errors, close } = await remote();

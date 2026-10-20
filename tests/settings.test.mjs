@@ -36,14 +36,14 @@ async function remote(opts) {
 test('en-tête : engrenage « Réglages » à la place de « ← Retour » ; vue Réglages de la maquette', async () => {
   const { page, errors, close } = await remote();
   const head = await page.evaluate(() => {
-    const end = document.querySelector('.remote-header-end');
+    const end = document.querySelector('#nv-head .nv-r1');
     const gear = document.getElementById('settingsBtn');
     const r = gear.getBoundingClientRect();
     return {
       children: [...end.children].map((e) => e.id || e.className),
       gear: [gear.getAttribute('aria-label'), Math.round(r.width), Math.round(r.height), !!gear.querySelector('svg')],
-      back: document.querySelectorAll('.remote-header .back-btn').length,
-      retour: document.querySelector('.remote-header').textContent.includes('Retour'),
+      back: document.querySelectorAll('#nv-head .back-btn').length,
+      retour: document.getElementById('nv-head').textContent.includes('Retour'),
     };
   });
   // L'engrenage ferme l'en-tête (d'autres pastilles peuvent le précéder)
@@ -60,7 +60,7 @@ test('en-tête : engrenage « Réglages » à la place de « ← Retour » ; vue
       title: t(document.getElementById('stTitle')),
       lang: [...document.querySelectorAll('.st-seg-btn')].map((b) => [t(b), b.classList.contains('active'), b.getAttribute('aria-pressed')]),
       note: getComputedStyle(document.getElementById('stLangNote')).display,
-      rows: [...document.querySelectorAll('.st-row')].map((r) => [t(r.querySelector('.st-row-label')), t(r.querySelector('.st-row-sub')), t(r.querySelector('.st-row-val'))]),
+      rows: [...document.querySelectorAll('#settings-view .st-row')].map((r) => [t(r.querySelector('.st-row-label')), t(r.querySelector('.st-row-sub')), t(r.querySelector('.st-row-val'))]),
       buttons: [...document.querySelectorAll('#settings-view .st-btn')].map(t),
       foot: [...document.querySelector('.st-foot').children].map(t),
       policyHref: document.querySelector('.st-policy').getAttribute('href'),
@@ -80,7 +80,7 @@ test('en-tête : engrenage « Réglages » à la place de « ← Retour » ; vue
       ['Fréquence max du strobo', 'Sécurité photosensibilité', '30 Hz'],
       ['Liaison par défaut', 'Internet, Wi-Fi local, Bluetooth', 'Auto'], // tests/offline.test.mjs
     ],
-    buttons: ['Oublier tous les écrans appairés', 'Retour à l\'accueil'],
+    buttons: ['Oublier tous les écrans appairés', 'Retour à l\'accueilQuitte la télécommande · les écrans restent appairés, ce qui est en cours s\'arrête'],
     foot: ['Politique de confidentialité', 'Aucun compte · aucune publicité · aucun suivi', `SetRemote ${APP_JSON_VERSION} · by Pikoo`],
     policyHref: 'confidentialite.html',
   });
@@ -91,7 +91,7 @@ test('en-tête : engrenage « Réglages » à la place de « ← Retour » ; vue
   const before = await page.evaluate(() => _session.channelId);
   await page.click('#settings-view .st-back');
   assert.equal(await visible(page, 'settings-view'), false);
-  assert.deepEqual(await page.evaluate(() => [mode, _session.channelId, getComputedStyle(document.getElementById('remote-mode')).display]), ['remote', before, 'block']);
+  assert.deepEqual(await page.evaluate(() => [mode, _session.channelId, getComputedStyle(document.getElementById('remote-mode')).display]), ['remote', before, 'flex']);
   assert.deepEqual(errors, []);
   await close();
 });
@@ -129,7 +129,7 @@ test('langue : choix mémorisé ; en anglais, note « bientôt » et politique e
 
 test('« Avertissement stroboscope » : reflète « Ne plus demander », la ligne le réactive (et inversement)', async () => {
   const { page, errors, close } = await remote();
-  const toggle = () => page.locator('label.toggle-switch:has(#strobeToggle)').click();
+  const toggle = async () => { await page.evaluate(() => switchTab('flash')); await page.locator('label.toggle-switch:has(#strobeToggle)').click(); };
   const shown = () => page.evaluate(() => getComputedStyle(document.getElementById('strobe-warn')).display === 'block');
   const row = () => page.evaluate(() => [document.getElementById('stStrobeWarnVal').textContent, document.getElementById('stStrobeWarnVal').className, document.getElementById('stStrobeWarn').getAttribute('aria-checked')]);
   // « Ne plus demander » coché dans la boîte
@@ -172,7 +172,7 @@ test('« Oublier tous les écrans appairés » : confirmation, puis nouvelle ses
   await page.click('#settings-view .st-danger');
   await sleep(50);
   assert.deepEqual(await page.evaluate(() => [_session.channelId, _pairedScreens.size, getComputedStyle(document.getElementById('settings-view')).display]), [before.id, 1, 'flex']);
-  // Acceptation : nouveau secret (stocké), écrans oubliés, onglet QR affiché
+  // Acceptation : nouveau secret (stocké), écrans oubliés, onglet Écrans affiché
   page.once('dialog', (d) => { msgs.push(d.message()); d.accept(); });
   await page.click('#settings-view .st-danger');
   await sleep(50);
@@ -187,7 +187,7 @@ test('« Oublier tous les écrans appairés » : confirmation, puis nouvelle ses
   assert.equal(after.stored, after.id);
   assert.equal(after.screens, 0);
   assert.equal(after.settings, 'none');
-  assert.equal(after.tab, 'content-qr');
+  assert.equal(after.tab, 'content-screens');
   assert.ok(after.qr);
   assert.deepEqual(errors, []);
   await close();

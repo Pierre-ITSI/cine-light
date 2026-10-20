@@ -168,12 +168,14 @@ test('paysage 844 × 390 · pavé du code de la Séquence : toutes les touches v
 });
 
 // ── Télécommande ──
-test('Accueil : confirmé avant de tout arrêter (en-tête et Réglages) ; Annuler et Échap gardent la télécommande', async () => {
+test('Accueil : seulement dans Réglages, confirmé avant de tout arrêter ; Annuler et Échap gardent la télécommande', async () => {
   const { page, errors, close } = await openPage(browser);
   await page.evaluate(() => startMode('remote'));
   const shown = () => page.evaluate(() => getComputedStyle(document.getElementById('app-confirm')).display === 'block');
   const where = () => page.evaluate(() => [mode, getComputedStyle(document.getElementById('splash')).display]);
-  await page.click('#homeBtn');
+  assert.equal(await page.evaluate(() => !!document.getElementById('homeBtn') || !!document.querySelector('#nv-head [onclick*=askGoBack]')), false, 'plus de maison dans l\'en-tête');
+  const home = async () => { await page.click('#settingsBtn'); await page.click('#settings-view .st-btn:not(.st-danger)'); };
+  await home();
   assert.equal(await shown(), true);
   assert.equal(await page.textContent('#acTitle'), 'Revenir à l\'accueil ?');
   assert.equal(await page.textContent('#acText'), 'Les écrans restent appairés ; ce qui est en cours (stroboscope, média, passerelle DMX, séquence) s\'arrête.');
@@ -182,20 +184,14 @@ test('Accueil : confirmé avant de tout arrêter (en-tête et Réglages) ; Annul
   await page.click('#acCancel');
   assert.equal(await shown(), false);
   assert.deepEqual(await where(), ['remote', 'none']);
-  await page.click('#homeBtn');
+  await page.click('#settings-view .st-btn:not(.st-danger)');
   await page.keyboard.press('Escape');
   assert.equal(await shown(), false);
   assert.deepEqual(await where(), ['remote', 'none']);
-  await page.click('#homeBtn');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('settings-view')).display !== 'none'), true, 'Échap ne ferme que la confirmation');
+  await page.click('#settings-view .st-btn:not(.st-danger)');
   await page.click('#acOk');
   assert.equal(await shown(), false);
-  assert.deepEqual(await where(), [null, 'flex']);
-  // Réglages › Retour à l'accueil : même confirmation
-  await page.evaluate(() => { startMode('remote'); openSettings(); });
-  await page.click('#settings-view .st-btn:not(.st-danger)');
-  assert.equal(await shown(), true);
-  assert.deepEqual(await where(), ['remote', 'none']);
-  await page.click('#acOk');
   assert.deepEqual(await where(), [null, 'flex']);
   assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('settings-view')).display), 'none');
   assert.deepEqual(errors, []);

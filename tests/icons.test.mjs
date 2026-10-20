@@ -32,7 +32,7 @@ test('modèle : aucun emoji dans l\'interface de la télécommande (le faux tél
   assert.deepEqual(hits, []);
 });
 
-test('rendu : aucun emoji visible dans les 7 onglets, les Réglages et les écrans de rejoindre', async () => {
+test('rendu : aucun emoji visible dans les 5 onglets (et leurs vues), les Réglages et les écrans de rejoindre', async () => {
   const { page, errors, close } = await openPage(browser);
   await page.evaluate(() => startMode('remote'));
   const seen = [];
@@ -44,8 +44,8 @@ test('rendu : aucun emoji visible dans les 7 onglets, les Réglages et les écra
   seen.push(['settings', await page.evaluate(() => document.getElementById('settings-view').innerText)]);
   for (const [name, text] of seen) assert.doesNotMatch(text, EMOJI, name);
   // Onglets : une icône du sprite chacun
-  const tabs = await page.evaluate(() => [...document.querySelectorAll('.tab-btn')].map((b) => b.querySelector('svg use').getAttribute('href')));
-  assert.deepEqual(tabs, ['#i-palette', '#i-sparkles', '#i-flashlight', '#i-film', '#i-phone', '#i-clapperboard', '#i-qr-code']);
+  const tabs = await page.evaluate(() => [...document.querySelectorAll('#nv-tabs [role=tab]')].map((b) => b.querySelector('svg use').getAttribute('href')));
+  assert.deepEqual(tabs, ['#i-lightbulb', '#i-sparkles', '#i-film', '#i-clapperboard', '#i-monitor-smartphone']);
   assert.deepEqual(errors, []);
   await close();
 });

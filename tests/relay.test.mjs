@@ -50,7 +50,7 @@ test('relais : QR — télécommande et deux écrans via le relais réel, comman
   const B = await openPage(browser, { seed: 203, hash, init: viaRelay() });
   await connected(A.page); await connected(B.page);
   await waitFor(rp, () => _pairedScreens.size === 2);
-  assert.equal(await pill(rp), 'Internet · chiffré', 'libellé inchangé');
+  assert.equal(await pill(rp), 'Internet', 'libellé inchangé');
   await rp.evaluate(() => { setKelvin(2700); toggleBlackout(); });
   const color = await rp.evaluate(() => currentColor);
   for (const s of [A, B]) await waitFor(s.page, (c) => screenBaseColor === c && screenBlackoutOn === true, color);
@@ -134,7 +134,7 @@ test('relais : redémarrage → reconnexion automatique, TOFU réarmé, resynchr
   await connected(rp, 20000); await connected(sp, 20000);
   // L'écran retrouve l'état exact de la télécommande (hello → caps → resynchronisation)
   await waitFor(sp, (c) => screenBaseColor === c && screenBlackoutOn === true, color, { timeout: 10000 });
-  await waitFor(rp, () => document.getElementById('linkPillLabel').textContent === 'Internet · chiffré');
+  await waitFor(rp, () => document.getElementById('linkPillLabel').textContent === 'Internet');
   assert.equal(relay.stats().tofu_entries, 1);
   assert.deepEqual(remote.errors, []); assert.deepEqual(screen.errors, []);
   await screen.close(); await remote.close();

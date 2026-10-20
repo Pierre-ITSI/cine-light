@@ -211,7 +211,7 @@ test('horloge décalée : trames authentiques périmées d\'affilée → « Horl
   const pairing = await page.evaluate(() => _session);
   const screenPeer = await fakePeer(pairing, 'screen');
   const pill = () => page.evaluate(() => [document.getElementById('linkPill').className, document.getElementById('linkPillLabel').textContent]);
-  const ONLINE = ['link-pill online', 'Internet · chiffré'];
+  const ONLINE = ['link-pill online', 'Internet'];
   const old = () => Date.now() - 10 * 60_000;
   assert.deepEqual(await pill(), ONLINE);
   // Trames périmées NON authentiques (autre session, ou falsifiées) : jamais d'alerte
@@ -240,6 +240,6 @@ test('horloge décalée : trames authentiques périmées d\'affilée → « Horl
   assert.equal((await pill())[1], 'Horloge décalée');
   await page.evaluate(() => newRemoteSession());
   await connected(page);
-  await waitFor(page, () => document.getElementById('linkPillLabel').textContent === 'Internet · chiffré');
+  await waitFor(page, () => document.getElementById('linkPillLabel').textContent === 'Internet');
   await close();
 });
