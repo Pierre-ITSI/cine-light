@@ -1,0 +1,61 @@
+/* SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP */
+/* Base du système visuel (phase 2) : police, casse, focus, mouvement réduit,
+   icônes. Feuille non stratifiée (voir 01-tokens.css) : elle passe devant les
+   anciennes règles (@layer legacy) sans !important ni course à la spécificité.
+   Le faux téléphone (#screen-mode hors menu, aperçus .ts-prev / .sp-card /
+   .pp-prev) n'est PAS concerné : ses couleurs et polices sont diégétiques. */
+
+html,body{background:var(--bg)}
+
+/* Racines de l'interface de la télécommande et des écrans de mise en service */
+#splash,#remote-mode,#settings-view,#project-view,#policy-view,#screens-view,#seq-step-view,#phone-params-view,#tel-style-view,
+#offline-view,#dmx-gateway,#strobe-warn,#app-confirm,#sr-sheet,#sr-revoke,#pair-verify,#screen-connect,#screen-menu,#screen-revoked{
+  font-family:var(--font-ui);font-size:var(--fs-body);line-height:1.5;color:var(--text);letter-spacing:0;
+  -webkit-font-smoothing:antialiased}
+
+/* Police, casse et interlettrage hérités remis à plat (les anciennes feuilles
+   déclaraient DM Mono en capitales interlettrées). :where() → spécificité nulle :
+   toute règle de composant (03-components.css) repasse devant. */
+:where(#splash,#remote-mode,#settings-view,#project-view,#policy-view,#screens-view,#seq-step-view,#phone-params-view,#tel-style-view,
+  #offline-view,#dmx-gateway,#strobe-warn,#app-confirm,#sr-sheet,#sr-revoke,#pair-verify,#screen-connect,#screen-menu,#screen-revoked)
+  *:where(:not(.ts-prev,.ts-prev *,.sp-card,.sp-card *,.pp-prev,.pp-prev *)){
+  font-family:inherit;text-transform:none;letter-spacing:0}
+/* Boutons et champs ne reprennent pas la police du navigateur */
+:where(button,input,select,textarea){font-family:inherit}
+
+/* DM Mono réservé aux codes, nombres et valeurs */
+:where(#remote-mode,#settings-view,#project-view,#screens-view,#seq-step-view,#phone-params-view,#dmx-gateway,#offline-view,#sr-sheet,#pair-verify,#screen-connect,#screen-menu) :is(
+  .slider-val,.swatch-hex,.pair-code,.pv-sas,.cl-dmx,.sq-num,#pairCodeInput,.st-row-val.mono,.ui-mono,.lic-id-txt,
+  .mbar-edit>span:first-child,.sq-phone-v,.chip.mono,.kelvin-labels,.green-labels,.prj-size b,#mediaCurTime,#mediaDurTime,
+  .pool-num,.gw-mono,.st-mono){
+  font-family:var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:0}
+
+/* Focus visible partout (clavier, D-pad TV, lecteur d'écran) : anneau à deux
+   traits (fond + accent) lisible sur toutes les surfaces */
+:where(button,[role=button],[role=switch],[role=checkbox],a,input,select,textarea,summary,[tabindex]):focus-visible{
+  outline:none;box-shadow:var(--focus)}
+.toggle-switch input:focus-visible~.toggle-track{box-shadow:var(--focus)}
+.toggle-switch:focus-within .toggle-track{box-shadow:var(--focus)}
+input[type=range]:focus-visible{box-shadow:none}
+input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--focus)}
+input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
+
+/* Mouvement réduit : l'interface de la télécommande n'anime plus (les
+   animations diégétiques de l'écran de jeu — téléphone, effets — restent) */
+@media (prefers-reduced-motion:reduce){
+  :is(#splash,#remote-mode,#settings-view,#project-view,#policy-view,#screens-view,#seq-step-view,#phone-params-view,#tel-style-view,
+    #offline-view,#dmx-gateway,#strobe-warn,#app-confirm,#sr-sheet,#sr-revoke,#pair-verify,#screen-connect,#screen-menu,#screen-revoked,#stickyPreview),
+  :is(#splash,#remote-mode,#settings-view,#project-view,#policy-view,#screens-view,#seq-step-view,#phone-params-view,#tel-style-view,
+    #offline-view,#dmx-gateway,#strobe-warn,#app-confirm,#sr-sheet,#sr-revoke,#pair-verify,#screen-connect,#screen-menu,#screen-revoked,#stickyPreview) *:not(.ts-prev,.ts-prev *,.sp-card,.sp-card *,.pp-prev,.pp-prev *){
+    animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
+/* Icônes (sprite Lucide inline, vendor/icons/) : trait 2 px, couleur du texte */
+.ic{width:var(--icon-md);height:var(--icon-md);flex:none;display:inline-block;vertical-align:-4px;stroke:currentColor}
+.ic-wrap{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);min-width:0;max-width:100%}
+.ic-wrap .ic-txt{min-width:0;text-align:left}
+.ic-trail{width:var(--icon-sm);height:var(--icon-sm);margin-left:-2px}
+.sr-only-ic{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.st-dot{width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block;flex:none}
+.st-dot.ok{background:var(--success)}
+.st-dot.ko{background:var(--danger)}

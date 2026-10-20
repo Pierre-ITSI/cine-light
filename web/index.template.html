@@ -43,6 +43,7 @@
 </style>
 </head>
 <body>
+<!-- @@ICONS@@ -->
 
 <div id="splash">
   <div class="splash-head">
@@ -189,7 +190,7 @@
 
     <div class="panel">
       <div class="panel-label">Mode sélection couleur</div>
-      <div class="chips-wrap" style="margin-bottom:16px">
+      <div class="chips-wrap seg" style="margin-bottom:16px">
         <button class="chip active" onclick="setColorPickMode('wheel')" id="chip-wheel">Roue</button>
         <button class="chip" onclick="setColorPickMode('hue')" id="chip-hue">HUE</button>
         <button class="chip" onclick="setColorPickMode('rgb')" id="chip-rgb">RGB</button>
@@ -255,7 +256,7 @@
         <div class="slider-header"><label>Température</label><div class="slider-val" id="kelvinVal">5600<span> K</span></div></div>
         <input type="range" id="kelvinSlider" min="1700" max="20000" value="5600" oninput="onKelvinChange()">
       </div>
-      <div class="chips-wrap">
+      <div class="chips-wrap chips-mono">
         <button class="chip" onclick="setKelvin(1700)">1700K</button>
         <button class="chip" onclick="setKelvin(2700)">2700K</button>
         <button class="chip" onclick="setKelvin(3200)">3200K</button>
@@ -294,7 +295,7 @@
       </div>
       <div id="strobeActiveBadge" style="display:none"><span class="strobe-active-badge">⚡ Strobe actif</span></div>
       <div class="panel-label" style="margin:14px 0 8px">Mode</div>
-      <div class="chips-wrap" style="margin-bottom:16px">
+      <div class="chips-wrap seg" style="margin-bottom:16px">
         <button class="chip active" onclick="setStrobeMode('regular')" id="chip-regular">Régulier</button>
         <button class="chip" onclick="setStrobeMode('random')" id="chip-random">Aléatoire</button>
       </div>
@@ -635,7 +636,7 @@
       </button>
       <div id="videoModeRow" style="display:none;margin:4px 0 10px">
         <div class="panel-label" style="margin-bottom:8px">Fin de lecture</div>
-        <div class="chips-wrap">
+        <div class="chips-wrap seg">
           <button class="chip active" id="vmode-loop" onclick="setVideoEndMode('loop')">🔁 Boucle</button>
           <button class="chip" id="vmode-pause" onclick="setVideoEndMode('pause')">⏯ 1× puis pause</button>
           <button class="chip" id="vmode-off" onclick="setVideoEndMode('off')">⏹ 1× puis off</button>

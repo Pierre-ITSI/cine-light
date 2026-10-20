@@ -3,7 +3,7 @@
 #screen-connect{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:flex-start;background:var(--dark);gap:18px;padding:max(48px,env(safe-area-inset-top)) max(28px,env(safe-area-inset-right)) max(32px,env(safe-area-inset-bottom)) max(28px,env(safe-area-inset-left));animation:fadeIn .4s ease;min-height:100vh;overflow-y:auto}
 #screen-connect h2{font-family:'Lato',sans-serif;font-weight:600;font-size:1.75rem;color:var(--accent);text-align:center}
 .screen-go-btn{background:var(--accent);color:var(--dark);border:none;font-family:'DM Mono',monospace;font-size:.85rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:14px 20px;border-radius:6px;cursor:pointer}
-.screen-back{font-size:.65rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;background:none;border:none}
+.screen-back{font-size:var(--fs-caption);color:var(--muted);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;background:none;border:none}
 .screen-back:hover{color:var(--text)}
 
 #screen-mode{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:#000000;min-height:100vh}

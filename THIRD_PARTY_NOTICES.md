@@ -48,6 +48,14 @@ dans son `package.json`.
 - **Fichiers** : `vendor/fflate-0.8.2.min.js`
 - **Note** : Compression deflate des fichiers projet .rem (web/js/72-project.js), chargé à la demande.
 
+### Lucide (icônes) 1.50.0
+
+- **Licence** : ISC — texte : [`vendor/icons/lucide-LICENSE.txt`](vendor/icons/lucide-LICENSE.txt)
+- **Copyright** : Copyright (c) 2026 Lucide Icons and Contributors
+- **Provenance** : npm lucide-static@1.50.0, icons/*.svg assemblées en un sprite de <symbol> (tracés non modifiés)
+- **Fichiers** : `vendor/icons/lucide-sprite.svg`
+- **Note** : Sprite inséré en ligne dans index.html par web/build.mjs (marqueur « @@ICONS@@ »), puis appelé par <use href="#i-…"> (web/js/02-icons.js).
+
 ### DM Mono (via @fontsource/dm-mono) 5.3.0
 
 - **Licence** : OFL-1.1 — texte : [`vendor/fonts/dm-mono-OFL.txt`](vendor/fonts/dm-mono-OFL.txt)

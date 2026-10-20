@@ -62,6 +62,13 @@ export const VENDORED = [
     note: 'Compression deflate des fichiers projet .rem (web/js/72-project.js), chargé à la demande.',
   },
   {
+    name: 'Lucide (icônes)', version: '1.50.0', license: 'ISC',
+    copyright: 'Copyright (c) 2026 Lucide Icons and Contributors',
+    files: ['vendor/icons/lucide-sprite.svg'], licenseFile: 'vendor/icons/lucide-LICENSE.txt',
+    source: 'npm lucide-static@1.50.0, icons/*.svg assemblées en un sprite de <symbol> (tracés non modifiés)',
+    note: 'Sprite inséré en ligne dans index.html par web/build.mjs (marqueur « @@ICONS@@ »), puis appelé par <use href="#i-…"> (web/js/02-icons.js).',
+  },
+  {
     name: 'DM Mono (via @fontsource/dm-mono)', version: '5.3.0', license: 'OFL-1.1',
     copyright: 'Copyright 2020 The DM Mono Project Authors (https://www.github.com/googlefonts/dm-mono)',
     files: [

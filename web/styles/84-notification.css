@@ -2,7 +2,7 @@
 /* ══ Onglet Tel : type (Appel / SMS / Notification, Discussion) et notification
    d'application (maquettes validées 24 et 25) ══ */
 .tel-kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-.tel-kinds .gw-seg-btn{font-size:.6875rem;padding:0 1px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tel-kinds .gw-seg-btn{font-size:var(--fs-label);padding:0 1px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tel-kinds .tel-kind-wide{grid-column:1/-1}
 
 /* Télécommande — Application */
@@ -12,16 +12,16 @@
 .nt-app-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
 .nt-app-main .text-input{width:100%;height:38px;font-size:.8125rem;padding:0 12px;border-color:rgba(255,255,255,.14);border-radius:6px}
 .nt-links{display:flex;gap:12px}
-.nt-link{background:none;border:none;padding:0;font-family:'DM Mono',monospace;font-size:.625rem;color:#FF8a55;cursor:pointer;text-align:left}
+.nt-link{background:none;border:none;padding:0;font-family:'DM Mono',monospace;font-size:var(--fs-caption);color:#FF8a55;cursor:pointer;text-align:left}
 .nt-link-dim{color:#a8a8a8}
 
 /* Télécommande — Affichage */
 .nt-show .panel-label{margin-bottom:10px}
 .nt-show .nt-sub{margin-top:14px}
 .nt-seg{display:flex;gap:6px}
-.nt-seg .gw-seg-btn{flex:1;font-size:.6875rem;padding:0 4px;min-width:0}
+.nt-seg .gw-seg-btn{flex:1;font-size:var(--fs-label);padding:0 4px;min-width:0}
 .nt-recv .nt-ago{flex:1.3;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
-.nt-ago input{width:3.2em;height:22px;box-sizing:border-box;border:1px solid rgba(255,255,255,.2);border-radius:4px;background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:.6875rem;text-align:center;padding:0 4px;outline:none}
+.nt-ago input{width:3.2em;height:22px;box-sizing:border-box;border:1px solid rgba(255,255,255,.2);border-radius:4px;background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:var(--fs-label);text-align:center;padding:0 4px}
 .nt-ago.active input{border-color:var(--accent)}
 .nt-row{display:flex;gap:6px}
 .nt-row+.nt-row,.nt-recv+.nt-row{margin-top:6px}
@@ -38,7 +38,7 @@
 /* Télécommande — Envoi, rangée « Style et son » (réglages propres aux notifications, maquette 36f) */
 .nt-actions{margin-bottom:12px}
 .nt-send{width:100%;height:46px;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
-.nt-note{font-size:.625rem;color:#a8a8a8;text-align:center;margin-top:12px}
+.nt-note{font-size:var(--fs-caption);color:#a8a8a8;text-align:center;margin-top:12px}
 .nt-wall-preview{width:36px;height:62px;border-radius:8px;background:var(--mid2);background-size:cover;background-position:center;border:1px solid var(--border);flex-shrink:0}
 
 /* Écran — carte de notification d'application (bandeau / écran verrouillé) */

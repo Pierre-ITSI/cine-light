@@ -98,6 +98,7 @@ test('un fichier ajouté dans vendor/ sans entrée fait échouer le contrôle', 
   const dir = mkdtempSync(path.join(tmpdir(), 'notices-'));
   try {
     mkdirSync(path.join(dir, 'vendor', 'fonts'), { recursive: true });
+    mkdirSync(path.join(dir, 'vendor', 'icons'), { recursive: true });
     for (const v of VENDORED) for (const f of [...v.files, v.licenseFile]) writeFileSync(path.join(dir, f), 'x');
     assert.deepEqual(uncoveredVendorFiles(dir), []);
     writeFileSync(path.join(dir, 'vendor', 'leaflet-1.9.4.js'), '/* tiers */');

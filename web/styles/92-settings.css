@@ -20,11 +20,11 @@
 
 /* Cartes */
 .st-card{background:var(--mid);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;flex-shrink:0}
-.st-label{font-size:.625rem;letter-spacing:.2em;text-transform:uppercase;color:#a8a8a8}
+.st-label{font-size:var(--fs-caption);letter-spacing:.2em;text-transform:uppercase;color:#a8a8a8}
 .st-seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .st-seg-btn{height:42px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:#d0d0d0;font-family:'DM Mono',monospace;font-size:.75rem;cursor:pointer}
 .st-seg-btn.active{border-color:var(--accent);background:rgba(255,107,44,.1);color:#FF8a55}
-.st-note{margin:0;background:var(--mid2);border-radius:8px;padding:10px 12px;font-size:.6875rem;color:#c4c4c4;line-height:1.6}
+.st-note{margin:0;background:var(--mid2);border-radius:8px;padding:10px 12px;font-size:var(--fs-label);color:#c4c4c4;line-height:1.6}
 
 /* Lignes : libellé + précision à gauche, valeur à droite */
 .st-rows{padding:4px 14px;gap:0}
@@ -32,16 +32,16 @@
 button.st-row{cursor:pointer}
 .st-row-main{flex:1;min-width:0}
 .st-row-label{display:block;font-size:.8125rem}
-.st-row-sub{display:block;font-size:.625rem;color:#a8a8a8;margin-top:3px}
-.st-row-val{font-size:.6875rem;color:#d0d0d0;white-space:nowrap}
+.st-row-sub{display:block;font-size:var(--fs-caption);color:#a8a8a8;margin-top:3px}
+.st-row-val{font-size:var(--fs-label);color:#d0d0d0;white-space:nowrap}
 .st-row-val.on{color:var(--green)}
 .st-row-val.off{color:#FF8a55}
 
 /* Boutons pleine largeur : « Oublier » (danger) puis « Retour à l'accueil » */
-.st-btn{height:48px;flex-shrink:0;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#d0d0d0;font-family:'DM Mono',monospace;font-size:.6875rem;letter-spacing:.06em;cursor:pointer}
+.st-btn{height:48px;flex-shrink:0;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#d0d0d0;font-family:'DM Mono',monospace;font-size:var(--fs-label);letter-spacing:.06em;cursor:pointer}
 .st-danger{border-color:rgba(255,90,79,.5);color:#ff7a70}
 
 /* Pied : politique de confidentialité, engagements, version */
-.st-foot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.6875rem;color:#a8a8a8;text-align:center}
+.st-foot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:var(--fs-label);color:#a8a8a8;text-align:center}
 .st-policy{font-size:.75rem;color:var(--accent)}
 .st-policy:hover{color:#ff8a55}

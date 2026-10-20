@@ -1,0 +1,52 @@
+/* SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP */
+/* Jetons du système visuel (phase 2 de la refonte). Feuille NON stratifiée :
+   build.mjs place les anciennes feuilles dans @layer legacy, ces règles gagnent
+   donc sans course à la spécificité. Ratios WCAG calculés (composition alpha
+   comprise) :
+     texte    : text 17,6 · text-2 9,3 · text-3 5,1 à 5,9 (sur surface-1 à 3)
+     contrôles : border-strong 3,7 / 3,4 / 3,1 sur bg / surface-1 / surface-2
+                 (jamais seul sur surface-3 : 2,7 — voir 03-components.css)
+     noir sur accent 7,4 · blanc sur danger-fill 4,8 */
+:root{
+  /* Couleurs */
+  --bg:#0B0B0D; --surface-1:#161619; --surface-2:#1F1F23; --surface-3:#2A2A30;
+  --border:#3A3A41;            /* décor, séparateurs (≈1,6:1) */
+  --border-strong:#6A6A74;     /* bord de contrôle, champ, piste (≥3:1) */
+  --text:#F5F2EC; --text-2:#B9B9C0; --text-3:#9A9AA3;
+  --accent:#FF6B2C; --on-accent:#000; --accent-text:#FF8A55; --accent-soft:rgba(255,107,44,.14);
+  --accent-pressed:#E85A1E;
+  --danger:#FF7A70; --danger-fill:#D92D20; --danger-soft:rgba(255,122,112,.14);
+  --success:#5FDF8A; --success-soft:rgba(95,223,138,.14);
+  --warning:#FFC440; --warning-soft:rgba(255,196,64,.14);
+  --info:#6FB4FF; --info-soft:rgba(111,180,255,.14); --fx:#D05CFF;
+  --scrim:rgba(0,0,0,.72);
+  /* Typographie : Lato pour l'interface, DM Mono réservé aux valeurs et codes */
+  --font-ui:'Lato',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'DM Mono',ui-monospace,monospace;
+  --fs-numeric:40px; --fs-display:28px; --fs-title:22px; --fs-title-s:18px;
+  --fs-body:16px; --fs-secondary:14px; --fs-label:13px; --fs-caption:12px;
+  /* Espacements 4/8 */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px;
+  /* Rayons (5) */
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:20px; --r-pill:999px;
+  /* Élévations (3) */
+  --e1:0 0 0 1px var(--border);
+  --e2:0 8px 24px rgba(0,0,0,.45);
+  --e3:0 24px 60px rgba(0,0,0,.6);
+  /* Contrôles */
+  --tap:44px; --btn-l:48px; --btn-m:44px;
+  --icon-sm:16px; --icon-md:20px; --icon-lg:24px;
+  --focus:0 0 0 2px var(--bg),0 0 0 4px var(--accent);
+  /* Mouvement */
+  --dur-press:120ms; --dur-state:200ms; --dur-enter:320ms; --dur-exit:200ms;
+  --ease-out:cubic-bezier(.2,.9,.3,1); --ease-in:cubic-bezier(.4,0,1,1);
+  /* Anciennes variables rebranchées : les 382 var() existants suivent sans retouche */
+  --dark:var(--bg); --mid:var(--surface-1); --mid2:var(--surface-3); --muted:var(--text-3); --green:var(--success);
+}
+/* Le faux téléphone (écran de jeu et ses aperçus dans la télécommande) garde
+   les couleurs diégétiques d'origine : il aura ses propres jetons --ph-* en
+   phase 5. Les écrans de rejoindre / menu / retiré, eux, suivent le système. */
+#screen-mode,.ts-prev,.sp-card,.pp-prev{
+  --dark:#000000; --mid:#1c1c1f; --mid2:#252528; --border:rgba(255,255,255,0.08); --muted:#777; --green:#5fdf8a}
+#screen-menu{
+  --dark:var(--bg); --mid:var(--surface-1); --mid2:var(--surface-3); --border:#3A3A41; --muted:var(--text-3); --green:var(--success)}

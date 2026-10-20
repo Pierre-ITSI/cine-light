@@ -19,7 +19,8 @@
 /* -webkit-tap-highlight-color : supprime le voile bleu d'Android/Chrome au
    toucher (visible notamment sur l'écran de jeu au clic « média suivant ») */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-#screen-mode,#screen-mode *{-webkit-user-select:none;user-select:none;outline:none}
-:root{--accent:#FF6B2C;--dark:#000000;--mid:#1c1c1f;--mid2:#252528;--border:rgba(255,255,255,0.08);--text:#F5F2EC;--muted:#777;--green:#5fdf8a}
+/* Pas de outline:none général : le focus clavier / D-pad reste visible (02-base.css) */
+#screen-mode,#screen-mode *{-webkit-user-select:none;user-select:none}
+/* Jetons de couleur : 01-tokens.css */
 html,body{width:100%;min-height:100vh;background:radial-gradient(ellipse at center,#141920 0%,#0E0E10 70%,var(--dark) 100%);color:var(--text);font-family:'DM Mono',monospace;overflow:hidden;touch-action:manipulation}
 

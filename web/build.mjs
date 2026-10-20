@@ -5,7 +5,13 @@
 //
 //   web/index.template.html   balisage complet + 2 marqueurs de ligne :
 //                             « /* @@STYLES@@ */ » et « /* @@SCRIPTS@@ */ »
-//   web/styles/NN-*.css       concaténés dans l'ordre des noms → <style> unique
+//   web/styles/NN-*.css       concaténés dans l'ordre des noms → <style> unique.
+//                             Les anciennes feuilles (hors 01 à 04 et 99, qui sont
+//                             le système visuel) sont enveloppées dans
+//                             @layer legacy { … } : toute règle non stratifiée
+//                             (système visuel) l'emporte sans !important.
+//   vendor/icons/lucide-sprite.svg  sprite d'icônes Lucide (ISC), inséré tel
+//                             quel à la place du marqueur « <!-- @@ICONS@@ -->»
 //   web/js/NN-*.js            scripts CLASSIQUES (pas de modules ES : l'app
 //                             repose sur des globales et des onclick= inline),
 //                             concaténés dans l'ordre des noms → <script> unique
@@ -42,6 +48,9 @@ export const FRAGMENT_LICENSE = Object.freeze({
 });
 
 const STYLES_MARK = '/* @@STYLES@@ */\n';
+const ICONS_MARK = '<!-- @@ICONS@@ -->';
+// Feuilles du système visuel : non stratifiées. Les autres vont dans @layer legacy.
+const SYSTEM_SHEET = /^styles\/(0[1-4]|99)-/;
 const SCRIPTS_MARK = '/* @@SCRIPTS@@ */\n';
 
 // Fragments d'un dossier, triés par nom (le préfixe NN- fixe l'ordre).
@@ -83,7 +92,11 @@ export function build() {
   }
   const protocol = bundleProtocol();
   const dmx = bundleDmx();
-  let html = replaceOnce(tpl, STYLES_MARK, concat(cssFrags, '.css'), 'STYLES');
+  const css = '@layer legacy{\n' + concat(cssFrags.filter((f) => !SYSTEM_SHEET.test(f.name)), '.css') + '}\n'
+    + concat(cssFrags.filter((f) => SYSTEM_SHEET.test(f.name)), '.css');
+  const sprite = readFileSync(join(ROOT_DIR, 'vendor', 'icons', 'lucide-sprite.svg'), 'utf8').trim();
+  let html = replaceOnce(tpl, STYLES_MARK, css, 'STYLES');
+  html = replaceOnce(html, ICONS_MARK, sprite, 'ICONS');
   html = replaceOnce(html, SCRIPTS_MARK, protocol.code + dmx.code + concat(jsFrags, '.js'), 'SCRIPTS');
   // En-tête juste après le doctype (le doctype reste la 1re ligne : aucun
   // risque de mode quirks).

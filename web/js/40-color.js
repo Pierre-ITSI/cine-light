@@ -107,9 +107,9 @@ function updateCrossfadeGradient() {
   const slider=document.getElementById('crossfadeSlider');
   const hueSlider=document.getElementById('hueCrossfadeSlider');
   const rgbSlider=document.getElementById('rgbCrossfadeSlider');
-  if(slider) slider.style.background=gradient;
-  if(hueSlider) hueSlider.style.background=gradient;
-  if(rgbSlider) rgbSlider.style.background=gradient;
+  if(slider) slider.style.setProperty("--track",gradient);
+  if(hueSlider) hueSlider.style.setProperty("--track",gradient);
+  if(rgbSlider) rgbSlider.style.setProperty("--track",gradient);
 }
 function setCrossfade(v) {
   colorCrossfade=v;
@@ -189,7 +189,7 @@ function updateHueGradient() {
     'hsl(300,100%,50%)',
     'hsl(0,100%,50%)'
   ];
-  hueSlider.style.background=`linear-gradient(to right,${stops.join(',')})`;
+  hueSlider.style.setProperty("--track",`linear-gradient(to right,${stops.join(',')})`);
 }
 
 function onRgbChange() {
@@ -211,9 +211,9 @@ function updateRgbGradients() {
   const redSlider=document.getElementById('rgbRedSlider');
   const greenSlider=document.getElementById('rgbGreenSlider');
   const blueSlider=document.getElementById('rgbBlueSlider');
-  if(redSlider) redSlider.style.background=`linear-gradient(to right,#000,rgb(255,0,0))`;
-  if(greenSlider) greenSlider.style.background=`linear-gradient(to right,#000,rgb(0,255,0))`;
-  if(blueSlider) blueSlider.style.background=`linear-gradient(to right,#000,rgb(0,0,255))`;
+  if(redSlider) redSlider.style.setProperty("--track",`linear-gradient(to right,#000,rgb(255,0,0))`);
+  if(greenSlider) greenSlider.style.setProperty("--track",`linear-gradient(to right,#000,rgb(0,255,0))`);
+  if(blueSlider) blueSlider.style.setProperty("--track",`linear-gradient(to right,#000,rgb(0,0,255))`);
 }
 
 function onHueCrossfadeChange() {

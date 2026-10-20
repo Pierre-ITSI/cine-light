@@ -13,7 +13,7 @@
 
 /* Écran de jeu épuré : aucune information visible. Le menu s'ouvre par un geste
    dans le coin haut-gauche, lu sans calque bloquant (30-navigation.js). */
-#screen-bar,#screen-status{display:none!important}
+#screen-bar,#screen-status{display:none}
 /* Confirmation temporaire de connexion (affichée ~5 s puis fondu) */
 #screen-notice{display:none;position:absolute;top:calc(28px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.25);border-radius:24px;padding:12px 24px;font-size:.85rem;letter-spacing:.08em;color:#F5F2EC;z-index:350;opacity:0;transition:opacity .5s ease;pointer-events:none;white-space:nowrap}
 #screen-menu{display:none;position:absolute;inset:0;z-index:400;background:rgba(0,0,0,.92);flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px}
