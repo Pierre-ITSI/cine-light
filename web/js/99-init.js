@@ -21,6 +21,7 @@ callersInit();         // appelants enregistrés (79-callers.js) ; 1re fois : re
 renderNotifForm();
 renderChatPanel();
 renderTelStyle();      // 78-tel-style.js
+setCallKind(callKind); // rangées du type affiché, liste enregistrée, barre d'action (73-tel-ui.js)
 
 // ── Onglet Séquence : séquence en cours, séquences enregistrées ──
 seqLoad();

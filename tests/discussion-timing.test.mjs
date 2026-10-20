@@ -8,7 +8,7 @@
 // des anciennes ; étape « Discussion » d'une Séquence en lecture auto.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { launchBrowser, openPage, waitFor, sleep, FakeBroker, pairingHash } from './helpers/harness.mjs';
+import { launchBrowser, openPage, waitFor, sleep, FakeBroker, pairingHash, chatGo, chatAutoToggle } from './helpers/harness.mjs';
 
 let browser;
 before(async () => { browser = await launchBrowser(); });
@@ -50,7 +50,7 @@ test('lecture auto entièrement automatique : pauses, « … écrit », texte qu
   assert.deepEqual(await rp.$$eval('#dcRows .dc-pill', (p) => p.map((x) => x.textContent)), ['0 s · 1 s', '1 s · auto 3 s', '0 s · 0 s']);
   assert.equal(await rp.textContent('#dcAutoState'), 'prête · 0 / 3');
   r.broker.clear();
-  await rp.click('#dcAutoPlay');
+  await chatAutoToggle(rp);
   assert.equal(await rp.evaluate(() => _chat.open), true, 'la lecture ouvre la discussion sur la cible');
   await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-typing'));
   assert.match(await rp.textContent('#dcAutoState'), /^● en cours · 1 \/ 3$/);
@@ -84,7 +84,7 @@ test('fil mixte : automatique jusqu\'au message tapé par le comédien, attente,
     ['d4', 'contact', 'Je t\'attends.', 2, 0, false, 'auto'],
   ]);
   assert.deepEqual((await rp.$$eval('#dcRows .dc-pill', (p) => p.map((x) => x.textContent)))[1], '0 s · tape');
-  await rp.click('#dcAutoPlay');
+  await chatAutoToggle(rp);
   await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 1);
   await waitFor(rp, () => /attend Julie/.test(document.getElementById('dcAutoState').textContent));
   assert.equal(await rp.textContent('#dcAutoState'), '● attend Julie · 2 / 4');
@@ -94,15 +94,15 @@ test('fil mixte : automatique jusqu\'au message tapé par le comédien, attente,
   await sp.keyboard.press('Enter');
   await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 3, null, { timeout: 3000 });
   // Pause pendant la « pause avant » du n° 4 : rien ne part ; ▶ repart
-  await rp.click('#dcAutoPause');
+  await chatAutoToggle(rp);
   assert.equal(await rp.textContent('#dcAutoState'), 'en pause · 4 / 4');
   await sleep(2400);
   assert.equal((await bubbles(sp)).length, 3);
-  await rp.click('#dcAutoPlay');
+  await chatAutoToggle(rp);
   await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 4, null, { timeout: 4000 });
   await waitFor(rp, () => /terminée/.test(document.getElementById('dcAutoState').textContent));
   // ↶ : pause et dernier message retiré
-  await rp.click('#dcAutoBack');
+  await rp.click('#dcBackBtn');
   await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 3);
   assert.equal(await rp.evaluate(() => _chatAuto.on), false);
   assert.equal(await rp.textContent('#dcAutoState'), 'prête · 3 / 4');
@@ -114,11 +114,11 @@ test('envoi « au bouton » du contact : la lecture attend « Envoyer n° X », 
   const r = await rig(87);
   const { rp, sp } = r;
   await setThread(rp, [['d1', 'contact', 'Allô ?', 0, 2, false, 'button'], ['d2', 'contact', 'Réponds.', 0, 0, false, 'auto']]);
-  await rp.click('#dcAutoPlay');
+  await chatAutoToggle(rp);
   await waitFor(rp, () => /attend « Envoyer »/.test(document.getElementById('dcAutoState').textContent));
   await sleep(600);
   assert.equal(await typing(sp), false);
-  await rp.click('#dcGo');
+  await chatGo(rp);
   await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-typing'));
   await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b:not(.scc-typing)').length === 2, null, { timeout: 4000 });
   assert.deepEqual(await bubbles(sp), ['< Allô ?', '< Réponds.']);
@@ -152,8 +152,7 @@ test('timings réglés dans le fil, enregistrés avec la discussion ; anciennes 
   assert.match(await page.textContent('#dcTimingPanel'), /Contact : « … écrit » pendant la durée d'écriture\. Comédien : le texte s'écrit tout seul lettre par lettre\./);
   assert.equal(await page.locator('#dcRows .dc-pill').nth(1).textContent(), '1 s · auto 4 s');
   // Enregistrer, recharger : timings gardés
-  await page.click('#dcTab-saved');
-  await page.click('#dcSaveBtn');
+  await page.click('#telSaveBtn');
   await page.fill('#srName', 'Avec timings');
   await page.click('#sr-sheet .sr-ok');
   await page.reload();
@@ -161,9 +160,8 @@ test('timings réglés dans le fil, enregistrés avec la discussion ; anciennes 
   assert.deepEqual(await page.evaluate(() => chatSaved[1].msgs[1]), { id: 'd2', from: 'actor', text: 'ici', pause: 1, write: 4, auto: true, send: 'auto' });
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('setremote-chat-saved-v1')).v), 2);
   // L'ancienne, chargée : « Envoyer n° X » comme avant (indicateur 2 s du réglage du fil, sans durée)
-  page.on('dialog', (d) => d.accept());
-  await page.click('#dcTab-saved');
   await page.locator('#dcSavedRows .dc-saved-row').nth(0).click();
+  if (await page.evaluate(() => appConfirmShown())) await page.click('#acOk'); // fil modifié : confirmation de l'app
   assert.deepEqual(await page.evaluate(() => _chat.msgs.map((m) => [m.pause, m.send])), [[0, 'button']]);
   assert.deepEqual(errors, []);
   await close();

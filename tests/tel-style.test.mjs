@@ -42,12 +42,19 @@ test('36 · appel : rangée résumé, vue « Style et sonnerie », panneau « Au
     assert.equal(await page.evaluate((id) => !!document.getElementById(id).closest('#tel-style-view'), id), true, id);
   }
   assert.equal(await shown(page, 'tel-style-view'), false);
-  assert.equal(await page.textContent('#telStyleLabel'), 'Style et sonnerie');
-  assert.equal(await page.innerHTML('#telStyleSum'), 'Verre · Plein écran · Avatar<br>Sonnerie Classique · 100 % · Vibreur non');
-  assert.equal((await page.textContent('#telStyleBtn b')).trim(), 'Régler');
-  // « Au décroché » : son propre panneau (bande son, décroché automatique)
+  // Carte « À jouer » (phase 4) : rangées « Apparence » et « Sonnerie », chacune avec sa valeur courte
+  assert.equal(await page.textContent('#telStyleLabel'), 'Apparence');
+  assert.equal(await page.textContent('#telStyleSum'), 'Verre · plein écran');
+  assert.equal(await page.textContent('#telRingSum'), 'Classique · 100 %');
+  // « Au décroché » : sa rangée ouvre la vue de la bande son et du décroché automatique
   assert.equal(await shown(page, 'callAnswerBlock'), true);
-  assert.match(await page.textContent('#callAnswerBlock .panel-label'), /^Au décroché · bande son$/);
+  assert.equal(await page.textContent('#telAnswerVal'), 'Silence · manuel');
+  await page.click('#callAnswerBlock');
+  assert.equal(await shown(page, 'tel-detail-view'), true);
+  assert.equal(await page.textContent('#tdTitle'), 'Au décroché');
+  assert.match(await page.textContent('#tdAnswer .panel-label'), /^Au décroché · bande son$/);
+  await page.keyboard.press('Escape');
+  assert.equal(await shown(page, 'tel-detail-view'), false, 'Échap ferme la vue');
   // La vue : aperçu, Style / Présentation / Photo, Sonnerie, Vibreur
   await page.click('#telStyleBtn');
   assert.equal(await shown(page, 'tel-style-view'), true);
@@ -68,7 +75,8 @@ test('36 · appel : rangée résumé, vue « Style et sonnerie », panneau « Au
   await page.click('#callstyle-tonal');
   await page.keyboard.press('Escape');
   assert.equal(await shown(page, 'tel-style-view'), false, 'Échap ferme la vue');
-  assert.equal(await page.innerHTML('#telStyleSum'), 'Tonal · Bandeau haut · Avatar<br>Sonnerie Digitale · 100 % · Vibreur oui');
+  assert.equal(await page.textContent('#telStyleSum'), 'Tonal · bandeau haut');
+  assert.equal(await page.textContent('#telRingSum'), 'Digitale · 100 % · vibreur');
   // Titres et contenus selon le type
   const view = (k) => page.evaluate((k) => {
     setCallKind(k); openTelStyle();
@@ -80,10 +88,11 @@ test('36 · appel : rangée résumé, vue « Style et sonnerie », panneau « Au
   assert.deepEqual(await view('sms'), ['Style et son', 'Son de notification', true, false, false]);
   assert.deepEqual(await view('discussion'), ['Style et son', 'Son des messages', true, false, false]);
   assert.deepEqual(await view('notif'), ['Style et son', 'Son de notification', false, false, true]);
-  assert.equal(await shown(page, 'telStyleRow'), false, 'notification : rangée sous « Envoyer la notification »');
+  assert.equal(await shown(page, 'telStyleRow'), false, 'notification : sa propre rangée « Style et son »');
+  assert.equal(await shown(page, 'ntStyleBtn'), true);
   await page.evaluate(() => setCallKind('sms'));
   assert.equal(await shown(page, 'telStyleRow'), true);
-  assert.equal(await shown(page, 'callAnswerBlock'), false, 'pas de décroché pour un SMS');
+  assert.equal(await shown(page, 'telCallRows'), false, 'pas d\'Apparence, de Sonnerie ni de décroché pour un SMS');
   assert.deepEqual(errors, []);
   await close();
 });
@@ -167,7 +176,7 @@ test('36d · discussion : son des messages et vibreur portés par chat:open, jou
   const { page, errors, close } = await openPage(browser, { init: { fn: SPY.fn, arg: false } });
   await remote(page, 'discussion');
   await spySent(page);
-  assert.equal(await page.innerHTML('#telStyleSum'), 'Épuré · Son des messages Silencieux · Vibreur non', 'par défaut : silencieux, comme avant');
+  assert.equal(await page.textContent('#telStyleSum2'), 'Épuré · Silencieux', 'par défaut : silencieux, comme avant');
   await page.evaluate(() => openChatOnTarget());
   let open = await page.evaluate(() => window.__sent.filter((m) => m.type === 'chat:open').at(-1));
   assert.deepEqual(['ring', 'ringId', 'ringVolume', 'vib'].filter((k) => k in open), [], 'silencieux : aucun champ');
@@ -176,7 +185,7 @@ test('36d · discussion : son des messages et vibreur portés par chat:open, jou
   await waitFor(page, () => window.__sent.some((m) => m.type === 'chat:open'));
   open = await page.evaluate(() => window.__sent.filter((m) => m.type === 'chat:open').at(-1));
   assert.deepEqual([open.ring, open.ringVolume, open.vib], ['soft', 0.6, true]);
-  assert.equal(await page.innerHTML('#telStyleSum'), 'Épuré · Son des messages Douce · Vibreur oui');
+  assert.equal(await page.textContent('#telStyleSum2'), 'Épuré · Douce · vibreur');
   assert.deepEqual(await page.evaluate(() => [callFormFields().kind, ringSettings.call.sound, ringSettings.sms.vib]), ['discussion', 'classic', false], 'les autres types gardent les leurs');
   await page.evaluate(() => closeChat());
   // Écran : chaque message du contact sonne et vibre ; l'historique d'une reprise, non
@@ -218,7 +227,9 @@ test('36e · appelants : enregistrer, liste, appliquer (appel, SMS, discussion),
   const { page, errors, close } = await openPage(browser);
   await remote(page);
   assert.equal(await page.textContent('#callWhoLabel'), 'Appelant');
-  assert.equal(await page.textContent('#callWhoSaved'), 'Enregistrés (0)');
+  assert.equal(await page.textContent('#callWhoSaved'), 'Changer');
+  assert.equal(await page.getAttribute('#callWhoSaved', 'aria-label'), 'Appelants enregistrés (0)');
+  await page.evaluate(() => openTelDetail('who'));
   assert.equal(await shown(page, 'callerSaveBtn'), true);
   assert.equal(await page.textContent('#callerSaveBtn'), 'Enregistrer comme appelant');
   // « ☆ Enregistrer comme appelant » : Maman, mobile, avec photo
@@ -228,7 +239,8 @@ test('36e · appelants : enregistrer, liste, appliquer (appel, SMS, discussion),
   await waitFor(page, () => callers.length === 1);
   assert.equal(await shown(page, 'callerSaveBtn'), false);
   assert.equal(await page.textContent('#callerSavedNote'), 'Appelant enregistré');
-  assert.equal(await page.textContent('#callWhoSaved'), 'Enregistrés (1)');
+  assert.equal(await page.getAttribute('#callWhoSaved', 'aria-label'), 'Appelants enregistrés (1)');
+  await page.evaluate(() => closeTelDetail());
   // Photo changée : plus « enregistré » tel quel
   await page.evaluate(() => { _callPhoto = null; renderCallerState(); });
   assert.equal(await shown(page, 'callerSaveBtn'), true);
@@ -252,7 +264,7 @@ test('36e · appelants : enregistrer, liste, appliquer (appel, SMS, discussion),
   assert.equal(await page.textContent('#callerSavedNote'), 'Appelant enregistré');
   // Discussion : en-tête « Contact · Enregistrés (2) › » ; l'appelant devient le contact (nom et photo)
   await page.evaluate(() => setCallKind('discussion'));
-  assert.equal(await page.textContent('#dcCallersLink'), 'Enregistrés (2)');
+  assert.equal(await page.getAttribute('#dcCallersLink', 'aria-label'), 'Appelants enregistrés (2)');
   await page.click('#dcCallersLink');
   await page.locator('#srSheetBody .cr-row').nth(0).click();
   await waitFor(page, () => _chat.name === 'Maman' && _chatAvatar);

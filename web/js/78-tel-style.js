@@ -14,12 +14,13 @@
 //   • Vibreur : propre à chaque type (ringSettings[type].vib), envoyé à
 //     l'écran (vib) qui vibre s'il le peut (80-call-simulator.js).
 // Titre : « Style et sonnerie » (appel), « Style et son » (SMS, notification,
-// discussion). Les réglages s'appliquent aussitôt (pas de bouton « Enregistrer »).
+// discussion). Rangées de l'onglet (phase 4) : « Apparence » et « Sonnerie » (appel),
+// « Style et son » (SMS, notification, discussion), chacune avec sa valeur courte. Les réglages s'appliquent aussitôt (pas de bouton « Enregistrer »).
 // Les éléments du style et du son vivent dans la vue (#tel-style-view) : leurs
 // fonctions (setCallStyle, setCallRing…) restent celles d'avant.
 // Textes affichés, regroupés pour la traduction ({…} : valeurs)
 const _TS_TXT = {
-  titleCall: 'Style et sonnerie', titleOther: 'Style et son', back: '← Tel',
+  titleCall: 'Style et sonnerie', titleOther: 'Style et son', back: '← Tel', vibOn: 'vibreur',
   capCall: 'Aperçu de l\'appel sur l\'écran de jeu', capSms: 'Aperçu du SMS sur l\'écran de jeu',
   capNotif: 'Aperçu de la notification sur l\'écran de jeu', capChat: 'Aperçu de la discussion sur l\'écran de jeu',
   vibNote: 'Vibre avec la sonnerie, même en Silencieux. Écran de jeu Android ou app SetRemote : iPhone dans Safari ne sait pas vibrer.',
@@ -52,6 +53,21 @@ function telStyleSummary(k) {
   if (k === 'discussion') return [j([style, _tsTpl(T.chatSound, { son }), vib])];
   return [j([style, _tsTpl(T.sound, { son }), vol, vib])];
 }
+// Valeur courte de chaque rangée de la carte « À jouer » (maquettes 4a à 4d) :
+// appel : { look : « Verre · plein écran », sound : « Classique · 100 % · vibreur » } ; autres types : { all }
+function telRowSummary(k) {
+  const r = ringSettings[_ringKind(k)], T = _TS_TXT;
+  const style = _CALL_STYLE_NAMES[_tsStyle(k)] || _CALL_STYLE_NAMES.glass;
+  const son = telSoundName(r.sound), vol = _tsTpl(T.vol, { n: Math.round(r.vol * 100) });
+  const j = (a) => a.filter(Boolean).join(T.sep);
+  const vib = r.vib ? T.vibOn : '';
+  if (k === 'call') {
+    return { look: j([style, (callPresent === 'banner' ? T.presBanner : T.presFull).toLowerCase()]), sound: j([son, vol, vib]) };
+  }
+  if (k === 'notif') return { all: j([style, son, vol]) };
+  if (k === 'discussion') return { all: j([style, son, vib]) };
+  return { all: j([style, son, vol]) };
+}
 
 let _tsOpen = false;
 function openTelStyle() {
@@ -59,6 +75,7 @@ function openTelStyle() {
   const v = document.getElementById('tel-style-view');
   if (!v) return;
   _tsOpen = true;
+  v.classList.toggle('over-sheet', !!_sheet); // ouverte depuis une feuille (création sur place) : passe devant
   v.style.display = 'flex';
   v.scrollTop = 0;
   renderTelStyle();
@@ -66,8 +83,9 @@ function openTelStyle() {
 function closeTelStyle() {
   _tsOpen = false;
   const v = document.getElementById('tel-style-view');
-  if (v) v.style.display = 'none';
+  if (v) { v.style.display = 'none'; v.classList.remove('over-sheet'); }
   if (_ringPrev) { _ringPrevStop(); renderRingPanel(); } // écoute d'un son importé en cours
+  if (_sheet && _sheet.kind === 'seqNewEntry') renderSheet(); // création sur place : valeurs des rangées à jour
 }
 function telStyleIsOpen() { return _tsOpen; }
 
@@ -76,10 +94,12 @@ function renderTelStyle() {
   const k = callKind, T = _TS_TXT;
   const set = (id, t) => { setIconText(document.getElementById(id), t); };
   const title = k === 'call' ? T.titleCall : T.titleOther;
-  set('telStyleLabel', title);
-  const sum = telStyleSummary(k).map(escapeHtml).join('<br>');
-  const el = document.getElementById(k === 'notif' ? 'ntStyleSum' : 'telStyleSum');
-  if (el && el.innerHTML !== sum) el.innerHTML = sum;
+  const sum = telRowSummary(k);
+  const put = (id, t) => { const el = document.getElementById(id); if (el && el.textContent !== t) el.textContent = t; };
+  if (k === 'call') { put('telStyleSum', sum.look); put('telRingSum', sum.sound); }
+  else if (k === 'notif') put('ntStyleSum', sum.all);
+  else put('telStyleSum2', sum.all);
+  if (typeof renderTelRows === 'function') renderTelRows();
   if (!_tsOpen) return;
   set('tsTitle', title);
   set('tsBack', T.back);

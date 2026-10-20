@@ -249,3 +249,22 @@ export const nativeShell = (publicUrl, bridge = false) => ({
 export async function connectFakeClients(page) {
   await page.evaluate(() => { for (const c of window.__mqttClients) if (!c.connected && !c.disconnecting) c._connect(); });
 }
+
+// ── Tel › Discussion (phase 4) : l'action est la barre fixe ──
+// « Envoyer n° X » : ouvre d'abord la discussion sur l'écran (« Ouvrir sur l'écran ») si besoin, puis envoie
+export async function chatGo(page) {
+  if (!(await page.evaluate(() => _chat.open))) await page.click('#dcOpenBtn');
+  await page.click('#dcGo');
+}
+// « Lecture auto » (bascule de la barre, devenue « Pause » tant qu'elle tourne) ; ouvre la discussion si besoin
+export async function chatAutoToggle(page) {
+  if (!(await page.evaluate(() => _chat.open))) await page.click('#dcOpenBtn');
+  await page.click('#dcAutoPlay');
+}
+// Menu ⋯ du titre « Fil » : une entrée par son libellé
+export async function chatThreadMenu(page, label) {
+  await page.click('#dcThreadMore');
+  await page.locator('#srSheetBody .dc-menu-btn', { hasText: label }).click();
+}
+// Indicateur « … écrit » (interrupteur de la carte, case masquée sous son dessin)
+export const chatTyping = (page, on) => page.evaluate((on) => { const el = document.getElementById('dcTypingToggle'); el.checked = on; el.dispatchEvent(new Event('change', { bubbles: true })); }, on);

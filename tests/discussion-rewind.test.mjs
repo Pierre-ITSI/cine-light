@@ -6,7 +6,7 @@
 // et reprise après rechargement de l'écran dans chaque cas.
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { launchBrowser, openPage, waitFor, sleep, FakeBroker, pairingHash } from './helpers/harness.mjs';
+import { launchBrowser, openPage, waitFor, sleep, FakeBroker, pairingHash, chatGo, chatThreadMenu, chatTyping } from './helpers/harness.mjs';
 
 let browser;
 before(async () => { browser = await launchBrowser(); });
@@ -26,13 +26,15 @@ const JULIE = 'je suis chez Léa, j\'arrive';
 test('télécommande seule : bouton « ↶ », « Repartir de zéro », repère de reprise gardé au rechargement', async () => {
   const { page, errors, close } = await openPage(browser);
   await page.evaluate(() => { startMode('remote'); switchTab('call'); setCallKind('discussion'); });
-  // Entre « Envoyer n°X » et « Écrire… » ; inactif tant que rien n'est affiché
-  assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#dcSendPanel .dc-send-row button')].map((b) => b.id)), ['dcGo', 'dcBackBtn', 'dcWriteBtn']);
+  // Barre : fermée, « Ouvrir sur l'écran » seul ; ouverte, ↶ · Lecture auto · Envoyer (↶ inactif tant que rien n'est affiché)
+  const barIds = () => page.evaluate(() => [...document.querySelectorAll('#tel-bar .nb-row button')].filter((b) => getComputedStyle(b).display !== 'none').map((b) => b.id));
+  assert.deepEqual(await barIds(), ['telSaveBtn', 'dcOpenBtn']);
+  await page.click('#dcOpenBtn');
+  assert.deepEqual(await barIds(), ['telSaveBtn', 'dcBackBtn', 'dcAutoPlay', 'dcGo']);
   assert.equal(await page.getAttribute('#dcBackBtn use', 'href'), '#i-undo-2');
-  assert.equal(await page.getAttribute('#dcBackBtn', 'aria-label'), 'Revenir d\'un message');
+  assert.equal(await page.getAttribute('#dcBackBtn', 'aria-label'), 'Pause et revenir d\'un message');
   assert.equal(await page.isDisabled('#dcBackBtn'), true);
-  assert.equal(await page.textContent('#dcRestartBtn'), 'Repartir de zéro');
-  assert.match(await page.textContent('#dcAdd'), /toucher un message : « Reprendre ici »$/);
+  assert.equal((await page.textContent('#dcAdd')).trim(), 'Message');
   // « Reprendre ici » depuis l'éditeur d'un message
   await page.locator('#dcRows .dc-row').nth(3).click();
   assert.equal(await page.textContent('#dcRows .dc-edit .dc-edit-resume'), 'Reprendre ici');
@@ -40,7 +42,7 @@ test('télécommande seule : bouton « ↶ », « Repartir de zéro », repère 
   assert.deepEqual(await state(page), ['posté', 'posté', 'posté', '', '']);
   assert.equal(await page.textContent('#dcResume'), 'Reprise ici · 1 à 3 affichés comme historique');
   assert.equal(await page.evaluate(() => document.getElementById('dcResume').previousElementSibling.dataset.id), 'd4', 'sous le message de reprise');
-  assert.equal(await page.textContent('#dcGo'), 'Envoyer n°4 (Maman)');
+  assert.equal(await page.textContent('#dcGoLbl'), 'ENVOYER N°4');
   assert.equal(await page.isDisabled('#dcBackBtn'), false);
   // Gardé au rechargement de la télécommande
   await page.reload();
@@ -54,7 +56,7 @@ test('télécommande seule : bouton « ↶ », « Repartir de zéro », repère 
   await page.locator('#dcRows .dc-row').nth(1).click();
   await page.click('#dcRows .dc-edit .dc-edit-resume');
   assert.equal(await page.textContent('#dcResume'), 'Reprise ici · 1 affiché comme historique');
-  await page.click('#dcRestartBtn');
+  await chatThreadMenu(page, 'Repartir de zéro');
   assert.deepEqual(await state(page), ['', '', '', '', '']);
   assert.equal(await page.evaluate(() => [document.getElementById('dcResume'), _chat.resumeAt].join()), ',');
   assert.equal(await page.isDisabled('#dcBackBtn'), true);
@@ -91,26 +93,26 @@ describe('télécommande et écran reliés', () => {
   };
 
   test('« ↶ » sur les messages du contact : une fois, plusieurs fois, pendant « … écrit »', async () => {
-    await rp.click('#dcGo');
-    await rp.click('#dcGo');
+    await chatGo(rp);
+    await chatGo(rp);
     await waitFor(sp, nBubbles, 2);
     broker.clear();
     await rp.click('#dcBackBtn');
     await waitFor(sp, nBubbles, 1);
     assert.deepEqual(await bubbles(sp), ['< Tu es où ?']);
     assert.deepEqual(await state(rp), ['posté', '', '', '', '']);
-    assert.equal(await rp.textContent('#dcGo'), 'Envoyer n°2 (Maman)', 'remis en attente');
+    assert.equal(await rp.textContent('#dcGoLbl'), 'ENVOYER N°2', 'remis en attente');
     await broker.flush();
     assert.deepEqual((await broker.sent(rp)).filter((m) => m.type.startsWith('chat:')), [{ type: 'chat:rewind', id: 'd2', target: { screens: [sid] } }]);
     // Encore : plus rien d'affiché, bouton inactif
     await rp.click('#dcBackBtn');
     await waitFor(sp, nBubbles, 0);
     assert.equal(await rp.isDisabled('#dcBackBtn'), true);
-    assert.equal(await rp.textContent('#dcGo'), 'Envoyer n°1 (Maman)');
+    assert.equal(await rp.textContent('#dcGoLbl'), 'ENVOYER N°1');
     // Pendant « … écrit » : l'indicateur disparaît, la bulle n'arrive jamais
-    await rp.click('#dcGo');
-    await rp.check('#dcTypingToggle');
-    await rp.click('#dcGo');
+    await chatGo(rp);
+    await chatTyping(rp, true);
+    await chatGo(rp);
     await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-typing'));
     await rp.click('#dcBackBtn');
     await waitFor(sp, () => !document.querySelector('#screen-chat .scc-typing'));
@@ -118,10 +120,10 @@ describe('télécommande et écran reliés', () => {
     assert.deepEqual(await bubbles(sp), ['< Tu es où ?']);
     assert.equal(await sp.evaluate(() => document.querySelector('#screen-chat .scc-typing')), null);
     // Renvoyé : de nouveau avec « … écrit », puis la bulle
-    await rp.click('#dcGo');
+    await chatGo(rp);
     await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-typing'));
     await waitFor(sp, nBubbles, 2, { timeout: 4000 });
-    await rp.uncheck('#dcTypingToggle');
+    await chatTyping(rp, false);
     assert.deepEqual(await state(rp), ['posté', 'posté', 'en cours', '', '']);
   });
 
@@ -147,7 +149,7 @@ describe('télécommande et écran reliés', () => {
     await sp.keyboard.type('abc');
     assert.equal((await compose(sp)).typed, '', 'pas de frappe tant que le contact n\'a pas réécrit');
     // Renvoyé : le message du comédien repart de zéro
-    await rp.click('#dcGo');
+    await chatGo(rp);
     await waitFor(sp, nBubbles, 2);
     assert.deepEqual(await compose(sp), { typed: '', ready: true, send: false });
     await sp.keyboard.type('abc');
@@ -160,7 +162,7 @@ describe('télécommande et écran reliés', () => {
   });
 
   test('« ↶ » sur un message improvisé : retiré de l\'écran et du fil ; écran rechargé ensuite', async () => {
-    await rp.click('#dcGo');
+    await chatGo(rp);
     await waitFor(sp, nBubbles, 1);
     await rp.click('#dcWriteBtn');
     await rp.fill('#dcWriteText', 'Allô ?');
@@ -176,7 +178,7 @@ describe('télécommande et écran reliés', () => {
     assert.deepEqual((await broker.sent(rp)).filter((m) => m.type.startsWith('chat:')), [{ type: 'chat:rewind', id: impro, drop: true, target: { screens: [sid] } }]);
     assert.equal(await sp.evaluate((id) => _scChat.ids.includes(id) || _scChatMsgs.has(id), impro), false, 'oublié par l\'écran');
     // Le fil continue normalement
-    await rp.click('#dcGo');
+    await chatGo(rp);
     await waitFor(sp, nBubbles, 2);
     await sp.keyboard.type('abcd');
     await waitFor(rp, () => _chat.progress && _chat.progress.typed === 4);
@@ -195,7 +197,7 @@ describe('télécommande et écran reliés', () => {
   });
 
   test('« Reprendre ici » : historique affiché d\'un coup (sans « … écrit », sans animation), frappe oubliée ; repère ; écran rechargé', async () => {
-    await rp.check('#dcTypingToggle'); // l'indicateur ne s'applique pas à l'historique
+    await chatTyping(rp, true); // l'indicateur ne s'applique pas à l'historique
     // Reprise au n° 5 (comédien) : 1 à 4 affichés, y compris la réponse de Julie
     await rp.locator('#dcRows .dc-row').nth(4).click();
     broker.clear();
@@ -241,30 +243,30 @@ describe('télécommande et écran reliés', () => {
     await sp.keyboard.type('x'.repeat(30));
     await sp.keyboard.press('Enter');
     await waitFor(rp, () => _chat.sent.includes('d3'));
-    await rp.click('#dcGo');
+    await chatGo(rp);
     await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-typing'));
     await waitFor(sp, nBubbles, 4, { timeout: 4000 });
-    await rp.uncheck('#dcTypingToggle');
+    await chatTyping(rp, false);
     assert.equal(await rp.textContent('#dcResume'), 'Reprise ici · 1 et 2 affichés comme historique', 'le repère reste');
   });
 
   test('« Reprendre ici » discussion fermée : ouverte sur la cible avec l\'historique ; « Repartir de zéro »', async () => {
-    await rp.click('#dcCloseBtn');
+    await chatThreadMenu(rp, 'Fermer sur l\'écran');
     await waitFor(sp, () => document.getElementById('screen-chat').style.display === 'none');
     await rp.locator('#dcRows .dc-row').nth(3).click();
     await rp.click('#dcRows .dc-edit .dc-edit-resume');
     await waitFor(sp, nBubbles, 3);
     assert.equal(await sp.evaluate(() => document.querySelectorAll('#screen-chat .scc-new').length), 0);
     assert.match(await rp.textContent('#dcState'), /^Discussion ouverte sur « /);
-    assert.equal(await rp.textContent('#dcGo'), 'Envoyer n°4 (Maman)');
+    assert.equal(await rp.textContent('#dcGoLbl'), 'ENVOYER N°4');
     // Écran rechargé : même historique
     await reloadScreen();
     await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 3, null, { timeout: 8000 });
     assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '< Ton père t\'attend depuis une heure', '> ' + JULIE]);
     // « Repartir de zéro »
-    await rp.click('#dcRestartBtn');
+    await chatThreadMenu(rp, 'Repartir de zéro');
     await waitFor(sp, nBubbles, 0);
     assert.equal(await rp.evaluate(() => document.getElementById('dcResume')), null);
-    assert.equal(await rp.textContent('#dcGo'), 'Envoyer n°1 (Maman)');
+    assert.equal(await rp.textContent('#dcGoLbl'), 'ENVOYER N°1');
   });
 });

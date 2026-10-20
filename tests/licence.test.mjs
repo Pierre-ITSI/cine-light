@@ -148,9 +148,9 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
     name: document.getElementById('callName').value, label: document.getElementById('callLabel').value,
     lists: [callList.call.map((e) => e.name), callList.sms.map((e) => e.msg), callList.notif.map((e) => e.appName)],
     chat: [_chat.name, _chat.msgs.length], saved: chatSaved.map((e) => e.contact), callers: callers.map((e) => e.name),
-    inert: ['telStyleBtn', 'callName', 'callerSaveBtn', 'callListSave', 'callListDel', 'dcAdd', 'dcContactPanel', 'callWhoSaved', 'dcNewBtn'].map((id) => document.getElementById(id).inert),
-    free: ['callTriggerBtn', 'callListGo', 'dcGo', 'callkind-sms'].map((id) => document.getElementById(id).inert),
-    ex: getComputedStyle(document.getElementById('callWhoLabel'), '::after').content,
+    inert: ['telStyleBtn', 'telRingBtn', 'telWhoBtn', 'telSaveBtn', 'dcAdd', 'dcContactPanel', 'callWhoSaved', 'callAnswerBlock'].map((id) => document.getElementById(id).inert),
+    free: ['callTriggerBtn', 'dcGo', 'dcOpenBtn', 'callkind-sms'].map((id) => document.getElementById(id).inert).concat(document.querySelector('#callListRows .cl-play').inert),
+    ex: getComputedStyle(document.getElementById('telPlayTitle'), '::after').content,
   }));
   assert.deepEqual(tel.locked, [true, true]);
   assert.equal(tel.banner, '');
@@ -173,7 +173,7 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
     // mettre à jour, renommer, dupliquer, supprimer : sans effet
     const id = callList.call[0].id;
     await selectCallEntry(id);
-    const upd = [getComputedStyle(document.getElementById('callListUpd')).display !== 'none', document.getElementById('callListUpd').inert];
+    const upd = [document.getElementById('telSaveBtn').inert, (openSaveCallSheet(), !!_sheet)];
     openCallEntryMenu(id);
     const menu = [...document.querySelectorAll('#srSheetBody button')].map((b) => b.textContent);
     closeSheet();
@@ -184,7 +184,7 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
   assert.equal(played.starts.length, 9);
   assert.ok(played.starts.every((n) => n === 'Maman'));
   assert.deepEqual([played.style, played.sheet, played.msgs, played.calls], [false, false, 5, 1]);
-  assert.deepEqual(played.upd, [true, true], '« Mettre à jour » affiché mais verrouillé');
+  assert.deepEqual(played.upd, [true, false], 'signet verrouillé, feuille d\'enregistrement refusée');
   assert.deepEqual(played.menu, ['Charger dans l\'onglet', 'Fermer']);
   assert.deepEqual([...played.r, played.title], [false, undefined, null, false, undefined]);
   // Séquence : démo « Batterie à plat », GO joue le SMS de Maman

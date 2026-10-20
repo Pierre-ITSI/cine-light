@@ -1114,38 +1114,13 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
    la passerelle DMX (mode Étendu 16). */
 .call-list{display:flex;flex-direction:column;gap:12px}
 .call-list .panel-label{margin-bottom:0}
-.cl-kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.cl-kinds .gw-seg-btn{height:42px}
-.cl-head,.cl-row{display:grid;grid-template-columns:30px minmax(0,1fr) 62px 28px 24px;gap:6px}
-.cl-head{padding:0 10px;font-size:var(--fs-caption);letter-spacing:.12em;color:var(--text-2);text-transform:uppercase}
-.cl-head span:nth-child(3){text-align:right}
-.cl-rows{display:flex;flex-direction:column;gap:12px}
-.cl-rows:empty{display:none}
-.cl-row{align-items:center;min-height:56px;padding:0 10px;border-radius:10px;background:var(--mid2);border:1px solid var(--border);cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-.cl-row.selected{background:rgba(255,107,44,.1);border-color:var(--accent)}
-.cl-num{font-family:'Lato',sans-serif;font-weight:700;font-size:1rem;color:var(--text)}
-.cl-row.selected .cl-num{color:var(--accent-text)}
-.cl-main{min-width:0}
-.cl-name,.cl-meta{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cl-name{font-size:.75rem}
-.cl-meta{font-size:var(--fs-caption);color:var(--text-2);margin-top:3px}
-.cl-dmx{font-size:var(--fs-label);text-align:right;color:var(--text);font-variant-numeric:tabular-nums}
-.cl-grip{display:flex;justify-content:center;color:var(--text-3);cursor:grab;touch-action:none}
 /* « ⋯ » : menu de l'entrée (maquette 43c) */
-.cl-more{width:28px;height:44px;padding:0;border:none;border-radius:6px;background:transparent;color:var(--text-3);font-family:'DM Mono',monospace;font-size:1.1rem;cursor:pointer}
 /* Glisser-déposer (même principe que le pool média) */
 .cl-row.cl-drag-src{opacity:.35;border-style:dashed;border-color:var(--accent)}
 .cl-ghost{position:fixed;z-index:1000;pointer-events:none;margin:0;opacity:.93;box-shadow:0 12px 32px rgba(0,0,0,.65);border-color:var(--accent)}
 .cl-save{height:46px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:var(--fs-label);letter-spacing:.04em;cursor:pointer}
 /* Entrée chargée (maquette 43) : « ↻ Mettre à jour » et « + Enregistrer comme nouveau » */
-.cl-upd{display:flex;gap:8px}
-.cl-upd-btn,.cl-upd .cl-save{flex:1;min-width:0;min-height:46px;height:auto;padding:4px 8px;border-radius:8px;font-family:'DM Mono',monospace;font-size:var(--fs-label);line-height:1.35;text-align:center;cursor:pointer;overflow:hidden;word-break:break-word}
-.cl-upd-btn{border:1px solid var(--accent);background:rgba(255,107,44,.08);color:var(--accent-text)}
-.cl-upd .cl-save:disabled{opacity:.4;cursor:default}
 .cl-note{background:var(--mid2);border-radius:8px;padding:10px 12px;font-size:var(--fs-label);color:var(--text-2);line-height:1.55}
-.cl-actions{display:flex;gap:10px}
-.cl-go{flex:1;height:50px;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
-.cl-del{height:50px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,90,79,.5);background:transparent;color:var(--danger);font-family:'DM Mono',monospace;font-size:var(--fs-label);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .call-list .media-pool-empty{margin:0}
 /* ══ Séquence (maquettes validées 28 à 32) ══
    Télécommande : liste des étapes, GO / ↶ / STOP, éditer une étape.
@@ -2291,9 +2266,6 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
 /* Champ de texte actif (clavier ouvert) : la barre s'efface */
 body.nv-kb #nv-tabs{display:none}
 
-/* Séquence : GO / retour / Stop collés au-dessus de la barre, à 16 px d'elle au moins (pas de changement d'onglet involontaire) */
-#nv-scroll .sq-ctl{bottom:0;padding-bottom:var(--sp-4)}
-
 /* ── Lumière : torche indisponible (iPhone) ── */
 #content-flash .flash-unavail-notice{margin-bottom:var(--sp-3)}
 
@@ -2381,8 +2353,8 @@ body.nv-kb #nv-tabs{display:none}
   #nv-head .nv-strip{flex:1 0 100%}
   #nv-scroll{padding:0 calc(24px + env(safe-area-inset-right)) var(--sp-5) 24px}
   .nv-sub{margin-left:-24px;margin-right:calc(-1 * (24px + env(safe-area-inset-right)));padding-left:24px;padding-right:calc(24px + env(safe-area-inset-right))}
-  #content-color.active,#content-flash.active,#content-effects.active,#content-media.active,#content-screens.active,#content-call.active{column-count:2;column-gap:var(--sp-4)}
-  #content-color.active>*,#content-flash.active>*,#content-effects.active>*,#content-media.active>*,#content-screens.active>*,#content-call.active>*{break-inside:avoid}
+  #content-color.active,#content-flash.active,#content-effects.active,#content-media.active,#content-screens.active{column-count:2;column-gap:var(--sp-4)}
+  #content-color.active>*,#content-flash.active>*,#content-effects.active>*,#content-media.active>*,#content-screens.active>*{break-inside:avoid}
   #content-seq.active{column-count:1}
   .nv-intro{column-span:all}
   #content-screens .pair-e2e{column-span:all}
@@ -2393,16 +2365,248 @@ body.nv-kb #nv-tabs{display:none}
   #nv-head{padding-top:var(--sp-2);padding-bottom:var(--sp-2)}
   #previewMeta{display:none}
 }
+/* Scénario, phase 4 : Tel « composer puis envoyer » et Séquence « Préparer / Plateau »
+   (maquettes 4a à 4j). Feuille NON stratifiée (voir 01-tokens.css) : jetons seulement.
+   1. Barres d'action fixes (#nv-bar : #tel-bar, #seq-bar) et bandeau « Annuler »
+   2. Tel : type, carte « À jouer », rangées, liste enregistrée, discussion
+   3. Vue de réglage des rangées (#tel-detail-view)
+   4. Séquence : Préparer, Plateau, GO
+   5. Éditeur d'étape en quatre questions
+   6. Feuilles (menus, console DMX) et bandeau d'aperçu sans licence */
+
+/* ═════════════ 1. Barres d'action ═════════════ */
+#nv-bar{flex:none;position:relative;z-index:25}
+.nb{display:none;flex-direction:column;gap:var(--sp-2);background:rgba(11,11,13,.97);border-top:1px solid var(--border-strong);
+  padding:var(--sp-3) calc(16px + env(safe-area-inset-right)) var(--sp-3) calc(16px + env(safe-area-inset-left))}
+#nv-main[data-bar="tel"] #tel-bar,#nv-main[data-bar="seq"] #seq-bar{display:flex}
+body.nv-kb #nv-main[data-bar] #nv-bar .nb{display:none}
+.nb-row{display:flex;gap:var(--sp-2);align-items:stretch}
+.nb button{height:56px;min-width:0;border:0;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;gap:var(--sp-2);padding:0 var(--sp-3);
+  background:var(--surface-3);color:var(--text);font:700 16px/1.1 var(--font-ui);cursor:pointer}
+.nb button .ic{width:22px;height:22px;flex:none;vertical-align:0}
+.nb button:disabled{opacity:.45;cursor:default}
+.nb .nb-ico{flex:none;width:56px;padding:0}
+.nb .nb-pri{flex:1;background:var(--accent);color:var(--on-accent)}
+.nb .nb-pri:active{background:var(--accent-pressed)}
+.nb .nb-pri:disabled{background:var(--surface-3);color:var(--text-3);opacity:1}
+.nb .nb-dng{flex:1;background:var(--danger-fill);color:#fff}
+.nb .nb-sec{flex:none;min-width:96px}
+.nb .nb-ghost{flex:none;width:92px;background:transparent;box-shadow:inset 0 0 0 1px var(--border-strong);padding:0 var(--sp-2)}
+.nb .nb-ghost b{font-size:15px;font-weight:700;letter-spacing:0;white-space:nowrap}
+.nb .nb-ghost.on{box-shadow:inset 0 0 0 1.5px var(--accent);color:var(--accent-text)}
+.nb-lbl{display:flex;flex-direction:column;align-items:center;min-width:0;max-width:100%;text-align:center;gap:2px}
+.nb-lbl b{font-size:16px;font-weight:700;letter-spacing:.02em;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.nb-lbl small{font-size:12px;font-weight:400;opacity:.85;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.nb-live{display:flex;align-items:center;gap:var(--sp-2);min-height:20px;font:400 14px/1.2 var(--font-ui);color:var(--text-2)}
+.nb-live span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nb-dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--success);box-shadow:0 0 0 4px var(--success-soft)}
+.nb-dot.acc{background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.nb-prog{height:4px;border-radius:2px;background:var(--surface-3);overflow:hidden}
+.nb-prog i{display:block;height:100%;width:0;background:var(--info);transition:width .4s linear}
+#telProg i{background:var(--accent)}
+#dcAutoFill{background:var(--success)}
+#telLive{display:none}
+/* Bandeau « supprimé · Annuler » (33-snackbar.js) */
+#undo-snack{position:absolute;left:12px;right:12px;bottom:calc(100% + 10px);z-index:30;background:var(--surface-3);border:1px solid var(--border-strong);border-radius:var(--r-md);box-shadow:var(--e2);overflow:hidden}
+.us-t{display:flex;align-items:center;gap:var(--sp-3);padding:6px 6px 6px var(--sp-4);min-height:56px;font:400 15px/1.3 var(--font-ui);color:var(--text)}
+.us-t>span{flex:1;min-width:0}
+.us-t b{font-weight:400;word-break:break-word}
+.us-t small{display:block;font-size:12px;color:var(--text-2)}
+.us-t button{flex:none;height:44px;padding:0 14px;border:0;border-radius:var(--r-md);background:none;color:var(--accent-text);font:700 15px/1 var(--font-ui);display:flex;align-items:center;gap:6px;cursor:pointer}
+.us-t button .ic{width:18px;height:18px}
+.us-bar{height:3px;background:transparent}
+.us-bar i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left}
+#usBar.run{animation:usbar 6s linear forwards}
+@keyframes usbar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+/* ═════════════ 2. Tel ═════════════ */
+.tl-kinds{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;padding:3px;margin:var(--sp-3) 0 var(--sp-2);background:var(--bg);border:1px solid var(--border-strong);border-radius:var(--r-md)}
+.tl-kind{height:56px;min-width:0;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--text-2);font:700 13px/1 var(--font-ui);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0 2px;cursor:pointer}
+.tl-kind .ic{width:20px;height:20px;vertical-align:0}
+.tl-kind.active{background:var(--surface-3);border-color:var(--border-strong);color:var(--text)}
+.tl-kind.active .ic{color:var(--accent-text)}
+.tl-h{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);min-height:36px;margin:var(--sp-4) 0 var(--sp-1)}
+.tl-h>b{font:700 16px/1.3 var(--font-ui);color:var(--text);min-width:0}
+.tl-h-act{display:flex;align-items:center;flex:none}
+.tl-card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.tl-card.tl-gap{margin-top:var(--sp-3)}
+.tl-row{display:flex;align-items:center;gap:var(--sp-3);min-height:56px;padding:var(--sp-2) var(--sp-4);border:0;border-top:1px solid var(--border);width:100%;background:none;color:var(--text);text-align:left;font:400 16px/1.3 var(--font-ui)}
+.tl-card>.tl-row:first-child,.tl-card>div:first-child>.tl-row:first-child{border-top:0}
+.tl-row[style*="display:none"]+.tl-row{border-top:1px solid var(--border)}
+.tl-main{flex:1;min-width:0;display:flex;align-items:center;gap:var(--sp-3);min-height:56px;padding:0;border:0;background:none;color:inherit;text-align:left;font:inherit;cursor:pointer}
+.tl-nav{cursor:pointer}
+.tl-k{flex:1;min-width:0;display:flex;flex-direction:column}
+.tl-k b{font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-k small{font-size:13px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-v{font-size:14px;color:var(--text-2);text-align:right;max-width:58%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-flex;align-items:center;gap:6px;justify-content:flex-end}
+.tl-row .ic{width:20px;height:20px;flex:none;color:var(--text-2);vertical-align:0}
+.tl-row .ic.tl-tr{width:16px;height:16px;color:var(--text-3)}
+.tl-row .ic.tl-lead{color:var(--accent-text)}
+.tl-dot{display:inline-block;width:12px;height:12px;border-radius:50%;flex:none}
+.tl-av{width:44px;height:44px;border-radius:50%;flex:none;background:#7b5a4a center/cover;color:#fff;font:700 20px/44px var(--font-ui);text-align:center;overflow:hidden}
+.tl-av.tl-sq{border-radius:10px;background-color:#2a6fd0}
+.tl-link{flex:none;min-height:var(--tap);display:inline-flex;align-items:center;gap:4px;padding:0 var(--sp-2);border:0;background:none;color:var(--accent-text);font:700 14px/1 var(--font-ui);cursor:pointer}
+.tl-link .ic{width:16px;height:16px;vertical-align:0}
+.tl-link.on{color:var(--text)}
+.tl-row>.tl-link{margin-right:calc(-1 * var(--sp-2))}
+.tl-ib{flex:none;width:var(--tap);height:var(--tap);display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:var(--r-md);background:none;color:var(--text-2);padding:0;cursor:pointer}
+.tl-ib .ic{width:20px;height:20px}
+.tl-h-act .tl-ib{margin-right:calc(-1 * var(--sp-2))}
+.tl-field{display:flex;flex-direction:column;gap:6px;padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--border)}
+.tl-field label{font:400 13px/1 var(--font-ui);color:var(--text-2)}
+.tl-field .text-input{width:100%;min-height:48px;height:auto}
+.tl-field textarea.text-input{height:72px;padding:10px var(--sp-3);resize:none;line-height:1.4}
+.tl-field .nt-title{font-weight:700}
+.tl-sw{flex:none}
+.tl-inline .dc-name{flex:none;width:45%;margin:0;text-align:right;color:var(--text);font:700 16px/1.2 var(--font-ui);min-height:44px;height:44px;padding:0 var(--sp-2);border:1px solid transparent;border-radius:var(--r-md);background:none;box-shadow:none}
+.tl-inline .dc-name:focus{border-color:var(--accent);background:var(--bg)}
+.tl-inline{cursor:text}
+.tl-row .text-input{flex:1}
+.dc-typing{cursor:pointer}
+.tl-dmx .tl-k small{font-size:14px}
+.tl-card .media-pool-empty{border:0;border-radius:0;padding:var(--sp-4);margin:0;font-size:14px}
+#callListPanel .cl-rows{display:flex;flex-direction:column;gap:0}
+/* Lignes enregistrées (appels, SMS, notifications) : n°, nom, ▶, ⋯ ; pas de plage DMX (dans ⋯) */
+.cl-row{display:flex;align-items:center;gap:var(--sp-2);min-height:64px;padding:var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);border:0;border-top:1px solid var(--border);border-radius:0;background:var(--surface-1);position:relative;grid-template-columns:none}
+.cl-row:first-child{border-top:0}
+.cl-row.selected{background:var(--accent-soft);border-color:var(--border)}
+.cl-row.selected::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:4px;border-radius:0 3px 3px 0;background:var(--accent)}
+.cl-num{width:20px;flex:none;font:500 15px/1 var(--font-mono);color:var(--text-3)}
+.cl-row.selected .cl-num{color:var(--accent-text)}
+.cl-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.cl-name{font:700 16px/1.25 var(--font-ui);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cl-meta{font:400 13px/1.2 var(--font-ui);color:var(--text-2);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cl-chip{display:inline-block;font:700 12px/1 var(--font-ui);color:var(--accent-text);border:1px solid var(--accent);border-radius:var(--r-pill);padding:3px 7px;margin-right:6px;vertical-align:1px}
+.cl-play,.cl-mv{flex:none;width:44px;height:44px;border-radius:var(--r-md);padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;font:inherit}
+.cl-play{border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent-text)}
+.cl-play .ic{width:20px;height:20px;fill:currentColor}
+.cl-mv{border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text)}
+.cl-mv .ic{width:18px;height:18px}
+.cl-mv:disabled{opacity:.35}
+.cl-more{flex:none;width:44px;height:44px;border:0;border-radius:var(--r-md);background:none;color:var(--text-2);padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cl-more .ic{width:22px;height:22px}
+.cl-row.cl-drag-src{opacity:.35;border-top-style:dashed}
+.cl-ghost{background:var(--surface-2);border:1px solid var(--accent)}
+/* Discussion : fil préparé */
+.dc-contact{gap:var(--sp-3)}
+.dc-avatar{width:44px;height:44px;font-size:20px}
+.dc-contact-main{flex:1;min-width:0}
+.dc-contact .dc-name{font:700 16px/1.3 var(--font-ui);min-height:24px;padding:0;margin:0;border:0;border-radius:0;background:none}
+.dc-contact .dc-name:focus{background:var(--bg)}
+.dc-state{font-size:13px;margin-top:0}
+.dc-rows{display:flex;flex-direction:column;gap:0}
+.dc-row{display:flex;align-items:flex-start;gap:var(--sp-3);min-height:56px;padding:var(--sp-3) var(--sp-4);margin:0;border:0;border-top:1px solid var(--border);border-radius:0;font-size:15px;position:relative}
+.dc-row:first-child{border-top:0}
+.dc-row.sent{opacity:1}
+.dc-row.sent .dc-text{color:var(--text-3)}
+.dc-st{flex:none;margin-top:1px}
+.dc-st .ic{width:22px;height:22px;color:var(--text-3);vertical-align:0}
+.dc-row.sent .dc-st .ic{color:var(--success)}
+.dc-row.next{background:var(--accent-soft);box-shadow:inset 4px 0 0 var(--accent)}
+.dc-row.next .dc-st .ic{color:var(--accent-text);fill:currentColor}
+.dc-row.cur{border:0;border-top:1px solid var(--border);padding:var(--sp-3) var(--sp-4);margin:0;background:var(--info-soft)}
+.dc-row.cur.next{background:var(--accent-soft)}
+.dc-row.editing{background:var(--surface-2);border-color:var(--border)}
+.dc-row.sel:not(.editing){background:var(--surface-2)}
+.dc-num{display:none}
+.dc-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.dc-who{font:700 12px/1.2 var(--font-ui);color:var(--text-2);margin-bottom:2px}
+.dc-row.actor .dc-who{color:var(--info)}
+.dc-text{font:400 15px/1.35 var(--font-ui);color:var(--text)}
+.dc-pill{flex:none;margin-top:1px;font:500 12px/1 var(--font-mono);color:var(--text-2);background:var(--surface-3);border:0;border-radius:6px;padding:5px 7px;white-space:nowrap;min-width:0;height:auto;box-shadow:none}
+.dc-progress,.dc-resume{padding:0 var(--sp-4) var(--sp-2) calc(var(--sp-4) + 34px);font-size:12px}
+.dc-edit{margin:0;border:0;border-top:1px solid var(--border);border-radius:0;background:var(--surface-2);padding:var(--sp-3) var(--sp-4) var(--sp-4)}
+.dc-edit textarea{min-height:72px}
+.dc-edit-actions{flex-wrap:wrap;justify-content:flex-start;gap:var(--sp-2)}
+.dc-edit-actions>button{height:44px}
+.dc-edit-mv{width:44px;flex:none;border:1px solid var(--border-strong);border-radius:var(--r-md);background:var(--surface-3);color:var(--text);padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.dc-edit-mv .ic{width:20px;height:20px}
+.dc-edit-mv:disabled{opacity:.35}
+.dc-edit-resume{margin-right:0;border-radius:var(--r-md);font:700 14px/1 var(--font-ui);letter-spacing:0}
+.dc-edit-actions .cl-del{padding:0 var(--sp-3);border-radius:var(--r-md);font:700 14px/1 var(--font-ui);letter-spacing:0;text-transform:none;background:var(--danger-soft)}
+.dc-edit-ok{height:44px;border-radius:var(--r-md);font:700 14px/1 var(--font-ui);letter-spacing:0;margin-left:auto}
+.dc-timing-panel{margin-top:var(--sp-3)}
+.dc-write-box{padding:0 var(--sp-4) var(--sp-3);display:flex;gap:var(--sp-2)}
+.dc-write-box textarea{flex:1;min-height:48px;height:64px}
+.dc-write-send{min-width:80px;min-height:44px;border-radius:var(--r-md);font:700 14px/1 var(--font-ui)}
+/* Discussions enregistrées : mêmes lignes que la liste des appels */
+.dc-saved-rows{display:flex;flex-direction:column;gap:0}
+.dc-saved-row{display:flex;align-items:center;gap:var(--sp-2);min-height:64px;padding:var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);border:0;border-top:1px solid var(--border);border-radius:0;background:var(--surface-1);position:relative}
+.dc-saved-row:first-child{border-top:0}
+.dc-saved-row.selected{background:var(--accent-soft);border-color:var(--border)}
+.dc-saved-main{flex:1;min-width:0;padding:0}
+.dc-saved-name{font:700 16px/1.25 var(--font-ui)}
+.dc-saved-meta{font:400 13px/1.2 var(--font-ui)}
+.dc-saved-more{flex:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--text-2)}
+.dc-saved-empty{border:0;border-radius:0;padding:var(--sp-4);font-size:14px}
+.dc-saved-hint{padding:0 var(--sp-1)}
+#dcSavedPanel .cl-note{margin-top:var(--sp-3)}
+
+/* ═════════════ 3. Vue de réglage des rangées ═════════════ */
+#tel-detail-view{display:none;position:fixed;inset:0;z-index:300;overflow-y:auto;overflow-x:hidden;background:var(--bg);color:var(--text);font-family:var(--font-ui);flex-direction:column;gap:var(--sp-3);
+  padding:calc(var(--sp-4) + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(var(--sp-5) + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
+#tel-detail-view.over-sheet,#tel-style-view.over-sheet{z-index:600}
+#tel-detail-view .td-sec{flex-direction:column}
+#tel-detail-view .ss-card{gap:var(--sp-3)}
+#tel-detail-view .td-two{display:flex;gap:var(--sp-2)}
+#tel-detail-view .td-two .text-input{flex:1;min-width:0}
+.td-photo{width:46px;height:46px;border-radius:50%;background:var(--surface-3) center/cover;border:1px solid var(--border);flex:none}
+.td-wall{width:36px;height:62px;border-radius:8px;background:var(--surface-3) center/cover;border:1px solid var(--border);flex:none}
+#tel-detail-view .ss-head,#seq-step-view .ss-head{padding-bottom:var(--sp-2);border-bottom:1px solid var(--border)}
+#tel-detail-view .ss-back,#seq-step-view .ss-back{display:flex;align-items:center;gap:2px;width:96px;min-height:var(--tap);color:var(--accent-text);font:700 15px/1 var(--font-ui)}
+#tel-detail-view .ss-back .ic,#seq-step-view .ss-back .ic{width:20px;height:20px;vertical-align:0}
+#tel-detail-view .ss-title,#seq-step-view .ss-title{font:700 17px/1.2 var(--font-ui)}
+#tel-detail-view .ss-spacer,#seq-step-view .ss-spacer{width:96px}
+
+/* ═════════════ 6. Feuilles et bandeau d'aperçu ═════════════ */
+.dc-menu-btn{display:flex;align-items:center;justify-content:flex-start;gap:var(--sp-3);width:100%;min-height:52px;padding:0 var(--sp-1);font:400 16px/1.2 var(--font-ui);color:var(--text);border:0;border-bottom:1px solid var(--border);background:none;cursor:pointer;text-align:left}
+.dc-menu-btn .ic{width:20px;height:20px;flex:none;color:var(--text-2);vertical-align:0}
+.dc-menu-btn.danger,.dc-menu-btn.danger .ic{color:var(--danger)}
+.dc-menu-btn.on{color:var(--accent-text)}
+.dc-menu-btn:disabled{opacity:.4;cursor:default}
+.dc-menu-big{min-height:64px}
+.dc-menu-big span{display:flex;flex-direction:column}
+.dc-menu-big small{font-size:13px;color:var(--text-2)}
+.dc-menu-meta,.sr-dmx-row{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);min-height:48px;padding:0 var(--sp-1);border-bottom:1px solid var(--border);font:400 14px/1.3 var(--font-ui);color:var(--text-2)}
+.dc-menu-meta b,.sr-dmx-row b{font:500 14px var(--font-mono);color:var(--text);white-space:nowrap}
+.sr-dmx-row span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr-detail{display:flex;flex-direction:column;gap:0}
+.sr-detail .dt{display:flex;justify-content:space-between;gap:var(--sp-3);min-height:48px;align-items:center;border-bottom:1px solid var(--border);font:400 15px/1.3 var(--font-ui)}
+.sr-detail .dt span{color:var(--text-2)}
+.sr-detail .dt b{font-weight:700;text-align:right;min-width:0}
+.sr-new{display:flex;flex-direction:column;gap:var(--sp-3)}
+.sr-new .text-input{width:100%;min-height:48px;height:auto}
+.sr-new-id{display:flex;gap:var(--sp-3);align-items:center}
+.sr-new-id .tl-av{width:56px;height:56px;line-height:56px;font-size:24px}
+.sr-new-id>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--sp-2)}
+.sr-new .tl-card .tl-row{min-height:56px}
+/* Bandeau « Aperçu · Tel / Séquence » : « Obtenir une licence ›  » ne se coupe plus (chevron compris) */
+.lic-pv-row{flex-wrap:wrap}
+.lic-pv-id,.lic-pv-buy{min-width:0;flex:1 1 140px}
+.lic-pv-buy{padding:0 var(--sp-3);overflow:visible;font-family:var(--font-ui);letter-spacing:0}
+.lic-pv-buy .ic{flex:none;width:16px;height:16px;vertical-align:0}
+.lic-pv{font-family:var(--font-ui)}
+/* Timings du message touché (maquette 26d) : pas ± de 44 px */
+.dc-tbtn{width:44px;height:44px;border-radius:var(--r-md);border:1px solid var(--border-strong);background:var(--surface-3);font-family:var(--font-ui)}
+.dc-timing .ss-opt{min-height:44px}
+.dc-timing{background:var(--surface-1);border-radius:var(--r-lg)}
+.dc-timing-panel{margin-bottom:0}
+#tel-bar #dcGo .nb-lbl b{font-size:15px;letter-spacing:0}
+#tel-bar #dcGo{padding:0 var(--sp-2)}
 </style>
 </head>
 <body>
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
 <!-- Lucide icons, lucide-static 1.50.0 — ISC License, Copyright (c) Lucide Icons and Contributors. https://lucide.dev -->
+<symbol id="i-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14" /><path d="m19 12-7 7-7-7" /></symbol>
 <symbol id="i-arrow-left-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4" /><path d="M4 7h16" /><path d="m16 21 4-4-4-4" /><path d="M20 17H4" /></symbol>
+<symbol id="i-arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></symbol>
 <symbol id="i-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></symbol>
 <symbol id="i-audio-waveform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 13a2 2 0 0 0 2-2V7a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0V4a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0v-4a2 2 0 0 1 2-2" /></symbol>
 <symbol id="i-battery-low" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 14v-4" /><path d="M6 14v-4" /><rect x="2" y="6" width="16" height="12" rx="2" /></symbol>
 <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></symbol>
+<symbol id="i-bookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" /></symbol>
 <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></symbol>
 <symbol id="i-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></symbol>
 <symbol id="i-chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></symbol>
@@ -2410,6 +2614,7 @@ body.nv-kb #nv-tabs{display:none}
 <symbol id="i-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /></symbol>
 <symbol id="i-circle-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="m16 9-5.5 5.5L8 12" /></symbol>
 <symbol id="i-clapperboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.296 3.464 3.02 3.956" /><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z" /><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="m6.18 5.276 3.1 3.899" /></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></symbol>
 <symbol id="i-diamond" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z" /></symbol>
 <symbol id="i-dice-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><path d="M16 8h.01" /><path d="M8 8h.01" /><path d="M8 16h.01" /><path d="M16 16h.01" /><path d="M12 12h.01" /></symbol>
 <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3" /><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" /></symbol>
@@ -2422,6 +2627,7 @@ body.nv-kb #nv-tabs{display:none}
 <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></symbol>
 <symbol id="i-lightbulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></symbol>
 <symbol id="i-link-2-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7" /><path d="M15 7h2a5 5 0 0 1 4 8" /><line x1="8" x2="12" y1="12" y2="12" /><line x1="2" x2="22" y1="2" y2="22" /></symbol>
+<symbol id="i-list-ordered" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5h10" /><path d="M11 12h10" /><path d="M11 19h10" /><path d="M4 4h1v5" /><path d="M4 9h2" /><path d="M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02" /></symbol>
 <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol>
 <symbol id="i-lock-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></symbol>
 <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /><rect x="2" y="4" width="20" height="16" rx="2" /></symbol>
@@ -2434,8 +2640,10 @@ body.nv-kb #nv-tabs{display:none}
 <symbol id="i-music" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></symbol>
 <symbol id="i-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" /><circle cx="13.5" cy="6.5" r=".5" fill="currentColor" /><circle cx="17.5" cy="10.5" r=".5" fill="currentColor" /><circle cx="6.5" cy="12.5" r=".5" fill="currentColor" /><circle cx="8.5" cy="7.5" r=".5" fill="currentColor" /></symbol>
 <symbol id="i-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="3" width="5" height="18" rx="1" /><rect x="5" y="3" width="5" height="18" rx="1" /></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" /></symbol>
 <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" /></symbol>
 <symbol id="i-phone-missed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 2 6 6" /><path d="m22 2-6 6" /><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" /></symbol>
+<symbol id="i-phone-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.1 13.9a14 14 0 0 0 3.732 2.668 1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2 18 18 0 0 1-12.728-5.272" /><path d="M22 2 2 22" /><path d="M4.76 13.582A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 .244.473" /></symbol>
 <symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" /></symbol>
 <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></symbol>
 <symbol id="i-power" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10" /><path d="M18.4 6.6a9 9 0 1 1-12.77.04" /></symbol>
@@ -2455,6 +2663,7 @@ body.nv-kb #nv-tabs{display:none}
 <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></symbol>
 <symbol id="i-step-forward" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.029 4.285A2 2 0 0 0 7 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z" /><path d="M3 4v16" /></symbol>
 <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></symbol>
+<symbol id="i-trash-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6" /><path d="M14 11v6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></symbol>
 <symbol id="i-triangle-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></symbol>
 <symbol id="i-undo-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11" /></symbol>
 <symbol id="i-vibrate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 8 2 2-2 2 2 2-2 2" /><path d="m22 8-2 2 2 2-2 2 2 2" /><rect width="8" height="14" x="8" y="5" rx="1" /></symbol>
@@ -3094,223 +3303,98 @@ body.nv-kb #nv-tabs{display:none}
         <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">Obtenir une licence <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
       </div>
     </div>
-    <div class="panel">
-      <div class="panel-label">Type</div>
-      <!-- Onglet Tel (maquettes 24 et 26) : appel, SMS, notification d'application, discussion -->
-      <div class="tel-kinds">
-        <button type="button" class="gw-seg-btn active" id="callkind-call" onclick="setCallKind('call')"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg> Appel</button>
-        <button type="button" class="gw-seg-btn" id="callkind-sms" onclick="setCallKind('sms')"><svg class="ic" aria-hidden="true"><use href="#i-mail"></use></svg> SMS</button>
-        <button type="button" class="gw-seg-btn" id="callkind-notif" onclick="setCallKind('notif')"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg> Notification</button>
-        <button type="button" class="gw-seg-btn tel-kind-wide" id="callkind-discussion" onclick="setCallKind('discussion')"><svg class="ic" aria-hidden="true"><use href="#i-message-circle"></use></svg> Discussion</button>
-      </div>
-      <!-- Style et sonnerie / Style et son (maquette 36) : résumé, réglages dans la vue #tel-style-view -->
-      <div class="tel-sum-row" id="telStyleRow">
-        <div class="panel-label" id="telStyleLabel">Style et sonnerie</div>
-        <button type="button" class="tel-sum" id="telStyleBtn" onclick="openTelStyle()"><span id="telStyleSum"></span><b>Régler <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></b></button>
-      </div>
+    <!-- Tel « composer puis envoyer » (phase 4, maquettes 4a à 4e3) : type, carte « À jouer », liste enregistrée ; l'action est la barre fixe #tel-bar -->
+    <div class="tl-kinds" id="telKinds" role="radiogroup" aria-label="Type">
+      <button type="button" role="radio" aria-checked="true" class="tl-kind active" id="callkind-call" onclick="setCallKind('call')"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg>Appel</button>
+      <button type="button" role="radio" aria-checked="false" class="tl-kind" id="callkind-sms" onclick="setCallKind('sms')"><svg class="ic" aria-hidden="true"><use href="#i-mail"></use></svg>SMS</button>
+      <button type="button" role="radio" aria-checked="false" class="tl-kind" id="callkind-notif" aria-label="Notification" onclick="setCallKind('notif')"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>Notif.</button>
+      <button type="button" role="radio" aria-checked="false" class="tl-kind" id="callkind-discussion" onclick="setCallKind('discussion')"><svg class="ic" aria-hidden="true"><use href="#i-message-circle"></use></svg>Discussion</button>
     </div>
-    <div class="panel" id="callWhoPanel">
-      <!-- Appelants enregistrés (maquette 36e) : feuille « Enregistrés (n) › », 79-callers.js -->
-      <div class="tel-head"><div class="panel-label" id="callWhoLabel">Appelant</div><button type="button" class="tel-link" id="callWhoSaved" onclick="openCallersSheet()">Enregistrés (0) <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button></div>
-      <input type="text" id="callName" class="text-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%;margin-bottom:10px" oninput="renderCallerState()">
-      <input type="text" id="callLabel" class="text-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px" oninput="renderCallerState()">
-      <div style="display:flex;gap:10px;align-items:center">
-        <div id="callPhotoPreview" style="width:46px;height:46px;border-radius:50%;background:var(--mid2);border:1px solid var(--border);background-size:cover;background-position:center;flex-shrink:0"></div>
-        <button class="media-btn" id="callPhotoBtn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()"><svg class="ic" aria-hidden="true"><use href="#i-image"></use></svg> Photo (option)</button>
-        <input type="file" id="callPhotoInput" accept="image/*" style="display:none" onchange="onCallPhoto(this.files);this.value=''">
+    <div class="tl-h"><b id="telPlayTitle">À jouer</b></div>
+    <div class="tl-card" id="telPlay">
+      <!-- Contact (appel, SMS) : nom, sous-titre et photo dans la vue « Appelant » (#tdWho) -->
+      <div class="tl-row" id="callWhoPanel">
+        <button type="button" class="tl-main" id="telWhoBtn" onclick="openTelDetail('who')"><span class="tl-av" id="telWhoAv"></span><span class="tl-k"><b id="telWhoName"></b><small id="telWhoSub"></small></span></button>
+        <button type="button" class="tl-link" id="callWhoSaved" onclick="openCallersSheet()">Changer</button>
       </div>
-      <button type="button" class="tel-save" id="callerSaveBtn" onclick="saveCurrentCaller()"><svg class="ic" aria-hidden="true"><use href="#i-star"></use></svg> Enregistrer comme appelant</button>
-      <div class="tel-saved" id="callerSavedNote" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg> Appelant enregistré</div>
-    </div>
-    <div class="panel" id="callMsgPanel" style="display:none">
-      <div class="panel-label">Message</div>
-      <input type="text" id="callMsgText" class="text-input" placeholder="Texte du message" value="Tu es où ??" style="width:100%;margin-bottom:14px">
-      <div class="panel-label">Application (fictive)</div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <input type="text" id="callAppName" class="text-input" placeholder="Nom affiché" value="SMS" maxlength="24" style="flex:1" oninput="this.dataset.touched='1'">
-        <input type="color" id="callAppColor" value="#2f8cf0" style="width:52px;flex-shrink:0" oninput="this.dataset.touched='1'">
+      <!-- Message du SMS, sur place -->
+      <div class="tl-field" id="callMsgPanel" style="display:none">
+        <label for="callMsgText">Message</label>
+        <input type="text" id="callMsgText" class="text-input" placeholder="Texte du message" value="Tu es où ??" oninput="renderTelRows()">
       </div>
-      <div class="media-status" style="text-align:left;margin-top:6px">Pas de marque réelle : inventez un nom (ex. « Chatly ») et une couleur.</div>
-    </div>
-    <div class="panel" id="callLockPanel" style="display:none">
-      <div class="toggle-row" style="margin-bottom:12px">
-        <div><div class="toggle-label">Écran verrouillé</div><div class="toggle-sub">La notification arrive sur un faux écran verrouillé</div></div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="lockToggle">
-          <div class="toggle-track"></div><div class="toggle-thumb"></div>
-        </label>
+      <button type="button" class="tl-row tl-nav" id="telAppBtn" style="display:none" onclick="openTelDetail('app')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-mail"></use></svg><span class="tl-k"><b>Application</b></span><span class="tl-v" id="telAppVal"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+      <div class="tl-row" id="callLockPanel" style="display:none">
+        <button type="button" class="tl-main" id="telLockBtn" onclick="openTelDetail('lock')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-lock"></use></svg><span class="tl-k"><b>Écran verrouillé</b><small id="telLockSub"></small></span></button>
+        <label class="toggle-switch tl-sw"><input type="checkbox" id="lockToggle" aria-label="Écran verrouillé" onchange="renderTelRows()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
       </div>
-      <div style="display:flex;gap:10px;margin-bottom:10px">
-        <input type="text" id="lockTime" class="text-input" placeholder="Heure (ex : 00:10)" style="flex:1;min-width:0">
-        <input type="text" id="lockDate" class="text-input" placeholder="Ven. 17 juil." style="flex:1;min-width:0">
+      <!-- Notification d'application (maquette 24) : application, titre et contenu sur place ; affichage dans #tdNtShow -->
+      <div class="tl-row" id="ntAppPanel" style="display:none">
+        <button type="button" class="tl-main" id="telNtAppBtn" onclick="openTelDetail('ntapp')"><span class="tl-av tl-sq" id="telNtAv"></span><span class="tl-k"><b id="telNtName"></b><small>application fictive</small></span></button>
+        <button type="button" class="tl-link" id="telNtIconBtn" onclick="openTelDetail('ntapp')">Changer l'icône</button>
       </div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <div id="lockWallPreview" style="width:36px;height:62px;border-radius:8px;background:var(--mid2);background-size:cover;background-position:center;border:1px solid var(--border);flex-shrink:0"></div>
-        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('lockWallInput').click()"><svg class="ic" aria-hidden="true"><use href="#i-image"></use></svg> Fond d'écran</button>
-        <input type="file" id="lockWallInput" accept="image/*" style="display:none" onchange="onLockWall(this.files);this.value=''">
+      <div class="tl-field" id="telNtTitleField" style="display:none">
+        <label for="ntTitle">Titre</label>
+        <input type="text" id="ntTitle" class="text-input nt-title" value="Virement reçu" maxlength="40" placeholder="Titre" oninput="renderNotifForm()">
       </div>
-      <div class="media-status" id="lockWallStatus">Sans fond : dégradé sombre. Heure/date vides : celles de l'écran.</div>
-    </div>
-    <!-- Notification d'application (maquette 24) : style, fond et son propres, indépendants des SMS -->
-    <div class="panel" id="ntAppPanel" style="display:none">
-      <div class="panel-label">Application</div>
-      <div class="nt-app">
-        <button type="button" class="nt-icon" id="ntIconPreview" aria-label="Changer l'icône" onclick="document.getElementById('ntIconInput').click()"></button>
-        <div class="nt-app-main">
-          <input type="text" id="ntAppName" class="text-input" value="Banque Atlas" maxlength="24" placeholder="Nom de l'application" oninput="renderNotifForm()">
-          <span class="nt-links">
-            <button type="button" class="nt-link" onclick="document.getElementById('ntIconInput').click()">Changer l'icône (PNG, JPG)</button>
-            <button type="button" class="nt-link nt-link-dim" id="ntIconClear" style="display:none" onclick="clearNotifIcon()">Retirer</button>
-          </span>
-        </div>
-        <input type="file" id="ntIconInput" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onNotifIcon(this.files);this.value=''">
+      <div class="tl-field" id="telNtBodyField" style="display:none">
+        <label for="ntBody">Contenu</label>
+        <textarea id="ntBody" class="text-input nt-body" maxlength="200" placeholder="Contenu" oninput="renderNotifForm()">Vous avez reçu 2 400,00 € de SARL Prod Nord. Solde disponible : 3 182,45 €.</textarea>
       </div>
-      <div class="media-status nt-status" id="ntIconStatus" style="display:none"></div>
-    </div>
-    <div class="panel nt-show" id="ntShowPanel" style="display:none">
-      <div class="panel-label">Affichage</div>
-      <div class="nt-seg">
-        <button type="button" class="gw-seg-btn active" id="ntpres-banner" onclick="setNotifPresent('banner')">Bandeau (déverrouillé)</button>
-        <button type="button" class="gw-seg-btn" id="ntpres-lock" onclick="setNotifPresent('lock')">Écran verrouillé</button>
+      <button type="button" class="tl-row tl-nav" id="ntShowPanel" style="display:none" onclick="openTelDetail('ntshow')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-rectangle-horizontal"></use></svg><span class="tl-k"><b>Affichage</b></span><span class="tl-v" id="telNtShowVal"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+      <!-- Appel : Apparence, Sonnerie, Au décroché (la vue « Style et sonnerie », 78-tel-style.js, reste la même) -->
+      <div id="telCallRows">
+        <button type="button" class="tl-row tl-nav" id="telStyleBtn" onclick="openTelStyle()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-smartphone"></use></svg><span class="tl-k"><b id="telStyleLabel">Apparence</b></span><span class="tl-v" id="telStyleSum"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+        <button type="button" class="tl-row tl-nav" id="telRingBtn" onclick="openTelStyle()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-music"></use></svg><span class="tl-k"><b>Sonnerie</b></span><span class="tl-v" id="telRingSum"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+        <button type="button" class="tl-row tl-nav" id="callAnswerBlock" onclick="openTelDetail('answer')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-audio-waveform"></use></svg><span class="tl-k"><b>Au décroché</b></span><span class="tl-v" id="telAnswerVal"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
       </div>
-      <div class="panel-label nt-sub">Heure du téléphone</div>
-      <div class="nt-row">
-        <label class="text-input nt-date" id="ntPhoneDateBox" onclick="ntOpenPicker(event, 'ntPhoneDate')"><span id="ntPhoneDateText"></span><input type="date" id="ntPhoneDate" aria-label="Date du téléphone" onchange="renderNotifForm()"></label>
-        <input type="text" id="ntPhoneTime" class="text-input nt-time" placeholder="Heure réelle" inputmode="numeric" maxlength="5" aria-label="Heure du téléphone" oninput="renderNotifForm()">
-      </div>
-      <div class="panel-label nt-sub">Reçue</div>
-      <div class="nt-seg nt-recv">
-        <button type="button" class="gw-seg-btn active" id="ntrecv-now" onclick="setNotifReceived('now')">Maintenant</button>
-        <div class="gw-seg-btn nt-ago" id="ntrecv-ago" role="button" tabindex="0" onclick="setNotifReceived('ago')">il y a <input type="text" id="ntAgoMin" value="15" maxlength="5" inputmode="numeric" aria-label="Minutes écoulées" onfocus="setNotifReceived('ago')" oninput="renderNotifForm()"> min</div>
-        <button type="button" class="gw-seg-btn" id="ntrecv-at" onclick="setNotifReceived('at')">Date et heure</button>
-      </div>
-      <div class="nt-row" id="ntAtRow" style="display:none">
-        <label class="text-input nt-date" id="ntAtDateBox" onclick="ntOpenPicker(event, 'ntAtDate')"><span id="ntAtDateText"></span><input type="date" id="ntAtDate" aria-label="Date de réception" onchange="renderNotifForm()"></label>
-        <input type="text" id="ntAtTime" class="text-input nt-time" placeholder="Heure" inputmode="numeric" maxlength="5" aria-label="Heure de réception" oninput="renderNotifForm()">
-      </div>
-      <div class="panel-label nt-sub">Titre et contenu</div>
-      <input type="text" id="ntTitle" class="text-input nt-title" value="Virement reçu" maxlength="40" placeholder="Titre">
-      <textarea id="ntBody" class="text-input nt-body" maxlength="200" placeholder="Contenu">Vous avez reçu 2 400,00 € de SARL Prod Nord. Solde disponible : 3 182,45 €.</textarea>
-    </div>
-    <div class="nt-actions" id="ntSendPanel" style="display:none">
-      <button type="button" class="nt-send" id="ntSendBtn" onclick="triggerCall()"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg> Envoyer la notification</button>
-      <div class="tel-sum-row nt-sum-row">
-        <div class="panel-label">Style et son</div>
-        <button type="button" class="tel-sum" id="ntStyleBtn" onclick="openTelStyle()"><span id="ntStyleSum"></span><b>Régler <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></b></button>
-      </div>
-      <div class="nt-note">Réglages propres aux notifications, indépendants des SMS.</div>
-    </div>
-    <!-- Au décroché (appel) : bande son et décroché automatique ; la sonnerie est dans « Style et sonnerie » -->
-    <div class="panel" id="callAnswerBlock">
-      <div class="panel-label">Au décroché · bande son</div>
-      <div class="rt-row rt-answer" id="callAudioRow" style="display:none">
-        <svg class="ic rt-wave" aria-hidden="true"><use href="#i-audio-waveform"></use></svg>
-        <span class="rt-main"><span class="rt-name"><span id="callAudioName"></span><span class="rt-dim" id="callAudioDur"></span></span></span>
-        <span class="rt-onscreen" id="callAudioState"></span>
-        <button type="button" class="rt-del" id="callAudioClear" aria-label="Retirer la bande son" onclick="clearCallAudio()"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
-      </div>
-      <button type="button" class="rt-import" id="callAudioPick" onclick="document.getElementById('callAudioInput').click()">+ Choisir la voix du correspondant (8 Mo)</button>
-      <input type="file" id="callAudioInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onCallAudio(this.files);this.value=''">
-      <div class="media-status rt-status" id="callAudioStatus">Aucune bande son — le décroché reste silencieux.</div>
-      <div class="slider-block rt-auto">
-        <div class="slider-header"><label>Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
-        <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
-      </div>
-    </div>
-    <div class="panel" id="callTriggerPanel">
-      <button class="media-btn" id="callTriggerBtn" onclick="triggerCall()"><span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg></span> Faire sonner</button>
-      <div style="display:flex;gap:10px">
-        <button class="media-btn" style="flex:1" id="callAnswerBtn" onclick="sendMsg({type:'call:answer'})"><svg class="ic" aria-hidden="true"><use href="#i-circle-check"></use></svg> Décrocher</button>
-        <button class="media-btn danger" style="flex:1" onclick="sendMsg({type:'call:end'})"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> Terminer</button>
-      </div>
-      <div class="media-status" id="callStatus">—</div>
-    </div>
-    <!-- Discussion (maquette 26) : fil préparé, messages du contact envoyés d'ici, ceux du comédien tapés sur l'écran -->
-    <!-- Sous-onglets (maquette 26c) : fil en cours, discussions enregistrées -->
-    <div class="dc-tabs" id="dcTabs" style="display:none">
-      <button type="button" class="gw-seg-btn active" id="dcTab-thread" onclick="setChatView('thread')">Fil en cours</button>
-      <button type="button" class="gw-seg-btn" id="dcTab-saved" onclick="setChatView('saved')">Enregistrées (0)</button>
-    </div>
-    <!-- Nouvelle discussion (maquette 47b) : fil vierge, « Enregistrer avant ? » si le fil a changé -->
-    <button type="button" class="prj-newbtn" id="dcNewBtn" style="display:none" onclick="chatNewAsk()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Nouvelle discussion</button>
-    <div class="dc-saved" id="dcSavedPanel" style="display:none">
-      <div class="dc-saved-rows" id="dcSavedRows"></div>
-      <div class="dc-saved-empty" id="dcSavedEmpty">Aucune discussion enregistrée pour l'instant.</div>
-      <div class="dc-saved-hint" id="dcSavedHint">Toucher : charger dans « Fil en cours ». ⋯ : renommer · dupliquer · supprimer.</div>
-      <button type="button" class="cl-save" id="dcSaveBtn" onclick="openSaveChatSheet()">+ Enregistrer le fil en cours</button>
-      <div class="cl-note">Une discussion enregistrée garde le contact (nom, photo), le comédien, le style et tous les messages. Le point de reprise n'est pas enregistré.</div>
-    </div>
-    <div class="panel dc-contact" id="dcContactPanel" style="display:none">
-      <div class="tel-head dc-contact-head"><div class="panel-label">Contact</div><button type="button" class="tel-link" id="dcCallersLink" onclick="openCallersSheet()">Enregistrés (0) <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button></div>
-      <div class="dc-contact-row">
+      <!-- Discussion (maquette 26) : contact, comédien -->
+      <div class="tl-row dc-contact" id="dcContactPanel" style="display:none">
         <button type="button" class="dc-avatar" id="dcAvatar" aria-label="Photo du contact" onclick="document.getElementById('dcAvatarInput').click()"></button>
         <input type="file" id="dcAvatarInput" accept="image/*" style="display:none" onchange="onChatAvatar(this.files);this.value=''">
         <span class="dc-contact-main">
           <input type="text" id="dcName" class="dc-name" value="Maman" maxlength="40" aria-label="Nom du contact" oninput="onChatNames()">
           <span class="dc-state" id="dcState"></span>
         </span>
+        <button type="button" class="tl-link" id="dcCallersLink" onclick="openCallersSheet()">Changer</button>
       </div>
-      <label class="dc-actor-row"><span>Comédien</span><input type="text" id="dcActor" class="dc-name" value="Julie" maxlength="40" aria-label="Nom du comédien" oninput="onChatNames()"></label>
+      <label class="tl-row tl-inline" id="dcActorRow" style="display:none"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-clapperboard"></use></svg><span class="tl-k"><small>Comédien</small></span><input type="text" id="dcActor" class="dc-name" value="Julie" maxlength="40" aria-label="Nom du comédien" oninput="onChatNames()"></label>
+      <!-- SMS, discussion : « Style et son » ; notification : sa propre rangée (réglages indépendants des SMS) -->
+      <button type="button" class="tl-row tl-nav" id="telStyleRow" onclick="openTelStyle()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-music"></use></svg><span class="tl-k"><b>Style et son</b></span><span class="tl-v" id="telStyleSum2"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+      <button type="button" class="tl-row tl-nav" id="ntStyleBtn" style="display:none" onclick="openTelStyle()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-music"></use></svg><span class="tl-k"><b>Style et son</b></span><span class="tl-v" id="ntStyleSum"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
     </div>
-    <div class="panel dc-thread" id="dcThreadPanel" style="display:none">
-      <div class="dc-head"><span class="panel-label">Fil préparé</span><span class="dc-pair" id="dcPair"></span></div>
-      <div class="dc-rows" id="dcRows"></div>
-      <button type="button" class="dc-add" id="dcAdd" onclick="addChatMessage()">+ Ajouter un message · glisser pour réordonner · toucher un message : « Reprendre ici »</button>
-    </div>
-    <!-- Timings du message touché (maquette 26d) -->
-    <div class="dc-timing-panel" id="dcTimingPanel" style="display:none"></div>
-    <!-- Lecture automatique (maquette 26d) : enchaîne les messages selon leurs timings -->
-    <div class="panel dc-auto" id="dcAutoPanel" style="display:none">
-      <div class="dc-auto-head"><span class="panel-label">Lecture automatique</span><span class="dc-auto-state" id="dcAutoState" role="status"></span></div>
-      <div class="dc-auto-bar"><i id="dcAutoFill"></i></div>
-      <div class="dc-auto-row">
-        <button type="button" class="dc-auto-play" id="dcAutoPlay" onclick="chatAutoStart()"><svg class="ic" aria-hidden="true"><use href="#i-play"></use></svg> Lecture auto</button>
-        <button type="button" class="dc-auto-pause" id="dcAutoPause" onclick="chatAutoPause()" disabled><svg class="ic" aria-hidden="true"><use href="#i-pause"></use></svg> Pause</button>
-        <button type="button" class="dc-auto-back" id="dcAutoBack" onclick="chatAutoBack()" aria-label="Pause et revenir d'un message" title="Pause et revenir d'un message" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg></button>
+    <!-- Discussion : fil préparé (messages, ↑ ↓, délais), message improvisé, discussions enregistrées -->
+    <div id="dcThreadPanel" style="display:none">
+      <div class="tl-h"><b id="dcThreadTitle">Fil · 0 message</b><span class="tl-h-act"><button type="button" class="tl-link" id="dcAdd" onclick="addChatMessage()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Message</button><button type="button" class="tl-ib" id="dcThreadMore" aria-label="Fil : nouvelle discussion, enregistrer, repartir de zéro, fermer" onclick="openChatThreadMenu()"><svg class="ic" aria-hidden="true"><use href="#i-ellipsis"></use></svg></button></span></div>
+      <div class="tl-card"><div class="dc-rows" id="dcRows"></div></div>
+      <div class="dc-timing-panel" id="dcTimingPanel" style="display:none"></div>
+      <div class="tl-card tl-gap" id="dcSendPanel">
+        <button type="button" class="tl-row tl-nav" id="dcWriteBtn" onclick="toggleChatWrite()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-pencil"></use></svg><span class="tl-k"><b>Écrire un message improvisé</b></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+        <div class="dc-write-box" id="dcWriteBox" style="display:none">
+          <textarea id="dcWriteText" class="text-input" maxlength="300" aria-label="Message improvisé"></textarea>
+          <button type="button" class="dc-write-send" onclick="sendImprovisedChat()">Envoyer</button>
+        </div>
+        <label class="tl-row dc-typing"><span class="tl-k"><b>Indicateur « écrit… »</b><small id="dcTypingLabel"></small></span><span class="toggle-switch tl-sw"><input type="checkbox" id="dcTypingToggle" onchange="onChatTypingToggle()"><span class="toggle-track"></span><span class="toggle-thumb"></span></span></label>
       </div>
     </div>
     <div class="panel dc-help-card" id="dcActorPanel" style="display:none">
       <div class="panel-label" id="dcActorLabel"></div>
       <div class="dc-help">Chaque touche du clavier de l'écran ajoute la lettre suivante du texte prévu. « Envoyer » n'est actif qu'une fois le texte complet.</div>
     </div>
-    <div class="dc-send" id="dcSendPanel" style="display:none">
-      <div class="dc-send-row">
-        <button type="button" class="dc-go" id="dcGo" onclick="sendNextChatMessage()"></button>
-        <button type="button" class="dc-back" id="dcBackBtn" aria-label="Revenir d'un message" title="Revenir d'un message" onclick="rewindChat()" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg></button>
-        <button type="button" class="dc-write" id="dcWriteBtn" onclick="toggleChatWrite()">Écrire…</button>
+    <div id="dcSavedPanel" style="display:none">
+      <div class="tl-h"><b id="dcSavedTitle">Discussions enregistrées · 0</b></div>
+      <div class="tl-card">
+        <div class="dc-saved-rows" id="dcSavedRows"></div>
+        <div class="dc-saved-empty" id="dcSavedEmpty">Aucune discussion enregistrée pour l'instant.</div>
       </div>
-      <div class="dc-write-box" id="dcWriteBox" style="display:none">
-        <textarea id="dcWriteText" class="text-input" maxlength="300" aria-label="Message improvisé"></textarea>
-        <button type="button" class="dc-write-send" onclick="sendImprovisedChat()">Envoyer</button>
-      </div>
-      <div class="dc-back-hint">« ↶ » retire le dernier message affiché sur l'écran (et le remet en attente).</div>
-      <label class="dc-typing"><input type="checkbox" id="dcTypingToggle" onchange="onChatTypingToggle()"><span id="dcTypingLabel"></span></label>
-      <div class="dc-ctl">
-        <button type="button" class="dc-ctl-btn" id="dcOpenBtn" onclick="openChatOnTarget()">Ouvrir sur l'écran</button>
-        <button type="button" class="dc-ctl-btn" id="dcRestartBtn" onclick="restartChat()">Repartir de zéro</button>
-        <button type="button" class="dc-ctl-btn dc-ctl-close" id="dcCloseBtn" onclick="closeChat()">Fermer</button>
-      </div>
+      <div class="cl-note" id="dcSavedNote">▶ charge la discussion dans le fil à jouer. ⋯ : renommer · dupliquer · supprimer. Une discussion enregistrée garde le contact (nom, photo), le comédien, le style et tous les messages ; pas le point de reprise.</div>
     </div>
-    <!-- Appels, SMS et notifications enregistrés, numérotés (maquette 18) : appels et SMS = cibles des canaux Appel / SMS de la passerelle DMX -->
-    <div class="panel call-list" id="callListPanel">
-      <div class="panel-label">Liste enregistrée</div>
-      <div class="cl-kinds">
-        <button type="button" class="gw-seg-btn active" id="clKind-call" onclick="setCallListKind('call')">Appels (0)</button>
-        <button type="button" class="gw-seg-btn" id="clKind-sms" onclick="setCallListKind('sms')">SMS (0)</button>
-        <button type="button" class="gw-seg-btn" id="clKind-notif" onclick="setCallListKind('notif')">Notifs (0)</button>
-      </div>
-      <div class="cl-head"><span>N°</span><span id="callListWho">Appelant</span><span>DMX</span><span></span></div>
-      <div class="cl-rows" id="callListRows"></div>
-      <div class="media-pool-empty" id="callListEmpty">Réglez l'appel ci-dessus puis enregistrez-le : il prend le numéro suivant.</div>
-      <button type="button" class="cl-save" id="callListSave" onclick="openSaveCallSheet()">+ Enregistrer l'appel actuel</button>
-      <div class="cl-upd" id="callListUpd" style="display:none">
-        <button type="button" class="cl-upd-btn" id="callListUpdate" onclick="updateLoadedCallEntry()"></button>
-        <button type="button" class="cl-save cl-save-new" id="callListSaveNew" onclick="openSaveCallSheet()">+ Enregistrer comme nouveau</button>
-      </div>
-      <div class="cl-note" id="callListNote">Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16). Valeur 0 : raccrocher. Glissez pour changer l'ordre.</div>
-      <div class="cl-actions" id="callListActions">
-        <button type="button" class="cl-go" id="callListGo" onclick="triggerSelectedCallEntry()">Appeler n°1</button>
-        <button type="button" class="cl-del" id="callListDel" onclick="deleteSelectedCallEntry()">Supprimer</button>
+    <!-- Appels, SMS et notifications enregistrés, numérotés (maquette 18) : la liste suit le type choisi ; appels et SMS = cibles des canaux Appel / SMS de la passerelle DMX -->
+    <div id="callListPanel">
+      <div class="tl-h"><b id="callListTitle">Appels enregistrés · 0</b><span class="tl-h-act"><button type="button" class="tl-link" id="callListSort" aria-pressed="false" onclick="toggleCallListSort()"><svg class="ic" aria-hidden="true"><use href="#i-list-ordered"></use></svg> Trier</button><button type="button" class="tl-link" id="callListAll" onclick="openCallListAll()">Tout voir <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button></span></div>
+      <div class="tl-card">
+        <div class="cl-rows" id="callListRows"></div>
+        <div class="media-pool-empty" id="callListEmpty">Réglez l'appel ci-dessus puis enregistrez-le : il prend le numéro suivant.</div>
+        <button type="button" class="tl-row tl-nav tl-dmx" id="callListDmx" onclick="openCallDmxInfo()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-sliders-horizontal"></use></svg><span class="tl-k"><small id="callListDmxTxt">Console DMX · n° 1 à 20 déclenchables</small></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
       </div>
     </div>
   </div>
@@ -3398,6 +3482,31 @@ body.nv-kb #nv-tabs{display:none}
   </div>
   </main>
 
+  <!-- Zone des barres d'action (phase 4) : UNE barre fixe au-dessus des onglets, celle de Tel ou celle de Séquence selon l'onglet (06-scenario.css) ; bandeau « Annuler » (suppression) juste au-dessus -->
+  <div id="nv-bar">
+    <div id="undo-snack" role="status" aria-live="polite" style="display:none">
+      <div class="us-t"><span><b id="usText"></b><small id="usSub"></small></span><button type="button" id="usUndo" onclick="undoSnackUndo()"><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg> Annuler</button></div>
+      <div class="us-bar"><i id="usBar"></i></div>
+    </div>
+    <!-- Tel : une action par type (Faire sonner, Envoyer le SMS, Envoyer la notification, Ouvrir sur l'écran), puis ses états -->
+    <div class="nb" id="tel-bar" data-bar="tel">
+      <div class="nb-live" id="telLive"><i class="nb-dot" id="telDot"></i><span id="callStatus"></span></div>
+      <div class="nb-prog" id="telProg" style="display:none"><i id="telProgFill"></i></div>
+      <div class="nb-live" id="dcLive" style="display:none"><i class="nb-dot"></i><span id="dcAutoState"></span></div>
+      <div class="nb-prog" id="dcProg" style="display:none"><i id="dcAutoFill"></i></div>
+      <div class="nb-row">
+        <button type="button" class="nb-ico" id="telSaveBtn" aria-label="Enregistrer dans la liste" onclick="telBarSave()"><svg class="ic" aria-hidden="true"><use href="#i-bookmark"></use></svg></button>
+        <button type="button" class="nb-pri" id="callTriggerBtn" onclick="triggerCall()"><svg class="ic" aria-hidden="true" id="callTriggerIc"><use href="#i-phone"></use></svg><span class="nb-lbl"><b id="callTriggerLbl">FAIRE SONNER</b><small id="callTriggerSub"></small></span></button>
+        <button type="button" class="nb-dng" id="callHangBtn" onclick="telHangup()"><svg class="ic" aria-hidden="true"><use href="#i-phone-off"></use></svg><span class="nb-lbl"><b>Raccrocher</b></span></button>
+        <button type="button" class="nb-pri" id="callAnswerBtn" onclick="sendMsg({type:'call:answer'})"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg><span class="nb-lbl"><b>Décrocher</b></span></button>
+        <button type="button" class="nb-pri" id="dcOpenBtn" onclick="openChatOnTarget()"><svg class="ic" aria-hidden="true"><use href="#i-message-circle"></use></svg><span class="nb-lbl"><b>OUVRIR SUR L'ÉCRAN</b><small id="dcOpenSub"></small></span></button>
+        <button type="button" class="nb-ico" id="dcBackBtn" aria-label="Pause et revenir d'un message" title="Revenir d'un message" onclick="chatAutoBack()" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg></button>
+        <button type="button" class="nb-ghost" id="dcAutoPlay" onclick="chatAutoToggle()"><svg class="ic" aria-hidden="true"><use href="#i-play"></use></svg><b>Lecture auto</b></button>
+        <button type="button" class="nb-pri" id="dcGo" onclick="sendNextChatMessage()"><svg class="ic" aria-hidden="true"><use href="#i-send"></use></svg><span class="nb-lbl"><b id="dcGoLbl">ENVOYER</b><small id="dcGoSub"></small></span></button>
+      </div>
+    </div>
+  </div>
+
   </div><!-- /nv-main -->
 
   <!-- Barre de 5 onglets : fixe en bas (téléphone portrait), rail latéral dès 700 px de large ou en paysage bas -->
@@ -3440,6 +3549,107 @@ body.nv-kb #nv-tabs{display:none}
   <div class="ss-actions">
     <button type="button" class="ss-del" id="ssDel" onclick="seqStepDelete()">Supprimer</button>
     <button type="button" class="ss-save" id="ssSave" onclick="seqStepSave()">Enregistrer</button>
+  </div>
+</div>
+
+<!-- Vues de réglage des rangées de l'onglet Tel (appelant, application, écran verrouillé, notification, au décroché) : mêmes champs et mêmes identifiants qu'avant -->
+<div id="tel-detail-view" role="dialog" aria-modal="true" aria-labelledby="tdTitle">
+  <div class="ss-head">
+    <button type="button" class="ss-back" id="tdBack" onclick="closeTelDetail()"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Tel</button>
+    <span class="ss-title" id="tdTitle">Réglages</span>
+    <span class="ss-spacer"></span>
+  </div>
+  <!-- Appelant (maquette 36e) : nom, sous-titre, photo, « Enregistrer comme appelant » -->
+  <div class="ss-card td-sec" id="tdWho">
+    <div class="panel-label" id="callWhoLabel">Appelant</div>
+    <input type="text" id="callName" class="text-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%" oninput="renderCallerState()">
+    <input type="text" id="callLabel" class="text-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%" oninput="renderCallerState()">
+    <div style="display:flex;gap:10px;align-items:center">
+      <div id="callPhotoPreview" class="td-photo"></div>
+      <button class="media-btn" id="callPhotoBtn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()"><svg class="ic" aria-hidden="true"><use href="#i-image"></use></svg> Photo (option)</button>
+      <input type="file" id="callPhotoInput" accept="image/*" style="display:none" onchange="onCallPhoto(this.files);this.value=''">
+    </div>
+    <button type="button" class="tel-save" id="callerSaveBtn" onclick="saveCurrentCaller()"><svg class="ic" aria-hidden="true"><use href="#i-star"></use></svg> Enregistrer comme appelant</button>
+    <div class="tel-saved" id="callerSavedNote" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg> Appelant enregistré</div>
+  </div>
+  <!-- Application fictive du SMS -->
+  <div class="ss-card td-sec" id="tdApp">
+    <div class="panel-label">Application (fictive)</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <input type="text" id="callAppName" class="text-input" placeholder="Nom affiché" value="SMS" maxlength="24" style="flex:1;min-width:0" oninput="this.dataset.touched='1';renderTelRows()">
+      <input type="color" id="callAppColor" value="#2f8cf0" style="width:52px;flex-shrink:0" oninput="this.dataset.touched='1';renderTelRows()">
+    </div>
+    <div class="media-status" style="text-align:left;margin-top:6px">Pas de marque réelle : inventez un nom (ex. « Chatly ») et une couleur.</div>
+  </div>
+  <!-- Écran verrouillé du SMS : heure, date, fond -->
+  <div class="ss-card td-sec" id="tdLock">
+    <div class="panel-label">Écran verrouillé</div>
+    <div class="td-two">
+      <input type="text" id="lockTime" class="text-input" placeholder="Heure (ex : 00:10)" aria-label="Heure" oninput="renderTelRows()">
+      <input type="text" id="lockDate" class="text-input" placeholder="Ven. 17 juil." aria-label="Date" oninput="renderTelRows()">
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div id="lockWallPreview" class="td-wall"></div>
+      <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('lockWallInput').click()"><svg class="ic" aria-hidden="true"><use href="#i-image"></use></svg> Fond d'écran</button>
+      <input type="file" id="lockWallInput" accept="image/*" style="display:none" onchange="onLockWall(this.files);this.value=''">
+    </div>
+    <div class="media-status" id="lockWallStatus">Sans fond : dégradé sombre. Heure/date vides : celles de l'écran.</div>
+  </div>
+  <!-- Notification d'application : nom et icône -->
+  <div class="ss-card td-sec" id="tdNtApp">
+    <div class="panel-label">Application</div>
+    <div class="nt-app">
+      <button type="button" class="nt-icon" id="ntIconPreview" aria-label="Changer l'icône" onclick="document.getElementById('ntIconInput').click()"></button>
+      <div class="nt-app-main">
+        <input type="text" id="ntAppName" class="text-input" value="Banque Atlas" maxlength="24" placeholder="Nom de l'application" oninput="renderNotifForm()">
+        <span class="nt-links">
+          <button type="button" class="nt-link" onclick="document.getElementById('ntIconInput').click()">Changer l'icône (PNG, JPG)</button>
+          <button type="button" class="nt-link nt-link-dim" id="ntIconClear" style="display:none" onclick="clearNotifIcon()">Retirer</button>
+        </span>
+      </div>
+      <input type="file" id="ntIconInput" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onNotifIcon(this.files);this.value=''">
+    </div>
+    <div class="media-status nt-status" id="ntIconStatus" style="display:none"></div>
+  </div>
+  <!-- Notification d'application : affichage (bandeau ou écran verrouillé), heure du téléphone, réception -->
+  <div class="ss-card td-sec nt-show" id="tdNtShow">
+    <div class="panel-label">Affichage</div>
+    <div class="nt-seg">
+      <button type="button" class="gw-seg-btn active" id="ntpres-banner" onclick="setNotifPresent('banner')">Bandeau (déverrouillé)</button>
+      <button type="button" class="gw-seg-btn" id="ntpres-lock" onclick="setNotifPresent('lock')">Écran verrouillé</button>
+    </div>
+    <div class="panel-label nt-sub">Heure du téléphone</div>
+    <div class="nt-row">
+      <label class="text-input nt-date" id="ntPhoneDateBox" onclick="ntOpenPicker(event, 'ntPhoneDate')"><span id="ntPhoneDateText"></span><input type="date" id="ntPhoneDate" aria-label="Date du téléphone" onchange="renderNotifForm()"></label>
+      <input type="text" id="ntPhoneTime" class="text-input nt-time" placeholder="Heure réelle" inputmode="numeric" maxlength="5" aria-label="Heure du téléphone" oninput="renderNotifForm()">
+    </div>
+    <div class="panel-label nt-sub">Reçue</div>
+    <div class="nt-seg nt-recv">
+      <button type="button" class="gw-seg-btn active" id="ntrecv-now" onclick="setNotifReceived('now')">Maintenant</button>
+      <div class="gw-seg-btn nt-ago" id="ntrecv-ago" role="button" tabindex="0" onclick="setNotifReceived('ago')">il y a <input type="text" id="ntAgoMin" value="15" maxlength="5" inputmode="numeric" aria-label="Minutes écoulées" onfocus="setNotifReceived('ago')" oninput="renderNotifForm()"> min</div>
+      <button type="button" class="gw-seg-btn" id="ntrecv-at" onclick="setNotifReceived('at')">Date et heure</button>
+    </div>
+    <div class="nt-row" id="ntAtRow" style="display:none">
+      <label class="text-input nt-date" id="ntAtDateBox" onclick="ntOpenPicker(event, 'ntAtDate')"><span id="ntAtDateText"></span><input type="date" id="ntAtDate" aria-label="Date de réception" onchange="renderNotifForm()"></label>
+      <input type="text" id="ntAtTime" class="text-input nt-time" placeholder="Heure" inputmode="numeric" maxlength="5" aria-label="Heure de réception" oninput="renderNotifForm()">
+    </div>
+  </div>
+  <!-- Au décroché (appel) : bande son et décroché automatique ; la sonnerie est dans « Style et sonnerie » -->
+  <div class="ss-card td-sec" id="tdAnswer">
+    <div class="panel-label">Au décroché · bande son</div>
+    <div class="rt-row rt-answer" id="callAudioRow" style="display:none">
+      <svg class="ic rt-wave" aria-hidden="true"><use href="#i-audio-waveform"></use></svg>
+      <span class="rt-main"><span class="rt-name"><span id="callAudioName"></span><span class="rt-dim" id="callAudioDur"></span></span></span>
+      <span class="rt-onscreen" id="callAudioState"></span>
+      <button type="button" class="rt-del" id="callAudioClear" aria-label="Retirer la bande son" onclick="clearCallAudio()"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
+    </div>
+    <button type="button" class="rt-import" id="callAudioPick" onclick="document.getElementById('callAudioInput').click()">+ Choisir la voix du correspondant (8 Mo)</button>
+    <input type="file" id="callAudioInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onCallAudio(this.files);this.value=''">
+    <div class="media-status rt-status" id="callAudioStatus">Aucune bande son — le décroché reste silencieux.</div>
+    <div class="slider-block rt-auto">
+      <div class="slider-header"><label for="callAutoSlider">Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
+      <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
+    </div>
   </div>
 </div>
 
@@ -7966,6 +8176,10 @@ function setIconLabel(el, name, text) {
   if (el) el.innerHTML = iconLabel(name, text);
 }
 
+// Icônes citées par un nom passé en paramètre (boutons ↑ ↓, menus ⋯ des listes et de l'éditeur, barre Tel) :
+// listées ici pour que le sprite les embarque (scripts/build-icons.mjs lit cette table)
+const _ICON_MORE = { up: 'arrow-up', down: 'arrow-down', del: 'trash-2', dup: 'copy', save: 'bookmark', edit: 'pencil', hang: 'phone-off', order: 'list-ordered', load: 'download', quit: 'power', again: 'rotate-ccw', ok: 'check' };
+
 // Glyphe ou emoji en tête d'un message → icône. Les textes de statut gardent
 // leur glyphe d'origine dans le code (⚠ ⏳ 🎬…) : il est converti à l'affichage.
 const _ICON_LEAD = {
@@ -11473,6 +11687,18 @@ function navScrollTo(el, off) {
   if (!sc || !el) return;
   sc.scrollTop += el.getBoundingClientRect().top - sc.getBoundingClientRect().top - (off == null ? 72 : off);
 }
+// Barre d'action fixe (phase 4) : celle de Tel ou de Séquence selon la vue du Scénario, aucune ailleurs.
+// Plateau : l'en-tête perd ses outils de préparation (bascule Tel | Séquence, pastille couleur) et la
+// pastille de liaison rejoint la barre de mode (91-sequence.js, seqPlaceLinkPill).
+function navBarUpdate() {
+  const nm = document.getElementById('nv-main');
+  if (!nm) return;
+  const onScn = _navTab === 'scenario', seq = onScn && _navSub.scenario === 'seq';
+  nm.dataset.bar = !onScn ? '' : seq ? (typeof _seqView !== 'undefined' && _seqView === 'saved' ? '' : 'seq') : 'tel';
+  const plateau = seq && typeof _seqMode !== 'undefined' && _seqMode === 'play' && _seqView !== 'saved';
+  document.body.classList.toggle('nv-plateau', plateau);
+  if (typeof seqPlaceLinkPill === 'function') seqPlaceLinkPill(plateau);
+}
 function switchTab(t) {
   let tab = t, sub = null;
   if (_NAV_ALIAS[t]) [tab, sub] = _NAV_ALIAS[t];
@@ -11498,7 +11724,9 @@ function switchTab(t) {
   }
   _navTab = tab;
   if (key !== _navKey) { _navKey = key; if (sc) sc.scrollTop = _navScroll[key] || 0; }
+  navBarUpdate();
   if (sub === 'seq') renderSeq(); // éléments supprimés entre-temps : « élément introuvable »
+  if (sub === 'call') renderTelBar();
   if (tab === 'media') renderMediaBarRow(); // barre d'état au-dessus des médias (98-phone-params.js)
   if (tab === 'screens') renderPairPanel();
   else remoteStopPairCode(true); // le code ne reste actif que sur l'onglet d'appairage
@@ -11762,6 +11990,52 @@ function scheduleAutoSend() {
   }, 40);
 }
 
+// ══════════════════════════ BANDEAU « ANNULER » (télécommande) ══════════════════════════
+// Remplace les confirm() du navigateur pour les suppressions (appel, SMS ou
+// notification enregistré, discussion ou séquence enregistrée, étape) : l'élément
+// disparaît aussitôt et un bandeau « supprimé · Annuler » reste 6 s au-dessus de la
+// barre d'action (#undo-snack, rôle status). « Annuler » remet l'élément à son rang
+// exact (donc, pour un appel ou un SMS, à sa plage DMX) ; passé le délai, ou à la
+// prochaine suppression, la suppression devient définitive (commit : effacement des
+// photos et bandes son rangées à part). Un seul bandeau à la fois.
+//   undoSnack({ text, sub, undo, commit })
+const UNDO_SNACK_MS = 6000;
+let _us = null; // { undo, commit, timer }
+function undoSnack(o) {
+  _usFlush(); // la suppression précédente devient définitive
+  const box = document.getElementById('undo-snack');
+  _us = { undo: o.undo, commit: o.commit, timer: setTimeout(_usFlush, UNDO_SNACK_MS) };
+  if (!box) return;
+  document.getElementById('usText').textContent = o.text || '';
+  const sub = document.getElementById('usSub');
+  sub.textContent = o.sub || '';
+  sub.style.display = o.sub ? '' : 'none';
+  box.style.display = '';
+  const bar = document.getElementById('usBar');
+  bar.classList.remove('run');
+  void bar.offsetWidth; // relance l'animation de la barre de temps
+  bar.classList.add('run');
+}
+function _usHide() { const box = document.getElementById('undo-snack'); if (box) box.style.display = 'none'; }
+// Annuler : l'élément revient (la suppression n'est jamais devenue définitive)
+function undoSnackUndo() {
+  const u = _us;
+  if (!u) return;
+  clearTimeout(u.timer);
+  _us = null;
+  _usHide();
+  if (u.undo) u.undo();
+}
+// Délai écoulé ou nouvelle suppression : définitive
+function _usFlush() {
+  const u = _us;
+  if (!u) return;
+  clearTimeout(u.timer);
+  _us = null;
+  _usHide();
+  if (u.commit) { try { u.commit(); } catch (_) {} }
+}
+function undoSnackActive() { return !!_us; }
 // ══════════════════════════ SCREEN DISPLAY ══════════════════════════
 let screenStrobeTimer = null, screenBaseColor = '#1a1a1a';
 function receiveColor(color) {
@@ -11986,7 +12260,7 @@ function screenIdentify() {
 // confirmation ; le retrait lui-même : 29-revoke.js.
 // Modèle (registre, cible, état de chaque écran) : 28-screens.js.
 let _svOpen = false;
-let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group' | 'chatName' | 'chatMenu' | 'seqName' | 'seqMenu' | 'install' | 'callers' | 'callerMenu' | 'callerName' | 'callName' | 'callMenu', … }
+let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group' | 'chatName' | 'chatMenu' | 'chatThread' | 'seqName' | 'seqMenu' | 'seq…' | 'install' | 'callers' | 'callerMenu' | 'callerName' | 'callName' | 'callMenu' | 'callAll' | 'callDmx', … }
 const _uiHtml = new Map();   // dernier HTML posé par conteneur (pas de re-rendu inutile pendant un geste)
 
 function _setHtml(el, html) {
@@ -12024,6 +12298,7 @@ function renderTargetBtn() {
   btn.classList.toggle('subset', scrTarget().k !== 'all');
   const x = scrTargetText();
   _setHtml(document.getElementById('targetBtnLabel'), 'Cible : <b>' + escapeHtml(x.name) + '</b>' + (x.count ? '<span class="tb-n">' + x.count + '</span>' : ''));
+  if (typeof renderTelBar === 'function') renderTelBar(); // « sur Téléphone de Julie » (73-tel-ui.js)
 }
 // « Identifier tous » : tous les écrans clignotent pour se reconnaître sur le décor
 function scrIdentifyAll() {
@@ -12063,13 +12338,13 @@ function renderSheet(focus) {
   const title = document.getElementById('srSheetTitle'), body = document.getElementById('srSheetBody');
   const s = _sheet;
   let t = '', h = '', form = s.kind === 'rename' || s.kind === 'group';
-  if (s.kind === 'chatName' || s.kind === 'chatMenu' || s.kind === 'chatNew' || s.kind === 'seqName' || s.kind === 'seqMenu' || s.kind === 'seqNew') {
+  if (s.kind === 'chatName' || s.kind === 'chatMenu' || s.kind === 'chatNew' || s.kind === 'chatThread' || s.kind.startsWith('seq')) {
     // Discussions enregistrées (89-discussions-saved.js), séquences enregistrées (96-sequences-saved.js) : nom, menu « ⋯ »,
     // « Enregistrer avant ? » de « + Nouvelle séquence / discussion » (maquettes 47, 47b)
     const c = s.kind.startsWith('seq') ? seqSheetContent(s) : chatSheetContent(s);
     if (!c) { closeSheet(); return; }
     t = c.title; h = c.html; form = c.form;
-  } else if (s.kind === 'callName' || s.kind === 'callMenu') {
+  } else if (s.kind === 'callName' || s.kind === 'callMenu' || s.kind === 'callAll' || s.kind === 'callDmx') {
     // Appels, SMS et notifications enregistrés (maquettes 43b, 43c, 82-call-list.js) : nom, menu « ⋯ »
     const c = callListSheetContent(s);
     if (!c) { closeSheet(); return; }
@@ -16826,6 +17101,210 @@ function projectOnNative(m) {
   }
   return true;
 }
+// ══════════════════════════ TEL « COMPOSER PUIS ENVOYER » (télécommande) ══════════════════════════
+// Phase 4 de la refonte (maquettes 4a à 4e3). L'onglet Tel est un seul squelette
+// pour les quatre types : sélecteur de type, carte « À jouer » (rangées-résumé
+// qui ouvrent leur vue de réglage, mêmes champs et mêmes identifiants qu'avant),
+// liste enregistrée du type (82-call-list.js), et UNE barre d'action fixe
+// au-dessus des onglets (#tel-bar) :
+//   Appel         [signet] FAIRE SONNER · pendant la sonnerie : ligne d'état +
+//                 progression, Raccrocher / Décrocher ; en ligne : Raccrocher
+//   SMS           [signet] ENVOYER LE SMS
+//   Notification  [signet] ENVOYER LA NOTIFICATION
+//   Discussion    [signet] OUVRIR SUR L'ÉCRAN ; ouverte : ↶ · Lecture auto /
+//                 Pause · ENVOYER N°n, avec l'état de la lecture auto au-dessus
+// Le signet enregistre (feuille « Enregistrer » ; entrée chargée : mettre à
+// jour ou enregistrer comme nouveau). Aperçu sans licence : signet et rangées
+// de réglage verrouillés, ▶ des lignes et barre d'envoi actifs (77-licence-ui.js).
+// Textes affichés, regroupés pour la traduction ({…} : valeurs)
+const _TU_TXT = {
+  on: 'sur {cible}', noScreen: 'aucun écran appairé',
+  call: 'FAIRE SONNER', sms: 'ENVOYER LE SMS', notif: 'ENVOYER LA NOTIFICATION',
+  sent: 'Sonnerie envoyée…', ringing: 'Ça sonne depuis {n} s', autoIn: ' · décroché auto dans {n} s', inCall: 'En ligne · {t}',
+  hungup: 'Appel terminé',
+  goN: 'ENVOYER N°{n}', goNone: 'Plus de message', goSub: '{qui} : « {texte} »',
+  unknown: 'Inconnu', labelNone: '—', photo: 'photo',
+  lockOn: 'Arrive sur un faux écran verrouillé · {heure}', lockOff: 'Le SMS arrive en bandeau', lockScreenTime: 'heure de l\'écran',
+  answerNone: 'Silence · manuel', answerManual: 'manuel', answerAuto: 'décroché auto {n} s', answerAudio: 'bande son',
+  showBanner: 'Bandeau', showLock: 'Écran verrouillé', recvNow: 'reçue maintenant', recvAgo: 'reçue il y a {n} min', recvAt: 'reçue à une date précise',
+  detailWho: 'Appelant', detailContact: 'Contact', detailApp: 'Application', detailLock: 'Écran verrouillé', detailShow: 'Affichage', detailAnswer: 'Au décroché',
+  vibOn: 'vibreur',
+};
+const _tuTpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
+const _tuShow = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
+const _tuText = (id, t) => { const el = document.getElementById(id); if (el && el.textContent !== t) el.textContent = t; };
+
+// ── État de l'appel de la barre : idle · sent (envoyé) · ringing · incall ──
+const _telCall = { phase: 'idle', t0: 0, auto: 0, text: '' };
+let _telTick = null;
+function _telSecs() { return Math.max(0, Math.floor((Date.now() - _telCall.t0) / 1000)); }
+// Appel envoyé (formulaire, ligne ▶) : Raccrocher / Décrocher dès l'envoi
+function telCallSent(kind, auto, text) {
+  if (kind !== 'call') return;
+  _telCall.phase = 'sent'; _telCall.t0 = Date.now(); _telCall.auto = Math.max(0, Number(auto) || 0); _telCall.text = text || _TU_TXT.sent;
+  _telStartTick();
+  renderTelBar();
+}
+// Retour de l'écran (call:state) : sonne, en ligne, ou retour au repos avec son message
+function telCallPhase(p, status) {
+  if (p === 'idle') {
+    _telCall.phase = 'idle';
+    if (_telTick) { clearInterval(_telTick); _telTick = null; }
+    _setCallStatusUI(status || '');
+    return;
+  }
+  // Sonnerie lancée ailleurs (écran, autre appareil) : l'horloge part de maintenant
+  if (p === 'incall' || _telCall.phase === 'idle') { _telCall.t0 = Date.now(); if (_telCall.phase === 'idle') _telCall.auto = 0; }
+  _telCall.phase = p;
+  _telStartTick();
+  _telLiveRefresh();
+}
+function _telStartTick() { if (!_telTick) _telTick = setInterval(_telLiveRefresh, 500); _telLiveRefresh(); }
+function _telLiveRefresh() {
+  const c = _telCall;
+  if (c.phase === 'idle') { if (_telTick) { clearInterval(_telTick); _telTick = null; } return; }
+  const s = _telSecs();
+  let t = '';
+  if (c.phase === 'sent') t = c.text || _TU_TXT.sent;
+  else if (c.phase === 'ringing') t = _tuTpl(_TU_TXT.ringing, { n: s }) + (c.auto > 0 ? _tuTpl(_TU_TXT.autoIn, { n: Math.max(0, c.auto - s) }) : '');
+  else t = _tuTpl(_TU_TXT.inCall, { t: fmtTime(s) });
+  const el = document.getElementById('callStatus');
+  if (el && el.textContent !== t) _setCallStatusUI(t, true); else renderTelBar();
+  const f = document.getElementById('telProgFill');
+  if (f) f.style.width = (c.phase !== 'incall' && c.auto > 0 ? Math.min(100, s / c.auto * 100) : 0) + '%';
+}
+// Raccrocher : l'appel est coupé sur les écrans, la barre revient au repos sans attendre leur réponse
+function telHangup() {
+  sendMsg({ type: 'call:end' });
+  telCallPhase('idle', _TU_TXT.hungup);
+}
+
+// ── Barre d'action ──
+function renderTelBar() {
+  const bar = document.getElementById('tel-bar');
+  if (!bar) return;
+  const k = callKind, disc = k === 'discussion', ph = _telCall.phase;
+  const inCall = k === 'call' && ph !== 'idle';
+  const tg = scrTargetText(), nScr = scrList().length;
+  const sub = nScr ? _tuTpl(_TU_TXT.on, { cible: tg.name + tg.count }) : _TU_TXT.noScreen;
+  const status = (document.getElementById('callStatus') || {}).textContent || '';
+  _tuShow('telSaveBtn', !inCall);
+  _tuShow('callTriggerBtn', !disc && !inCall);
+  _tuShow('callHangBtn', !disc && inCall);
+  _tuShow('callAnswerBtn', !disc && inCall && ph !== 'incall');
+  _tuShow('telLive', !disc && !!status);
+  _tuShow('telProg', !disc && inCall && ph !== 'incall' && _telCall.auto > 0);
+  const live = document.getElementById('telDot');
+  if (live) live.className = 'nb-dot' + (inCall ? (ph === 'incall' ? ' ok' : ' acc') : ' ok');
+  if (!disc) {
+    _tuText('callTriggerLbl', _TU_TXT[k] || _TU_TXT.call);
+    _tuText('callTriggerSub', sub);
+    const use = document.querySelector('#callTriggerIc use');
+    const href = '#i-' + (k === 'call' ? 'phone' : k === 'sms' ? 'send' : 'bell');
+    if (use && use.getAttribute('href') !== href) use.setAttribute('href', href);
+  }
+  // Discussion : ouvrir, puis ↶ · lecture auto · envoyer
+  const open = disc && _chat.open;
+  _tuShow('dcOpenBtn', disc && !_chat.open);
+  _tuShow('dcBackBtn', open);
+  _tuShow('dcAutoPlay', open);
+  _tuShow('dcGo', open);
+  _tuShow('dcLive', open);
+  _tuShow('dcProg', open);
+  if (disc) {
+    _tuText('dcOpenSub', sub);
+    const next = chatNextContact();
+    const n = next ? _chat.msgs.indexOf(next) + 1 : 0;
+    _tuText('dcGoLbl', next ? _tuTpl(_TU_TXT.goN, { n }) : _TU_TXT.goNone);
+    const snip = next ? Array.from(next.text).slice(0, 26).join('') + (Array.from(next.text).length > 26 ? '…' : '') : '';
+    _tuText('dcGoSub', next ? _tuTpl(_TU_TXT.goSub, { qui: chatContactName(), texte: snip }) : '');
+    const go = document.getElementById('dcGo');
+    if (go) go.disabled = !next;
+    const bk = document.getElementById('dcBackBtn');
+    if (bk) bk.disabled = !_chat.sent.length;
+  }
+  const sv = document.getElementById('telSaveBtn');
+  if (sv) sv.setAttribute('aria-label', disc ? 'Enregistrer le fil dans la liste' : k === 'call' ? 'Enregistrer l\'appel dans la liste' : k === 'sms' ? 'Enregistrer le SMS dans la liste' : 'Enregistrer la notification dans la liste');
+}
+// Signet : enregistrer l'appel / le SMS / la notification, ou le fil de la discussion
+function telBarSave() {
+  if (callKind === 'discussion') openSaveChatSheet(); else openSaveCallSheet();
+}
+
+// ── Rangées-résumé de la carte « À jouer » ──
+function renderTelRows() {
+  const val = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const T = _TU_TXT, k = callKind;
+  const name = val('callName').trim() || T.unknown, label = val('callLabel').trim();
+  const av = document.getElementById('telWhoAv');
+  if (av) {
+    av.style.backgroundImage = _callPhoto ? 'url(' + _callPhoto + ')' : '';
+    const ini = name.charAt(0).toUpperCase() || '?';
+    if (av.textContent !== (_callPhoto ? '' : ini)) av.textContent = _callPhoto ? '' : ini;
+  }
+  _tuText('telWhoName', name);
+  _tuText('telWhoSub', (label || T.labelNone) + (_callPhoto ? ' · ' + T.photo : ''));
+  // SMS : application, écran verrouillé
+  const app = document.getElementById('telAppVal');
+  if (app) {
+    const h = '<i class="tl-dot" style="background:' + escapeHtml(val('callAppColor') || '#2f8cf0') + '"></i>' + escapeHtml(val('callAppName') || 'SMS');
+    if (app.innerHTML !== h) app.innerHTML = h;
+  }
+  const lock = document.getElementById('lockToggle');
+  _tuText('telLockSub', lock && lock.checked ? _tuTpl(T.lockOn, { heure: val('lockTime').trim() || T.lockScreenTime }) : T.lockOff);
+  // Notification : application, affichage
+  const nm = val('ntAppName').trim();
+  _tuText('telNtName', nm || '?');
+  const nav = document.getElementById('telNtAv');
+  if (nav) {
+    nav.style.backgroundImage = _notifIcon ? 'url(' + _notifIcon + ')' : '';
+    const ini = _notifIcon ? '' : (nm.charAt(0).toUpperCase() || '?');
+    if (nav.textContent !== ini) nav.textContent = ini;
+  }
+  let recv = T.recvNow;
+  if (notifReceived === 'ago') recv = _tuTpl(T.recvAgo, { n: _ntReceived().min });
+  else if (notifReceived === 'at') recv = T.recvAt;
+  _tuText('telNtShowVal', (notifPresent === 'lock' ? T.showLock : T.showBanner) + ' · ' + recv);
+  // Appel : au décroché
+  const slider = document.getElementById('callAutoSlider');
+  const auto = slider ? parseInt(slider.value) || 0 : 0;
+  const parts = [];
+  parts.push(_callAudioData ? (_callAudioName ? _callAudioName.replace(/\.[a-z0-9]{2,4}$/i, '') : T.answerAudio) : null);
+  if (!parts[0]) parts[0] = 'Silence';
+  parts.push(auto > 0 ? _tuTpl(T.answerAuto, { n: auto }) : T.answerManual);
+  _tuText('telAnswerVal', parts.join(' · '));
+  void k;
+}
+
+// ── Vues de réglage des rangées (même chrome que « Style et sonnerie ») ──
+const _TD_SECS = { who: 'tdWho', app: 'tdApp', lock: 'tdLock', ntapp: 'tdNtApp', ntshow: 'tdNtShow', answer: 'tdAnswer' };
+let _tdSec = null;
+function openTelDetail(sec) {
+  if (licLocked('tel') || !_TD_SECS[sec]) return; // aperçu sans licence : réglages verrouillés
+  const v = document.getElementById('tel-detail-view');
+  if (!v) return;
+  _tdSec = sec;
+  for (const [s, id] of Object.entries(_TD_SECS)) { const el = document.getElementById(id); if (el) el.style.display = s === sec ? 'flex' : 'none'; }
+  const T = _TU_TXT;
+  _tuText('tdTitle', sec === 'who' ? (callKind === 'call' ? T.detailWho : T.detailContact) : sec === 'app' || sec === 'ntapp' ? T.detailApp : sec === 'lock' ? T.detailLock : sec === 'ntshow' ? T.detailShow : T.detailAnswer);
+  v.classList.toggle('over-sheet', !!_sheet); // ouverte depuis une feuille (création sur place) : passe devant
+  v.style.display = 'flex';
+  v.scrollTop = 0;
+  renderCallerState();
+  if (sec === 'ntshow' || sec === 'ntapp') renderNotifForm();
+}
+function closeTelDetail() {
+  _tdSec = null;
+  const v = document.getElementById('tel-detail-view');
+  if (v) { v.style.display = 'none'; v.classList.remove('over-sheet'); }
+  renderTelRows();
+  if (_sheet && _sheet.kind === 'seqNewEntry') renderSheet(); // création sur place : valeurs des rangées à jour
+}
+function telDetailIsOpen() { return _tdSec !== null; }
+// Échap : ferme la vue (une feuille ouverte passe d'abord)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && _tdSec !== null && !_sheet && !appConfirmShown()) closeTelDetail();
+}, true);
 // ══════════════════════════ PROJETS : INTERFACE (télécommande) ══════════════════════════
 // Maquettes validées 45 à 46c. Moteur : 72-project.js ; contrat : docs/PROJECTS.md.
 //   45   Réglages › carte « Projet » : projet ouvert (nom, compteurs) → « Projets › »,
@@ -17855,11 +18334,11 @@ function licLocked(f) { return _licPreview[f] === true; }
 // Éléments verrouillés : estompés (dim) ou seulement figés (ro, lisibles)
 const _LIC_LOCKS = {
   tel: {
-    dim: ['telStyleBtn', 'ntStyleBtn', 'callWhoSaved', 'callName', 'callLabel', 'callPhotoBtn', 'callerSaveBtn',
-      'callMsgText', 'callAppName', 'callAppColor', 'callLockPanel', 'ntAppPanel', 'ntShowPanel', 'callAnswerBlock',
-      'callListSave', 'callListUpd', 'callListDel', 'dcTab-saved', 'dcNewBtn', 'dcContactPanel', 'dcAdd', 'dcWriteBtn'],
+    // Rangées de réglage, champs sur place, signet et listes : figés ; ▶ des lignes, barre d'envoi et vue des appels restent actifs
+    dim: ['telStyleBtn', 'telRingBtn', 'telStyleRow', 'ntStyleBtn', 'callWhoSaved', 'telWhoBtn', 'callMsgText', 'telAppBtn', 'callLockPanel', 'ntAppPanel',
+      'telNtTitleField', 'telNtBodyField', 'ntShowPanel', 'callAnswerBlock', 'telSaveBtn', 'dcContactPanel', 'dcActorRow', 'dcAdd', 'dcWriteBtn', 'dcThreadMore'],
     ro: ['dcRows', 'dcTimingPanel'],
-    ex: ['callWhoLabel'],
+    ex: ['telPlayTitle'],
     banner: 'licPvTel',
   },
   seq: { dim: ['seqAddBtn', 'seqPhoneBtn', 'seqTab-saved', 'seqNewBtn'], ro: ['seqRows'], ex: [], banner: 'licPvSeq' },
@@ -17907,6 +18386,7 @@ function licSeqRestarted() {
 // ── Rechargement des onglets depuis le stockage (masqué ou réel) ──
 function _licReloadTel() {
   closeTelStyle();
+  closeTelDetail();
   if (_sheet) closeSheet();
   loadRingSettings();
   renderRingPanel();
@@ -17937,7 +18417,7 @@ function _licReloadSeq() {
 let _licTelBak = null, _licTelGen = 0;
 function _licTelBackup() {
   const inputs = {};
-  document.querySelectorAll('#content-call input, #content-call textarea').forEach((el) => {
+  document.querySelectorAll('#content-call input, #content-call textarea, #tel-detail-view input, #tel-detail-view textarea').forEach((el) => {
     if (el.id && el.type !== 'file') inputs[el.id] = { v: el.value, c: el.checked, t: el.dataset.touched };
   });
   _licTelBak = {
@@ -18155,12 +18635,13 @@ function licOpenBuy() {
 //   • Vibreur : propre à chaque type (ringSettings[type].vib), envoyé à
 //     l'écran (vib) qui vibre s'il le peut (80-call-simulator.js).
 // Titre : « Style et sonnerie » (appel), « Style et son » (SMS, notification,
-// discussion). Les réglages s'appliquent aussitôt (pas de bouton « Enregistrer »).
+// discussion). Rangées de l'onglet (phase 4) : « Apparence » et « Sonnerie » (appel),
+// « Style et son » (SMS, notification, discussion), chacune avec sa valeur courte. Les réglages s'appliquent aussitôt (pas de bouton « Enregistrer »).
 // Les éléments du style et du son vivent dans la vue (#tel-style-view) : leurs
 // fonctions (setCallStyle, setCallRing…) restent celles d'avant.
 // Textes affichés, regroupés pour la traduction ({…} : valeurs)
 const _TS_TXT = {
-  titleCall: 'Style et sonnerie', titleOther: 'Style et son', back: '← Tel',
+  titleCall: 'Style et sonnerie', titleOther: 'Style et son', back: '← Tel', vibOn: 'vibreur',
   capCall: 'Aperçu de l\'appel sur l\'écran de jeu', capSms: 'Aperçu du SMS sur l\'écran de jeu',
   capNotif: 'Aperçu de la notification sur l\'écran de jeu', capChat: 'Aperçu de la discussion sur l\'écran de jeu',
   vibNote: 'Vibre avec la sonnerie, même en Silencieux. Écran de jeu Android ou app SetRemote : iPhone dans Safari ne sait pas vibrer.',
@@ -18193,6 +18674,21 @@ function telStyleSummary(k) {
   if (k === 'discussion') return [j([style, _tsTpl(T.chatSound, { son }), vib])];
   return [j([style, _tsTpl(T.sound, { son }), vol, vib])];
 }
+// Valeur courte de chaque rangée de la carte « À jouer » (maquettes 4a à 4d) :
+// appel : { look : « Verre · plein écran », sound : « Classique · 100 % · vibreur » } ; autres types : { all }
+function telRowSummary(k) {
+  const r = ringSettings[_ringKind(k)], T = _TS_TXT;
+  const style = _CALL_STYLE_NAMES[_tsStyle(k)] || _CALL_STYLE_NAMES.glass;
+  const son = telSoundName(r.sound), vol = _tsTpl(T.vol, { n: Math.round(r.vol * 100) });
+  const j = (a) => a.filter(Boolean).join(T.sep);
+  const vib = r.vib ? T.vibOn : '';
+  if (k === 'call') {
+    return { look: j([style, (callPresent === 'banner' ? T.presBanner : T.presFull).toLowerCase()]), sound: j([son, vol, vib]) };
+  }
+  if (k === 'notif') return { all: j([style, son, vol]) };
+  if (k === 'discussion') return { all: j([style, son, vib]) };
+  return { all: j([style, son, vol]) };
+}
 
 let _tsOpen = false;
 function openTelStyle() {
@@ -18200,6 +18696,7 @@ function openTelStyle() {
   const v = document.getElementById('tel-style-view');
   if (!v) return;
   _tsOpen = true;
+  v.classList.toggle('over-sheet', !!_sheet); // ouverte depuis une feuille (création sur place) : passe devant
   v.style.display = 'flex';
   v.scrollTop = 0;
   renderTelStyle();
@@ -18207,8 +18704,9 @@ function openTelStyle() {
 function closeTelStyle() {
   _tsOpen = false;
   const v = document.getElementById('tel-style-view');
-  if (v) v.style.display = 'none';
+  if (v) { v.style.display = 'none'; v.classList.remove('over-sheet'); }
   if (_ringPrev) { _ringPrevStop(); renderRingPanel(); } // écoute d'un son importé en cours
+  if (_sheet && _sheet.kind === 'seqNewEntry') renderSheet(); // création sur place : valeurs des rangées à jour
 }
 function telStyleIsOpen() { return _tsOpen; }
 
@@ -18217,10 +18715,12 @@ function renderTelStyle() {
   const k = callKind, T = _TS_TXT;
   const set = (id, t) => { setIconText(document.getElementById(id), t); };
   const title = k === 'call' ? T.titleCall : T.titleOther;
-  set('telStyleLabel', title);
-  const sum = telStyleSummary(k).map(escapeHtml).join('<br>');
-  const el = document.getElementById(k === 'notif' ? 'ntStyleSum' : 'telStyleSum');
-  if (el && el.innerHTML !== sum) el.innerHTML = sum;
+  const sum = telRowSummary(k);
+  const put = (id, t) => { const el = document.getElementById(id); if (el && el.textContent !== t) el.textContent = t; };
+  if (k === 'call') { put('telStyleSum', sum.look); put('telRingSum', sum.sound); }
+  else if (k === 'notif') put('ntStyleSum', sum.all);
+  else put('telStyleSum2', sum.all);
+  if (typeof renderTelRows === 'function') renderTelRows();
   if (!_tsOpen) return;
   set('tsTitle', title);
   set('tsBack', T.back);
@@ -18310,7 +18810,7 @@ const _CR_ID_RE = /^[A-Za-z0-9_-]{1,40}$/;
 // Textes affichés (maquettes 36, 36e), regroupés pour la traduction ({…} : valeurs)
 const _CR_TXT = {
   title: 'Appelants enregistrés',
-  link: 'Enregistrés ({n}) ›',
+  link: 'Changer', linkAria: 'Appelants enregistrés ({n})',
   photo: 'photo', noLabel: '—', sep: ' · ',
   add: '+ Enregistrer « {nom} » (actuel)', added: '✓ « {nom} » enregistré', full: 'Liste pleine ({max} appelants)',
   note: 'Un appelant enregistré sert aux appels, SMS et discussions : nom, sous-titre et photo. « ⋯ » : renommer, supprimer.',
@@ -18506,8 +19006,13 @@ function deleteCaller(id) {
 
 // ── Rendu dans l'onglet ──
 function renderCallerState() {
-  const link = _crTpl(_CR_TXT.link, { n: callers.length });
-  for (const id of ['callWhoSaved', 'dcCallersLink']) { setIconText(document.getElementById(id), link); }
+  // « Changer » sur la rangée du contact (phase 4) ; le nombre d'appelants enregistrés est dans son nom accessible
+  for (const id of ['callWhoSaved', 'dcCallersLink']) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.textContent = _CR_TXT.link;
+    el.setAttribute('aria-label', _crTpl(_CR_TXT.linkAria, { n: callers.length }));
+  }
   const saved = callerIsSaved(), named = !!_crCurrent().name;
   const btn = document.getElementById('callerSaveBtn'), note = document.getElementById('callerSavedNote');
   if (btn) {
@@ -18516,6 +19021,7 @@ function renderCallerState() {
     btn.disabled = !named || (!_crMatch(_crCurrent()) && callers.length >= CALLERS_MAX);
   }
   if (note) { setIconText(note, _CR_TXT.savedNote); note.style.display = saved ? '' : 'none'; }
+  if (typeof renderTelRows === 'function') renderTelRows();
   if (_sheet && _sheet.kind === 'callers') renderSheet();
 }
 
@@ -18592,7 +19098,6 @@ function callersSheetContent(s) {
 // — Télécommande —
 // callKind : 'call' | 'sms' | 'notif' | 'discussion'
 let callKind = 'call', callStyle = 'glass', _callPhoto = null;
-let _callUiTimer = null, _callUiT0 = 0;
 const CALL_KINDS = ['call', 'sms', 'notif', 'discussion'];
 
 // Application fictive par défaut d'un SMS (modifiable)
@@ -18605,7 +19110,7 @@ const _CALL_STYLE_HINTS = {
 
 function _callShow(id, on, disp) {
   const el = document.getElementById(id);
-  if (el) el.style.display = on ? (disp || 'block') : 'none';
+  if (el) el.style.display = on ? (disp || '') : 'none';
 }
 function setCallKind(k) {
   if (k === 'chat' || k === 'whatsapp') k = 'sms'; // ancienne messagerie
@@ -18613,7 +19118,7 @@ function setCallKind(k) {
   callKind = k;
   CALL_KINDS.forEach(x => {
     const b = document.getElementById('callkind-' + x);
-    if (b) b.classList.toggle('active', x === k);
+    if (b) { b.classList.toggle('active', x === k); b.setAttribute('aria-checked', x === k ? 'true' : 'false'); }
   });
   // Nom/couleur d'app : on applique le défaut du type tant que l'utilisateur
   // ne les a pas personnalisés
@@ -18622,36 +19127,34 @@ function setCallKind(k) {
   if (def && an && !an.dataset.touched) an.value = def.name;
   if (def && ac && !ac.dataset.touched) ac.value = def.color;
   const call = k === 'call', sms = k === 'sms', notif = k === 'notif', disc = k === 'discussion';
-  // Vue « Style et sonnerie » : style commun (appel, SMS, discussion) ou
+  // Carte « À jouer » (maquettes 4a à 4d) : un seul squelette, les rangées du type
+  // choisi. Vue « Style et sonnerie » : style commun (appel, SMS, discussion) ou
   // style et fond propres à la notification
-  _callShow('telStyleRow', !notif); // notification : sa rangée est sous « Envoyer la notification »
+  _callShow('callWhoPanel', call || sms);
+  _callShow('callMsgPanel', sms);
+  _callShow('telAppBtn', sms);
+  _callShow('callLockPanel', sms);
+  _callShow('telCallRows', call);
+  _callShow('telStyleRow', sms || disc);
+  _callShow('ntStyleBtn', notif);
   _callShow('callStyleRow', !notif);
   _callShow('ntDetail-style', notif);
   _callShow('ntDetail-wall', notif);
   _callShow('callPresentRow', call);
-  _callShow('callWhoPanel', call || sms);
-  _callShow('callMsgPanel', sms);
-  _callShow('callLockPanel', sms);
-  _callShow('callTriggerPanel', !disc);
-  _callShow('callTriggerBtn', !notif, 'flex');
-  _callShow('callAnswerBtn', call, 'flex'); // « Décrocher » : appel seulement (pas de sens pour un SMS)
-  _callShow('callListPanel', !disc, 'flex');
+  _callShow('callListPanel', !disc);
   const who = document.getElementById('callWhoLabel');
   if (who) who.textContent = call ? 'Appelant' : 'Contact';
+  setIconText(document.getElementById('telPlayTitle'), 'À jouer');
   notifShowForm(notif);       // 84-notification.js
   chatShowForm(disc);         // 83-discussion.js
   _syncCallStyleChips();
   renderRingPanel(); // « Sonnerie », « Son de notification » ou « Son des messages » : choix propre au type
   _syncCallPhotoRow();
-  renderTelStyle();           // 78-tel-style.js : rangée résumé, vue ouverte
-  renderCallerState();        // 79-callers.js : « Enregistrés (n) », appelant enregistré ?
-  const btn = document.getElementById('callTriggerBtn');
-  if (btn) btn.innerHTML = call
-    ? '<span class="media-icon">' + icon('phone') + '</span> Faire sonner'
-    : '<span class="media-icon">' + icon('message-circle') + '</span> Envoyer la notification';
-  // Liste enregistrée : l'onglet suit le type choisi (Appels, SMS, Notifs)
+  renderTelStyle();           // 78-tel-style.js : rangées résumé, vue ouverte
+  renderCallerState();        // 79-callers.js : « Changer », appelant enregistré ? (et rangées : renderTelRows)
+  // Liste enregistrée : elle suit le type choisi (Appels, SMS, Notifications)
   if (CALL_LISTS.includes(k) && callListKind !== k) setCallListKind(k);
-  renderCallListSaveLabel(); // « + Enregistrer l'appel / le SMS / la notification actuel(le) »
+  renderCallList();           // 82-call-list.js : titre, lignes, barre d'action
 }
 // Style : commun à l'appel et au SMS ; la discussion a le sien (83-discussion.js),
 // la notification aussi (84-notification.js)
@@ -18765,10 +19268,12 @@ function renderCallAudioRow(message) {
     st.style.display = t ? 'block' : 'none';
     st.classList.toggle('rt-warn', !!message);
   }
+  renderTelRows(); // rangée « Au décroché »
 }
 function onCallAutoChange() {
   const v = parseInt(document.getElementById('callAutoSlider').value) || 0;
   document.getElementById('callAutoVal').textContent = v > 0 ? v + ' s' : 'Off';
+  renderTelRows();
 }
 // Photo de l'appelant : envoyée DÈS le choix, en fragments chiffrés mis en
 // cache sur l'écran sous '__callphoto' (comme le fond d'écran verrouillé) ;
@@ -18919,11 +19424,18 @@ async function triggerCall() {
     if (notif && fields.present === 'lock') await ensureSlotImage('__notifwall', _notifWallData);
   }
   sendMsg(Object.assign({ type: 'call:start' }, fields));
-  _setCallStatusUI(fields.kind === 'call' ? '📞 Sonnerie envoyée…' : notif ? '🔔 Notification envoyée' : '💬 SMS envoyé');
+  _setCallStatusUI(fields.kind === 'call' ? 'Sonnerie envoyée…' : notif ? 'Notification envoyée' : 'SMS envoyé');
+  telCallSent(fields.kind, fields.kind === 'call' ? fields.autoAnswer : 0);
 }
-function _setCallStatusUI(t) {
+// Ligne d'état de la barre Tel (au-dessus des boutons, vide au repos) ; un envoi de
+// SMS ou de notification s'efface seul après quelques secondes
+let _callStatusTimer = null;
+function _setCallStatusUI(t, keep) {
+  if (_callStatusTimer) { clearTimeout(_callStatusTimer); _callStatusTimer = null; }
   const el = document.getElementById('callStatus');
   setIconText(el, t);
+  if (t && !keep) _callStatusTimer = setTimeout(() => { _callStatusTimer = null; if (_telCall.phase === 'idle') _setCallStatusUI(''); }, 4000);
+  renderTelBar();
 }
 function remoteOnCallState(m) {
   // État de l'appel de cet écran (liste « Écrans connectés »)
@@ -18935,18 +19447,11 @@ function remoteOnCallState(m) {
     scrChanged();
     if (!scrInTarget(sid)) return; // l'interface suit les écrans de la cible
   }
-  if (_callUiTimer) { clearInterval(_callUiTimer); _callUiTimer = null; }
-  if (m.state === 'ringing') _setCallStatusUI("📞 Ça sonne sur l'écran…");
-  else if (m.state === 'incall') {
-    _callUiT0 = Date.now();
-    _callUiTimer = setInterval(() => {
-      const s = Math.floor((Date.now() - _callUiT0) / 1000);
-      _setCallStatusUI('🟢 En ligne · ' + fmtTime(s));
-    }, 500);
-    _setCallStatusUI('🟢 En ligne');
-  }
-  else if (m.state === 'declined') _setCallStatusUI('🔴 Refusé sur l\'écran');
-  else if (m.state === 'ended') _setCallStatusUI('⏹ Terminé');
+  // Barre Tel : sonne (Raccrocher / Décrocher), en ligne (Raccrocher), puis retour au repos
+  if (m.state === 'ringing') telCallPhase('ringing');
+  else if (m.state === 'incall') telCallPhase('incall');
+  else if (m.state === 'declined') telCallPhase('idle', 'Refusé sur l\'écran');
+  else if (m.state === 'ended') telCallPhase('idle', 'Terminé');
 }
 
 // — Écran : sons (WebAudio) —
@@ -19988,9 +20493,7 @@ function renderRingPanel() {
     }).join('');
   }
   _ringRenderVol();
-  // Panneau « Au décroché » (bande son, décroché automatique) : appel seulement
-  const ans = document.getElementById('callAnswerBlock');
-  if (ans) ans.style.display = isCall ? 'block' : 'none';
+  // « Au décroché » (bande son, décroché automatique) : rangée de l'appel seulement (#telCallRows, 80-call-simulator.js)
 }
 
 function ringInit() {
@@ -20060,11 +20563,24 @@ const _CL_TXT = {
   nameNote: 'Vide : « {defaut} ». Le nom sert dans la liste, la Séquence et la console (n° {n}, DMX {plage}).',
   nameNoteNoDmx: 'Vide : « {defaut} ». Le nom sert dans la liste et la Séquence (n° {n}).',
   cancel: 'Annuler', ok: 'Enregistrer', close: 'Fermer',
-  update: '↻ Mettre à jour « {nom} »', saveNew: '+ Enregistrer comme nouveau',
+  update: '↻ Mettre à jour « {nom} »',
   menuLoad: 'Charger dans l\'onglet', menuRename: 'Renommer', menuUpdate: 'Mettre à jour avec les réglages actuels',
   menuDuplicate: 'Dupliquer', menuDelete: 'Supprimer', menuAria: 'Charger, renommer, mettre à jour, dupliquer, supprimer',
   menuTitle: '« {nom} »', copy: '{nom} (copie)',
-  confirmDelete: 'Supprimer « {nom} » (n°{n}) ? Les numéros suivants avancent d\'un rang.',
+  menuUp: 'Monter d\'un rang', menuDown: 'Descendre d\'un rang',
+  menuConsole: 'Console : {genre} n° {n}', menuNoConsole: 'Hors console (au-delà du n° 20)', menuNoChannel: 'Pas de canal console',
+  deleted: '« {nom} » supprimé', deletedSub: 'Les n° suivants ont avancé d\'un rang', deletedSubDmx: 'Les n° suivants ont avancé d\'un rang · DMX inclus',
+  // Liste enregistrée de l'onglet Tel (phase 4)
+  titleCall: 'Appels enregistrés', titleSms: 'SMS enregistrés', titleNotif: 'Notifications enregistrées',
+  playAria: 'Lancer « {nom} »', moveUp: 'Monter « {nom} »', moveDown: 'Descendre « {nom} »', loaded: 'chargé',
+  allTitle: 'Tout voir', allCall: 'Appels ({n})', allSms: 'SMS ({n})', allNotif: 'Notifications ({n})',
+  dmxTitle: 'Console DMX', dmxRow: 'n° {n} · {nom}',
+  dmxNote: 'Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16) : valeur n × 10 … n × 10 + 9 = entrée n. Valeur 0 : raccrocher. Glissez ou utilisez Trier / ⋯ pour changer l\'ordre.',
+  dmxNoteNotif: 'Les notifications ne se déclenchent pas depuis la console : seulement d\'ici.',
+  dmxEmpty: 'Aucune entrée dans cette liste.',
+  saveUpd: 'n° {n} · garde sa place dans la liste', saveNewSub: 'prend le n° {n}', saveNew: 'Enregistrer comme nouveau',
+  sentCall: 'Appel n°{n} envoyé…', sentSms: 'SMS n°{n} envoyé', sentNotif: 'Notification n°{n} envoyée',
+  genreCall: 'appel', genreSms: 'SMS', genreNotif: 'notification',
 };
 const _clTpl = (t, v) => t.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
 const _clLine = (v) => (typeof v === 'string' ? v.replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, CALL_TITLE_MAX).trim() : '');
@@ -20281,58 +20797,44 @@ function _clSelected(kind) {
 }
 
 // ── Rendu ──
+// Mode « Trier » (↑ ↓ sur chaque ligne, en plus du glisser) : accessibilité
+let _clSort = false;
+function toggleCallListSort() { _clSort = !_clSort; renderCallList(); }
+function _clTitleOf(kind) { return kind === 'call' ? _CL_TXT.titleCall : kind === 'notif' ? _CL_TXT.titleNotif : _CL_TXT.titleSms; }
 function renderCallList() {
   const kind = callListKind, list = callList[kind];
-  const cb = document.getElementById('clKind-call'), sb = document.getElementById('clKind-sms'), nb = document.getElementById('clKind-notif');
-  if (cb) { cb.textContent = 'Appels (' + callList.call.length + ')'; cb.classList.toggle('active', kind === 'call'); }
-  if (sb) { sb.textContent = 'SMS (' + callList.sms.length + ')'; sb.classList.toggle('active', kind === 'sms'); }
-  if (nb) { nb.textContent = 'Notifs (' + callList.notif.length + ')'; nb.classList.toggle('active', kind === 'notif'); }
-  const who = document.getElementById('callListWho');
-  if (who) who.textContent = kind === 'call' ? 'Appelant' : kind === 'notif' ? 'Titre' : 'Expéditeur';
-  const note = document.getElementById('callListNote');
-  if (note) note.textContent = kind === 'notif'
-    ? 'Les notifications ne se déclenchent pas depuis la console : seulement d\'ici. Glissez pour changer l\'ordre.'
-    : 'Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16). Valeur 0 : raccrocher. Glissez pour changer l\'ordre.';
-  const sel = _clSelected(kind);
+  const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+  set('callListTitle', _clTitleOf(kind) + ' · ' + list.length);
+  const loaded = callListLoadedEntry();
   const rows = document.getElementById('callListRows');
   if (rows) {
-    rows.innerHTML = list.map((e, i) => '<div class="cl-row' + (sel && e.id === sel.id ? ' selected' : '') + '" data-id="' + e.id + '" onclick="selectCallEntry(\'' + e.id + '\')">'
-      + '<span class="cl-num">' + (i + 1) + '</span>'
-      + '<span class="cl-main"><span class="cl-name">' + escapeHtml(callEntryName(e)) + '</span><span class="cl-meta">' + escapeHtml(_clMeta(e)) + '</span></span>'
-      + '<span class="cl-dmx">' + callEntryDmxRange(i, kind) + '</span>'
-      + '<button type="button" class="cl-more" aria-label="' + escapeHtml(_CL_TXT.menuAria) + '" onclick="event.stopPropagation();openCallEntryMenu(\'' + e.id + '\')">' + icon('ellipsis', 'ic-lg') + '</button>'
-      + '<span class="cl-grip" aria-label="Déplacer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 9h14M5 15h14"/></svg></span>'
-      + '</div>').join('');
+    rows.classList.toggle('sorting', _clSort);
+    const mv = (cls, label, fn, id, off, ico) => '<button type="button" class="cl-mv ' + cls + '" aria-label="' + escapeHtml(label) + '"' + (off ? ' disabled' : '') + ' onclick="event.stopPropagation();' + fn + '(\'' + id + '\')">' + icon(ico) + '</button>';
+    rows.innerHTML = list.map((e, i) => {
+      const nom = callEntryName(e);
+      return '<div class="cl-row' + (loaded && e.id === loaded.id ? ' selected' : '') + '" data-id="' + e.id + '" onclick="selectCallEntry(\'' + e.id + '\')">'
+        + '<span class="cl-num">' + (i + 1) + '</span>'
+        + '<span class="cl-main"><span class="cl-name">' + escapeHtml(nom) + '</span><span class="cl-meta">'
+        + (loaded && e.id === loaded.id ? '<span class="cl-chip">' + escapeHtml(_CL_TXT.loaded) + '</span>' : '') + escapeHtml(_clMeta(e)) + '</span></span>'
+        + (_clSort ? mv('up', _clTpl(_CL_TXT.moveUp, { nom }), 'moveCallEntryUp', e.id, i === 0, 'arrow-up') + mv('down', _clTpl(_CL_TXT.moveDown, { nom }), 'moveCallEntryDown', e.id, i === list.length - 1, 'arrow-down') : '')
+        + '<button type="button" class="cl-play" aria-label="' + escapeHtml(_clTpl(_CL_TXT.playAria, { nom })) + '" onclick="event.stopPropagation();playCallEntry(\'' + e.id + '\')">' + icon('play') + '</button>'
+        + '<button type="button" class="cl-more" aria-label="' + escapeHtml(_CL_TXT.menuAria) + '" onclick="event.stopPropagation();openCallEntryMenu(\'' + e.id + '\')">' + icon('ellipsis', 'ic-lg') + '</button>'
+        + '</div>';
+    }).join('');
   }
+  const sort = document.getElementById('callListSort');
+  if (sort) { sort.setAttribute('aria-pressed', _clSort ? 'true' : 'false'); sort.classList.toggle('on', _clSort); sort.style.display = list.length > 1 ? '' : 'none'; }
   const empty = document.getElementById('callListEmpty');
   if (empty) {
     empty.style.display = list.length ? 'none' : 'block';
-    empty.textContent = 'Réglez ' + (kind === 'call' ? 'l\'appel' : kind === 'notif' ? 'la notification' : 'le SMS') + ' ci-dessus puis enregistrez-' + (kind === 'notif' ? 'la' : 'le') + ' : ' + (kind === 'notif' ? 'elle' : 'il') + ' prend le numéro suivant.';
+    empty.textContent = 'Réglez ' + (kind === 'call' ? 'l\'appel' : kind === 'notif' ? 'la notification' : 'le SMS') + ' ci-dessus puis enregistrez-' + (kind === 'notif' ? 'la' : 'le') + ' (signet) : ' + (kind === 'notif' ? 'elle' : 'il') + ' prend le numéro suivant.';
   }
-  const actions = document.getElementById('callListActions');
-  if (actions) actions.style.display = list.length ? 'flex' : 'none';
-  const go = document.getElementById('callListGo');
-  if (go && sel) {
-    const n = list.indexOf(sel) + 1;
-    go.textContent = (kind === 'call' ? 'Appeler n°{n}' : kind === 'notif' ? 'Envoyer la notification n°{n}' : 'Envoyer le SMS n°{n}').replace('{n}', n);
-  }
-  renderCallListSaveLabel();
+  const dmx = document.getElementById('callListDmx');
+  if (dmx) dmx.style.display = kind === 'notif' ? 'none' : '';
+  renderTelBar();
 }
-// Bouton d'enregistrement, ou « Mettre à jour » / « Enregistrer comme nouveau » (entrée chargée)
-function renderCallListSaveLabel() {
-  const loaded = callListLoadedEntry();
-  const b = document.getElementById('callListSave');
-  if (b) {
-    b.textContent = callKind === 'call' ? '+ Enregistrer l\'appel actuel' : callKind === 'notif' ? '+ Enregistrer la notification actuelle' : '+ Enregistrer le SMS actuel';
-    b.style.display = loaded ? 'none' : '';
-  }
-  const upd = document.getElementById('callListUpd');
-  if (upd) upd.style.display = loaded ? '' : 'none';
-  const u = document.getElementById('callListUpdate');
-  if (u && loaded) setIconText(u, _clTpl(_CL_TXT.update, { nom: callEntryName(loaded) }));
-  const n = document.getElementById('callListSaveNew');
-  if (n) { setIconText(n, _CL_TXT.saveNew); n.disabled = !!loaded && callList[_clListOf(loaded.kind)].length >= CALL_LIST_MAX; }
-}
+// Compat : l'état « chargé » est dessiné par renderCallList (puce sur la ligne)
+function renderCallListSaveLabel() { renderCallList(); }
 
 function setCallListKind(k) {
   callListKind = CALL_LISTS.includes(k) ? k : 'call';
@@ -20374,10 +20876,16 @@ function _clTitleFor(e, value) {
   const t = _clLine(value);
   return t && t !== callEntryDefaultName(e) ? t : '';
 }
-// « + Enregistrer … » (après la feuille du nom, maquette 43b) ; title : nom de l'enregistrement (facultatif)
-async function saveCurrentCall(title) {
+// « Enregistrer » (après la feuille du nom, maquette 43b) ; title : nom de l'enregistrement (facultatif).
+// over : champs qui remplacent ceux du formulaire (création sur place depuis l'éditeur d'étape :
+// nom, sous-titre, message, titre…). La photo du formulaire ne suit que si le nom ne change pas.
+async function saveCurrentCall(title, over) {
   if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
-  const { e: fields, photo, audio } = _clFormEntry();
+  let { e: fields, photo, audio } = _clFormEntry();
+  if (over) {
+    if (fields.kind !== 'notif' && over.name !== undefined && String(over.name) !== String(fields.name)) { photo = null; fields.hasPhoto = false; }
+    Object.assign(fields, over);
+  }
   const list = _clListOf(fields.kind);
   if (callList[list].length >= CALL_LIST_MAX) return null;
   const e = Object.assign({ id: _clNewId() }, fields);
@@ -20448,20 +20956,49 @@ async function duplicateCallEntry(id) {
   renderCallList();
   return e.id;
 }
-// Supprimer (confirmation) : les numéros suivants avancent ; photo et bande son effacées
+// Monter / descendre d'un rang (bouton, en plus du glisser) : le numéro, donc la
+// plage DMX, suit le rang
+function moveCallEntry(id, d) {
+  if (licLocked('tel')) return false; // aperçu sans licence : ordre figé
+  const kind = _clKindOf(id);
+  if (!kind) return false;
+  const list = callList[kind], i = list.findIndex((x) => x.id === id), j = i + (d < 0 ? -1 : 1);
+  if (j < 0 || j >= list.length) return false;
+  [list[i], list[j]] = [list[j], list[i]];
+  persistCallList();
+  renderCallList();
+  return true;
+}
+function moveCallEntryUp(id) { return moveCallEntry(id, -1); }
+function moveCallEntryDown(id) { return moveCallEntry(id, 1); }
+// Supprimer : la ligne disparaît aussitôt, bandeau « Annuler » 6 s (33-snackbar.js) qui
+// remet l'entrée à son rang exact (donc à sa plage DMX) ; photo et bande son effacées à l'échéance
 function deleteCallEntry(id) {
   if (licLocked('tel')) return false; // aperçu sans licence (77-licence-ui.js)
   const kind = _clKindOf(id);
   if (!kind) return false;
   const i = callList[kind].findIndex((x) => x.id === id), e = callList[kind][i];
-  if (!confirm(_clTpl(_CL_TXT.confirmDelete, { nom: callEntryName(e), n: i + 1 }))) return false;
+  const prevSel = _callListSel[kind], wasLoaded = _clLoadedId === id;
   callList[kind].splice(i, 1);
   if (_callListSel[kind] === id || !callList[kind].some((x) => x.id === _callListSel[kind])) _callListSel[kind] = (callList[kind][Math.min(i, callList[kind].length - 1)] || {}).id || null;
-  if (_clLoadedId === id) _clLoadedId = null;
-  callAssetDelete(e.id + ':photo'); callAssetDelete(e.id + ':audio');
+  if (wasLoaded) _clLoadedId = null;
   _clPrepIds.delete(e.id);
   persistCallList();
   renderCallList();
+  undoSnack({
+    text: _clTpl(_CL_TXT.deleted, { nom: callEntryName(e) }),
+    sub: kind === 'notif' ? _CL_TXT.deletedSub : _CL_TXT.deletedSubDmx,
+    undo: () => {
+      const list = callList[kind];
+      if (list.length >= CALL_LIST_MAX || list.some((x) => x.id === e.id)) return;
+      list.splice(Math.min(i, list.length), 0, e);
+      if (prevSel && list.some((x) => x.id === prevSel)) _callListSel[kind] = prevSel;
+      if (wasLoaded && callKind === e.kind && callListKind === kind) _clLoadedId = e.id;
+      persistCallList();
+      renderCallList();
+    },
+    commit: () => { callAssetDelete(e.id + ':photo'); callAssetDelete(e.id + ':audio'); },
+  });
   return true;
 }
 
@@ -20527,18 +21064,20 @@ async function loadCallEntryIntoForm(e) {
   renderTelStyle();
 }
 
-// « Appeler n° X » / « Envoyer le SMS n° X »
-async function triggerSelectedCallEntry() {
-  const e = _clSelected(callListKind);
-  if (!e) return;
-  const n = callList[callListKind].indexOf(e) + 1;
-  _setCallStatusUI((e.kind === 'call' ? '📞 Appel n°{n} envoyé…' : e.kind === 'notif' ? '🔔 Notification n°{n} envoyée' : '💬 SMS n°{n} envoyé').replace('{n}', n));
+// ▶ d'une ligne : déclenche cette entrée sur la cible, sans la charger dans le formulaire
+async function playCallEntry(id) {
+  const kind = _clKindOf(id);
+  if (!kind) return;
+  const e = callList[kind].find((x) => x.id === id);
+  const n = callList[kind].indexOf(e) + 1;
+  const text = _clTpl(e.kind === 'call' ? _CL_TXT.sentCall : e.kind === 'notif' ? _CL_TXT.sentNotif : _CL_TXT.sentSms, { n });
+  _setCallStatusUI(text);
+  telCallSent(e.kind, e.kind === 'call' ? (e.autoAnswer || 0) : 0, text);
   await sendCallEntry(e);
 }
-
-function deleteSelectedCallEntry() {
+async function triggerSelectedCallEntry() {
   const e = _clSelected(callListKind);
-  if (e) deleteCallEntry(e.id);
+  if (e) await playCallEntry(e.id);
 }
 
 // ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) : nom (43b), menu « ⋯ » (43c) ──
@@ -20556,44 +21095,86 @@ function callMenuRename(id) { if (!licLocked('tel') && _clKindOf(id)) { _sheet =
 function callMenuUpdate(id) { closeSheet(); updateCallEntry(id); }
 function callMenuDuplicate(id) { closeSheet(); duplicateCallEntry(id); }
 function callMenuDelete(id) { closeSheet(); deleteCallEntry(id); }
+// Monter / descendre : la feuille reste ouverte (le menu se redessine avec le nouveau rang)
+function callMenuUp(id) { moveCallEntry(id, -1); renderSheet(); }
+function callMenuDown(id) { moveCallEntry(id, 1); renderSheet(); }
+// « Tout voir » : les trois listes et leur nombre ; en choisir une change le type affiché
+function openCallListAll() { _sheet = { kind: 'callAll' }; renderSheet(); }
+function callAllPick(k) { closeSheet(); setCallKind(k); }
+// « Console DMX · n° 1 à 20 déclenchables » : n° et plages des entrées de la liste affichée
+function openCallDmxInfo() { _sheet = { kind: 'callDmx' }; renderSheet(); }
 // Contenu d'une feuille : { title, html, form } ; null : entrée disparue
 function callListSheetContent(s) {
+  const close = '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CL_TXT.close) + '</button></div>';
+  if (s.kind === 'callAll') {
+    const b = (k, label) => '<button type="button" class="dc-menu-btn' + (callListKind === k ? ' on' : '') + '" id="callAll-' + k + '" onclick="callAllPick(\'' + k + '\')">' + escapeHtml(label) + '</button>';
+    return {
+      title: _CL_TXT.allTitle, form: false,
+      html: b('call', _clTpl(_CL_TXT.allCall, { n: callList.call.length })) + b('sms', _clTpl(_CL_TXT.allSms, { n: callList.sms.length })) + b('notif', _clTpl(_CL_TXT.allNotif, { n: callList.notif.length })) + close,
+    };
+  }
+  if (s.kind === 'callDmx') {
+    const kind = callListKind, list = callList[kind];
+    const rows = kind === 'notif' ? '' : list.slice(0, CALL_LIST_DMX_ITEMS).map((e, i) => '<div class="sr-dmx-row"><span>' + escapeHtml(_clTpl(_CL_TXT.dmxRow, { n: i + 1, nom: callEntryName(e) })) + '</span><b>DMX ' + callEntryDmxRange(i, kind) + '</b></div>').join('');
+    return {
+      title: _CL_TXT.dmxTitle, form: false,
+      html: '<p class="sr-sheet-note">' + escapeHtml(kind === 'notif' ? _CL_TXT.dmxNoteNotif : _CL_TXT.dmxNote) + '</p>'
+        + (kind === 'notif' ? '' : (rows || '<p class="sr-sheet-note">' + escapeHtml(_CL_TXT.dmxEmpty) + '</p>')) + close,
+    };
+  }
   const kind = s.id ? _clKindOf(s.id) : null;
   const e = kind ? callList[kind].find((x) => x.id === s.id) : null;
   if (s.id && !e) return null;
   if (s.kind === 'callMenu') {
-    const b = (cls, fn, label) => '<button type="button" class="dc-menu-btn' + cls + '" onclick="' + fn + '(\'' + e.id + '\')">' + escapeHtml(label) + '</button>';
+    const b = (cls, fn, label, ico) => '<button type="button" class="dc-menu-btn' + cls + '" onclick="' + fn + '(\'' + e.id + '\')">' + (ico ? icon(ico) : '') + escapeHtml(label) + '</button>';
     // Aperçu sans licence : charger seulement ; « Mettre à jour » : formulaire du même type de liste
     const edit = !licLocked('tel'), canUpdate = callKind !== 'discussion' && _clListOf(callKind) === kind;
+    const i = callList[kind].indexOf(e);
+    // Jargon DMX : ici seulement (plus sur les lignes)
+    const genre = kind === 'call' ? _CL_TXT.genreCall : kind === 'notif' ? _CL_TXT.genreNotif : _CL_TXT.genreSms;
+    const dmx = callEntryDmxRange(i, kind);
+    const meta = kind === 'notif' ? '<span>' + escapeHtml(_CL_TXT.menuNoChannel) + '</span><b>—</b>'
+      : dmx === '—' ? '<span>' + escapeHtml(_CL_TXT.menuNoConsole) + '</span><b>—</b>'
+      : '<span>' + escapeHtml(_clTpl(_CL_TXT.menuConsole, { genre, n: i + 1 })) + '</span><b>DMX ' + dmx + '</b>';
     return {
       title: _clTpl(_CL_TXT.menuTitle, { nom: callEntryName(e) }), form: false,
-      html: b('', 'callMenuLoad', _CL_TXT.menuLoad)
-        + (edit ? b('', 'callMenuRename', _CL_TXT.menuRename)
-          + (canUpdate ? b('', 'callMenuUpdate', _CL_TXT.menuUpdate) : '')
-          + (callList[kind].length < CALL_LIST_MAX ? b('', 'callMenuDuplicate', _CL_TXT.menuDuplicate) : '')
-          + b(' danger', 'callMenuDelete', _CL_TXT.menuDelete) : '')
-        + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CL_TXT.close) + '</button></div>',
+      html: b('', 'callMenuLoad', _CL_TXT.menuLoad, 'download')
+        + (edit ? b('', 'callMenuRename', _CL_TXT.menuRename, 'pencil')
+          + (canUpdate ? b('', 'callMenuUpdate', _CL_TXT.menuUpdate, 'refresh-cw') : '')
+          + (callList[kind].length < CALL_LIST_MAX ? b('', 'callMenuDuplicate', _CL_TXT.menuDuplicate, 'copy') : '')
+          + (i > 0 ? b('', 'callMenuUp', _CL_TXT.menuUp, 'arrow-up') : '')
+          + (i < callList[kind].length - 1 ? b('', 'callMenuDown', _CL_TXT.menuDown, 'arrow-down') : '') : '')
+        + '<div class="dc-menu-meta">' + meta + '</div>'
+        + (edit ? b(' danger', 'callMenuDelete', _CL_TXT.menuDelete, 'trash-2') : '')
+        + close,
     };
   }
   // Nom : de l'enregistrement à venir (proposition préremplie) ou de l'entrée à renommer
-  let def, val, n, list, title;
+  let def, val, n, list, title, choice = '';
   if (e) {
     def = callEntryDefaultName(e); val = e.title || def; list = kind; n = callList[kind].indexOf(e) + 1; title = _CL_TXT.sheetRename;
   } else {
     const f = _clFormEntry().e;
     def = callEntryDefaultName(f); val = def; list = _clListOf(f.kind); n = callList[list].length + 1;
     title = f.kind === 'call' ? _CL_TXT.sheetCall : f.kind === 'notif' ? _CL_TXT.sheetNotif : _CL_TXT.sheetSms;
+    // Entrée chargée (maquette 4e3) : « Mettre à jour » ou « Comme nouveau »
+    const loaded = callListLoadedEntry();
+    if (loaded) {
+      choice = '<button type="button" class="dc-menu-btn dc-menu-big" id="callSaveUpdate" onclick="closeSheet();updateLoadedCallEntry()">' + icon('refresh-cw')
+        + '<span><b>' + escapeHtml(_clTpl(_CL_TXT.update, { nom: callEntryName(loaded) }).replace(/^↻\s*/, '')) + '</b><small>' + escapeHtml(_clTpl(_CL_TXT.saveUpd, { n: callList[list].indexOf(loaded) + 1 })) + '</small></span></button>';
+      title = _CL_TXT.saveNew;
+    }
   }
   const dmx = callEntryDmxRange(n - 1, list);
   const note = _clTpl(dmx === '—' ? _CL_TXT.nameNoteNoDmx : _CL_TXT.nameNote, { defaut: def, n, plage: dmx });
   return {
-    title, form: true,
-    html: '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
+    title: choice ? _clTpl(list === 'call' ? _CL_TXT.sheetCall : list === 'notif' ? _CL_TXT.sheetNotif : _CL_TXT.sheetSms, {}) : title, form: true,
+    html: choice + '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
       + '<label class="sr-sublabel" for="srName">' + escapeHtml(_CL_TXT.nameLabel) + '</label>'
       + '<input type="text" id="srName" class="text-input sr-input" maxlength="' + CALL_TITLE_MAX + '" autocomplete="off" placeholder="' + escapeHtml(def) + '" value="' + escapeHtml(val.slice(0, CALL_TITLE_MAX)) + '">'
       + '<p class="sr-sheet-note">' + escapeHtml(note) + '</p>'
       + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CL_TXT.cancel) + '</button>'
-      + '<button type="submit" class="sr-ok">' + escapeHtml(_CL_TXT.ok) + '</button></div></form>',
+      + '<button type="submit" class="sr-ok" id="callSaveNew">' + escapeHtml(choice ? _CL_TXT.saveNew : _CL_TXT.ok) + '</button></div></form>',
   };
 }
 function callListSheetSave(s, value) {
@@ -20612,7 +21193,7 @@ let _clDrag = null, _clSuppressClick = false;
   box.addEventListener('pointerdown', (e) => {
     const row = e.target.closest('.cl-row');
     if (!row || (e.pointerType === 'mouse' && e.button !== 0) || licLocked('tel')) return; // aperçu : ordre figé
-    if (e.target.closest('.cl-more')) return; // « ⋯ » : le menu, pas de glisser
+    if (e.target.closest('.cl-more, .cl-play, .cl-mv')) return; // ⋯, ▶, ↑ ↓ : leur action, pas de glisser
     _clDrag ={ row, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, active: false, ghost: null };
     if (e.target.closest('.cl-grip')) { e.preventDefault(); startDrag(); }
     else _clDrag.timer = setTimeout(startDrag, HOLD);
@@ -20747,7 +21328,10 @@ const _CHAT_TXT = {
   autoLabel: 'Lecture automatique',
   autoRun: '● en cours · {n} / {total}', autoPaused: '⏸ en pause · {n} / {total}', autoReady: 'prête · {n} / {total}',
   autoActor: '● attend {comedien} · {n} / {total}', autoButton: '● attend « Envoyer » · {n} / {total}', autoDone: 'terminée · {n} / {total}',
-  autoPlay: '▶ Lecture auto', autoPause: '⏸ Pause', autoBack: '↶', autoBackAria: 'Pause et revenir d\'un message',
+  autoPlay: 'Lecture auto', autoPause: 'Pause', autoBack: '↶', autoBackAria: 'Pause et revenir d\'un message',
+  threadTitle1: 'Fil · 1 message', threadTitleN: 'Fil · {n} messages', threadTitle0: 'Fil · aucun message',
+  moveUp: 'Monter le message', moveDown: 'Descendre le message',
+  menuTitle: 'Fil de la discussion', menuNew: 'Nouvelle discussion', menuSave: 'Enregistrer le fil', menuRestart: 'Repartir de zéro', menuClose: 'Fermer sur l\'écran',
   undelivered: 'Non distribué',
 };
 // Timings d'un message (maquette 26d) ; valeurs par défaut = comportement d'avant
@@ -21098,6 +21682,15 @@ function editChatMessage(id) {
   _chatTimingId = id;
   renderChatPanel();
 }
+// Monter / descendre un message d'un rang (bouton, en plus du glisser)
+function moveChatMessage(id, d) {
+  if (licLocked('tel')) return false;
+  const i = _chat.msgs.findIndex((x) => x.id === id), j = i + (d < 0 ? -1 : 1);
+  if (i < 0 || j < 0 || j >= _chat.msgs.length) return false;
+  [_chat.msgs[i], _chat.msgs[j]] = [_chat.msgs[j], _chat.msgs[i]];
+  _chatChanged();
+  return true;
+}
 function setChatMessageSide(id, from) {
   const m = _chat.msgs.find((x) => x.id === id);
   if (!m) return;
@@ -21124,6 +21717,8 @@ function onChatMessageText(id, el) {
   m.text = String(el.value || '').slice(0, CHAT_TEXT_MAX);
   _chatChanged(true);
 }
+// ⋯ du titre « Fil » : nouvelle discussion, enregistrer le fil, repartir de zéro, fermer (89-discussions-saved.js)
+function openChatThreadMenu() { _sheet = { kind: 'chatThread' }; renderSheet(); }
 function closeChatEditor() {
   const m = _chat.msgs.find((x) => x.id === _chatEditId);
   _chatEditId = null;
@@ -21209,6 +21804,8 @@ function chatAutoStop() {
 }
 // « ↶ » de la lecture : pause, puis le dernier message affiché est retiré
 function chatAutoBack() { chatAutoPause(); rewindChat(); }
+// Un seul bouton dans la barre : « Lecture auto », puis « Pause » tant qu'elle tourne
+function chatAutoToggle() { if (_chatAuto.on) chatAutoPause(); else chatAutoStart(); }
 function _chatAutoPhase(id, k, dur) { _chatAuto.phase = { id, k }; _chatAuto.t0 = Date.now(); _chatAuto.dur = dur || 0; }
 // Message suivant : pause avant, puis écriture et envoi
 function _chatAutoNext(resume) {
@@ -21282,9 +21879,18 @@ function _chatRenderAuto() {
   if (st) { setIconText(st, info.text); st.classList.toggle('on', info.live); }
   if (fill) fill.style.width = info.pct + '%';
   if (typeof seqRenderChatStatus === 'function') seqRenderChatStatus(); // 91-sequence.js : état sous l'étape en cours
-  const play = document.getElementById('dcAutoPlay'), pause = document.getElementById('dcAutoPause'), back = document.getElementById('dcAutoBack');
-  if (play) play.disabled = !_chatAuto.on && !_chatNextMsg(); // en cours : reste allumé (maquette 26d), sans effet
-  if (pause) pause.disabled = !_chatAuto.on;
+  const play = document.getElementById('dcAutoPlay');
+  if (play) {
+    const on = _chatAuto.on, key = on ? 'on' : 'off';
+    if (play.dataset.st !== key) {
+      play.dataset.st = key;
+      play.innerHTML = icon(on ? 'pause' : 'play') + '<b>' + escapeHtml(on ? _CHAT_TXT.autoPause : _CHAT_TXT.autoPlay) + '</b>';
+      play.classList.toggle('on', on);
+      play.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    play.disabled = !on && !_chatNextMsg(); // en cours : « Pause » reste actif
+  }
+  const back = document.getElementById('dcBackBtn');
   if (back) back.disabled = !_chat.sent.length;
 }
 // Resynchronisation (24-resync.js) : écrans de la discussion revenus
@@ -21297,25 +21903,20 @@ function chatOnScreensResync(ids) {
 }
 
 // ── Rendu (télécommande) ──
-// Sous-onglets (maquette 26c) : « Fil en cours » | « Enregistrées (n) »
+// Phase 4 : plus de sous-onglets « Fil en cours | Enregistrées » ; le fil à jouer, puis la liste
+// « Discussions enregistrées » dessous (▶ charge une discussion dans le fil)
 let _chatView = 'thread';
 function chatShowForm(on) {
-  const saved = on && _chatView === 'saved';
   const show = (id, v) => { const el = document.getElementById(id); if (el) el.style.display = v ? '' : 'none'; };
-  for (const id of ['dcNewBtn', 'dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcAutoPanel', 'dcSendPanel']) show(id, on && !saved);
-  if (!on || saved) show('dcTimingPanel', false);
-  show('dcTabs', on);
-  show('dcSavedPanel', saved);
-  // Le style appartient au fil en cours : rangée « Style et son » masquée sur la liste
-  if (on) show('telStyleRow', !saved);
-  for (const v of ['thread', 'saved']) {
-    const b = document.getElementById('dcTab-' + v);
-    if (b) b.classList.toggle('active', _chatView === v);
-  }
+  for (const id of ['dcContactPanel', 'dcActorRow', 'dcThreadPanel', 'dcActorPanel', 'dcSavedPanel']) show(id, on);
+  if (!on) show('dcTimingPanel', false);
+  // Le style appartient au fil en cours : rangée « Style et son » (commune aux SMS)
+  if (on) show('telStyleRow', true);
   if (on) { renderChatPanel(); renderSavedChats(); }
+  renderTelBar();
 }
 function setChatView(v) {
-  _chatView = v === 'saved' ? 'saved' : 'thread';
+  _chatView = 'thread';
   chatShowForm(callKind === 'discussion');
 }
 function _chatScreensLabel() {
@@ -21338,12 +21939,6 @@ function _chatRenderHead() {
   set('dcTypingLabel', _tplChat('Indicateur « … écrit » 2 s avant chaque message de {contact}', { contact: chatContactName() }));
   const wt = document.getElementById('dcWriteText');
   if (wt) wt.placeholder = _tplChat('Message improvisé de {contact}', { contact: chatContactName() });
-  const go = document.getElementById('dcGo'), next = chatNextContact();
-  if (go) {
-    const n = next ? _chat.msgs.indexOf(next) + 1 : 0;
-    go.textContent = next ? _tplChat('Envoyer n°{n} ({contact})', { n, contact: chatContactName() }) : _tplChat('Plus de message de {contact}', { contact: chatContactName() });
-    go.disabled = !next;
-  }
   // Noms : la saisie en cours n'est pas réécrite
   for (const [id, v] of [['dcName', _chat.name], ['dcActor', _chat.actor]]) {
     const el = document.getElementById(id);
@@ -21351,11 +21946,8 @@ function _chatRenderHead() {
   }
   const tg = document.getElementById('dcTypingToggle');
   if (tg) tg.checked = !!_chat.typing;
-  const cb = document.getElementById('dcCloseBtn');
-  if (cb) cb.disabled = !_chat.open;
-  const bk = document.getElementById('dcBackBtn');
-  if (bk) bk.disabled = !_chat.sent.length;
   _chatRenderAuto();
+  renderTelBar(); // barre d'action : Ouvrir sur l'écran / ↶ · Lecture auto · Envoyer n°n
 }
 function _chatProgressText(cur) {
   const p = _chat.progress && _chat.progress.id === cur.id ? _chat.progress : null;
@@ -21375,20 +21967,25 @@ function renderChatPanel() {
   const cur = chatCurrentActor();
   const resume = _chatResumeInfo();
   rows.textContent = '';
+  const nextMsg = _chatNextMsg();
   _chat.msgs.forEach((m, i) => {
     const row = document.createElement('div');
-    row.className = 'dc-row' + (_chatSent(m) ? ' sent' : '') + (cur && cur.id === m.id ? ' cur' : '') + (m.from === 'actor' ? ' actor' : '') + (_chatEditId === m.id ? ' editing' : '') + (_chatTimingId === m.id ? ' sel' : '');
+    row.className = 'dc-row' + (_chatSent(m) ? ' sent' : '') + (cur && cur.id === m.id ? ' cur' : '') + (nextMsg && nextMsg.id === m.id ? ' next' : '') + (m.from === 'actor' ? ' actor' : '') + (_chatEditId === m.id ? ' editing' : '') + (_chatTimingId === m.id ? ' sel' : '');
     row.dataset.id = m.id;
     row.onclick = () => editChatMessage(m.id);
+    const st = document.createElement('span'); st.className = 'dc-st';
+    st.innerHTML = icon(_chatSent(m) ? 'circle-check' : nextMsg && nextMsg.id === m.id ? 'play' : 'circle');
     const num = document.createElement('span'); num.className = 'dc-num'; num.textContent = String(i + 1);
-    const who = document.createElement('span'); who.className = 'dc-who';
+    const tx = document.createElement('span'); tx.className = 'dc-tx';
+    const who = document.createElement('small'); who.className = 'dc-who';
     who.textContent = _tplChat('{nom} ›', { nom: m.from === 'actor' ? (_chat.actor || 'Comédien') : chatContactName() });
     const txt = document.createElement('span'); txt.className = 'dc-text';
     txt.textContent = m.text || '…';
+    tx.append(who, txt);
     // Pastille des timings (maquette 26d) : pause · écriture
     const pill = document.createElement('span'); pill.className = 'dc-pill';
     pill.textContent = _tplChat(m.from === 'actor' ? (m.auto ? _CHAT_TXT.pillAuto : _CHAT_TXT.pillActor) : _CHAT_TXT.pill, { p: m.pause, w: m.write });
-    row.append(num, who, txt, pill);
+    row.append(st, num, tx, pill);
     rows.appendChild(row);
     if (cur && cur.id === m.id) {
       const pr = document.createElement('div'); pr.className = 'dc-progress'; pr.id = 'dcProgress';
@@ -21405,6 +22002,8 @@ function renderChatPanel() {
     }
     if (_chatEditId === m.id) rows.appendChild(_chatEditor(m));
   });
+  const n = _chat.msgs.length;
+  _tuText('dcThreadTitle', n === 0 ? _CHAT_TXT.threadTitle0 : n === 1 ? _CHAT_TXT.threadTitle1 : _tplChat(_CHAT_TXT.threadTitleN, { n }));
   const add = document.getElementById('dcAdd');
   if (add) add.disabled = _chat.msgs.length >= CHAT_MAX;
   _chatRenderTiming();
@@ -21424,6 +22023,15 @@ function _chatEditor(m) {
   ta.setAttribute('aria-label', 'Texte du message');
   ta.oninput = () => onChatMessageText(m.id, ta);
   const act = document.createElement('div'); act.className = 'dc-edit-actions';
+  // Monter / descendre : au bouton, en plus du glisser (accessibilité)
+  const i = _chat.msgs.indexOf(m);
+  const mv = (d, ico, label) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'dc-edit-mv'; b.innerHTML = icon(ico);
+    b.setAttribute('aria-label', label); b.title = label;
+    b.disabled = d < 0 ? i <= 0 : i >= _chat.msgs.length - 1;
+    b.onclick = () => moveChatMessage(m.id, d);
+    return b;
+  };
   const del = document.createElement('button'); del.type = 'button'; del.className = 'cl-del'; del.textContent = 'Supprimer';
   del.onclick = () => deleteChatMessage(m.id);
   // « Reprendre ici » (maquette 26b) : ce qui précède devient l'historique affiché
@@ -21433,7 +22041,7 @@ function _chatEditor(m) {
   ta.addEventListener('input', () => { res.disabled = !_chatValid(m); });
   const ok = document.createElement('button'); ok.type = 'button'; ok.className = 'dc-edit-ok'; ok.textContent = 'OK';
   ok.onclick = () => closeChatEditor();
-  act.append(res, del, ok);
+  act.append(mv(-1, 'arrow-up', _CHAT_TXT.moveUp), mv(1, 'arrow-down', _CHAT_TXT.moveDown), res, del, ok);
   box.append(seg, ta, act);
   return box;
 }
@@ -21991,7 +22599,7 @@ function notifFormFields() {
 
 // Formulaire affiché (type Notification)
 function notifShowForm(on) {
-  for (const id of ['ntAppPanel', 'ntShowPanel', 'ntSendPanel']) {
+  for (const id of ['ntAppPanel', 'telNtTitleField', 'telNtBodyField', 'ntShowPanel']) {
     const el = document.getElementById(id);
     if (el) el.style.display = on ? '' : 'none';
   }
@@ -23236,16 +23844,16 @@ function exitFS() {
 handleLaunchHash();
 
 // ══════════════════════════ DISCUSSIONS ENREGISTRÉES (onglet Tel, télécommande) ══════════════════════════
-// Maquette validée 26c. Deux sous-onglets dans « Discussion » : « Fil en
-// cours » (83-discussion.js) et « Enregistrées (n) ». Une discussion
+// Maquettes validées 26c puis 4d (phase 4). Dans « Discussion », le fil à jouer
+// (83-discussion.js) puis, dessous, la liste « Discussions enregistrées · n ». Une discussion
 // enregistrée garde son nom, le contact (nom, photo), le comédien, le style
 // et tous les messages avec leurs timings (maquette 26d : pause avant,
 // écriture, envoi) ; PAS le point de reprise (ni ce qui est posté).
 // Migration : une discussion enregistrée avant les timings les reçoit par
 // défaut (pause 0 s, le comédien tape, envoi au bouton) : rien ne change.
 //   • « + Enregistrer le fil en cours » : demande un nom, ajoute en fin de liste.
-//   • Toucher une ligne : la charge dans « Fil en cours » (confirmation si le
-//     fil en cours a des modifications non enregistrées). Ouverte sur un
+//   • ▶ (ou toucher la ligne) : la charge dans le fil à jouer (confirmation si le
+//     fil a des modifications non enregistrées). Ouverte sur un
 //     écran, la discussion y repart de zéro avec le nouveau fil.
 //   • « ⋯ » : renommer, dupliquer, supprimer (avec confirmation).
 // Stockage (comme la liste des appels, 82-call-list.js) : textes en
@@ -23276,8 +23884,9 @@ const _CHSV_TXT = {
   duplicate: 'Dupliquer',
   remove: 'Supprimer',
   copy: '{nom} (copie)',
-  confirmLoad: 'Le fil en cours a des modifications non enregistrées. Charger « {nom} » à la place ?',
-  confirmDelete: 'Supprimer la discussion « {nom} » ?',
+  loadTitle: 'Charger « {nom} » ?', loadText: 'Le fil en cours a des modifications non enregistrées : elles seront perdues.', loadOk: 'Charger', loadCancel: 'Annuler',
+  deleted: '« {nom} » supprimée', playAria: 'Charger « {nom} » dans le fil',
+  titleSaved: 'Discussions enregistrées · {n}',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Discussion',
   // « + Nouvelle discussion » (maquette 47b)
@@ -23376,13 +23985,17 @@ async function saveCurrentChat(name) {
 
 // Toucher une ligne : charge l'entrée dans « Fil en cours »
 let _chsvLoadSeq = 0;
-async function loadSavedChat(id) {
+async function loadSavedChat(id, confirmed) {
   const e = chatSaved.find((x) => x.id === id);
   if (!e) return false;
   const dirty = chatHasUnsavedChanges();
   // Déjà chargée, sans modification : simple retour au fil (la scène en cours est gardée)
   if (e.id === _chat.savedId && !dirty) { setChatView('thread'); return true; }
-  if (dirty && !confirm(_tplChat(_CHSV_TXT.confirmLoad, { nom: e.name }))) return false;
+  if (dirty && confirmed !== true) {
+    // Fil modifié : confirmation (boîte de l'app) avant de le remplacer
+    openAppConfirm({ title: _tplChat(_CHSV_TXT.loadTitle, { nom: e.name }), text: _CHSV_TXT.loadText, ok: _CHSV_TXT.loadOk, cancel: _CHSV_TXT.loadCancel }, () => loadSavedChat(id, true));
+    return false;
+  }
   const seq = ++_chsvLoadSeq;
   const photo = e.hasPhoto ? safeImageData(await callAssetGet(_chsvPhotoKey(e.id))) : null;
   if (seq !== _chsvLoadSeq) return false; // une autre entrée touchée entre-temps
@@ -23434,12 +24047,22 @@ async function duplicateSavedChat(id) {
 function deleteSavedChat(id) {
   const i = chatSaved.findIndex((x) => x.id === id);
   if (i < 0) return false;
-  if (!confirm(_tplChat(_CHSV_TXT.confirmDelete, { nom: chatSaved[i].name }))) return false;
+  const e = chatSaved[i], wasCur = _chat.savedId === id;
   chatSaved.splice(i, 1);
   _chsvPersist();
-  callAssetDelete(_chsvPhotoKey(id));
-  if (_chat.savedId === id) { _chat.savedId = null; chatSave(); }
+  if (wasCur) { _chat.savedId = null; chatSave(); }
   renderSavedChats();
+  undoSnack({
+    text: _tplChat(_CHSV_TXT.deleted, { nom: e.name }),
+    undo: () => {
+      if (chatSaved.length >= CHAT_SAVED_MAX || chatSaved.some((x) => x.id === e.id)) return;
+      chatSaved.splice(Math.min(i, chatSaved.length), 0, e);
+      _chsvPersist();
+      if (wasCur && !_chat.savedId) { _chat.savedId = e.id; chatSave(); }
+      renderSavedChats();
+    },
+    commit: () => { callAssetDelete(_chsvPhotoKey(id)); },
+  });
   return true;
 }
 
@@ -23452,10 +24075,7 @@ function _chsvMeta(e) {
   });
 }
 function renderSavedChats() {
-  const tab = document.getElementById('dcTab-saved');
-  if (tab) tab.textContent = _tplChat(_CHSV_TXT.tab, { n: chatSaved.length });
-  const nb = document.getElementById('dcNewBtn');
-  setIconText(nb, _CHSV_TXT.newBtn);
+  _tuText('dcSavedTitle', _tplChat(_CHSV_TXT.titleSaved, { n: chatSaved.length }));
   const rows = document.getElementById('dcSavedRows');
   if (!rows) return;
   rows.textContent = '';
@@ -23468,22 +24088,17 @@ function renderSavedChats() {
     const nm = document.createElement('span'); nm.className = 'dc-saved-name'; nm.textContent = e.name;
     const meta = document.createElement('span'); meta.className = 'dc-saved-meta'; meta.textContent = _chsvMeta(e);
     main.append(nm, meta);
+    const play = document.createElement('button'); play.type = 'button'; play.className = 'cl-play'; play.innerHTML = icon('play');
+    play.setAttribute('aria-label', _tplChat(_CHSV_TXT.playAria, { nom: e.name }));
+    play.onclick = (ev) => { ev.stopPropagation(); loadSavedChat(e.id); };
     const more = document.createElement('button'); more.type = 'button'; more.className = 'dc-saved-more'; more.innerHTML = icon('ellipsis', 'ic-lg');
     more.setAttribute('aria-label', _CHSV_TXT.rename + ', ' + _CHSV_TXT.duplicate.toLowerCase() + ', ' + _CHSV_TXT.remove.toLowerCase());
     more.onclick = (ev) => { ev.stopPropagation(); openSavedChatMenu(e.id); };
-    row.append(main, more);
+    row.append(main, play, more);
     rows.appendChild(row);
   }
   const empty = document.getElementById('dcSavedEmpty');
   if (empty) empty.style.display = chatSaved.length ? 'none' : '';
-  const hint = document.getElementById('dcSavedHint');
-  if (hint) hint.style.display = chatSaved.length ? '' : 'none';
-  const btn = document.getElementById('dcSaveBtn');
-  if (btn) {
-    const full = chatSaved.length >= CHAT_SAVED_MAX;
-    btn.disabled = full;
-    btn.textContent = full ? _tplChat(_CHSV_TXT.full, { max: CHAT_SAVED_MAX }) : _CHSV_TXT.save;
-  }
 }
 
 // ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) ──
@@ -23502,6 +24117,17 @@ function openRenameSavedChat(id) {
 }
 // Contenu d'une feuille de discussion : { title, html, form } ; null : entrée disparue
 function chatSheetContent(s) {
+  if (s.kind === 'chatThread') {
+    // ⋯ du titre « Fil » (maquette 4d) : ce qui ne tient pas dans la barre
+    const b = (cls, fn, label, ico, off) => '<button type="button" class="dc-menu-btn' + cls + '"' + (off ? ' disabled' : '') + ' onclick="closeSheet();' + fn + '">' + icon(ico) + escapeHtml(label) + '</button>';
+    const edit = !licLocked('tel');
+    return {
+      title: _CHAT_TXT.menuTitle, form: false,
+      html: (edit ? b('', 'chatNewAsk()', _CHAT_TXT.menuNew, 'plus') + b('', 'openSaveChatSheet()', _CHAT_TXT.menuSave, 'bookmark', chatSaved.length >= CHAT_SAVED_MAX) : '')
+        + b('', 'restartChat()', _CHAT_TXT.menuRestart, 'rotate-ccw', !_chat.sent.length) + b('', 'closeChat()', _CHAT_TXT.menuClose, 'power', !_chat.open)
+        + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CHSV_TXT.cancel) + '</button></div>',
+    };
+  }
   if (s.kind === 'chatNew') {
     const note = (t) => '<p class="sr-sheet-note prj-sheet-text">' + escapeHtml(t) + '</p>';
     if (s.live) {
@@ -26911,6 +27537,7 @@ callersInit();         // appelants enregistrés (79-callers.js) ; 1re fois : re
 renderNotifForm();
 renderChatPanel();
 renderTelStyle();      // 78-tel-style.js
+setCallKind(callKind); // rangées du type affiché, liste enregistrée, barre d'action (73-tel-ui.js)
 
 // ── Onglet Séquence : séquence en cours, séquences enregistrées ──
 seqLoad();

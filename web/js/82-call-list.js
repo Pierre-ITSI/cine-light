@@ -60,11 +60,24 @@ const _CL_TXT = {
   nameNote: 'Vide : « {defaut} ». Le nom sert dans la liste, la Séquence et la console (n° {n}, DMX {plage}).',
   nameNoteNoDmx: 'Vide : « {defaut} ». Le nom sert dans la liste et la Séquence (n° {n}).',
   cancel: 'Annuler', ok: 'Enregistrer', close: 'Fermer',
-  update: '↻ Mettre à jour « {nom} »', saveNew: '+ Enregistrer comme nouveau',
+  update: '↻ Mettre à jour « {nom} »',
   menuLoad: 'Charger dans l\'onglet', menuRename: 'Renommer', menuUpdate: 'Mettre à jour avec les réglages actuels',
   menuDuplicate: 'Dupliquer', menuDelete: 'Supprimer', menuAria: 'Charger, renommer, mettre à jour, dupliquer, supprimer',
   menuTitle: '« {nom} »', copy: '{nom} (copie)',
-  confirmDelete: 'Supprimer « {nom} » (n°{n}) ? Les numéros suivants avancent d\'un rang.',
+  menuUp: 'Monter d\'un rang', menuDown: 'Descendre d\'un rang',
+  menuConsole: 'Console : {genre} n° {n}', menuNoConsole: 'Hors console (au-delà du n° 20)', menuNoChannel: 'Pas de canal console',
+  deleted: '« {nom} » supprimé', deletedSub: 'Les n° suivants ont avancé d\'un rang', deletedSubDmx: 'Les n° suivants ont avancé d\'un rang · DMX inclus',
+  // Liste enregistrée de l'onglet Tel (phase 4)
+  titleCall: 'Appels enregistrés', titleSms: 'SMS enregistrés', titleNotif: 'Notifications enregistrées',
+  playAria: 'Lancer « {nom} »', moveUp: 'Monter « {nom} »', moveDown: 'Descendre « {nom} »', loaded: 'chargé',
+  allTitle: 'Tout voir', allCall: 'Appels ({n})', allSms: 'SMS ({n})', allNotif: 'Notifications ({n})',
+  dmxTitle: 'Console DMX', dmxRow: 'n° {n} · {nom}',
+  dmxNote: 'Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16) : valeur n × 10 … n × 10 + 9 = entrée n. Valeur 0 : raccrocher. Glissez ou utilisez Trier / ⋯ pour changer l\'ordre.',
+  dmxNoteNotif: 'Les notifications ne se déclenchent pas depuis la console : seulement d\'ici.',
+  dmxEmpty: 'Aucune entrée dans cette liste.',
+  saveUpd: 'n° {n} · garde sa place dans la liste', saveNewSub: 'prend le n° {n}', saveNew: 'Enregistrer comme nouveau',
+  sentCall: 'Appel n°{n} envoyé…', sentSms: 'SMS n°{n} envoyé', sentNotif: 'Notification n°{n} envoyée',
+  genreCall: 'appel', genreSms: 'SMS', genreNotif: 'notification',
 };
 const _clTpl = (t, v) => t.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
 const _clLine = (v) => (typeof v === 'string' ? v.replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, CALL_TITLE_MAX).trim() : '');
@@ -281,58 +294,44 @@ function _clSelected(kind) {
 }
 
 // ── Rendu ──
+// Mode « Trier » (↑ ↓ sur chaque ligne, en plus du glisser) : accessibilité
+let _clSort = false;
+function toggleCallListSort() { _clSort = !_clSort; renderCallList(); }
+function _clTitleOf(kind) { return kind === 'call' ? _CL_TXT.titleCall : kind === 'notif' ? _CL_TXT.titleNotif : _CL_TXT.titleSms; }
 function renderCallList() {
   const kind = callListKind, list = callList[kind];
-  const cb = document.getElementById('clKind-call'), sb = document.getElementById('clKind-sms'), nb = document.getElementById('clKind-notif');
-  if (cb) { cb.textContent = 'Appels (' + callList.call.length + ')'; cb.classList.toggle('active', kind === 'call'); }
-  if (sb) { sb.textContent = 'SMS (' + callList.sms.length + ')'; sb.classList.toggle('active', kind === 'sms'); }
-  if (nb) { nb.textContent = 'Notifs (' + callList.notif.length + ')'; nb.classList.toggle('active', kind === 'notif'); }
-  const who = document.getElementById('callListWho');
-  if (who) who.textContent = kind === 'call' ? 'Appelant' : kind === 'notif' ? 'Titre' : 'Expéditeur';
-  const note = document.getElementById('callListNote');
-  if (note) note.textContent = kind === 'notif'
-    ? 'Les notifications ne se déclenchent pas depuis la console : seulement d\'ici. Glissez pour changer l\'ordre.'
-    : 'Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16). Valeur 0 : raccrocher. Glissez pour changer l\'ordre.';
-  const sel = _clSelected(kind);
+  const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+  set('callListTitle', _clTitleOf(kind) + ' · ' + list.length);
+  const loaded = callListLoadedEntry();
   const rows = document.getElementById('callListRows');
   if (rows) {
-    rows.innerHTML = list.map((e, i) => '<div class="cl-row' + (sel && e.id === sel.id ? ' selected' : '') + '" data-id="' + e.id + '" onclick="selectCallEntry(\'' + e.id + '\')">'
-      + '<span class="cl-num">' + (i + 1) + '</span>'
-      + '<span class="cl-main"><span class="cl-name">' + escapeHtml(callEntryName(e)) + '</span><span class="cl-meta">' + escapeHtml(_clMeta(e)) + '</span></span>'
-      + '<span class="cl-dmx">' + callEntryDmxRange(i, kind) + '</span>'
-      + '<button type="button" class="cl-more" aria-label="' + escapeHtml(_CL_TXT.menuAria) + '" onclick="event.stopPropagation();openCallEntryMenu(\'' + e.id + '\')">' + icon('ellipsis', 'ic-lg') + '</button>'
-      + '<span class="cl-grip" aria-label="Déplacer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 9h14M5 15h14"/></svg></span>'
-      + '</div>').join('');
+    rows.classList.toggle('sorting', _clSort);
+    const mv = (cls, label, fn, id, off, ico) => '<button type="button" class="cl-mv ' + cls + '" aria-label="' + escapeHtml(label) + '"' + (off ? ' disabled' : '') + ' onclick="event.stopPropagation();' + fn + '(\'' + id + '\')">' + icon(ico) + '</button>';
+    rows.innerHTML = list.map((e, i) => {
+      const nom = callEntryName(e);
+      return '<div class="cl-row' + (loaded && e.id === loaded.id ? ' selected' : '') + '" data-id="' + e.id + '" onclick="selectCallEntry(\'' + e.id + '\')">'
+        + '<span class="cl-num">' + (i + 1) + '</span>'
+        + '<span class="cl-main"><span class="cl-name">' + escapeHtml(nom) + '</span><span class="cl-meta">'
+        + (loaded && e.id === loaded.id ? '<span class="cl-chip">' + escapeHtml(_CL_TXT.loaded) + '</span>' : '') + escapeHtml(_clMeta(e)) + '</span></span>'
+        + (_clSort ? mv('up', _clTpl(_CL_TXT.moveUp, { nom }), 'moveCallEntryUp', e.id, i === 0, 'arrow-up') + mv('down', _clTpl(_CL_TXT.moveDown, { nom }), 'moveCallEntryDown', e.id, i === list.length - 1, 'arrow-down') : '')
+        + '<button type="button" class="cl-play" aria-label="' + escapeHtml(_clTpl(_CL_TXT.playAria, { nom })) + '" onclick="event.stopPropagation();playCallEntry(\'' + e.id + '\')">' + icon('play') + '</button>'
+        + '<button type="button" class="cl-more" aria-label="' + escapeHtml(_CL_TXT.menuAria) + '" onclick="event.stopPropagation();openCallEntryMenu(\'' + e.id + '\')">' + icon('ellipsis', 'ic-lg') + '</button>'
+        + '</div>';
+    }).join('');
   }
+  const sort = document.getElementById('callListSort');
+  if (sort) { sort.setAttribute('aria-pressed', _clSort ? 'true' : 'false'); sort.classList.toggle('on', _clSort); sort.style.display = list.length > 1 ? '' : 'none'; }
   const empty = document.getElementById('callListEmpty');
   if (empty) {
     empty.style.display = list.length ? 'none' : 'block';
-    empty.textContent = 'Réglez ' + (kind === 'call' ? 'l\'appel' : kind === 'notif' ? 'la notification' : 'le SMS') + ' ci-dessus puis enregistrez-' + (kind === 'notif' ? 'la' : 'le') + ' : ' + (kind === 'notif' ? 'elle' : 'il') + ' prend le numéro suivant.';
+    empty.textContent = 'Réglez ' + (kind === 'call' ? 'l\'appel' : kind === 'notif' ? 'la notification' : 'le SMS') + ' ci-dessus puis enregistrez-' + (kind === 'notif' ? 'la' : 'le') + ' (signet) : ' + (kind === 'notif' ? 'elle' : 'il') + ' prend le numéro suivant.';
   }
-  const actions = document.getElementById('callListActions');
-  if (actions) actions.style.display = list.length ? 'flex' : 'none';
-  const go = document.getElementById('callListGo');
-  if (go && sel) {
-    const n = list.indexOf(sel) + 1;
-    go.textContent = (kind === 'call' ? 'Appeler n°{n}' : kind === 'notif' ? 'Envoyer la notification n°{n}' : 'Envoyer le SMS n°{n}').replace('{n}', n);
-  }
-  renderCallListSaveLabel();
+  const dmx = document.getElementById('callListDmx');
+  if (dmx) dmx.style.display = kind === 'notif' ? 'none' : '';
+  renderTelBar();
 }
-// Bouton d'enregistrement, ou « Mettre à jour » / « Enregistrer comme nouveau » (entrée chargée)
-function renderCallListSaveLabel() {
-  const loaded = callListLoadedEntry();
-  const b = document.getElementById('callListSave');
-  if (b) {
-    b.textContent = callKind === 'call' ? '+ Enregistrer l\'appel actuel' : callKind === 'notif' ? '+ Enregistrer la notification actuelle' : '+ Enregistrer le SMS actuel';
-    b.style.display = loaded ? 'none' : '';
-  }
-  const upd = document.getElementById('callListUpd');
-  if (upd) upd.style.display = loaded ? '' : 'none';
-  const u = document.getElementById('callListUpdate');
-  if (u && loaded) setIconText(u, _clTpl(_CL_TXT.update, { nom: callEntryName(loaded) }));
-  const n = document.getElementById('callListSaveNew');
-  if (n) { setIconText(n, _CL_TXT.saveNew); n.disabled = !!loaded && callList[_clListOf(loaded.kind)].length >= CALL_LIST_MAX; }
-}
+// Compat : l'état « chargé » est dessiné par renderCallList (puce sur la ligne)
+function renderCallListSaveLabel() { renderCallList(); }
 
 function setCallListKind(k) {
   callListKind = CALL_LISTS.includes(k) ? k : 'call';
@@ -374,10 +373,16 @@ function _clTitleFor(e, value) {
   const t = _clLine(value);
   return t && t !== callEntryDefaultName(e) ? t : '';
 }
-// « + Enregistrer … » (après la feuille du nom, maquette 43b) ; title : nom de l'enregistrement (facultatif)
-async function saveCurrentCall(title) {
+// « Enregistrer » (après la feuille du nom, maquette 43b) ; title : nom de l'enregistrement (facultatif).
+// over : champs qui remplacent ceux du formulaire (création sur place depuis l'éditeur d'étape :
+// nom, sous-titre, message, titre…). La photo du formulaire ne suit que si le nom ne change pas.
+async function saveCurrentCall(title, over) {
   if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
-  const { e: fields, photo, audio } = _clFormEntry();
+  let { e: fields, photo, audio } = _clFormEntry();
+  if (over) {
+    if (fields.kind !== 'notif' && over.name !== undefined && String(over.name) !== String(fields.name)) { photo = null; fields.hasPhoto = false; }
+    Object.assign(fields, over);
+  }
   const list = _clListOf(fields.kind);
   if (callList[list].length >= CALL_LIST_MAX) return null;
   const e = Object.assign({ id: _clNewId() }, fields);
@@ -448,20 +453,49 @@ async function duplicateCallEntry(id) {
   renderCallList();
   return e.id;
 }
-// Supprimer (confirmation) : les numéros suivants avancent ; photo et bande son effacées
+// Monter / descendre d'un rang (bouton, en plus du glisser) : le numéro, donc la
+// plage DMX, suit le rang
+function moveCallEntry(id, d) {
+  if (licLocked('tel')) return false; // aperçu sans licence : ordre figé
+  const kind = _clKindOf(id);
+  if (!kind) return false;
+  const list = callList[kind], i = list.findIndex((x) => x.id === id), j = i + (d < 0 ? -1 : 1);
+  if (j < 0 || j >= list.length) return false;
+  [list[i], list[j]] = [list[j], list[i]];
+  persistCallList();
+  renderCallList();
+  return true;
+}
+function moveCallEntryUp(id) { return moveCallEntry(id, -1); }
+function moveCallEntryDown(id) { return moveCallEntry(id, 1); }
+// Supprimer : la ligne disparaît aussitôt, bandeau « Annuler » 6 s (33-snackbar.js) qui
+// remet l'entrée à son rang exact (donc à sa plage DMX) ; photo et bande son effacées à l'échéance
 function deleteCallEntry(id) {
   if (licLocked('tel')) return false; // aperçu sans licence (77-licence-ui.js)
   const kind = _clKindOf(id);
   if (!kind) return false;
   const i = callList[kind].findIndex((x) => x.id === id), e = callList[kind][i];
-  if (!confirm(_clTpl(_CL_TXT.confirmDelete, { nom: callEntryName(e), n: i + 1 }))) return false;
+  const prevSel = _callListSel[kind], wasLoaded = _clLoadedId === id;
   callList[kind].splice(i, 1);
   if (_callListSel[kind] === id || !callList[kind].some((x) => x.id === _callListSel[kind])) _callListSel[kind] = (callList[kind][Math.min(i, callList[kind].length - 1)] || {}).id || null;
-  if (_clLoadedId === id) _clLoadedId = null;
-  callAssetDelete(e.id + ':photo'); callAssetDelete(e.id + ':audio');
+  if (wasLoaded) _clLoadedId = null;
   _clPrepIds.delete(e.id);
   persistCallList();
   renderCallList();
+  undoSnack({
+    text: _clTpl(_CL_TXT.deleted, { nom: callEntryName(e) }),
+    sub: kind === 'notif' ? _CL_TXT.deletedSub : _CL_TXT.deletedSubDmx,
+    undo: () => {
+      const list = callList[kind];
+      if (list.length >= CALL_LIST_MAX || list.some((x) => x.id === e.id)) return;
+      list.splice(Math.min(i, list.length), 0, e);
+      if (prevSel && list.some((x) => x.id === prevSel)) _callListSel[kind] = prevSel;
+      if (wasLoaded && callKind === e.kind && callListKind === kind) _clLoadedId = e.id;
+      persistCallList();
+      renderCallList();
+    },
+    commit: () => { callAssetDelete(e.id + ':photo'); callAssetDelete(e.id + ':audio'); },
+  });
   return true;
 }
 
@@ -527,18 +561,20 @@ async function loadCallEntryIntoForm(e) {
   renderTelStyle();
 }
 
-// « Appeler n° X » / « Envoyer le SMS n° X »
-async function triggerSelectedCallEntry() {
-  const e = _clSelected(callListKind);
-  if (!e) return;
-  const n = callList[callListKind].indexOf(e) + 1;
-  _setCallStatusUI((e.kind === 'call' ? '📞 Appel n°{n} envoyé…' : e.kind === 'notif' ? '🔔 Notification n°{n} envoyée' : '💬 SMS n°{n} envoyé').replace('{n}', n));
+// ▶ d'une ligne : déclenche cette entrée sur la cible, sans la charger dans le formulaire
+async function playCallEntry(id) {
+  const kind = _clKindOf(id);
+  if (!kind) return;
+  const e = callList[kind].find((x) => x.id === id);
+  const n = callList[kind].indexOf(e) + 1;
+  const text = _clTpl(e.kind === 'call' ? _CL_TXT.sentCall : e.kind === 'notif' ? _CL_TXT.sentNotif : _CL_TXT.sentSms, { n });
+  _setCallStatusUI(text);
+  telCallSent(e.kind, e.kind === 'call' ? (e.autoAnswer || 0) : 0, text);
   await sendCallEntry(e);
 }
-
-function deleteSelectedCallEntry() {
+async function triggerSelectedCallEntry() {
   const e = _clSelected(callListKind);
-  if (e) deleteCallEntry(e.id);
+  if (e) await playCallEntry(e.id);
 }
 
 // ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) : nom (43b), menu « ⋯ » (43c) ──
@@ -556,44 +592,86 @@ function callMenuRename(id) { if (!licLocked('tel') && _clKindOf(id)) { _sheet =
 function callMenuUpdate(id) { closeSheet(); updateCallEntry(id); }
 function callMenuDuplicate(id) { closeSheet(); duplicateCallEntry(id); }
 function callMenuDelete(id) { closeSheet(); deleteCallEntry(id); }
+// Monter / descendre : la feuille reste ouverte (le menu se redessine avec le nouveau rang)
+function callMenuUp(id) { moveCallEntry(id, -1); renderSheet(); }
+function callMenuDown(id) { moveCallEntry(id, 1); renderSheet(); }
+// « Tout voir » : les trois listes et leur nombre ; en choisir une change le type affiché
+function openCallListAll() { _sheet = { kind: 'callAll' }; renderSheet(); }
+function callAllPick(k) { closeSheet(); setCallKind(k); }
+// « Console DMX · n° 1 à 20 déclenchables » : n° et plages des entrées de la liste affichée
+function openCallDmxInfo() { _sheet = { kind: 'callDmx' }; renderSheet(); }
 // Contenu d'une feuille : { title, html, form } ; null : entrée disparue
 function callListSheetContent(s) {
+  const close = '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CL_TXT.close) + '</button></div>';
+  if (s.kind === 'callAll') {
+    const b = (k, label) => '<button type="button" class="dc-menu-btn' + (callListKind === k ? ' on' : '') + '" id="callAll-' + k + '" onclick="callAllPick(\'' + k + '\')">' + escapeHtml(label) + '</button>';
+    return {
+      title: _CL_TXT.allTitle, form: false,
+      html: b('call', _clTpl(_CL_TXT.allCall, { n: callList.call.length })) + b('sms', _clTpl(_CL_TXT.allSms, { n: callList.sms.length })) + b('notif', _clTpl(_CL_TXT.allNotif, { n: callList.notif.length })) + close,
+    };
+  }
+  if (s.kind === 'callDmx') {
+    const kind = callListKind, list = callList[kind];
+    const rows = kind === 'notif' ? '' : list.slice(0, CALL_LIST_DMX_ITEMS).map((e, i) => '<div class="sr-dmx-row"><span>' + escapeHtml(_clTpl(_CL_TXT.dmxRow, { n: i + 1, nom: callEntryName(e) })) + '</span><b>DMX ' + callEntryDmxRange(i, kind) + '</b></div>').join('');
+    return {
+      title: _CL_TXT.dmxTitle, form: false,
+      html: '<p class="sr-sheet-note">' + escapeHtml(kind === 'notif' ? _CL_TXT.dmxNoteNotif : _CL_TXT.dmxNote) + '</p>'
+        + (kind === 'notif' ? '' : (rows || '<p class="sr-sheet-note">' + escapeHtml(_CL_TXT.dmxEmpty) + '</p>')) + close,
+    };
+  }
   const kind = s.id ? _clKindOf(s.id) : null;
   const e = kind ? callList[kind].find((x) => x.id === s.id) : null;
   if (s.id && !e) return null;
   if (s.kind === 'callMenu') {
-    const b = (cls, fn, label) => '<button type="button" class="dc-menu-btn' + cls + '" onclick="' + fn + '(\'' + e.id + '\')">' + escapeHtml(label) + '</button>';
+    const b = (cls, fn, label, ico) => '<button type="button" class="dc-menu-btn' + cls + '" onclick="' + fn + '(\'' + e.id + '\')">' + (ico ? icon(ico) : '') + escapeHtml(label) + '</button>';
     // Aperçu sans licence : charger seulement ; « Mettre à jour » : formulaire du même type de liste
     const edit = !licLocked('tel'), canUpdate = callKind !== 'discussion' && _clListOf(callKind) === kind;
+    const i = callList[kind].indexOf(e);
+    // Jargon DMX : ici seulement (plus sur les lignes)
+    const genre = kind === 'call' ? _CL_TXT.genreCall : kind === 'notif' ? _CL_TXT.genreNotif : _CL_TXT.genreSms;
+    const dmx = callEntryDmxRange(i, kind);
+    const meta = kind === 'notif' ? '<span>' + escapeHtml(_CL_TXT.menuNoChannel) + '</span><b>—</b>'
+      : dmx === '—' ? '<span>' + escapeHtml(_CL_TXT.menuNoConsole) + '</span><b>—</b>'
+      : '<span>' + escapeHtml(_clTpl(_CL_TXT.menuConsole, { genre, n: i + 1 })) + '</span><b>DMX ' + dmx + '</b>';
     return {
       title: _clTpl(_CL_TXT.menuTitle, { nom: callEntryName(e) }), form: false,
-      html: b('', 'callMenuLoad', _CL_TXT.menuLoad)
-        + (edit ? b('', 'callMenuRename', _CL_TXT.menuRename)
-          + (canUpdate ? b('', 'callMenuUpdate', _CL_TXT.menuUpdate) : '')
-          + (callList[kind].length < CALL_LIST_MAX ? b('', 'callMenuDuplicate', _CL_TXT.menuDuplicate) : '')
-          + b(' danger', 'callMenuDelete', _CL_TXT.menuDelete) : '')
-        + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CL_TXT.close) + '</button></div>',
+      html: b('', 'callMenuLoad', _CL_TXT.menuLoad, 'download')
+        + (edit ? b('', 'callMenuRename', _CL_TXT.menuRename, 'pencil')
+          + (canUpdate ? b('', 'callMenuUpdate', _CL_TXT.menuUpdate, 'refresh-cw') : '')
+          + (callList[kind].length < CALL_LIST_MAX ? b('', 'callMenuDuplicate', _CL_TXT.menuDuplicate, 'copy') : '')
+          + (i > 0 ? b('', 'callMenuUp', _CL_TXT.menuUp, 'arrow-up') : '')
+          + (i < callList[kind].length - 1 ? b('', 'callMenuDown', _CL_TXT.menuDown, 'arrow-down') : '') : '')
+        + '<div class="dc-menu-meta">' + meta + '</div>'
+        + (edit ? b(' danger', 'callMenuDelete', _CL_TXT.menuDelete, 'trash-2') : '')
+        + close,
     };
   }
   // Nom : de l'enregistrement à venir (proposition préremplie) ou de l'entrée à renommer
-  let def, val, n, list, title;
+  let def, val, n, list, title, choice = '';
   if (e) {
     def = callEntryDefaultName(e); val = e.title || def; list = kind; n = callList[kind].indexOf(e) + 1; title = _CL_TXT.sheetRename;
   } else {
     const f = _clFormEntry().e;
     def = callEntryDefaultName(f); val = def; list = _clListOf(f.kind); n = callList[list].length + 1;
     title = f.kind === 'call' ? _CL_TXT.sheetCall : f.kind === 'notif' ? _CL_TXT.sheetNotif : _CL_TXT.sheetSms;
+    // Entrée chargée (maquette 4e3) : « Mettre à jour » ou « Comme nouveau »
+    const loaded = callListLoadedEntry();
+    if (loaded) {
+      choice = '<button type="button" class="dc-menu-btn dc-menu-big" id="callSaveUpdate" onclick="closeSheet();updateLoadedCallEntry()">' + icon('refresh-cw')
+        + '<span><b>' + escapeHtml(_clTpl(_CL_TXT.update, { nom: callEntryName(loaded) }).replace(/^↻\s*/, '')) + '</b><small>' + escapeHtml(_clTpl(_CL_TXT.saveUpd, { n: callList[list].indexOf(loaded) + 1 })) + '</small></span></button>';
+      title = _CL_TXT.saveNew;
+    }
   }
   const dmx = callEntryDmxRange(n - 1, list);
   const note = _clTpl(dmx === '—' ? _CL_TXT.nameNoteNoDmx : _CL_TXT.nameNote, { defaut: def, n, plage: dmx });
   return {
-    title, form: true,
-    html: '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
+    title: choice ? _clTpl(list === 'call' ? _CL_TXT.sheetCall : list === 'notif' ? _CL_TXT.sheetNotif : _CL_TXT.sheetSms, {}) : title, form: true,
+    html: choice + '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
       + '<label class="sr-sublabel" for="srName">' + escapeHtml(_CL_TXT.nameLabel) + '</label>'
       + '<input type="text" id="srName" class="text-input sr-input" maxlength="' + CALL_TITLE_MAX + '" autocomplete="off" placeholder="' + escapeHtml(def) + '" value="' + escapeHtml(val.slice(0, CALL_TITLE_MAX)) + '">'
       + '<p class="sr-sheet-note">' + escapeHtml(note) + '</p>'
       + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CL_TXT.cancel) + '</button>'
-      + '<button type="submit" class="sr-ok">' + escapeHtml(_CL_TXT.ok) + '</button></div></form>',
+      + '<button type="submit" class="sr-ok" id="callSaveNew">' + escapeHtml(choice ? _CL_TXT.saveNew : _CL_TXT.ok) + '</button></div></form>',
   };
 }
 function callListSheetSave(s, value) {
@@ -612,7 +690,7 @@ let _clDrag = null, _clSuppressClick = false;
   box.addEventListener('pointerdown', (e) => {
     const row = e.target.closest('.cl-row');
     if (!row || (e.pointerType === 'mouse' && e.button !== 0) || licLocked('tel')) return; // aperçu : ordre figé
-    if (e.target.closest('.cl-more')) return; // « ⋯ » : le menu, pas de glisser
+    if (e.target.closest('.cl-more, .cl-play, .cl-mv')) return; // ⋯, ▶, ↑ ↓ : leur action, pas de glisser
     _clDrag ={ row, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, active: false, ghost: null };
     if (e.target.closest('.cl-grip')) { e.preventDefault(); startDrag(); }
     else _clDrag.timer = setTimeout(startDrag, HOLD);

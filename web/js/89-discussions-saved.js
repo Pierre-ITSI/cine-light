@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ DISCUSSIONS ENREGISTRÉES (onglet Tel, télécommande) ══════════════════════════
-// Maquette validée 26c. Deux sous-onglets dans « Discussion » : « Fil en
-// cours » (83-discussion.js) et « Enregistrées (n) ». Une discussion
+// Maquettes validées 26c puis 4d (phase 4). Dans « Discussion », le fil à jouer
+// (83-discussion.js) puis, dessous, la liste « Discussions enregistrées · n ». Une discussion
 // enregistrée garde son nom, le contact (nom, photo), le comédien, le style
 // et tous les messages avec leurs timings (maquette 26d : pause avant,
 // écriture, envoi) ; PAS le point de reprise (ni ce qui est posté).
 // Migration : une discussion enregistrée avant les timings les reçoit par
 // défaut (pause 0 s, le comédien tape, envoi au bouton) : rien ne change.
 //   • « + Enregistrer le fil en cours » : demande un nom, ajoute en fin de liste.
-//   • Toucher une ligne : la charge dans « Fil en cours » (confirmation si le
-//     fil en cours a des modifications non enregistrées). Ouverte sur un
+//   • ▶ (ou toucher la ligne) : la charge dans le fil à jouer (confirmation si le
+//     fil a des modifications non enregistrées). Ouverte sur un
 //     écran, la discussion y repart de zéro avec le nouveau fil.
 //   • « ⋯ » : renommer, dupliquer, supprimer (avec confirmation).
 // Stockage (comme la liste des appels, 82-call-list.js) : textes en
@@ -40,8 +40,9 @@ const _CHSV_TXT = {
   duplicate: 'Dupliquer',
   remove: 'Supprimer',
   copy: '{nom} (copie)',
-  confirmLoad: 'Le fil en cours a des modifications non enregistrées. Charger « {nom} » à la place ?',
-  confirmDelete: 'Supprimer la discussion « {nom} » ?',
+  loadTitle: 'Charger « {nom} » ?', loadText: 'Le fil en cours a des modifications non enregistrées : elles seront perdues.', loadOk: 'Charger', loadCancel: 'Annuler',
+  deleted: '« {nom} » supprimée', playAria: 'Charger « {nom} » dans le fil',
+  titleSaved: 'Discussions enregistrées · {n}',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Discussion',
   // « + Nouvelle discussion » (maquette 47b)
@@ -140,13 +141,17 @@ async function saveCurrentChat(name) {
 
 // Toucher une ligne : charge l'entrée dans « Fil en cours »
 let _chsvLoadSeq = 0;
-async function loadSavedChat(id) {
+async function loadSavedChat(id, confirmed) {
   const e = chatSaved.find((x) => x.id === id);
   if (!e) return false;
   const dirty = chatHasUnsavedChanges();
   // Déjà chargée, sans modification : simple retour au fil (la scène en cours est gardée)
   if (e.id === _chat.savedId && !dirty) { setChatView('thread'); return true; }
-  if (dirty && !confirm(_tplChat(_CHSV_TXT.confirmLoad, { nom: e.name }))) return false;
+  if (dirty && confirmed !== true) {
+    // Fil modifié : confirmation (boîte de l'app) avant de le remplacer
+    openAppConfirm({ title: _tplChat(_CHSV_TXT.loadTitle, { nom: e.name }), text: _CHSV_TXT.loadText, ok: _CHSV_TXT.loadOk, cancel: _CHSV_TXT.loadCancel }, () => loadSavedChat(id, true));
+    return false;
+  }
   const seq = ++_chsvLoadSeq;
   const photo = e.hasPhoto ? safeImageData(await callAssetGet(_chsvPhotoKey(e.id))) : null;
   if (seq !== _chsvLoadSeq) return false; // une autre entrée touchée entre-temps
@@ -198,12 +203,22 @@ async function duplicateSavedChat(id) {
 function deleteSavedChat(id) {
   const i = chatSaved.findIndex((x) => x.id === id);
   if (i < 0) return false;
-  if (!confirm(_tplChat(_CHSV_TXT.confirmDelete, { nom: chatSaved[i].name }))) return false;
+  const e = chatSaved[i], wasCur = _chat.savedId === id;
   chatSaved.splice(i, 1);
   _chsvPersist();
-  callAssetDelete(_chsvPhotoKey(id));
-  if (_chat.savedId === id) { _chat.savedId = null; chatSave(); }
+  if (wasCur) { _chat.savedId = null; chatSave(); }
   renderSavedChats();
+  undoSnack({
+    text: _tplChat(_CHSV_TXT.deleted, { nom: e.name }),
+    undo: () => {
+      if (chatSaved.length >= CHAT_SAVED_MAX || chatSaved.some((x) => x.id === e.id)) return;
+      chatSaved.splice(Math.min(i, chatSaved.length), 0, e);
+      _chsvPersist();
+      if (wasCur && !_chat.savedId) { _chat.savedId = e.id; chatSave(); }
+      renderSavedChats();
+    },
+    commit: () => { callAssetDelete(_chsvPhotoKey(id)); },
+  });
   return true;
 }
 
@@ -216,10 +231,7 @@ function _chsvMeta(e) {
   });
 }
 function renderSavedChats() {
-  const tab = document.getElementById('dcTab-saved');
-  if (tab) tab.textContent = _tplChat(_CHSV_TXT.tab, { n: chatSaved.length });
-  const nb = document.getElementById('dcNewBtn');
-  setIconText(nb, _CHSV_TXT.newBtn);
+  _tuText('dcSavedTitle', _tplChat(_CHSV_TXT.titleSaved, { n: chatSaved.length }));
   const rows = document.getElementById('dcSavedRows');
   if (!rows) return;
   rows.textContent = '';
@@ -232,22 +244,17 @@ function renderSavedChats() {
     const nm = document.createElement('span'); nm.className = 'dc-saved-name'; nm.textContent = e.name;
     const meta = document.createElement('span'); meta.className = 'dc-saved-meta'; meta.textContent = _chsvMeta(e);
     main.append(nm, meta);
+    const play = document.createElement('button'); play.type = 'button'; play.className = 'cl-play'; play.innerHTML = icon('play');
+    play.setAttribute('aria-label', _tplChat(_CHSV_TXT.playAria, { nom: e.name }));
+    play.onclick = (ev) => { ev.stopPropagation(); loadSavedChat(e.id); };
     const more = document.createElement('button'); more.type = 'button'; more.className = 'dc-saved-more'; more.innerHTML = icon('ellipsis', 'ic-lg');
     more.setAttribute('aria-label', _CHSV_TXT.rename + ', ' + _CHSV_TXT.duplicate.toLowerCase() + ', ' + _CHSV_TXT.remove.toLowerCase());
     more.onclick = (ev) => { ev.stopPropagation(); openSavedChatMenu(e.id); };
-    row.append(main, more);
+    row.append(main, play, more);
     rows.appendChild(row);
   }
   const empty = document.getElementById('dcSavedEmpty');
   if (empty) empty.style.display = chatSaved.length ? 'none' : '';
-  const hint = document.getElementById('dcSavedHint');
-  if (hint) hint.style.display = chatSaved.length ? '' : 'none';
-  const btn = document.getElementById('dcSaveBtn');
-  if (btn) {
-    const full = chatSaved.length >= CHAT_SAVED_MAX;
-    btn.disabled = full;
-    btn.textContent = full ? _tplChat(_CHSV_TXT.full, { max: CHAT_SAVED_MAX }) : _CHSV_TXT.save;
-  }
 }
 
 // ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) ──
@@ -266,6 +273,17 @@ function openRenameSavedChat(id) {
 }
 // Contenu d'une feuille de discussion : { title, html, form } ; null : entrée disparue
 function chatSheetContent(s) {
+  if (s.kind === 'chatThread') {
+    // ⋯ du titre « Fil » (maquette 4d) : ce qui ne tient pas dans la barre
+    const b = (cls, fn, label, ico, off) => '<button type="button" class="dc-menu-btn' + cls + '"' + (off ? ' disabled' : '') + ' onclick="closeSheet();' + fn + '">' + icon(ico) + escapeHtml(label) + '</button>';
+    const edit = !licLocked('tel');
+    return {
+      title: _CHAT_TXT.menuTitle, form: false,
+      html: (edit ? b('', 'chatNewAsk()', _CHAT_TXT.menuNew, 'plus') + b('', 'openSaveChatSheet()', _CHAT_TXT.menuSave, 'bookmark', chatSaved.length >= CHAT_SAVED_MAX) : '')
+        + b('', 'restartChat()', _CHAT_TXT.menuRestart, 'rotate-ccw', !_chat.sent.length) + b('', 'closeChat()', _CHAT_TXT.menuClose, 'power', !_chat.open)
+        + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CHSV_TXT.cancel) + '</button></div>',
+    };
+  }
   if (s.kind === 'chatNew') {
     const note = (t) => '<p class="sr-sheet-note prj-sheet-text">' + escapeHtml(t) + '</p>';
     if (s.live) {

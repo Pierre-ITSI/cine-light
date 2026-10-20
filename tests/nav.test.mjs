@@ -296,11 +296,12 @@ test('rail latéral : dès 700 px de large et en paysage bas ; barre du bas en p
 test('clavier : un champ de texte actif masque la barre d\'onglets, un curseur non', async () => {
   const { page, errors, close } = await remote();
   const barShown = () => page.evaluate(() => getComputedStyle(document.getElementById('nv-tabs')).display !== 'none');
-  await page.evaluate(() => switchTab('call'));
+  await page.evaluate(() => { switchTab('call'); setCallKind('sms'); });
   assert.equal(await barShown(), true);
-  await page.focus('#callName');
+  await page.focus('#callMsgText');
   assert.equal(await barShown(), false);
-  await page.evaluate(() => document.getElementById('callName').blur());
+  assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('tel-bar')).display), 'none', 'la barre d\'action s\'efface aussi');
+  await page.evaluate(() => document.getElementById('callMsgText').blur());
   await sleep(30);
   assert.equal(await barShown(), true);
   await page.evaluate(() => switchTab('color'));
@@ -347,7 +348,7 @@ for (const width of [360, 375, 390]) {
       await page.evaluate((t) => switchTab(t), t);
       const w = await page.evaluate(() => {
         const out = [];
-        for (const id of ['remote-mode', 'nv-main', 'nv-head', 'nv-scroll', 'nv-tabs']) { const e = document.getElementById(id); if (e.scrollWidth > e.clientWidth + 1) out.push(id + ' ' + e.scrollWidth + '>' + e.clientWidth); }
+        for (const id of ['remote-mode', 'nv-main', 'nv-head', 'nv-scroll', 'nv-bar', 'nv-tabs']) { const e = document.getElementById(id); if (e.scrollWidth > e.clientWidth + 1) out.push(id + ' ' + e.scrollWidth + '>' + e.clientWidth); }
         if (document.documentElement.scrollWidth > innerWidth) out.push('document ' + document.documentElement.scrollWidth);
         for (const e of document.querySelectorAll('#nv-head *, #nv-tabs *')) { const r = e.getBoundingClientRect(); if (r.width && (r.right > innerWidth + 1 || r.left < -1)) out.push((e.id || e.className) + ' hors fenêtre'); }
         return out;

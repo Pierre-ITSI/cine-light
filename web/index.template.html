@@ -675,223 +675,98 @@
         <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">Obtenir une licence <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
       </div>
     </div>
-    <div class="panel">
-      <div class="panel-label">Type</div>
-      <!-- Onglet Tel (maquettes 24 et 26) : appel, SMS, notification d'application, discussion -->
-      <div class="tel-kinds">
-        <button type="button" class="gw-seg-btn active" id="callkind-call" onclick="setCallKind('call')"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg> Appel</button>
-        <button type="button" class="gw-seg-btn" id="callkind-sms" onclick="setCallKind('sms')"><svg class="ic" aria-hidden="true"><use href="#i-mail"></use></svg> SMS</button>
-        <button type="button" class="gw-seg-btn" id="callkind-notif" onclick="setCallKind('notif')"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg> Notification</button>
-        <button type="button" class="gw-seg-btn tel-kind-wide" id="callkind-discussion" onclick="setCallKind('discussion')"><svg class="ic" aria-hidden="true"><use href="#i-message-circle"></use></svg> Discussion</button>
-      </div>
-      <!-- Style et sonnerie / Style et son (maquette 36) : résumé, réglages dans la vue #tel-style-view -->
-      <div class="tel-sum-row" id="telStyleRow">
-        <div class="panel-label" id="telStyleLabel">Style et sonnerie</div>
-        <button type="button" class="tel-sum" id="telStyleBtn" onclick="openTelStyle()"><span id="telStyleSum"></span><b>Régler <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></b></button>
-      </div>
+    <!-- Tel « composer puis envoyer » (phase 4, maquettes 4a à 4e3) : type, carte « À jouer », liste enregistrée ; l'action est la barre fixe #tel-bar -->
+    <div class="tl-kinds" id="telKinds" role="radiogroup" aria-label="Type">
+      <button type="button" role="radio" aria-checked="true" class="tl-kind active" id="callkind-call" onclick="setCallKind('call')"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg>Appel</button>
+      <button type="button" role="radio" aria-checked="false" class="tl-kind" id="callkind-sms" onclick="setCallKind('sms')"><svg class="ic" aria-hidden="true"><use href="#i-mail"></use></svg>SMS</button>
+      <button type="button" role="radio" aria-checked="false" class="tl-kind" id="callkind-notif" aria-label="Notification" onclick="setCallKind('notif')"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg>Notif.</button>
+      <button type="button" role="radio" aria-checked="false" class="tl-kind" id="callkind-discussion" onclick="setCallKind('discussion')"><svg class="ic" aria-hidden="true"><use href="#i-message-circle"></use></svg>Discussion</button>
     </div>
-    <div class="panel" id="callWhoPanel">
-      <!-- Appelants enregistrés (maquette 36e) : feuille « Enregistrés (n) › », 79-callers.js -->
-      <div class="tel-head"><div class="panel-label" id="callWhoLabel">Appelant</div><button type="button" class="tel-link" id="callWhoSaved" onclick="openCallersSheet()">Enregistrés (0) <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button></div>
-      <input type="text" id="callName" class="text-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%;margin-bottom:10px" oninput="renderCallerState()">
-      <input type="text" id="callLabel" class="text-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px" oninput="renderCallerState()">
-      <div style="display:flex;gap:10px;align-items:center">
-        <div id="callPhotoPreview" style="width:46px;height:46px;border-radius:50%;background:var(--mid2);border:1px solid var(--border);background-size:cover;background-position:center;flex-shrink:0"></div>
-        <button class="media-btn" id="callPhotoBtn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()"><svg class="ic" aria-hidden="true"><use href="#i-image"></use></svg> Photo (option)</button>
-        <input type="file" id="callPhotoInput" accept="image/*" style="display:none" onchange="onCallPhoto(this.files);this.value=''">
+    <div class="tl-h"><b id="telPlayTitle">À jouer</b></div>
+    <div class="tl-card" id="telPlay">
+      <!-- Contact (appel, SMS) : nom, sous-titre et photo dans la vue « Appelant » (#tdWho) -->
+      <div class="tl-row" id="callWhoPanel">
+        <button type="button" class="tl-main" id="telWhoBtn" onclick="openTelDetail('who')"><span class="tl-av" id="telWhoAv"></span><span class="tl-k"><b id="telWhoName"></b><small id="telWhoSub"></small></span></button>
+        <button type="button" class="tl-link" id="callWhoSaved" onclick="openCallersSheet()">Changer</button>
       </div>
-      <button type="button" class="tel-save" id="callerSaveBtn" onclick="saveCurrentCaller()"><svg class="ic" aria-hidden="true"><use href="#i-star"></use></svg> Enregistrer comme appelant</button>
-      <div class="tel-saved" id="callerSavedNote" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg> Appelant enregistré</div>
-    </div>
-    <div class="panel" id="callMsgPanel" style="display:none">
-      <div class="panel-label">Message</div>
-      <input type="text" id="callMsgText" class="text-input" placeholder="Texte du message" value="Tu es où ??" style="width:100%;margin-bottom:14px">
-      <div class="panel-label">Application (fictive)</div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <input type="text" id="callAppName" class="text-input" placeholder="Nom affiché" value="SMS" maxlength="24" style="flex:1" oninput="this.dataset.touched='1'">
-        <input type="color" id="callAppColor" value="#2f8cf0" style="width:52px;flex-shrink:0" oninput="this.dataset.touched='1'">
+      <!-- Message du SMS, sur place -->
+      <div class="tl-field" id="callMsgPanel" style="display:none">
+        <label for="callMsgText">Message</label>
+        <input type="text" id="callMsgText" class="text-input" placeholder="Texte du message" value="Tu es où ??" oninput="renderTelRows()">
       </div>
-      <div class="media-status" style="text-align:left;margin-top:6px">Pas de marque réelle : inventez un nom (ex. « Chatly ») et une couleur.</div>
-    </div>
-    <div class="panel" id="callLockPanel" style="display:none">
-      <div class="toggle-row" style="margin-bottom:12px">
-        <div><div class="toggle-label">Écran verrouillé</div><div class="toggle-sub">La notification arrive sur un faux écran verrouillé</div></div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="lockToggle">
-          <div class="toggle-track"></div><div class="toggle-thumb"></div>
-        </label>
+      <button type="button" class="tl-row tl-nav" id="telAppBtn" style="display:none" onclick="openTelDetail('app')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-mail"></use></svg><span class="tl-k"><b>Application</b></span><span class="tl-v" id="telAppVal"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+      <div class="tl-row" id="callLockPanel" style="display:none">
+        <button type="button" class="tl-main" id="telLockBtn" onclick="openTelDetail('lock')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-lock"></use></svg><span class="tl-k"><b>Écran verrouillé</b><small id="telLockSub"></small></span></button>
+        <label class="toggle-switch tl-sw"><input type="checkbox" id="lockToggle" aria-label="Écran verrouillé" onchange="renderTelRows()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
       </div>
-      <div style="display:flex;gap:10px;margin-bottom:10px">
-        <input type="text" id="lockTime" class="text-input" placeholder="Heure (ex : 00:10)" style="flex:1;min-width:0">
-        <input type="text" id="lockDate" class="text-input" placeholder="Ven. 17 juil." style="flex:1;min-width:0">
+      <!-- Notification d'application (maquette 24) : application, titre et contenu sur place ; affichage dans #tdNtShow -->
+      <div class="tl-row" id="ntAppPanel" style="display:none">
+        <button type="button" class="tl-main" id="telNtAppBtn" onclick="openTelDetail('ntapp')"><span class="tl-av tl-sq" id="telNtAv"></span><span class="tl-k"><b id="telNtName"></b><small>application fictive</small></span></button>
+        <button type="button" class="tl-link" id="telNtIconBtn" onclick="openTelDetail('ntapp')">Changer l'icône</button>
       </div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <div id="lockWallPreview" style="width:36px;height:62px;border-radius:8px;background:var(--mid2);background-size:cover;background-position:center;border:1px solid var(--border);flex-shrink:0"></div>
-        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('lockWallInput').click()"><svg class="ic" aria-hidden="true"><use href="#i-image"></use></svg> Fond d'écran</button>
-        <input type="file" id="lockWallInput" accept="image/*" style="display:none" onchange="onLockWall(this.files);this.value=''">
+      <div class="tl-field" id="telNtTitleField" style="display:none">
+        <label for="ntTitle">Titre</label>
+        <input type="text" id="ntTitle" class="text-input nt-title" value="Virement reçu" maxlength="40" placeholder="Titre" oninput="renderNotifForm()">
       </div>
-      <div class="media-status" id="lockWallStatus">Sans fond : dégradé sombre. Heure/date vides : celles de l'écran.</div>
-    </div>
-    <!-- Notification d'application (maquette 24) : style, fond et son propres, indépendants des SMS -->
-    <div class="panel" id="ntAppPanel" style="display:none">
-      <div class="panel-label">Application</div>
-      <div class="nt-app">
-        <button type="button" class="nt-icon" id="ntIconPreview" aria-label="Changer l'icône" onclick="document.getElementById('ntIconInput').click()"></button>
-        <div class="nt-app-main">
-          <input type="text" id="ntAppName" class="text-input" value="Banque Atlas" maxlength="24" placeholder="Nom de l'application" oninput="renderNotifForm()">
-          <span class="nt-links">
-            <button type="button" class="nt-link" onclick="document.getElementById('ntIconInput').click()">Changer l'icône (PNG, JPG)</button>
-            <button type="button" class="nt-link nt-link-dim" id="ntIconClear" style="display:none" onclick="clearNotifIcon()">Retirer</button>
-          </span>
-        </div>
-        <input type="file" id="ntIconInput" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onNotifIcon(this.files);this.value=''">
+      <div class="tl-field" id="telNtBodyField" style="display:none">
+        <label for="ntBody">Contenu</label>
+        <textarea id="ntBody" class="text-input nt-body" maxlength="200" placeholder="Contenu" oninput="renderNotifForm()">Vous avez reçu 2 400,00 € de SARL Prod Nord. Solde disponible : 3 182,45 €.</textarea>
       </div>
-      <div class="media-status nt-status" id="ntIconStatus" style="display:none"></div>
-    </div>
-    <div class="panel nt-show" id="ntShowPanel" style="display:none">
-      <div class="panel-label">Affichage</div>
-      <div class="nt-seg">
-        <button type="button" class="gw-seg-btn active" id="ntpres-banner" onclick="setNotifPresent('banner')">Bandeau (déverrouillé)</button>
-        <button type="button" class="gw-seg-btn" id="ntpres-lock" onclick="setNotifPresent('lock')">Écran verrouillé</button>
+      <button type="button" class="tl-row tl-nav" id="ntShowPanel" style="display:none" onclick="openTelDetail('ntshow')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-rectangle-horizontal"></use></svg><span class="tl-k"><b>Affichage</b></span><span class="tl-v" id="telNtShowVal"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+      <!-- Appel : Apparence, Sonnerie, Au décroché (la vue « Style et sonnerie », 78-tel-style.js, reste la même) -->
+      <div id="telCallRows">
+        <button type="button" class="tl-row tl-nav" id="telStyleBtn" onclick="openTelStyle()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-smartphone"></use></svg><span class="tl-k"><b id="telStyleLabel">Apparence</b></span><span class="tl-v" id="telStyleSum"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+        <button type="button" class="tl-row tl-nav" id="telRingBtn" onclick="openTelStyle()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-music"></use></svg><span class="tl-k"><b>Sonnerie</b></span><span class="tl-v" id="telRingSum"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+        <button type="button" class="tl-row tl-nav" id="callAnswerBlock" onclick="openTelDetail('answer')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-audio-waveform"></use></svg><span class="tl-k"><b>Au décroché</b></span><span class="tl-v" id="telAnswerVal"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
       </div>
-      <div class="panel-label nt-sub">Heure du téléphone</div>
-      <div class="nt-row">
-        <label class="text-input nt-date" id="ntPhoneDateBox" onclick="ntOpenPicker(event, 'ntPhoneDate')"><span id="ntPhoneDateText"></span><input type="date" id="ntPhoneDate" aria-label="Date du téléphone" onchange="renderNotifForm()"></label>
-        <input type="text" id="ntPhoneTime" class="text-input nt-time" placeholder="Heure réelle" inputmode="numeric" maxlength="5" aria-label="Heure du téléphone" oninput="renderNotifForm()">
-      </div>
-      <div class="panel-label nt-sub">Reçue</div>
-      <div class="nt-seg nt-recv">
-        <button type="button" class="gw-seg-btn active" id="ntrecv-now" onclick="setNotifReceived('now')">Maintenant</button>
-        <div class="gw-seg-btn nt-ago" id="ntrecv-ago" role="button" tabindex="0" onclick="setNotifReceived('ago')">il y a <input type="text" id="ntAgoMin" value="15" maxlength="5" inputmode="numeric" aria-label="Minutes écoulées" onfocus="setNotifReceived('ago')" oninput="renderNotifForm()"> min</div>
-        <button type="button" class="gw-seg-btn" id="ntrecv-at" onclick="setNotifReceived('at')">Date et heure</button>
-      </div>
-      <div class="nt-row" id="ntAtRow" style="display:none">
-        <label class="text-input nt-date" id="ntAtDateBox" onclick="ntOpenPicker(event, 'ntAtDate')"><span id="ntAtDateText"></span><input type="date" id="ntAtDate" aria-label="Date de réception" onchange="renderNotifForm()"></label>
-        <input type="text" id="ntAtTime" class="text-input nt-time" placeholder="Heure" inputmode="numeric" maxlength="5" aria-label="Heure de réception" oninput="renderNotifForm()">
-      </div>
-      <div class="panel-label nt-sub">Titre et contenu</div>
-      <input type="text" id="ntTitle" class="text-input nt-title" value="Virement reçu" maxlength="40" placeholder="Titre">
-      <textarea id="ntBody" class="text-input nt-body" maxlength="200" placeholder="Contenu">Vous avez reçu 2 400,00 € de SARL Prod Nord. Solde disponible : 3 182,45 €.</textarea>
-    </div>
-    <div class="nt-actions" id="ntSendPanel" style="display:none">
-      <button type="button" class="nt-send" id="ntSendBtn" onclick="triggerCall()"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg> Envoyer la notification</button>
-      <div class="tel-sum-row nt-sum-row">
-        <div class="panel-label">Style et son</div>
-        <button type="button" class="tel-sum" id="ntStyleBtn" onclick="openTelStyle()"><span id="ntStyleSum"></span><b>Régler <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></b></button>
-      </div>
-      <div class="nt-note">Réglages propres aux notifications, indépendants des SMS.</div>
-    </div>
-    <!-- Au décroché (appel) : bande son et décroché automatique ; la sonnerie est dans « Style et sonnerie » -->
-    <div class="panel" id="callAnswerBlock">
-      <div class="panel-label">Au décroché · bande son</div>
-      <div class="rt-row rt-answer" id="callAudioRow" style="display:none">
-        <svg class="ic rt-wave" aria-hidden="true"><use href="#i-audio-waveform"></use></svg>
-        <span class="rt-main"><span class="rt-name"><span id="callAudioName"></span><span class="rt-dim" id="callAudioDur"></span></span></span>
-        <span class="rt-onscreen" id="callAudioState"></span>
-        <button type="button" class="rt-del" id="callAudioClear" aria-label="Retirer la bande son" onclick="clearCallAudio()"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
-      </div>
-      <button type="button" class="rt-import" id="callAudioPick" onclick="document.getElementById('callAudioInput').click()">+ Choisir la voix du correspondant (8 Mo)</button>
-      <input type="file" id="callAudioInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onCallAudio(this.files);this.value=''">
-      <div class="media-status rt-status" id="callAudioStatus">Aucune bande son — le décroché reste silencieux.</div>
-      <div class="slider-block rt-auto">
-        <div class="slider-header"><label>Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
-        <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
-      </div>
-    </div>
-    <div class="panel" id="callTriggerPanel">
-      <button class="media-btn" id="callTriggerBtn" onclick="triggerCall()"><span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg></span> Faire sonner</button>
-      <div style="display:flex;gap:10px">
-        <button class="media-btn" style="flex:1" id="callAnswerBtn" onclick="sendMsg({type:'call:answer'})"><svg class="ic" aria-hidden="true"><use href="#i-circle-check"></use></svg> Décrocher</button>
-        <button class="media-btn danger" style="flex:1" onclick="sendMsg({type:'call:end'})"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> Terminer</button>
-      </div>
-      <div class="media-status" id="callStatus">—</div>
-    </div>
-    <!-- Discussion (maquette 26) : fil préparé, messages du contact envoyés d'ici, ceux du comédien tapés sur l'écran -->
-    <!-- Sous-onglets (maquette 26c) : fil en cours, discussions enregistrées -->
-    <div class="dc-tabs" id="dcTabs" style="display:none">
-      <button type="button" class="gw-seg-btn active" id="dcTab-thread" onclick="setChatView('thread')">Fil en cours</button>
-      <button type="button" class="gw-seg-btn" id="dcTab-saved" onclick="setChatView('saved')">Enregistrées (0)</button>
-    </div>
-    <!-- Nouvelle discussion (maquette 47b) : fil vierge, « Enregistrer avant ? » si le fil a changé -->
-    <button type="button" class="prj-newbtn" id="dcNewBtn" style="display:none" onclick="chatNewAsk()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Nouvelle discussion</button>
-    <div class="dc-saved" id="dcSavedPanel" style="display:none">
-      <div class="dc-saved-rows" id="dcSavedRows"></div>
-      <div class="dc-saved-empty" id="dcSavedEmpty">Aucune discussion enregistrée pour l'instant.</div>
-      <div class="dc-saved-hint" id="dcSavedHint">Toucher : charger dans « Fil en cours ». ⋯ : renommer · dupliquer · supprimer.</div>
-      <button type="button" class="cl-save" id="dcSaveBtn" onclick="openSaveChatSheet()">+ Enregistrer le fil en cours</button>
-      <div class="cl-note">Une discussion enregistrée garde le contact (nom, photo), le comédien, le style et tous les messages. Le point de reprise n'est pas enregistré.</div>
-    </div>
-    <div class="panel dc-contact" id="dcContactPanel" style="display:none">
-      <div class="tel-head dc-contact-head"><div class="panel-label">Contact</div><button type="button" class="tel-link" id="dcCallersLink" onclick="openCallersSheet()">Enregistrés (0) <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button></div>
-      <div class="dc-contact-row">
+      <!-- Discussion (maquette 26) : contact, comédien -->
+      <div class="tl-row dc-contact" id="dcContactPanel" style="display:none">
         <button type="button" class="dc-avatar" id="dcAvatar" aria-label="Photo du contact" onclick="document.getElementById('dcAvatarInput').click()"></button>
         <input type="file" id="dcAvatarInput" accept="image/*" style="display:none" onchange="onChatAvatar(this.files);this.value=''">
         <span class="dc-contact-main">
           <input type="text" id="dcName" class="dc-name" value="Maman" maxlength="40" aria-label="Nom du contact" oninput="onChatNames()">
           <span class="dc-state" id="dcState"></span>
         </span>
+        <button type="button" class="tl-link" id="dcCallersLink" onclick="openCallersSheet()">Changer</button>
       </div>
-      <label class="dc-actor-row"><span>Comédien</span><input type="text" id="dcActor" class="dc-name" value="Julie" maxlength="40" aria-label="Nom du comédien" oninput="onChatNames()"></label>
+      <label class="tl-row tl-inline" id="dcActorRow" style="display:none"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-clapperboard"></use></svg><span class="tl-k"><small>Comédien</small></span><input type="text" id="dcActor" class="dc-name" value="Julie" maxlength="40" aria-label="Nom du comédien" oninput="onChatNames()"></label>
+      <!-- SMS, discussion : « Style et son » ; notification : sa propre rangée (réglages indépendants des SMS) -->
+      <button type="button" class="tl-row tl-nav" id="telStyleRow" onclick="openTelStyle()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-music"></use></svg><span class="tl-k"><b>Style et son</b></span><span class="tl-v" id="telStyleSum2"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+      <button type="button" class="tl-row tl-nav" id="ntStyleBtn" style="display:none" onclick="openTelStyle()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-music"></use></svg><span class="tl-k"><b>Style et son</b></span><span class="tl-v" id="ntStyleSum"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
     </div>
-    <div class="panel dc-thread" id="dcThreadPanel" style="display:none">
-      <div class="dc-head"><span class="panel-label">Fil préparé</span><span class="dc-pair" id="dcPair"></span></div>
-      <div class="dc-rows" id="dcRows"></div>
-      <button type="button" class="dc-add" id="dcAdd" onclick="addChatMessage()">+ Ajouter un message · glisser pour réordonner · toucher un message : « Reprendre ici »</button>
-    </div>
-    <!-- Timings du message touché (maquette 26d) -->
-    <div class="dc-timing-panel" id="dcTimingPanel" style="display:none"></div>
-    <!-- Lecture automatique (maquette 26d) : enchaîne les messages selon leurs timings -->
-    <div class="panel dc-auto" id="dcAutoPanel" style="display:none">
-      <div class="dc-auto-head"><span class="panel-label">Lecture automatique</span><span class="dc-auto-state" id="dcAutoState" role="status"></span></div>
-      <div class="dc-auto-bar"><i id="dcAutoFill"></i></div>
-      <div class="dc-auto-row">
-        <button type="button" class="dc-auto-play" id="dcAutoPlay" onclick="chatAutoStart()"><svg class="ic" aria-hidden="true"><use href="#i-play"></use></svg> Lecture auto</button>
-        <button type="button" class="dc-auto-pause" id="dcAutoPause" onclick="chatAutoPause()" disabled><svg class="ic" aria-hidden="true"><use href="#i-pause"></use></svg> Pause</button>
-        <button type="button" class="dc-auto-back" id="dcAutoBack" onclick="chatAutoBack()" aria-label="Pause et revenir d'un message" title="Pause et revenir d'un message" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg></button>
+    <!-- Discussion : fil préparé (messages, ↑ ↓, délais), message improvisé, discussions enregistrées -->
+    <div id="dcThreadPanel" style="display:none">
+      <div class="tl-h"><b id="dcThreadTitle">Fil · 0 message</b><span class="tl-h-act"><button type="button" class="tl-link" id="dcAdd" onclick="addChatMessage()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Message</button><button type="button" class="tl-ib" id="dcThreadMore" aria-label="Fil : nouvelle discussion, enregistrer, repartir de zéro, fermer" onclick="openChatThreadMenu()"><svg class="ic" aria-hidden="true"><use href="#i-ellipsis"></use></svg></button></span></div>
+      <div class="tl-card"><div class="dc-rows" id="dcRows"></div></div>
+      <div class="dc-timing-panel" id="dcTimingPanel" style="display:none"></div>
+      <div class="tl-card tl-gap" id="dcSendPanel">
+        <button type="button" class="tl-row tl-nav" id="dcWriteBtn" onclick="toggleChatWrite()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-pencil"></use></svg><span class="tl-k"><b>Écrire un message improvisé</b></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+        <div class="dc-write-box" id="dcWriteBox" style="display:none">
+          <textarea id="dcWriteText" class="text-input" maxlength="300" aria-label="Message improvisé"></textarea>
+          <button type="button" class="dc-write-send" onclick="sendImprovisedChat()">Envoyer</button>
+        </div>
+        <label class="tl-row dc-typing"><span class="tl-k"><b>Indicateur « écrit… »</b><small id="dcTypingLabel"></small></span><span class="toggle-switch tl-sw"><input type="checkbox" id="dcTypingToggle" onchange="onChatTypingToggle()"><span class="toggle-track"></span><span class="toggle-thumb"></span></span></label>
       </div>
     </div>
     <div class="panel dc-help-card" id="dcActorPanel" style="display:none">
       <div class="panel-label" id="dcActorLabel"></div>
       <div class="dc-help">Chaque touche du clavier de l'écran ajoute la lettre suivante du texte prévu. « Envoyer » n'est actif qu'une fois le texte complet.</div>
     </div>
-    <div class="dc-send" id="dcSendPanel" style="display:none">
-      <div class="dc-send-row">
-        <button type="button" class="dc-go" id="dcGo" onclick="sendNextChatMessage()"></button>
-        <button type="button" class="dc-back" id="dcBackBtn" aria-label="Revenir d'un message" title="Revenir d'un message" onclick="rewindChat()" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg></button>
-        <button type="button" class="dc-write" id="dcWriteBtn" onclick="toggleChatWrite()">Écrire…</button>
+    <div id="dcSavedPanel" style="display:none">
+      <div class="tl-h"><b id="dcSavedTitle">Discussions enregistrées · 0</b></div>
+      <div class="tl-card">
+        <div class="dc-saved-rows" id="dcSavedRows"></div>
+        <div class="dc-saved-empty" id="dcSavedEmpty">Aucune discussion enregistrée pour l'instant.</div>
       </div>
-      <div class="dc-write-box" id="dcWriteBox" style="display:none">
-        <textarea id="dcWriteText" class="text-input" maxlength="300" aria-label="Message improvisé"></textarea>
-        <button type="button" class="dc-write-send" onclick="sendImprovisedChat()">Envoyer</button>
-      </div>
-      <div class="dc-back-hint">« ↶ » retire le dernier message affiché sur l'écran (et le remet en attente).</div>
-      <label class="dc-typing"><input type="checkbox" id="dcTypingToggle" onchange="onChatTypingToggle()"><span id="dcTypingLabel"></span></label>
-      <div class="dc-ctl">
-        <button type="button" class="dc-ctl-btn" id="dcOpenBtn" onclick="openChatOnTarget()">Ouvrir sur l'écran</button>
-        <button type="button" class="dc-ctl-btn" id="dcRestartBtn" onclick="restartChat()">Repartir de zéro</button>
-        <button type="button" class="dc-ctl-btn dc-ctl-close" id="dcCloseBtn" onclick="closeChat()">Fermer</button>
-      </div>
+      <div class="cl-note" id="dcSavedNote">▶ charge la discussion dans le fil à jouer. ⋯ : renommer · dupliquer · supprimer. Une discussion enregistrée garde le contact (nom, photo), le comédien, le style et tous les messages ; pas le point de reprise.</div>
     </div>
-    <!-- Appels, SMS et notifications enregistrés, numérotés (maquette 18) : appels et SMS = cibles des canaux Appel / SMS de la passerelle DMX -->
-    <div class="panel call-list" id="callListPanel">
-      <div class="panel-label">Liste enregistrée</div>
-      <div class="cl-kinds">
-        <button type="button" class="gw-seg-btn active" id="clKind-call" onclick="setCallListKind('call')">Appels (0)</button>
-        <button type="button" class="gw-seg-btn" id="clKind-sms" onclick="setCallListKind('sms')">SMS (0)</button>
-        <button type="button" class="gw-seg-btn" id="clKind-notif" onclick="setCallListKind('notif')">Notifs (0)</button>
-      </div>
-      <div class="cl-head"><span>N°</span><span id="callListWho">Appelant</span><span>DMX</span><span></span></div>
-      <div class="cl-rows" id="callListRows"></div>
-      <div class="media-pool-empty" id="callListEmpty">Réglez l'appel ci-dessus puis enregistrez-le : il prend le numéro suivant.</div>
-      <button type="button" class="cl-save" id="callListSave" onclick="openSaveCallSheet()">+ Enregistrer l'appel actuel</button>
-      <div class="cl-upd" id="callListUpd" style="display:none">
-        <button type="button" class="cl-upd-btn" id="callListUpdate" onclick="updateLoadedCallEntry()"></button>
-        <button type="button" class="cl-save cl-save-new" id="callListSaveNew" onclick="openSaveCallSheet()">+ Enregistrer comme nouveau</button>
-      </div>
-      <div class="cl-note" id="callListNote">Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16). Valeur 0 : raccrocher. Glissez pour changer l'ordre.</div>
-      <div class="cl-actions" id="callListActions">
-        <button type="button" class="cl-go" id="callListGo" onclick="triggerSelectedCallEntry()">Appeler n°1</button>
-        <button type="button" class="cl-del" id="callListDel" onclick="deleteSelectedCallEntry()">Supprimer</button>
+    <!-- Appels, SMS et notifications enregistrés, numérotés (maquette 18) : la liste suit le type choisi ; appels et SMS = cibles des canaux Appel / SMS de la passerelle DMX -->
+    <div id="callListPanel">
+      <div class="tl-h"><b id="callListTitle">Appels enregistrés · 0</b><span class="tl-h-act"><button type="button" class="tl-link" id="callListSort" aria-pressed="false" onclick="toggleCallListSort()"><svg class="ic" aria-hidden="true"><use href="#i-list-ordered"></use></svg> Trier</button><button type="button" class="tl-link" id="callListAll" onclick="openCallListAll()">Tout voir <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button></span></div>
+      <div class="tl-card">
+        <div class="cl-rows" id="callListRows"></div>
+        <div class="media-pool-empty" id="callListEmpty">Réglez l'appel ci-dessus puis enregistrez-le : il prend le numéro suivant.</div>
+        <button type="button" class="tl-row tl-nav tl-dmx" id="callListDmx" onclick="openCallDmxInfo()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-sliders-horizontal"></use></svg><span class="tl-k"><small id="callListDmxTxt">Console DMX · n° 1 à 20 déclenchables</small></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
       </div>
     </div>
   </div>
@@ -979,6 +854,31 @@
   </div>
   </main>
 
+  <!-- Zone des barres d'action (phase 4) : UNE barre fixe au-dessus des onglets, celle de Tel ou celle de Séquence selon l'onglet (06-scenario.css) ; bandeau « Annuler » (suppression) juste au-dessus -->
+  <div id="nv-bar">
+    <div id="undo-snack" role="status" aria-live="polite" style="display:none">
+      <div class="us-t"><span><b id="usText"></b><small id="usSub"></small></span><button type="button" id="usUndo" onclick="undoSnackUndo()"><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg> Annuler</button></div>
+      <div class="us-bar"><i id="usBar"></i></div>
+    </div>
+    <!-- Tel : une action par type (Faire sonner, Envoyer le SMS, Envoyer la notification, Ouvrir sur l'écran), puis ses états -->
+    <div class="nb" id="tel-bar" data-bar="tel">
+      <div class="nb-live" id="telLive"><i class="nb-dot" id="telDot"></i><span id="callStatus"></span></div>
+      <div class="nb-prog" id="telProg" style="display:none"><i id="telProgFill"></i></div>
+      <div class="nb-live" id="dcLive" style="display:none"><i class="nb-dot"></i><span id="dcAutoState"></span></div>
+      <div class="nb-prog" id="dcProg" style="display:none"><i id="dcAutoFill"></i></div>
+      <div class="nb-row">
+        <button type="button" class="nb-ico" id="telSaveBtn" aria-label="Enregistrer dans la liste" onclick="telBarSave()"><svg class="ic" aria-hidden="true"><use href="#i-bookmark"></use></svg></button>
+        <button type="button" class="nb-pri" id="callTriggerBtn" onclick="triggerCall()"><svg class="ic" aria-hidden="true" id="callTriggerIc"><use href="#i-phone"></use></svg><span class="nb-lbl"><b id="callTriggerLbl">FAIRE SONNER</b><small id="callTriggerSub"></small></span></button>
+        <button type="button" class="nb-dng" id="callHangBtn" onclick="telHangup()"><svg class="ic" aria-hidden="true"><use href="#i-phone-off"></use></svg><span class="nb-lbl"><b>Raccrocher</b></span></button>
+        <button type="button" class="nb-pri" id="callAnswerBtn" onclick="sendMsg({type:'call:answer'})"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg><span class="nb-lbl"><b>Décrocher</b></span></button>
+        <button type="button" class="nb-pri" id="dcOpenBtn" onclick="openChatOnTarget()"><svg class="ic" aria-hidden="true"><use href="#i-message-circle"></use></svg><span class="nb-lbl"><b>OUVRIR SUR L'ÉCRAN</b><small id="dcOpenSub"></small></span></button>
+        <button type="button" class="nb-ico" id="dcBackBtn" aria-label="Pause et revenir d'un message" title="Revenir d'un message" onclick="chatAutoBack()" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg></button>
+        <button type="button" class="nb-ghost" id="dcAutoPlay" onclick="chatAutoToggle()"><svg class="ic" aria-hidden="true"><use href="#i-play"></use></svg><b>Lecture auto</b></button>
+        <button type="button" class="nb-pri" id="dcGo" onclick="sendNextChatMessage()"><svg class="ic" aria-hidden="true"><use href="#i-send"></use></svg><span class="nb-lbl"><b id="dcGoLbl">ENVOYER</b><small id="dcGoSub"></small></span></button>
+      </div>
+    </div>
+  </div>
+
   </div><!-- /nv-main -->
 
   <!-- Barre de 5 onglets : fixe en bas (téléphone portrait), rail latéral dès 700 px de large ou en paysage bas -->
@@ -1021,6 +921,107 @@
   <div class="ss-actions">
     <button type="button" class="ss-del" id="ssDel" onclick="seqStepDelete()">Supprimer</button>
     <button type="button" class="ss-save" id="ssSave" onclick="seqStepSave()">Enregistrer</button>
+  </div>
+</div>
+
+<!-- Vues de réglage des rangées de l'onglet Tel (appelant, application, écran verrouillé, notification, au décroché) : mêmes champs et mêmes identifiants qu'avant -->
+<div id="tel-detail-view" role="dialog" aria-modal="true" aria-labelledby="tdTitle">
+  <div class="ss-head">
+    <button type="button" class="ss-back" id="tdBack" onclick="closeTelDetail()"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Tel</button>
+    <span class="ss-title" id="tdTitle">Réglages</span>
+    <span class="ss-spacer"></span>
+  </div>
+  <!-- Appelant (maquette 36e) : nom, sous-titre, photo, « Enregistrer comme appelant » -->
+  <div class="ss-card td-sec" id="tdWho">
+    <div class="panel-label" id="callWhoLabel">Appelant</div>
+    <input type="text" id="callName" class="text-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%" oninput="renderCallerState()">
+    <input type="text" id="callLabel" class="text-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%" oninput="renderCallerState()">
+    <div style="display:flex;gap:10px;align-items:center">
+      <div id="callPhotoPreview" class="td-photo"></div>
+      <button class="media-btn" id="callPhotoBtn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()"><svg class="ic" aria-hidden="true"><use href="#i-image"></use></svg> Photo (option)</button>
+      <input type="file" id="callPhotoInput" accept="image/*" style="display:none" onchange="onCallPhoto(this.files);this.value=''">
+    </div>
+    <button type="button" class="tel-save" id="callerSaveBtn" onclick="saveCurrentCaller()"><svg class="ic" aria-hidden="true"><use href="#i-star"></use></svg> Enregistrer comme appelant</button>
+    <div class="tel-saved" id="callerSavedNote" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg> Appelant enregistré</div>
+  </div>
+  <!-- Application fictive du SMS -->
+  <div class="ss-card td-sec" id="tdApp">
+    <div class="panel-label">Application (fictive)</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <input type="text" id="callAppName" class="text-input" placeholder="Nom affiché" value="SMS" maxlength="24" style="flex:1;min-width:0" oninput="this.dataset.touched='1';renderTelRows()">
+      <input type="color" id="callAppColor" value="#2f8cf0" style="width:52px;flex-shrink:0" oninput="this.dataset.touched='1';renderTelRows()">
+    </div>
+    <div class="media-status" style="text-align:left;margin-top:6px">Pas de marque réelle : inventez un nom (ex. « Chatly ») et une couleur.</div>
+  </div>
+  <!-- Écran verrouillé du SMS : heure, date, fond -->
+  <div class="ss-card td-sec" id="tdLock">
+    <div class="panel-label">Écran verrouillé</div>
+    <div class="td-two">
+      <input type="text" id="lockTime" class="text-input" placeholder="Heure (ex : 00:10)" aria-label="Heure" oninput="renderTelRows()">
+      <input type="text" id="lockDate" class="text-input" placeholder="Ven. 17 juil." aria-label="Date" oninput="renderTelRows()">
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div id="lockWallPreview" class="td-wall"></div>
+      <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('lockWallInput').click()"><svg class="ic" aria-hidden="true"><use href="#i-image"></use></svg> Fond d'écran</button>
+      <input type="file" id="lockWallInput" accept="image/*" style="display:none" onchange="onLockWall(this.files);this.value=''">
+    </div>
+    <div class="media-status" id="lockWallStatus">Sans fond : dégradé sombre. Heure/date vides : celles de l'écran.</div>
+  </div>
+  <!-- Notification d'application : nom et icône -->
+  <div class="ss-card td-sec" id="tdNtApp">
+    <div class="panel-label">Application</div>
+    <div class="nt-app">
+      <button type="button" class="nt-icon" id="ntIconPreview" aria-label="Changer l'icône" onclick="document.getElementById('ntIconInput').click()"></button>
+      <div class="nt-app-main">
+        <input type="text" id="ntAppName" class="text-input" value="Banque Atlas" maxlength="24" placeholder="Nom de l'application" oninput="renderNotifForm()">
+        <span class="nt-links">
+          <button type="button" class="nt-link" onclick="document.getElementById('ntIconInput').click()">Changer l'icône (PNG, JPG)</button>
+          <button type="button" class="nt-link nt-link-dim" id="ntIconClear" style="display:none" onclick="clearNotifIcon()">Retirer</button>
+        </span>
+      </div>
+      <input type="file" id="ntIconInput" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onNotifIcon(this.files);this.value=''">
+    </div>
+    <div class="media-status nt-status" id="ntIconStatus" style="display:none"></div>
+  </div>
+  <!-- Notification d'application : affichage (bandeau ou écran verrouillé), heure du téléphone, réception -->
+  <div class="ss-card td-sec nt-show" id="tdNtShow">
+    <div class="panel-label">Affichage</div>
+    <div class="nt-seg">
+      <button type="button" class="gw-seg-btn active" id="ntpres-banner" onclick="setNotifPresent('banner')">Bandeau (déverrouillé)</button>
+      <button type="button" class="gw-seg-btn" id="ntpres-lock" onclick="setNotifPresent('lock')">Écran verrouillé</button>
+    </div>
+    <div class="panel-label nt-sub">Heure du téléphone</div>
+    <div class="nt-row">
+      <label class="text-input nt-date" id="ntPhoneDateBox" onclick="ntOpenPicker(event, 'ntPhoneDate')"><span id="ntPhoneDateText"></span><input type="date" id="ntPhoneDate" aria-label="Date du téléphone" onchange="renderNotifForm()"></label>
+      <input type="text" id="ntPhoneTime" class="text-input nt-time" placeholder="Heure réelle" inputmode="numeric" maxlength="5" aria-label="Heure du téléphone" oninput="renderNotifForm()">
+    </div>
+    <div class="panel-label nt-sub">Reçue</div>
+    <div class="nt-seg nt-recv">
+      <button type="button" class="gw-seg-btn active" id="ntrecv-now" onclick="setNotifReceived('now')">Maintenant</button>
+      <div class="gw-seg-btn nt-ago" id="ntrecv-ago" role="button" tabindex="0" onclick="setNotifReceived('ago')">il y a <input type="text" id="ntAgoMin" value="15" maxlength="5" inputmode="numeric" aria-label="Minutes écoulées" onfocus="setNotifReceived('ago')" oninput="renderNotifForm()"> min</div>
+      <button type="button" class="gw-seg-btn" id="ntrecv-at" onclick="setNotifReceived('at')">Date et heure</button>
+    </div>
+    <div class="nt-row" id="ntAtRow" style="display:none">
+      <label class="text-input nt-date" id="ntAtDateBox" onclick="ntOpenPicker(event, 'ntAtDate')"><span id="ntAtDateText"></span><input type="date" id="ntAtDate" aria-label="Date de réception" onchange="renderNotifForm()"></label>
+      <input type="text" id="ntAtTime" class="text-input nt-time" placeholder="Heure" inputmode="numeric" maxlength="5" aria-label="Heure de réception" oninput="renderNotifForm()">
+    </div>
+  </div>
+  <!-- Au décroché (appel) : bande son et décroché automatique ; la sonnerie est dans « Style et sonnerie » -->
+  <div class="ss-card td-sec" id="tdAnswer">
+    <div class="panel-label">Au décroché · bande son</div>
+    <div class="rt-row rt-answer" id="callAudioRow" style="display:none">
+      <svg class="ic rt-wave" aria-hidden="true"><use href="#i-audio-waveform"></use></svg>
+      <span class="rt-main"><span class="rt-name"><span id="callAudioName"></span><span class="rt-dim" id="callAudioDur"></span></span></span>
+      <span class="rt-onscreen" id="callAudioState"></span>
+      <button type="button" class="rt-del" id="callAudioClear" aria-label="Retirer la bande son" onclick="clearCallAudio()"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
+    </div>
+    <button type="button" class="rt-import" id="callAudioPick" onclick="document.getElementById('callAudioInput').click()">+ Choisir la voix du correspondant (8 Mo)</button>
+    <input type="file" id="callAudioInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onCallAudio(this.files);this.value=''">
+    <div class="media-status rt-status" id="callAudioStatus">Aucune bande son — le décroché reste silencieux.</div>
+    <div class="slider-block rt-auto">
+      <div class="slider-header"><label for="callAutoSlider">Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
+      <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
+    </div>
   </div>
 </div>
 

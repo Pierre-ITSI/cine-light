@@ -103,7 +103,7 @@ jour** qu'elles montraient :
     (lecture tout automatique : elle se joue sans personne) une fois
     déverrouillé → batterie faible après 25 s →
     extinction 8 s plus tard ;
-- **verrouillé** : style et sonnerie (« Régler › » visible, non modifiable),
+- **verrouillé** : style et sonnerie (rangées Apparence / Sonnerie / Style et son visibles, non modifiables),
   champs, photos, sons, appelants enregistrés, enregistrer / supprimer /
   réordonner / renommer, ajout et édition d'étapes, « Téléphone au départ »,
   séquences et discussions enregistrées ;

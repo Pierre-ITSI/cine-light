@@ -476,7 +476,7 @@ export const SCENES = {
       scrSetTarget({ k: 'screen', id: julie });
       openChatOnTarget(); resumeChatAt('d3');
     }, SCR_IDS[0]);
-    await scrollTo('dcTabs', 60)(page);
+    await scrollTo('dcThreadPanel', 84)(page);
   }),
   // 26c · Discussions enregistrées : quatre entrées, la première chargée dans « Fil en cours »
   'remote-call-discussion-saved': remote('call', async (page) => {
@@ -488,9 +488,9 @@ export const SCENES = {
         e('c21', 'Séq. 21 — Agence', 'Agence Riviera', 'Marc', 'tonal', 4), e('c30', 'Séq. 30 — Groupe famille', 'Papa', 'Julie', 'minimal', 9),
       ];
       _chat.savedId = 'c12';
-      setCallKind('discussion'); setChatView('saved');
+      setCallKind('discussion');
     });
-    await scrollTo('dcTabs', 80)(page);
+    await scrollTo('dcSavedPanel', 80)(page);
   }),
   // 12 · Sonnerie de l'appel : sons intégrés, « Vos sonneries », volume, bande son au décroché
   'remote-call-ring': ringScene('call'),
@@ -798,8 +798,8 @@ export const SCENES = {
   }),
   // 47b · « + NOUVELLE DISCUSSION » sous les sous-onglets du fil
   'remote-call-discussion-new': remote('call', async (page) => {
-    await page.evaluate(() => setCallKind('discussion'));
-    await scrollTo('dcTabs', 80)(page);
+    await page.evaluate(() => { setCallKind('discussion'); openChatThreadMenu(); });
+    await scrollTo('dcThreadPanel', 84)(page);
   }),
   // 47b · Fil modifié depuis son entrée enregistrée : « Enregistrer « … » avant ? »
   'remote-call-discussion-new-ask': remote('call', async (page) => {
@@ -808,7 +808,7 @@ export const SCENES = {
       _chat.savedId = 'c12';
       setCallKind('discussion'); setChatView('thread');
     });
-    await scrollTo('dcTabs', 80)(page);
+    await scrollTo('dcThreadPanel', 84)(page);
     await page.evaluate(() => chatNewAsk());
   }),
   // 26d · Timings du fil et lecture automatique : messages 1 et 2 postés, le n° 3 (texte automatique en 4 s) en cours
@@ -885,6 +885,81 @@ export const SCENES = {
     await page.clock.runFor(600);
   },
 };
+// ── Phase 4 : Tel « composer puis envoyer » et Séquence « Préparer / Plateau » (maquettes 4a à 4i) ──
+// Tel : trois appels (le premier chargé), un SMS, une notification, une discussion ; cible : Téléphone de Julie
+const telScene = (extra) => multiScreen(async (page) => {
+  await page.evaluate(async (julie) => {
+    telCallPhase('idle', ''); // l'appel lancé par multiScreen ne laisse pas la barre en « Raccrocher / Décrocher »
+    scrSetTarget({ k: 'screen', id: julie });
+    const call = (id, name, title, meta) => Object.assign({ id, kind: 'call', style: 'glass', name, label: 'mobile', title, ring: 'classic', ringVolume: 1, present: 'full', photoMode: 'avatar', autoAnswer: 0, lock: null, hasPhoto: false, hasAudio: false }, meta);
+    callList.call = [
+      call('e1', 'Maman', 'Maman — scène 12', { hasAudio: true }),
+      call('e2', 'Agence', 'Agence — appel du matin', { style: 'tonal', autoAnswer: 8 }),
+      call('e3', 'Inconnu', 'Inconnu — nuit', { style: 'minimal' }),
+      call('e4', 'Hôpital', 'Hôpital — annonce', { present: 'banner' }),
+      call('e5', 'Julien', 'Julien — rappel', { style: 'tonal' }),
+    ];
+    callList.sms = [
+      { id: 's1', kind: 'sms', style: 'glass', name: 'Maman', msg: 'Tu es où ??', title: 'Maman — « Tu es où ?? »', appName: 'SMS', appColor: '#2f8cf0', ring: 'classic', ringVolume: 0.6, lock: { time: '00:10', date: '' }, hasPhoto: false, hasAudio: false },
+      { id: 's2', kind: 'sms', style: 'tonal', name: 'Régie', msg: 'Retard de 10 min', title: 'Régie — « Retard de 10 min »', appName: 'SMS', appColor: '#2f8cf0', ring: 'classic', ringVolume: 0.6, lock: null, hasPhoto: false, hasAudio: false },
+    ];
+    callList.notif = [
+      { id: 'n1', kind: 'notif', style: 'glass', name: 'Virement reçu', msg: 'Vous avez reçu 2 400,00 €', title: 'Virement reçu — Banque Atlas', appName: 'Banque Atlas', ring: 'classic', ringVolume: 0.6, present: 'banner', phone: {}, received: { mode: 'now' }, hasPhoto: false, hasAudio: false },
+      { id: 'n2', kind: 'notif', style: 'tonal', name: 'Colis livré', msg: 'Votre colis est arrivé', title: 'Colis livré — Relais 24', appName: 'Relais 24', ring: 'classic', ringVolume: 0.6, present: 'lock', phone: {}, received: { mode: 'now' }, hasPhoto: false, hasAudio: false },
+    ];
+    persistCallList();
+    switchTab('call'); setCallKind('call');
+    await selectCallEntry('e1');
+  }, SCR_IDS[0]);
+  if (extra) await extra(page);
+  await page.clock.runFor(300);
+});
+const telKind = (k, extra) => telScene(async (page) => {
+  await page.evaluate((k) => setCallKind(k), k);
+  if (extra) await extra(page);
+});
+// Discussion : deux messages postés, la lecture automatique tourne (3 / 5), le n° 4 touché (↑ ↓, Reprendre ici)
+const telChat = (extra) => telKind('discussion', async (page) => {
+  await page.evaluate(() => {
+    openChatOnTarget(); sendNextChatMessage(); sendNextChatMessage();
+    editChatMessage('d4');
+  });
+  if (extra) await extra(page);
+});
+Object.assign(SCENES, {
+  // 4a · Appel : « À jouer », trois appels enregistrés avec leur ▶, une seule barre « FAIRE SONNER »
+  'remote-tel-call': telScene(),
+  // 4a2 · L'appel sonne depuis 4 s (décroché auto dans 4 s) : Raccrocher / Décrocher
+  'remote-tel-call-ringing': telScene(async (page) => {
+    await page.evaluate(() => { document.getElementById('callAutoSlider').value = '8'; onCallAutoChange(); telCallSent('call', 8); remoteOnCallState({ state: 'ringing' }); });
+    await page.clock.runFor(4000);
+  }),
+  // 4b · SMS : message modifiable sur place, « ENVOYER LE SMS »
+  'remote-tel-sms': telKind('sms', (page) => page.evaluate(() => {
+    document.getElementById('callMsgText').value = 'Tu es où ??';
+    document.getElementById('lockToggle').checked = true; document.getElementById('lockTime').value = '00:10';
+    renderTelRows();
+  })),
+  // 4c · Notification : titre et contenu sur place, « ENVOYER LA NOTIFICATION »
+  'remote-tel-notif': telKind('notif'),
+  // 4d · Discussion ouverte : fil, ↑ ↓ sur la ligne touchée, barre ↶ / Pause / Envoyer n°3
+  'remote-tel-discussion-open': telChat(async (page) => {
+    await page.evaluate(() => { chatAutoStart(); });
+    await page.clock.runFor(1500);
+    await scrollTo('dcThreadPanel', 84)(page);
+  }),
+  // 4d2 · Discussion avant ouverture : « OUVRIR SUR L'ÉCRAN »
+  'remote-tel-discussion-closed': telKind('discussion'),
+  // 4e · « Inconnu — nuit » supprimé : bandeau « Annuler », les numéros suivants ont avancé
+  'remote-tel-list-deleted': telScene(async (page) => {
+    await page.evaluate(() => { deleteCallEntry('e3'); });
+    await scrollTo('callListPanel', 100)(page);
+  }),
+  // 4e2 · Menu ⋯ d'une ligne : monter / descendre, console DMX (n° 3, DMX 30–39)
+  'remote-tel-list-menu': telScene((page) => page.evaluate(() => openCallEntryMenu('e3'))),
+  // 4e3 · Signet d'une entrée chargée : mettre à jour / enregistrer comme nouveau
+  'remote-tel-save-loaded': telScene((page) => page.evaluate(() => openSaveCallSheet())),
+});
 // Fenêtre propre à une scène (sinon 390 × 844)
 const LANDSCAPE = { width: 844, height: 390 };
 export const SCENE_VIEWPORT = {

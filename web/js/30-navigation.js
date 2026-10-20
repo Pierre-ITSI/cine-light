@@ -331,6 +331,18 @@ function navScrollTo(el, off) {
   if (!sc || !el) return;
   sc.scrollTop += el.getBoundingClientRect().top - sc.getBoundingClientRect().top - (off == null ? 72 : off);
 }
+// Barre d'action fixe (phase 4) : celle de Tel ou de Séquence selon la vue du Scénario, aucune ailleurs.
+// Plateau : l'en-tête perd ses outils de préparation (bascule Tel | Séquence, pastille couleur) et la
+// pastille de liaison rejoint la barre de mode (91-sequence.js, seqPlaceLinkPill).
+function navBarUpdate() {
+  const nm = document.getElementById('nv-main');
+  if (!nm) return;
+  const onScn = _navTab === 'scenario', seq = onScn && _navSub.scenario === 'seq';
+  nm.dataset.bar = !onScn ? '' : seq ? (typeof _seqView !== 'undefined' && _seqView === 'saved' ? '' : 'seq') : 'tel';
+  const plateau = seq && typeof _seqMode !== 'undefined' && _seqMode === 'play' && _seqView !== 'saved';
+  document.body.classList.toggle('nv-plateau', plateau);
+  if (typeof seqPlaceLinkPill === 'function') seqPlaceLinkPill(plateau);
+}
 function switchTab(t) {
   let tab = t, sub = null;
   if (_NAV_ALIAS[t]) [tab, sub] = _NAV_ALIAS[t];
@@ -356,7 +368,9 @@ function switchTab(t) {
   }
   _navTab = tab;
   if (key !== _navKey) { _navKey = key; if (sc) sc.scrollTop = _navScroll[key] || 0; }
+  navBarUpdate();
   if (sub === 'seq') renderSeq(); // éléments supprimés entre-temps : « élément introuvable »
+  if (sub === 'call') renderTelBar();
   if (tab === 'media') renderMediaBarRow(); // barre d'état au-dessus des médias (98-phone-params.js)
   if (tab === 'screens') renderPairPanel();
   else remoteStopPairCode(true); // le code ne reste actif que sur l'onglet d'appairage

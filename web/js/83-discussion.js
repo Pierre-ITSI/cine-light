@@ -83,7 +83,10 @@ const _CHAT_TXT = {
   autoLabel: 'Lecture automatique',
   autoRun: '● en cours · {n} / {total}', autoPaused: '⏸ en pause · {n} / {total}', autoReady: 'prête · {n} / {total}',
   autoActor: '● attend {comedien} · {n} / {total}', autoButton: '● attend « Envoyer » · {n} / {total}', autoDone: 'terminée · {n} / {total}',
-  autoPlay: '▶ Lecture auto', autoPause: '⏸ Pause', autoBack: '↶', autoBackAria: 'Pause et revenir d\'un message',
+  autoPlay: 'Lecture auto', autoPause: 'Pause', autoBack: '↶', autoBackAria: 'Pause et revenir d\'un message',
+  threadTitle1: 'Fil · 1 message', threadTitleN: 'Fil · {n} messages', threadTitle0: 'Fil · aucun message',
+  moveUp: 'Monter le message', moveDown: 'Descendre le message',
+  menuTitle: 'Fil de la discussion', menuNew: 'Nouvelle discussion', menuSave: 'Enregistrer le fil', menuRestart: 'Repartir de zéro', menuClose: 'Fermer sur l\'écran',
   undelivered: 'Non distribué',
 };
 // Timings d'un message (maquette 26d) ; valeurs par défaut = comportement d'avant
@@ -434,6 +437,15 @@ function editChatMessage(id) {
   _chatTimingId = id;
   renderChatPanel();
 }
+// Monter / descendre un message d'un rang (bouton, en plus du glisser)
+function moveChatMessage(id, d) {
+  if (licLocked('tel')) return false;
+  const i = _chat.msgs.findIndex((x) => x.id === id), j = i + (d < 0 ? -1 : 1);
+  if (i < 0 || j < 0 || j >= _chat.msgs.length) return false;
+  [_chat.msgs[i], _chat.msgs[j]] = [_chat.msgs[j], _chat.msgs[i]];
+  _chatChanged();
+  return true;
+}
 function setChatMessageSide(id, from) {
   const m = _chat.msgs.find((x) => x.id === id);
   if (!m) return;
@@ -460,6 +472,8 @@ function onChatMessageText(id, el) {
   m.text = String(el.value || '').slice(0, CHAT_TEXT_MAX);
   _chatChanged(true);
 }
+// ⋯ du titre « Fil » : nouvelle discussion, enregistrer le fil, repartir de zéro, fermer (89-discussions-saved.js)
+function openChatThreadMenu() { _sheet = { kind: 'chatThread' }; renderSheet(); }
 function closeChatEditor() {
   const m = _chat.msgs.find((x) => x.id === _chatEditId);
   _chatEditId = null;
@@ -545,6 +559,8 @@ function chatAutoStop() {
 }
 // « ↶ » de la lecture : pause, puis le dernier message affiché est retiré
 function chatAutoBack() { chatAutoPause(); rewindChat(); }
+// Un seul bouton dans la barre : « Lecture auto », puis « Pause » tant qu'elle tourne
+function chatAutoToggle() { if (_chatAuto.on) chatAutoPause(); else chatAutoStart(); }
 function _chatAutoPhase(id, k, dur) { _chatAuto.phase = { id, k }; _chatAuto.t0 = Date.now(); _chatAuto.dur = dur || 0; }
 // Message suivant : pause avant, puis écriture et envoi
 function _chatAutoNext(resume) {
@@ -618,9 +634,18 @@ function _chatRenderAuto() {
   if (st) { setIconText(st, info.text); st.classList.toggle('on', info.live); }
   if (fill) fill.style.width = info.pct + '%';
   if (typeof seqRenderChatStatus === 'function') seqRenderChatStatus(); // 91-sequence.js : état sous l'étape en cours
-  const play = document.getElementById('dcAutoPlay'), pause = document.getElementById('dcAutoPause'), back = document.getElementById('dcAutoBack');
-  if (play) play.disabled = !_chatAuto.on && !_chatNextMsg(); // en cours : reste allumé (maquette 26d), sans effet
-  if (pause) pause.disabled = !_chatAuto.on;
+  const play = document.getElementById('dcAutoPlay');
+  if (play) {
+    const on = _chatAuto.on, key = on ? 'on' : 'off';
+    if (play.dataset.st !== key) {
+      play.dataset.st = key;
+      play.innerHTML = icon(on ? 'pause' : 'play') + '<b>' + escapeHtml(on ? _CHAT_TXT.autoPause : _CHAT_TXT.autoPlay) + '</b>';
+      play.classList.toggle('on', on);
+      play.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    play.disabled = !on && !_chatNextMsg(); // en cours : « Pause » reste actif
+  }
+  const back = document.getElementById('dcBackBtn');
   if (back) back.disabled = !_chat.sent.length;
 }
 // Resynchronisation (24-resync.js) : écrans de la discussion revenus
@@ -633,25 +658,20 @@ function chatOnScreensResync(ids) {
 }
 
 // ── Rendu (télécommande) ──
-// Sous-onglets (maquette 26c) : « Fil en cours » | « Enregistrées (n) »
+// Phase 4 : plus de sous-onglets « Fil en cours | Enregistrées » ; le fil à jouer, puis la liste
+// « Discussions enregistrées » dessous (▶ charge une discussion dans le fil)
 let _chatView = 'thread';
 function chatShowForm(on) {
-  const saved = on && _chatView === 'saved';
   const show = (id, v) => { const el = document.getElementById(id); if (el) el.style.display = v ? '' : 'none'; };
-  for (const id of ['dcNewBtn', 'dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcAutoPanel', 'dcSendPanel']) show(id, on && !saved);
-  if (!on || saved) show('dcTimingPanel', false);
-  show('dcTabs', on);
-  show('dcSavedPanel', saved);
-  // Le style appartient au fil en cours : rangée « Style et son » masquée sur la liste
-  if (on) show('telStyleRow', !saved);
-  for (const v of ['thread', 'saved']) {
-    const b = document.getElementById('dcTab-' + v);
-    if (b) b.classList.toggle('active', _chatView === v);
-  }
+  for (const id of ['dcContactPanel', 'dcActorRow', 'dcThreadPanel', 'dcActorPanel', 'dcSavedPanel']) show(id, on);
+  if (!on) show('dcTimingPanel', false);
+  // Le style appartient au fil en cours : rangée « Style et son » (commune aux SMS)
+  if (on) show('telStyleRow', true);
   if (on) { renderChatPanel(); renderSavedChats(); }
+  renderTelBar();
 }
 function setChatView(v) {
-  _chatView = v === 'saved' ? 'saved' : 'thread';
+  _chatView = 'thread';
   chatShowForm(callKind === 'discussion');
 }
 function _chatScreensLabel() {
@@ -674,12 +694,6 @@ function _chatRenderHead() {
   set('dcTypingLabel', _tplChat('Indicateur « … écrit » 2 s avant chaque message de {contact}', { contact: chatContactName() }));
   const wt = document.getElementById('dcWriteText');
   if (wt) wt.placeholder = _tplChat('Message improvisé de {contact}', { contact: chatContactName() });
-  const go = document.getElementById('dcGo'), next = chatNextContact();
-  if (go) {
-    const n = next ? _chat.msgs.indexOf(next) + 1 : 0;
-    go.textContent = next ? _tplChat('Envoyer n°{n} ({contact})', { n, contact: chatContactName() }) : _tplChat('Plus de message de {contact}', { contact: chatContactName() });
-    go.disabled = !next;
-  }
   // Noms : la saisie en cours n'est pas réécrite
   for (const [id, v] of [['dcName', _chat.name], ['dcActor', _chat.actor]]) {
     const el = document.getElementById(id);
@@ -687,11 +701,8 @@ function _chatRenderHead() {
   }
   const tg = document.getElementById('dcTypingToggle');
   if (tg) tg.checked = !!_chat.typing;
-  const cb = document.getElementById('dcCloseBtn');
-  if (cb) cb.disabled = !_chat.open;
-  const bk = document.getElementById('dcBackBtn');
-  if (bk) bk.disabled = !_chat.sent.length;
   _chatRenderAuto();
+  renderTelBar(); // barre d'action : Ouvrir sur l'écran / ↶ · Lecture auto · Envoyer n°n
 }
 function _chatProgressText(cur) {
   const p = _chat.progress && _chat.progress.id === cur.id ? _chat.progress : null;
@@ -711,20 +722,25 @@ function renderChatPanel() {
   const cur = chatCurrentActor();
   const resume = _chatResumeInfo();
   rows.textContent = '';
+  const nextMsg = _chatNextMsg();
   _chat.msgs.forEach((m, i) => {
     const row = document.createElement('div');
-    row.className = 'dc-row' + (_chatSent(m) ? ' sent' : '') + (cur && cur.id === m.id ? ' cur' : '') + (m.from === 'actor' ? ' actor' : '') + (_chatEditId === m.id ? ' editing' : '') + (_chatTimingId === m.id ? ' sel' : '');
+    row.className = 'dc-row' + (_chatSent(m) ? ' sent' : '') + (cur && cur.id === m.id ? ' cur' : '') + (nextMsg && nextMsg.id === m.id ? ' next' : '') + (m.from === 'actor' ? ' actor' : '') + (_chatEditId === m.id ? ' editing' : '') + (_chatTimingId === m.id ? ' sel' : '');
     row.dataset.id = m.id;
     row.onclick = () => editChatMessage(m.id);
+    const st = document.createElement('span'); st.className = 'dc-st';
+    st.innerHTML = icon(_chatSent(m) ? 'circle-check' : nextMsg && nextMsg.id === m.id ? 'play' : 'circle');
     const num = document.createElement('span'); num.className = 'dc-num'; num.textContent = String(i + 1);
-    const who = document.createElement('span'); who.className = 'dc-who';
+    const tx = document.createElement('span'); tx.className = 'dc-tx';
+    const who = document.createElement('small'); who.className = 'dc-who';
     who.textContent = _tplChat('{nom} ›', { nom: m.from === 'actor' ? (_chat.actor || 'Comédien') : chatContactName() });
     const txt = document.createElement('span'); txt.className = 'dc-text';
     txt.textContent = m.text || '…';
+    tx.append(who, txt);
     // Pastille des timings (maquette 26d) : pause · écriture
     const pill = document.createElement('span'); pill.className = 'dc-pill';
     pill.textContent = _tplChat(m.from === 'actor' ? (m.auto ? _CHAT_TXT.pillAuto : _CHAT_TXT.pillActor) : _CHAT_TXT.pill, { p: m.pause, w: m.write });
-    row.append(num, who, txt, pill);
+    row.append(st, num, tx, pill);
     rows.appendChild(row);
     if (cur && cur.id === m.id) {
       const pr = document.createElement('div'); pr.className = 'dc-progress'; pr.id = 'dcProgress';
@@ -741,6 +757,8 @@ function renderChatPanel() {
     }
     if (_chatEditId === m.id) rows.appendChild(_chatEditor(m));
   });
+  const n = _chat.msgs.length;
+  _tuText('dcThreadTitle', n === 0 ? _CHAT_TXT.threadTitle0 : n === 1 ? _CHAT_TXT.threadTitle1 : _tplChat(_CHAT_TXT.threadTitleN, { n }));
   const add = document.getElementById('dcAdd');
   if (add) add.disabled = _chat.msgs.length >= CHAT_MAX;
   _chatRenderTiming();
@@ -760,6 +778,15 @@ function _chatEditor(m) {
   ta.setAttribute('aria-label', 'Texte du message');
   ta.oninput = () => onChatMessageText(m.id, ta);
   const act = document.createElement('div'); act.className = 'dc-edit-actions';
+  // Monter / descendre : au bouton, en plus du glisser (accessibilité)
+  const i = _chat.msgs.indexOf(m);
+  const mv = (d, ico, label) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'dc-edit-mv'; b.innerHTML = icon(ico);
+    b.setAttribute('aria-label', label); b.title = label;
+    b.disabled = d < 0 ? i <= 0 : i >= _chat.msgs.length - 1;
+    b.onclick = () => moveChatMessage(m.id, d);
+    return b;
+  };
   const del = document.createElement('button'); del.type = 'button'; del.className = 'cl-del'; del.textContent = 'Supprimer';
   del.onclick = () => deleteChatMessage(m.id);
   // « Reprendre ici » (maquette 26b) : ce qui précède devient l'historique affiché
@@ -769,7 +796,7 @@ function _chatEditor(m) {
   ta.addEventListener('input', () => { res.disabled = !_chatValid(m); });
   const ok = document.createElement('button'); ok.type = 'button'; ok.className = 'dc-edit-ok'; ok.textContent = 'OK';
   ok.onclick = () => closeChatEditor();
-  act.append(res, del, ok);
+  act.append(mv(-1, 'arrow-up', _CHAT_TXT.moveUp), mv(1, 'arrow-down', _CHAT_TXT.moveDown), res, del, ok);
   box.append(seg, ta, act);
   return box;
 }

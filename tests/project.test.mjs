@@ -158,7 +158,7 @@ test('aller-retour « Remplacer » entre deux pages vierges : tout revient à l\
   const after = await state(B.page);
   assert.deepEqual(after, before);
   // Interface relue : listes, onglets, sons importés
-  assert.equal(await B.page.evaluate(() => document.getElementById('clKind-call').textContent), 'Appels (1)');
+  assert.equal(await B.page.evaluate(() => document.getElementById('callListTitle').textContent), 'Appels enregistrés · 1');
   assert.equal(await B.page.evaluate(() => document.getElementById('seqTab-saved').textContent), 'Enregistrées (1)');
   assert.deepEqual(A.errors, []); assert.deepEqual(B.errors, []);
   await A.close(); await B.close();

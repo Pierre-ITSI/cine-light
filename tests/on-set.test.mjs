@@ -216,23 +216,30 @@ test('onglet Tel à 390 px : aucun débordement horizontal, quel que soit le typ
   await close();
 });
 
-test('onglet Tel : « Décrocher » pour l\'appel seulement ; la liste enregistrée suit le type', async () => {
+test('onglet Tel : « Décrocher » seulement pendant l\'appel qui sonne ; la liste enregistrée suit le type, « Tout voir » aussi', async () => {
   const { page, errors, close } = await openPage(browser);
   await page.evaluate(() => { startMode('remote'); switchTab('call'); });
   const st = (k) => page.evaluate((k) => {
     setCallKind(k);
     return {
       answer: getComputedStyle(document.getElementById('callAnswerBtn')).display,
-      list: [...document.querySelectorAll('.cl-kinds .gw-seg-btn.active')].map((b) => b.id),
+      list: document.getElementById('callListTitle').textContent,
       empty: document.getElementById('callListEmpty').textContent,
     };
   }, k);
-  assert.deepEqual(await st('sms'), { answer: 'none', list: ['clKind-sms'], empty: 'Réglez le SMS ci-dessus puis enregistrez-le : il prend le numéro suivant.' });
-  assert.deepEqual(await st('notif'), { answer: 'none', list: ['clKind-notif'], empty: 'Réglez la notification ci-dessus puis enregistrez-la : elle prend le numéro suivant.' });
-  assert.deepEqual(await st('call'), { answer: 'flex', list: ['clKind-call'], empty: 'Réglez l\'appel ci-dessus puis enregistrez-le : il prend le numéro suivant.' });
-  // L'onglet de liste reste libre : on peut regarder les SMS en réglant un appel
-  await page.click('#clKind-sms');
-  assert.equal(await page.evaluate(() => callListKind), 'sms');
+  assert.deepEqual(await st('sms'), { answer: 'none', list: 'SMS enregistrés · 0', empty: 'Réglez le SMS ci-dessus puis enregistrez-le (signet) : il prend le numéro suivant.' });
+  assert.deepEqual(await st('notif'), { answer: 'none', list: 'Notifications enregistrées · 0', empty: 'Réglez la notification ci-dessus puis enregistrez-la (signet) : elle prend le numéro suivant.' });
+  assert.deepEqual(await st('call'), { answer: 'none', list: 'Appels enregistrés · 0', empty: 'Réglez l\'appel ci-dessus puis enregistrez-le (signet) : il prend le numéro suivant.' });
+  // Pendant la sonnerie seulement
+  await page.evaluate(() => { telCallSent('call', 0); });
+  assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('callAnswerBtn')).display), 'flex');
+  await page.evaluate(() => telCallPhase('idle', ''));
+  // « Tout voir » : les trois compteurs ; choisir une liste change aussi le type
+  await page.evaluate(() => { callList.sms.push({ id: 'x1', kind: 'sms', style: 'glass', name: 'Léa', msg: 'Salut' }); renderCallList(); });
+  await page.click('#callListAll');
+  assert.deepEqual(await page.$$eval('#srSheetBody .dc-menu-btn', (b) => b.map((x) => x.textContent)), ['Appels (0)', 'SMS (1)', 'Notifications (0)']);
+  await page.click('#callAll-sms');
+  assert.deepEqual(await page.evaluate(() => [callKind, callListKind]), ['sms', 'sms']);
   assert.deepEqual(errors, []);
   await close();
 });

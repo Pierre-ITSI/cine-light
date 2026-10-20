@@ -6,7 +6,7 @@
 //   web/index.template.html   balisage complet + 2 marqueurs de ligne :
 //                             « /* @@STYLES@@ */ » et « /* @@SCRIPTS@@ */ »
 //   web/styles/NN-*.css       concaténés dans l'ordre des noms → <style> unique.
-//                             Les anciennes feuilles (hors 01 à 04 et 99, qui sont
+//                             Les anciennes feuilles (hors 01 à 04, 06 et 99, qui sont
 //                             le système visuel) sont enveloppées dans
 //                             @layer legacy { … } : toute règle non stratifiée
 //                             (système visuel) l'emporte sans !important.
@@ -50,7 +50,7 @@ export const FRAGMENT_LICENSE = Object.freeze({
 const STYLES_MARK = '/* @@STYLES@@ */\n';
 const ICONS_MARK = '<!-- @@ICONS@@ -->';
 // Feuilles du système visuel : non stratifiées. Les autres vont dans @layer legacy.
-const SYSTEM_SHEET = /^styles\/(0[1-4]|99)-/;
+const SYSTEM_SHEET = /^styles\/(0[1-4]|06|99)-/;
 const SCRIPTS_MARK = '/* @@SCRIPTS@@ */\n';
 
 // Fragments d'un dossier, triés par nom (le préfixe NN- fixe l'ordre).

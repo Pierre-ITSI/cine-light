@@ -13,7 +13,7 @@
 //
 // Références repérées dans web/index.template.html et web/js/*.js :
 //   href="#i-NOM" · icon('NOM'…) (y compris les deux branches d'un ternaire) ·
-//   valeurs de SEQ_ICONS et de _ICON_LEAD. Le build (web/build.mjs) insère le
+//   valeurs de SEQ_ICONS, de _ICON_LEAD et de _ICON_MORE (icônes nommées par paramètre). Le build (web/build.mjs) insère le
 //   sprite en ligne dans index.html ; tests/icons.test.mjs vérifie qu'aucune
 //   référence n'est orpheline et qu'aucune icône du sprite n'est inutilisée.
 // ════════════════════════════════════════════════════════════════════════════
@@ -35,7 +35,7 @@ export function usedIcons() {
     for (const m of s.matchAll(/href="#i-([a-z0-9-]+)"/g)) names.add(m[1]);
     for (const m of s.matchAll(/\bicon\(([^()]*?)(?:,\s*'[^']*')?\)/g)) lit(m[1].includes('?') ? m[1].slice(m[1].indexOf('?')) : m[1]);
     for (const m of s.matchAll(/\b(?:iconLabel|setIconLabel)\([^,]*,\s*'([a-z0-9-]+)'/g)) names.add(m[1]);
-    for (const m of s.matchAll(/const (?:SEQ_ICONS|_ICON_LEAD) = \{([\s\S]*?)\};/g)) {
+    for (const m of s.matchAll(/const (?:SEQ_ICONS|_ICON_LEAD|_ICON_MORE) = \{([\s\S]*?)\};/g)) {
       for (const p of m[1].matchAll(/:\s*'([a-z][a-z0-9-]*)'/g)) names.add(p[1]);
     }
   }

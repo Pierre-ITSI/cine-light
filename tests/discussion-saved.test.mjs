@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
-// Discussions enregistrées (onglet Tel, maquette validée 26c) : sous-onglets
-// « Fil en cours » / « Enregistrées (n) », enregistrer (nom demandé),
-// charger (confirmation si le fil en cours a des modifications non
-// enregistrées), renommer, dupliquer, supprimer (confirmation) ; photo du
+// Discussions enregistrées (onglet Tel, maquettes 26c puis 4d) : liste sous le fil
+// (▶ charge), enregistrer par le signet de la barre (nom demandé),
+// charger (confirmation de l'app si le fil a des modifications non
+// enregistrées), renommer, dupliquer, supprimer (bandeau « Annuler ») ; photo du
 // contact gardée (IndexedDB) ; persistance au rechargement, validation au
 // chargement, plafond ; point de reprise non enregistré ; jamais sur la console DMX.
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { launchBrowser, openPage, waitFor, sleep, FakeBroker, pairingHash } from './helpers/harness.mjs';
+import { launchBrowser, openPage, waitFor, sleep, FakeBroker, pairingHash, chatGo } from './helpers/harness.mjs';
 
 let browser;
 before(async () => { browser = await launchBrowser(); });
@@ -43,31 +43,27 @@ const idbPhoto = (page, id) => page.evaluate((id) => { _clAssetMem.clear(); retu
 test('enregistrer, charger, renommer, dupliquer, supprimer ; photo gardée ; confirmation ; rechargement', async () => {
   const { page, errors, close } = await openPage(browser);
   await disc(page);
-  // Sous-onglets : « Fil en cours » actif, liste vide
-  assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#dcTabs .gw-seg-btn')].map((b) => b.textContent + (b.classList.contains('active') ? ' *' : ''))), ['Fil en cours *', 'Enregistrées (0)']);
-  assert.equal(await shown(page, 'dcSavedPanel'), false);
-  await page.click('#dcTab-saved');
-  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcSendPanel', 'telStyleRow']) assert.equal(await shown(page, id), false, id);
-  assert.equal(await shown(page, 'dcSavedPanel'), true);
+  // Plus de sous-onglets : le fil à jouer, puis la liste (vide) des discussions enregistrées
+  assert.equal(await page.evaluate(() => !!document.getElementById('dcTabs') || !!document.getElementById('dcSaveBtn')), false);
+  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcSavedPanel', 'telStyleRow']) assert.equal(await shown(page, id), true, id);
   assert.equal(await shown(page, 'dcSavedEmpty'), true);
-  assert.equal(await page.textContent('#dcSaveBtn'), '+ Enregistrer le fil en cours');
+  assert.equal(await page.textContent('#dcSavedTitle'), 'Discussions enregistrées · 0');
   // 1. Fil d'exemple, sans photo
   const unexpected = [];
   const noDialog = (d) => { unexpected.push(d.message()); d.dismiss(); };
   page.on('dialog', noDialog);
-  await page.click('#dcSaveBtn');
+  await page.click('#telSaveBtn');
   await nameSheet(page, 'Enregistrer le fil en cours', 'Séq. 12 — Maman inquiète');
   assert.deepEqual(await savedRows(page), [['Séq. 12 — Maman inquiète', 'Maman ‹› Julie · 5 messages · Épuré', 'chargée']]);
-  assert.equal(await page.textContent('#dcTab-saved'), 'Enregistrées (1)');
+  assert.equal(await page.textContent('#dcSavedTitle'), 'Discussions enregistrées · 1');
   assert.equal(await shown(page, 'dcSavedEmpty'), false);
   // 2. Autre contact, photo, style, un message de plus, une reprise (non enregistrée)
-  await page.click('#dcTab-thread');
   await page.setInputFiles('#dcAvatarInput', await pngFile(page, '#2a7ad5'));
   await waitFor(page, () => !!_chatAvatar);
   const photo = await avatar(page);
   await page.fill('#dcName', 'Thomas');
   // Style dans la vue « Style et son » (maquette 36d)
-  await page.click('#telStyleBtn');
+  await page.click('#telStyleRow');
   await page.click('#callstyle-glass');
   await page.click('#tsBack');
   await page.click('#dcAdd');
@@ -75,8 +71,7 @@ test('enregistrer, charger, renommer, dupliquer, supprimer ; photo gardée ; con
   await page.locator('#dcRows .dc-edit .dc-edit-ok').click();
   await page.evaluate(() => resumeChatAt('d3'));
   assert.equal(await page.evaluate(() => chatHasUnsavedChanges()), true);
-  await page.click('#dcTab-saved');
-  await page.click('#dcSaveBtn');
+  await page.click('#telSaveBtn');
   assert.equal(await page.getAttribute('#srName', 'placeholder'), 'Thomas ‹› Julie');
   await nameSheet(page, 'Enregistrer le fil en cours', 'Séq. 14 — Rupture');
   assert.deepEqual(await savedRows(page), [['Séq. 12 — Maman inquiète', 'Maman ‹› Julie · 5 messages · Épuré', ''], ['Séq. 14 — Rupture', 'Thomas ‹› Julie · 6 messages · Verre', 'chargée']]);
@@ -87,35 +82,31 @@ test('enregistrer, charger, renommer, dupliquer, supprimer ; photo gardée ; con
   await page.locator('#dcSavedRows .dc-saved-row').nth(0).click();
   await waitFor(page, () => _chat.savedId === chatSaved[0].id);
   assert.equal(await shown(page, 'dcThreadPanel'), true, 'retour au fil en cours');
-  assert.equal(await page.evaluate(() => document.getElementById('dcTab-thread').classList.contains('active')), true);
   assert.deepEqual(await page.evaluate(() => [_chat.name, _chat.actor, _chat.style, document.getElementById('dcName').value, _chat.sent.length, _chat.resumeAt]), ['Maman', 'Julie', 'minimal', 'Maman', 0, null]);
   assert.equal((await threadTexts(page)).length, 5);
   assert.equal(await avatar(page), null);
   assert.equal(await page.evaluate(() => document.getElementById('dcAvatar').textContent), 'M');
-  // Charger la 2e : photo retrouvée, point de reprise NON restauré
-  await page.click('#dcTab-saved');
-  await page.locator('#dcSavedRows .dc-saved-row').nth(1).click();
+  // Charger la 2e (▶) : photo retrouvée, point de reprise NON restauré
+  await page.locator('#dcSavedRows .dc-saved-row').nth(1).locator('.cl-play').click();
   await waitFor(page, () => _chat.savedId === chatSaved[1].id);
   assert.equal(await avatar(page), photo);
   assert.match(await page.evaluate(() => document.getElementById('dcAvatar').style.backgroundImage), /^url\("data:image\/jpeg;base64,/);
   assert.deepEqual(await page.evaluate(() => [_chat.name, _chat.style, _chat.msgs.length, _chat.sent.length, document.getElementById('dcResume')]), ['Thomas', 'glass', 6, 0, null]);
   // Modification non enregistrée : confirmation avant de charger une autre discussion
   await page.fill('#dcActor', 'Léo');
-  await page.click('#dcTab-saved');
-  page.off('dialog', noDialog);
-  assert.deepEqual(unexpected, [], 'aucune confirmation tant que rien n\'est perdu');
-  let asked = '';
-  page.once('dialog', (d) => { asked = d.message(); d.dismiss(); });
+  assert.deepEqual(unexpected, [], 'aucune boîte du navigateur : la confirmation est celle de l\'app');
   await page.locator('#dcSavedRows .dc-saved-row').nth(0).click();
+  assert.equal(await page.textContent('#acTitle'), 'Charger « Séq. 12 — Maman inquiète » ?');
+  assert.equal(await page.textContent('#acText'), 'Le fil en cours a des modifications non enregistrées : elles seront perdues.');
+  await page.click('#acCancel');
   await sleep(100);
-  assert.equal(asked, 'Le fil en cours a des modifications non enregistrées. Charger « Séq. 12 — Maman inquiète » à la place ?');
   assert.deepEqual(await page.evaluate(() => [_chat.name, _chat.actor, _chat.savedId === chatSaved[1].id]), ['Thomas', 'Léo', true], 'refusé : rien ne change');
-  page.once('dialog', (d) => d.accept());
-  await page.locator('#dcSavedRows .dc-saved-row').nth(0).click();
+  await page.locator('#dcSavedRows .dc-saved-row').nth(0).locator('.cl-play').click();
+  await page.click('#acOk');
   await waitFor(page, () => _chat.savedId === chatSaved[0].id);
+  assert.deepEqual(unexpected, []);
   assert.deepEqual(await page.evaluate(() => [_chat.name, _chat.actor]), ['Maman', 'Julie']);
   // Renommer
-  await page.click('#dcTab-saved');
   await menu(page, 1, 'Renommer');
   assert.equal(await page.inputValue('#srName'), 'Séq. 14 — Rupture');
   await nameSheet(page, 'Renommer la discussion', 'Séq. 14 — Rupture (v2)');
@@ -128,32 +119,32 @@ test('enregistrer, charger, renommer, dupliquer, supprimer ; photo gardée ; con
   assert.deepEqual((await savedRows(page)).map((r) => r[0]), ['Séq. 12 — Maman inquiète', 'Séq. 12 — Maman inquiète (copie)', 'Séq. 14 — Rupture (v2)', 'Séq. 14 — Rupture (v2) (copie)']);
   const idD = await page.evaluate(() => chatSaved[3].id);
   assert.equal(await idbPhoto(page, idD), photo, 'photo copiée');
-  // Supprimer : confirmation (refus puis accord), photo effacée
-  page.once('dialog', (d) => { asked = d.message(); d.dismiss(); });
+  // Supprimer : aucune confirmation, bandeau « Annuler » ; photo gardée tant que l'annulation est possible
   await menu(page, 3, 'Supprimer');
-  await sleep(100);
-  assert.equal(asked, 'Supprimer la discussion « Séq. 14 — Rupture (v2) (copie) » ?');
-  assert.equal(await page.evaluate(() => chatSaved.length), 4);
-  page.once('dialog', (d) => d.accept());
+  assert.equal(await page.evaluate(() => chatSaved.length), 3);
+  assert.equal(await page.textContent('#usText'), '« Séq. 14 — Rupture (v2) (copie) » supprimée');
+  assert.equal(await idbPhoto(page, idD), photo, 'photo gardée pendant le bandeau');
+  await page.click('#usUndo');
+  assert.deepEqual((await savedRows(page)).map((r) => r[0]).slice(2), ['Séq. 14 — Rupture (v2)', 'Séq. 14 — Rupture (v2) (copie)'], 'remise à son rang');
   await menu(page, 3, 'Supprimer');
-  await waitFor(page, () => chatSaved.length === 3);
-  assert.equal(await idbPhoto(page, idD), null, 'photo supprimée');
+  await page.evaluate(() => _usFlush());
+  assert.equal(await page.evaluate(() => chatSaved.length), 3);
+  assert.equal(await idbPhoto(page, idD), null, 'photo supprimée à l\'échéance');
+  assert.deepEqual(unexpected, [], 'plus de confirm()');
   // Rechargement de la télécommande : liste, entrée chargée et photo (relue d'IndexedDB) retrouvées
   await page.reload();
   await disc(page);
-  await page.click('#dcTab-saved');
   assert.deepEqual(await savedRows(page), [
     ['Séq. 12 — Maman inquiète', 'Maman ‹› Julie · 5 messages · Épuré', 'chargée'], ['Séq. 12 — Maman inquiète (copie)', 'Maman ‹› Julie · 5 messages · Épuré', ''],
     ['Séq. 14 — Rupture (v2)', 'Thomas ‹› Julie · 6 messages · Verre', ''],
   ]);
-  assert.equal(await page.textContent('#dcTab-saved'), 'Enregistrées (3)');
+  assert.equal(await page.textContent('#dcSavedTitle'), 'Discussions enregistrées · 3');
   await page.locator('#dcSavedRows .dc-saved-row').nth(2).click();
   await waitFor(page, () => !!_chatAvatar);
   assert.equal(await avatar(page), photo);
   assert.deepEqual(await page.evaluate((ids) => chatSaved.map((e) => e.id).filter((x) => ids.includes(x)).length, [idA, idB]), 2);
   // Déjà chargée, sans modification : retour au fil sans rien recharger (la scène en cours est gardée)
   await page.evaluate(() => sendNextChatMessage());
-  await page.click('#dcTab-saved');
   await page.locator('#dcSavedRows .dc-saved-row').nth(2).click();
   assert.deepEqual(await page.evaluate(() => [_chatView, _chat.sent.length]), ['thread', 1]);
   // La console DMX n'en voit aucune (les canaux Appel / SMS ne visent que la liste des appels)
@@ -179,7 +170,6 @@ test('chargement : entrées revalidées, textes jamais interprétés, plafond de
   });
   await page.reload();
   await disc(page);
-  await page.click('#dcTab-saved');
   const r = await page.evaluate(() => ({ n: chatSaved.length, first: chatSaved[0], last: chatSaved.at(-1).id }));
   assert.equal(r.n, 100, 'plafond');
   assert.deepEqual(r.first, {
@@ -191,10 +181,9 @@ test('chargement : entrées revalidées, textes jamais interprétés, plafond de
   assert.equal(r.last, 'c98');
   assert.equal(await page.evaluate(() => [window.__p, document.querySelectorAll('#dcSavedRows b, #dcSavedRows i, #dcSavedRows img').length].join()), ',0');
   assert.equal((await savedRows(page))[0][0], '<b onclick=window.__p=2>Nom</b>');
-  assert.equal(await page.textContent('#dcTab-saved'), 'Enregistrées (100)');
+  assert.equal(await page.textContent('#dcSavedTitle'), 'Discussions enregistrées · 100');
   // Liste pleine : enregistrement et duplication indisponibles
-  assert.equal(await page.isDisabled('#dcSaveBtn'), true);
-  assert.equal(await page.textContent('#dcSaveBtn'), 'Liste pleine (100 discussions)');
+  assert.equal(await page.evaluate(() => { openSaveChatSheet(); return !!_sheet; }), false, 'feuille d\'enregistrement refusée');
   assert.equal(await page.evaluate(async () => [await saveCurrentChat('x'), await duplicateSavedChat('c0'), chatSaved.length].join()), ',,100');
   // Le menu « ⋯ » ne propose plus « Dupliquer »
   await page.locator('#dcSavedRows .dc-saved-row .dc-saved-more').nth(0).click();
@@ -250,8 +239,8 @@ describe('discussion ouverte sur un écran', () => {
     await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-avatar').style.backgroundImage);
     assert.deepEqual(await sp.evaluate(() => [document.querySelectorAll('#screen-chat .scc-b').length, document.querySelector('#screen-chat .scc').className, document.querySelector('#screen-chat .scc-name').textContent]),
       [0, 'scc tonal scc-instant', 'Agence Riviera']);
-    assert.equal(await rp.textContent('#dcGo'), 'Envoyer n°1 (Agence Riviera)');
-    await rp.click('#dcGo');
+    assert.equal(await rp.textContent('#dcGoLbl'), 'ENVOYER N°1');
+    await chatGo(rp);
     await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 1);
     await sp.keyboard.type('Merci');
     await sp.keyboard.press('Enter');

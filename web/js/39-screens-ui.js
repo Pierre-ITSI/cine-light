@@ -12,7 +12,7 @@
 // confirmation ; le retrait lui-même : 29-revoke.js.
 // Modèle (registre, cible, état de chaque écran) : 28-screens.js.
 let _svOpen = false;
-let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group' | 'chatName' | 'chatMenu' | 'seqName' | 'seqMenu' | 'install' | 'callers' | 'callerMenu' | 'callerName' | 'callName' | 'callMenu', … }
+let _sheet = null;           // feuille ouverte : { kind: 'target' | 'rename' | 'screenGroups' | 'group' | 'chatName' | 'chatMenu' | 'chatThread' | 'seqName' | 'seqMenu' | 'seq…' | 'install' | 'callers' | 'callerMenu' | 'callerName' | 'callName' | 'callMenu' | 'callAll' | 'callDmx', … }
 const _uiHtml = new Map();   // dernier HTML posé par conteneur (pas de re-rendu inutile pendant un geste)
 
 function _setHtml(el, html) {
@@ -50,6 +50,7 @@ function renderTargetBtn() {
   btn.classList.toggle('subset', scrTarget().k !== 'all');
   const x = scrTargetText();
   _setHtml(document.getElementById('targetBtnLabel'), 'Cible : <b>' + escapeHtml(x.name) + '</b>' + (x.count ? '<span class="tb-n">' + x.count + '</span>' : ''));
+  if (typeof renderTelBar === 'function') renderTelBar(); // « sur Téléphone de Julie » (73-tel-ui.js)
 }
 // « Identifier tous » : tous les écrans clignotent pour se reconnaître sur le décor
 function scrIdentifyAll() {
@@ -89,13 +90,13 @@ function renderSheet(focus) {
   const title = document.getElementById('srSheetTitle'), body = document.getElementById('srSheetBody');
   const s = _sheet;
   let t = '', h = '', form = s.kind === 'rename' || s.kind === 'group';
-  if (s.kind === 'chatName' || s.kind === 'chatMenu' || s.kind === 'chatNew' || s.kind === 'seqName' || s.kind === 'seqMenu' || s.kind === 'seqNew') {
+  if (s.kind === 'chatName' || s.kind === 'chatMenu' || s.kind === 'chatNew' || s.kind === 'chatThread' || s.kind.startsWith('seq')) {
     // Discussions enregistrées (89-discussions-saved.js), séquences enregistrées (96-sequences-saved.js) : nom, menu « ⋯ »,
     // « Enregistrer avant ? » de « + Nouvelle séquence / discussion » (maquettes 47, 47b)
     const c = s.kind.startsWith('seq') ? seqSheetContent(s) : chatSheetContent(s);
     if (!c) { closeSheet(); return; }
     t = c.title; h = c.html; form = c.form;
-  } else if (s.kind === 'callName' || s.kind === 'callMenu') {
+  } else if (s.kind === 'callName' || s.kind === 'callMenu' || s.kind === 'callAll' || s.kind === 'callDmx') {
     // Appels, SMS et notifications enregistrés (maquettes 43b, 43c, 82-call-list.js) : nom, menu « ⋯ »
     const c = callListSheetContent(s);
     if (!c) { closeSheet(); return; }

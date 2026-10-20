@@ -27,7 +27,7 @@ const _CR_ID_RE = /^[A-Za-z0-9_-]{1,40}$/;
 // Textes affichés (maquettes 36, 36e), regroupés pour la traduction ({…} : valeurs)
 const _CR_TXT = {
   title: 'Appelants enregistrés',
-  link: 'Enregistrés ({n}) ›',
+  link: 'Changer', linkAria: 'Appelants enregistrés ({n})',
   photo: 'photo', noLabel: '—', sep: ' · ',
   add: '+ Enregistrer « {nom} » (actuel)', added: '✓ « {nom} » enregistré', full: 'Liste pleine ({max} appelants)',
   note: 'Un appelant enregistré sert aux appels, SMS et discussions : nom, sous-titre et photo. « ⋯ » : renommer, supprimer.',
@@ -223,8 +223,13 @@ function deleteCaller(id) {
 
 // ── Rendu dans l'onglet ──
 function renderCallerState() {
-  const link = _crTpl(_CR_TXT.link, { n: callers.length });
-  for (const id of ['callWhoSaved', 'dcCallersLink']) { setIconText(document.getElementById(id), link); }
+  // « Changer » sur la rangée du contact (phase 4) ; le nombre d'appelants enregistrés est dans son nom accessible
+  for (const id of ['callWhoSaved', 'dcCallersLink']) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.textContent = _CR_TXT.link;
+    el.setAttribute('aria-label', _crTpl(_CR_TXT.linkAria, { n: callers.length }));
+  }
   const saved = callerIsSaved(), named = !!_crCurrent().name;
   const btn = document.getElementById('callerSaveBtn'), note = document.getElementById('callerSavedNote');
   if (btn) {
@@ -233,6 +238,7 @@ function renderCallerState() {
     btn.disabled = !named || (!_crMatch(_crCurrent()) && callers.length >= CALLERS_MAX);
   }
   if (note) { setIconText(note, _CR_TXT.savedNote); note.style.display = saved ? '' : 'none'; }
+  if (typeof renderTelRows === 'function') renderTelRows();
   if (_sheet && _sheet.kind === 'callers') renderSheet();
 }
 

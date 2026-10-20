@@ -22,6 +22,10 @@ function setIconLabel(el, name, text) {
   if (el) el.innerHTML = iconLabel(name, text);
 }
 
+// Icônes citées par un nom passé en paramètre (boutons ↑ ↓, menus ⋯ des listes et de l'éditeur, barre Tel) :
+// listées ici pour que le sprite les embarque (scripts/build-icons.mjs lit cette table)
+const _ICON_MORE = { up: 'arrow-up', down: 'arrow-down', del: 'trash-2', dup: 'copy', save: 'bookmark', edit: 'pencil', hang: 'phone-off', order: 'list-ordered', load: 'download', quit: 'power', again: 'rotate-ccw', ok: 'check' };
+
 // Glyphe ou emoji en tête d'un message → icône. Les textes de statut gardent
 // leur glyphe d'origine dans le code (⚠ ⏳ 🎬…) : il est converti à l'affichage.
 const _ICON_LEAD = {

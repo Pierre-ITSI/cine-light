@@ -144,11 +144,11 @@ test('choix par type : libellés, décroché, volume ; mémorisés au rechargeme
   await setVolume(page, 80);
   const A = await page.evaluate(() => ringSettings.call.sound);
   assert.deepEqual(await label(page), ['Sonnerie', 'Volume de la sonnerie']);
-  assert.equal(await shown(page, 'callAnswerBlock'), true, 'appel : bande son au décroché');
+  assert.equal(await shown(page, 'telCallRows'), true, 'appel : bande son au décroché');
   // SMS : son de notification, sans décroché ; son par défaut tant qu'on n'a rien choisi
   await page.evaluate(() => setCallKind('sms'));
   assert.deepEqual(await label(page), ['Son de notification', 'Volume de la notification']);
-  assert.equal(await shown(page, 'callAnswerBlock'), false);
+  assert.equal(await shown(page, 'telCallRows'), false);
   assert.equal(await shown(page, 'callRingPanel'), true);
   assert.deepEqual(await activeChips(page).then((c) => c.filter((x) => x.startsWith('callring'))), ['callring-classic']);
   assert.equal(await page.evaluate(() => document.getElementById('ringVolVal').textContent), '100 %');
@@ -161,7 +161,7 @@ test('choix par type : libellés, décroché, volume ; mémorisés au rechargeme
   // Notification : Silencieux (panneau du son sous la tuile « Son »)
   await page.evaluate(() => { setCallKind('notif'); });
   await inView(page, () => page.click('#callring-silent'));
-  assert.equal(await shown(page, 'callAnswerBlock'), false);
+  assert.equal(await shown(page, 'telCallRows'), false);
   // Champs envoyés selon le type
   const fields = await page.evaluate(() => ['call', 'sms', 'notif'].map((k) => { setCallKind(k); const f = callFormFields(); return [f.ring, f.ringId, f.ringVolume]; }));
   assert.deepEqual(fields, [['classic', A, 0.8], ['classic', B, 0.6], ['silent', undefined, undefined]]);
@@ -330,7 +330,7 @@ describe('télécommande et écran reliés', () => {
     await rp.evaluate(() => { setCallKind('notif'); setNotifPresent('lock'); });
     await inView(rp, () => rp.locator('#ringLibRows .rt-row').nth(0).click());
     await clearAudio(sp);
-    await rp.click('#ntSendBtn');
+    await rp.click('#callTriggerBtn');
     await waitFor(sp, () => _callState === 'notif' && !!document.querySelector('#screen-call .sc-lock'));
     await waitFor(sp, () => window.__audio.some((e) => e.ev === 'start'));
     await sleep(500);
@@ -410,7 +410,7 @@ describe('télécommande et écran reliés', () => {
     await waitFor(sp, (id) => _mediaCache.has(id), A);
   });
 
-  test('liste : « Appeler n° 1 » sonne avec le son et le volume de l\'entrée', async () => {
+  test('liste : la ▶ de la ligne n° 1 sonne avec le son et le volume de l\'entrée', async () => {
     await importFile(rp, tone('entree.wav', 2, 660));
     const B = await rp.evaluate(() => ringSettings.call.sound);
     await setVolume(rp, 45);
@@ -419,7 +419,7 @@ describe('télécommande et écran reliés', () => {
     await rp.evaluate(() => { setCallRing('silent'); document.getElementById('ringVolSlider').value = '100'; onRingVolume(); setCallListKind('call'); });
     await clearAudio(sp);
     broker.clear();
-    await rp.click('#callListGo');
+    await rp.locator('#callListRows .cl-row').first().locator('.cl-play').click();
     await ringing();
     await waitFor(sp, () => !!_ringPlayer);
     const p = await sp.evaluate(() => ({ id: _ringPlayer.id, loop: _ringPlayer.src.loop, gain: _ringPlayer.gain.gain.value }));

@@ -115,7 +115,7 @@ function notifFormFields() {
 
 // Formulaire affiché (type Notification)
 function notifShowForm(on) {
-  for (const id of ['ntAppPanel', 'ntShowPanel', 'ntSendPanel']) {
+  for (const id of ['ntAppPanel', 'telNtTitleField', 'telNtBodyField', 'ntShowPanel']) {
     const el = document.getElementById(id);
     if (el) el.style.display = on ? '' : 'none';
   }

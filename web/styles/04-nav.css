@@ -90,9 +90,6 @@
 /* Champ de texte actif (clavier ouvert) : la barre s'efface */
 body.nv-kb #nv-tabs{display:none}
 
-/* Séquence : GO / retour / Stop collés au-dessus de la barre, à 16 px d'elle au moins (pas de changement d'onglet involontaire) */
-#nv-scroll .sq-ctl{bottom:0;padding-bottom:var(--sp-4)}
-
 /* ── Lumière : torche indisponible (iPhone) ── */
 #content-flash .flash-unavail-notice{margin-bottom:var(--sp-3)}
 
@@ -180,8 +177,8 @@ body.nv-kb #nv-tabs{display:none}
   #nv-head .nv-strip{flex:1 0 100%}
   #nv-scroll{padding:0 calc(24px + env(safe-area-inset-right)) var(--sp-5) 24px}
   .nv-sub{margin-left:-24px;margin-right:calc(-1 * (24px + env(safe-area-inset-right)));padding-left:24px;padding-right:calc(24px + env(safe-area-inset-right))}
-  #content-color.active,#content-flash.active,#content-effects.active,#content-media.active,#content-screens.active,#content-call.active{column-count:2;column-gap:var(--sp-4)}
-  #content-color.active>*,#content-flash.active>*,#content-effects.active>*,#content-media.active>*,#content-screens.active>*,#content-call.active>*{break-inside:avoid}
+  #content-color.active,#content-flash.active,#content-effects.active,#content-media.active,#content-screens.active{column-count:2;column-gap:var(--sp-4)}
+  #content-color.active>*,#content-flash.active>*,#content-effects.active>*,#content-media.active>*,#content-screens.active>*{break-inside:avoid}
   #content-seq.active{column-count:1}
   .nv-intro{column-span:all}
   #content-screens .pair-e2e{column-span:all}

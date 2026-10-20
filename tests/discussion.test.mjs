@@ -7,7 +7,7 @@
 // reprise après rechargement de l'écran, « Écrire… », ciblage, sécurité.
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { launchBrowser, openPage, waitFor, sleep, FakeBroker, pairingHash, fakePeer, deliverFrame, connectFakeClients } from './helpers/harness.mjs';
+import { launchBrowser, openPage, waitFor, sleep, FakeBroker, pairingHash, fakePeer, deliverFrame, connectFakeClients, chatGo, chatThreadMenu, chatTyping } from './helpers/harness.mjs';
 
 let browser;
 before(async () => { browser = await launchBrowser(); });
@@ -27,15 +27,14 @@ const compose = (page) => page.evaluate(() => {
 test('fil préparé : ajouter, modifier (texte, côté), glisser, supprimer ; gardé au rechargement', async () => {
   const { page, errors, close } = await openPage(browser);
   await page.evaluate(() => { startMode('remote'); switchTab('call'); setCallKind('discussion'); });
-  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcSendPanel']) assert.notEqual(await page.evaluate((id) => getComputedStyle(document.getElementById(id)).display, id), 'none', id);
-  for (const id of ['callWhoPanel', 'callTriggerPanel', 'callListPanel', 'callAnswerBlock']) assert.equal(await page.evaluate((id) => getComputedStyle(document.getElementById(id)).display, id), 'none', id);
+  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcSendPanel', 'dcSavedPanel']) assert.notEqual(await page.evaluate((id) => getComputedStyle(document.getElementById(id)).display, id), 'none', id);
+  for (const id of ['callWhoPanel', 'callListPanel', 'telCallRows']) assert.equal(await page.evaluate((id) => getComputedStyle(document.getElementById(id)).display, id), 'none', id);
   // Fil par défaut (maquette 26)
   assert.deepEqual(await rows(page), [
     ['1', 'Maman ›', 'Tu es où ?', ''], ['2', 'Maman ›', 'Ton père t\'attend depuis une heure', ''],
     ['3', 'Julie ›', 'je suis chez Léa, j\'arrive', ''], ['4', 'Maman ›', 'Je t\'ai vue avec lui. On en parlera ce soir.', ''], ['5', 'Julie ›', 'pardon maman', ''],
   ]);
-  assert.equal(await page.textContent('#dcGo'), 'Envoyer n°1 (Maman)');
-  assert.equal(await page.textContent('#dcPair'), 'Maman ‹› Julie');
+  assert.equal(await page.textContent('#dcGoLbl'), 'ENVOYER N°1');
   assert.equal(await page.textContent('#dcState'), 'Discussion fermée');
   // Noms
   await page.fill('#dcName', 'Papa');
@@ -59,6 +58,7 @@ test('fil préparé : ajouter, modifier (texte, côté), glisser, supprimer ; ga
   await page.locator('#dcRows .dc-edit .dc-edit-ok').click();
   assert.equal((await rows(page)).length, 6);
   // Glisser (appui maintenu) : la ligne 5 passe en tête
+  await page.evaluate(() => document.getElementById('dcRows').scrollIntoView({ block: 'center' }));
   const r5 = await page.locator('#dcRows .dc-row').nth(4).boundingBox();
   const r1 = await page.locator('#dcRows .dc-row').nth(0).boundingBox();
   await page.mouse.move(r5.x + 40, r5.y + r5.height / 2);
@@ -78,12 +78,12 @@ test('fil préparé : ajouter, modifier (texte, côté), glisser, supprimer ; ga
   assert.equal((await rows(page)).length, 5);
   assert.deepEqual(await page.evaluate(() => [_chat.name, _chat.actor, document.getElementById('dcName').value]), ['Papa', 'Léo', 'Papa']);
   // Style propre à la discussion (l'appel garde le sien), dans la vue « Style et son » (maquette 36d)
-  assert.equal(await page.innerHTML('#telStyleSum'), 'Épuré · Son des messages Silencieux · Vibreur non');
-  await page.click('#telStyleBtn');
+  assert.equal(await page.textContent('#telStyleSum2'), 'Épuré · Silencieux');
+  await page.click('#telStyleRow');
   assert.deepEqual(await page.evaluate(() => [document.getElementById('tsTitle').textContent, document.getElementById('ringPanelLabel').textContent]), ['Style et son', 'Son des messages']);
   await page.click('#callstyle-glass');
   await page.click('#tsBack');
-  assert.equal(await page.innerHTML('#telStyleSum'), 'Verre · Son des messages Silencieux · Vibreur non');
+  assert.equal(await page.textContent('#telStyleSum2'), 'Verre · Silencieux');
   assert.equal(await page.evaluate(() => [_chat.style, callStyle].join()), 'glass,glass');
   await page.evaluate(() => { setCallKind('call'); setCallStyle('tonal'); setCallKind('discussion'); });
   assert.equal(await page.evaluate(() => [_chat.style, callStyle].join()), 'glass,tonal');
@@ -146,19 +146,19 @@ describe('télécommande et écran reliés', () => {
   test('messages du contact : ouverture sur la cible, indicateur « … écrit » 2 s avant la bulle', async () => {
     await rp.evaluate((sid) => scrSetTarget({ k: 'screen', id: sid }), sid);
     broker.clear();
-    await rp.click('#dcGo'); // ouvre la discussion et poste le n° 1, sans indicateur
+    await chatGo(rp); // « Ouvrir sur l'écran » puis « Envoyer n° 1 » (sans indicateur)
     await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 1);
     assert.deepEqual(await bubbles(sp), ['< Tu es où ?']);
     assert.match(await rp.textContent('#dcState'), /^Discussion ouverte sur « /);
     await broker.flush();
     const sent = await broker.sent(rp);
-    assert.deepEqual(sent.filter((m) => m.type.startsWith('chat:')).map((m) => m.type), ['chat:msg', 'chat:msg', 'chat:msg', 'chat:msg', 'chat:msg', 'chat:open', 'chat:post']);
+    assert.deepEqual(sent.filter((m) => m.type.startsWith('chat:')).map((m) => m.type), ['chat:msg', 'chat:msg', 'chat:msg', 'chat:msg', 'chat:msg', 'chat:open', 'chat:open', 'chat:post']);
     assert.ok(sent.filter((m) => m.type.startsWith('chat:')).every((m) => JSON.stringify(m.target) === JSON.stringify({ screens: [sid] })), 'ciblés sur l\'écran choisi');
     assert.equal(await sp.evaluate(() => document.querySelector('#screen-chat .scc-name').textContent), 'Maman');
     // Avec l'indicateur
-    await rp.check('#dcTypingToggle');
-    assert.equal(await rp.textContent('#dcGo'), 'Envoyer n°2 (Maman)');
-    await rp.click('#dcGo');
+    await chatTyping(rp, true);
+    assert.equal(await rp.textContent('#dcGoLbl'), 'ENVOYER N°2');
+    await chatGo(rp);
     await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-typing'));
     assert.deepEqual(await bubbles(sp), ['< Tu es où ?'], 'pas encore de bulle');
     await sleep(1500);
@@ -166,7 +166,7 @@ describe('télécommande et écran reliés', () => {
     await waitFor(sp, () => !document.querySelector('#screen-chat .scc-typing'), null, { timeout: 3000 });
     assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '< Ton père t\'attend depuis une heure']);
     assert.deepEqual((await rows(rp)).map((r) => r[3]), ['posté', 'posté', 'en cours', '', '']);
-    assert.equal(await rp.textContent('#dcGo'), 'Envoyer n°4 (Maman)');
+    assert.equal(await rp.textContent('#dcGoLbl'), 'ENVOYER N°4');
   });
 
   test('message du comédien : chaque touche révèle la lettre suivante, envoi actif seulement une fois complet, progression sur la télécommande', async () => {
@@ -206,8 +206,8 @@ describe('télécommande et écran reliés', () => {
     // Touches sans message prêt (le contact doit d'abord écrire) : ignorées
     await sp.keyboard.type('abc');
     assert.deepEqual(await compose(sp), { typed: '', send: false });
-    await rp.uncheck('#dcTypingToggle');
-    await rp.click('#dcGo');
+    await chatTyping(rp, false);
+    await chatGo(rp);
     await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 4);
     await sp.keyboard.type('pardo');
     assert.equal((await compose(sp)).typed, 'pardo');
@@ -224,7 +224,7 @@ describe('télécommande et écran reliés', () => {
     await sp.keyboard.type('n maman');
     await sp.keyboard.press('Enter');
     await waitFor(rp, () => _chat.sent.includes('d5'));
-    assert.equal(await rp.textContent('#dcGo'), 'Plus de message de Maman');
+    assert.equal(await rp.textContent('#dcGoLbl'), 'Plus de message');
   });
 
   test('« Écrire… » : message improvisé du contact, inséré dans le fil ; modifications suivies ; Repartir de zéro, Fermer', async () => {
@@ -240,12 +240,11 @@ describe('télécommande et écran reliés', () => {
     await waitFor(sp, () => document.querySelector('#screen-chat .scc-b').textContent === 'T\'es où ?');
     await rp.locator('#dcRows .dc-edit .dc-edit-ok').click();
     // « Repartir de zéro » : plus rien de posté
-    assert.equal(await rp.textContent('#dcRestartBtn'), 'Repartir de zéro');
-    await rp.click('#dcRestartBtn');
+    await chatThreadMenu(rp, 'Repartir de zéro');
     await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 0);
-    assert.equal(await rp.textContent('#dcGo'), 'Envoyer n°1 (Maman)');
+    assert.equal(await rp.textContent('#dcGoLbl'), 'ENVOYER N°1');
     // Fermer
-    await rp.click('#dcCloseBtn');
+    await chatThreadMenu(rp, 'Fermer sur l\'écran');
     await waitFor(sp, () => document.getElementById('screen-chat').style.display === 'none');
     assert.equal(await rp.textContent('#dcState'), 'Discussion fermée');
   });

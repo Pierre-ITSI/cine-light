@@ -159,7 +159,7 @@ test('jetons : couleurs, rayons, !important absents hors mouvement réduit, anci
   assert.deepEqual(errors, []);
   await close();
   // Les 5 !important historiques ont disparu des feuilles d'origine
-  for (const f of readdirSync(new URL('../web/styles/', import.meta.url)).filter((f) => /^(?!0[1-4]-|99-)/.test(f))) {
+  for (const f of readdirSync(new URL('../web/styles/', import.meta.url)).filter((f) => /^(?!0[1-4]-|06-|99-)/.test(f))) {
     assert.doesNotMatch(readFileSync(new URL('../web/styles/' + f, import.meta.url), 'utf8'), /!important/, f);
   }
 });

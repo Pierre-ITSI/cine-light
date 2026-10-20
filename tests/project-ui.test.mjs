@@ -328,37 +328,40 @@ test('« + Nouvelle discussion » : fil vierge ; Enregistrer / Ne pas enregistre
   const state = () => page.evaluate(() => ({ msgs: _chat.msgs.length, name: _chat.name, actor: _chat.actor, saved: chatSaved.map((e) => e.name), sheet: _sheet && _sheet.kind }));
   const dirty = () => page.evaluate(() => { _chat.name = 'Léa'; _chat.msgs.push({ id: 'x1', from: 'contact', text: 'Salut' }); chatSave(); renderChatPanel(); });
   await page.evaluate(() => { switchTab('call'); setCallKind('discussion'); });
-  assert.equal(await text(page, '#dcNewBtn'), 'Nouvelle discussion');
+  // « Nouvelle discussion » : dans le ⋯ du titre « Fil » (la barre est réservée à l'envoi)
+  const newChat = async () => { await page.click('#dcThreadMore'); await page.locator('#srSheetBody .dc-menu-btn', { hasText: 'Nouvelle discussion' }).click(); };
+  await page.click('#dcThreadMore');
+  assert.deepEqual(await page.$$eval('#srSheetBody .dc-menu-btn', (b) => b.map((x) => x.textContent)), ['Nouvelle discussion', 'Enregistrer le fil', 'Repartir de zéro', 'Fermer sur l\'écran']);
+  await page.click('#sr-sheet .sr-cancel');
   // Fil d'exemple, inchangé : aussitôt
-  await page.click('#dcNewBtn');
+  await newChat();
   await waitFor(page, () => _chat.msgs.length === 0);
   assert.deepEqual(await state(), { msgs: 0, name: '', actor: 'Julie', saved: [], sheet: null });
   await dirty();
-  await page.click('#dcNewBtn');
+  await newChat();
   await waitFor(page, () => !!_sheet);
   assert.equal(await text(page, '#srSheetTitle'), 'Enregistrer « Léa ‹› Julie » avant ?');
   assert.match(await text(page, '#srSheetBody'), /La nouvelle discussion part d'un fil vide \(même comédien, même style\)\./);
   await page.click('#srSheetBody .sr-cancel');
   assert.deepEqual(await state(), { msgs: 1, name: 'Léa', actor: 'Julie', saved: [], sheet: null });
-  await page.click('#dcNewBtn');
+  await newChat();
   await waitFor(page, () => !!_sheet);
   await page.click('#chatNewDiscard');
   await waitFor(page, () => !_sheet);
   assert.deepEqual(await state(), { msgs: 0, name: '', actor: 'Julie', saved: [], sheet: null });
   await dirty();
-  await page.click('#dcNewBtn');
+  await newChat();
   await waitFor(page, () => !!_sheet);
   await page.click('#chatNewSave');
   await waitFor(page, () => !_sheet);
   assert.deepEqual(await state(), { msgs: 0, name: '', actor: 'Julie', saved: ['Léa ‹› Julie'], sheet: null });
   // Discussion ouverte sur les écrans : refus
   await page.evaluate(() => { _chat.open = true; });
-  await page.click('#dcNewBtn');
+  await newChat();
   await waitFor(page, () => !!_sheet);
   assert.equal(await text(page, '#srSheetTitle'), 'Impossible pour l\'instant');
   assert.match(await text(page, '#srSheetBody'), /fermez-la avant d'en commencer une nouvelle/);
-  await page.evaluate(() => { _chat.open = false; closeSheet(); setChatView('saved'); });
-  assert.equal(await page.locator('#dcNewBtn').isVisible(), false, 'masqué sur la liste des enregistrées');
+  await page.evaluate(() => { _chat.open = false; closeSheet(); });
   assert.deepEqual(errors, []);
   await close();
 });

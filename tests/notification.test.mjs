@@ -185,8 +185,9 @@ describe('télécommande et écran reliés', () => {
 
   test('formulaire : icône en fragments chiffrés, en cache sur l\'écran, renvoyée seulement si elle manque', async () => {
     await rp.evaluate(() => setCallKind('notif'));
-    for (const id of ['ntAppPanel', 'ntShowPanel', 'ntSendPanel']) assert.equal(await rp.evaluate((id) => getComputedStyle(document.getElementById(id)).display !== 'none', id), true, id);
-    for (const id of ['callWhoPanel', 'callMsgPanel', 'callLockPanel', 'callStyleRow', 'callTriggerBtn']) assert.equal(await rp.evaluate((id) => getComputedStyle(document.getElementById(id)).display, id), 'none', id);
+    for (const id of ['ntAppPanel', 'telNtTitleField', 'telNtBodyField', 'ntShowPanel']) assert.equal(await rp.evaluate((id) => getComputedStyle(document.getElementById(id)).display !== 'none', id), true, id);
+    for (const id of ['callWhoPanel', 'callMsgPanel', 'callLockPanel', 'telCallRows', 'callStyleRow']) assert.equal(await rp.evaluate((id) => getComputedStyle(document.getElementById(id)).display, id), 'none', id);
+    assert.match(await rp.textContent('#callTriggerLbl'), /^ENVOYER LA NOTIFICATION$/, 'une seule action de barre');
     assert.equal(await rp.textContent('#ntIconPreview'), 'B', 'sans icône : initiale de l\'application');
     broker.clear();
     await rp.setInputFiles('#ntIconInput', await pngFile(rp, 'banque.png', '#2a7ad5'));
@@ -207,7 +208,7 @@ describe('télécommande et écran reliés', () => {
     });
     assert.equal(await rp.textContent('#ntPhoneDateText'), 'ven. 17 oct.');
     broker.clear();
-    await rp.click('#ntSendBtn');
+    await rp.click('#callTriggerBtn');
     await waitFor(sp, () => _callState === 'notif');
     await broker.flush();
     const [start] = await broker.sent(rp, 'call:start');
@@ -246,7 +247,7 @@ describe('télécommande et écran reliés', () => {
     // Plus de tuiles : une rangée « Style et son » sous « Envoyer la notification »
     assert.equal(await rp.evaluate(() => !!document.querySelector('.nt-tiles, #ntSoundSlot')), false);
     assert.equal(await shown('telStyleRow'), false, 'rangée du type Notification sous l\'envoi');
-    assert.equal(await rp.innerHTML('#ntStyleSum'), 'Verre · Fond Dégradé<br>Son Classique · 100 % · Vibreur non');
+    assert.equal(await rp.textContent('#ntStyleSum'), 'Verre · Classique · 100 %');
     await rp.click('#ntStyleBtn');
     assert.equal(await shown('tel-style-view'), true);
     assert.equal(await rp.textContent('#tsTitle'), 'Style et son');
@@ -259,16 +260,16 @@ describe('télécommande et écran reliés', () => {
     await waitFor(sp, () => _mediaCache.has('__notifwall'));
     await rp.click('#tsBack');
     assert.equal(await shown('tel-style-view'), false);
-    assert.equal(await rp.innerHTML('#ntStyleSum'), 'Épuré · Fond Photo<br>Son Digitale · 100 % · Vibreur non');
+    assert.equal(await rp.textContent('#ntStyleSum'), 'Épuré · Digitale · 100 %');
     const f = await rp.evaluate(() => { const n = callFormFields(); setCallKind('sms'); const s = callFormFields(); setCallKind('notif'); return { n: [n.style, n.ring], s: [s.style, s.ring] }; });
     assert.deepEqual(f, { n: ['minimal', 'digital'], s: ['tonal', 'soft'] });
     await rp.evaluate(() => setCallKind('sms'));
-    assert.equal(await rp.innerHTML('#telStyleSum'), 'Tonal · Son Douce · 100 % · Vibreur non', 'SMS : ses propres réglages');
+    assert.equal(await rp.textContent('#telStyleSum2'), 'Tonal · Douce · 100 %', 'SMS : ses propres réglages');
     // Sur l'écran : chaque type a son fond
     const walls = await sp.evaluate(() => [_mediaCache.get('__lockwall').data, _mediaCache.get('__notifwall').data]);
     assert.notEqual(walls[0], walls[1]);
     await rp.evaluate(() => { setCallKind('notif'); });
-    await rp.click('#ntSendBtn');
+    await rp.click('#callTriggerBtn');
     await waitFor(sp, () => _callState === 'notif');
     let html = await sp.evaluate(() => document.querySelector('#screen-call .sc-lock').getAttribute('style'));
     assert.ok(html.includes(walls[1].slice(0, 60)), 'fond des notifications');
@@ -289,19 +290,20 @@ describe('télécommande et écran reliés', () => {
   test('liste « Notifs » : enregistrée avec son icône, rechargée, envoyée ; pas de plage DMX', async () => {
     await rp.evaluate(() => { setCallKind('notif'); document.getElementById('ntTitle').value = 'Rappel'; });
     await rp.evaluate(() => saveCurrentCall());
-    assert.equal(await rp.textContent('#clKind-notif'), 'Notifs (1)');
-    assert.equal(await rp.textContent('#callListWho'), 'Titre');
-    const row = await rp.evaluate(() => { const r = document.querySelector('#callListRows .cl-row'); return [r.querySelector('.cl-name').textContent, r.querySelector('.cl-meta').textContent, r.querySelector('.cl-dmx').textContent]; });
+    assert.equal(await rp.textContent('#callListTitle'), 'Notifications enregistrées · 1');
+    const row = await rp.evaluate(() => { const r = document.querySelector('#callListRows .cl-row'); return [r.querySelector('.cl-name').textContent, r.querySelector('.cl-meta').lastChild.textContent, callEntryDmxRange(0, 'notif')]; });
     assert.deepEqual(row, ['Rappel', 'Épuré · Banque Atlas · icône · écran verrouillé', '—']);
-    assert.match(await rp.textContent('#callListNote'), /ne se déclenchent pas depuis la console/);
-    assert.equal(await rp.textContent('#callListGo'), 'Envoyer la notification n°1');
+    assert.equal(await rp.evaluate(() => getComputedStyle(document.getElementById('callListDmx')).display), 'none', 'pas de canal console pour les notifications');
+    await rp.evaluate(() => openCallDmxInfo());
+    assert.match(await rp.textContent('#srSheetBody .sr-sheet-note'), /ne se déclenchent pas depuis la console/);
+    await rp.evaluate(() => closeSheet());
     // Formulaire changé puis entrée rechargée
     await rp.evaluate(() => { document.getElementById('ntTitle').value = 'Autre'; clearNotifIcon(); setNotifPresent('banner'); });
     await rp.locator('#callListRows .cl-row').first().click();
     await waitFor(rp, () => document.getElementById('ntTitle').value === 'Rappel' && !!_notifIcon);
     assert.equal(await rp.evaluate(() => notifPresent), 'lock');
     broker.clear();
-    await rp.click('#callListGo');
+    await rp.locator('#callListRows .cl-row').first().locator('.cl-play').click();
     await waitFor(sp, () => _callState === 'notif');
     await broker.flush();
     const [m] = await broker.sent(rp, 'call:start');

@@ -474,9 +474,7 @@ function renderRingPanel() {
     }).join('');
   }
   _ringRenderVol();
-  // Panneau « Au décroché » (bande son, décroché automatique) : appel seulement
-  const ans = document.getElementById('callAnswerBlock');
-  if (ans) ans.style.display = isCall ? 'block' : 'none';
+  // « Au décroché » (bande son, décroché automatique) : rangée de l'appel seulement (#telCallRows, 80-call-simulator.js)
 }
 
 function ringInit() {

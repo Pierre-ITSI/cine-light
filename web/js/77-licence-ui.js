@@ -61,11 +61,11 @@ function licLocked(f) { return _licPreview[f] === true; }
 // Éléments verrouillés : estompés (dim) ou seulement figés (ro, lisibles)
 const _LIC_LOCKS = {
   tel: {
-    dim: ['telStyleBtn', 'ntStyleBtn', 'callWhoSaved', 'callName', 'callLabel', 'callPhotoBtn', 'callerSaveBtn',
-      'callMsgText', 'callAppName', 'callAppColor', 'callLockPanel', 'ntAppPanel', 'ntShowPanel', 'callAnswerBlock',
-      'callListSave', 'callListUpd', 'callListDel', 'dcTab-saved', 'dcNewBtn', 'dcContactPanel', 'dcAdd', 'dcWriteBtn'],
+    // Rangées de réglage, champs sur place, signet et listes : figés ; ▶ des lignes, barre d'envoi et vue des appels restent actifs
+    dim: ['telStyleBtn', 'telRingBtn', 'telStyleRow', 'ntStyleBtn', 'callWhoSaved', 'telWhoBtn', 'callMsgText', 'telAppBtn', 'callLockPanel', 'ntAppPanel',
+      'telNtTitleField', 'telNtBodyField', 'ntShowPanel', 'callAnswerBlock', 'telSaveBtn', 'dcContactPanel', 'dcActorRow', 'dcAdd', 'dcWriteBtn', 'dcThreadMore'],
     ro: ['dcRows', 'dcTimingPanel'],
-    ex: ['callWhoLabel'],
+    ex: ['telPlayTitle'],
     banner: 'licPvTel',
   },
   seq: { dim: ['seqAddBtn', 'seqPhoneBtn', 'seqTab-saved', 'seqNewBtn'], ro: ['seqRows'], ex: [], banner: 'licPvSeq' },
@@ -113,6 +113,7 @@ function licSeqRestarted() {
 // ── Rechargement des onglets depuis le stockage (masqué ou réel) ──
 function _licReloadTel() {
   closeTelStyle();
+  closeTelDetail();
   if (_sheet) closeSheet();
   loadRingSettings();
   renderRingPanel();
@@ -143,7 +144,7 @@ function _licReloadSeq() {
 let _licTelBak = null, _licTelGen = 0;
 function _licTelBackup() {
   const inputs = {};
-  document.querySelectorAll('#content-call input, #content-call textarea').forEach((el) => {
+  document.querySelectorAll('#content-call input, #content-call textarea, #tel-detail-view input, #tel-detail-view textarea').forEach((el) => {
     if (el.id && el.type !== 'file') inputs[el.id] = { v: el.value, c: el.checked, t: el.dataset.touched };
   });
   _licTelBak = {

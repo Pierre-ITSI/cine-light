@@ -13,7 +13,6 @@
 // — Télécommande —
 // callKind : 'call' | 'sms' | 'notif' | 'discussion'
 let callKind = 'call', callStyle = 'glass', _callPhoto = null;
-let _callUiTimer = null, _callUiT0 = 0;
 const CALL_KINDS = ['call', 'sms', 'notif', 'discussion'];
 
 // Application fictive par défaut d'un SMS (modifiable)
@@ -26,7 +25,7 @@ const _CALL_STYLE_HINTS = {
 
 function _callShow(id, on, disp) {
   const el = document.getElementById(id);
-  if (el) el.style.display = on ? (disp || 'block') : 'none';
+  if (el) el.style.display = on ? (disp || '') : 'none';
 }
 function setCallKind(k) {
   if (k === 'chat' || k === 'whatsapp') k = 'sms'; // ancienne messagerie
@@ -34,7 +33,7 @@ function setCallKind(k) {
   callKind = k;
   CALL_KINDS.forEach(x => {
     const b = document.getElementById('callkind-' + x);
-    if (b) b.classList.toggle('active', x === k);
+    if (b) { b.classList.toggle('active', x === k); b.setAttribute('aria-checked', x === k ? 'true' : 'false'); }
   });
   // Nom/couleur d'app : on applique le défaut du type tant que l'utilisateur
   // ne les a pas personnalisés
@@ -43,36 +42,34 @@ function setCallKind(k) {
   if (def && an && !an.dataset.touched) an.value = def.name;
   if (def && ac && !ac.dataset.touched) ac.value = def.color;
   const call = k === 'call', sms = k === 'sms', notif = k === 'notif', disc = k === 'discussion';
-  // Vue « Style et sonnerie » : style commun (appel, SMS, discussion) ou
+  // Carte « À jouer » (maquettes 4a à 4d) : un seul squelette, les rangées du type
+  // choisi. Vue « Style et sonnerie » : style commun (appel, SMS, discussion) ou
   // style et fond propres à la notification
-  _callShow('telStyleRow', !notif); // notification : sa rangée est sous « Envoyer la notification »
+  _callShow('callWhoPanel', call || sms);
+  _callShow('callMsgPanel', sms);
+  _callShow('telAppBtn', sms);
+  _callShow('callLockPanel', sms);
+  _callShow('telCallRows', call);
+  _callShow('telStyleRow', sms || disc);
+  _callShow('ntStyleBtn', notif);
   _callShow('callStyleRow', !notif);
   _callShow('ntDetail-style', notif);
   _callShow('ntDetail-wall', notif);
   _callShow('callPresentRow', call);
-  _callShow('callWhoPanel', call || sms);
-  _callShow('callMsgPanel', sms);
-  _callShow('callLockPanel', sms);
-  _callShow('callTriggerPanel', !disc);
-  _callShow('callTriggerBtn', !notif, 'flex');
-  _callShow('callAnswerBtn', call, 'flex'); // « Décrocher » : appel seulement (pas de sens pour un SMS)
-  _callShow('callListPanel', !disc, 'flex');
+  _callShow('callListPanel', !disc);
   const who = document.getElementById('callWhoLabel');
   if (who) who.textContent = call ? 'Appelant' : 'Contact';
+  setIconText(document.getElementById('telPlayTitle'), 'À jouer');
   notifShowForm(notif);       // 84-notification.js
   chatShowForm(disc);         // 83-discussion.js
   _syncCallStyleChips();
   renderRingPanel(); // « Sonnerie », « Son de notification » ou « Son des messages » : choix propre au type
   _syncCallPhotoRow();
-  renderTelStyle();           // 78-tel-style.js : rangée résumé, vue ouverte
-  renderCallerState();        // 79-callers.js : « Enregistrés (n) », appelant enregistré ?
-  const btn = document.getElementById('callTriggerBtn');
-  if (btn) btn.innerHTML = call
-    ? '<span class="media-icon">' + icon('phone') + '</span> Faire sonner'
-    : '<span class="media-icon">' + icon('message-circle') + '</span> Envoyer la notification';
-  // Liste enregistrée : l'onglet suit le type choisi (Appels, SMS, Notifs)
+  renderTelStyle();           // 78-tel-style.js : rangées résumé, vue ouverte
+  renderCallerState();        // 79-callers.js : « Changer », appelant enregistré ? (et rangées : renderTelRows)
+  // Liste enregistrée : elle suit le type choisi (Appels, SMS, Notifications)
   if (CALL_LISTS.includes(k) && callListKind !== k) setCallListKind(k);
-  renderCallListSaveLabel(); // « + Enregistrer l'appel / le SMS / la notification actuel(le) »
+  renderCallList();           // 82-call-list.js : titre, lignes, barre d'action
 }
 // Style : commun à l'appel et au SMS ; la discussion a le sien (83-discussion.js),
 // la notification aussi (84-notification.js)
@@ -186,10 +183,12 @@ function renderCallAudioRow(message) {
     st.style.display = t ? 'block' : 'none';
     st.classList.toggle('rt-warn', !!message);
   }
+  renderTelRows(); // rangée « Au décroché »
 }
 function onCallAutoChange() {
   const v = parseInt(document.getElementById('callAutoSlider').value) || 0;
   document.getElementById('callAutoVal').textContent = v > 0 ? v + ' s' : 'Off';
+  renderTelRows();
 }
 // Photo de l'appelant : envoyée DÈS le choix, en fragments chiffrés mis en
 // cache sur l'écran sous '__callphoto' (comme le fond d'écran verrouillé) ;
@@ -340,11 +339,18 @@ async function triggerCall() {
     if (notif && fields.present === 'lock') await ensureSlotImage('__notifwall', _notifWallData);
   }
   sendMsg(Object.assign({ type: 'call:start' }, fields));
-  _setCallStatusUI(fields.kind === 'call' ? '📞 Sonnerie envoyée…' : notif ? '🔔 Notification envoyée' : '💬 SMS envoyé');
+  _setCallStatusUI(fields.kind === 'call' ? 'Sonnerie envoyée…' : notif ? 'Notification envoyée' : 'SMS envoyé');
+  telCallSent(fields.kind, fields.kind === 'call' ? fields.autoAnswer : 0);
 }
-function _setCallStatusUI(t) {
+// Ligne d'état de la barre Tel (au-dessus des boutons, vide au repos) ; un envoi de
+// SMS ou de notification s'efface seul après quelques secondes
+let _callStatusTimer = null;
+function _setCallStatusUI(t, keep) {
+  if (_callStatusTimer) { clearTimeout(_callStatusTimer); _callStatusTimer = null; }
   const el = document.getElementById('callStatus');
   setIconText(el, t);
+  if (t && !keep) _callStatusTimer = setTimeout(() => { _callStatusTimer = null; if (_telCall.phase === 'idle') _setCallStatusUI(''); }, 4000);
+  renderTelBar();
 }
 function remoteOnCallState(m) {
   // État de l'appel de cet écran (liste « Écrans connectés »)
@@ -356,18 +362,11 @@ function remoteOnCallState(m) {
     scrChanged();
     if (!scrInTarget(sid)) return; // l'interface suit les écrans de la cible
   }
-  if (_callUiTimer) { clearInterval(_callUiTimer); _callUiTimer = null; }
-  if (m.state === 'ringing') _setCallStatusUI("📞 Ça sonne sur l'écran…");
-  else if (m.state === 'incall') {
-    _callUiT0 = Date.now();
-    _callUiTimer = setInterval(() => {
-      const s = Math.floor((Date.now() - _callUiT0) / 1000);
-      _setCallStatusUI('🟢 En ligne · ' + fmtTime(s));
-    }, 500);
-    _setCallStatusUI('🟢 En ligne');
-  }
-  else if (m.state === 'declined') _setCallStatusUI('🔴 Refusé sur l\'écran');
-  else if (m.state === 'ended') _setCallStatusUI('⏹ Terminé');
+  // Barre Tel : sonne (Raccrocher / Décrocher), en ligne (Raccrocher), puis retour au repos
+  if (m.state === 'ringing') telCallPhase('ringing');
+  else if (m.state === 'incall') telCallPhase('incall');
+  else if (m.state === 'declined') telCallPhase('idle', 'Refusé sur l\'écran');
+  else if (m.state === 'ended') telCallPhase('idle', 'Terminé');
 }
 
 // — Écran : sons (WebAudio) —
