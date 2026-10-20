@@ -9,9 +9,9 @@
 //        Identifier / Dépatcher
 //   17 · Table des canaux d'un mode, pour le pupitreur, et son document PDF
 //        (bouton « PDF » : patch + tables des modes utilisés)
-// Accès : onglet QR de la télécommande, dans l'app native seulement (à valider :
+// Accès : onglet Écrans de la télécommande, dans l'app native seulement (à valider :
 // aucune maquette ne montre l'accès). Dans un navigateur, la vue explique
-// qu'il faut l'app (même principe que l'onglet Flash sur iPhone).
+// qu'il faut l'app (même principe que la torche sur iPhone).
 let _gwView = null, _gwMonitorId = null, _gwMonitorPct = false, _gwChannelsMode = DMX_DEFAULT_PERSONALITY;
 let _gwRenderTimer = null, _gwPdfError = null;
 
@@ -89,7 +89,7 @@ function gwRender() {
   else if (_gwView === 'channels') renderGwChannels();
 }
 
-// Accès depuis l'onglet QR : « active » tant que la passerelle tourne
+// Accès depuis l'onglet Écrans : « active » tant que la passerelle tourne
 function renderGwEntry() {
   const st = document.getElementById('gwEntryState');
   if (st) st.textContent = _gw ? '· active' : '';
@@ -236,7 +236,7 @@ function renderGwPatch() {
       + '<span class="gw-pmain"><span class="gw-pname">' + name + '</span><span class="gw-pnote">' + e.address + '–' + last + ' · ' + label + '</span></span>'
       + '<span class="gw-pu">' + e.universe + '</span><span class="gw-pa">' + e.address + '</span>'
       + '<span class="gw-pm">' + escapeHtml(SRDMX.getPersonality(e.personality).name) + '</span></button>';
-  }).join('') : '<div class="gw-pempty">Aucun écran appairé : appairez les écrans de jeu depuis l\'onglet QR de la télécommande.</div>';
+  }).join('') : '<div class="gw-pempty">Aucun écran appairé : appairez les écrans de jeu depuis l\'onglet Écrans de la télécommande.</div>';
   // Avertissement : premier chevauchement (ou adresse hors univers)
   const warnEl = document.getElementById('gwPatchWarn');
   const first = res.errors[0] || res.warnings[0];

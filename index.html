@@ -236,8 +236,7 @@ input[type="range"]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;b
 .target-btn .tb-icon{flex-shrink:0;color:var(--accent)}
 .tb-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* — Onglet QR : « Écrans appairés (n) » + « Gérer » (maquette 1) — */
-.pair-screens-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+/* — Onglet Écrans : « Identifier tous » (en-tête de la carte des écrans) — */
 .pair-manage{background:none;border:none;padding:10px 0 10px 16px;margin:-10px 0;font-family:'DM Mono',monospace;font-size:var(--fs-label);line-height:1;color:var(--accent);cursor:pointer}
 
 /* — Écran de jeu : son nom dans le menu (sur deux lignes si long) — */
@@ -2309,6 +2308,67 @@ body.nv-kb #nv-tabs{display:none}
   #previewMeta{display:none}
   #nv-head{gap:6px;padding-bottom:8px}
 }
+/* ── Écrans ── */
+.nv-h{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)}
+.nv-h .panel-label{margin:0}
+.nv-h-sub{font-size:var(--fs-caption);color:var(--text-2)}
+.pair-screens{display:block}
+.pair-screens-list{display:flex;flex-direction:column;gap:0}
+.pair-screen{display:flex;align-items:center;gap:var(--sp-3);width:100%;min-height:60px;padding:var(--sp-2) 0;border:0;border-top:1px solid var(--border);background:none;
+  color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.pair-screen:first-child{border-top:0}
+.ps-sw{flex:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--border-strong);background-size:cover}
+.ps-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.pair-screen .ps-name{font:700 var(--fs-body)/1.25 var(--font-ui);color:var(--text);flex:none}
+.ps-now{font-size:var(--fs-label);color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pair-screen .ps-link{flex:none;display:flex;align-items:center;gap:6px;font:700 var(--fs-caption)/1 var(--font-ui);color:var(--success)}
+.pair-screen .ps-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.pair-screen.lan .ps-link{color:var(--info)}
+.pair-screen.ble .ps-link{color:var(--warning)}
+.pair-screen.off .ps-link{color:var(--danger)}
+.pair-screen>.ic{flex:none;color:var(--text-3);width:18px;height:18px;vertical-align:0}
+.nv-empty{font-size:var(--fs-secondary);line-height:1.5;color:var(--text-2);border:1px dashed var(--border-strong);border-radius:var(--r-md);padding:var(--sp-4)}
+.nv-groups{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-3);padding-top:var(--sp-3);border-top:1px solid var(--border)}
+.nv-groups:empty{display:none}
+.nv-groups .sv-chip{height:var(--tap)}
+.pair-panel{align-items:stretch;gap:0}
+.nv-add{display:flex;gap:14px;align-items:center}
+.nv-add .pair-qr{flex:none;width:158px;height:158px;padding:6px;border-radius:12px}
+.nv-add .pair-qr svg{width:100%;height:100%}
+.nv-add-r{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--sp-2)}
+.nv-add .pair-steps{font-size:var(--fs-label);text-align:left;line-height:1.4}
+.nv-add .pair-or{display:none}
+.nv-add .pair-code-row{justify-content:flex-start;gap:var(--sp-2)}
+.nv-add .pair-code{font-size:26px;white-space:nowrap}
+.nv-add .pair-note,.nv-add .pair-wait{text-align:left;justify-content:flex-start;font-size:var(--fs-caption)}
+.nv-grp{margin:var(--sp-5) 2px var(--sp-2);font:700 var(--fs-secondary)/1 var(--font-ui);color:var(--text-2)}
+.nv-link-card{padding-top:0;padding-bottom:0}
+.nv-link-card .st-row:last-child{border-bottom:0}
+.nv-lead{display:flex;align-items:center;gap:var(--sp-3);min-height:60px}
+.nv-lead>.ic:first-child{flex:none;width:22px;height:22px;color:var(--accent-text)}
+.nv-lead .st-row-main{text-align:left}
+.pair-renew{width:100%;display:flex;align-items:center;justify-content:center;gap:var(--sp-2);margin-top:var(--sp-3)}
+#content-screens .pair-e2e{margin-top:var(--sp-4)}
+/* Feuille « Écran » : actions de la ligne touchée */
+.sr-act{display:flex;align-items:center;gap:var(--sp-3);width:100%;min-height:56px;padding:0 var(--sp-1);border:0;border-bottom:1px solid var(--border);background:none;color:var(--text);
+  font:inherit;text-align:left;cursor:pointer}
+.sr-act-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.sr-act-label{font-size:var(--fs-body);line-height:1.35}
+.sr-act-sub{font-size:var(--fs-label);line-height:1.4;color:var(--text-2)}
+.sr-act .ic-trail{color:var(--text-3)}
+.sr-act.danger .sr-act-label{color:var(--danger)}
+
+/* ── Très étroit (360 px) ── */
+@media (max-width:374px){
+  #nv-head .target-btn .tb-icon{display:none}
+  .nv-seg button{min-width:52px;padding:0 var(--sp-2)}
+  .nv-seg button .ic{display:none}
+  .nv-add{flex-direction:column;align-items:center}
+  .nv-add-r{align-items:center;width:100%}
+  .nv-add .pair-steps,.nv-add .pair-note,.nv-add .pair-wait{text-align:center;justify-content:center}
+  .nv-add .pair-code-row{justify-content:center}
+}
+
 </style>
 </head>
 <body>
@@ -11512,11 +11572,11 @@ document.addEventListener('focusout', () => setTimeout(navKeyboardSync, 0));
 // Télécommande : pastille de liaison dans l'en-tête et liste des écrans
 // appairés (onglet d'appairage). Un écran est « hors ligne » s'il n'a rien
 // envoyé depuis 40 s (il émet un signe de vie toutes les 15 s).
-// Maquette 4, cinq états : « Internet · chiffré », « Reconnexion… »,
-// « Wi-Fi local », « Bluetooth » (commandes seulement), « Hors ligne · n
-// écran(s) ». Avec les liaisons locales (21-links.js), la pastille montre la
-// liaison la plus faible qui relie encore un écran : Internet, sinon Wi-Fi
-// local, sinon Bluetooth ; chaque écran garde la sienne (maquette 5).
+// Pastille : l'état de la LIAISON seulement (« Connexion… », « Reconnexion… »,
+// « Horloge décalée », puis la liaison la plus faible qui relie encore un
+// écran : Internet, Wi-Fi local, Bluetooth). Les écrans muets ne s'y lisent
+// plus : badge de l'onglet Écrans (31-nav-status.js) et lignes de la liste.
+// Avec les liaisons locales (21-links.js), chaque écran garde sa liaison.
 const SCREEN_ALIVE_MS = 15000, SCREEN_OFFLINE_MS = 40000;
 let _linkState = 'connecting', _linkEverConnected = false, _linkWatch = null; // _linkState : transport Internet
 const _pairedScreens = new Map();   // screenId (ou étiquette d'émetteur) → { n, lastSeen, via? }
@@ -11566,33 +11626,40 @@ function renderLinkStatus() {
     } else if (clockSkewed) {
       cls = 'skew'; text = 'Horloge décalée'; // trames authentiques mais hors des 5 min de tolérance
     } else {
-      const off = _offlineScreens(now).length;
-      if (off) { cls = 'offline'; text = 'Hors ligne · ' + off + (off > 1 ? ' écrans' : ' écran'); }
-      else {
-        cls = remoteWorstLink(now);
-        text = cls === 'online' ? 'Internet · chiffré' : LINK_LABELS[cls];
-      }
+      cls = remoteWorstLink(now);
+      text = LINK_LABELS[cls === 'online' ? 'internet' : cls];
     }
     pill.className = 'link-pill ' + cls;
     lbl.textContent = text;
   }
-  renderPairedScreens(now);
+  renderScreensUi(now); // liste des écrans, puce Cible, vues ouvertes (39-screens-ui.js)
+  renderNavBadges(); // écrans hors ligne : badge de l'onglet Écrans
 }
 
-// Noms : ceux du registre de la session (28-screens.js, « Écran n » par défaut)
+// Noms : ceux du registre de la session (28-screens.js, « Écran n » par défaut).
+// Une ligne par écran (pastille de couleur, nom, ce qu'il montre, liaison) ;
+// la toucher ouvre la feuille « Écran » (39-screens-ui.js).
 function renderPairedScreens(now) {
   const box = document.getElementById('pairScreens'), list = document.getElementById('pairScreensList');
   if (!box || !list) return;
-  box.style.display = _pairedScreens.size ? 'flex' : 'none';
-  document.getElementById('pairScreensCount').textContent = String(_pairedScreens.size);
-  const order = (id, s) => { const e = _scrReg.screens.get(id); return e ? e.n : 1e6 + s.n; };
-  list.innerHTML = [..._pairedScreens.entries()].sort((a, b) => order(...a) - order(...b)).map(([id, s]) => {
-    const off = remoteLinkUp() && now - s.lastSeen > SCREEN_OFFLINE_MS;
-    const l = off ? 'off' : scrLinkOf(id, now);
-    return '<div class="pair-screen' + (off ? ' off' : l === 'internet' ? '' : ' ' + l) + '"><span class="ps-dot"></span>'
-      + '<span class="ps-name">' + escapeHtml(scrName(id)) + '</span><span class="ps-link">' + LINK_LABELS[l] + '</span></div>';
-  }).join('');
-  if (typeof renderScreensUi === 'function') renderScreensUi(); // liaison de chaque écran (maquette 5)
+  const ids = typeof scrList === 'function' ? scrList() : [];
+  document.getElementById('pairScreensCount').textContent = String(ids.length);
+  const empty = document.getElementById('pairScreensEmpty');
+  if (empty) empty.style.display = ids.length ? 'none' : 'block';
+  const idAll = document.getElementById('identifyAllBtn');
+  if (idAll) idAll.style.display = ids.length ? '' : 'none';
+  _setHtml(list, ids.map((id) => {
+    const l = scrLinkOf(id, now);
+    const now_ = scrNowText(id) || '';
+    return '<button type="button" class="pair-screen' + (l === 'off' ? ' off' : l === 'internet' ? '' : ' ' + l) + '" data-id="' + id + '" onclick="openScreenSheet(\'' + id + '\')">'
+      + '<span class="ps-sw" style="' + scrSwatchCss(id) + '"></span>'
+      + '<span class="ps-main"><span class="ps-name">' + escapeHtml(scrName(id)) + '</span><span class="ps-now">' + escapeHtml(now_) + '</span></span>'
+      + '<span class="ps-link"><span class="ps-dot"></span>' + LINK_LABELS[l] + '</span>' + icon('chevron-right', 'ic-trail') + '</button>';
+  }).join(''));
+  const gb = document.getElementById('pairGroups'), t = scrTarget();
+  _setHtml(gb, ids.length ? _scrReg.groups.map((g) => '<button type="button" class="sv-chip' + (t.k === 'group' && t.id === g.id ? ' on' : '')
+    + '" onclick="openGroupEditor(\'' + g.id + '\')">' + escapeHtml(g.name) + ' · ' + scrGroupMembers(g.id).length + '</button>').join('')
+    + (_scrReg.groups.length < SCR_GROUPS_MAX ? '<button type="button" class="sv-chip add" onclick="openGroupEditor(null)">+ Nouveau groupe</button>' : '') : '');
 }
 
 // Doublon authentifié arrivé par une autre liaison : cette liaison relie l'écran
@@ -11635,11 +11702,11 @@ function remoteNoteScreen(sender, msg, via, peer) {
 }
 function clearPairedScreens() { _pairedScreens.clear(); _screenOfSender.clear(); _linkPeerScreen.clear(); _pairedSeq = 0; renderLinkStatus(); }
 
-// Toucher la pastille : détail par écran (onglet d'appairage)
+// Toucher la pastille : détail par écran (onglet Écrans)
 function openLinkDetail() {
-  switchTab('qr');
-  const el = document.getElementById(_pairedScreens.size ? 'pairScreens' : 'content-qr');
-  if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  switchTab('screens');
+  const sc = navScroller();
+  if (sc) sc.scrollTop = 0;
 }
 function setScreenStatus(msg) {
   const el = document.getElementById('screen-status');
@@ -11907,37 +11974,42 @@ const _HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const _plural = (n, one, many) => n + ' ' + (n > 1 ? many : one);
 
 // Rafraîchit tout ce qui montre les écrans (appelé par scrChanged, renderLinkStatus)
-function renderScreensUi() {
+function renderScreensUi(now) {
   if (mode !== 'remote') return;
+  renderPairedScreens(now || Date.now()); // lignes de l'onglet Écrans (32-status.js)
   renderTargetBtn();
   renderScreensView();
-  if (_sheet && (_sheet.kind === 'target' || _sheet.kind === 'screenGroups')) renderSheet();
+  if (_sheet && (_sheet.kind === 'target' || _sheet.kind === 'screenGroups' || _sheet.kind === 'screen')) renderSheet();
   if (typeof renderOfflineView === 'function') renderOfflineView(); // préparation de chaque écran (maquette 10)
 }
 function closeScreensUi() { closeRevokeDialog(); closeSheet(); closeScreensView(); }
 
-// ── Bouton « Cible : … » (maquette 6) ──
-// Affiché dès deux écrans (ou une cible autre que « Tous »)
+// ── Puce « Cible : … » de l'en-tête (maquette 6) ──
+// Toujours visible, même avec un seul écran. Libellés courts :
+// « Cible : Tous · 3 », « Cible : Salon · 2 », « Cible : Tablette cuisine ».
 function scrTargetText() {
   const t = scrTarget();
-  if (t.k === 'group') { const g = scrGroup(t.id); return { name: g ? g.name : 'Groupe', count: ' (' + _plural(scrGroupMembers(t.id).length, 'écran', 'écrans') + ')' }; }
+  if (t.k === 'group') { const g = scrGroup(t.id); return { name: g ? g.name : 'Groupe', count: ' · ' + scrGroupMembers(t.id).length }; }
   if (t.k === 'screen') return { name: scrName(t.id), count: '' };
-  return { name: 'Tous les écrans', count: ' (' + scrList().length + ')' };
+  const n = scrList().length;
+  return n ? { name: 'Tous', count: ' · ' + n } : { name: 'Aucun écran', count: '' };
 }
 function renderTargetBtn() {
   const btn = document.getElementById('targetBtn');
   if (!btn) return;
-  const t = scrTarget();
-  const show = scrList().length >= 2 || t.k !== 'all';
-  btn.style.display = show ? 'flex' : 'none';
-  if (!show) return;
-  btn.classList.toggle('subset', t.k !== 'all');
+  btn.classList.toggle('subset', scrTarget().k !== 'all');
   const x = scrTargetText();
-  _setHtml(document.getElementById('targetBtnLabel'), 'Cible : <b>' + escapeHtml(x.name) + '</b>' + x.count);
+  _setHtml(document.getElementById('targetBtnLabel'), 'Cible : <b>' + escapeHtml(x.name) + '</b>' + (x.count ? '<span class="tb-n">' + x.count + '</span>' : ''));
+}
+// « Identifier tous » : tous les écrans clignotent pour se reconnaître sur le décor
+function scrIdentifyAll() {
+  const ids = scrList();
+  if (ids.length) sendMsg({ type: 'screen:identify', target: { screens: ids } });
 }
 
 // ── Feuilles ──
 function openTargetSheet() { _sheet = { kind: 'target' }; renderSheet(); }
+function openScreenSheet(id) { if (scrKnown(id)) { _sheet = { kind: 'screen', id }; renderSheet(); } }
 function openRenameScreen(id) { if (scrKnown(id)) { _sheet = { kind: 'rename', id }; renderSheet(true); } }
 function openScreenGroups(id) { if (scrKnown(id)) { _sheet = { kind: 'screenGroups', id }; renderSheet(); } }
 function openGroupEditor(gid, preset) {
@@ -12003,6 +12075,20 @@ function renderSheet(focus) {
     }
     for (const id of list) s.rows.push({ t: { k: 'screen', id }, label: scrName(id), meta: scrOnline(id) ? 'écran' : 'hors ligne' });
     h = s.rows.map((r, i) => _sheetRow(i, 'radio', 'srTarget', r.t.k === cur.k && r.t.id === cur.id, r.label, r.meta, r)).join('');
+  } else if (s.kind === 'screen') {
+    // Feuille « Écran » (touche d'une ligne de l'onglet Écrans) : mêmes actions que la vue « Écrans connectés »
+    const e = _scrReg.screens.get(s.id);
+    if (!e) { closeSheet(); return; }
+    t = scrName(s.id);
+    const link = scrOnline(s.id) ? scrLinkOf(s.id) : 'off';
+    const groups = e.groups.map((g) => (scrGroup(g) || {}).name).filter(Boolean);
+    const act = (label, sub, js, cls) => '<button type="button" class="sr-act' + (cls ? ' ' + cls : '') + '" onclick="' + js + '"><span class="sr-act-main"><span class="sr-act-label">'
+      + escapeHtml(label) + '</span>' + (sub ? '<span class="sr-act-sub">' + escapeHtml(sub) + '</span>' : '') + '</span>' + icon('chevron-right', 'ic-trail') + '</button>';
+    h = '<p class="sr-sheet-note">' + escapeHtml(LINK_LABELS[link] + ' · ' + (scrNowText(s.id) || '')) + '</p>'
+      + act('Identifier', 'Fait clignoter cet écran pour le reconnaître', 'scrIdentify(\'' + s.id + '\')')
+      + act('Renommer', '', 'openRenameScreen(\'' + s.id + '\')')
+      + act('Groupes', groups.length ? groups.join(' · ') : 'Sans groupe', 'openScreenGroups(\'' + s.id + '\')')
+      + act('Retirer l\'écran', '', 'closeSheet();openRevokeDialog(\'' + s.id + '\')', 'danger');
   } else if (s.kind === 'rename') {
     const e = _scrReg.screens.get(s.id);
     if (!e) { closeSheet(); return; }
@@ -12103,13 +12189,12 @@ function closeScreensView() {
   const v = document.getElementById('screens-view');
   if (v) v.classList.remove('open');
 }
-// « + Appairer » : l'appairage reste celui de l'onglet QR
+// « + Appairer » : l'appairage reste celui de l'onglet Écrans
 function screensViewPair() {
   closeSheet();
   closeScreensView();
-  switchTab('qr');
-  const rm = document.getElementById('remote-mode'), qr = document.getElementById('content-qr');
-  if (rm && qr) rm.scrollTop += qr.getBoundingClientRect().top - 80;
+  switchTab('screens');
+  navScrollTo(document.getElementById('pairPanel'), 72);
 }
 
 // Ce que montre un écran, d'après son état attendu et ses retours
@@ -22632,9 +22717,9 @@ function gwIdentify(id) {
 //        Identifier / Dépatcher
 //   17 · Table des canaux d'un mode, pour le pupitreur, et son document PDF
 //        (bouton « PDF » : patch + tables des modes utilisés)
-// Accès : onglet QR de la télécommande, dans l'app native seulement (à valider :
+// Accès : onglet Écrans de la télécommande, dans l'app native seulement (à valider :
 // aucune maquette ne montre l'accès). Dans un navigateur, la vue explique
-// qu'il faut l'app (même principe que l'onglet Flash sur iPhone).
+// qu'il faut l'app (même principe que la torche sur iPhone).
 let _gwView = null, _gwMonitorId = null, _gwMonitorPct = false, _gwChannelsMode = DMX_DEFAULT_PERSONALITY;
 let _gwRenderTimer = null, _gwPdfError = null;
 
@@ -22712,7 +22797,7 @@ function gwRender() {
   else if (_gwView === 'channels') renderGwChannels();
 }
 
-// Accès depuis l'onglet QR : « active » tant que la passerelle tourne
+// Accès depuis l'onglet Écrans : « active » tant que la passerelle tourne
 function renderGwEntry() {
   const st = document.getElementById('gwEntryState');
   if (st) st.textContent = _gw ? '· active' : '';
@@ -22859,7 +22944,7 @@ function renderGwPatch() {
       + '<span class="gw-pmain"><span class="gw-pname">' + name + '</span><span class="gw-pnote">' + e.address + '–' + last + ' · ' + label + '</span></span>'
       + '<span class="gw-pu">' + e.universe + '</span><span class="gw-pa">' + e.address + '</span>'
       + '<span class="gw-pm">' + escapeHtml(SRDMX.getPersonality(e.personality).name) + '</span></button>';
-  }).join('') : '<div class="gw-pempty">Aucun écran appairé : appairez les écrans de jeu depuis l\'onglet QR de la télécommande.</div>';
+  }).join('') : '<div class="gw-pempty">Aucun écran appairé : appairez les écrans de jeu depuis l\'onglet Écrans de la télécommande.</div>';
   // Avertissement : premier chevauchement (ou adresse hors univers)
   const warnEl = document.getElementById('gwPatchWarn');
   const first = res.errors[0] || res.warnings[0];
@@ -23773,7 +23858,7 @@ const _SEQ_TXT = {
   afterLabel: 'Après', fallbackLabel: 'Sinon après', never: 'jamais', seconds: '{n} s',
   endLoop: '🔁 Boucle', endPause: '⏯ 1× puis pause', endOff: '⏹ 1× puis off',
   none: {
-    color: 'Aucune mémoire de couleur : enregistrez-en une dans l\'onglet Couleur.',
+    color: 'Aucune mémoire de couleur : enregistrez-en une dans Lumière › Couleur.',
     effect: 'Aucune mémoire d\'effet : enregistrez-en une dans l\'onglet Effets.',
     media: 'Pool média vide : ajoutez des images ou des vidéos dans l\'onglet Média.',
     call: 'Aucun appel enregistré : enregistrez-en un dans l\'onglet Tel.',
@@ -25197,7 +25282,7 @@ function closePrivacyPolicy() {
 // Vue « Tourner sans réseau » (télécommande) : choix de la liaison (Auto,
 // Internet, Wi-Fi local, Bluetooth : 21-links.js) et « Préparation des
 // écrans ». Accès : ligne « Liaison par défaut » des Réglages (maquette 13) et
-// bouton de l'onglet QR (à côté de la passerelle DMX).
+// ligne de l'onglet Écrans (à côté de la passerelle DMX).
 //
 // Préparer = mettre en cache sur chaque écran, tant qu'une liaison à haut
 // débit existe (Internet ou Wi-Fi local), tout ce qu'une commande peut
@@ -25360,7 +25445,7 @@ function renderOfflineView() {
       + '<div class="off-row-head"><span class="off-name">' + escapeHtml(scrName(sid)) + '</span><span class="off-state">' + escapeHtml(s.state) + '</span></div>'
       + '<div class="off-bar"><div style="width:' + s.pct + '%"></div></div>'
       + '<div class="off-detail">' + escapeHtml(s.detail) + '</div></div>';
-  }).join('') : '<div class="off-empty">Aucun écran appairé : appairez les écrans (onglet QR), puis préparez-les ici.</div>');
+  }).join('') : '<div class="off-empty">Aucun écran appairé : appairez les écrans (onglet Écrans), puis préparez-les ici.</div>');
   const btn = document.getElementById('offPrepBtn'), note = document.getElementById('offPrepNote');
   let label = 'Tout préparer maintenant', on = false, why = '';
   const reach = list.filter((s) => scrOnline(s) && scrMediaReachable(s));
@@ -25378,7 +25463,7 @@ function renderOfflineView() {
   note.style.display = why ? 'block' : 'none';
   renderOfflineEntry();
 }
-// Bouton de l'onglet QR : liaison choisie quand ce n'est pas « Auto »
+// Ligne de l'onglet Écrans : liaison choisie quand ce n'est pas « Auto »
 function renderOfflineEntry() {
   const st = document.getElementById('offEntryState');
   if (st) { const p = linkPref(); st.textContent = p === 'auto' ? '' : '· ' + linkPrefLabel(p); }

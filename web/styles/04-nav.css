@@ -107,3 +107,64 @@ body.nv-kb #nv-tabs{display:none}
   #previewMeta{display:none}
   #nv-head{gap:6px;padding-bottom:8px}
 }
+/* ── Écrans ── */
+.nv-h{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)}
+.nv-h .panel-label{margin:0}
+.nv-h-sub{font-size:var(--fs-caption);color:var(--text-2)}
+.pair-screens{display:block}
+.pair-screens-list{display:flex;flex-direction:column;gap:0}
+.pair-screen{display:flex;align-items:center;gap:var(--sp-3);width:100%;min-height:60px;padding:var(--sp-2) 0;border:0;border-top:1px solid var(--border);background:none;
+  color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.pair-screen:first-child{border-top:0}
+.ps-sw{flex:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--border-strong);background-size:cover}
+.ps-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.pair-screen .ps-name{font:700 var(--fs-body)/1.25 var(--font-ui);color:var(--text);flex:none}
+.ps-now{font-size:var(--fs-label);color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pair-screen .ps-link{flex:none;display:flex;align-items:center;gap:6px;font:700 var(--fs-caption)/1 var(--font-ui);color:var(--success)}
+.pair-screen .ps-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.pair-screen.lan .ps-link{color:var(--info)}
+.pair-screen.ble .ps-link{color:var(--warning)}
+.pair-screen.off .ps-link{color:var(--danger)}
+.pair-screen>.ic{flex:none;color:var(--text-3);width:18px;height:18px;vertical-align:0}
+.nv-empty{font-size:var(--fs-secondary);line-height:1.5;color:var(--text-2);border:1px dashed var(--border-strong);border-radius:var(--r-md);padding:var(--sp-4)}
+.nv-groups{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-3);padding-top:var(--sp-3);border-top:1px solid var(--border)}
+.nv-groups:empty{display:none}
+.nv-groups .sv-chip{height:var(--tap)}
+.pair-panel{align-items:stretch;gap:0}
+.nv-add{display:flex;gap:14px;align-items:center}
+.nv-add .pair-qr{flex:none;width:158px;height:158px;padding:6px;border-radius:12px}
+.nv-add .pair-qr svg{width:100%;height:100%}
+.nv-add-r{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--sp-2)}
+.nv-add .pair-steps{font-size:var(--fs-label);text-align:left;line-height:1.4}
+.nv-add .pair-or{display:none}
+.nv-add .pair-code-row{justify-content:flex-start;gap:var(--sp-2)}
+.nv-add .pair-code{font-size:26px;white-space:nowrap}
+.nv-add .pair-note,.nv-add .pair-wait{text-align:left;justify-content:flex-start;font-size:var(--fs-caption)}
+.nv-grp{margin:var(--sp-5) 2px var(--sp-2);font:700 var(--fs-secondary)/1 var(--font-ui);color:var(--text-2)}
+.nv-link-card{padding-top:0;padding-bottom:0}
+.nv-link-card .st-row:last-child{border-bottom:0}
+.nv-lead{display:flex;align-items:center;gap:var(--sp-3);min-height:60px}
+.nv-lead>.ic:first-child{flex:none;width:22px;height:22px;color:var(--accent-text)}
+.nv-lead .st-row-main{text-align:left}
+.pair-renew{width:100%;display:flex;align-items:center;justify-content:center;gap:var(--sp-2);margin-top:var(--sp-3)}
+#content-screens .pair-e2e{margin-top:var(--sp-4)}
+/* Feuille « Écran » : actions de la ligne touchée */
+.sr-act{display:flex;align-items:center;gap:var(--sp-3);width:100%;min-height:56px;padding:0 var(--sp-1);border:0;border-bottom:1px solid var(--border);background:none;color:var(--text);
+  font:inherit;text-align:left;cursor:pointer}
+.sr-act-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.sr-act-label{font-size:var(--fs-body);line-height:1.35}
+.sr-act-sub{font-size:var(--fs-label);line-height:1.4;color:var(--text-2)}
+.sr-act .ic-trail{color:var(--text-3)}
+.sr-act.danger .sr-act-label{color:var(--danger)}
+
+/* ── Très étroit (360 px) ── */
+@media (max-width:374px){
+  #nv-head .target-btn .tb-icon{display:none}
+  .nv-seg button{min-width:52px;padding:0 var(--sp-2)}
+  .nv-seg button .ic{display:none}
+  .nv-add{flex-direction:column;align-items:center}
+  .nv-add-r{align-items:center;width:100%}
+  .nv-add .pair-steps,.nv-add .pair-note,.nv-add .pair-wait{text-align:center;justify-content:center}
+  .nv-add .pair-code-row{justify-content:center}
+}
+

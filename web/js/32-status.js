@@ -3,11 +3,11 @@
 // Télécommande : pastille de liaison dans l'en-tête et liste des écrans
 // appairés (onglet d'appairage). Un écran est « hors ligne » s'il n'a rien
 // envoyé depuis 40 s (il émet un signe de vie toutes les 15 s).
-// Maquette 4, cinq états : « Internet · chiffré », « Reconnexion… »,
-// « Wi-Fi local », « Bluetooth » (commandes seulement), « Hors ligne · n
-// écran(s) ». Avec les liaisons locales (21-links.js), la pastille montre la
-// liaison la plus faible qui relie encore un écran : Internet, sinon Wi-Fi
-// local, sinon Bluetooth ; chaque écran garde la sienne (maquette 5).
+// Pastille : l'état de la LIAISON seulement (« Connexion… », « Reconnexion… »,
+// « Horloge décalée », puis la liaison la plus faible qui relie encore un
+// écran : Internet, Wi-Fi local, Bluetooth). Les écrans muets ne s'y lisent
+// plus : badge de l'onglet Écrans (31-nav-status.js) et lignes de la liste.
+// Avec les liaisons locales (21-links.js), chaque écran garde sa liaison.
 const SCREEN_ALIVE_MS = 15000, SCREEN_OFFLINE_MS = 40000;
 let _linkState = 'connecting', _linkEverConnected = false, _linkWatch = null; // _linkState : transport Internet
 const _pairedScreens = new Map();   // screenId (ou étiquette d'émetteur) → { n, lastSeen, via? }
@@ -57,33 +57,40 @@ function renderLinkStatus() {
     } else if (clockSkewed) {
       cls = 'skew'; text = 'Horloge décalée'; // trames authentiques mais hors des 5 min de tolérance
     } else {
-      const off = _offlineScreens(now).length;
-      if (off) { cls = 'offline'; text = 'Hors ligne · ' + off + (off > 1 ? ' écrans' : ' écran'); }
-      else {
-        cls = remoteWorstLink(now);
-        text = cls === 'online' ? 'Internet · chiffré' : LINK_LABELS[cls];
-      }
+      cls = remoteWorstLink(now);
+      text = LINK_LABELS[cls === 'online' ? 'internet' : cls];
     }
     pill.className = 'link-pill ' + cls;
     lbl.textContent = text;
   }
-  renderPairedScreens(now);
+  renderScreensUi(now); // liste des écrans, puce Cible, vues ouvertes (39-screens-ui.js)
+  renderNavBadges(); // écrans hors ligne : badge de l'onglet Écrans
 }
 
-// Noms : ceux du registre de la session (28-screens.js, « Écran n » par défaut)
+// Noms : ceux du registre de la session (28-screens.js, « Écran n » par défaut).
+// Une ligne par écran (pastille de couleur, nom, ce qu'il montre, liaison) ;
+// la toucher ouvre la feuille « Écran » (39-screens-ui.js).
 function renderPairedScreens(now) {
   const box = document.getElementById('pairScreens'), list = document.getElementById('pairScreensList');
   if (!box || !list) return;
-  box.style.display = _pairedScreens.size ? 'flex' : 'none';
-  document.getElementById('pairScreensCount').textContent = String(_pairedScreens.size);
-  const order = (id, s) => { const e = _scrReg.screens.get(id); return e ? e.n : 1e6 + s.n; };
-  list.innerHTML = [..._pairedScreens.entries()].sort((a, b) => order(...a) - order(...b)).map(([id, s]) => {
-    const off = remoteLinkUp() && now - s.lastSeen > SCREEN_OFFLINE_MS;
-    const l = off ? 'off' : scrLinkOf(id, now);
-    return '<div class="pair-screen' + (off ? ' off' : l === 'internet' ? '' : ' ' + l) + '"><span class="ps-dot"></span>'
-      + '<span class="ps-name">' + escapeHtml(scrName(id)) + '</span><span class="ps-link">' + LINK_LABELS[l] + '</span></div>';
-  }).join('');
-  if (typeof renderScreensUi === 'function') renderScreensUi(); // liaison de chaque écran (maquette 5)
+  const ids = typeof scrList === 'function' ? scrList() : [];
+  document.getElementById('pairScreensCount').textContent = String(ids.length);
+  const empty = document.getElementById('pairScreensEmpty');
+  if (empty) empty.style.display = ids.length ? 'none' : 'block';
+  const idAll = document.getElementById('identifyAllBtn');
+  if (idAll) idAll.style.display = ids.length ? '' : 'none';
+  _setHtml(list, ids.map((id) => {
+    const l = scrLinkOf(id, now);
+    const now_ = scrNowText(id) || '';
+    return '<button type="button" class="pair-screen' + (l === 'off' ? ' off' : l === 'internet' ? '' : ' ' + l) + '" data-id="' + id + '" onclick="openScreenSheet(\'' + id + '\')">'
+      + '<span class="ps-sw" style="' + scrSwatchCss(id) + '"></span>'
+      + '<span class="ps-main"><span class="ps-name">' + escapeHtml(scrName(id)) + '</span><span class="ps-now">' + escapeHtml(now_) + '</span></span>'
+      + '<span class="ps-link"><span class="ps-dot"></span>' + LINK_LABELS[l] + '</span>' + icon('chevron-right', 'ic-trail') + '</button>';
+  }).join(''));
+  const gb = document.getElementById('pairGroups'), t = scrTarget();
+  _setHtml(gb, ids.length ? _scrReg.groups.map((g) => '<button type="button" class="sv-chip' + (t.k === 'group' && t.id === g.id ? ' on' : '')
+    + '" onclick="openGroupEditor(\'' + g.id + '\')">' + escapeHtml(g.name) + ' · ' + scrGroupMembers(g.id).length + '</button>').join('')
+    + (_scrReg.groups.length < SCR_GROUPS_MAX ? '<button type="button" class="sv-chip add" onclick="openGroupEditor(null)">+ Nouveau groupe</button>' : '') : '');
 }
 
 // Doublon authentifié arrivé par une autre liaison : cette liaison relie l'écran
@@ -126,11 +133,11 @@ function remoteNoteScreen(sender, msg, via, peer) {
 }
 function clearPairedScreens() { _pairedScreens.clear(); _screenOfSender.clear(); _linkPeerScreen.clear(); _pairedSeq = 0; renderLinkStatus(); }
 
-// Toucher la pastille : détail par écran (onglet d'appairage)
+// Toucher la pastille : détail par écran (onglet Écrans)
 function openLinkDetail() {
-  switchTab('qr');
-  const el = document.getElementById(_pairedScreens.size ? 'pairScreens' : 'content-qr');
-  if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  switchTab('screens');
+  const sc = navScroller();
+  if (sc) sc.scrollTop = 0;
 }
 function setScreenStatus(msg) {
   const el = document.getElementById('screen-status');

@@ -3,7 +3,7 @@
 // Vue « Tourner sans réseau » (télécommande) : choix de la liaison (Auto,
 // Internet, Wi-Fi local, Bluetooth : 21-links.js) et « Préparation des
 // écrans ». Accès : ligne « Liaison par défaut » des Réglages (maquette 13) et
-// bouton de l'onglet QR (à côté de la passerelle DMX).
+// ligne de l'onglet Écrans (à côté de la passerelle DMX).
 //
 // Préparer = mettre en cache sur chaque écran, tant qu'une liaison à haut
 // débit existe (Internet ou Wi-Fi local), tout ce qu'une commande peut
@@ -166,7 +166,7 @@ function renderOfflineView() {
       + '<div class="off-row-head"><span class="off-name">' + escapeHtml(scrName(sid)) + '</span><span class="off-state">' + escapeHtml(s.state) + '</span></div>'
       + '<div class="off-bar"><div style="width:' + s.pct + '%"></div></div>'
       + '<div class="off-detail">' + escapeHtml(s.detail) + '</div></div>';
-  }).join('') : '<div class="off-empty">Aucun écran appairé : appairez les écrans (onglet QR), puis préparez-les ici.</div>');
+  }).join('') : '<div class="off-empty">Aucun écran appairé : appairez les écrans (onglet Écrans), puis préparez-les ici.</div>');
   const btn = document.getElementById('offPrepBtn'), note = document.getElementById('offPrepNote');
   let label = 'Tout préparer maintenant', on = false, why = '';
   const reach = list.filter((s) => scrOnline(s) && scrMediaReachable(s));
@@ -184,7 +184,7 @@ function renderOfflineView() {
   note.style.display = why ? 'block' : 'none';
   renderOfflineEntry();
 }
-// Bouton de l'onglet QR : liaison choisie quand ce n'est pas « Auto »
+// Ligne de l'onglet Écrans : liaison choisie quand ce n'est pas « Auto »
 function renderOfflineEntry() {
   const st = document.getElementById('offEntryState');
   if (st) { const p = linkPref(); st.textContent = p === 'auto' ? '' : '· ' + linkPrefLabel(p); }

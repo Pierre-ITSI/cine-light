@@ -146,7 +146,7 @@ const _SEQ_TXT = {
   afterLabel: 'Après', fallbackLabel: 'Sinon après', never: 'jamais', seconds: '{n} s',
   endLoop: '🔁 Boucle', endPause: '⏯ 1× puis pause', endOff: '⏹ 1× puis off',
   none: {
-    color: 'Aucune mémoire de couleur : enregistrez-en une dans l\'onglet Couleur.',
+    color: 'Aucune mémoire de couleur : enregistrez-en une dans Lumière › Couleur.',
     effect: 'Aucune mémoire d\'effet : enregistrez-en une dans l\'onglet Effets.',
     media: 'Pool média vide : ajoutez des images ou des vidéos dans l\'onglet Média.',
     call: 'Aucun appel enregistré : enregistrez-en un dans l\'onglet Tel.',

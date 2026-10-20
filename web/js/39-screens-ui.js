@@ -24,37 +24,42 @@ const _HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const _plural = (n, one, many) => n + ' ' + (n > 1 ? many : one);
 
 // Rafraîchit tout ce qui montre les écrans (appelé par scrChanged, renderLinkStatus)
-function renderScreensUi() {
+function renderScreensUi(now) {
   if (mode !== 'remote') return;
+  renderPairedScreens(now || Date.now()); // lignes de l'onglet Écrans (32-status.js)
   renderTargetBtn();
   renderScreensView();
-  if (_sheet && (_sheet.kind === 'target' || _sheet.kind === 'screenGroups')) renderSheet();
+  if (_sheet && (_sheet.kind === 'target' || _sheet.kind === 'screenGroups' || _sheet.kind === 'screen')) renderSheet();
   if (typeof renderOfflineView === 'function') renderOfflineView(); // préparation de chaque écran (maquette 10)
 }
 function closeScreensUi() { closeRevokeDialog(); closeSheet(); closeScreensView(); }
 
-// ── Bouton « Cible : … » (maquette 6) ──
-// Affiché dès deux écrans (ou une cible autre que « Tous »)
+// ── Puce « Cible : … » de l'en-tête (maquette 6) ──
+// Toujours visible, même avec un seul écran. Libellés courts :
+// « Cible : Tous · 3 », « Cible : Salon · 2 », « Cible : Tablette cuisine ».
 function scrTargetText() {
   const t = scrTarget();
-  if (t.k === 'group') { const g = scrGroup(t.id); return { name: g ? g.name : 'Groupe', count: ' (' + _plural(scrGroupMembers(t.id).length, 'écran', 'écrans') + ')' }; }
+  if (t.k === 'group') { const g = scrGroup(t.id); return { name: g ? g.name : 'Groupe', count: ' · ' + scrGroupMembers(t.id).length }; }
   if (t.k === 'screen') return { name: scrName(t.id), count: '' };
-  return { name: 'Tous les écrans', count: ' (' + scrList().length + ')' };
+  const n = scrList().length;
+  return n ? { name: 'Tous', count: ' · ' + n } : { name: 'Aucun écran', count: '' };
 }
 function renderTargetBtn() {
   const btn = document.getElementById('targetBtn');
   if (!btn) return;
-  const t = scrTarget();
-  const show = scrList().length >= 2 || t.k !== 'all';
-  btn.style.display = show ? 'flex' : 'none';
-  if (!show) return;
-  btn.classList.toggle('subset', t.k !== 'all');
+  btn.classList.toggle('subset', scrTarget().k !== 'all');
   const x = scrTargetText();
-  _setHtml(document.getElementById('targetBtnLabel'), 'Cible : <b>' + escapeHtml(x.name) + '</b>' + x.count);
+  _setHtml(document.getElementById('targetBtnLabel'), 'Cible : <b>' + escapeHtml(x.name) + '</b>' + (x.count ? '<span class="tb-n">' + x.count + '</span>' : ''));
+}
+// « Identifier tous » : tous les écrans clignotent pour se reconnaître sur le décor
+function scrIdentifyAll() {
+  const ids = scrList();
+  if (ids.length) sendMsg({ type: 'screen:identify', target: { screens: ids } });
 }
 
 // ── Feuilles ──
 function openTargetSheet() { _sheet = { kind: 'target' }; renderSheet(); }
+function openScreenSheet(id) { if (scrKnown(id)) { _sheet = { kind: 'screen', id }; renderSheet(); } }
 function openRenameScreen(id) { if (scrKnown(id)) { _sheet = { kind: 'rename', id }; renderSheet(true); } }
 function openScreenGroups(id) { if (scrKnown(id)) { _sheet = { kind: 'screenGroups', id }; renderSheet(); } }
 function openGroupEditor(gid, preset) {
@@ -120,6 +125,20 @@ function renderSheet(focus) {
     }
     for (const id of list) s.rows.push({ t: { k: 'screen', id }, label: scrName(id), meta: scrOnline(id) ? 'écran' : 'hors ligne' });
     h = s.rows.map((r, i) => _sheetRow(i, 'radio', 'srTarget', r.t.k === cur.k && r.t.id === cur.id, r.label, r.meta, r)).join('');
+  } else if (s.kind === 'screen') {
+    // Feuille « Écran » (touche d'une ligne de l'onglet Écrans) : mêmes actions que la vue « Écrans connectés »
+    const e = _scrReg.screens.get(s.id);
+    if (!e) { closeSheet(); return; }
+    t = scrName(s.id);
+    const link = scrOnline(s.id) ? scrLinkOf(s.id) : 'off';
+    const groups = e.groups.map((g) => (scrGroup(g) || {}).name).filter(Boolean);
+    const act = (label, sub, js, cls) => '<button type="button" class="sr-act' + (cls ? ' ' + cls : '') + '" onclick="' + js + '"><span class="sr-act-main"><span class="sr-act-label">'
+      + escapeHtml(label) + '</span>' + (sub ? '<span class="sr-act-sub">' + escapeHtml(sub) + '</span>' : '') + '</span>' + icon('chevron-right', 'ic-trail') + '</button>';
+    h = '<p class="sr-sheet-note">' + escapeHtml(LINK_LABELS[link] + ' · ' + (scrNowText(s.id) || '')) + '</p>'
+      + act('Identifier', 'Fait clignoter cet écran pour le reconnaître', 'scrIdentify(\'' + s.id + '\')')
+      + act('Renommer', '', 'openRenameScreen(\'' + s.id + '\')')
+      + act('Groupes', groups.length ? groups.join(' · ') : 'Sans groupe', 'openScreenGroups(\'' + s.id + '\')')
+      + act('Retirer l\'écran', '', 'closeSheet();openRevokeDialog(\'' + s.id + '\')', 'danger');
   } else if (s.kind === 'rename') {
     const e = _scrReg.screens.get(s.id);
     if (!e) { closeSheet(); return; }
@@ -220,13 +239,12 @@ function closeScreensView() {
   const v = document.getElementById('screens-view');
   if (v) v.classList.remove('open');
 }
-// « + Appairer » : l'appairage reste celui de l'onglet QR
+// « + Appairer » : l'appairage reste celui de l'onglet Écrans
 function screensViewPair() {
   closeSheet();
   closeScreensView();
-  switchTab('qr');
-  const rm = document.getElementById('remote-mode'), qr = document.getElementById('content-qr');
-  if (rm && qr) rm.scrollTop += qr.getBoundingClientRect().top - 80;
+  switchTab('screens');
+  navScrollTo(document.getElementById('pairPanel'), 72);
 }
 
 // Ce que montre un écran, d'après son état attendu et ses retours
