@@ -10,7 +10,7 @@ import type { ShouldStartLoadRequest, WebViewNavigationEvent } from 'react-nativ
 import SetRemoteLink, { createLinkBridge, type LinkBridge } from '../modules/setremote-link';
 import SetRemoteUdp, { createDmxBridge, type DmxBridge } from '../modules/setremote-udp';
 import { createPdfPreviewer, type PdfPrintFn } from '../src/lib/pdfPreview';
-import { createProjectBridge, PROJECT_MIME, type PickedFile, type TempFile } from '../src/lib/projectFiles';
+import { createProjectBridge, PROJECT_PICK_TYPES, type PickedFile, type TempFile } from '../src/lib/projectFiles';
 import { nativeBootstrapScript } from '../src/config';
 
 // Coque native de SetRemote : la PWA (fonctionnalités de référence) tourne dans
@@ -22,7 +22,7 @@ import { nativeBootstrapScript } from '../src/config';
 // (module local modules/setremote-link, contrat dans docs/OFFLINE-NATIVE.md),
 // aperçu PDF in-app de la table des canaux DMX (expo-print, src/lib/pdfPreview.ts),
 // vibreur de l'écran de jeu (Vibration de React Native, la vue web n'en a pas),
-// fichiers projet .setremote (feuille de partage, sélecteur de fichier :
+// fichiers projet .rem (feuille de partage, sélecteur de fichier :
 // src/lib/projectFiles.ts, docs/PROJECTS.md § 6).
 // Les anciens écrans 100 % natifs (/native, /remote, /screen) et leurs
 // transports en clair ont été retirés : la vue web est la seule interface.
@@ -152,7 +152,7 @@ export default function AppShell() {
     inject: (script) => webRef.current?.injectJavaScript(script),
   }), []);
 
-  // Fichiers projet .setremote : project:save (morceaux base64 → fichier
+  // Fichiers projet .rem : project:save (morceaux base64 → fichier
   // temporaire du cache → feuille de partage d'expo-sharing) et project:open
   // (sélecteur de fichier d'expo-file-system → morceaux renvoyés par
   // window.SRNative.receive). expo-sharing est chargé à la demande : un
@@ -177,7 +177,7 @@ export default function AppShell() {
       return (uri, o) => Sharing.shareAsync(uri, o);
     },
     pick: async () => {
-      const r = await File.pickFileAsync({ mimeTypes: [PROJECT_MIME, 'application/octet-stream', '*/*'] });
+      const r = await File.pickFileAsync({ mimeTypes: PROJECT_PICK_TYPES });
       if (r.canceled || !r.result) return null;
       const f = r.result;
       const h = f.open();

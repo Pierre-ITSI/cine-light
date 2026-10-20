@@ -53,6 +53,7 @@ test('en-tête : engrenage « Réglages » à la place de « ← Retour » ; vue
   assert.equal(await visible(page, 'settings-view'), false);
   await page.click('#settingsBtn');
   assert.equal(await visible(page, 'settings-view'), true);
+  await page.evaluate(() => projectUiIdle()); // carte « Projet » : rendu asynchrone (74-project-ui.js)
   const view = await page.evaluate(() => {
     const t = (e) => e.textContent.replace(/\s+/g, ' ').trim();
     return {
@@ -70,6 +71,10 @@ test('en-tête : engrenage « Réglages » à la place de « ← Retour » ; vue
     lang: [['Français', true, 'true'], ['English', false, 'false']],
     note: 'none',
     rows: [
+      // Projet (maquette 45, tests/project-ui.test.mjs) : premier usage, « Mon projet »
+      ['Mon projet', 'Projet ouvert · 0 séquences · 0 discussions · 0 appels et SMS', 'Projets ›'],
+      ['Exporter le projet…', 'Fichier .rem à envoyer ou à archiver', '›'],
+      ['Importer un projet…', 'Ajouter, remplacer, ou ouvrir comme nouveau projet', '›'],
       ['Chiffrement de bout en bout', 'Clés générées sur vos appareils', 'Actif'],
       ['Avertissement stroboscope', 'Avant chaque activation', 'Activé'],
       ['Fréquence max du strobo', 'Sécurité photosensibilité', '30 Hz'],

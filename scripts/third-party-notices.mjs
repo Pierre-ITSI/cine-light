@@ -59,7 +59,7 @@ export const VENDORED = [
     copyright: 'Copyright (c) 2023 Arjun Barrett',
     files: ['vendor/fflate-0.8.2.min.js'], licenseFile: 'vendor/fflate-LICENSE.txt',
     source: 'npm fflate@0.8.2, umd/index.js (déjà minifié, non modifié)',
-    note: 'Compression deflate des fichiers projet .setremote (web/js/72-project.js), chargé à la demande.',
+    note: 'Compression deflate des fichiers projet .rem (web/js/72-project.js), chargé à la demande.',
   },
   {
     name: 'DM Mono (via @fontsource/dm-mono)', version: '5.3.0', license: 'OFL-1.1',

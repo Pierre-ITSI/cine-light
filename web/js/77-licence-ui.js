@@ -63,12 +63,12 @@ const _LIC_LOCKS = {
   tel: {
     dim: ['telStyleBtn', 'ntStyleBtn', 'callWhoSaved', 'callName', 'callLabel', 'callPhotoBtn', 'callerSaveBtn',
       'callMsgText', 'callAppName', 'callAppColor', 'callLockPanel', 'ntAppPanel', 'ntShowPanel', 'callAnswerBlock',
-      'callListSave', 'callListUpd', 'callListDel', 'dcTab-saved', 'dcContactPanel', 'dcAdd', 'dcWriteBtn'],
+      'callListSave', 'callListUpd', 'callListDel', 'dcTab-saved', 'dcNewBtn', 'dcContactPanel', 'dcAdd', 'dcWriteBtn'],
     ro: ['dcRows', 'dcTimingPanel'],
     ex: ['callWhoLabel'],
     banner: 'licPvTel',
   },
-  seq: { dim: ['seqAddBtn', 'seqPhoneBtn', 'seqTab-saved'], ro: ['seqRows'], ex: [], banner: 'licPvSeq' },
+  seq: { dim: ['seqAddBtn', 'seqPhoneBtn', 'seqTab-saved', 'seqNewBtn'], ro: ['seqRows'], ex: [], banner: 'licPvSeq' },
 };
 function _licLockUi(f, on) {
   const L = _LIC_LOCKS[f];

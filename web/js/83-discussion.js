@@ -638,7 +638,7 @@ let _chatView = 'thread';
 function chatShowForm(on) {
   const saved = on && _chatView === 'saved';
   const show = (id, v) => { const el = document.getElementById(id); if (el) el.style.display = v ? '' : 'none'; };
-  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcAutoPanel', 'dcSendPanel']) show(id, on && !saved);
+  for (const id of ['dcNewBtn', 'dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcAutoPanel', 'dcSendPanel']) show(id, on && !saved);
   if (!on || saved) show('dcTimingPanel', false);
   show('dcTabs', on);
   show('dcSavedPanel', saved);

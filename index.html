@@ -1408,6 +1408,95 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
   0%,100%{box-shadow:0 0 0 2px var(--stc),0 0 14px var(--stc)}
   50%{box-shadow:0 0 0 2px rgba(0,0,0,0),0 0 14px rgba(0,0,0,0)}
 }
+/* ══ Projets (maquettes validées 45 à 47b, 74-project-ui.js) ══
+   Préfixe prj- (pj- : appairage) ; la vue reprend le gabarit des Réglages (st-head, st-card,
+   st-row : 92-settings.css). */
+#project-view{display:none;position:fixed;inset:0;z-index:315;flex-direction:column;gap:12px;overflow-y:auto;overflow-x:hidden;background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);color:var(--text);font-family:'DM Mono',monospace;padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
+.prj-body{display:flex;flex-direction:column;gap:12px}
+.prj-label{padding-top:10px}
+.prj-last{border-bottom:none!important}
+.prj-accent{color:#FF8a55}
+#stProject .st-row:last-child{border-bottom:none}
+.prj-lastexp{margin-top:-4px}
+
+/* Cases à cocher, interrupteur, compteurs */
+.prj-chk{width:20px;height:20px;border-radius:5px;border:1.5px solid rgba(255,255,255,.35);flex:none;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:#000}
+.prj-chk.on{background:var(--accent);border-color:var(--accent)}
+.prj-chk.on:after{content:'✓';font-weight:700}
+.prj-chk.lock{opacity:.55}
+.prj-absent .prj-chk{opacity:.35}
+.prj-absent .st-row-label,.prj-absent .prj-cnt{color:#8f8f8f}
+.prj-srow{cursor:pointer}
+.prj-srow[aria-disabled="true"]{cursor:default}
+.prj-cnt{font-size:.75rem;color:var(--text);white-space:nowrap}
+.prj-cnt small{color:#a8a8a8;font-size:.625rem}
+.prj-tog{width:40px;height:24px;border-radius:12px;background:#3a3a3e;position:relative;flex:none}
+.prj-tog:after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#bdbdbd}
+.prj-tog.on{background:var(--accent)}
+.prj-tog.on:after{left:19px;background:#fff}
+.prj-compact .st-row{min-height:40px}
+
+/* Champ, textes, taille, bouton principal */
+.prj-input{height:44px;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:#1a1a1e;color:var(--text);font:.875rem 'DM Mono',monospace;padding:0 12px;width:100%;box-sizing:border-box}
+.prj-input:focus{outline:none;border-color:var(--accent)}
+.prj-sub{font-size:.625rem;color:#a8a8a8;line-height:1.55;margin:0}
+.prj-size{display:flex;justify-content:space-between;font-size:.6875rem;color:#c8c8c8}
+.prj-size b{color:var(--text);font-weight:500}
+.prj-primary{height:50px;flex-shrink:0;border-radius:8px;border:none;background:var(--accent);color:#000;font:500 .75rem 'DM Mono',monospace;letter-spacing:.08em;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}
+.prj-primary small{font-size:.5625rem;letter-spacing:.02em;font-weight:400;opacity:.75;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 12px}
+.prj-primary:disabled{opacity:.5;cursor:default}
+
+/* Fichier importé */
+.prj-file{display:flex;gap:12px;align-items:center}
+.prj-file>div{min-width:0}
+.prj-ico{width:44px;height:52px;border-radius:6px;background:linear-gradient(160deg,#FF6B2C,#b2441a);flex:none;display:flex;align-items:flex-end;justify-content:center;font:600 .5rem 'DM Mono',monospace;color:#000;padding-bottom:6px;letter-spacing:.04em;box-sizing:border-box}
+.prj-name{font:600 1rem 'Lato',sans-serif;color:var(--text);overflow-wrap:anywhere}
+.prj-file .prj-sub{overflow-wrap:anywhere}
+
+/* Choix exclusifs (mode d'import, nouveau projet) */
+.prj-mode{display:flex;flex-direction:column;gap:8px}
+.prj-mode-sheet{margin-top:12px}
+.prj-opt{border:1px solid rgba(255,255,255,.14);border-radius:8px;background:#252528;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;font-family:'DM Mono',monospace;color:inherit;cursor:pointer}
+.prj-opt.on{border-color:var(--accent);background:rgba(255,107,44,.08)}
+.prj-radio{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(255,255,255,.4);flex:none;margin-top:1px;position:relative;box-sizing:border-box}
+.prj-opt.on .prj-radio{border-color:var(--accent)}
+.prj-opt.on .prj-radio:after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--accent)}
+.prj-opt-t{display:block;font-size:.8125rem;color:var(--text)}
+.prj-opt.on .prj-opt-t{color:#FF8a55}
+.prj-opt-s{display:block;font-size:.625rem;color:#a8a8a8;line-height:1.5;margin-top:3px}
+
+/* Avertissements, compte rendu */
+.prj-warn{border:1px solid rgba(255,90,79,.5);background:rgba(255,90,79,.08);border-radius:8px;padding:10px 12px;font-size:.6875rem;color:#ffb0a8;line-height:1.55;flex-shrink:0}
+.prj-warn-soft{border-color:rgba(255,107,44,.5);background:rgba(255,107,44,.08);color:#ffc4a8}
+.prj-done{border:1px solid rgba(76,217,100,.45);background:rgba(76,217,100,.08);border-radius:8px;padding:10px 12px;font-size:.6875rem;color:#a6ecb3;line-height:1.55;flex-shrink:0}
+.prj-ok{display:flex;gap:10px;align-items:center;font:600 .9375rem 'Lato',sans-serif;color:var(--text)}
+.prj-ok i{width:28px;height:28px;border-radius:50%;background:rgba(76,217,100,.15);color:#4cd964;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:.875rem;flex:none}
+.prj-err i{background:rgba(255,90,79,.15);color:#ff7a70}
+.prj-err-text{font-size:.6875rem;color:#c8c8c8}
+.prj-plus{color:#4cd964}
+.prj-skip{color:#FF8a55}
+.prj-dim{color:#8f8f8f}
+
+/* Liste des projets (maquette 46) */
+.prj-projs{padding-top:2px}
+.prj-proj{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;box-sizing:border-box}
+.prj-proj:last-child{border-bottom:none}
+.prj-proj.act{border-left:3px solid var(--accent);margin-left:-14px;padding-left:11px;width:calc(100% + 14px)}
+.prj-proj.act .prj-pn{color:#FF8a55}
+.prj-pn{font-size:.8125rem;color:var(--text);overflow-wrap:anywhere}
+.prj-tag{font-size:.5rem;letter-spacing:.14em;text-transform:uppercase;color:#FF8a55;border:1px solid rgba(255,107,44,.5);border-radius:9px;padding:2px 6px;margin-left:6px;vertical-align:2px}
+.prj-pm{display:block;font-size:.625rem;color:#a8a8a8;margin-top:4px;line-height:1.45}
+.prj-more{color:#a8a8a8;font-size:1.15rem;padding:0 4px;min-width:44px;min-height:44px;background:none;border:none;cursor:pointer}
+.prj-sec{height:46px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:#252528;color:var(--text);font:.6875rem 'DM Mono',monospace;letter-spacing:.06em;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
+.prj-dash{border-style:dashed;color:#FF8a55;border-color:rgba(255,107,44,.6);background:transparent}
+
+/* Feuilles : texte d'explication, erreur */
+.prj-sheet-text{font-size:.75rem;line-height:1.6;color:#c8c8c8}
+.prj-sheet-err{color:#ff7a70}
+
+/* « + Nouvelle séquence » / « + Nouvelle discussion » (maquettes 47, 47b) */
+.prj-newbtn{display:flex;align-items:center;justify-content:center;width:100%;height:40px;border-radius:8px;border:1px dashed rgba(255,107,44,.6);background:transparent;color:#FF8a55;font:.6875rem 'DM Mono',monospace;letter-spacing:.04em;margin:0 0 12px;cursor:pointer}
+.sq>.prj-newbtn{margin-bottom:2px}
 /* ══ Réglages (maquette validée 13) et engrenage de l'en-tête (maquette 1) ══
    Préfixe st- propre aux réglages ; l'en-tête existant (20-remote.css,
    25-pairing.css) n'est pas modifié : seul le bouton engrenage s'y ajoute. */
@@ -2307,6 +2396,8 @@ button.st-row{cursor:pointer}
       <button type="button" class="gw-seg-btn active" id="dcTab-thread" onclick="setChatView('thread')">Fil en cours</button>
       <button type="button" class="gw-seg-btn" id="dcTab-saved" onclick="setChatView('saved')">Enregistrées (0)</button>
     </div>
+    <!-- Nouvelle discussion (maquette 47b) : fil vierge, « Enregistrer avant ? » si le fil a changé -->
+    <button type="button" class="prj-newbtn" id="dcNewBtn" style="display:none" onclick="chatNewAsk()">+ NOUVELLE DISCUSSION</button>
     <div class="dc-saved" id="dcSavedPanel" style="display:none">
       <div class="dc-saved-rows" id="dcSavedRows"></div>
       <div class="dc-saved-empty" id="dcSavedEmpty">Aucune discussion enregistrée pour l'instant.</div>
@@ -2405,6 +2496,8 @@ button.st-row{cursor:pointer}
       <button type="button" class="gw-seg-btn" id="seqTab-saved" onclick="setSeqView('saved')">Enregistrées (0)</button>
     </div>
     <div class="sq" id="seqCurView">
+      <!-- Nouvelle séquence (maquette 47) : séquence vide, « Enregistrer avant ? » si la séquence a changé -->
+      <button type="button" class="prj-newbtn" id="seqNewBtn" onclick="seqNewAsk()">+ NOUVELLE SÉQUENCE</button>
       <div class="sq-head"><span class="sq-title">Séquence</span><button type="button" class="sq-add" id="seqAddBtn" onclick="openSeqStep(null)">+ ÉTAPE</button></div>
       <div class="sq-sub"><span id="seqName"></span><span id="seqTarget"></span></div>
       <!-- Téléphone au départ (maquette 28b) : barre d'état de la séquence -->
@@ -2749,6 +2842,23 @@ button.st-row{cursor:pointer}
     <p class="st-note" id="stLicBuyNote" style="display:none"></p>
     <button type="button" class="st-lic-wide st-lic-buy" id="stLicBuy" style="display:none" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
   </div>
+  <!-- Projet (maquette 45, 74-project-ui.js) : projet ouvert, exporter, importer -->
+  <div class="st-card st-rows" id="stProject">
+    <span class="st-label prj-label">Projet</span>
+    <button type="button" class="st-row" id="stPrjOpen" onclick="openProjectsView()">
+      <span class="st-row-main"><span class="st-row-label" id="stPrjName">Mon projet</span><span class="st-row-sub" id="stPrjSub">Projet ouvert</span></span>
+      <span class="st-row-val prj-accent">Projets ›</span>
+    </button>
+    <button type="button" class="st-row" id="stPrjExport" onclick="openProjectExport()">
+      <span class="st-row-main"><span class="st-row-label">Exporter le projet…</span><span class="st-row-sub">Fichier .rem à envoyer ou à archiver</span></span>
+      <span class="st-row-val">›</span>
+    </button>
+    <button type="button" class="st-row prj-last" id="stPrjImport" onclick="projectImportPick()">
+      <span class="st-row-main"><span class="st-row-label">Importer un projet…</span><span class="st-row-sub">Ajouter, remplacer, ou ouvrir comme nouveau projet</span></span>
+      <span class="st-row-val">›</span>
+    </button>
+  </div>
+  <p class="st-note prj-lastexp" id="stPrjLast" style="display:none"></p>
   <div class="st-card">
     <span class="st-label">Langue</span>
     <div class="st-seg">
@@ -2782,6 +2892,16 @@ button.st-row{cursor:pointer}
     <span>Aucun compte · aucune publicité · aucun suivi</span>
     <span id="stVersion">SetRemote · by Pikoo</span>
   </div>
+</div>
+
+<!-- Projets (maquettes 45b à 46, 74-project-ui.js) : liste, export, aperçu de l'import, compte rendu, erreurs -->
+<div id="project-view" role="dialog" aria-modal="true" aria-labelledby="pjTitle">
+  <div class="st-head">
+    <button type="button" class="st-back" onclick="projectViewBack()">← Retour</button>
+    <span class="st-title" id="pjTitle">Projets</span>
+    <span class="st-spacer"></span>
+  </div>
+  <div class="prj-body" id="pjBody"></div>
 </div>
 
 <!-- Tourner sans réseau (maquette 10) : liaison (Auto / Internet / Wi-Fi local / Bluetooth) et préparation des écrans -->
@@ -6834,7 +6954,7 @@ const IN_NATIVE_APP = !!(window.SETREMOTE_NATIVE && window.ReactNativeWebView);
 //   vibrate:stop                                        arrête la vibration (décroché, refus, fin d'appel)
 //   dmx:listen, dmx:stop, udp:send, net:info, pdf:preview : docs/DMX-NATIVE.md
 //   link:start, link:stop, link:send, link:state?     : docs/OFFLINE-NATIVE.md
-//   project:save { id, name, size, i, n, data }        fichier .setremote par morceaux (data : base64,
+//   project:save { id, name, size, i, n, data }        fichier .rem par morceaux (data : base64,
 //                                                       PRJ_CHUNK = 512 Kio de caractères, multiple de 4
 //                                                       sauf le dernier) ; au dernier (i = n − 1), la coque
 //                                                       l'écrit puis ouvre la feuille de partage
@@ -10831,8 +10951,9 @@ function renderSheet(focus) {
   const title = document.getElementById('srSheetTitle'), body = document.getElementById('srSheetBody');
   const s = _sheet;
   let t = '', h = '', form = s.kind === 'rename' || s.kind === 'group';
-  if (s.kind === 'chatName' || s.kind === 'chatMenu' || s.kind === 'seqName' || s.kind === 'seqMenu') {
-    // Discussions enregistrées (89-discussions-saved.js), séquences enregistrées (96-sequences-saved.js) : nom, menu « ⋯ »
+  if (s.kind === 'chatName' || s.kind === 'chatMenu' || s.kind === 'chatNew' || s.kind === 'seqName' || s.kind === 'seqMenu' || s.kind === 'seqNew') {
+    // Discussions enregistrées (89-discussions-saved.js), séquences enregistrées (96-sequences-saved.js) : nom, menu « ⋯ »,
+    // « Enregistrer avant ? » de « + Nouvelle séquence / discussion » (maquettes 47, 47b)
     const c = s.kind.startsWith('seq') ? seqSheetContent(s) : chatSheetContent(s);
     if (!c) { closeSheet(); return; }
     t = c.title; h = c.html; form = c.form;
@@ -10844,6 +10965,11 @@ function renderSheet(focus) {
   } else if (s.kind === 'callers' || s.kind === 'callerMenu' || s.kind === 'callerName') {
     // Appelants enregistrés (maquette 36e, 79-callers.js) : liste, menu « ⋯ », renommer
     const c = callersSheetContent(s);
+    if (!c) { closeSheet(); return; }
+    t = c.title; h = c.html; form = c.form;
+  } else if (s.kind.startsWith('prj')) {
+    // Projets (maquettes 46 à 46c, 74-project-ui.js) : menu « ⋯ », renommer, nouveau projet, ouvrir, refus pendant le jeu
+    const c = projectSheetContent(s);
     if (!c) { closeSheet(); return; }
     t = c.title; h = c.html; form = c.form;
   } else if (s.kind === 'install') {
@@ -10928,6 +11054,7 @@ function sheetSave() {
   if (s.kind === 'seqName') { seqSheetSave(s, inp.value); return; }   // 96-sequences-saved.js
   if (s.kind === 'callerName') { callerSheetSave(s, inp.value); return; } // 79-callers.js
   if (s.kind === 'callName') { callListSheetSave(s, inp.value); return; } // 82-call-list.js
+  if (s.kind === 'prjName' || s.kind === 'prjNew') { projectSheetSave(s, inp.value); return; } // 74-project-ui.js
   if (s.kind === 'rename') scrRenameScreen(s.id, inp.value);
   else if (s.kind === 'group') {
     const members = [...s.members].filter(scrKnown);
@@ -14085,9 +14212,8 @@ function stopMediaBroadcast(notify = true, everywhere = false) {
   if (notify) sendMsg({ type: 'media-stop' });
 }
 // ══════════════════════════ PROJETS : EXPORT, IMPORT ET GESTION (télécommande) ══════════════════════════
-// MOTEUR SEULEMENT : aucun bouton, aucune vue. L'interface (Réglages › Projet,
-// feuilles d'export, d'aperçu et de compte rendu, liste des projets) attend les
-// maquettes 45 à 46c (règle : pas d'interface sans maquette validée).
+// Moteur. Interface (maquettes validées 45 à 46c : Réglages › Projet, vues
+// d'export, d'aperçu, de compte rendu, liste des projets) : 74-project-ui.js.
 // Contrat complet, inventaire du stockage et choix : docs/PROJECTS.md.
 //
 // Un PROJET regroupe ce que la télécommande a préparé pour une production :
@@ -14112,7 +14238,7 @@ function stopMediaBroadcast(notify = true, everywhere = false) {
 // du relais, patch DMX, préférences de l'appareil (langue, liaison…). Liste
 // exacte : PRJ_NEVER_KEYS ; garde-fou à l'export : _prjSecretScan.
 //
-// ── Fichier « Nom.setremote » = ZIP (méthodes 0 « stocké » et 8 « deflate ») ──
+// ── Fichier « Nom.rem » = ZIP (méthodes 0 « stocké » et 8 « deflate ») ──
 //   project.json        manifeste { format: 'setremote-project', version: 1,
 //                       app, created (ISO), name, sections, counts, files }
 //   data/<section>.json une entrée par section
@@ -14144,7 +14270,7 @@ function stopMediaBroadcast(notify = true, everywhere = false) {
 //
 // ── Projets locaux (plusieurs projets, un seul ouvert) ──
 // Base IndexedDB setremote-projects : meta { id, name, created, updated, size,
-// counts } et snap (instantané .setremote du projet quand il n'est pas ouvert) ;
+// counts, lastExport?, imported? } et snap (instantané .rem du projet quand il n'est pas ouvert) ;
 // projet ouvert : setremote-project-v1 { v, active }. Le contenu du projet
 // OUVERT est l'espace de travail (le stockage habituel des modules). Changer de
 // projet : instantané de l'espace de travail (même sérialiseur que l'export)
@@ -14166,8 +14292,13 @@ function stopMediaBroadcast(notify = true, everywhere = false) {
 //                 project:error { id, reason }
 const PRJ_FORMAT = 'setremote-project';
 const PRJ_VERSION = 1;
-const PRJ_EXT = '.setremote';
-const PRJ_MIME = 'application/zip';
+// Extension des fichiers écrits ; à l'import : .rem et l'ancienne .setremote
+// (le contenu est validé quel que soit le nom). Identifiant interne du format
+// (manifeste) inchangé : 'setremote-project'.
+const PRJ_EXT = '.rem';
+const PRJ_EXTS_IN = ['.rem', '.setremote'];
+const PRJ_MIME = 'application/zip';           // type du Blob produit (conteneur ZIP)
+const PRJ_SAVE_MIME = 'application/octet-stream'; // téléchargement : aucun navigateur n'y ajoute « .zip »
 const PRJ_FFLATE_SRC = 'vendor/fflate-0.8.2.min.js';
 const PRJ_SECTIONS = ['seq', 'chat', 'calls', 'callers', 'rings', 'memories', 'media'];
 const PRJ_ALL = PRJ_SECTIONS.concat(['work']);
@@ -14175,7 +14306,7 @@ const PRJ_CHUNK = 512 * 1024;                 // caractères base64 par message 
 const _PRJ_MB = 1024 * 1024;
 // Plafonds (objet modifiable par les tests seulement)
 const PRJ_LIMITS = {
-  file: 512 * _PRJ_MB,      // fichier .setremote
+  file: 512 * _PRJ_MB,      // fichier .rem
   total: 512 * _PRJ_MB,     // somme des entrées décompressées
   entries: 4000,
   manifest: 64 * 1024, json: 8 * _PRJ_MB,
@@ -14203,7 +14334,7 @@ const _PRJ_TXT = {
   defaultName: 'Projet', firstName: 'Mon projet', copy: '{nom} (copie)', untitledMem: 'Mémoire',
   sections: { seq: 'Séquences', chat: 'Discussions', calls: 'Appels et SMS', callers: 'Appelants', rings: 'Sonneries', memories: 'Mémoires', media: 'Médias', work: 'En cours' },
   err: {
-    'not-zip': 'Fichier non reconnu : ce n\'est pas un projet SetRemote (.setremote).',
+    'not-zip': 'Fichier non reconnu : ce n\'est pas un projet SetRemote (.rem).',
     'not-project': 'Ce fichier n\'est pas un projet SetRemote.',
     version: 'Ce projet vient d\'une version plus récente de SetRemote : mettez l\'app à jour pour l\'ouvrir.',
     'too-large': 'Fichier trop volumineux (plus de {max} Mo).',
@@ -14779,28 +14910,31 @@ function _prjSecretScan(text) {
 
 // ══════════ API : résumé, export ══════════
 // Contenu actuel par section (feuille d'export) : { counts, calls, media: { count, bytes }, bytes (estimation) }
+// bytesBy : estimation par section (photos, sons, images ; textes compris) pour la taille estimée
 async function projectSummary() {
   const sz = (d) => (typeof d === 'string' ? Math.round(d.length * 0.75) : 0);
-  let bytes = 0;
+  const txt = (k) => (_prjLsRaw(k) || '').length;
+  const by = { seq: txt(SEQ_SAVED_KEY), chat: txt(CHAT_SAVED_KEY), calls: txt(CALL_LIST_KEY), callers: txt(CALLERS_KEY), rings: txt(RING_SETTINGS_KEY), memories: txt(_PRJ_COLOR_KEY) + txt(_PRJ_FX_KEY) };
   const seqs = _prjSavedSeqs((_prjLsJson(SEQ_SAVED_KEY) || {}).list).slice(0, SEQ_SAVED_MAX);
   const imgs = new Set();
   for (const e of seqs) for (const s of _prjSeqImgs(e.steps, e.wall)) imgs.add(s);
-  for (const s of imgs) bytes += sz(await _prjAssetGet(seqHomeKey(s)));
+  for (const s of imgs) by.seq += sz(await _prjAssetGet(seqHomeKey(s)));
   const chats = _prjSavedChats((_prjLsJson(CHAT_SAVED_KEY) || {}).list).slice(0, CHAT_SAVED_MAX);
-  for (const e of (_prjLsJson(CHAT_SAVED_KEY) || {}).list || []) if (e && e.hasPhoto && chats.some((c) => c.id === e.id)) bytes += sz(await _prjAssetGet(_chsvPhotoKey(e.id)));
+  for (const e of (_prjLsJson(CHAT_SAVED_KEY) || {}).list || []) if (e && e.hasPhoto && chats.some((c) => c.id === e.id)) by.chat += sz(await _prjAssetGet(_chsvPhotoKey(e.id)));
   const lists = _prjCallLists(_prjLsJson(CALL_LIST_KEY));
   const calls = {};
   for (const k of CALL_LISTS) {
     calls[k] = Math.min(CALL_LIST_MAX, lists[k].length);
     for (const e of lists[k].slice(0, CALL_LIST_MAX)) {
-      if (e.hasPhoto) bytes += sz(await _prjAssetGet(e.id + ':photo'));
-      if (e.hasAudio) bytes += sz(await _prjAssetGet(e.id + ':audio'));
+      if (e.hasPhoto) by.calls += sz(await _prjAssetGet(e.id + ':photo'));
+      if (e.hasAudio) by.calls += sz(await _prjAssetGet(e.id + ':audio'));
     }
   }
   const crs = _prjCallers((_prjLsJson(CALLERS_KEY) || {}).list).slice(0, CALLERS_MAX);
-  for (const e of crs) if (e.hasPhoto) bytes += sz(await _prjAssetGet(_crPhotoKey(e.id)));
+  for (const e of crs) if (e.hasPhoto) by.callers += sz(await _prjAssetGet(_crPhotoKey(e.id)));
   const rings = (await _prjRingMetas()).slice(0, PRJ_LIMITS.rings);
-  for (const m of rings) bytes += m.size || 0;
+  for (const m of rings) by.rings += m.size || 0;
+  const bytes = Object.values(by).reduce((n, v) => n + v, 0);
   const mem = await _PRJ_OUT.memories();
   const media = _mediaPool.slice(0, PRJ_LIMITS.media).filter((m) => m.file);
   const mediaBytes = media.reduce((n, m) => n + (m.file.size || 0), 0);
@@ -14808,7 +14942,7 @@ async function projectSummary() {
     counts: { seq: seqs.length, chat: chats.length, calls: calls.call + calls.sms + calls.notif, callers: crs.length, rings: rings.length, memories: mem.color.length + mem.fx.length, media: media.length },
     calls, memories: { color: mem.color.length, fx: mem.fx.length },
     media: { count: media.length, bytes: mediaBytes },
-    bytes, // sans les médias
+    bytes, bytesBy: by, // sans les médias
   };
 }
 // Sections demandées, dans l'ordre du format ; médias seulement avec includeMedia
@@ -14987,7 +15121,9 @@ async function _prjSteps(p, steps, maps) {
   }
   return seqSanitizeSteps(out);
 }
-const _prjRes = () => ({ added: 0, removed: 0, skipped: 0, renamed: 0, same: 0 });
+// names : nouveaux noms des éléments renommés (3 au plus, compte rendu)
+const _prjRes = () => ({ added: 0, removed: 0, skipped: 0, renamed: 0, same: 0, names: [] });
+function _prjRenamed(r, name) { r.renamed++; if (r.names.length < 3) r.names.push(name); }
 function _prjWarn(R, section, code, name) { if (R.warnings.length < 50) R.warnings.push({ section, code, name: name || '' }); }
 
 const _PRJ_APPLY = {
@@ -15034,7 +15170,7 @@ const _PRJ_APPLY = {
         e.id = _prjFreshId(e.id, ids, gen);
         maps[k].set(e0.id, e.id);
         const nm = _prjUnique(e.name, names, 40);
-        if (nm !== e.name) { r.renamed++; e.name = nm; }
+        if (nm !== e.name) { _prjRenamed(r, nm); e.name = nm; }
         cur.push(e); r.added++;
       }
       _prjLsWrite(key, JSON.stringify(cur));
@@ -15096,7 +15232,7 @@ const _PRJ_APPLY = {
         if (e.ringId && maps.ring.has(e.ringId)) e.ringId = maps.ring.get(e.ringId);
         const nm = callEntryName(e);
         const u = _prjUnique(nm, names, CALL_TITLE_MAX);
-        if (u !== nm) { e.title = u; r.renamed++; }
+        if (u !== nm) { e.title = u; _prjRenamed(r, u); }
         const ph = await _prjLoadData(p, e0.photo, 'image');
         const au = e.kind === 'call' ? await _prjLoadData(p, e0.audio, 'audio', CALL_AUDIO_MAX_BYTES) : null;
         if ((e0.photo && !ph) || (e0.audio && !au)) _prjWarn(R, 'calls', 'file', callEntryName(e));
@@ -15126,7 +15262,7 @@ const _PRJ_APPLY = {
       e.id = _prjFreshId(e0.id, ids, _chsvNewId);
       maps.chat.set(e0.id, e.id);
       const nm = _prjUnique(e.name, names, CHAT_SAVED_NAME_MAX);
-      if (nm !== e.name) { e.name = nm; r.renamed++; }
+      if (nm !== e.name) { e.name = nm; _prjRenamed(r, nm); }
       const ph = await _prjLoadData(p, e0.photo, 'image');
       if (e0.photo && !ph) _prjWarn(R, 'chat', 'file', e.name);
       if (ph) { await _prjAssetPut(_chsvPhotoKey(e.id), ph); e.hasPhoto = true; e.photoSig = _chsvPhotoSig(ph); }
@@ -15148,7 +15284,7 @@ const _PRJ_APPLY = {
       maps.seq.set(e0.id, e.id);
       if (e0.wall) { const sig = await _prjImg(p, e0.wall.img, maps); e.wall = sig ? { img: sig, name: e0.wall.name } : null; }
       const nm = _prjUnique(e.name, names, SEQ_NAME_MAX);
-      if (nm !== e.name) { e.name = nm; r.renamed++; }
+      if (nm !== e.name) { e.name = nm; _prjRenamed(r, nm); }
       const c = _sqsvSanitize(e);
       if (!c) { r.skipped++; continue; }
       cur.push(c); r.added++;
@@ -15380,7 +15516,7 @@ function projectDelete(id) {
     return { ok: true, id };
   });
 }
-// Fichier .setremote d'un projet rangé (sans l'ouvrir) ; projet ouvert : export du contenu actuel
+// Fichier .rem d'un projet rangé (sans l'ouvrir) ; projet ouvert : export du contenu actuel
 function projectExportStored(id, opts = {}) {
   return _prjRun(async () => {
     const metas = await projectsInit();
@@ -15412,7 +15548,7 @@ async function _prjRewrite(snap, name) {
   }
   return _prjZipBuild(out, when);
 }
-// Fichier .setremote rangé comme NOUVEAU projet (validé en entier d'abord) ; ne l'ouvre pas
+// Fichier .rem rangé comme NOUVEAU projet (validé en entier d'abord) ; ne l'ouvre pas
 function projectImportAsNew(file, opts = {}) {
   return _prjRun(async () => {
     const p = await _prjOpen(file);
@@ -15421,10 +15557,21 @@ function projectImportAsNew(file, opts = {}) {
     _prjQuota(metas, file.size);
     const name = _prjUnique(_prjName(opts.name) || p.name, _prjNames(metas), 60);
     const now = Date.now();
-    const m = { id: _prjNewPid(), name, created: now, updated: now, size: file.size, counts: p.counts };
+    const m = { id: _prjNewPid(), name, created: now, updated: now, size: file.size, counts: p.counts, imported: true };
     const blob = file.slice(0, file.size, PRJ_MIME);
     await _prjTx('readwrite', (st, sn) => { st.put(m); return sn.put(blob, m.id); });
     return { ok: true, mode: 'new', id: m.id, name, counts: p.counts };
+  });
+}
+// Dernier export d'un projet (Réglages › Projet : « Dernier export : … ») : meta.lastExport { at, file }
+function projectNoteExport(id, file) {
+  return _prjRun(async () => {
+    const metas = await projectsInit();
+    const m = metas.find((x) => x.id === (id || projectActiveId()));
+    if (!m) throw _prjErr('not-found');
+    m.lastExport = { at: Date.now(), file: projectFileName(String(file || '').replace(/\.(rem|setremote)$/i, '')) };
+    await _prjTx('readwrite', (st) => st.put(m));
+    return { ok: true };
   });
 }
 // Quelque chose se joue sur les écrans : séquence lancée, discussion ouverte, appel en cours
@@ -15476,11 +15623,16 @@ function projectFileName(name) {
 }
 const _prjNat = { save: new Map(), open: null };
 const _prjNatId = () => 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-// Web : téléchargement « Nom.setremote » ; app : feuille de partage (pont par morceaux)
+// Nom d'un fichier reçu (sélecteur natif) : nettoyé, extension d'origine gardée
+function _prjPickedName(name) {
+  const n = String(name || '').replace(/[\u0000-\u001F\u007F/\\:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim().replace(/^[.\s]+/, '').slice(-80).trim();
+  return n || _PRJ_TXT.defaultName + PRJ_EXT;
+}
+// Web : téléchargement « Nom.rem » ; app : feuille de partage (pont par morceaux)
 async function projectSave(blob, name) {
   const file = projectFileName(name);
   if (!IN_NATIVE_APP) {
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(new Blob([blob], { type: PRJ_SAVE_MIME }));
     const a = document.createElement('a');
     a.href = url; a.download = file; a.rel = 'noopener';
     a.click();
@@ -15514,7 +15666,7 @@ function projectPick() {
   return new Promise((resolve) => {
     const inp = document.createElement('input');
     inp.type = 'file';
-    inp.accept = PRJ_EXT + ',application/zip';
+    inp.accept = PRJ_EXTS_IN.join(',') + ',' + PRJ_MIME;
     let settled = false;
     const end = (f) => { if (!settled) { settled = true; resolve(f); } };
     inp.addEventListener('change', () => end(inp.files && inp.files[0] ? inp.files[0] : null));
@@ -15545,13 +15697,692 @@ function projectOnNative(m) {
     && typeof m.data === 'string' && m.data.length <= PRJ_CHUNK && (m.i === m.n - 1 || m.data.length % 4 === 0) && _PRJ_B64_RE.test(m.data)
     && Number.isInteger(m.size) && m.size >= 0 && m.size <= PRJ_LIMITS.native;
   if (!ok) { o.done(null, _prjErr(m.size > PRJ_LIMITS.native ? 'too-large' : 'corrupt')); return true; }
-  if (m.i === 0) { o.n = m.n; o.size = m.size; o.name = projectFileName(String(m.name || '').replace(/\.setremote$/i, '')); }
+  if (m.i === 0) { o.n = m.n; o.size = m.size; o.name = _prjPickedName(m.name); }
   try { o.parts.push(_prjB64ToBytes(m.data)); } catch (_) { o.done(null, _prjErr('corrupt')); return true; }
   if (o.parts.length === o.n) {
     const f = new File(o.parts, o.name, { type: PRJ_MIME });
     if (f.size !== o.size) o.done(null, _prjErr('corrupt')); else o.done(f);
   }
   return true;
+}
+// ══════════════════════════ PROJETS : INTERFACE (télécommande) ══════════════════════════
+// Maquettes validées 45 à 46c. Moteur : 72-project.js ; contrat : docs/PROJECTS.md.
+//   45   Réglages › carte « Projet » : projet ouvert (nom, compteurs) → « Projets › »,
+//        « Exporter le projet… », « Importer un projet… », dernier export.
+//   45b  Vue « Exporter le projet » : nom, sections cochées avec compteurs, médias
+//        en option (taille), taille estimée, EXPORTER (web : téléchargement
+//        « Nom.rem » ; app : feuille de partage). Séquences cochées mais appels,
+//        discussions, appelants, sonneries ou mémoires décochés (non vides) :
+//        avertissement « introuvables ».
+//   45c  Vue « Importer un projet » : fichier (nom, taille, date d'export,
+//        version), sections du fichier à cocher, mode (Ajouter / Remplacer /
+//        Ouvrir comme nouveau projet), avertissement de ce que « Remplacer »
+//        supprime (sonneries importées comprises : un appel dont le son
+//        disparaît reprend « Classique »).
+//   45d  Compte rendu (« Projet importé ») ; 45e erreurs (rien n'a été modifié).
+//   46   Vue « Projets » : projet ouvert en orange, « ⋯ » (Ouvrir, Renommer,
+//        Dupliquer, Exporter…, Supprimer), « + NOUVEAU PROJET », « IMPORTER UN PROJET… ».
+//   46b  Feuille « Nouveau projet » (Vide / À partir du projet actuel) : créé puis ouvert.
+//   46c  Feuille « Ouvrir « … » ? » ; refus pendant le jeu (séquence lancée,
+//        discussion ouverte, appel en cours sur un écran).
+// Une seule vue plein écran (#project-view, gabarit des Réglages : st-head,
+// st-card) dont le contenu change ; les feuilles sont celles de 39-screens-ui.js
+// (_sheet, renderSheet). Aperçu sans licence : tout reste disponible ici (les
+// données importées vont dans le stockage réel, 72-project.js).
+// Nouvelle séquence / nouvelle discussion (maquettes 47, 47b) : 96-sequences-saved.js,
+// 89-discussions-saved.js.
+
+// Textes affichés, regroupés pour la traduction ({…} : valeurs)
+const _PJU_TXT = {
+  title: { list: 'Projets', export: 'Exporter le projet', import: 'Importer un projet', report: 'Projet importé', error: 'Importer un projet' },
+  sec: { seq: 'Séquences', chat: 'Discussions', calls: 'Appels et SMS', callers: 'Appelants', rings: 'Sonneries', memories: 'Mémoires', media: 'Médias' },
+  expSub: {
+    seq: 'Téléphone au départ et fonds d\'écran compris', chat: 'Timings et photos des contacts', callers: 'Avec leurs photos',
+    rings: 'Sons importés et choix par type', media: 'Images et vidéos du pool : lourd, facultatif', calls: 'Photos et bandes son comprises',
+  },
+  open: 'Projet ouvert', projects: 'Projets ›',
+  lastExport: 'Dernier export : {quand} · « {fichier} »',
+  n: {
+    seq: ['{n} séquence', '{n} séquences'], chat: ['{n} discussion', '{n} discussions'], calls: ['{n} appel ou SMS', '{n} appels et SMS'],
+    callers: ['{n} appelant', '{n} appelants'], rings: ['{n} sonnerie importée', '{n} sonneries importées'], memories: ['{n} mémoire', '{n} mémoires'],
+    media: ['{n} média', '{n} médias'], call: ['{n} appel', '{n} appels'], sms: ['{n} SMS', '{n} SMS'], notif: ['{n} notification', '{n} notifications'],
+    color: ['{n} couleur', '{n} couleurs'], fx: ['{n} effet', '{n} effets'],
+  },
+  short: '{seq} séq. · {chat} disc. · {calls} appels et SMS · {taille}',
+  modified: 'Modifié {quand}', imported: 'Importé {quand}', tagOpen: 'ouvert',
+  today: 'aujourd\'hui, {h}', yesterday: 'hier, {h}', day: 'le {j} {m}', dayYear: 'le {j} {m} {a}', dayTime: '{jour}, {h}',
+  months: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
+  // 45b
+  nameLabel: 'Nom du projet', fileLine: 'Fichier : « {fichier} »', content: 'Contenu',
+  always: 'Toujours compris : la séquence en cours et le fil de discussion en cours. Jamais : appairage, écrans, licence.',
+  missing: 'Certaines étapes des séquences utiliseront des éléments non exportés ({sections}) : elles arriveront « introuvables ».',
+  size: 'Taille estimée', sizeVal: '≈ {taille}', exportBtn: 'EXPORTER', exporting: 'EXPORT…',
+  exportWeb: 'Téléchargement de « {fichier} »', exportApp: 'Partager, enregistrer dans Fichiers…',
+  exported: '« {fichier} » exporté.',
+  // 45c
+  toImport: 'À importer', howTo: 'Comment l\'importer', notIn: 'Non inclus dans ce fichier', exportedOn: 'Exporté {quand}',
+  modes: {
+    merge: ['Ajouter à mes données', 'À la suite de « {projet} » ; doublons : « (2) ».', 'IMPORTER'],
+    replace: ['Remplacer', 'Sections cochées vidées, puis remplies.', 'REMPLACER ET IMPORTER'],
+    new: ['Ouvrir comme nouveau projet', '« {projet} » reste tel quel.', 'OUVRIR LE PROJET'],
+  },
+  newAll: 'Le projet est rangé en entier ; les médias cochés rejoignent le pool, commun à tous les projets.',
+  replaceWarn: '⚠ {liste} de « {projet} » seront supprimés. Exportez-le d\'abord pour les garder.',
+  replaceRings: 'Les sonneries importées sont remplacées aussi : un appel dont le son disparaît reprend « Classique ».',
+  and: ' et ', importing: 'IMPORT…',
+  // 45d
+  okMerge: '« {nom} » ajouté à « {projet} »', okReplace: '« {projet} » : sections remplacées par « {nom} »', okNew: '« {nom} » ouvert comme nouveau projet',
+  okNewStored: '« {nom} » rangé dans vos projets',
+  ignored: ['{n} ignoré', '{n} ignorés'], same: '{n} déjà là', full: 'Liste pleine', notImported: ['non importés', 'non importées'], notIncluded: 'non inclus',
+  removed: ['{n} supprimé', '{n} supprimés', '{n} supprimée', '{n} supprimées'],
+  renamed: ['{n} renommé : {noms}', '{n} renommés : {noms}', '{n} renommée : {noms}', '{n} renommées : {noms}'],
+  warn: {
+    callers: 'Photo illisible : appelant « {nom} », importé sans photo.', calls: 'Photo ou son illisible : « {nom} », importé sans.',
+    chat: 'Photo illisible : discussion « {nom} », importée sans photo.', rings: 'Son illisible : « {nom} », non importé.', media: 'Média illisible : « {nom} », non importé.',
+  },
+  warnMore: 'Et {n} autres.',
+  preview: 'Aperçu sans licence : les données importées sont gardées ; elles apparaîtront avec la licence.',
+  seqNote: 'Les étapes des séquences importées pointent vers les appels, discussions et mémoires importés avec elles.',
+  notOpened: 'Le projet n\'a pas été ouvert : {raison}',
+  seeSeqs: 'VOIR LES SÉQUENCES', close: 'FERMER',
+  // 45e
+  errTitle: {
+    'not-zip': 'Fichier non reconnu', 'not-project': 'Fichier non reconnu', 'too-large': 'Fichier trop volumineux', version: 'Version plus récente',
+    corrupt: 'Fichier abîmé', invalid: 'Contenu invalide', empty: 'Rien à importer', 'too-many': 'Projet trop gros', 'storage-full': 'Mémoire pleine', other: 'Import impossible',
+  },
+  errNotProject: '« {fichier} » n\'est pas un projet SetRemote (.rem).',
+  errTooLarge: '« {fichier} » dépasse {max} Mo. Exportez-le sans les médias.',
+  nothing: 'Rien n\'a été modifié.', partial: 'Les sections déjà écrites le restent.',
+  pickOther: 'CHOISIR UN AUTRE FICHIER',
+  // 46
+  newProject: '+ NOUVEAU PROJET', importProject: 'IMPORTER UN PROJET…',
+  listNote: 'Toucher un projet : l\'ouvrir. Écrans appairés, licence et réglages sont communs à tous les projets ; le pool média aussi.',
+  more: 'Ouvrir, renommer, dupliquer, exporter, supprimer',
+  menu: { open: 'Ouvrir', rename: 'Renommer', duplicate: 'Dupliquer', export: 'Exporter…', remove: 'Supprimer' },
+  cancel: 'Annuler', create: 'Créer', save: 'Enregistrer', ok: 'OK', openBtn: 'Ouvrir', opening: 'Ouverture…',
+  renameTitle: 'Renommer le projet',
+  confirmDelete: 'Supprimer le projet « {nom} » ? Son contenu est effacé de cet appareil.',
+  // 46b
+  newTitle: 'Nouveau projet',
+  newEmpty: ['Vide', 'Aucune séquence, discussion, appel ni mémoire.'],
+  newCopy: ['À partir du projet actuel', 'Copie de « {projet} » (sans les médias).'],
+  newNote: 'Le nouveau projet s\'ouvre ; « {projet} » est rangé tel quel.',
+  // 46c
+  openTitle: 'Ouvrir « {nom} » ?',
+  openText: '« {projet} » est rangé tel quel : séquences, discussions, appels, sonneries, mémoires, séquence et fil en cours. Les écrans restent appairés.',
+  busyTitle: 'Impossible pour l\'instant',
+  busy: {
+    seq: 'Une séquence est lancée sur les écrans. Arrêtez-la (↺ Recommencer) avant d\'ouvrir un autre projet.',
+    chat: 'Une discussion est ouverte sur les écrans. Fermez-la avant d\'ouvrir un autre projet.',
+    call: 'Un appel est en cours sur un écran. Raccrochez avant d\'ouvrir un autre projet.',
+  },
+  errTitleGeneric: 'Opération impossible',
+};
+const _pjuTpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
+const _pjuN = (k, n) => _pjuTpl(_PJU_TXT.n[k][n === 1 ? 0 : 1], { n }); // 0 : pluriel (« 0 appels et SMS »)
+const _pjuEsc = (s) => escapeHtml(String(s == null ? '' : s));
+const _PJU_SECS = ['seq', 'chat', 'calls', 'callers', 'rings', 'memories'];
+const _PJU_FEM = { seq: true, chat: true, rings: true, memories: true };
+// Sections dont les séquences dépendent (étapes « introuvables » si absentes)
+const _PJU_SEQ_DEPS = ['chat', 'calls', 'callers', 'rings', 'memories'];
+
+// ── État ──
+// view : 'list' | 'export' | 'import' | 'report' | 'error' ; from : vue d'où l'on vient ('list' ou null = Réglages)
+let _pju = { view: null, from: null, list: null, exp: null, imp: null, rep: null, err: null };
+// Rendus asynchrones en cours (projectUiIdle : captures et tests)
+const _pjuPending = new Set();
+function _pjuTrack(p) {
+  _pjuPending.add(p);
+  const done = () => _pjuPending.delete(p);
+  p.then(done, done);
+  return p;
+}
+// Opérations du moteur une à une (il refuse les appels simultanés : 'pending')
+let _pjuQ = Promise.resolve();
+const _pjuSerial = (fn) => (...a) => { const p = _pjuQ.then(() => fn(...a)); _pjuQ = p.catch(() => null); return p; };
+async function projectUiIdle() { while (_pjuPending.size) await Promise.all([..._pjuPending].map((p) => p.catch(() => null))); }
+
+// ── Formats ──
+function _pjuSize(b) {
+  b = Math.max(0, b || 0);
+  if (!b) return '0 Ko';
+  if (b < 100 * 1024) return Math.max(1, Math.round(b / 1024)) + ' Ko';
+  const mo = b / (1024 * 1024);
+  return (mo < 10 ? String(Math.round(mo * 10) / 10).replace('.', ',') : String(Math.round(mo))) + ' Mo';
+}
+const _pjuHm = (d) => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+function _pjuDay(d, withYear) {
+  return _pjuTpl(withYear ? _PJU_TXT.dayYear : _PJU_TXT.day, { j: d.getDate(), m: _PJU_TXT.months[d.getMonth()], a: d.getFullYear() });
+}
+// « aujourd'hui, 14:02 » · « hier, 23:12 » · « le 12 oct. » (time : « le 12 oct., 23:12 »)
+function _pjuWhen(ts, time) {
+  const d = new Date(ts), now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (ts >= start) return _pjuTpl(_PJU_TXT.today, { h: _pjuHm(d) });
+  if (ts >= start - 86400000) return _pjuTpl(_PJU_TXT.yesterday, { h: _pjuHm(d) });
+  const day = _pjuDay(d, d.getFullYear() !== now.getFullYear());
+  return time ? _pjuTpl(_PJU_TXT.dayTime, { jour: day, h: _pjuHm(d) }) : day;
+}
+function _pjuList(items) {
+  if (items.length <= 1) return items.join('');
+  return items.slice(0, -1).join(', ') + _PJU_TXT.and + items[items.length - 1];
+}
+const _pjuCountsLong = (c) => ['seq', 'chat', 'calls'].map((k) => _pjuN(k, (c && c[k]) || 0)).join(' · ');
+const _pjuCountsShort = (c, size) => _pjuTpl(_PJU_TXT.short, { seq: (c && c.seq) || 0, chat: (c && c.chat) || 0, calls: (c && c.calls) || 0, taille: _pjuSize(size) });
+function _pjuCallsSub(k) { return k ? ['call', 'sms', 'notif'].map((x) => _pjuN(x, k[x] || 0)).join(' · ') : ''; }
+function _pjuMemSub(m) { return m ? _pjuN('color', m.color) + ' · ' + _pjuN('fx', m.fx) : ''; }
+// Ce qui se joue sur les écrans (refus d'ouvrir un autre projet) : 'seq' | 'chat' | 'call' | null
+function _pjuBusyWhat() {
+  try {
+    if (typeof _seqRun !== 'undefined' && (_seqRun.state === 'running' || _seqRun.state === 'stopped')) return 'seq';
+    if (typeof _chat !== 'undefined' && _chat.open) return 'chat';
+    if (scrList().some((id) => scrKnown(id) && scrState(id).call)) return 'call';
+  } catch (_) {}
+  return projectLiveBusy() ? 'seq' : null;
+}
+function _pjuActive() { return _pju.list && _pju.list.list.find((m) => m.active) || null; }
+const _pjuActiveName = () => { const a = _pjuActive(); return a ? a.name : _PRJ_TXT.firstName; };
+
+// ══════════ 45 · Réglages : carte « Projet » ══════════
+function renderSettingsProject() {
+  return _pjuTrack(_pjuLoadList().then(() => {
+    const a = _pjuActive();
+    if (!a) return;
+    const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+    set('stPrjName', a.name);
+    set('stPrjSub', _PJU_TXT.open + ' · ' + _pjuCountsLong(a.counts));
+    const last = document.getElementById('stPrjLast');
+    if (last) {
+      const le = a.lastExport;
+      last.style.display = le && le.file ? '' : 'none';
+      last.textContent = le && le.file ? _pjuTpl(_PJU_TXT.lastExport, { quand: _pjuWhen(le.at, true), fichier: le.file }) : '';
+    }
+  }));
+}
+async function _pjuLoadList() {
+  const r = await _pjuSerial(projectsList)();
+  // Projet ouvert en tête, puis du plus récemment modifié au plus ancien
+  if (r.ok) r.list.sort((a, b) => (b.active - a.active) || (b.updated - a.updated) || (b.created - a.created) || a.name.localeCompare(b.name, 'fr'));
+  if (r.ok) _pju.list = r;
+  return r;
+}
+
+// ══════════ Vue plein écran ══════════
+function _pjuShow(view, from) {
+  if (from !== undefined) _pju.from = from;
+  _pju.view = view;
+  const v = document.getElementById('project-view');
+  document.getElementById('pjTitle').textContent = _PJU_TXT.title[view];
+  v.style.display = 'flex';
+  _pjuRender();
+  v.scrollTop = 0;
+}
+function closeProjectView() {
+  _pju.view = null;
+  const v = document.getElementById('project-view');
+  if (v) v.style.display = 'none';
+  if (document.getElementById('settings-view').style.display !== 'none') renderSettingsProject();
+}
+// « ← Retour » : vers la liste si l'on en vient, sinon vers les Réglages
+function projectViewBack() {
+  if (_pju.view !== 'list' && _pju.from === 'list') { openProjectsView(); return; }
+  closeProjectView();
+}
+function _pjuRender() {
+  const body = document.getElementById('pjBody');
+  if (!body) return;
+  const fn = { list: _pjuListHtml, export: _pjuExportHtml, import: _pjuImportHtml, report: _pjuReportHtml, error: _pjuErrorHtml }[_pju.view];
+  body.innerHTML = fn ? fn() : '';
+}
+
+// ══════════ 46 · Projets ══════════
+function openProjectsView() {
+  _pjuShow('list', null);
+  return _pjuTrack(_pjuLoadList().then(() => { if (_pju.view === 'list') _pjuRender(); }));
+}
+function _pjuListHtml() {
+  const L = _pju.list ? _pju.list.list : [];
+  const rows = L.map((m) => {
+    const when = m.imported && m.updated === m.created ? _pjuTpl(_PJU_TXT.imported, { quand: _pjuWhen(m.created) }) : _pjuTpl(_PJU_TXT.modified, { quand: _pjuWhen(m.updated) });
+    return '<div class="prj-proj' + (m.active ? ' act' : '') + '" data-id="' + m.id + '" onclick="projectRowTap(\'' + m.id + '\')">'
+      + '<span class="st-row-main"><span class="prj-pn">' + _pjuEsc(m.name) + (m.active ? '<span class="prj-tag">' + _PJU_TXT.tagOpen + '</span>' : '') + '</span>'
+      + '<span class="prj-pm">' + _pjuEsc(when) + '<br>' + _pjuEsc(_pjuCountsShort(m.counts, m.size)) + '</span></span>'
+      + '<button type="button" class="prj-more" aria-label="' + _pjuEsc(_PJU_TXT.more) + '" onclick="event.stopPropagation();openProjectMenu(\'' + m.id + '\')">⋯</button></div>';
+  }).join('');
+  return '<div class="st-card st-rows prj-projs">' + rows + '</div>'
+    + '<button type="button" class="prj-sec prj-dash" id="pjNewBtn" onclick="openNewProjectSheet()">' + _PJU_TXT.newProject + '</button>'
+    + '<button type="button" class="prj-sec" onclick="projectImportPick(\'list\')">' + _PJU_TXT.importProject + '</button>'
+    + '<p class="st-note">' + _pjuEsc(_PJU_TXT.listNote) + '</p>';
+}
+const _pjuMeta = (id) => (_pju.list ? _pju.list.list.find((m) => m.id === id) : null);
+function projectRowTap(id) {
+  const m = _pjuMeta(id);
+  if (!m) return;
+  if (m.active) openProjectMenu(id); else askOpenProject(id);
+}
+function openProjectMenu(id) {
+  if (!_pjuMeta(id)) return;
+  _sheet = { kind: 'prjMenu', id }; renderSheet();
+}
+// 46c : confirmation, ou refus pendant le jeu
+function askOpenProject(id) {
+  const busy = _pjuBusyWhat();
+  if (busy) { _sheet = { kind: 'prjBusy', what: busy }; renderSheet(); return; }
+  _sheet = { kind: 'prjOpen', id }; renderSheet();
+}
+function openNewProjectSheet() {
+  _sheet = { kind: 'prjNew', from: 'empty', name: '' }; renderSheet(true);
+}
+// Feuilles (39-screens-ui.js, renderSheet) : { title, html, form } ; null : projet disparu
+function projectSheetContent(s) {
+  const b = (cls, fn, label) => '<button type="button" class="dc-menu-btn' + cls + '" onclick="' + fn + '">' + _pjuEsc(label) + '</button>';
+  const cancel = '<button type="button" class="sr-cancel" onclick="closeSheet()">' + _PJU_TXT.cancel + '</button>';
+  const note = (t) => '<p class="sr-sheet-note prj-sheet-text">' + _pjuEsc(t) + '</p>';
+  const m = s.id ? _pjuMeta(s.id) : null;
+  if (s.id && !m) return null;
+  const M = _PJU_TXT.menu;
+  switch (s.kind) {
+    case 'prjMenu':
+      return {
+        title: '« ' + m.name + ' »', form: false,
+        html: (m.active ? '' : b('', 'askOpenProject(\'' + m.id + '\')', M.open)) + b('', 'openRenameProject(\'' + m.id + '\')', M.rename)
+          + b('', 'projectMenuDuplicate(\'' + m.id + '\')', M.duplicate) + b('', 'projectMenuExport(\'' + m.id + '\')', M.export)
+          + (m.active ? '' : b(' danger', 'projectMenuDelete(\'' + m.id + '\')', M.remove))
+          + (s.msg ? '<p class="sr-sheet-note prj-sheet-err" role="alert">' + _pjuEsc(s.msg) + '</p>' : '')
+          + '<div class="sr-actions">' + cancel + '</div>',
+      };
+    case 'prjName':
+      return {
+        title: _PJU_TXT.renameTitle, form: true,
+        html: '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
+          + '<label class="sr-sublabel" for="srName">' + _PJU_TXT.nameLabel + '</label>'
+          + '<input type="text" id="srName" class="text-input sr-input" maxlength="60" autocomplete="off" placeholder="' + _pjuEsc(m.name) + '" value="' + _pjuEsc(m.name) + '">'
+          + '<div class="sr-actions">' + cancel + '<button type="submit" class="sr-ok">' + _PJU_TXT.save + '</button></div></form>',
+      };
+    case 'prjNew': {
+      const cur = _pjuActiveName();
+      const opt = (k, t, sub) => '<button type="button" class="prj-opt' + (s.from === k ? ' on' : '') + '" role="radio" aria-checked="' + (s.from === k) + '" onclick="projectNewFrom(\'' + k + '\')">'
+        + '<span class="prj-radio"></span><span><span class="prj-opt-t">' + _pjuEsc(t) + '</span><span class="prj-opt-s">' + _pjuEsc(sub) + '</span></span></button>';
+      return {
+        title: _PJU_TXT.newTitle, form: true,
+        html: '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
+          + '<label class="sr-sublabel" for="srName">' + _PJU_TXT.nameLabel + '</label>'
+          + '<input type="text" id="srName" class="text-input sr-input" maxlength="60" autocomplete="off" placeholder="' + _pjuEsc(_PRJ_TXT.defaultName) + '" value="' + _pjuEsc(s.name) + '" oninput="_sheet&&(_sheet.name=this.value)">'
+          + '<div class="prj-mode prj-mode-sheet" role="radiogroup">' + opt('empty', _PJU_TXT.newEmpty[0], _PJU_TXT.newEmpty[1])
+          + opt('current', _PJU_TXT.newCopy[0], _pjuTpl(_PJU_TXT.newCopy[1], { projet: cur })) + '</div>'
+          + '<p class="sr-sheet-note">' + _pjuEsc(_pjuTpl(_PJU_TXT.newNote, { projet: cur })) + '</p>'
+          + (s.msg ? '<p class="sr-sheet-note prj-sheet-err" role="alert">' + _pjuEsc(s.msg) + '</p>' : '')
+          + '<div class="sr-actions">' + cancel + '<button type="submit" class="sr-ok"' + (s.busy ? ' disabled' : '') + '>' + _PJU_TXT.create + '</button></div></form>',
+      };
+    }
+    case 'prjOpen':
+      return {
+        title: _pjuTpl(_PJU_TXT.openTitle, { nom: m.name }), form: false,
+        html: note(_pjuTpl(_PJU_TXT.openText, { projet: _pjuActiveName() }))
+          + (s.msg ? '<p class="sr-sheet-note prj-sheet-err" role="alert">' + _pjuEsc(s.msg) + '</p>' : '')
+          + '<div class="sr-actions">' + cancel + '<button type="button" class="sr-ok" id="pjOpenOk"' + (s.busy ? ' disabled' : '') + ' onclick="projectOpenConfirm(\'' + m.id + '\')">'
+          + (s.busy ? _PJU_TXT.opening : _PJU_TXT.openBtn) + '</button></div>',
+      };
+    case 'prjBusy':
+      return {
+        title: _PJU_TXT.busyTitle, form: false,
+        html: note(_PJU_TXT.busy[s.what] || _PJU_TXT.busy.seq) + '<div class="sr-actions"><button type="button" class="sr-ok" onclick="closeSheet()">' + _PJU_TXT.ok + '</button></div>',
+      };
+    case 'prjMsg':
+      return {
+        title: s.title || _PJU_TXT.errTitleGeneric, form: false,
+        html: note(s.text) + '<div class="sr-actions"><button type="button" class="sr-ok" onclick="closeSheet()">' + _PJU_TXT.ok + '</button></div>',
+      };
+  }
+  return null;
+}
+function _pjuSheetMsg(title, text) { _sheet = { kind: 'prjMsg', title, text }; renderSheet(); }
+function projectNewFrom(k) {
+  if (!_sheet || _sheet.kind !== 'prjNew') return;
+  const inp = document.getElementById('srName');
+  if (inp) _sheet.name = inp.value;
+  _sheet.from = k === 'current' ? 'current' : 'empty';
+  renderSheet();
+}
+// Formulaires de feuille (sheetSave, 39-screens-ui.js)
+function projectSheetSave(s, value) {
+  if (s.kind === 'prjName') {
+    closeSheet();
+    return _pjuTrack(_pjuSerial(projectRename)(s.id, value).then(async (r) => {
+      if (!r.ok) { _pjuSheetMsg(null, r.message); return; }
+      await _pjuLoadList(); _pjuRefresh();
+    }));
+  }
+  if (s.kind === 'prjNew') return _pjuTrack(_pjuCreate(s, value));
+  return null;
+}
+// 46b : créé puis ouvert (refus pendant le jeu : rien n'est créé)
+async function _pjuCreate(s, value) {
+  const busy = _pjuBusyWhat();
+  if (busy) { _sheet = { kind: 'prjBusy', what: busy }; renderSheet(); return; }
+  s.name = value; s.busy = true; s.msg = '';
+  renderSheet();
+  const c = await _pjuSerial(projectCreate)({ name: value, from: s.from });
+  let r = c;
+  if (c.ok) r = await _pjuSerial(projectSwitch)(c.id);
+  if (_sheet === s) { s.busy = false; if (!r.ok) { s.msg = r.message; renderSheet(); } else closeSheet(); }
+  await _pjuLoadList();
+  _pjuRefresh();
+}
+async function projectOpenConfirm(id) {
+  const s = _sheet;
+  if (!s || s.kind !== 'prjOpen' || s.busy) return;
+  const busy = _pjuBusyWhat();
+  if (busy) { _sheet = { kind: 'prjBusy', what: busy }; renderSheet(); return; }
+  s.busy = true; s.msg = ''; renderSheet();
+  await _pjuTrack((async () => {
+    const r = await _pjuSerial(projectSwitch)(id);
+    if (_sheet === s) {
+      s.busy = false;
+      if (r.ok) closeSheet();
+      else if (r.code === 'busy') { _sheet = { kind: 'prjBusy', what: _pjuBusyWhat() || 'seq' }; renderSheet(); } else { s.msg = r.message; renderSheet(); }
+    }
+    await _pjuLoadList();
+    _pjuRefresh();
+  })());
+}
+function openRenameProject(id) { if (_pjuMeta(id)) { _sheet = { kind: 'prjName', id }; renderSheet(true); } }
+function projectMenuDuplicate(id) {
+  closeSheet();
+  return _pjuTrack(_pjuSerial(projectDuplicate)(id).then(async (r) => {
+    if (!r.ok) { _pjuSheetMsg(null, r.message); return; }
+    await _pjuLoadList(); _pjuRefresh();
+  }));
+}
+function projectMenuDelete(id) {
+  const m = _pjuMeta(id);
+  if (!m) return null;
+  closeSheet();
+  if (!confirm(_pjuTpl(_PJU_TXT.confirmDelete, { nom: m.name }))) return null;
+  return _pjuTrack(_pjuSerial(projectDelete)(id).then(async (r) => {
+    if (!r.ok) { _pjuSheetMsg(null, r.message); return; }
+    await _pjuLoadList(); _pjuRefresh();
+  }));
+}
+// « Exporter… » : projet ouvert → vue d'export ; projet rangé → fichier tel quel
+function projectMenuExport(id) {
+  const m = _pjuMeta(id);
+  if (!m) return null;
+  closeSheet();
+  if (m.active) return openProjectExport('list');
+  return _pjuTrack((async () => {
+    const r = await _pjuSerial(projectExportStored)(id);
+    if (!r.ok) { _pjuSheetMsg(null, r.message); return; }
+    const sv = await projectSave(r.blob, r.name);
+    if (!sv.ok) { if (sv.code !== 'cancelled') _pjuSheetMsg(null, sv.message); return; }
+    await _pjuSerial(projectNoteExport)(id, projectFileName(r.name));
+    await _pjuLoadList(); _pjuRefresh();
+  })());
+}
+// Redessine ce qui est affiché (vue, carte des Réglages)
+function _pjuRefresh() {
+  if (_pju.view === 'list') _pjuRender();
+  if (document.getElementById('settings-view').style.display !== 'none') renderSettingsProject();
+}
+
+// ══════════ 45b · Exporter le projet ══════════
+function openProjectExport(from) {
+  _pju.exp = { name: _pjuActiveName(), sel: { seq: true, chat: true, calls: true, callers: true, rings: true, memories: true }, media: false, sum: null, busy: false, msg: '', ok: '' };
+  _pjuShow('export', from === 'list' ? 'list' : null);
+  return _pjuTrack((async () => {
+    if (!_pju.list) await _pjuLoadList();
+    const e = _pju.exp;
+    e.name = _pjuActiveName();
+    e.sum = await projectSummary();
+    if (_pju.view === 'export' && _pju.exp === e) _pjuRender();
+  })());
+}
+// Sections non exportées dont dépendent les séquences (non vides)
+function _pjuMissingDeps(sel, counts) {
+  if (!sel.seq || !counts || !counts.seq) return [];
+  return _PJU_SEQ_DEPS.filter((k) => !sel[k] && counts[k] > 0);
+}
+function _pjuExportHtml() {
+  const e = _pju.exp, S = e.sum, c = S ? S.counts : null;
+  const sub = (k) => (k === 'calls' ? (S && c.calls ? _pjuCallsSub(S.calls) : _PJU_TXT.expSub.calls) : k === 'memories' ? (S ? _pjuMemSub(S.memories) : '') : _PJU_TXT.expSub[k]);
+  const rows = _PJU_SECS.map((k) => '<button type="button" class="st-row prj-srow" role="checkbox" aria-checked="' + e.sel[k] + '" id="pjExp-' + k + '" onclick="projectExportToggle(\'' + k + '\')">'
+    + '<span class="prj-chk' + (e.sel[k] ? ' on' : '') + '"></span><span class="st-row-main"><span class="st-row-label">' + _PJU_TXT.sec[k] + '</span>'
+    + (sub(k) ? '<span class="st-row-sub">' + _pjuEsc(sub(k)) + '</span>' : '') + '</span><span class="prj-cnt">' + (c ? c[k] : '·') + '</span></button>').join('');
+  const media = '<button type="button" class="st-row prj-srow prj-last" role="switch" aria-checked="' + e.media + '" id="pjExp-media" onclick="projectExportToggle(\'media\')">'
+    + '<span class="prj-tog' + (e.media ? ' on' : '') + '"></span><span class="st-row-main"><span class="st-row-label">' + _PJU_TXT.sec.media + '</span><span class="st-row-sub">' + _PJU_TXT.expSub.media + '</span></span>'
+    + '<span class="prj-cnt">' + (S ? S.media.count + ' <small>· ' + _pjuSize(S.media.bytes) + '</small>' : '·') + '</span></button>';
+  const miss = _pjuMissingDeps(e.sel, c);
+  let size = 0;
+  if (S) { for (const k of _PJU_SECS) if (e.sel[k]) size += S.bytesBy[k] || 0; if (e.media) size += S.media.bytes; }
+  const file = projectFileName(e.name || _pjuActiveName());
+  return '<div class="st-card"><label class="st-label" for="pjExpName">' + _PJU_TXT.nameLabel + '</label>'
+    + '<input type="text" class="prj-input" id="pjExpName" maxlength="60" autocomplete="off" value="' + _pjuEsc(e.name) + '" oninput="projectExportName(this.value)">'
+    + '<p class="prj-sub" id="pjExpFile">' + _pjuEsc(_pjuTpl(_PJU_TXT.fileLine, { fichier: file })) + '</p></div>'
+    + '<div class="st-card st-rows"><span class="st-label prj-label">' + _PJU_TXT.content + '</span>' + rows + media + '</div>'
+    + (miss.length ? '<div class="prj-warn" id="pjExpWarn" role="alert">' + _pjuEsc(_pjuTpl(_PJU_TXT.missing, { sections: _pjuList(miss.map((k) => '« ' + _PJU_TXT.sec[k] + ' »')) })) + '</div>' : '')
+    + '<p class="st-note">' + _pjuEsc(_PJU_TXT.always) + '</p>'
+    + '<div class="prj-size"><span>' + _PJU_TXT.size + '</span><b id="pjExpSize">' + (S ? _pjuTpl(_PJU_TXT.sizeVal, { taille: _pjuSize(size) }) : '…') + '</b></div>'
+    + (e.msg ? '<div class="prj-warn" role="alert">' + _pjuEsc(e.msg) + '</div>' : '')
+    + (e.ok ? '<div class="prj-done" role="status">' + _pjuEsc(e.ok) + '</div>' : '')
+    + '<button type="button" class="prj-primary" id="pjExpGo"' + (e.busy || !S ? ' disabled' : '') + ' onclick="projectExportGo()">' + (e.busy ? _PJU_TXT.exporting : _PJU_TXT.exportBtn)
+    + '<small id="pjExpHint">' + _pjuEsc(IN_NATIVE_APP ? _PJU_TXT.exportApp : _pjuTpl(_PJU_TXT.exportWeb, { fichier: file })) + '</small></button>';
+}
+function projectExportToggle(k) {
+  const e = _pju.exp;
+  if (!e || e.busy) return;
+  if (k === 'media') e.media = !e.media; else if (k in e.sel) e.sel[k] = !e.sel[k];
+  e.ok = ''; e.msg = '';
+  const top = document.getElementById('project-view').scrollTop;
+  _pjuRender();
+  document.getElementById('project-view').scrollTop = top;
+}
+function projectExportName(v) {
+  const e = _pju.exp;
+  if (!e) return;
+  e.name = v;
+  const file = projectFileName(v.trim() || _pjuActiveName());
+  const f = document.getElementById('pjExpFile');
+  if (f) f.textContent = _pjuTpl(_PJU_TXT.fileLine, { fichier: file });
+  const h = document.getElementById('pjExpHint');
+  if (h && !IN_NATIVE_APP) h.textContent = _pjuTpl(_PJU_TXT.exportWeb, { fichier: file });
+}
+// EXPORTER : nom changé → projet ouvert renommé ; fichier écrit puis téléchargé / partagé
+function projectExportGo() {
+  const e = _pju.exp;
+  if (!e || e.busy || !e.sum) return null;
+  e.busy = true; e.msg = ''; e.ok = '';
+  _pjuRender();
+  return _pjuTrack((async () => {
+    const a = _pjuActive();
+    let name = _prjName(e.name) || (a ? a.name : _PRJ_TXT.defaultName);
+    if (a && name !== a.name) {
+      const r = await _pjuSerial(projectRename)(a.id, name);
+      if (r.ok) name = r.name;
+    }
+    const sections = _PJU_SECS.filter((k) => e.sel[k]).concat(e.media ? ['media'] : []);
+    let blob = null;
+    try { blob = await projectExport({ name, sections, includeMedia: e.media }); } catch (x) { e.msg = _prjFail(x).message; }
+    if (blob) {
+      const sv = await projectSave(blob, name);
+      if (sv.ok) {
+        const file = projectFileName(name);
+        await _pjuSerial(projectNoteExport)(a ? a.id : null, file);
+        e.ok = _pjuTpl(_PJU_TXT.exported, { fichier: file });
+      } else if (sv.code !== 'cancelled') e.msg = sv.message;
+    }
+    e.busy = false; e.name = name;
+    await _pjuLoadList();
+    if (_pju.exp === e && _pju.view === 'export') _pjuRender();
+  })());
+}
+
+// ══════════ 45c · Importer : choisir, aperçu ══════════
+// Choisir un fichier (web : <input type=file> ; app : sélecteur natif), puis aperçu ou erreur
+function projectImportPick(from) {
+  const src = from === 'list' ? 'list' : null;
+  return _pjuTrack((async () => {
+    let f = null;
+    try { f = await projectPick(); } catch (x) { _pjuError(null, _prjFail(x), src); return; }
+    if (f) await projectImportFile(f, src);
+  })());
+}
+async function projectImportFile(file, from) {
+  const info = await projectInspect(file);
+  if (!info.ok) { _pjuError(file, info, from); return; }
+  if (!_pju.list) await _pjuLoadList();
+  const cur = await projectSummary();
+  const sel = {};
+  for (const k of _PJU_SECS.concat(['media'])) sel[k] = info.sections.includes(k);
+  _pju.imp = { file, info, sel, mode: 'merge', cur, busy: false };
+  _pjuShow('import', from === 'list' ? 'list' : null);
+}
+function _pjuImportHtml() {
+  const I = _pju.imp, info = I.info, mode = I.mode;
+  const T = _PJU_TXT, cur = _pjuActiveName();
+  const meta = _pjuEsc(I.file.name || '') + ' · ' + _pjuSize(info.size)
+    + (info.created ? '<br>' + _pjuEsc(_pjuTpl(T.exportedOn, { quand: _pjuDay(new Date(info.created), true) + ', ' + _pjuHm(new Date(info.created)) })) + (info.app ? ' · SetRemote ' + _pjuEsc(info.app) : '') : '');
+  const row = (k, last) => {
+    const has = info.sections.includes(k);
+    const lock = !has || (mode === 'new' && k !== 'media');
+    const on = has && (mode === 'new' ? true : I.sel[k]);
+    const sub = !has ? T.notIn : k === 'calls' ? _pjuCallsSub(info.calls) : k === 'memories' ? _pjuMemSub(info.memories) : k === 'media' ? _pjuSize(info.mediaBytes) : '';
+    const n = !has ? '—' : (info.counts[k] || 0);
+    return '<button type="button" class="st-row prj-srow' + (last ? ' prj-last' : '') + (has ? '' : ' prj-absent') + '" role="checkbox" aria-checked="' + on + '" id="pjImp-' + k + '"'
+      + (lock ? ' aria-disabled="true"' : '') + ' onclick="projectImportToggle(\'' + k + '\')">'
+      + '<span class="prj-chk' + (on ? ' on' : '') + (lock ? ' lock' : '') + '"></span><span class="st-row-main"><span class="st-row-label">' + T.sec[k] + '</span>'
+      + (sub ? '<span class="st-row-sub">' + _pjuEsc(sub) + '</span>' : '') + '</span><span class="prj-cnt">' + n + '</span></button>';
+  };
+  const opt = (k) => '<button type="button" class="prj-opt' + (mode === k ? ' on' : '') + '" role="radio" aria-checked="' + (mode === k) + '" id="pjMode-' + k + '" onclick="projectImportMode(\'' + k + '\')">'
+    + '<span class="prj-radio"></span><span><span class="prj-opt-t">' + T.modes[k][0] + '</span><span class="prj-opt-s">' + _pjuEsc(_pjuTpl(T.modes[k][1], { projet: cur })) + '</span></span></button>';
+  const want = _pjuImpWant();
+  let warn = '';
+  if (mode === 'replace') {
+    const lost = want.filter((k) => I.cur.counts[k] > 0).map((k) => _pjuN(k, I.cur.counts[k]));
+    const parts = [];
+    if (lost.length) parts.push(_pjuEsc(_pjuTpl(T.replaceWarn, { liste: _pjuList(lost), projet: cur })));
+    if (want.includes('rings') && (I.cur.counts.rings > 0 || info.counts.rings > 0)) parts.push(_pjuEsc(T.replaceRings));
+    if (parts.length) warn = '<div class="prj-warn" id="pjImpWarn" role="alert">' + parts.join('<br>') + '</div>';
+  }
+  return '<div class="st-card"><div class="prj-file"><span class="prj-ico">.REM</span><div><div class="prj-name">' + _pjuEsc(info.name) + '</div><p class="prj-sub">' + meta + '</p></div></div></div>'
+    + '<div class="st-card st-rows prj-compact' + (mode === 'new' ? ' pj-whole' : '') + '"><span class="st-label prj-label">' + T.toImport + '</span>'
+    + _PJU_SECS.map((k) => row(k, false)).join('') + row('media', true) + '</div>'
+    + '<div class="st-card"><span class="st-label">' + T.howTo + '</span><div class="prj-mode" role="radiogroup">' + opt('merge') + opt('replace') + opt('new') + '</div>'
+    + (mode === 'new' ? '<p class="prj-sub">' + _pjuEsc(T.newAll) + '</p>' : '') + '</div>'
+    + warn
+    + '<button type="button" class="prj-primary" id="pjImpGo"' + (I.busy || (mode !== 'new' && !want.length) ? ' disabled' : '') + ' onclick="projectImportGo()">' + (I.busy ? T.importing : T.modes[mode][2]) + '</button>';
+}
+// Sections cochées présentes dans le fichier (mode « new » : médias seulement comptent)
+function _pjuImpWant() {
+  const I = _pju.imp;
+  return _PJU_SECS.concat(['media']).filter((k) => I.info.sections.includes(k) && I.sel[k]);
+}
+function projectImportToggle(k) {
+  const I = _pju.imp;
+  if (!I || I.busy || !I.info.sections.includes(k) || (I.mode === 'new' && k !== 'media')) return;
+  I.sel[k] = !I.sel[k];
+  const top = document.getElementById('project-view').scrollTop;
+  _pjuRender();
+  document.getElementById('project-view').scrollTop = top;
+}
+function projectImportMode(m) {
+  const I = _pju.imp;
+  if (!I || I.busy || !_PJU_TXT.modes[m]) return;
+  I.mode = m;
+  const top = document.getElementById('project-view').scrollTop;
+  _pjuRender();
+  document.getElementById('project-view').scrollTop = top;
+}
+function projectImportGo() {
+  const I = _pju.imp;
+  if (!I || I.busy) return null;
+  const want = _pjuImpWant();
+  if (I.mode !== 'new' && !want.length) return null;
+  if (I.mode === 'new') {
+    const busy = _pjuBusyWhat();
+    if (busy) { _sheet = { kind: 'prjBusy', what: busy }; renderSheet(); return null; }
+  }
+  I.busy = true;
+  _pjuRender();
+  return _pjuTrack((async () => {
+    const cur = _pjuActiveName();
+    let r;
+    if (I.mode === 'new') {
+      r = await _pjuSerial(projectImportAsNew)(I.file);
+      if (r.ok) {
+        const sw = await _pjuSerial(projectSwitch)(r.id);
+        r.opened = sw.ok;
+        if (!sw.ok) r.why = sw.message;
+        else if (want.includes('media')) { const m = await _pjuSerial(projectImport)(I.file, { mode: 'merge', sections: ['media'] }); if (m.ok) r.media = m.sections.media; }
+      }
+    } else r = await _pjuSerial(projectImport)(I.file, { mode: I.mode, sections: want });
+    I.busy = false;
+    await _pjuLoadList();
+    if (!r.ok) { _pjuError(I.file, r, _pju.from); return; }
+    _pju.rep = { r, mode: I.mode, info: I.info, want, cur };
+    _pjuShow('report');
+  })());
+}
+
+// ══════════ 45d · Compte rendu ══════════
+function _pjuReportHtml() {
+  const { r, mode, info, want, cur } = _pju.rep, T = _PJU_TXT;
+  const head = mode === 'new' ? (r.opened ? T.okNew : T.okNewStored) : mode === 'replace' ? T.okReplace : T.okMerge;
+  const line = (k, val, sub, last) => '<div class="st-row' + (last ? ' prj-last' : '') + '" id="pjRep-' + k + '"><span class="st-row-main"><span class="st-row-label">' + T.sec[k] + '</span>'
+    + (sub ? '<span class="st-row-sub">' + _pjuEsc(sub) + '</span>' : '') + '</span><span class="prj-cnt">' + val + '</span></div>';
+  const fem = (k) => !!_PJU_FEM[k];
+  const rows = _PJU_SECS.concat(['media']).map((k, i, a) => {
+    const last = i === a.length - 1;
+    if (!info.sections.includes(k)) return line(k, '<span class="prj-dim">' + T.notIncluded + '</span>', '', last);
+    let x = null;
+    if (mode === 'new') x = k === 'media' ? r.media || null : { added: (r.counts && r.counts[k]) || 0, removed: 0, skipped: 0, renamed: 0, same: 0, names: [] };
+    else x = r.sections[k] || null;
+    if (!x || (mode !== 'new' && !want.includes(k))) return line(k, '<span class="prj-dim">' + T.notImported[fem(k) ? 1 : 0] + '</span>', '', last);
+    let val = '<span class="prj-plus">+' + x.added + '</span>';
+    if (x.skipped) val += ' · <span class="prj-skip">' + _pjuTpl(T.ignored[x.skipped > 1 ? 1 : 0], { n: x.skipped }) + '</span>';
+    if (x.same) val += ' · <span class="prj-dim">' + _pjuTpl(T.same, { n: x.same }) + '</span>';
+    const subs = [];
+    if (x.removed) subs.push(_pjuTpl(T.removed[(fem(k) ? 2 : 0) + (x.removed > 1 ? 1 : 0)], { n: x.removed }));
+    if (x.renamed) subs.push(_pjuTpl(T.renamed[(fem(k) ? 2 : 0) + (x.renamed > 1 ? 1 : 0)], { n: x.renamed, noms: (x.names || []).map((n) => '« ' + n + ' »').join(', ') }));
+    if (x.skipped && !(r.warnings || []).some((w) => w.section === k)) subs.push(T.full);
+    return line(k, val, subs.join(' · '), last);
+  }).join('');
+  const W = (r.warnings || []).filter((w) => T.warn[w.section]);
+  const warns = W.slice(0, 3).map((w) => _pjuEsc(_pjuTpl(T.warn[w.section], { nom: w.name }))).concat(W.length > 3 ? [_pjuEsc(_pjuTpl(T.warnMore, { n: W.length - 3 }))] : []);
+  const seqIn = mode === 'new' ? (r.counts && r.counts.seq) : (r.sections && r.sections.seq && r.sections.seq.added);
+  return '<div class="st-card"><div class="prj-ok"><i>✓</i><span id="pjRepHead">' + _pjuEsc(_pjuTpl(head, { nom: info.name, projet: cur })) + '</span></div></div>'
+    + '<div class="st-card st-rows">' + rows + '</div>'
+    + (mode === 'new' && !r.opened && r.why ? '<div class="prj-warn" role="alert">' + _pjuEsc(_pjuTpl(T.notOpened, { raison: r.why })) + '</div>' : '')
+    + (warns.length ? '<div class="prj-warn prj-warn-soft" role="status">' + warns.join('<br>') + '</div>' : '')
+    + (r.preview && r.preview.length ? '<p class="st-note">' + _pjuEsc(T.preview) + '</p>' : '')
+    + (seqIn ? '<p class="st-note">' + _pjuEsc(T.seqNote) + '</p>' : '')
+    + (seqIn ? '<button type="button" class="prj-primary" onclick="projectSeeSequences()">' + T.seeSeqs + '</button>' : '')
+    + '<button type="button" class="st-btn" onclick="projectViewBack()">' + T.close + '</button>';
+}
+function projectSeeSequences() {
+  closeProjectView();
+  closeSettings();
+  switchTab('seq');
+  setSeqView('saved');
+  const rm = document.getElementById('remote-mode'), el = document.getElementById('seqTab-cur');
+  if (rm && el) rm.scrollTop += el.getBoundingClientRect().top - 120;
+}
+
+// ══════════ 45e · Erreurs ══════════
+function _pjuError(file, r, from) {
+  _pju.err = { name: file && file.name ? String(file.name) : '', code: r.code, message: r.message };
+  _pjuShow('error', from === 'list' ? 'list' : null);
+}
+function _pjuErrorHtml() {
+  const E = _pju.err, T = _PJU_TXT;
+  const title = T.errTitle[E.code] || T.errTitle.other;
+  let text = E.message;
+  if ((E.code === 'not-zip' || E.code === 'not-project') && E.name) text = _pjuTpl(T.errNotProject, { fichier: E.name });
+  else if (E.code === 'too-large' && E.name) text = _pjuTpl(T.errTooLarge, { fichier: E.name, max: Math.round((IN_NATIVE_APP ? PRJ_LIMITS.native : PRJ_LIMITS.file) / (1024 * 1024)) });
+  return '<div class="st-card"><div class="prj-ok prj-err"><i>!</i><span id="pjErrTitle">' + _pjuEsc(title) + '</span></div>'
+    + '<p class="prj-sub prj-err-text" id="pjErrText">' + _pjuEsc(text) + '</p></div>'
+    + '<p class="st-note">' + _pjuEsc(E.code === 'storage-full' ? T.partial : T.nothing) + '</p>'
+    + '<button type="button" class="prj-primary" onclick="projectImportPick(_pju.from)">' + T.pickOther + '</button>'
+    + '<button type="button" class="st-btn" onclick="projectViewBack()">' + T.close + '</button>';
 }
 // ══════════════════════════ MÉDIA — ÉCRAN (récepteur) ══════════════════════════
 let _screenPc = null, _screenPendingIce = [];
@@ -15906,12 +16737,12 @@ const _LIC_LOCKS = {
   tel: {
     dim: ['telStyleBtn', 'ntStyleBtn', 'callWhoSaved', 'callName', 'callLabel', 'callPhotoBtn', 'callerSaveBtn',
       'callMsgText', 'callAppName', 'callAppColor', 'callLockPanel', 'ntAppPanel', 'ntShowPanel', 'callAnswerBlock',
-      'callListSave', 'callListUpd', 'callListDel', 'dcTab-saved', 'dcContactPanel', 'dcAdd', 'dcWriteBtn'],
+      'callListSave', 'callListUpd', 'callListDel', 'dcTab-saved', 'dcNewBtn', 'dcContactPanel', 'dcAdd', 'dcWriteBtn'],
     ro: ['dcRows', 'dcTimingPanel'],
     ex: ['callWhoLabel'],
     banner: 'licPvTel',
   },
-  seq: { dim: ['seqAddBtn', 'seqPhoneBtn', 'seqTab-saved'], ro: ['seqRows'], ex: [], banner: 'licPvSeq' },
+  seq: { dim: ['seqAddBtn', 'seqPhoneBtn', 'seqTab-saved', 'seqNewBtn'], ro: ['seqRows'], ex: [], banner: 'licPvSeq' },
 };
 function _licLockUi(f, on) {
   const L = _LIC_LOCKS[f];
@@ -19346,7 +20177,7 @@ let _chatView = 'thread';
 function chatShowForm(on) {
   const saved = on && _chatView === 'saved';
   const show = (id, v) => { const el = document.getElementById(id); if (el) el.style.display = v ? '' : 'none'; };
-  for (const id of ['dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcAutoPanel', 'dcSendPanel']) show(id, on && !saved);
+  for (const id of ['dcNewBtn', 'dcContactPanel', 'dcThreadPanel', 'dcActorPanel', 'dcAutoPanel', 'dcSendPanel']) show(id, on && !saved);
   if (!on || saved) show('dcTimingPanel', false);
   show('dcTabs', on);
   show('dcSavedPanel', saved);
@@ -21323,6 +22154,15 @@ const _CHSV_TXT = {
   confirmDelete: 'Supprimer la discussion « {nom} » ?',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Discussion',
+  // « + Nouvelle discussion » (maquette 47b)
+  newBtn: '+ NOUVELLE DISCUSSION',
+  newAsk: 'Enregistrer « {nom} » avant ?',
+  newAskText: 'Le fil en cours a des modifications non enregistrées. La nouvelle discussion part d\'un fil vide (même comédien, même style).',
+  newDiscard: 'Ne pas enregistrer',
+  newFull: 'Liste pleine ({max} discussions) : enregistrement impossible.',
+  liveTitle: 'Impossible pour l\'instant',
+  live: 'La discussion est ouverte sur les écrans : fermez-la avant d\'en commencer une nouvelle.',
+  okBtn: 'OK',
 };
 
 let chatSaved = [];
@@ -21488,6 +22328,8 @@ function _chsvMeta(e) {
 function renderSavedChats() {
   const tab = document.getElementById('dcTab-saved');
   if (tab) tab.textContent = _tplChat(_CHSV_TXT.tab, { n: chatSaved.length });
+  const nb = document.getElementById('dcNewBtn');
+  if (nb) nb.textContent = _CHSV_TXT.newBtn;
   const rows = document.getElementById('dcSavedRows');
   if (!rows) return;
   rows.textContent = '';
@@ -21534,6 +22376,20 @@ function openRenameSavedChat(id) {
 }
 // Contenu d'une feuille de discussion : { title, html, form } ; null : entrée disparue
 function chatSheetContent(s) {
+  if (s.kind === 'chatNew') {
+    const note = (t) => '<p class="sr-sheet-note prj-sheet-text">' + escapeHtml(t) + '</p>';
+    if (s.live) {
+      return { title: _CHSV_TXT.liveTitle, form: false, html: note(_CHSV_TXT.live) + '<div class="sr-actions"><button type="button" class="sr-ok" onclick="closeSheet()">' + escapeHtml(_CHSV_TXT.okBtn) + '</button></div>' };
+    }
+    return {
+      title: _tplChat(_CHSV_TXT.newAsk, { nom: s.name }), form: false,
+      html: note(_CHSV_TXT.newAskText)
+        + (s.msg ? '<p class="sr-sheet-note prj-sheet-err" role="alert">' + escapeHtml(s.msg) + '</p>' : '')
+        + '<button type="button" class="dc-menu-btn danger" id="chatNewDiscard" onclick="chatNewAnswer(\'discard\')">' + escapeHtml(_CHSV_TXT.newDiscard) + '</button>'
+        + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CHSV_TXT.cancel) + '</button>'
+        + '<button type="button" class="sr-ok" id="chatNewSave" onclick="chatNewAnswer(\'save\')">' + escapeHtml(_CHSV_TXT.ok) + '</button></div>',
+    };
+  }
   const e = s.id ? chatSaved.find((x) => x.id === s.id) : null;
   if (s.id && !e) return null;
   if (s.kind === 'chatMenu') {
@@ -21565,7 +22421,27 @@ function chatMenuRename(id) { openRenameSavedChat(id); }
 function chatMenuDuplicate(id) { closeSheet(); duplicateSavedChat(id); }
 function chatMenuDelete(id) { closeSheet(); deleteSavedChat(id); }
 
-// ── Nouvelle discussion (moteur ; bouton et confirmation : maquette 47b, à valider) ──
+// ── Nouvelle discussion (maquette 47b) : bouton « + NOUVELLE DISCUSSION » sous les sous-onglets ──
+// Sans modification en cours : aussitôt. Sinon feuille « Enregistrer « … » avant ? » :
+// Enregistrer (nouvelle entrée, nom par défaut) / Ne pas enregistrer / Annuler.
+// Discussion ouverte sur les écrans : refus (feuille).
+async function chatNewAsk() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
+  const r = await chatNew();
+  if (r.ok) return;
+  if (r.code === 'dirty') { _sheet = { kind: 'chatNew', name: r.name }; renderSheet(); } else if (r.code === 'live') { _sheet = { kind: 'chatNew', live: true }; renderSheet(); }
+}
+async function chatNewAnswer(choice) {
+  const s = _sheet;
+  if (!s || s.kind !== 'chatNew' || s.live) return;
+  const r = await chatNew(choice === 'save' ? { save: '' } : { discard: true });
+  if (_sheet !== s) return;
+  if (r.ok) { closeSheet(); return; }
+  if (r.code === 'live') { s.live = true; renderSheet(); return; }
+  s.msg = r.code === 'full' ? _tplChat(_CHSV_TXT.newFull, { max: CHAT_SAVED_MAX }) : _CHSV_TXT.storeFull;
+  renderSheet();
+}
+// Moteur :
 // Fil vierge (aucun message, contact sans nom ni photo ; comédien et style
 // gardés), sans toucher aux discussions enregistrées. Modifications non
 // enregistrées (chatHasUnsavedChanges) : refus { ok: false, code: 'dirty', name }
@@ -23177,6 +24053,8 @@ function seqReorder(order) {
 //                                 (21-links.js) ; la ligne ouvre « Tourner sans
 //                                 réseau » (maquette 10, 93-offline.js), où se
 //                                 fait le choix
+// Carte « Projet » (maquette 45) : projet ouvert, exporter, importer ; vues et
+// feuilles des projets : 74-project-ui.js (maquettes 45b à 46c).
 // En tête, version officielle seulement (absentes de la version libre) :
 //   Licence, Identifiant de cet appareil   maquettes 37 / 37b, 77-licence-ui.js
 // Laissées de côté tant que la fonction n'existe pas (pas de valeur inventée) :
@@ -23210,6 +24088,7 @@ function openSettings() {
 }
 function closeSettings() {
   closePrivacyPolicy();
+  if (typeof closeProjectView === 'function') closeProjectView();
   document.getElementById('settings-view').style.display = 'none';
 }
 
@@ -23230,6 +24109,7 @@ function renderSettings() {
   document.getElementById('stStrobeMax').textContent = PROTO.STROBE_FREQ_MAX + ' Hz';
   renderSettingsLink();
   renderLicenceSettings(); // Licence (maquettes 37, 37b) : version officielle seulement, 77-licence-ui.js
+  renderSettingsProject(); // Projet (maquette 45) : 74-project-ui.js, asynchrone
   document.getElementById('stVersion').textContent = 'SetRemote ' + APP_VERSION + ' · by Pikoo';
 }
 
@@ -24130,6 +25010,13 @@ const _SQSV_TXT = {
   confirmDelete: 'Supprimer la séquence « {nom} » ?',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Séquence',
+  // « + Nouvelle séquence » (maquette 47)
+  newBtn: '+ NOUVELLE SÉQUENCE',
+  newAsk: 'Enregistrer « {nom} » avant ?',
+  newAskText: 'La séquence en cours a des modifications non enregistrées. La nouvelle séquence part de zéro.',
+  newAskTextSaved: 'La séquence en cours a des modifications non enregistrées. La nouvelle séquence part de zéro ; « {nom} » enregistrée reste telle quelle.',
+  newDiscard: 'Ne pas enregistrer',
+  newFull: 'Liste pleine ({max} séquences) : enregistrement impossible.',
 };
 
 let seqSaved = [];
@@ -24232,6 +25119,7 @@ function _sqsvMeta(e) {
 function renderSavedSeqs() {
   _seqSet('seqTab-cur', _SQSV_TXT.tabCur);
   _seqSet('seqTab-saved', _seqTpl(_SQSV_TXT.tab, { n: seqSaved.length }));
+  _seqSet('seqNewBtn', _SQSV_TXT.newBtn);
   const rows = document.getElementById('seqSavedRows');
   if (!rows) return;
   rows.textContent = '';
@@ -24281,6 +25169,17 @@ function openRenameSavedSeq(id) {
 }
 // Contenu d'une feuille de séquence : { title, html, form } ; null : entrée disparue
 function seqSheetContent(s) {
+  if (s.kind === 'seqNew') {
+    const saved = seqSaved.find((x) => x.id === _seq.savedId);
+    return {
+      title: _seqTpl(_SQSV_TXT.newAsk, { nom: s.name }), form: false,
+      html: '<p class="sr-sheet-note prj-sheet-text">' + escapeHtml(saved ? _seqTpl(_SQSV_TXT.newAskTextSaved, { nom: saved.name }) : _SQSV_TXT.newAskText) + '</p>'
+        + (s.msg ? '<p class="sr-sheet-note prj-sheet-err" role="alert">' + escapeHtml(s.msg) + '</p>' : '')
+        + '<button type="button" class="dc-menu-btn danger" id="seqNewDiscard" onclick="seqNewAnswer(\'discard\')">' + escapeHtml(_SQSV_TXT.newDiscard) + '</button>'
+        + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_SQSV_TXT.cancel) + '</button>'
+        + '<button type="button" class="sr-ok" id="seqNewSave" onclick="seqNewAnswer(\'save\')">' + escapeHtml(_SQSV_TXT.ok) + '</button></div>',
+    };
+  }
   const e = s.id ? seqSaved.find((x) => x.id === s.id) : null;
   if (s.id && !e) return null;
   if (s.kind === 'seqMenu') {
@@ -24312,7 +25211,23 @@ function seqMenuRename(id) { openRenameSavedSeq(id); }
 function seqMenuDuplicate(id) { closeSheet(); duplicateSavedSeq(id); }
 function seqMenuDelete(id) { closeSheet(); deleteSavedSeq(id); }
 
-// ── Nouvelle séquence (moteur ; bouton et confirmation : maquette 47, à valider) ──
+// ── Nouvelle séquence (maquette 47) : bouton « + NOUVELLE SÉQUENCE » sous les sous-onglets ──
+// Sans modification en cours : aussitôt. Sinon feuille « Enregistrer « … » avant ? » :
+// Enregistrer (nouvelle entrée, nom actuel) / Ne pas enregistrer / Annuler.
+function seqNewAsk() {
+  if (licLocked('seq')) return; // aperçu sans licence (77-licence-ui.js)
+  const r = seqNew();
+  if (!r.ok && r.code === 'dirty') { _sheet = { kind: 'seqNew', name: r.name }; renderSheet(); }
+}
+function seqNewAnswer(choice) {
+  const s = _sheet;
+  if (!s || s.kind !== 'seqNew') return;
+  const r = seqNew(choice === 'save' ? { save: '' } : { discard: true });
+  if (r.ok) { closeSheet(); return; }
+  s.msg = r.code === 'full' ? _seqTpl(_SQSV_TXT.newFull, { max: SEQ_SAVED_MAX }) : _SQSV_TXT.storeFull;
+  renderSheet();
+}
+// Moteur :
 // Repart d'une séquence vide sans toucher aux enregistrées. La séquence en cours
 // a des modifications non enregistrées (seqHasUnsavedChanges) : refus
 // { ok: false, code: 'dirty', name } tant que l'appelant n'a pas choisi :

@@ -28,8 +28,48 @@ const remote = (tab, extra) => async (page) => {
   await page.clock.runFor(400);
   if (tab) await page.evaluate((t) => switchTab(t), tab);
   if (extra) await extra(page);
+  // Rendus asynchrones des projets (IndexedDB : carte « Projet » des Réglages, vues) terminés
+  await page.evaluate(() => (typeof projectUiIdle === 'function' ? projectUiIdle() : null));
   await page.clock.runFor(400);
 };
+// ── Projets (maquettes 45 à 46c) : données d'un projet « Tournage B » écrites dans le stockage ──
+const projectSeed = async (page) => { await importTones(page); await page.evaluate(async () => {
+  const msgs = (n) => Array.from({ length: n }, (_, i) => ({ id: 'm' + (i + 1), from: i % 2 ? 'actor' : 'contact', text: 'Message ' + (i + 1) }));
+  localStorage.setItem(CHAT_SAVED_KEY, JSON.stringify({ v: 2, list: [['cD1', 'Séq. 12 — Maman', 'Maman', 'Julie'], ['cD2', 'Séq. 14 — Rupture', 'Thomas', 'Julie'], ['cD3', 'Séq. 21 — Agence', 'Agence', 'Marc']]
+    .map(([id, name, contact, actor]) => ({ id, name, contact, actor, style: 'glass', msgs: msgs(4), hasPhoto: false, photoSig: null })) }));
+  const call = (id, name) => ({ id, kind: 'call', style: 'glass', name, label: 'mobile', ring: 'classic', ringVolume: 1, present: 'full', photoMode: 'avatar', autoAnswer: 0, lock: null, hasPhoto: false, hasAudio: false });
+  const sms = (id, name, msg) => ({ id, kind: 'sms', style: 'glass', name, label: '', msg, appName: 'Messages', ring: 'digital', ringVolume: 1, autoAnswer: 0, lock: null, hasPhoto: false, hasAudio: false });
+  localStorage.setItem(CALL_LIST_KEY, JSON.stringify({ v: 1,
+    call: [call('eA1', 'Maman'), call('eA2', 'Agence'), call('eA3', 'Inconnu'), call('eA4', 'Hôpital'), call('eA5', 'Julien')],
+    sms: [sms('eS1', 'Léa', 'Tu viens ?'), sms('eS2', 'Maman', 'Rappelle-moi stp')],
+    notif: [{ id: 'eN1', kind: 'notif', style: 'glass', name: 'Alerte', label: '', msg: 'Nouveau message', appName: 'Insta', ring: 'soft', ringVolume: 0.5, present: 'banner', phone: { date: '2026-07-17', time: '14:32' }, received: { mode: 'ago', min: 5 }, hasPhoto: false, hasAudio: false }] }));
+  localStorage.setItem(CALLERS_KEY, JSON.stringify({ v: 1, list: ['Maman', 'Agence', 'Léa', 'Thomas', 'Hôpital', 'Julien'].map((name, i) => ({ id: 'pC' + i, name, label: '', hasPhoto: false })) }));
+  const spec = (k) => ({ kelvin: k, tint: 0, dimmer: 80, wheelHex: '#ffffff', crossfade: 0 });
+  localStorage.setItem('setremote-color-memories', JSON.stringify([['col1', 'Chaud', 3200], ['col2', 'Nuit', 5600], ['col3', 'Bougie', 1900]].map(([id, name, k]) => ({ id, name, spec: spec(k), strobe: null }))));
+  const fx = Object.keys(EFFECT_CONFIG);
+  localStorage.setItem('setremote-fx-memories', JSON.stringify([{ id: 'fx1', name: 'Orage', effect: fx[0], params: {} }, { id: 'fx2', name: 'TV', effect: fx[1], params: {} }]));
+  const st = (id, kind, ref) => ({ id, kind, ref, target: { k: 'all' }, trig: { k: 'go' }, opt: {} });
+  localStorage.setItem(SEQ_SAVED_KEY, JSON.stringify({ v: 1, list: [['qS1', 'Scène 12'], ['qS2', 'Scène 14'], ['qS3', 'Scène 21'], ['qS4', 'Scène 30']]
+    .map(([id, name]) => ({ id, name, steps: [st('s1', 'color', 'col1'), st('s2', 'call', 'eA1'), st('s3', 'sms', 'eS1'), st('s4', 'chat', 'cD1')] })) }));
+  _licReloadTel(); seqLoad(); loadSavedSeqs(); renderSeq();
+  loadColorMemories(); renderColorMemories(); loadFxMemories(); renderFxMemories();
+  await projectsInit();
+  await projectRename(projectActiveId(), 'Tournage B');
+}); };
+// Autres projets rangés (liste, maquette 46)
+const projectMore = (page) => page.evaluate(async () => {
+  await projectCreate({ name: 'Mon projet', from: 'current' });
+  await projectCreate({ name: 'Court « La Nuit »' });
+  await projectCreate({ name: 'Pub Orangina' });
+});
+// Fichier « tournage-b.rem » exporté des données du projet (sans les médias)
+const projectFile = (page) => page.evaluate(async () => {
+  window.__rem = new File([await projectExport({ name: 'Tournage B' })], 'tournage-b.rem', { type: 'application/zip' });
+});
+const projectScene = (extra) => remote(null, async (page) => {
+  await projectSeed(page);
+  if (extra) await extra(page);
+});
 // Notification d'application de la maquette 24 / 25
 const NOTIF = {
   kind: 'notif', name: 'Virement reçu', appName: 'Banque Atlas',
@@ -541,6 +581,55 @@ export const SCENES = {
   }),
   // 13 · Réglages (engrenage de l'en-tête)
   'remote-settings': remote(null, (page) => page.evaluate(() => openSettings())),
+  // 45 · Réglages : carte « Projet » (projet ouvert, compteurs, exporter, importer, dernier export)
+  'remote-project': projectScene((page) => page.evaluate(async () => { await projectNoteExport(null, 'Tournage B.rem'); openSettings(); })),
+  // 45b · Exporter le projet : sections cochées, Mémoires décochée (avertissement « introuvables »), taille estimée
+  'remote-project-export': projectScene((page) => page.evaluate(async () => {
+    openSettings(); await openProjectExport(); projectExportToggle('memories');
+  })),
+  // 45c · Aperçu de l'import « tournage-b.rem » : sections, mode « Ajouter à mes données »
+  'remote-project-import': projectScene(async (page) => {
+    await projectFile(page);
+    await page.evaluate(async () => { openSettings(); await projectImportFile(window.__rem); });
+  }),
+  // 45c · Mode « Remplacer » : ce qui sera supprimé, sonneries comprises
+  'remote-project-import-replace': projectScene(async (page) => {
+    await projectFile(page);
+    await page.evaluate(async () => {
+      openSettings(); await projectImportFile(window.__rem); projectImportMode('replace');
+      const v = document.getElementById('project-view'); v.scrollTop = v.scrollHeight;
+    });
+  }),
+  // 45d · Compte rendu : ajouté au projet ouvert (doublons renommés « (2) », appelants déjà là)
+  'remote-project-report': projectScene(async (page) => {
+    await projectFile(page);
+    await page.evaluate(async () => { openSettings(); await projectImportFile(window.__rem); await projectImportGo(); });
+  }),
+  // 45e · Fichier non reconnu : rien n'a été modifié
+  'remote-project-error': projectScene((page) => page.evaluate(async () => {
+    openSettings();
+    await projectImportFile(new File(['ceci n\'est pas un projet, juste un texte assez long'], 'vacances.zip', { type: 'application/zip' }));
+  })),
+  // 46 · Projets : projet ouvert en orange, « ⋯ », nouveau projet, importer
+  'remote-projects': projectScene(async (page) => {
+    await projectMore(page);
+    await page.evaluate(async () => { openSettings(); await openProjectsView(); });
+  }),
+  // 46 · Menu « ⋯ » d'un projet rangé
+  'remote-projects-menu': projectScene(async (page) => {
+    await projectMore(page);
+    await page.evaluate(async () => { openSettings(); await openProjectsView(); openProjectMenu(_pju.list.list[1].id); });
+  }),
+  // 46b · Nouveau projet : nom, « Vide » / « À partir du projet actuel »
+  'remote-projects-new': projectScene(async (page) => {
+    await projectMore(page);
+    await page.evaluate(async () => { openSettings(); await openProjectsView(); openNewProjectSheet(); document.getElementById('srName').value = 'Tournage C'; });
+  }),
+  // 46c · Ouvrir un autre projet : confirmation
+  'remote-projects-open': projectScene(async (page) => {
+    await projectMore(page);
+    await page.evaluate(async () => { openSettings(); await openProjectsView(); askOpenProject(_pju.list.list[1].id); });
+  }),
   // Réglages : anglais choisi (note « bientôt ») et avertissement désactivé pour la session
   'remote-settings-en': remote(null, (page) => page.evaluate(() => { setFlashWarningSkipped(true); openSettings(); setAppLanguage('en'); })),
   // Politique de confidentialité ouverte depuis les Réglages (page embarquée)
@@ -671,6 +760,36 @@ export const SCENES = {
     _seq.steps.unshift(seqSanitizeStep({ id: 'a0', kind: 'sleep', target: _seq.steps[0].target, trig: { k: 'go' }, opt: { notif: true, touch: true, after: 8 } }));
     openSeqStep('a0');
   })),
+  // 47 · « + NOUVELLE SÉQUENCE » sous les sous-onglets
+  'remote-seq-new': seqScene(scrollTo('seqTab-cur', 80)),
+  // 47 · Séquence modifiée : « Enregistrer « … » avant ? » (Enregistrer / Ne pas enregistrer / Annuler)
+  'remote-seq-new-ask': seqScene(async (page) => {
+    await scrollTo('seqTab-cur', 80)(page);
+    await page.evaluate(() => seqNewAsk());
+  }),
+  // 46c · Refus : une séquence est lancée sur les écrans, pas d'autre projet
+  'remote-projects-busy': seqScene(async (page) => {
+    await page.evaluate(async () => {
+      seqGo(); await _seqChain;
+      await projectsInit(); await projectRename(projectActiveId(), 'Tournage B'); await projectCreate({ name: 'Mon projet' });
+      openSettings(); await openProjectsView(); askOpenProject(_pju.list.list[1].id);
+    });
+  }),
+  // 47b · « + NOUVELLE DISCUSSION » sous les sous-onglets du fil
+  'remote-call-discussion-new': remote('call', async (page) => {
+    await page.evaluate(() => setCallKind('discussion'));
+    await scrollTo('dcTabs', 80)(page);
+  }),
+  // 47b · Fil modifié depuis son entrée enregistrée : « Enregistrer « … » avant ? »
+  'remote-call-discussion-new-ask': remote('call', async (page) => {
+    await page.evaluate(async () => {
+      chatSaved = [{ id: 'c12', name: 'Séq. 12 — Maman inquiète', contact: 'Maman', actor: 'Julie', style: 'glass', msgs: [{ id: 'm1', from: 'contact', text: 'Tu es où ?' }], hasPhoto: false, photoSig: null }];
+      _chat.savedId = 'c12';
+      setCallKind('discussion'); setChatView('thread');
+    });
+    await scrollTo('dcTabs', 80)(page);
+    await page.evaluate(() => chatNewAsk());
+  }),
   // 26d · Timings du fil et lecture automatique : messages 1 et 2 postés, le n° 3 (texte automatique en 4 s) en cours
   'remote-call-discussion-timing': multiScreen(async (page) => {
     await page.evaluate((julie) => {

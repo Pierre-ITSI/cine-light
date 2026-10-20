@@ -44,6 +44,15 @@ const _CHSV_TXT = {
   confirmDelete: 'Supprimer la discussion « {nom} » ?',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Discussion',
+  // « + Nouvelle discussion » (maquette 47b)
+  newBtn: '+ NOUVELLE DISCUSSION',
+  newAsk: 'Enregistrer « {nom} » avant ?',
+  newAskText: 'Le fil en cours a des modifications non enregistrées. La nouvelle discussion part d\'un fil vide (même comédien, même style).',
+  newDiscard: 'Ne pas enregistrer',
+  newFull: 'Liste pleine ({max} discussions) : enregistrement impossible.',
+  liveTitle: 'Impossible pour l\'instant',
+  live: 'La discussion est ouverte sur les écrans : fermez-la avant d\'en commencer une nouvelle.',
+  okBtn: 'OK',
 };
 
 let chatSaved = [];
@@ -209,6 +218,8 @@ function _chsvMeta(e) {
 function renderSavedChats() {
   const tab = document.getElementById('dcTab-saved');
   if (tab) tab.textContent = _tplChat(_CHSV_TXT.tab, { n: chatSaved.length });
+  const nb = document.getElementById('dcNewBtn');
+  if (nb) nb.textContent = _CHSV_TXT.newBtn;
   const rows = document.getElementById('dcSavedRows');
   if (!rows) return;
   rows.textContent = '';
@@ -255,6 +266,20 @@ function openRenameSavedChat(id) {
 }
 // Contenu d'une feuille de discussion : { title, html, form } ; null : entrée disparue
 function chatSheetContent(s) {
+  if (s.kind === 'chatNew') {
+    const note = (t) => '<p class="sr-sheet-note prj-sheet-text">' + escapeHtml(t) + '</p>';
+    if (s.live) {
+      return { title: _CHSV_TXT.liveTitle, form: false, html: note(_CHSV_TXT.live) + '<div class="sr-actions"><button type="button" class="sr-ok" onclick="closeSheet()">' + escapeHtml(_CHSV_TXT.okBtn) + '</button></div>' };
+    }
+    return {
+      title: _tplChat(_CHSV_TXT.newAsk, { nom: s.name }), form: false,
+      html: note(_CHSV_TXT.newAskText)
+        + (s.msg ? '<p class="sr-sheet-note prj-sheet-err" role="alert">' + escapeHtml(s.msg) + '</p>' : '')
+        + '<button type="button" class="dc-menu-btn danger" id="chatNewDiscard" onclick="chatNewAnswer(\'discard\')">' + escapeHtml(_CHSV_TXT.newDiscard) + '</button>'
+        + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CHSV_TXT.cancel) + '</button>'
+        + '<button type="button" class="sr-ok" id="chatNewSave" onclick="chatNewAnswer(\'save\')">' + escapeHtml(_CHSV_TXT.ok) + '</button></div>',
+    };
+  }
   const e = s.id ? chatSaved.find((x) => x.id === s.id) : null;
   if (s.id && !e) return null;
   if (s.kind === 'chatMenu') {
@@ -286,7 +311,27 @@ function chatMenuRename(id) { openRenameSavedChat(id); }
 function chatMenuDuplicate(id) { closeSheet(); duplicateSavedChat(id); }
 function chatMenuDelete(id) { closeSheet(); deleteSavedChat(id); }
 
-// ── Nouvelle discussion (moteur ; bouton et confirmation : maquette 47b, à valider) ──
+// ── Nouvelle discussion (maquette 47b) : bouton « + NOUVELLE DISCUSSION » sous les sous-onglets ──
+// Sans modification en cours : aussitôt. Sinon feuille « Enregistrer « … » avant ? » :
+// Enregistrer (nouvelle entrée, nom par défaut) / Ne pas enregistrer / Annuler.
+// Discussion ouverte sur les écrans : refus (feuille).
+async function chatNewAsk() {
+  if (licLocked('tel')) return; // aperçu sans licence (77-licence-ui.js)
+  const r = await chatNew();
+  if (r.ok) return;
+  if (r.code === 'dirty') { _sheet = { kind: 'chatNew', name: r.name }; renderSheet(); } else if (r.code === 'live') { _sheet = { kind: 'chatNew', live: true }; renderSheet(); }
+}
+async function chatNewAnswer(choice) {
+  const s = _sheet;
+  if (!s || s.kind !== 'chatNew' || s.live) return;
+  const r = await chatNew(choice === 'save' ? { save: '' } : { discard: true });
+  if (_sheet !== s) return;
+  if (r.ok) { closeSheet(); return; }
+  if (r.code === 'live') { s.live = true; renderSheet(); return; }
+  s.msg = r.code === 'full' ? _tplChat(_CHSV_TXT.newFull, { max: CHAT_SAVED_MAX }) : _CHSV_TXT.storeFull;
+  renderSheet();
+}
+// Moteur :
 // Fil vierge (aucun message, contact sans nom ni photo ; comédien et style
 // gardés), sans toucher aux discussions enregistrées. Modifications non
 // enregistrées (chatHasUnsavedChanges) : refus { ok: false, code: 'dirty', name }

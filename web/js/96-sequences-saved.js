@@ -49,6 +49,13 @@ const _SQSV_TXT = {
   confirmDelete: 'Supprimer la séquence « {nom} » ?',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Séquence',
+  // « + Nouvelle séquence » (maquette 47)
+  newBtn: '+ NOUVELLE SÉQUENCE',
+  newAsk: 'Enregistrer « {nom} » avant ?',
+  newAskText: 'La séquence en cours a des modifications non enregistrées. La nouvelle séquence part de zéro.',
+  newAskTextSaved: 'La séquence en cours a des modifications non enregistrées. La nouvelle séquence part de zéro ; « {nom} » enregistrée reste telle quelle.',
+  newDiscard: 'Ne pas enregistrer',
+  newFull: 'Liste pleine ({max} séquences) : enregistrement impossible.',
 };
 
 let seqSaved = [];
@@ -151,6 +158,7 @@ function _sqsvMeta(e) {
 function renderSavedSeqs() {
   _seqSet('seqTab-cur', _SQSV_TXT.tabCur);
   _seqSet('seqTab-saved', _seqTpl(_SQSV_TXT.tab, { n: seqSaved.length }));
+  _seqSet('seqNewBtn', _SQSV_TXT.newBtn);
   const rows = document.getElementById('seqSavedRows');
   if (!rows) return;
   rows.textContent = '';
@@ -200,6 +208,17 @@ function openRenameSavedSeq(id) {
 }
 // Contenu d'une feuille de séquence : { title, html, form } ; null : entrée disparue
 function seqSheetContent(s) {
+  if (s.kind === 'seqNew') {
+    const saved = seqSaved.find((x) => x.id === _seq.savedId);
+    return {
+      title: _seqTpl(_SQSV_TXT.newAsk, { nom: s.name }), form: false,
+      html: '<p class="sr-sheet-note prj-sheet-text">' + escapeHtml(saved ? _seqTpl(_SQSV_TXT.newAskTextSaved, { nom: saved.name }) : _SQSV_TXT.newAskText) + '</p>'
+        + (s.msg ? '<p class="sr-sheet-note prj-sheet-err" role="alert">' + escapeHtml(s.msg) + '</p>' : '')
+        + '<button type="button" class="dc-menu-btn danger" id="seqNewDiscard" onclick="seqNewAnswer(\'discard\')">' + escapeHtml(_SQSV_TXT.newDiscard) + '</button>'
+        + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_SQSV_TXT.cancel) + '</button>'
+        + '<button type="button" class="sr-ok" id="seqNewSave" onclick="seqNewAnswer(\'save\')">' + escapeHtml(_SQSV_TXT.ok) + '</button></div>',
+    };
+  }
   const e = s.id ? seqSaved.find((x) => x.id === s.id) : null;
   if (s.id && !e) return null;
   if (s.kind === 'seqMenu') {
@@ -231,7 +250,23 @@ function seqMenuRename(id) { openRenameSavedSeq(id); }
 function seqMenuDuplicate(id) { closeSheet(); duplicateSavedSeq(id); }
 function seqMenuDelete(id) { closeSheet(); deleteSavedSeq(id); }
 
-// ── Nouvelle séquence (moteur ; bouton et confirmation : maquette 47, à valider) ──
+// ── Nouvelle séquence (maquette 47) : bouton « + NOUVELLE SÉQUENCE » sous les sous-onglets ──
+// Sans modification en cours : aussitôt. Sinon feuille « Enregistrer « … » avant ? » :
+// Enregistrer (nouvelle entrée, nom actuel) / Ne pas enregistrer / Annuler.
+function seqNewAsk() {
+  if (licLocked('seq')) return; // aperçu sans licence (77-licence-ui.js)
+  const r = seqNew();
+  if (!r.ok && r.code === 'dirty') { _sheet = { kind: 'seqNew', name: r.name }; renderSheet(); }
+}
+function seqNewAnswer(choice) {
+  const s = _sheet;
+  if (!s || s.kind !== 'seqNew') return;
+  const r = seqNew(choice === 'save' ? { save: '' } : { discard: true });
+  if (r.ok) { closeSheet(); return; }
+  s.msg = r.code === 'full' ? _seqTpl(_SQSV_TXT.newFull, { max: SEQ_SAVED_MAX }) : _SQSV_TXT.storeFull;
+  renderSheet();
+}
+// Moteur :
 // Repart d'une séquence vide sans toucher aux enregistrées. La séquence en cours
 // a des modifications non enregistrées (seqHasUnsavedChanges) : refus
 // { ok: false, code: 'dirty', name } tant que l'appelant n'a pas choisi :

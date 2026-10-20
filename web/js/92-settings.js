@@ -13,6 +13,8 @@
 //                                 (21-links.js) ; la ligne ouvre « Tourner sans
 //                                 réseau » (maquette 10, 93-offline.js), où se
 //                                 fait le choix
+// Carte « Projet » (maquette 45) : projet ouvert, exporter, importer ; vues et
+// feuilles des projets : 74-project-ui.js (maquettes 45b à 46c).
 // En tête, version officielle seulement (absentes de la version libre) :
 //   Licence, Identifiant de cet appareil   maquettes 37 / 37b, 77-licence-ui.js
 // Laissées de côté tant que la fonction n'existe pas (pas de valeur inventée) :
@@ -46,6 +48,7 @@ function openSettings() {
 }
 function closeSettings() {
   closePrivacyPolicy();
+  if (typeof closeProjectView === 'function') closeProjectView();
   document.getElementById('settings-view').style.display = 'none';
 }
 
@@ -66,6 +69,7 @@ function renderSettings() {
   document.getElementById('stStrobeMax').textContent = PROTO.STROBE_FREQ_MAX + ' Hz';
   renderSettingsLink();
   renderLicenceSettings(); // Licence (maquettes 37, 37b) : version officielle seulement, 77-licence-ui.js
+  renderSettingsProject(); // Projet (maquette 45) : 74-project-ui.js, asynchrone
   document.getElementById('stVersion').textContent = 'SetRemote ' + APP_VERSION + ' · by Pikoo';
 }
 

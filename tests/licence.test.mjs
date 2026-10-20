@@ -148,7 +148,7 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
     name: document.getElementById('callName').value, label: document.getElementById('callLabel').value,
     lists: [callList.call.map((e) => e.name), callList.sms.map((e) => e.msg), callList.notif.map((e) => e.appName)],
     chat: [_chat.name, _chat.msgs.length], saved: chatSaved.map((e) => e.contact), callers: callers.map((e) => e.name),
-    inert: ['telStyleBtn', 'callName', 'callerSaveBtn', 'callListSave', 'callListDel', 'dcAdd', 'dcContactPanel', 'callWhoSaved'].map((id) => document.getElementById(id).inert),
+    inert: ['telStyleBtn', 'callName', 'callerSaveBtn', 'callListSave', 'callListDel', 'dcAdd', 'dcContactPanel', 'callWhoSaved', 'dcNewBtn'].map((id) => document.getElementById(id).inert),
     free: ['callTriggerBtn', 'callListGo', 'dcGo', 'callkind-sms'].map((id) => document.getElementById(id).inert),
     ex: getComputedStyle(document.getElementById('callWhoLabel'), '::after').content,
   }));
@@ -201,8 +201,9 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
       text: document.querySelector('#licPvSeq p').textContent,
       sms: __sent.filter((m) => m.type === 'call:start' && m.kind === 'sms').map((m) => m.msg),
       editor: !!_seqEdit, pp: !!_pp, sheet: !!_sheet, saved: seqSaved.length, chatOpt: _seq.steps[2].opt, label: seqStepLabel(_seq.steps[2]),
-      inert: ['seqAddBtn', 'seqPhoneBtn', 'seqTab-saved', 'seqRows'].map((id) => document.getElementById(id).inert),
+      inert: ['seqAddBtn', 'seqPhoneBtn', 'seqTab-saved', 'seqRows', 'seqNewBtn'].map((id) => document.getElementById(id).inert),
       ctl: ['seqGoBtn', 'seqBackBtn', 'seqStopBtn'].map((id) => document.getElementById(id).inert),
+      prj: ['stPrjOpen', 'stPrjExport', 'stPrjImport', 'project-view'].map((id) => document.getElementById(id).inert || !!document.getElementById(id).closest('[inert]')),
     };
   });
   assert.equal(seq.name, 'Démo — « Batterie à plat »');
@@ -217,6 +218,7 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
   assert.equal(seq.label, 'Discussion « Maman » → réponse · auto complète');
   assert.ok(seq.inert.every(Boolean));
   assert.ok(seq.ctl.every((v) => !v), 'GO / ↶ / STOP libres');
+  assert.deepEqual(seq.prj, [false, false, false, false], 'projets : export, import, liste disponibles en aperçu');
   // Rien n'a touché les données de l'utilisateur
   const after = await p.page.evaluate(() => ['setremote-call-list-v1', 'setremote-seq-v1', 'setremote-chat-v1'].map((k) => localStorage.getItem(k)));
   assert.deepEqual(after, before);

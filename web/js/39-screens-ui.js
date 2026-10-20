@@ -84,8 +84,9 @@ function renderSheet(focus) {
   const title = document.getElementById('srSheetTitle'), body = document.getElementById('srSheetBody');
   const s = _sheet;
   let t = '', h = '', form = s.kind === 'rename' || s.kind === 'group';
-  if (s.kind === 'chatName' || s.kind === 'chatMenu' || s.kind === 'seqName' || s.kind === 'seqMenu') {
-    // Discussions enregistrées (89-discussions-saved.js), séquences enregistrées (96-sequences-saved.js) : nom, menu « ⋯ »
+  if (s.kind === 'chatName' || s.kind === 'chatMenu' || s.kind === 'chatNew' || s.kind === 'seqName' || s.kind === 'seqMenu' || s.kind === 'seqNew') {
+    // Discussions enregistrées (89-discussions-saved.js), séquences enregistrées (96-sequences-saved.js) : nom, menu « ⋯ »,
+    // « Enregistrer avant ? » de « + Nouvelle séquence / discussion » (maquettes 47, 47b)
     const c = s.kind.startsWith('seq') ? seqSheetContent(s) : chatSheetContent(s);
     if (!c) { closeSheet(); return; }
     t = c.title; h = c.html; form = c.form;
@@ -97,6 +98,11 @@ function renderSheet(focus) {
   } else if (s.kind === 'callers' || s.kind === 'callerMenu' || s.kind === 'callerName') {
     // Appelants enregistrés (maquette 36e, 79-callers.js) : liste, menu « ⋯ », renommer
     const c = callersSheetContent(s);
+    if (!c) { closeSheet(); return; }
+    t = c.title; h = c.html; form = c.form;
+  } else if (s.kind.startsWith('prj')) {
+    // Projets (maquettes 46 à 46c, 74-project-ui.js) : menu « ⋯ », renommer, nouveau projet, ouvrir, refus pendant le jeu
+    const c = projectSheetContent(s);
     if (!c) { closeSheet(); return; }
     t = c.title; h = c.html; form = c.form;
   } else if (s.kind === 'install') {
@@ -181,6 +187,7 @@ function sheetSave() {
   if (s.kind === 'seqName') { seqSheetSave(s, inp.value); return; }   // 96-sequences-saved.js
   if (s.kind === 'callerName') { callerSheetSave(s, inp.value); return; } // 79-callers.js
   if (s.kind === 'callName') { callListSheetSave(s, inp.value); return; } // 82-call-list.js
+  if (s.kind === 'prjName' || s.kind === 'prjNew') { projectSheetSave(s, inp.value); return; } // 74-project-ui.js
   if (s.kind === 'rename') scrRenameScreen(s.id, inp.value);
   else if (s.kind === 'group') {
     const members = [...s.members].filter(scrKnown);

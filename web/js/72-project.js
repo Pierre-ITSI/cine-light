@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ PROJETS : EXPORT, IMPORT ET GESTION (télécommande) ══════════════════════════
-// MOTEUR SEULEMENT : aucun bouton, aucune vue. L'interface (Réglages › Projet,
-// feuilles d'export, d'aperçu et de compte rendu, liste des projets) attend les
-// maquettes 45 à 46c (règle : pas d'interface sans maquette validée).
+// Moteur. Interface (maquettes validées 45 à 46c : Réglages › Projet, vues
+// d'export, d'aperçu, de compte rendu, liste des projets) : 74-project-ui.js.
 // Contrat complet, inventaire du stockage et choix : docs/PROJECTS.md.
 //
 // Un PROJET regroupe ce que la télécommande a préparé pour une production :
@@ -27,7 +26,7 @@
 // du relais, patch DMX, préférences de l'appareil (langue, liaison…). Liste
 // exacte : PRJ_NEVER_KEYS ; garde-fou à l'export : _prjSecretScan.
 //
-// ── Fichier « Nom.setremote » = ZIP (méthodes 0 « stocké » et 8 « deflate ») ──
+// ── Fichier « Nom.rem » = ZIP (méthodes 0 « stocké » et 8 « deflate ») ──
 //   project.json        manifeste { format: 'setremote-project', version: 1,
 //                       app, created (ISO), name, sections, counts, files }
 //   data/<section>.json une entrée par section
@@ -59,7 +58,7 @@
 //
 // ── Projets locaux (plusieurs projets, un seul ouvert) ──
 // Base IndexedDB setremote-projects : meta { id, name, created, updated, size,
-// counts } et snap (instantané .setremote du projet quand il n'est pas ouvert) ;
+// counts, lastExport?, imported? } et snap (instantané .rem du projet quand il n'est pas ouvert) ;
 // projet ouvert : setremote-project-v1 { v, active }. Le contenu du projet
 // OUVERT est l'espace de travail (le stockage habituel des modules). Changer de
 // projet : instantané de l'espace de travail (même sérialiseur que l'export)
@@ -81,8 +80,13 @@
 //                 project:error { id, reason }
 const PRJ_FORMAT = 'setremote-project';
 const PRJ_VERSION = 1;
-const PRJ_EXT = '.setremote';
-const PRJ_MIME = 'application/zip';
+// Extension des fichiers écrits ; à l'import : .rem et l'ancienne .setremote
+// (le contenu est validé quel que soit le nom). Identifiant interne du format
+// (manifeste) inchangé : 'setremote-project'.
+const PRJ_EXT = '.rem';
+const PRJ_EXTS_IN = ['.rem', '.setremote'];
+const PRJ_MIME = 'application/zip';           // type du Blob produit (conteneur ZIP)
+const PRJ_SAVE_MIME = 'application/octet-stream'; // téléchargement : aucun navigateur n'y ajoute « .zip »
 const PRJ_FFLATE_SRC = 'vendor/fflate-0.8.2.min.js';
 const PRJ_SECTIONS = ['seq', 'chat', 'calls', 'callers', 'rings', 'memories', 'media'];
 const PRJ_ALL = PRJ_SECTIONS.concat(['work']);
@@ -90,7 +94,7 @@ const PRJ_CHUNK = 512 * 1024;                 // caractères base64 par message 
 const _PRJ_MB = 1024 * 1024;
 // Plafonds (objet modifiable par les tests seulement)
 const PRJ_LIMITS = {
-  file: 512 * _PRJ_MB,      // fichier .setremote
+  file: 512 * _PRJ_MB,      // fichier .rem
   total: 512 * _PRJ_MB,     // somme des entrées décompressées
   entries: 4000,
   manifest: 64 * 1024, json: 8 * _PRJ_MB,
@@ -118,7 +122,7 @@ const _PRJ_TXT = {
   defaultName: 'Projet', firstName: 'Mon projet', copy: '{nom} (copie)', untitledMem: 'Mémoire',
   sections: { seq: 'Séquences', chat: 'Discussions', calls: 'Appels et SMS', callers: 'Appelants', rings: 'Sonneries', memories: 'Mémoires', media: 'Médias', work: 'En cours' },
   err: {
-    'not-zip': 'Fichier non reconnu : ce n\'est pas un projet SetRemote (.setremote).',
+    'not-zip': 'Fichier non reconnu : ce n\'est pas un projet SetRemote (.rem).',
     'not-project': 'Ce fichier n\'est pas un projet SetRemote.',
     version: 'Ce projet vient d\'une version plus récente de SetRemote : mettez l\'app à jour pour l\'ouvrir.',
     'too-large': 'Fichier trop volumineux (plus de {max} Mo).',
@@ -694,28 +698,31 @@ function _prjSecretScan(text) {
 
 // ══════════ API : résumé, export ══════════
 // Contenu actuel par section (feuille d'export) : { counts, calls, media: { count, bytes }, bytes (estimation) }
+// bytesBy : estimation par section (photos, sons, images ; textes compris) pour la taille estimée
 async function projectSummary() {
   const sz = (d) => (typeof d === 'string' ? Math.round(d.length * 0.75) : 0);
-  let bytes = 0;
+  const txt = (k) => (_prjLsRaw(k) || '').length;
+  const by = { seq: txt(SEQ_SAVED_KEY), chat: txt(CHAT_SAVED_KEY), calls: txt(CALL_LIST_KEY), callers: txt(CALLERS_KEY), rings: txt(RING_SETTINGS_KEY), memories: txt(_PRJ_COLOR_KEY) + txt(_PRJ_FX_KEY) };
   const seqs = _prjSavedSeqs((_prjLsJson(SEQ_SAVED_KEY) || {}).list).slice(0, SEQ_SAVED_MAX);
   const imgs = new Set();
   for (const e of seqs) for (const s of _prjSeqImgs(e.steps, e.wall)) imgs.add(s);
-  for (const s of imgs) bytes += sz(await _prjAssetGet(seqHomeKey(s)));
+  for (const s of imgs) by.seq += sz(await _prjAssetGet(seqHomeKey(s)));
   const chats = _prjSavedChats((_prjLsJson(CHAT_SAVED_KEY) || {}).list).slice(0, CHAT_SAVED_MAX);
-  for (const e of (_prjLsJson(CHAT_SAVED_KEY) || {}).list || []) if (e && e.hasPhoto && chats.some((c) => c.id === e.id)) bytes += sz(await _prjAssetGet(_chsvPhotoKey(e.id)));
+  for (const e of (_prjLsJson(CHAT_SAVED_KEY) || {}).list || []) if (e && e.hasPhoto && chats.some((c) => c.id === e.id)) by.chat += sz(await _prjAssetGet(_chsvPhotoKey(e.id)));
   const lists = _prjCallLists(_prjLsJson(CALL_LIST_KEY));
   const calls = {};
   for (const k of CALL_LISTS) {
     calls[k] = Math.min(CALL_LIST_MAX, lists[k].length);
     for (const e of lists[k].slice(0, CALL_LIST_MAX)) {
-      if (e.hasPhoto) bytes += sz(await _prjAssetGet(e.id + ':photo'));
-      if (e.hasAudio) bytes += sz(await _prjAssetGet(e.id + ':audio'));
+      if (e.hasPhoto) by.calls += sz(await _prjAssetGet(e.id + ':photo'));
+      if (e.hasAudio) by.calls += sz(await _prjAssetGet(e.id + ':audio'));
     }
   }
   const crs = _prjCallers((_prjLsJson(CALLERS_KEY) || {}).list).slice(0, CALLERS_MAX);
-  for (const e of crs) if (e.hasPhoto) bytes += sz(await _prjAssetGet(_crPhotoKey(e.id)));
+  for (const e of crs) if (e.hasPhoto) by.callers += sz(await _prjAssetGet(_crPhotoKey(e.id)));
   const rings = (await _prjRingMetas()).slice(0, PRJ_LIMITS.rings);
-  for (const m of rings) bytes += m.size || 0;
+  for (const m of rings) by.rings += m.size || 0;
+  const bytes = Object.values(by).reduce((n, v) => n + v, 0);
   const mem = await _PRJ_OUT.memories();
   const media = _mediaPool.slice(0, PRJ_LIMITS.media).filter((m) => m.file);
   const mediaBytes = media.reduce((n, m) => n + (m.file.size || 0), 0);
@@ -723,7 +730,7 @@ async function projectSummary() {
     counts: { seq: seqs.length, chat: chats.length, calls: calls.call + calls.sms + calls.notif, callers: crs.length, rings: rings.length, memories: mem.color.length + mem.fx.length, media: media.length },
     calls, memories: { color: mem.color.length, fx: mem.fx.length },
     media: { count: media.length, bytes: mediaBytes },
-    bytes, // sans les médias
+    bytes, bytesBy: by, // sans les médias
   };
 }
 // Sections demandées, dans l'ordre du format ; médias seulement avec includeMedia
@@ -902,7 +909,9 @@ async function _prjSteps(p, steps, maps) {
   }
   return seqSanitizeSteps(out);
 }
-const _prjRes = () => ({ added: 0, removed: 0, skipped: 0, renamed: 0, same: 0 });
+// names : nouveaux noms des éléments renommés (3 au plus, compte rendu)
+const _prjRes = () => ({ added: 0, removed: 0, skipped: 0, renamed: 0, same: 0, names: [] });
+function _prjRenamed(r, name) { r.renamed++; if (r.names.length < 3) r.names.push(name); }
 function _prjWarn(R, section, code, name) { if (R.warnings.length < 50) R.warnings.push({ section, code, name: name || '' }); }
 
 const _PRJ_APPLY = {
@@ -949,7 +958,7 @@ const _PRJ_APPLY = {
         e.id = _prjFreshId(e.id, ids, gen);
         maps[k].set(e0.id, e.id);
         const nm = _prjUnique(e.name, names, 40);
-        if (nm !== e.name) { r.renamed++; e.name = nm; }
+        if (nm !== e.name) { _prjRenamed(r, nm); e.name = nm; }
         cur.push(e); r.added++;
       }
       _prjLsWrite(key, JSON.stringify(cur));
@@ -1011,7 +1020,7 @@ const _PRJ_APPLY = {
         if (e.ringId && maps.ring.has(e.ringId)) e.ringId = maps.ring.get(e.ringId);
         const nm = callEntryName(e);
         const u = _prjUnique(nm, names, CALL_TITLE_MAX);
-        if (u !== nm) { e.title = u; r.renamed++; }
+        if (u !== nm) { e.title = u; _prjRenamed(r, u); }
         const ph = await _prjLoadData(p, e0.photo, 'image');
         const au = e.kind === 'call' ? await _prjLoadData(p, e0.audio, 'audio', CALL_AUDIO_MAX_BYTES) : null;
         if ((e0.photo && !ph) || (e0.audio && !au)) _prjWarn(R, 'calls', 'file', callEntryName(e));
@@ -1041,7 +1050,7 @@ const _PRJ_APPLY = {
       e.id = _prjFreshId(e0.id, ids, _chsvNewId);
       maps.chat.set(e0.id, e.id);
       const nm = _prjUnique(e.name, names, CHAT_SAVED_NAME_MAX);
-      if (nm !== e.name) { e.name = nm; r.renamed++; }
+      if (nm !== e.name) { e.name = nm; _prjRenamed(r, nm); }
       const ph = await _prjLoadData(p, e0.photo, 'image');
       if (e0.photo && !ph) _prjWarn(R, 'chat', 'file', e.name);
       if (ph) { await _prjAssetPut(_chsvPhotoKey(e.id), ph); e.hasPhoto = true; e.photoSig = _chsvPhotoSig(ph); }
@@ -1063,7 +1072,7 @@ const _PRJ_APPLY = {
       maps.seq.set(e0.id, e.id);
       if (e0.wall) { const sig = await _prjImg(p, e0.wall.img, maps); e.wall = sig ? { img: sig, name: e0.wall.name } : null; }
       const nm = _prjUnique(e.name, names, SEQ_NAME_MAX);
-      if (nm !== e.name) { e.name = nm; r.renamed++; }
+      if (nm !== e.name) { e.name = nm; _prjRenamed(r, nm); }
       const c = _sqsvSanitize(e);
       if (!c) { r.skipped++; continue; }
       cur.push(c); r.added++;
@@ -1295,7 +1304,7 @@ function projectDelete(id) {
     return { ok: true, id };
   });
 }
-// Fichier .setremote d'un projet rangé (sans l'ouvrir) ; projet ouvert : export du contenu actuel
+// Fichier .rem d'un projet rangé (sans l'ouvrir) ; projet ouvert : export du contenu actuel
 function projectExportStored(id, opts = {}) {
   return _prjRun(async () => {
     const metas = await projectsInit();
@@ -1327,7 +1336,7 @@ async function _prjRewrite(snap, name) {
   }
   return _prjZipBuild(out, when);
 }
-// Fichier .setremote rangé comme NOUVEAU projet (validé en entier d'abord) ; ne l'ouvre pas
+// Fichier .rem rangé comme NOUVEAU projet (validé en entier d'abord) ; ne l'ouvre pas
 function projectImportAsNew(file, opts = {}) {
   return _prjRun(async () => {
     const p = await _prjOpen(file);
@@ -1336,10 +1345,21 @@ function projectImportAsNew(file, opts = {}) {
     _prjQuota(metas, file.size);
     const name = _prjUnique(_prjName(opts.name) || p.name, _prjNames(metas), 60);
     const now = Date.now();
-    const m = { id: _prjNewPid(), name, created: now, updated: now, size: file.size, counts: p.counts };
+    const m = { id: _prjNewPid(), name, created: now, updated: now, size: file.size, counts: p.counts, imported: true };
     const blob = file.slice(0, file.size, PRJ_MIME);
     await _prjTx('readwrite', (st, sn) => { st.put(m); return sn.put(blob, m.id); });
     return { ok: true, mode: 'new', id: m.id, name, counts: p.counts };
+  });
+}
+// Dernier export d'un projet (Réglages › Projet : « Dernier export : … ») : meta.lastExport { at, file }
+function projectNoteExport(id, file) {
+  return _prjRun(async () => {
+    const metas = await projectsInit();
+    const m = metas.find((x) => x.id === (id || projectActiveId()));
+    if (!m) throw _prjErr('not-found');
+    m.lastExport = { at: Date.now(), file: projectFileName(String(file || '').replace(/\.(rem|setremote)$/i, '')) };
+    await _prjTx('readwrite', (st) => st.put(m));
+    return { ok: true };
   });
 }
 // Quelque chose se joue sur les écrans : séquence lancée, discussion ouverte, appel en cours
@@ -1391,11 +1411,16 @@ function projectFileName(name) {
 }
 const _prjNat = { save: new Map(), open: null };
 const _prjNatId = () => 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-// Web : téléchargement « Nom.setremote » ; app : feuille de partage (pont par morceaux)
+// Nom d'un fichier reçu (sélecteur natif) : nettoyé, extension d'origine gardée
+function _prjPickedName(name) {
+  const n = String(name || '').replace(/[\u0000-\u001F\u007F/\\:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim().replace(/^[.\s]+/, '').slice(-80).trim();
+  return n || _PRJ_TXT.defaultName + PRJ_EXT;
+}
+// Web : téléchargement « Nom.rem » ; app : feuille de partage (pont par morceaux)
 async function projectSave(blob, name) {
   const file = projectFileName(name);
   if (!IN_NATIVE_APP) {
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(new Blob([blob], { type: PRJ_SAVE_MIME }));
     const a = document.createElement('a');
     a.href = url; a.download = file; a.rel = 'noopener';
     a.click();
@@ -1429,7 +1454,7 @@ function projectPick() {
   return new Promise((resolve) => {
     const inp = document.createElement('input');
     inp.type = 'file';
-    inp.accept = PRJ_EXT + ',application/zip';
+    inp.accept = PRJ_EXTS_IN.join(',') + ',' + PRJ_MIME;
     let settled = false;
     const end = (f) => { if (!settled) { settled = true; resolve(f); } };
     inp.addEventListener('change', () => end(inp.files && inp.files[0] ? inp.files[0] : null));
@@ -1460,7 +1485,7 @@ function projectOnNative(m) {
     && typeof m.data === 'string' && m.data.length <= PRJ_CHUNK && (m.i === m.n - 1 || m.data.length % 4 === 0) && _PRJ_B64_RE.test(m.data)
     && Number.isInteger(m.size) && m.size >= 0 && m.size <= PRJ_LIMITS.native;
   if (!ok) { o.done(null, _prjErr(m.size > PRJ_LIMITS.native ? 'too-large' : 'corrupt')); return true; }
-  if (m.i === 0) { o.n = m.n; o.size = m.size; o.name = projectFileName(String(m.name || '').replace(/\.setremote$/i, '')); }
+  if (m.i === 0) { o.n = m.n; o.size = m.size; o.name = _prjPickedName(m.name); }
   try { o.parts.push(_prjB64ToBytes(m.data)); } catch (_) { o.done(null, _prjErr('corrupt')); return true; }
   if (o.parts.length === o.n) {
     const f = new File(o.parts, o.name, { type: PRJ_MIME });

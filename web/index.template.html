@@ -802,6 +802,8 @@
       <button type="button" class="gw-seg-btn active" id="dcTab-thread" onclick="setChatView('thread')">Fil en cours</button>
       <button type="button" class="gw-seg-btn" id="dcTab-saved" onclick="setChatView('saved')">Enregistrées (0)</button>
     </div>
+    <!-- Nouvelle discussion (maquette 47b) : fil vierge, « Enregistrer avant ? » si le fil a changé -->
+    <button type="button" class="prj-newbtn" id="dcNewBtn" style="display:none" onclick="chatNewAsk()">+ NOUVELLE DISCUSSION</button>
     <div class="dc-saved" id="dcSavedPanel" style="display:none">
       <div class="dc-saved-rows" id="dcSavedRows"></div>
       <div class="dc-saved-empty" id="dcSavedEmpty">Aucune discussion enregistrée pour l'instant.</div>
@@ -900,6 +902,8 @@
       <button type="button" class="gw-seg-btn" id="seqTab-saved" onclick="setSeqView('saved')">Enregistrées (0)</button>
     </div>
     <div class="sq" id="seqCurView">
+      <!-- Nouvelle séquence (maquette 47) : séquence vide, « Enregistrer avant ? » si la séquence a changé -->
+      <button type="button" class="prj-newbtn" id="seqNewBtn" onclick="seqNewAsk()">+ NOUVELLE SÉQUENCE</button>
       <div class="sq-head"><span class="sq-title">Séquence</span><button type="button" class="sq-add" id="seqAddBtn" onclick="openSeqStep(null)">+ ÉTAPE</button></div>
       <div class="sq-sub"><span id="seqName"></span><span id="seqTarget"></span></div>
       <!-- Téléphone au départ (maquette 28b) : barre d'état de la séquence -->
@@ -1244,6 +1248,23 @@
     <p class="st-note" id="stLicBuyNote" style="display:none"></p>
     <button type="button" class="st-lic-wide st-lic-buy" id="stLicBuy" style="display:none" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
   </div>
+  <!-- Projet (maquette 45, 74-project-ui.js) : projet ouvert, exporter, importer -->
+  <div class="st-card st-rows" id="stProject">
+    <span class="st-label prj-label">Projet</span>
+    <button type="button" class="st-row" id="stPrjOpen" onclick="openProjectsView()">
+      <span class="st-row-main"><span class="st-row-label" id="stPrjName">Mon projet</span><span class="st-row-sub" id="stPrjSub">Projet ouvert</span></span>
+      <span class="st-row-val prj-accent">Projets ›</span>
+    </button>
+    <button type="button" class="st-row" id="stPrjExport" onclick="openProjectExport()">
+      <span class="st-row-main"><span class="st-row-label">Exporter le projet…</span><span class="st-row-sub">Fichier .rem à envoyer ou à archiver</span></span>
+      <span class="st-row-val">›</span>
+    </button>
+    <button type="button" class="st-row prj-last" id="stPrjImport" onclick="projectImportPick()">
+      <span class="st-row-main"><span class="st-row-label">Importer un projet…</span><span class="st-row-sub">Ajouter, remplacer, ou ouvrir comme nouveau projet</span></span>
+      <span class="st-row-val">›</span>
+    </button>
+  </div>
+  <p class="st-note prj-lastexp" id="stPrjLast" style="display:none"></p>
   <div class="st-card">
     <span class="st-label">Langue</span>
     <div class="st-seg">
@@ -1277,6 +1298,16 @@
     <span>Aucun compte · aucune publicité · aucun suivi</span>
     <span id="stVersion">SetRemote · by Pikoo</span>
   </div>
+</div>
+
+<!-- Projets (maquettes 45b à 46, 74-project-ui.js) : liste, export, aperçu de l'import, compte rendu, erreurs -->
+<div id="project-view" role="dialog" aria-modal="true" aria-labelledby="pjTitle">
+  <div class="st-head">
+    <button type="button" class="st-back" onclick="projectViewBack()">← Retour</button>
+    <span class="st-title" id="pjTitle">Projets</span>
+    <span class="st-spacer"></span>
+  </div>
+  <div class="prj-body" id="pjBody"></div>
 </div>
 
 <!-- Tourner sans réseau (maquette 10) : liaison (Auto / Internet / Wi-Fi local / Bluetooth) et préparation des écrans -->

@@ -1,14 +1,20 @@
-# Projets SetRemote (`.setremote`) : export, import, projets locaux
+# Projets SetRemote (`.rem`) : export, import, projets locaux
 
-Moteur : `web/js/72-project.js` (télécommande). Nouvelle séquence / nouvelle
-discussion : `seqNew` (`web/js/96-sequences-saved.js`), `chatNew`
+Moteur : `web/js/72-project.js` (télécommande). Interface (maquettes validées
+45 à 47b) : `web/js/74-project-ui.js`, `web/styles/91-project.css` (§ 11).
+Nouvelle séquence / nouvelle discussion : `seqNew` / `seqNewAsk`
+(`web/js/96-sequences-saved.js`), `chatNew` / `chatNewAsk`
 (`web/js/89-discussions-saved.js`). Coque native : `expo-app/src/lib/projectFiles.ts`.
-Tests : `tests/project.test.mjs`, `expo-app/test/project-files.test.mjs`.
+Tests : `tests/project.test.mjs` (moteur), `tests/project-ui.test.mjs`
+(interface), `expo-app/test/project-files.test.mjs` (coque), captures
+`remote-project*`, `remote-projects*`, `remote-seq-new*`, `remote-call-discussion-new*`.
 
-**État : moteur seulement.** Aucun bouton ni aucune vue dans l'app : l'interface
-(Réglages › Projet, feuilles d'export / d'aperçu / de compte rendu, liste des
-projets, « + Nouvelle séquence », « + Nouvelle discussion ») attend la
-validation des maquettes 45 à 47b.
+**Extension : `.rem`.** Les fichiers écrits s'appellent `Nom.rem` (nom nettoyé :
+ni séparateur, ni caractère de contrôle, ni `: * ? " < > |`, 60 caractères au
+plus). À l'import, `.rem` et l'ancienne extension `.setremote` sont acceptées
+(et tout fichier dont le **contenu** est un projet valide : le nom ne décide de
+rien). L'identifiant interne du format (`format: "setremote-project"` du
+manifeste) ne change pas.
 
 ## 1. Ce qu'est un projet
 
@@ -39,7 +45,9 @@ Choix :
   exportés ; seules les mémoires le sont.
 - Les séquences gardent des **références** vers les autres sections (pas de
   copies) : exporter les séquences sans les appels rend leurs étapes « élément
-  introuvable » à l'arrivée (question ouverte : prévenir dans la feuille d'export).
+  introuvable » à l'arrivée. La vue d'export le dit (§ 11) quand Séquences est
+  cochée et que Discussions, Appels et SMS, Appelants, Sonneries ou Mémoires
+  (non vides) ne le sont pas.
 
 ## 2. Inventaire du stockage de `web/js` (octobre 2026)
 
@@ -103,8 +111,8 @@ Les écrans, l'appairage et les réglages restent **communs à tous les projets*
 
 ## 4. Format (version 1)
 
-Fichier `Nom.setremote` = ZIP (méthodes 0 « stocké » et 8 « deflate », sans ZIP64,
-noms UTF-8) :
+Fichier `Nom.rem` = ZIP (méthodes 0 « stocké » et 8 « deflate », sans ZIP64,
+noms UTF-8) ; ancienne extension `.setremote`, même contenu :
 
 ```
 project.json            { format: "setremote-project", version: 1, app: "1.0.0",
@@ -162,9 +170,10 @@ suivent. Choix du son par type : remplacé seulement en mode « Remplacer ».
 
 Compte rendu :
 ```
-{ ok: true, mode, name, sections: { calls: { added, removed, skipped, renamed, same }, … },
+{ ok: true, mode, name, sections: { calls: { added, removed, skipped, renamed, same, names }, … },
   warnings: [{ section, code: 'file', name }], preview: ['tel'?, 'seq'?] }
 ```
+`names` : nouveaux noms des éléments renommés (« Scène 12 (2) », 3 au plus).
 Échec : `{ ok: false, code, message }` (§ 8).
 
 **Aperçu sans licence** (77-licence-ui.js) : les données importées sont à
@@ -180,8 +189,20 @@ Après l'import : listes relues et redessinées, passerelle DMX resynchronisée
 
 | | Web | App native (vue web : `<a download>` sans effet) |
 |-|-----|------|
-| Enregistrer | `projectSave(blob, nom)` → téléchargement `Nom.setremote` (URL blob) | pont `project:save` → fichier temporaire (`cache/projets/`), feuille de partage (expo-sharing) |
-| Choisir | `projectPick()` → `<input type=file accept=".setremote,application/zip">` | pont `project:open` → sélecteur de fichier (`File.pickFileAsync` d'expo-file-system) |
+| Enregistrer | `projectSave(blob, nom)` → téléchargement `Nom.rem` (URL blob, type `application/octet-stream`) | pont `project:save` → fichier temporaire `cache/projets/Nom.rem`, feuille de partage (expo-sharing) |
+| Choisir | `projectPick()` → `<input type=file accept=".rem,.setremote,application/zip">` | pont `project:open` → sélecteur de fichier (`File.pickFileAsync` d'expo-file-system, types `application/octet-stream`, `application/zip`, `*/*`) |
+
+Types annoncés : le contenu reste un ZIP (`Blob` de type `application/zip` en
+mémoire), mais le fichier **partagé ou téléchargé** est annoncé comme
+`application/octet-stream` (UTI iOS `public.data`), pas `application/zip` /
+`public.zip-archive` : annoncé comme une archive, iOS propose de le
+décompresser, certains navigateurs et apps Android y ajoutent `.zip`, et
+l'extension `.rem` se perdrait. `.rem` n'a pas de type MIME enregistré : le
+sélecteur natif accepte donc `*/*`, la page valide le contenu. Le nom d'un
+fichier choisi est renvoyé nettoyé avec son extension d'origine (`.rem`,
+`.setremote`, `.zip`… : affiché dans l'aperçu et dans les erreurs). Aucun type de
+document « .rem » n'est déclaré à iOS / Android (ouvrir un .rem depuis Fichiers
+ou un mail : passer par « Importer un projet… »).
 
 Pont, par morceaux de `PRJ_CHUNK` = 512 Kio de caractères base64 (multiple de 4
 sauf le dernier), dans l'ordre, fichier ≤ 256 Mo :
@@ -205,9 +226,10 @@ vient d'expo-file-system (déjà là) : pas besoin d'expo-document-picker. Un
 
 Plusieurs projets sur le téléphone, un seul ouvert. Le contenu du projet
 ouvert est l'espace de travail habituel (stockage des modules, § 2) ; les
-autres sont rangés comme instantanés `.setremote` (IndexedDB
-`setremote-projects` : `meta` `{ id, name, created, updated, size, counts }`,
-`snap` : le fichier). Projet ouvert : `setremote-project-v1`.
+autres sont rangés comme instantanés `.rem` (IndexedDB
+`setremote-projects` : `meta` `{ id, name, created, updated, size, counts,
+lastExport?: { at, file }, imported?: true }`, `snap` : le fichier). Projet
+ouvert : `setremote-project-v1`.
 
 | API | Effet |
 |-----|-------|
@@ -216,7 +238,8 @@ autres sont rangés comme instantanés `.setremote` (IndexedDB
 | `projectSwitch(id)` | instantané du projet ouvert rangé, puis chargement du projet visé (chemin de l'import « Remplacer » ; sections absentes vidées). Échec : l'espace de travail quitté est rétabli |
 | `projectRename(id, nom)`, `projectDuplicate(id)`, `projectDelete(id)` | supprimer le projet ouvert : refusé (`active`) |
 | `projectExportStored(id)` | `{ ok, name, blob }` sans ouvrir le projet |
-| `projectImport(file, { mode: 'new' })` / `projectImportAsNew(file)` | fichier validé puis rangé comme nouveau projet |
+| `projectImport(file, { mode: 'new' })` / `projectImportAsNew(file)` | fichier validé puis rangé comme nouveau projet (`imported: true`) |
+| `projectNoteExport(id, fichier)` | note le dernier export d'un projet (`lastExport`, carte « Projet » des Réglages) |
 
 Choix :
 - **Pool média** : commun, hors projets (il ne vit qu'en mémoire, le temps de
@@ -231,7 +254,7 @@ Choix :
 
 | Code | Message |
 |------|---------|
-| `not-zip` | Fichier non reconnu : ce n'est pas un projet SetRemote (.setremote). |
+| `not-zip` | Fichier non reconnu : ce n'est pas un projet SetRemote (.rem). |
 | `not-project` | Ce fichier n'est pas un projet SetRemote. |
 | `version` | Ce projet vient d'une version plus récente de SetRemote : mettez l'app à jour pour l'ouvrir. |
 | `too-large` | Fichier trop volumineux (plus de {max} Mo). |
@@ -270,3 +293,33 @@ Choix :
 Un import valide est écrit section par section. Si la mémoire de l'appareil se
 remplit en cours de route (`storage-full`), les sections déjà écrites le
 restent. Le changement de projet, lui, rétablit l'espace de travail quitté.
+
+## 11. Interface (maquettes 45 à 47b)
+
+Une vue plein écran `#project-view` (gabarit des Réglages : `st-head`,
+`st-card`) dont le contenu change, et les feuilles `#sr-sheet` de
+`39-screens-ui.js`. Textes : `_PJU_TXT` (74-project-ui.js), `_SQSV_TXT`,
+`_CHSV_TXT`. Les appels au moteur passent un par un (`_pjuSerial` : le moteur
+refuse les appels simultanés, `pending`) ; `projectUiIdle()` attend la fin des
+rendus asynchrones (tests, captures).
+
+| Maquette | Écran | Détails |
+|----------|-------|---------|
+| 45 | Réglages › carte « Projet » | nom du projet ouvert, « Projet ouvert · n séquences · n discussions · n appels et SMS », « Projets › » ; « Exporter le projet… » ; « Importer un projet… » ; note « Dernier export : hier, 23:12 · « Nom.rem » » (`lastExport`) |
+| 45b | « Exporter le projet » | nom (renomme le projet ouvert ; fichier « Nom.rem » affiché), six sections cochées avec compteurs (appels : « 5 appels · 2 SMS · 1 notification », mémoires : « 3 couleurs · 2 effets »), interrupteur Médias (nombre, taille ; décoché par défaut), avertissement « introuvables » (§ 1), « Toujours compris… Jamais… », taille estimée (`projectSummary().bytesBy`), EXPORTER (web : téléchargement ; app : feuille de partage) puis « « Nom.rem » exporté. » |
+| 45c | « Importer un projet » | fichier (nom, taille, « Exporté le 18 oct. 2026, 23:12 · SetRemote 1.0.0 »), sections du fichier à cocher (absentes : grisées, « Non inclus dans ce fichier »), modes Ajouter à mes données / Remplacer / Ouvrir comme nouveau projet ; Remplacer : « ⚠ n séquences, … de « Projet » seront supprimés » et, si des sonneries importées sont en jeu, « un appel dont le son disparaît reprend « Classique » » |
+| 45d | « Projet importé » | « « Nom » ajouté à « Projet » » (ou remplacé, ou ouvert comme nouveau projet) ; par section +ajoutés, ignorés, déjà là, supprimés, renommés (noms) ; « non importées » / « non inclus » ; avertissements de fichiers illisibles ; aperçu sans licence ; VOIR LES SÉQUENCES, FERMER |
+| 45e | erreurs | Fichier non reconnu (« « vacances.zip » n'est pas un projet SetRemote (.rem). »), trop volumineux, version plus récente, abîmé… ; « Rien n'a été modifié. » ; CHOISIR UN AUTRE FICHIER, FERMER |
+| 46 | « Projets » | projet ouvert en tête (orange, « ouvert »), puis du plus récemment modifié ; « Modifié aujourd'hui, 14:02 » / « Importé le 2 oct. », « 4 séq. · 3 disc. · 8 appels et SMS · 6,4 Mo » ; toucher : ouvrir (projet ouvert : son menu) ; « ⋯ » : Ouvrir, Renommer, Dupliquer, Exporter…, Supprimer (projet ouvert : ni Ouvrir ni Supprimer) ; + NOUVEAU PROJET ; IMPORTER UN PROJET… |
+| 46b | feuille « Nouveau projet » | nom, Vide / À partir du projet actuel (sans les médias) ; créé **puis ouvert** |
+| 46c | feuilles « Ouvrir « … » ? » et « Impossible pour l'instant » | refus pendant le jeu (séquence lancée, discussion ouverte, appel en cours), aussi pour « Nouveau projet » et « Ouvrir comme nouveau projet » |
+| 47 | « + NOUVELLE SÉQUENCE » sous les sous-onglets (Séquence en cours) | séquence modifiée : « Enregistrer « Nom » avant ? » — Enregistrer (nouvelle entrée), Ne pas enregistrer, Annuler |
+| 47b | « + NOUVELLE DISCUSSION » sous les sous-onglets (Fil en cours) | même question ; discussion ouverte sur les écrans : refus |
+
+Choix :
+- **Ouvrir comme nouveau projet** range le fichier **en entier** (cases
+  grisées) puis l'ouvre ; les médias cochés rejoignent le pool, commun.
+- Projets, export et import restent disponibles en **aperçu sans licence** ;
+  « + Nouvelle séquence » / « + Nouvelle discussion » y sont verrouillés comme
+  les autres modifications.
+- « Exporter… » d'un projet rangé : son instantané tel quel (sans médias).

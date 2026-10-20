@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
-// Projets .setremote (web/js/72-project.js, docs/PROJECTS.md) : export → import
+// Projets .rem (web/js/72-project.js, docs/PROJECTS.md) : export → import
 // entre deux pages vierges (remplacer, ajouter), renumérotation des ids et
 // références des séquences, secrets absents, plafonds, fichiers abîmés,
 // version inconnue, contenu hostile, aperçu sans licence, médias inclus ou non,
@@ -93,7 +93,7 @@ const state = (page) => page.evaluate(async () => {
   };
 });
 const exportB64 = (page, opts) => page.evaluate(async (o) => _prjBytesToB64(new Uint8Array(await (await projectExport(o)).arrayBuffer())), opts);
-const setFile = (page, buf, name = 'projet.setremote') => page.evaluate(({ b64, name }) => { window.__f = new File([_prjB64ToBytes(b64)], name, { type: 'application/zip' }); }, { b64: Buffer.from(buf).toString('base64'), name });
+const setFile = (page, buf, name = 'projet.rem') => page.evaluate(({ b64, name }) => { window.__f = new File([_prjB64ToBytes(b64)], name, { type: 'application/zip' }); }, { b64: Buffer.from(buf).toString('base64'), name });
 const ALL = ['seq', 'chat', 'calls', 'callers', 'rings', 'memories', 'media', 'work'];
 
 test('export : ZIP lisible, manifeste, une entrée par section, fichiers dédupliqués par SHA-256, médias seulement sur demande', async () => {
@@ -171,9 +171,10 @@ test('« Ajouter » deux fois : ids renumérotés, références des séquences s
   await setFile(A.page, Buffer.from(b64, 'base64'));
   const r = await A.page.evaluate(() => projectImport(window.__f, { mode: 'merge' }));
   assert.equal(r.ok, true);
-  assert.deepEqual(r.sections.callers, { added: 0, removed: 0, skipped: 0, renamed: 0, same: 2 });
-  assert.deepEqual(r.sections.rings, { added: 0, removed: 0, skipped: 0, renamed: 0, same: 1 });
+  assert.deepEqual(r.sections.callers, { added: 0, removed: 0, skipped: 0, renamed: 0, same: 2, names: [] });
+  assert.deepEqual(r.sections.rings, { added: 0, removed: 0, skipped: 0, renamed: 0, same: 1, names: [] });
   assert.equal(r.sections.seq.added, 1); assert.equal(r.sections.seq.renamed, 1);
+  assert.deepEqual(r.sections.seq.names, ['Scène 12 (2)']); // nouveaux noms (compte rendu, 3 au plus)
   assert.equal(r.sections.work, undefined, 'état de travail jamais touché par « Ajouter » sans le demander');
   const s = await A.page.evaluate(() => ({
     seqs: seqSaved.map((e) => e.name), calls: callList.call.map((e) => [e.id, callEntryName(e), e.ringId]),
@@ -210,7 +211,7 @@ test('« Ajouter » : plafonds de l\'app respectés, le reste compté « ignoré
   await A.page.evaluate(() => localStorage.setItem(CALLERS_KEY, JSON.stringify({ v: 1, list: Array.from({ length: 40 }, (_, i) => ({ id: 'x' + i, name: 'Local ' + i, label: '' })) })));
   await setFile(A.page, file);
   const r = await A.page.evaluate(() => projectImport(window.__f, { mode: 'merge' }));
-  assert.deepEqual(r.sections.callers, { added: 10, removed: 0, skipped: 20, renamed: 0, same: 0 });
+  assert.deepEqual(r.sections.callers, { added: 10, removed: 0, skipped: 20, renamed: 0, same: 0, names: [] });
   assert.equal(await A.page.evaluate(() => callers.length), 50);
   await A.close();
 });
@@ -250,7 +251,7 @@ test('fichiers refusés : pas un ZIP, abîmé, tronqué, autre format, version f
   const good = zip([{ name: 'project.json', data: manifest() }, { name: 'data/memories.json', data: { color: [], fx: [] } }]);
   assert.equal((await inspect(good)).ok, true);
   const cases = [
-    [Buffer.from('ceci n\'est pas un zip, juste du texte assez long pour la fin de fichier'), 'not-zip', 'Fichier non reconnu : ce n\'est pas un projet SetRemote (.setremote).'],
+    [Buffer.from('ceci n\'est pas un zip, juste du texte assez long pour la fin de fichier'), 'not-zip', 'Fichier non reconnu : ce n\'est pas un projet SetRemote (.rem).'],
     [Buffer.alloc(10), 'not-zip'],
     [good.subarray(0, good.length - 30), 'not-zip'],
     [zip([{ name: 'autre.txt', data: 'x' }]), 'not-project', 'Ce fichier n\'est pas un projet SetRemote.'],
@@ -389,17 +390,21 @@ test('aperçu sans licence : import écrit dans le stockage réel, l\'aperçu re
   await L.close();
 });
 
-test('web : projectSave télécharge « Nom.setremote », projectPick ouvre un sélecteur de fichier', async () => {
+test('web : projectSave télécharge « Nom.rem », projectPick ouvre un sélecteur de fichier (.rem, ancien .setremote)', async () => {
   const { page, close } = await remote();
   const [dl] = await Promise.all([page.waitForEvent('download'), page.evaluate(async () => projectSave(await projectExport({ name: 'Nuit/Jour: 2' }), 'Nuit/Jour: 2'))]);
-  assert.equal(dl.suggestedFilename(), 'Nuit Jour 2.setremote');
+  assert.equal(dl.suggestedFilename(), 'Nuit Jour 2.rem');
   const path = await dl.path();
   const buf = (await import('node:fs')).readFileSync(path);
   assert.equal(json(unzip(buf), 'project.json').name, 'Nuit/Jour: 2');
   const [fc] = await Promise.all([page.waitForEvent('filechooser'), page.evaluate(() => { window.__pick = projectPick(); })]);
-  assert.equal(await fc.element().getAttribute('accept'), '.setremote,application/zip');
-  await fc.setFiles({ name: 'Nuit.setremote', mimeType: 'application/zip', buffer: buf });
-  assert.deepEqual(await page.evaluate(async () => { const f = await window.__pick; return [f.name, (await projectInspect(f)).name]; }), ['Nuit.setremote', 'Nuit/Jour: 2']);
+  assert.equal(await fc.element().getAttribute('accept'), '.rem,.setremote,application/zip');
+  await fc.setFiles({ name: 'Nuit.rem', mimeType: 'application/octet-stream', buffer: buf });
+  assert.deepEqual(await page.evaluate(async () => { const f = await window.__pick; return [f.name, (await projectInspect(f)).name]; }), ['Nuit.rem', 'Nuit/Jour: 2']);
+  // Ancienne extension : même contenu, accepté
+  const [fc2] = await Promise.all([page.waitForEvent('filechooser'), page.evaluate(() => { window.__pick = projectPick(); })]);
+  await fc2.setFiles({ name: 'Ancien.setremote', mimeType: 'application/zip', buffer: buf });
+  assert.deepEqual(await page.evaluate(async () => { const f = await window.__pick; return [f.name, (await projectInspect(f)).ok]; }), ['Ancien.setremote', true]);
   await close();
 });
 
@@ -416,7 +421,7 @@ test('app native : enregistrement et ouverture par morceaux base64 (pont project
   });
   const posts = await page.evaluate(() => window.__posts.filter((m) => m.type === 'project:save'));
   assert.equal(posts.length, 4);
-  assert.ok(posts.every((m, i) => m.i === i && m.n === 4 && m.name === 'Gros.setremote' && m.size === 1200000 && m.data.length <= 512 * 1024));
+  assert.ok(posts.every((m, i) => m.i === i && m.n === 4 && m.name === 'Gros.rem' && m.size === 1200000 && m.data.length <= 512 * 1024));
   assert.equal(Buffer.concat(posts.map((m) => Buffer.from(m.data, 'base64'))).toString('base64'), big);
   await page.evaluate((id) => SRNative.receive({ type: 'project:saved', id, ok: true, shared: true }), posts[0].id);
   assert.deepEqual(await page.evaluate(() => window.__saved), { ok: true, shared: true });

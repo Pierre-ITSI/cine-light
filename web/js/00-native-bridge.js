@@ -19,7 +19,7 @@ const IN_NATIVE_APP = !!(window.SETREMOTE_NATIVE && window.ReactNativeWebView);
 //   vibrate:stop                                        arrête la vibration (décroché, refus, fin d'appel)
 //   dmx:listen, dmx:stop, udp:send, net:info, pdf:preview : docs/DMX-NATIVE.md
 //   link:start, link:stop, link:send, link:state?     : docs/OFFLINE-NATIVE.md
-//   project:save { id, name, size, i, n, data }        fichier .setremote par morceaux (data : base64,
+//   project:save { id, name, size, i, n, data }        fichier .rem par morceaux (data : base64,
 //                                                       PRJ_CHUNK = 512 Kio de caractères, multiple de 4
 //                                                       sauf le dernier) ; au dernier (i = n − 1), la coque
 //                                                       l'écrit puis ouvre la feuille de partage

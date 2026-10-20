@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ════════════════════════════════════════════════════════════════════════════
-// Fichiers projet .setremote (web/js/72-project.js, docs/PROJECTS.md § 6) :
+// Fichiers projet .rem (ancienne extension .setremote acceptée à l'ouverture ;
+// web/js/72-project.js, docs/PROJECTS.md § 6) :
 // logique pure, sans React Native, testée sous Node (test/project-files.test.mjs).
 // Dans la vue web, <a download> ne fait rien et <input type=file> n'ouvre pas
 // le sélecteur de documents : la coque s'en charge, par morceaux base64.
@@ -25,8 +26,15 @@ export const PROJECT_CHUNK = 512 * 1024;                 // caractères base64 p
 export const PROJECT_CHUNK_BYTES = (PROJECT_CHUNK / 4) * 3;
 export const PROJECT_MAX_BYTES = 256 * 1024 * 1024;
 export const PROJECT_MAX_CHUNKS = Math.ceil(PROJECT_MAX_BYTES / PROJECT_CHUNK_BYTES);
-export const PROJECT_MIME = 'application/zip';
-export const PROJECT_UTI = 'public.zip-archive';
+// Partage d'un .rem : type opaque (application/octet-stream, UTI public.data).
+// Le contenu est un ZIP, mais annoncé comme tel (application/zip,
+// public.zip-archive), iOS proposerait de le décompresser et certaines apps
+// Android le renommeraient en .zip : l'extension .rem se perdrait.
+export const PROJECT_EXT = '.rem';
+export const PROJECT_MIME = 'application/octet-stream';
+export const PROJECT_UTI = 'public.data';
+// Sélecteur : .rem n'a pas de type MIME enregistré, d'où « */* » ; le contenu est validé par la page.
+export const PROJECT_PICK_TYPES = ['application/octet-stream', 'application/zip', '*/*'];
 
 export const PROJECT_ERROR_REASONS = [
   'bad-chunk', // morceau invalide ou hors d'ordre
@@ -41,10 +49,10 @@ export type ProjectErrorReason = (typeof PROJECT_ERROR_REASONS)[number];
 const ID_RE = /^[A-Za-z0-9_-]{1,40}$/;
 const B64_RE = /^[A-Za-z0-9+/]*={0,2}$/;
 
-/** Nom de fichier sûr : sans séparateur ni caractère de contrôle, terminé par .setremote. */
+/** Nom de fichier sûr : sans séparateur ni caractère de contrôle, terminé par .rem. */
 export function projectFileName(name: unknown): string {
   const base = String(typeof name === 'string' ? name : '')
-    .replace(/\.setremote$/i, '')
+    .replace(/\.(rem|setremote)$/i, '')
     // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u001f\u007f/\\:*?"<>|]/g, ' ')
     .replace(/\s+/g, ' ')
@@ -52,7 +60,19 @@ export function projectFileName(name: unknown): string {
     .replace(/^[.\s]+/, '')
     .slice(0, 60)
     .trim();
-  return (base || 'Projet') + '.setremote';
+  return (base || 'Projet') + PROJECT_EXT;
+}
+/** Nom d'un fichier choisi, renvoyé à la page : nettoyé, extension d'origine gardée (.rem, .setremote, .zip…). */
+export function pickedFileName(name: unknown): string {
+  const n = String(typeof name === 'string' ? name : '')
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001f\u007f/\\:*?"<>|]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^[.\s]+/, '')
+    .slice(-80)
+    .trim();
+  return n || 'Projet' + PROJECT_EXT;
 }
 
 // ── base64 (Hermes a atob/btoa, mais on évite les chaînes binaires géantes) ──
@@ -186,7 +206,7 @@ export function createProjectBridge(opts: ProjectBridgeOptions): ProjectBridge {
       if (!f) { send({ type: 'project:file', id, cancelled: true }); return; }
       if (f.size > PROJECT_MAX_BYTES) { fail(id, 'too-large'); return; }
       const n = Math.max(1, Math.ceil(f.size / PROJECT_CHUNK_BYTES));
-      const name = projectFileName(f.name);
+      const name = pickedFileName(f.name);
       for (let i = 0; i < n; i++) {
         let bytes: Uint8Array;
         try { bytes = f.read(Math.min(PROJECT_CHUNK_BYTES, f.size - i * PROJECT_CHUNK_BYTES)); } catch { fail(id, 'read-failed'); return; }

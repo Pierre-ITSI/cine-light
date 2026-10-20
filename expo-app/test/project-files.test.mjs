@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
-// Fichiers projet .setremote côté coque (src/lib/projectFiles.ts) : morceaux
+// Fichiers projet .rem côté coque (src/lib/projectFiles.ts) : morceaux
 // base64 page → fichier temporaire → feuille de partage ; sélecteur → morceaux
 // renvoyés à la page ; refus (ordre, taille, indisponible) ; base64 maison.
 //
@@ -9,8 +9,8 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { randomBytes } from 'node:crypto';
 import {
-  createProjectBridge, parseSaveChunk, projectFileName, projectScript, bytesToBase64, base64ToBytes,
-  PROJECT_CHUNK, PROJECT_CHUNK_BYTES, PROJECT_MAX_BYTES, PROJECT_ERROR_REASONS,
+  createProjectBridge, parseSaveChunk, projectFileName, pickedFileName, projectScript, bytesToBase64, base64ToBytes,
+  PROJECT_EXT, PROJECT_PICK_TYPES, PROJECT_CHUNK, PROJECT_CHUNK_BYTES, PROJECT_MAX_BYTES, PROJECT_ERROR_REASONS,
 } from '../src/lib/projectFiles.ts';
 
 function fakeWeb() {
@@ -51,13 +51,21 @@ test('base64 maison = Buffer, toutes longueurs', () => {
   assert.equal(PROJECT_CHUNK_BYTES * 4 / 3, PROJECT_CHUNK);
 });
 
-test('nom de fichier : sans séparateur ni contrôle, .setremote', () => {
-  assert.equal(projectFileName('Tournage/Nuit: 2'), 'Tournage Nuit 2.setremote');
-  assert.equal(projectFileName('../../etc/passwd'), 'etc passwd.setremote');
-  assert.equal(projectFileName(''), 'Projet.setremote');
-  assert.equal(projectFileName(42), 'Projet.setremote');
-  assert.equal(projectFileName('a\u0000b\nc.setremote'), 'a b c.setremote');
-  assert.equal(projectFileName('x'.repeat(200)).length, 60 + '.setremote'.length);
+test('nom de fichier : sans séparateur ni contrôle, .rem', () => {
+  assert.equal(projectFileName('Tournage/Nuit: 2'), 'Tournage Nuit 2.rem');
+  assert.equal(projectFileName('../../etc/passwd'), 'etc passwd.rem');
+  assert.equal(projectFileName(''), 'Projet.rem');
+  assert.equal(projectFileName(42), 'Projet.rem');
+  assert.equal(projectFileName('a\u0000b\nc.setremote'), 'a b c.rem');
+  assert.equal(projectFileName('Nuit.rem'), 'Nuit.rem');
+  assert.equal(projectFileName('x'.repeat(200)).length, 60 + '.rem'.length);
+  // Fichier choisi : extension d'origine gardée (.rem, ancienne .setremote, autre)
+  assert.equal(pickedFileName('Tournage B.rem'), 'Tournage B.rem');
+  assert.equal(pickedFileName('Ancien.setremote'), 'Ancien.setremote');
+  assert.equal(pickedFileName('../vacances.zip'), 'vacances.zip');
+  assert.equal(pickedFileName(''), 'Projet.rem');
+  assert.equal(PROJECT_EXT, '.rem');
+  assert.deepEqual(PROJECT_PICK_TYPES, ['application/octet-stream', 'application/zip', '*/*']);
 });
 
 test('morceaux : validation de forme', () => {
@@ -82,8 +90,8 @@ test('enregistrement : morceaux assemblés dans le cache, feuille de partage, pr
   const buf = randomBytes(PROJECT_CHUNK_BYTES * 2 + 1000);
   for (const m of chunksOf(buf, 'a1', 'Nuit/Jour')) assert.equal(bridge.handle(m), true);
   await flush();
-  assert.deepEqual(fs.files.get('Nuit Jour.setremote'), buf);
-  assert.deepEqual(shared, [['file:///cache/projets/Nuit%20Jour.setremote', { mimeType: 'application/zip', UTI: 'public.zip-archive', dialogTitle: 'SetRemote' }]]);
+  assert.deepEqual(fs.files.get('Nuit Jour.rem'), buf);
+  assert.deepEqual(shared, [['file:///cache/projets/Nuit%20Jour.rem', { mimeType: 'application/octet-stream', UTI: 'public.data', dialogTitle: 'SetRemote' }]]);
   assert.deepEqual(web.received, [{ type: 'project:saved', id: 'a1', ok: true, shared: true }]);
   // Hors d'ordre, taille finale fausse, partage absent ou en échec
   const c = chunksOf(buf, 'a2', 'B');
@@ -117,6 +125,13 @@ test('ouverture : sélecteur, fichier renvoyé par morceaux, annulation, trop gr
   assert.deepEqual(Buffer.concat(web.received.map((m) => Buffer.from(m.data, 'base64'))), buf);
   assert.ok(web.received.every((m) => m.data.length <= PROJECT_CHUNK));
   assert.equal(closed, 1);
+  web.received.length = 0;
+  // Fichier .rem : nom renvoyé tel quel
+  off = 0;
+  const legacy = next;
+  next = () => ({ ...legacy(), name: 'Tournage B.rem' });
+  bridge.handle({ type: 'project:open', id: 'o5' }); await flush(); await flush();
+  assert.deepEqual(web.received.map((m) => [m.id, m.name, m.i]), [['o5', 'Tournage B.rem', 0], ['o5', 'Tournage B.rem', 1]]);
   web.received.length = 0;
   next = () => null;
   bridge.handle({ type: 'project:open', id: 'o2' }); await flush();

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
-// ZIP minimal côté Node pour les tests des projets .setremote (web/js/72-project.js) :
+// ZIP minimal côté Node pour les tests des projets .rem (web/js/72-project.js) :
 // lecture (vérifie le CRC) et fabrication de fichiers, y compris volontairement faux.
 import zlib from 'node:zlib';
 

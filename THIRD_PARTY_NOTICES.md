@@ -46,7 +46,7 @@ dans son `package.json`.
 - **Copyright** : Copyright (c) 2023 Arjun Barrett
 - **Provenance** : npm fflate@0.8.2, umd/index.js (déjà minifié, non modifié)
 - **Fichiers** : `vendor/fflate-0.8.2.min.js`
-- **Note** : Compression deflate des fichiers projet .setremote (web/js/72-project.js), chargé à la demande.
+- **Note** : Compression deflate des fichiers projet .rem (web/js/72-project.js), chargé à la demande.
 
 ### DM Mono (via @fontsource/dm-mono) 5.3.0
 

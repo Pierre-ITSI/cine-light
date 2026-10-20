@@ -40,7 +40,7 @@
  *  - 'pdf:preview' (PWA → coque) et 'pdf:error' (coque → PWA) : aperçu PDF de
  *    la table des canaux DMX (expo-print, expo-app/src/lib/pdfPreview.ts) ;
  *  - 'project:save', 'project:open' (PWA → coque) et 'project:saved',
- *    'project:file', 'project:error' (coque → PWA) : fichiers projet .setremote
+ *    'project:file', 'project:error' (coque → PWA) : fichiers projet .rem
  *    par morceaux base64 (expo-app/src/lib/projectFiles.ts, docs/PROJECTS.md) ;
  *  - 'link:start', 'link:stop', 'link:send', 'link:state?' (PWA → coque) et
  *    'link:frames', 'link:peers', 'link:state', 'link:error' (coque → PWA) :
