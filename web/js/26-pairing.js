@@ -241,12 +241,16 @@ function showPairVerify(role, sas, onAnswer) {
   const ok = document.getElementById('pvOk');
   ok.disabled = false; ok.textContent = 'Identique';
   el.style.display = 'block';
+  renderNavBadges();
 }
 function hidePairVerify() {
   _pvAnswer = null;
   const el = document.getElementById('pair-verify');
   if (el) el.style.display = 'none';
+  renderNavBadges();
 }
+// Une vérification de nombre attend une réponse (point orange sur l'onglet Écrans)
+function pairVerifyPending() { return !!_pvAnswer; }
 // Écran : confirmé avant la télécommande → on attend la remise du secret
 function setPairVerifyWaiting() {
   const ok = document.getElementById('pvOk');

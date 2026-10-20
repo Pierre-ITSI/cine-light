@@ -11,14 +11,9 @@
 
 /* ── Fonds de vue : uni (fin du dégradé bleu, quasi OLED) ── */
 #splash,#remote-mode,#settings-view,#project-view,#screens-view,#seq-step-view,#phone-params-view,#tel-style-view,#policy-view,#offline-view,#dmx-gateway{background:var(--bg)}
-#remote-mode{padding-left:calc(16px + env(safe-area-inset-left));padding-right:calc(16px + env(safe-area-inset-right));padding-top:calc(12px + env(safe-area-inset-top))}
 #settings-view,#project-view,#screens-view{padding:calc(8px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));gap:var(--sp-3)}
 
-/* ── En-tête de la télécommande ── */
-/* Pas de logotype (décision propriétaire) : état de la liaison à gauche, accueil et réglages à droite */
-.remote-header{margin-bottom:var(--sp-4);padding-bottom:var(--sp-3);border-bottom-color:var(--border);min-height:56px}
-.remote-header-end{flex:1;min-width:0;gap:var(--sp-2)}
-.remote-header-end .link-pill{margin-right:auto}
+/* ── En-tête de la télécommande : état de la liaison et réglages (coque : 04-nav.css) ── */
 .hdr-gear{width:var(--tap);height:var(--tap);border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface-1);color:var(--text-2)}
 .hdr-gear .ic{width:22px;height:22px}
 .hdr-gear:active{transform:none;background:var(--surface-3)}
@@ -30,35 +25,16 @@
 .link-pill.offline,.link-pill.skew{color:var(--danger);background:var(--danger-soft)}
 
 /* ── Aperçu (swatch) ── */
-.swatch-row{gap:var(--sp-3);margin-bottom:var(--sp-3)}
 .swatch{width:56px;height:56px;border-radius:var(--r-md);border:1px solid var(--border-strong)}
 .swatch-hex{font-size:24px;font-weight:500;line-height:1.2;color:var(--text)}
 .swatch-label{font-size:var(--fs-label);color:var(--text-2);margin-top:2px}
 .autosend-badge{font:700 var(--fs-caption)/1.4 var(--font-ui);color:var(--success);margin-top:2px}
-#stickyPreview{background:rgba(11,11,13,.86);border-bottom-color:var(--border);padding-bottom:var(--sp-2)}
-.sticky-swatch{height:36px;border-radius:var(--r-md);border-color:var(--border-strong)}
-.sticky-blackout{height:var(--btn-m);border-radius:var(--r-md);background:var(--surface-3);border:1px solid var(--border);font:700 14px/1 var(--font-ui);padding:0 var(--sp-4)}
-.sticky-blackout.on{background:#000;border-color:var(--accent);color:var(--accent-text)}
 
 /* ── Cible et Allumé/Noir ── */
 .target-btn{height:var(--btn-l);border-radius:var(--r-md);border:1px solid var(--border-strong);background:var(--surface-1);font:400 var(--fs-body)/1.2 var(--font-ui);padding:0 var(--sp-4);gap:var(--sp-3)}
 .target-btn b{font-weight:700}
 .target-btn .tb-icon{color:var(--accent-text);width:var(--icon-md);height:var(--icon-md)}
 .target-btn.subset{border-color:var(--accent);background:var(--accent-soft)}
-.screen-toggle-btn{height:var(--btn-l);padding:0 var(--sp-4);border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface-3);
-  color:var(--text);font:700 15px/1.2 var(--font-ui);margin-bottom:var(--sp-4);gap:var(--sp-2)}
-.screen-toggle-btn .ic{color:var(--success)}
-.screen-toggle-btn.on{background:#000;border-color:var(--accent);color:var(--accent-text)}
-.screen-toggle-btn.on .ic{color:var(--accent-text)}
-.screen-toggle-btn:hover{border-color:var(--border-strong)}
-
-/* ── Barre de 7 onglets (structure conservée en phase 2) ── */
-.tabs{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);padding:4px;gap:2px;margin-bottom:var(--sp-4)}
-.tab-btn{position:relative;flex:1 1 auto;min-width:var(--tap);min-height:56px;padding:6px 1px 5px;border-radius:var(--r-md);color:var(--text-2);
-  font:700 var(--fs-caption)/1.2 var(--font-ui);letter-spacing:-.01em;display:flex;flex-direction:column;align-items:center;gap:4px;white-space:nowrap}
-.tab-ic{display:block;font-size:0;line-height:0}
-.tab-ic .ic,.tab-btn>.ic-wrap .ic{width:22px;height:22px}
-.tab-btn.active{background:var(--surface-3);color:var(--accent-text);box-shadow:inset 0 0 0 1px var(--border-strong)}
 
 /* ── Card (panel, st-card, sv-card…) ── */
 .panel,.st-card,.sv-card,.sv-groups,.sq-list,.sq-now{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg)}

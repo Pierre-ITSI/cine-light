@@ -657,8 +657,7 @@ function projectSeeSequences() {
   closeSettings();
   switchTab('seq');
   setSeqView('saved');
-  const rm = document.getElementById('remote-mode'), el = document.getElementById('seqTab-cur');
-  if (rm && el) rm.scrollTop += el.getBoundingClientRect().top - 120;
+  navScrollTo(document.getElementById('seqTab-cur'), 72);
 }
 
 // ══════════ 45e · Erreurs ══════════

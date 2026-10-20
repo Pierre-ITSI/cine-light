@@ -44,9 +44,9 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
    animations diégétiques de l'écran de jeu — téléphone, effets — restent) */
 @media (prefers-reduced-motion:reduce){
   :is(#splash,#remote-mode,#settings-view,#project-view,#policy-view,#screens-view,#seq-step-view,#phone-params-view,#tel-style-view,
-    #offline-view,#dmx-gateway,#strobe-warn,#app-confirm,#sr-sheet,#sr-revoke,#pair-verify,#screen-connect,#screen-menu,#screen-revoked,#stickyPreview),
+    #offline-view,#dmx-gateway,#strobe-warn,#app-confirm,#sr-sheet,#sr-revoke,#pair-verify,#screen-connect,#screen-menu,#screen-revoked),
   :is(#splash,#remote-mode,#settings-view,#project-view,#policy-view,#screens-view,#seq-step-view,#phone-params-view,#tel-style-view,
-    #offline-view,#dmx-gateway,#strobe-warn,#app-confirm,#sr-sheet,#sr-revoke,#pair-verify,#screen-connect,#screen-menu,#screen-revoked,#stickyPreview) *:not(.ts-prev,.ts-prev *,.sp-card,.sp-card *,.pp-prev,.pp-prev *){
+    #offline-view,#dmx-gateway,#strobe-warn,#app-confirm,#sr-sheet,#sr-revoke,#pair-verify,#screen-connect,#screen-menu,#screen-revoked) *:not(.ts-prev,.ts-prev *,.sp-card,.sp-card *,.pp-prev,.pp-prev *){
     animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
 

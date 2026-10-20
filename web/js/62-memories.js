@@ -116,6 +116,7 @@ function applyStrobeState(s){
   const badge=document.getElementById('strobeActiveBadge'); if(badge) badge.style.display=strobeActive?'block':'none';
   if(strobeActive){ sendMsg(buildStrobePayload()); runLocalStrobePreview(); }
   else { sendMsg({type:'strobe',active:false}); stopLocalStrobePreview(); }
+  renderNavStatus();
 }
 // Couleur affichée pour une mémoire (même calcul que recomputeColor).
 function memorySwatch(s){

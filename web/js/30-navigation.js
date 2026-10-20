@@ -6,9 +6,7 @@ function startMode(m) {
   if (m === 'remote') {
     mode = 'remote';
     const rm = document.getElementById('remote-mode');
-    rm.style.display = 'block';
-    // Recalcule la mini-carte sticky maintenant que la télécommande est visible
-    requestAnimationFrame(() => rm.dispatchEvent(new Event('scroll')));
+    rm.style.display = 'flex'; // coque : en-tête fixe, contenu défilant, barre d'onglets (04-nav.css)
     initWheel();
     loadColorMemories(); renderColorMemories();
     recomputeColor();
@@ -104,7 +102,7 @@ function connectRemote(p, o = {}) {
     scrLoad();
     if (scrTarget().k !== 'all') scrLoadView();
   }
-  if (document.getElementById('content-qr').classList.contains('active')) renderPairPanel(); // nouveau QR, nouveau code
+  if (document.getElementById('content-screens').classList.contains('active')) renderPairPanel(); // nouveau QR, nouveau code
   if (!o.keep) {
     gwOnSessionChanged(); // passerelle DMX : patch de cette session
     rkStartListeners();   // anciens topics encore écoutés après un retrait
@@ -311,22 +309,55 @@ function goBack() {
   applyPendingUpdate(); // une mise à jour en attente peut s'appliquer maintenant
 }
 
+// ══════════ Onglets de la télécommande (phase 3) ══════════
+// Cinq onglets en bas (Lumière, Effets, Média, Scénario, Écrans). Lumière et
+// Scénario ont un segmenté interne (Couleur | Flash, Tel | Séquence). Les
+// anciens identifiants restent des alias : switchTab('color' | 'flash' |
+// 'call' | 'seq' | 'qr') ouvre le bon onglet ET la bonne vue.
+const NAV_TABS = ['light', 'effects', 'media', 'scenario', 'screens'];
+const _NAV_ALIAS = { color: ['light', 'color'], flash: ['light', 'flash'], call: ['scenario', 'call'], seq: ['scenario', 'seq'], qr: ['screens', null] };
+const _NAV_CONTENT = { light: 'content-light', effects: 'content-effects', media: 'content-media', scenario: 'content-scn', screens: 'content-screens' };
+const _NAV_SEG = { light: ['color', 'flash'], scenario: ['call', 'seq'] };
+const _navSub = { light: 'color', scenario: 'call' }; // dernière vue de chaque onglet à segmenté
+const _navScroll = {};                                // position de défilement retenue par onglet / vue
+let _navKey = 'light/color'; // vue affichée au démarrage
+let _navTab = 'light';
+function navScroller() { return document.getElementById('nv-scroll'); }
+function navCurrentTab() { return _navTab; }
+function navCurrentSub() { return _navSub[_navTab] || null; }
+// Fait défiler le contenu pour amener un élément sous l'en-tête collant (off px de marge)
+function navScrollTo(el, off) {
+  const sc = navScroller();
+  if (!sc || !el) return;
+  sc.scrollTop += el.getBoundingClientRect().top - sc.getBoundingClientRect().top - (off == null ? 72 : off);
+}
 function switchTab(t) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  const btn = document.getElementById('tab-' + t);
-  btn.classList.add('active');
-  // Barre qui défile (écran étroit) : l'onglet choisi reste entièrement visible
-  const bar = btn.parentElement;
-  if (bar && bar.scrollWidth > bar.clientWidth) {
-    const l = btn.offsetLeft - bar.offsetLeft, r = l + btn.offsetWidth;
-    if (l < bar.scrollLeft) bar.scrollLeft = l - 4;
-    else if (r > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = r - bar.clientWidth + 4;
+  let tab = t, sub = null;
+  if (_NAV_ALIAS[t]) [tab, sub] = _NAV_ALIAS[t];
+  if (!NAV_TABS.includes(tab)) return;
+  const segs = _NAV_SEG[tab];
+  if (segs) { if (sub) _navSub[tab] = sub; sub = _navSub[tab]; } else sub = null;
+  const key = tab + (sub ? '/' + sub : '');
+  const sc = navScroller();
+  if (sc && _navKey && key !== _navKey) _navScroll[_navKey] = sc.scrollTop;
+  document.querySelectorAll('#nv-tabs [role=tab]').forEach((b) => {
+    const on = b.id === 'tab-' + tab;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  document.querySelectorAll('.tab-content').forEach((c) => c.classList.remove('active'));
+  document.getElementById(_NAV_CONTENT[tab]).classList.add('active');
+  if (segs) {
+    document.getElementById('content-' + sub).classList.add('active');
+    for (const k of segs) {
+      const b = document.getElementById((tab === 'light' ? 'lightSeg-' : 'scnSeg-') + k);
+      if (b) { b.classList.toggle('active', k === sub); b.setAttribute('aria-selected', k === sub ? 'true' : 'false'); }
+    }
   }
-  document.getElementById('content-' + t).classList.add('active');
-  if (t === 'seq') renderSeq(); // éléments supprimés entre-temps : « élément introuvable »
-  if (t === 'media') renderMediaBarRow(); // barre d'état au-dessus des médias (98-phone-params.js)
-  if (t === 'qr') renderPairPanel();
+  _navTab = tab;
+  if (key !== _navKey) { _navKey = key; if (sc) sc.scrollTop = _navScroll[key] || 0; }
+  if (sub === 'seq') renderSeq(); // éléments supprimés entre-temps : « élément introuvable »
+  if (tab === 'media') renderMediaBarRow(); // barre d'état au-dessus des médias (98-phone-params.js)
+  if (tab === 'screens') renderPairPanel();
   else remoteStopPairCode(true); // le code ne reste actif que sur l'onglet d'appairage
 }
-

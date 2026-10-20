@@ -1,0 +1,109 @@
+/* SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP */
+/* Navigation de la télécommande (phase 3). Feuille NON stratifiée (voir
+   01-tokens.css) : elle passe devant @layer legacy.
+   Coque : #remote-mode (colonne) = #nv-main (en-tête fixe + contenu seul à
+   défiler) + #nv-tabs (barre de 5 onglets fixe en bas).
+   Dès 700 px de large, ou en paysage de moins de 500 px de haut (téléphone
+   couché), la barre devient un rail latéral et le contenu passe sur 2 colonnes.
+   L'affichage (display) de #remote-mode reste posé en ligne par startMode() /
+   goBack() ; les vues plein écran (#settings-view…, z-index 300+) et les
+   feuilles (500+) passent au-dessus de la barre (z-index 30). */
+
+#remote-mode{flex-direction:column;overflow:hidden;padding:0;min-height:0;background:var(--bg)}
+#nv-main{flex:1 1 auto;min-width:0;min-height:0;display:flex;flex-direction:column}
+
+/* ── En-tête fixe ── */
+#nv-head{flex:none;z-index:20;display:flex;flex-direction:column;gap:var(--sp-2);background:var(--bg);border-bottom:1px solid var(--border);
+  padding:calc(var(--sp-2) + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 10px calc(16px + env(safe-area-inset-left))}
+.nv-r1,.nv-r2{display:flex;align-items:center;gap:10px;min-width:0}
+#nv-head .swatch{position:relative;overflow:hidden;flex:none;width:44px;height:44px;border-radius:var(--r-md)}
+.nv-val{position:relative;flex:1;min-width:0;line-height:1.15}
+#nv-head .swatch-hex{font-size:18px;white-space:nowrap}
+#nv-head .swatch-label{font-size:var(--fs-caption);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#nv-head .autosend-badge{position:absolute;top:0;right:0;margin:0;font-size:var(--fs-caption)}
+/* Pastille de liaison : zone tactile de 44 px, pastille dessinée à 32 px (::before, teinte de l'état à 14 %) */
+#nv-head .link-pill{flex:none;margin:0;height:var(--tap);padding:0 var(--sp-3);background:transparent;isolation:isolate}
+#nv-head .link-pill::before{content:'';position:absolute;inset:6px 0;z-index:-1;border-radius:var(--r-pill);background:currentColor;opacity:.14}
+#nv-head .link-pill::after{display:none}
+#nv-head .hdr-gear{flex:none}
+
+/* Cible (toujours visible) */
+#nv-head .target-btn{display:flex;flex:1;min-width:0;width:auto;height:52px;margin:0;padding:0 var(--sp-3);gap:var(--sp-2);font-size:var(--fs-secondary)}
+#nv-head .target-btn .tb-icon{width:18px;height:18px}
+#nv-head .tb-label{flex:1;min-width:0;display:flex;align-items:baseline;overflow:hidden;white-space:nowrap;text-align:left}
+#nv-head .tb-label b{min-width:0;margin-left:.3em;overflow:hidden;text-overflow:ellipsis}
+#nv-head .tb-label .tb-n{flex:none;color:var(--text-2);white-space:pre}
+
+/* Allumé | Noir : segmenté de l'écran de jeu. Allumé : surface grise (pas de blanc plein,
+   sans éblouir un plateau sombre) ; l'état choisi porte le liseré orange. */
+.nv-seg{flex:none;display:flex;gap:2px;padding:3px;background:var(--bg);border:1px solid var(--border-strong);border-radius:var(--r-md)}
+.nv-seg button{min-width:64px;height:var(--tap);padding:0 var(--sp-3);border:0;border-radius:7px;background:transparent;color:var(--text-2);
+  font:700 var(--fs-secondary)/1 var(--font-ui);display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.nv-seg button .ic{width:16px;height:16px;vertical-align:0}
+.nv-seg button.on{background:var(--surface-3);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.nv-seg button.on .ic{color:var(--accent-text)}
+.nv-seg #blackoutOff.on{background:#000;color:var(--accent-text)}
+
+/* Barre « en cours » + Tout arrêter */
+.nv-strip{display:none;align-items:center;gap:var(--sp-2);height:48px;padding:0 2px 0 var(--sp-3);background:rgba(208,92,255,.14);border:1px solid rgba(208,92,255,.55);
+  border-radius:var(--r-md);color:var(--text);font:700 var(--fs-secondary)/1 var(--font-ui)}
+.nv-strip .ic{flex:none;width:18px;height:18px;color:var(--fx);vertical-align:0}
+.nv-strip-txt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nv-strip button{flex:none;height:var(--tap);padding:0 var(--sp-4);border:0;border-radius:var(--r-md);background:var(--danger-fill);color:#fff;
+  font:700 var(--fs-secondary)/1 var(--font-ui);display:flex;align-items:center;gap:6px;cursor:pointer}
+.nv-strip button .ic{width:14px;height:14px;color:#fff}
+
+/* ── Contenu : seul élément qui défile ── */
+#nv-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+  padding:0 calc(16px + env(safe-area-inset-right)) var(--sp-4) calc(16px + env(safe-area-inset-left));background:var(--bg)}
+#nv-scroll::-webkit-scrollbar{display:none}
+#content-light>.tab-content,#content-scn>.tab-content{padding-top:0}
+#nv-scroll>.tab-content.active:not(#content-light):not(#content-scn){padding-top:var(--sp-3)}
+
+/* Segmenté interne (Couleur | Flash, Tel | Séquence), collé sous l'en-tête */
+.nv-sub{position:sticky;top:0;z-index:10;margin:0 calc(-1 * (16px + env(safe-area-inset-right))) var(--sp-3) calc(-1 * (16px + env(safe-area-inset-left)));
+  padding:var(--sp-3) calc(16px + env(safe-area-inset-right)) var(--sp-2) calc(16px + env(safe-area-inset-left));background:var(--bg)}
+.nv-seg2{display:flex;max-width:520px;gap:2px;padding:3px;background:var(--bg);border:1px solid var(--border-strong);border-radius:var(--r-md)}
+.nv-seg2 button{flex:1;height:var(--tap);border:1px solid transparent;border-radius:7px;background:transparent;color:var(--text-2);
+  font:700 var(--fs-body)/1 var(--font-ui);display:flex;align-items:center;justify-content:center;gap:var(--sp-2);cursor:pointer}
+.nv-seg2 button.active{background:var(--surface-3);border-color:var(--border-strong);color:var(--text)}
+.nv-seg2 button .ic{width:18px;height:18px;vertical-align:0}
+.nv-intro{margin:0 0 var(--sp-3);font-size:var(--fs-secondary);line-height:1.45;color:var(--text-2)}
+.nv-tag{margin-left:var(--sp-2);padding:3px 8px;border-radius:var(--r-pill);background:var(--accent-soft);color:var(--accent-text);font:700 var(--fs-caption)/1 var(--font-ui);vertical-align:2px}
+
+/* ── Barre du bas : 5 onglets, fixe ── */
+#nv-tabs{flex:none;position:relative;z-index:30;display:flex;gap:2px;min-height:calc(60px + env(safe-area-inset-bottom));
+  padding:6px calc(8px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+  background:rgba(16,16,19,.97);border-top:1px solid var(--border-strong)}
+#nv-tabs button{position:relative;flex:1;min-width:0;min-height:var(--tap);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  border:0;border-radius:var(--r-md);background:none;color:var(--text-2);font:700 var(--fs-caption)/1.1 var(--font-ui);cursor:pointer}
+#nv-tabs .nt-ic{position:relative;display:flex;align-items:center;justify-content:center;width:56px;height:30px;border-radius:15px;transition:background var(--dur-state)}
+#nv-tabs .nt-ic .ic{width:24px;height:24px;vertical-align:0}
+#nv-tabs button.active{color:var(--accent-text)}
+#nv-tabs button.active .nt-ic{background:var(--accent-soft)}
+/* Pastilles : en cours (point violet), vérification d'appairage (point orange), écrans hors ligne (nombre jaune) */
+#nv-tabs button.run .nt-ic::after,#nv-tabs button.pend .nt-ic::after{content:'';position:absolute;top:0;right:10px;width:10px;height:10px;border-radius:50%;
+  background:var(--fx);box-shadow:0 0 0 2px #101013}
+#nv-tabs button.pend .nt-ic::after{background:var(--accent)}
+.nt-badge{position:absolute;top:-3px;right:4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--warning);color:#000;
+  font:700 var(--fs-caption)/18px var(--font-ui);text-align:center;box-shadow:0 0 0 2px #101013}
+/* Champ de texte actif (clavier ouvert) : la barre s'efface */
+body.nv-kb #nv-tabs{display:none}
+
+/* Séquence : GO / retour / Stop collés au-dessus de la barre, à 16 px d'elle au moins (pas de changement d'onglet involontaire) */
+#nv-scroll .sq-ctl{bottom:0;padding-bottom:var(--sp-4)}
+
+/* ── Lumière : torche indisponible (iPhone) ── */
+#content-flash .flash-unavail-notice{margin-bottom:var(--sp-3)}
+
+/* Réglages › Retour à l'accueil */
+.st-btn.nv-home{height:auto;min-height:64px;display:flex;align-items:center;gap:14px;padding:10px var(--sp-4);text-align:left;border-color:var(--border-strong)}
+.nv-home .ic{flex:none;width:22px;height:22px;color:var(--text-2)}
+.nv-home-t{display:flex;flex-direction:column;gap:2px;font-family:var(--font-ui)}
+.nv-home-t b{font-size:var(--fs-body)}
+.nv-home-t small{font-size:var(--fs-label);font-weight:400;line-height:1.35;color:var(--text-2)}
+/* ── Portrait peu haut (iPhone SE…) : l'en-tête garde l'essentiel sur une ligne de texte ── */
+@media (max-height:699px){
+  #previewMeta{display:none}
+  #nv-head{gap:6px;padding-bottom:8px}
+}

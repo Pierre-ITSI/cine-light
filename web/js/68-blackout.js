@@ -10,16 +10,15 @@ let remoteBlackout = false, screenBlackoutOn = false;
 let _blackoutTouched = false;
 
 function renderRemoteBlackout() {
-  const btn = document.getElementById('blackoutBtn');
-  if (btn) btn.classList.toggle('on', remoteBlackout);
-  const lbl = document.getElementById('blackoutLabel');
-  if (lbl) lbl.textContent = remoteBlackout ? 'Écran OFF — appuyer pour rallumer' : 'Écran ON — appuyer pour éteindre';
-  const ic = document.getElementById('blackoutIcon');
-  if (ic) ic.innerHTML = icon(remoteBlackout ? 'power-off' : 'power');
-  // Bouton compact de la mini-carte sticky
-  const sb = document.getElementById('stickyBlackoutBtn');
-  if (sb) { sb.classList.toggle('on', remoteBlackout); sb.textContent = remoteBlackout ? 'Écran OFF' : 'Écran ON'; }
+  // Segmenté « Allumé | Noir » de l'en-tête (un seul segment coché à la fois)
+  const on = document.getElementById('blackoutOn'), off = document.getElementById('blackoutOff');
+  if (on) { on.classList.toggle('on', !remoteBlackout); on.setAttribute('aria-checked', remoteBlackout ? 'false' : 'true'); }
+  if (off) { off.classList.toggle('on', remoteBlackout); off.setAttribute('aria-checked', remoteBlackout ? 'true' : 'false'); }
   updateStatusRings();
+}
+// Un segment impose l'état voulu (un second toucher sur le segment déjà actif ne fait rien)
+function setRemoteBlackout(on) {
+  if (!!on !== remoteBlackout) toggleBlackout();
 }
 
 // — Télécommande : envoie l'ordre à l'écran —

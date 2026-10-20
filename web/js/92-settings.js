@@ -85,14 +85,14 @@ function toggleFlashWarningSetting() {
   renderSettings();
 }
 
-// Même effet que « Nouvelle session » (onglet QR) : nouveau secret, tous les
+// Même effet que « Nouvelle session » (onglet Écrans) : nouveau secret, tous les
 // écrans révoqués ; on revient sur le nouveau QR pour les réappairer.
 function settingsForgetScreens() {
   if (!confirm('Oublier tous les écrans appairés : ils seront déconnectés et devront scanner le nouveau QR. Continuer ?')) return;
   newRemoteSession();
   closeSettings();
-  switchTab('qr');
-  document.getElementById('remote-mode').scrollTop = 0;
+  switchTab('screens');
+  const sc = navScroller(); if (sc) sc.scrollTop = 0;
 }
 
 // Confirmé comme le bouton Accueil de l'en-tête (30-navigation.js)

@@ -29,22 +29,6 @@ renderSeq();
 // Aperçu, Réglages › Licence, vérification de la licence (sans effet hors version officielle)
 licBootUi();
 
-// ── Mini-carte sticky : apparaît dès que la preview commence à être masquée ──
-(function initStickyPreview() {
-  const row = document.getElementById('previewRow');
-  const bar = document.getElementById('stickyPreview');
-  const scroller = document.getElementById('remote-mode');
-  if (!row || !bar || !scroller) return;
-  function update() {
-    // Dès que le haut de la preview passe sous le bord supérieur de l'écran
-    // (début de coupure), la carte s'affiche.
-    bar.classList.toggle('visible', row.getBoundingClientRect().top < 8);
-  }
-  scroller.addEventListener('scroll', update, { passive: true });
-  window.addEventListener('resize', update);
-  update();
-})();
-
 // Initialiser tous les sliders avec boutons +/- et valeurs cliquables
 document.querySelectorAll('input[type="range"]').forEach(slider => {
   if (slider.parentElement.classList.contains('slider-row')) return; // déjà transformé

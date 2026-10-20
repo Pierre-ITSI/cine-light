@@ -110,23 +110,7 @@ html,body{width:100%;min-height:100vh;background:radial-gradient(ellipse at cent
 
 
 
-#remote-mode{display:none;position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;padding:calc(14px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));background:linear-gradient(135deg,#1a2a3a 0%,#0a0a0f 100%);min-height:100vh}
-/* Mini-carte sticky (preview + On/Off) affichée quand la preview sort du viewport */
-#stickyPreview{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:rgba(13,17,23,.68);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);transform:translateY(-110%);transition:transform .28s ease;pointer-events:none}
-#stickyPreview.visible{transform:translateY(0);pointer-events:auto}
-.sticky-swatch{flex:1;height:34px;border-radius:8px;border:1px solid var(--border);background:#fff;transition:background-color .1s;min-width:0}
-.sticky-blackout{background:var(--mid2);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:var(--fs-caption);letter-spacing:.08em;text-transform:uppercase;padding:9px 16px;border-radius:18px;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
-.sticky-blackout.on{background:#000;border-color:var(--accent);color:var(--accent)}
-.remote-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
-
-/* Barre d'onglets (7 onglets avec Séquence) : icône au-dessus du libellé, libellés
-   resserrés ; si les 7 ne tiennent pas (écran de moins de 375 px), la barre
-   défile horizontalement au lieu de couper un libellé. */
-.tabs{display:flex;gap:2px;margin-bottom:14px;background:var(--mid);border-radius:8px;padding:4px;overflow-x:auto;scrollbar-width:none}
-.tabs::-webkit-scrollbar{display:none}
-.tab-btn{flex:1 0 0;min-width:46px;padding:8px 1px;background:none;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:var(--fs-caption);letter-spacing:.02em;text-transform:uppercase;cursor:pointer;border-radius:5px;transition:all .2s;line-height:1.4;text-align:center}
-.tab-ic{display:block;font-size:.75rem;line-height:1.3;letter-spacing:0}
-.tab-btn.active{background:var(--mid2);color:var(--accent)}
+#remote-mode{display:none;position:fixed;inset:0;overflow:hidden;background:var(--bg)} /* coque : 04-nav.css */
 .tab-content{display:none}
 .tab-content.active{display:block}
 
@@ -142,7 +126,6 @@ html,body{width:100%;min-height:100vh;background:radial-gradient(ellipse at cent
 .dot.connecting{background:var(--accent);animation:pulse 1s infinite}
 .dot.error{background:#e05050}
 
-.swatch-row{display:flex;gap:12px;align-items:center;margin-bottom:12px}
 .swatch{width:50px;height:50px;border-radius:6px;border:1px solid var(--border);flex-shrink:0;transition:background-color .1s}
 .swatch-info{flex:1}
 .swatch-hex{font-family:'Lato',sans-serif;font-weight:600;font-size:1.3rem;letter-spacing:.04em}
@@ -509,9 +492,6 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .blackout-btn.on{background:#000;border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 24px rgba(0,0,0,.8)}
 
 /* GLOBAL SCREEN ON/OFF (au-dessus des onglets) */
-.screen-toggle-btn{width:100%;padding:13px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px}
-.screen-toggle-btn:hover{border-color:var(--accent)}
-.screen-toggle-btn.on{background:#000;border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 22px rgba(0,0,0,.85)}
 
 /* ══ Passerelle DMX (maquettes validées 14 à 17) ══
    Préfixe gw- propre à la passerelle. */
@@ -1769,9 +1749,9 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
    animations diégétiques de l'écran de jeu — téléphone, effets — restent) */
 @media (prefers-reduced-motion:reduce){
   :is(#splash,#remote-mode,#settings-view,#project-view,#policy-view,#screens-view,#seq-step-view,#phone-params-view,#tel-style-view,
-    #offline-view,#dmx-gateway,#strobe-warn,#app-confirm,#sr-sheet,#sr-revoke,#pair-verify,#screen-connect,#screen-menu,#screen-revoked,#stickyPreview),
+    #offline-view,#dmx-gateway,#strobe-warn,#app-confirm,#sr-sheet,#sr-revoke,#pair-verify,#screen-connect,#screen-menu,#screen-revoked),
   :is(#splash,#remote-mode,#settings-view,#project-view,#policy-view,#screens-view,#seq-step-view,#phone-params-view,#tel-style-view,
-    #offline-view,#dmx-gateway,#strobe-warn,#app-confirm,#sr-sheet,#sr-revoke,#pair-verify,#screen-connect,#screen-menu,#screen-revoked,#stickyPreview) *:not(.ts-prev,.ts-prev *,.sp-card,.sp-card *,.pp-prev,.pp-prev *){
+    #offline-view,#dmx-gateway,#strobe-warn,#app-confirm,#sr-sheet,#sr-revoke,#pair-verify,#screen-connect,#screen-menu,#screen-revoked) *:not(.ts-prev,.ts-prev *,.sp-card,.sp-card *,.pp-prev,.pp-prev *){
     animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
 
@@ -1800,14 +1780,9 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
 
 /* ── Fonds de vue : uni (fin du dégradé bleu, quasi OLED) ── */
 #splash,#remote-mode,#settings-view,#project-view,#screens-view,#seq-step-view,#phone-params-view,#tel-style-view,#policy-view,#offline-view,#dmx-gateway{background:var(--bg)}
-#remote-mode{padding-left:calc(16px + env(safe-area-inset-left));padding-right:calc(16px + env(safe-area-inset-right));padding-top:calc(12px + env(safe-area-inset-top))}
 #settings-view,#project-view,#screens-view{padding:calc(8px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));gap:var(--sp-3)}
 
-/* ── En-tête de la télécommande ── */
-/* Pas de logotype (décision propriétaire) : état de la liaison à gauche, accueil et réglages à droite */
-.remote-header{margin-bottom:var(--sp-4);padding-bottom:var(--sp-3);border-bottom-color:var(--border);min-height:56px}
-.remote-header-end{flex:1;min-width:0;gap:var(--sp-2)}
-.remote-header-end .link-pill{margin-right:auto}
+/* ── En-tête de la télécommande : état de la liaison et réglages (coque : 04-nav.css) ── */
 .hdr-gear{width:var(--tap);height:var(--tap);border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface-1);color:var(--text-2)}
 .hdr-gear .ic{width:22px;height:22px}
 .hdr-gear:active{transform:none;background:var(--surface-3)}
@@ -1819,35 +1794,16 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
 .link-pill.offline,.link-pill.skew{color:var(--danger);background:var(--danger-soft)}
 
 /* ── Aperçu (swatch) ── */
-.swatch-row{gap:var(--sp-3);margin-bottom:var(--sp-3)}
 .swatch{width:56px;height:56px;border-radius:var(--r-md);border:1px solid var(--border-strong)}
 .swatch-hex{font-size:24px;font-weight:500;line-height:1.2;color:var(--text)}
 .swatch-label{font-size:var(--fs-label);color:var(--text-2);margin-top:2px}
 .autosend-badge{font:700 var(--fs-caption)/1.4 var(--font-ui);color:var(--success);margin-top:2px}
-#stickyPreview{background:rgba(11,11,13,.86);border-bottom-color:var(--border);padding-bottom:var(--sp-2)}
-.sticky-swatch{height:36px;border-radius:var(--r-md);border-color:var(--border-strong)}
-.sticky-blackout{height:var(--btn-m);border-radius:var(--r-md);background:var(--surface-3);border:1px solid var(--border);font:700 14px/1 var(--font-ui);padding:0 var(--sp-4)}
-.sticky-blackout.on{background:#000;border-color:var(--accent);color:var(--accent-text)}
 
 /* ── Cible et Allumé/Noir ── */
 .target-btn{height:var(--btn-l);border-radius:var(--r-md);border:1px solid var(--border-strong);background:var(--surface-1);font:400 var(--fs-body)/1.2 var(--font-ui);padding:0 var(--sp-4);gap:var(--sp-3)}
 .target-btn b{font-weight:700}
 .target-btn .tb-icon{color:var(--accent-text);width:var(--icon-md);height:var(--icon-md)}
 .target-btn.subset{border-color:var(--accent);background:var(--accent-soft)}
-.screen-toggle-btn{height:var(--btn-l);padding:0 var(--sp-4);border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface-3);
-  color:var(--text);font:700 15px/1.2 var(--font-ui);margin-bottom:var(--sp-4);gap:var(--sp-2)}
-.screen-toggle-btn .ic{color:var(--success)}
-.screen-toggle-btn.on{background:#000;border-color:var(--accent);color:var(--accent-text)}
-.screen-toggle-btn.on .ic{color:var(--accent-text)}
-.screen-toggle-btn:hover{border-color:var(--border-strong)}
-
-/* ── Barre de 7 onglets (structure conservée en phase 2) ── */
-.tabs{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);padding:4px;gap:2px;margin-bottom:var(--sp-4)}
-.tab-btn{position:relative;flex:1 1 auto;min-width:var(--tap);min-height:56px;padding:6px 1px 5px;border-radius:var(--r-md);color:var(--text-2);
-  font:700 var(--fs-caption)/1.2 var(--font-ui);letter-spacing:-.01em;display:flex;flex-direction:column;align-items:center;gap:4px;white-space:nowrap}
-.tab-ic{display:block;font-size:0;line-height:0}
-.tab-ic .ic,.tab-btn>.ic-wrap .ic{width:22px;height:22px}
-.tab-btn.active{background:var(--surface-3);color:var(--accent-text);box-shadow:inset 0 0 0 1px var(--border-strong)}
 
 /* ── Card (panel, st-card, sv-card…) ── */
 .panel,.st-card,.sv-card,.sv-groups,.sq-list,.sq-now{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg)}
@@ -2245,6 +2201,114 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
 .splash-credit{color:var(--text-3);font-size:var(--fs-caption)}
 .ss-opt{word-break:normal;overflow-wrap:break-word;hyphens:auto}
 .ss-play .ss-opt,.pp-bars .ss-opt{font-size:var(--fs-label);padding:var(--sp-1)}
+/* Navigation de la télécommande (phase 3). Feuille NON stratifiée (voir
+   01-tokens.css) : elle passe devant @layer legacy.
+   Coque : #remote-mode (colonne) = #nv-main (en-tête fixe + contenu seul à
+   défiler) + #nv-tabs (barre de 5 onglets fixe en bas).
+   Dès 700 px de large, ou en paysage de moins de 500 px de haut (téléphone
+   couché), la barre devient un rail latéral et le contenu passe sur 2 colonnes.
+   L'affichage (display) de #remote-mode reste posé en ligne par startMode() /
+   goBack() ; les vues plein écran (#settings-view…, z-index 300+) et les
+   feuilles (500+) passent au-dessus de la barre (z-index 30). */
+
+#remote-mode{flex-direction:column;overflow:hidden;padding:0;min-height:0;background:var(--bg)}
+#nv-main{flex:1 1 auto;min-width:0;min-height:0;display:flex;flex-direction:column}
+
+/* ── En-tête fixe ── */
+#nv-head{flex:none;z-index:20;display:flex;flex-direction:column;gap:var(--sp-2);background:var(--bg);border-bottom:1px solid var(--border);
+  padding:calc(var(--sp-2) + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 10px calc(16px + env(safe-area-inset-left))}
+.nv-r1,.nv-r2{display:flex;align-items:center;gap:10px;min-width:0}
+#nv-head .swatch{position:relative;overflow:hidden;flex:none;width:44px;height:44px;border-radius:var(--r-md)}
+.nv-val{position:relative;flex:1;min-width:0;line-height:1.15}
+#nv-head .swatch-hex{font-size:18px;white-space:nowrap}
+#nv-head .swatch-label{font-size:var(--fs-caption);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#nv-head .autosend-badge{position:absolute;top:0;right:0;margin:0;font-size:var(--fs-caption)}
+/* Pastille de liaison : zone tactile de 44 px, pastille dessinée à 32 px (::before, teinte de l'état à 14 %) */
+#nv-head .link-pill{flex:none;margin:0;height:var(--tap);padding:0 var(--sp-3);background:transparent;isolation:isolate}
+#nv-head .link-pill::before{content:'';position:absolute;inset:6px 0;z-index:-1;border-radius:var(--r-pill);background:currentColor;opacity:.14}
+#nv-head .link-pill::after{display:none}
+#nv-head .hdr-gear{flex:none}
+
+/* Cible (toujours visible) */
+#nv-head .target-btn{display:flex;flex:1;min-width:0;width:auto;height:52px;margin:0;padding:0 var(--sp-3);gap:var(--sp-2);font-size:var(--fs-secondary)}
+#nv-head .target-btn .tb-icon{width:18px;height:18px}
+#nv-head .tb-label{flex:1;min-width:0;display:flex;align-items:baseline;overflow:hidden;white-space:nowrap;text-align:left}
+#nv-head .tb-label b{min-width:0;margin-left:.3em;overflow:hidden;text-overflow:ellipsis}
+#nv-head .tb-label .tb-n{flex:none;color:var(--text-2);white-space:pre}
+
+/* Allumé | Noir : segmenté de l'écran de jeu. Allumé : surface grise (pas de blanc plein,
+   sans éblouir un plateau sombre) ; l'état choisi porte le liseré orange. */
+.nv-seg{flex:none;display:flex;gap:2px;padding:3px;background:var(--bg);border:1px solid var(--border-strong);border-radius:var(--r-md)}
+.nv-seg button{min-width:64px;height:var(--tap);padding:0 var(--sp-3);border:0;border-radius:7px;background:transparent;color:var(--text-2);
+  font:700 var(--fs-secondary)/1 var(--font-ui);display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.nv-seg button .ic{width:16px;height:16px;vertical-align:0}
+.nv-seg button.on{background:var(--surface-3);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.nv-seg button.on .ic{color:var(--accent-text)}
+.nv-seg #blackoutOff.on{background:#000;color:var(--accent-text)}
+
+/* Barre « en cours » + Tout arrêter */
+.nv-strip{display:none;align-items:center;gap:var(--sp-2);height:48px;padding:0 2px 0 var(--sp-3);background:rgba(208,92,255,.14);border:1px solid rgba(208,92,255,.55);
+  border-radius:var(--r-md);color:var(--text);font:700 var(--fs-secondary)/1 var(--font-ui)}
+.nv-strip .ic{flex:none;width:18px;height:18px;color:var(--fx);vertical-align:0}
+.nv-strip-txt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nv-strip button{flex:none;height:var(--tap);padding:0 var(--sp-4);border:0;border-radius:var(--r-md);background:var(--danger-fill);color:#fff;
+  font:700 var(--fs-secondary)/1 var(--font-ui);display:flex;align-items:center;gap:6px;cursor:pointer}
+.nv-strip button .ic{width:14px;height:14px;color:#fff}
+
+/* ── Contenu : seul élément qui défile ── */
+#nv-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+  padding:0 calc(16px + env(safe-area-inset-right)) var(--sp-4) calc(16px + env(safe-area-inset-left));background:var(--bg)}
+#nv-scroll::-webkit-scrollbar{display:none}
+#content-light>.tab-content,#content-scn>.tab-content{padding-top:0}
+#nv-scroll>.tab-content.active:not(#content-light):not(#content-scn){padding-top:var(--sp-3)}
+
+/* Segmenté interne (Couleur | Flash, Tel | Séquence), collé sous l'en-tête */
+.nv-sub{position:sticky;top:0;z-index:10;margin:0 calc(-1 * (16px + env(safe-area-inset-right))) var(--sp-3) calc(-1 * (16px + env(safe-area-inset-left)));
+  padding:var(--sp-3) calc(16px + env(safe-area-inset-right)) var(--sp-2) calc(16px + env(safe-area-inset-left));background:var(--bg)}
+.nv-seg2{display:flex;max-width:520px;gap:2px;padding:3px;background:var(--bg);border:1px solid var(--border-strong);border-radius:var(--r-md)}
+.nv-seg2 button{flex:1;height:var(--tap);border:1px solid transparent;border-radius:7px;background:transparent;color:var(--text-2);
+  font:700 var(--fs-body)/1 var(--font-ui);display:flex;align-items:center;justify-content:center;gap:var(--sp-2);cursor:pointer}
+.nv-seg2 button.active{background:var(--surface-3);border-color:var(--border-strong);color:var(--text)}
+.nv-seg2 button .ic{width:18px;height:18px;vertical-align:0}
+.nv-intro{margin:0 0 var(--sp-3);font-size:var(--fs-secondary);line-height:1.45;color:var(--text-2)}
+.nv-tag{margin-left:var(--sp-2);padding:3px 8px;border-radius:var(--r-pill);background:var(--accent-soft);color:var(--accent-text);font:700 var(--fs-caption)/1 var(--font-ui);vertical-align:2px}
+
+/* ── Barre du bas : 5 onglets, fixe ── */
+#nv-tabs{flex:none;position:relative;z-index:30;display:flex;gap:2px;min-height:calc(60px + env(safe-area-inset-bottom));
+  padding:6px calc(8px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+  background:rgba(16,16,19,.97);border-top:1px solid var(--border-strong)}
+#nv-tabs button{position:relative;flex:1;min-width:0;min-height:var(--tap);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  border:0;border-radius:var(--r-md);background:none;color:var(--text-2);font:700 var(--fs-caption)/1.1 var(--font-ui);cursor:pointer}
+#nv-tabs .nt-ic{position:relative;display:flex;align-items:center;justify-content:center;width:56px;height:30px;border-radius:15px;transition:background var(--dur-state)}
+#nv-tabs .nt-ic .ic{width:24px;height:24px;vertical-align:0}
+#nv-tabs button.active{color:var(--accent-text)}
+#nv-tabs button.active .nt-ic{background:var(--accent-soft)}
+/* Pastilles : en cours (point violet), vérification d'appairage (point orange), écrans hors ligne (nombre jaune) */
+#nv-tabs button.run .nt-ic::after,#nv-tabs button.pend .nt-ic::after{content:'';position:absolute;top:0;right:10px;width:10px;height:10px;border-radius:50%;
+  background:var(--fx);box-shadow:0 0 0 2px #101013}
+#nv-tabs button.pend .nt-ic::after{background:var(--accent)}
+.nt-badge{position:absolute;top:-3px;right:4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--warning);color:#000;
+  font:700 var(--fs-caption)/18px var(--font-ui);text-align:center;box-shadow:0 0 0 2px #101013}
+/* Champ de texte actif (clavier ouvert) : la barre s'efface */
+body.nv-kb #nv-tabs{display:none}
+
+/* Séquence : GO / retour / Stop collés au-dessus de la barre, à 16 px d'elle au moins (pas de changement d'onglet involontaire) */
+#nv-scroll .sq-ctl{bottom:0;padding-bottom:var(--sp-4)}
+
+/* ── Lumière : torche indisponible (iPhone) ── */
+#content-flash .flash-unavail-notice{margin-bottom:var(--sp-3)}
+
+/* Réglages › Retour à l'accueil */
+.st-btn.nv-home{height:auto;min-height:64px;display:flex;align-items:center;gap:14px;padding:10px var(--sp-4);text-align:left;border-color:var(--border-strong)}
+.nv-home .ic{flex:none;width:22px;height:22px;color:var(--text-2)}
+.nv-home-t{display:flex;flex-direction:column;gap:2px;font-family:var(--font-ui)}
+.nv-home-t b{font-size:var(--fs-body)}
+.nv-home-t small{font-size:var(--fs-label);font-weight:400;line-height:1.35;color:var(--text-2)}
+/* ── Portrait peu haut (iPhone SE…) : l'en-tête garde l'essentiel sur une ligne de texte ── */
+@media (max-height:699px){
+  #previewMeta{display:none}
+  #nv-head{gap:6px;padding-bottom:8px}
+}
 </style>
 </head>
 <body>
@@ -2279,6 +2343,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
 <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /><rect x="2" y="4" width="20" height="16" rx="2" /></symbol>
 <symbol id="i-message-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></symbol>
 <symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /></symbol>
+<symbol id="i-monitor-smartphone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8" /><path d="M10 19v-3.96 3.15" /><path d="M7 19h5" /><rect width="6" height="10" x="16" y="12" rx="2" /></symbol>
 <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></symbol>
 <symbol id="i-move-horizontal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 8 4 4-4 4" /><path d="M2 12h20" /><path d="m6 8-4 4 4 4" /></symbol>
 <symbol id="i-move-vertical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20" /><path d="m8 18 4 4 4-4" /><path d="m8 6 4-4 4 4" /></symbol>
@@ -2291,7 +2356,6 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
 <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></symbol>
 <symbol id="i-power" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10" /><path d="M18.4 6.6a9 9 0 1 1-12.77.04" /></symbol>
 <symbol id="i-power-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64A9 9 0 0 1 20.77 15" /><path d="M6.16 6.16a9 9 0 1 0 12.68 12.68" /><path d="M12 2v4" /><path d="m2 2 20 20" /></symbol>
-<symbol id="i-qr-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1" /><rect width="5" height="5" x="16" y="3" rx="1" /><rect width="5" height="5" x="3" y="16" rx="1" /><path d="M21 16h-3a2 2 0 0 0-2 2v3" /><path d="M21 21v.01" /><path d="M12 7v3a2 2 0 0 1-2 2H7" /><path d="M3 12h.01" /><path d="M12 3h.01" /><path d="M12 16v.01" /><path d="M16 12h1" /><path d="M21 12v.01" /><path d="M12 21v-1" /></symbol>
 <symbol id="i-rectangle-horizontal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2" /></symbol>
 <symbol id="i-refresh-cw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></symbol>
 <symbol id="i-repeat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14" /><path d="m7 22-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" /></symbol>
@@ -2408,47 +2472,48 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
 </div>
 
 <div id="remote-mode">
-  <!-- Mini-carte sticky : apparaît quand la preview principale sort de l'écran -->
-  <div id="stickyPreview">
-    <div class="sticky-swatch" id="stickySwatch"><canvas class="pv-fx-canvas" id="stickyFxCanvas" width="160" height="34"></canvas></div>
-    <button class="sticky-blackout" id="stickyBlackoutBtn" onclick="toggleBlackout()">Écran ON</button>
-  </div>
-  <div class="remote-header">
-    <div class="remote-header-end">
+  <!-- Phase 3 : coque de la télécommande. En-tête fixe (aperçu, liaison, réglages, cible, Allumé/Noir, « Tout arrêter »),
+       contenu seul à défiler (#nv-scroll), barre de 5 onglets fixe en bas (rail latéral dès 700 px de large ou en paysage bas). -->
+  <div id="nv-main">
+  <header id="nv-head">
+    <div class="nv-r1">
+      <div class="swatch" id="previewSwatch" style="background:#fff"><canvas class="pv-fx-canvas" id="previewFxCanvas" width="96" height="96"></canvas></div>
+      <div class="nv-val" id="previewRow">
+        <div class="swatch-hex" id="previewHex">#FFFFFF</div>
+        <div class="swatch-label" id="previewMeta">—</div>
+        <div class="autosend-badge" id="autosendBadge"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-arrow-up-right"></use></svg> envoyé</div>
+      </div>
       <button type="button" class="link-pill reconnecting" id="linkPill" onclick="openLinkDetail()" aria-label="État de la liaison — détail par écran"><span class="link-dot"></span><span id="linkPillLabel">Connexion…</span></button>
-      <button type="button" class="hdr-gear" id="homeBtn" aria-label="Menu principal" title="Menu principal" onclick="askGoBack()"><svg class="ic" aria-hidden="true"><use href="#i-house"></use></svg></button>
       <button type="button" class="hdr-gear" id="settingsBtn" aria-label="Réglages" onclick="openSettings()"><svg class="ic" aria-hidden="true"><use href="#i-settings"></use></svg></button>
     </div>
-  </div>
-  <div class="swatch-row" id="previewRow">
-    <div class="swatch" id="previewSwatch" style="background:#fff"><canvas class="pv-fx-canvas" id="previewFxCanvas" width="96" height="96"></canvas></div>
-    <div class="swatch-info">
-      <div class="swatch-hex" id="previewHex">#FFFFFF</div>
-      <div class="swatch-label" id="previewMeta">—</div>
-      <div class="autosend-badge" id="autosendBadge"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-arrow-up-right"></use></svg> envoyé</div>
+    <div class="nv-r2">
+      <!-- Cible des commandes : toujours visible, même avec un seul écran -->
+      <button type="button" class="target-btn" id="targetBtn" onclick="openTargetSheet()" aria-haspopup="dialog">
+        <svg class="ic tb-icon" aria-hidden="true"><use href="#i-target"></use></svg>
+        <span class="tb-label" id="targetBtnLabel">Cible : <b>Aucun écran</b></span>
+        <svg class="ic ic-sm" aria-hidden="true"><use href="#i-chevron-down"></use></svg>
+      </button>
+      <!-- Allumé / Noir de l'écran de jeu (remplace « Écran ON — appuyer pour éteindre ») -->
+      <div class="nv-seg" id="blackoutSeg" role="radiogroup" aria-label="Écran de jeu">
+        <button type="button" class="on" role="radio" aria-checked="true" id="blackoutOn" onclick="setRemoteBlackout(false)"><svg class="ic" aria-hidden="true"><use href="#i-power"></use></svg><span>Allumé</span></button>
+        <button type="button" role="radio" aria-checked="false" id="blackoutOff" onclick="setRemoteBlackout(true)"><span>Noir</span></button>
+      </div>
     </div>
-  </div>
-  <!-- Cible des commandes (maquette 6) : visible dès deux écrans appairés -->
-  <button type="button" class="target-btn" id="targetBtn" style="display:none" onclick="openTargetSheet()" aria-haspopup="dialog">
-    <svg class="ic tb-icon" aria-hidden="true"><use href="#i-target"></use></svg>
-    <span class="tb-label" id="targetBtnLabel">Cible : <b>Tous les écrans</b></span>
-    <svg class="ic ic-sm" aria-hidden="true"><use href="#i-chevron-down"></use></svg>
-  </button>
-  <button class="screen-toggle-btn" id="blackoutBtn" onclick="toggleBlackout()">
-    <span id="blackoutIcon"><svg class="ic" aria-hidden="true"><use href="#i-power"></use></svg></span><span id="blackoutLabel">Écran ON — appuyer pour éteindre</span>
-  </button>
+    <!-- Ce qui tourne (stroboscope, effet, média, torche) et un seul « Tout arrêter » -->
+    <div class="nv-strip" id="nvStrip" role="status" style="display:none">
+      <svg class="ic" aria-hidden="true"><use href="#i-zap"></use></svg>
+      <span class="nv-strip-txt" id="nvStripTxt"></span>
+      <button type="button" id="nvStopAll" onclick="stopEverything()"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> Tout arrêter</button>
+    </div>
+  </header>
 
-  <!-- 7 onglets : icône au-dessus du libellé ; sous 375 px, la barre défile horizontalement -->
-  <div class="tabs" id="tabsBar">
-    <button class="tab-btn active" onclick="switchTab('color')" id="tab-color"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-palette"></use></svg></span> Couleur</button>
-    <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-sparkles"></use></svg></span> Effets</button>
-    <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg></span> Flash</button>
-    <button class="tab-btn" onclick="switchTab('media')" id="tab-media"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-film"></use></svg></span> Média</button>
-    <button class="tab-btn" onclick="switchTab('call')" id="tab-call"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg></span> Tel</button>
-    <button class="tab-btn" onclick="switchTab('seq')" id="tab-seq"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-clapperboard"></use></svg></span> Séquence</button>
-    <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-qr-code"></use></svg></span> QR</button>
-  </div>
-
+  <main id="nv-scroll">
+  <!-- Lumière : segmenté « Couleur | Flash » (l'ancien onglet Flash est la vue « Flash ») -->
+  <div class="tab-content active" id="content-light">
+  <div class="nv-sub"><div class="nv-seg2" role="tablist" aria-label="Lumière">
+    <button type="button" class="active" role="tab" aria-selected="true" id="lightSeg-color" onclick="switchTab('color')"><svg class="ic" aria-hidden="true"><use href="#i-palette"></use></svg> Couleur</button>
+    <button type="button" role="tab" aria-selected="false" id="lightSeg-flash" onclick="switchTab('flash')"><svg class="ic" aria-hidden="true"><use href="#i-zap"></use></svg> Flash</button>
+  </div></div>
   <div class="tab-content active" id="content-color">
     <div class="panel">
       <div class="panel-label">Intensité (Dimmer)</div>
@@ -2556,6 +2621,22 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
     </div>
 
     <div class="panel">
+      <div class="panel-label">Mémoires de couleur</div>
+      <div class="memory-actions">
+        <button class="memory-save-btn" onclick="saveColorMemory()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Enregistrer</button>
+        <button class="memory-update-btn" id="memoryUpdateBtn" onclick="updateColorMemory()" disabled><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Mettre à jour</button>
+      </div>
+      <div id="memoryGrid" class="memory-grid"></div>
+      <div id="memoryEmpty" class="media-pool-empty">Réglez une couleur puis « Enregistrer » pour créer une mémoire.</div>
+      <div id="memoryHint" class="memory-hint" style="display:none">Touchez pour rappeler · appui long (ou la croix) pour supprimer.</div>
+    </div>
+  </div>
+
+
+  <!-- Vue « Flash » de Lumière : stroboscope, torche du récepteur, vibration -->
+  <div class="tab-content" id="content-flash">
+    <p class="nv-intro">Stroboscope, torche du récepteur et vibration. « Tout arrêter » (en-tête) coupe tout ce qui tourne.</p>
+    <div class="panel">
       <div class="toggle-row">
         <div><div class="toggle-label">Stroboscope</div><div class="toggle-sub">Flash sur l'écran distant</div></div>
         <label class="toggle-switch">
@@ -2590,44 +2671,20 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
         </div>
       </div>
       <div class="strobe-preview">Aperçu local<div class="strobe-flash" id="strobeFlashPreview"></div></div>
-      <div style="height:1px;background:var(--border);margin:14px 0"></div>
-      <div class="panel-label">Effets sur le récepteur</div>
-      <div class="toggle-row" style="margin-bottom:10px">
+      <div class="toggle-row" style="margin:16px 0 0">
         <div><div class="toggle-label"><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg> Torche synchronisée</div><div class="toggle-sub">Flash la torche du récepteur avec le strobe</div></div>
         <label class="toggle-switch">
           <input type="checkbox" id="torchSyncToggle" onchange="onStrobeParamChange()">
           <div class="toggle-track"></div><div class="toggle-thumb"></div>
         </label>
       </div>
-      <div class="panel-label" style="margin-top:4px"><svg class="ic" aria-hidden="true"><use href="#i-vibrate"></use></svg> Vibration rapide</div>
-      <div class="chips-wrap">
-        <button class="chip" onclick="sendVibrate([80])">Court</button>
-        <button class="chip" onclick="sendVibrate([300])">Long</button>
-        <button class="chip" onclick="sendVibrate([80,80,80])">Double</button>
-        <button class="chip" onclick="sendVibrate([80,60,80,60,300])">Alerte</button>
-        <button class="chip" onclick="sendVibrate([50,30,50,30,50,30,300,50,300,50,300,50,50,30,50,30,50])">SOS</button>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-label">Mémoires de couleur</div>
-      <div class="memory-actions">
-        <button class="memory-save-btn" onclick="saveColorMemory()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Enregistrer</button>
-        <button class="memory-update-btn" id="memoryUpdateBtn" onclick="updateColorMemory()" disabled><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Mettre à jour</button>
-      </div>
-      <div id="memoryGrid" class="memory-grid"></div>
-      <div id="memoryEmpty" class="media-pool-empty">Réglez une couleur puis « Enregistrer » pour créer une mémoire.</div>
-      <div id="memoryHint" class="memory-hint" style="display:none">Touchez pour rappeler · appui long (ou la croix) pour supprimer.</div>
-    </div>
-  </div>
-
-  <div class="tab-content" id="content-flash">
-    <div class="flash-unavail-notice" id="flashUnavailNotice" style="display:none">
-      <strong><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg> Non disponible sur iPhone</strong>
-      Le récepteur est un iPhone : iOS ne permet pas de piloter la torche LED ni le vibreur depuis le web. Utilisez le strobe par l'écran (onglet Effets) ou un récepteur Android.
     </div>
     <div class="panel">
-      <div class="panel-label">Torche récepteur</div>
+      <div class="panel-label">Torche du récepteur <span class="nv-tag">Bêta</span></div>
+      <div class="flash-unavail-notice" id="flashUnavailNotice" style="display:none">
+        <strong><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg> Non disponible sur iPhone</strong>
+        Le récepteur est un iPhone : iOS ne permet pas de piloter la torche LED ni le vibreur depuis le web. Utilisez le stroboscope de l'écran (ci-dessus) ou un récepteur Android.
+      </div>
       <button class="torch-onoff-btn" id="remoteTorchBtn" onclick="onRemoteTorchToggle()">
         <span id="remoteTorchIcon"><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg></span><span id="remoteTorchLabel">Allumer la torche</span>
       </button>
@@ -2641,7 +2698,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
       </div>
     </div>
     <div class="panel">
-      <div class="panel-label">Effets</div>
+      <div class="panel-label">Motifs de torche</div>
       <div class="effect-grid">
         <button class="effect-btn" id="efx-sos" onclick="sendTorchEffect('sos')">
           SOS
@@ -2663,7 +2720,18 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
         </button>
       </div>
     </div>
+    <div class="panel">
+      <div class="panel-label"><svg class="ic" aria-hidden="true"><use href="#i-vibrate"></use></svg> Vibration rapide</div>
+      <div class="chips-wrap">
+        <button class="chip" onclick="sendVibrate([80])">Court</button>
+        <button class="chip" onclick="sendVibrate([300])">Long</button>
+        <button class="chip" onclick="sendVibrate([80,80,80])">Double</button>
+        <button class="chip" onclick="sendVibrate([80,60,80,60,300])">Alerte</button>
+        <button class="chip" onclick="sendVibrate([50,30,50,30,50,30,300,50,300,50,300,50,50,30,50,30,50])">SOS</button>
+      </div>
+    </div>
   </div>
+  </div><!-- /content-light -->
 
   <div class="tab-content" id="content-effects">
     <div id="effectActiveBadge" class="effect-active-row" style="display:none">
@@ -2926,6 +2994,12 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
     </div>
   </div>
 
+  <!-- Scénario : segmenté « Tel | Séquence » (anciens onglets Tel et Séquence) -->
+  <div class="tab-content" id="content-scn">
+  <div class="nv-sub"><div class="nv-seg2" role="tablist" aria-label="Scénario">
+    <button type="button" class="active" role="tab" aria-selected="true" id="scnSeg-call" onclick="switchTab('call')"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg> Tel</button>
+    <button type="button" role="tab" aria-selected="false" id="scnSeg-seq" onclick="switchTab('seq')"><svg class="ic" aria-hidden="true"><use href="#i-clapperboard"></use></svg> Séquence</button>
+  </div></div>
   <div class="tab-content" id="content-call">
     <!-- Aperçu sans licence (maquettes 39 / 39b) : version officielle seulement, 77-licence-ui.js -->
     <div class="lic-pv" id="licPvTel" style="display:none">
@@ -3198,36 +3272,58 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
       <div class="cl-note" id="seqSavedNote"></div>
     </div>
   </div>
+  </div><!-- /content-scn -->
 
-  <div class="tab-content" id="content-qr">
-    <div class="panel pair-panel">
-      <div class="panel-label">Appairer un écran de jeu</div>
-      <div class="pair-qr" id="pairQr" role="img" aria-label="QR code d'appairage"></div>
-      <div class="pair-steps">Sur chaque écran de jeu : <b>Écran projecteur</b> → <b>Scanner</b><br><span>Autant d'écrans que nécessaire, ils jouent ensemble.</span></div>
-      <div class="pair-or">ou avec le code</div>
-      <div class="pair-code-row">
-        <span class="pair-code" id="pairCode">···&nbsp;···</span>
-        <button type="button" class="pair-refresh" aria-label="Générer un nouveau code" onclick="remoteNewPairCode()">
-          <svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg>
-        </button>
-      </div>
-      <div class="pair-note">Code valable 2 min · un nouveau code par écran</div>
-      <div class="pair-wait"><span class="pair-wait-dot"></span>En attente d'un écran…</div>
-    </div>
-    <div class="panel pair-screens" id="pairScreens" style="display:none">
-      <div class="pair-screens-head"><div class="panel-label">Écrans appairés (<span id="pairScreensCount">0</span>)</div><button type="button" class="pair-manage" onclick="openScreensView()">Gérer</button></div>
+  <!-- Écrans : écrans de jeu et groupes, ajout d'un écran, liaison et plateau (anciens onglet QR et « Écrans appairés ») -->
+  <div class="tab-content" id="content-screens">
+    <div class="panel pair-screens" id="pairScreens">
+      <div class="nv-h"><div class="panel-label">Écrans de jeu (<span id="pairScreensCount">0</span>)</div><button type="button" class="pair-manage" id="identifyAllBtn" onclick="scrIdentifyAll()">Identifier tous</button></div>
       <div id="pairScreensList" class="pair-screens-list"></div>
+      <div class="nv-empty" id="pairScreensEmpty">Aucun écran appairé : scannez le QR ci-dessous sur chaque écran de jeu.</div>
+      <div class="nv-groups" id="pairGroups"></div>
     </div>
-    <!-- Passerelle DMX : visible partout ; hors de l'app native, la vue explique qu'il faut l'app (validé) -->
-    <button type="button" class="media-btn gw-entry" id="gwEntryBtn" onclick="openDmxGateway()"><span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-sliders-horizontal"></use></svg></span> Passerelle DMX <span class="gw-entry-state" id="gwEntryState"></span></button>
-    <!-- Tourner sans réseau (maquette 10) : liaison et préparation des écrans -->
-    <button type="button" class="media-btn gw-entry" id="offEntryBtn" onclick="openOfflineView()"><span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-wifi-off"></use></svg></span> Tourner sans réseau <span class="gw-entry-state" id="offEntryState"></span></button>
-    <button class="media-btn pair-renew" onclick="confirmNewSession()"><span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg></span> Nouvelle session</button>
+    <div class="panel pair-panel" id="pairPanel">
+      <div class="nv-h"><div class="panel-label">Ajouter un écran</div><span class="nv-h-sub">code valable 2 min</span></div>
+      <div class="nv-add">
+        <div class="pair-qr" id="pairQr" role="img" aria-label="QR code d'appairage"></div>
+        <div class="nv-add-r">
+          <div class="pair-steps">Sur chaque écran de jeu : <b>Écran projecteur</b> → <b>Scanner</b><br><span>Autant d'écrans que nécessaire, ils jouent ensemble.</span></div>
+          <div class="pair-or">ou avec le code</div>
+          <div class="pair-code-row">
+            <span class="pair-code" id="pairCode">···&nbsp;···</span>
+            <button type="button" class="pair-refresh" aria-label="Générer un nouveau code" onclick="remoteNewPairCode()">
+              <svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg>
+            </button>
+          </div>
+          <div class="pair-note">Un nouveau code par écran</div>
+          <div class="pair-wait"><span class="pair-wait-dot"></span>En attente d'un écran…</div>
+        </div>
+      </div>
+    </div>
+    <div class="nv-grp">Liaison et plateau</div>
+    <div class="st-card st-rows nv-link-card">
+      <!-- Passerelle DMX : visible partout ; hors de l'app native, la vue explique qu'il faut l'app (validé) -->
+      <button type="button" class="st-row nv-lead" id="offEntryBtn" onclick="openOfflineView()"><svg class="ic" aria-hidden="true"><use href="#i-wifi-off"></use></svg><span class="st-row-main"><span class="st-row-label">Tourner sans réseau <span class="gw-entry-state" id="offEntryState"></span></span><span class="st-row-sub">Wi-Fi local, Bluetooth · préparer les écrans</span></span><svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+      <button type="button" class="st-row nv-lead" id="gwEntryBtn" onclick="openDmxGateway()"><svg class="ic" aria-hidden="true"><use href="#i-sliders-horizontal"></use></svg><span class="st-row-main"><span class="st-row-label">Passerelle DMX <span class="gw-entry-state" id="gwEntryState"></span></span><span class="st-row-sub">sACN / Art-Net vers les écrans</span></span><svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+    </div>
+    <button type="button" class="st-btn st-danger pair-renew" onclick="confirmNewSession()"><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Nouvelle session — déconnecte tout</button>
     <div class="pair-e2e">
       <svg class="ic ic-sm" aria-hidden="true"><use href="#i-lock"></use></svg>
       Chiffré de bout en bout : seuls vos appareils lisent les messages et les médias
     </div>
   </div>
+  </main>
+
+  </div><!-- /nv-main -->
+
+  <!-- Barre de 5 onglets : fixe en bas (téléphone portrait), rail latéral dès 700 px de large ou en paysage bas -->
+  <nav id="nv-tabs" role="tablist" aria-label="Sections de la télécommande">
+    <button type="button" role="tab" class="active" id="tab-light" aria-selected="true" aria-controls="content-light" onclick="switchTab('light')"><span class="nt-ic"><svg class="ic" aria-hidden="true"><use href="#i-lightbulb"></use></svg></span><span class="nt-lbl">Lumière</span></button>
+    <button type="button" role="tab" id="tab-effects" aria-selected="false" aria-controls="content-effects" onclick="switchTab('effects')"><span class="nt-ic"><svg class="ic" aria-hidden="true"><use href="#i-sparkles"></use></svg></span><span class="nt-lbl">Effets</span></button>
+    <button type="button" role="tab" id="tab-media" aria-selected="false" aria-controls="content-media" onclick="switchTab('media')"><span class="nt-ic"><svg class="ic" aria-hidden="true"><use href="#i-film"></use></svg></span><span class="nt-lbl">Média</span></button>
+    <button type="button" role="tab" id="tab-scenario" aria-selected="false" aria-controls="content-scn" onclick="switchTab('scenario')"><span class="nt-ic"><svg class="ic" aria-hidden="true"><use href="#i-clapperboard"></use></svg></span><span class="nt-lbl">Scénario</span></button>
+    <button type="button" role="tab" id="tab-screens" aria-selected="false" aria-controls="content-screens" onclick="switchTab('screens')"><span class="nt-ic"><svg class="ic" aria-hidden="true"><use href="#i-monitor-smartphone"></use></svg><span class="nt-badge" id="screensBadge" style="display:none"></span></span><span class="nt-lbl">Écrans</span></button>
+  </nav>
 </div>
 
 <!-- Écrans connectés & groupes (maquette 5) -->
@@ -3575,7 +3671,8 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
     </button>
   </div>
   <button type="button" class="st-btn st-danger" onclick="settingsForgetScreens()">Oublier tous les écrans appairés</button>
-  <button type="button" class="st-btn" onclick="settingsGoHome()">Retour à l'accueil</button>
+  <!-- Accueil : seulement ici (plus dans l'en-tête), toujours confirmé (askGoBack) -->
+  <button type="button" class="st-btn nv-home" onclick="settingsGoHome()"><svg class="ic" aria-hidden="true"><use href="#i-house"></use></svg><span class="nv-home-t"><b>Retour à l'accueil</b><small>Quitte la télécommande · les écrans restent appairés, ce qui est en cours s'arrête</small></span></button>
   <div class="st-foot">
     <a href="confidentialite.html" class="st-policy" onclick="event.preventDefault();openPrivacyPolicy()">Politique de confidentialité</a>
     <span>Aucun compte · aucune publicité · aucun suivi</span>
@@ -9882,12 +9979,16 @@ function showPairVerify(role, sas, onAnswer) {
   const ok = document.getElementById('pvOk');
   ok.disabled = false; ok.textContent = 'Identique';
   el.style.display = 'block';
+  renderNavBadges();
 }
 function hidePairVerify() {
   _pvAnswer = null;
   const el = document.getElementById('pair-verify');
   if (el) el.style.display = 'none';
+  renderNavBadges();
 }
+// Une vérification de nombre attend une réponse (point orange sur l'onglet Écrans)
+function pairVerifyPending() { return !!_pvAnswer; }
 // Écran : confirmé avant la télécommande → on attend la remise du secret
 function setPairVerifyWaiting() {
   const ok = document.getElementById('pvOk');
@@ -10963,9 +11064,7 @@ function startMode(m) {
   if (m === 'remote') {
     mode = 'remote';
     const rm = document.getElementById('remote-mode');
-    rm.style.display = 'block';
-    // Recalcule la mini-carte sticky maintenant que la télécommande est visible
-    requestAnimationFrame(() => rm.dispatchEvent(new Event('scroll')));
+    rm.style.display = 'flex'; // coque : en-tête fixe, contenu défilant, barre d'onglets (04-nav.css)
     initWheel();
     loadColorMemories(); renderColorMemories();
     recomputeColor();
@@ -11061,7 +11160,7 @@ function connectRemote(p, o = {}) {
     scrLoad();
     if (scrTarget().k !== 'all') scrLoadView();
   }
-  if (document.getElementById('content-qr').classList.contains('active')) renderPairPanel(); // nouveau QR, nouveau code
+  if (document.getElementById('content-screens').classList.contains('active')) renderPairPanel(); // nouveau QR, nouveau code
   if (!o.keep) {
     gwOnSessionChanged(); // passerelle DMX : patch de cette session
     rkStartListeners();   // anciens topics encore écoutés après un retrait
@@ -11268,25 +11367,147 @@ function goBack() {
   applyPendingUpdate(); // une mise à jour en attente peut s'appliquer maintenant
 }
 
+// ══════════ Onglets de la télécommande (phase 3) ══════════
+// Cinq onglets en bas (Lumière, Effets, Média, Scénario, Écrans). Lumière et
+// Scénario ont un segmenté interne (Couleur | Flash, Tel | Séquence). Les
+// anciens identifiants restent des alias : switchTab('color' | 'flash' |
+// 'call' | 'seq' | 'qr') ouvre le bon onglet ET la bonne vue.
+const NAV_TABS = ['light', 'effects', 'media', 'scenario', 'screens'];
+const _NAV_ALIAS = { color: ['light', 'color'], flash: ['light', 'flash'], call: ['scenario', 'call'], seq: ['scenario', 'seq'], qr: ['screens', null] };
+const _NAV_CONTENT = { light: 'content-light', effects: 'content-effects', media: 'content-media', scenario: 'content-scn', screens: 'content-screens' };
+const _NAV_SEG = { light: ['color', 'flash'], scenario: ['call', 'seq'] };
+const _navSub = { light: 'color', scenario: 'call' }; // dernière vue de chaque onglet à segmenté
+const _navScroll = {};                                // position de défilement retenue par onglet / vue
+let _navKey = 'light/color'; // vue affichée au démarrage
+let _navTab = 'light';
+function navScroller() { return document.getElementById('nv-scroll'); }
+function navCurrentTab() { return _navTab; }
+function navCurrentSub() { return _navSub[_navTab] || null; }
+// Fait défiler le contenu pour amener un élément sous l'en-tête collant (off px de marge)
+function navScrollTo(el, off) {
+  const sc = navScroller();
+  if (!sc || !el) return;
+  sc.scrollTop += el.getBoundingClientRect().top - sc.getBoundingClientRect().top - (off == null ? 72 : off);
+}
 function switchTab(t) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  const btn = document.getElementById('tab-' + t);
-  btn.classList.add('active');
-  // Barre qui défile (écran étroit) : l'onglet choisi reste entièrement visible
-  const bar = btn.parentElement;
-  if (bar && bar.scrollWidth > bar.clientWidth) {
-    const l = btn.offsetLeft - bar.offsetLeft, r = l + btn.offsetWidth;
-    if (l < bar.scrollLeft) bar.scrollLeft = l - 4;
-    else if (r > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = r - bar.clientWidth + 4;
+  let tab = t, sub = null;
+  if (_NAV_ALIAS[t]) [tab, sub] = _NAV_ALIAS[t];
+  if (!NAV_TABS.includes(tab)) return;
+  const segs = _NAV_SEG[tab];
+  if (segs) { if (sub) _navSub[tab] = sub; sub = _navSub[tab]; } else sub = null;
+  const key = tab + (sub ? '/' + sub : '');
+  const sc = navScroller();
+  if (sc && _navKey && key !== _navKey) _navScroll[_navKey] = sc.scrollTop;
+  document.querySelectorAll('#nv-tabs [role=tab]').forEach((b) => {
+    const on = b.id === 'tab-' + tab;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  document.querySelectorAll('.tab-content').forEach((c) => c.classList.remove('active'));
+  document.getElementById(_NAV_CONTENT[tab]).classList.add('active');
+  if (segs) {
+    document.getElementById('content-' + sub).classList.add('active');
+    for (const k of segs) {
+      const b = document.getElementById((tab === 'light' ? 'lightSeg-' : 'scnSeg-') + k);
+      if (b) { b.classList.toggle('active', k === sub); b.setAttribute('aria-selected', k === sub ? 'true' : 'false'); }
+    }
   }
-  document.getElementById('content-' + t).classList.add('active');
-  if (t === 'seq') renderSeq(); // éléments supprimés entre-temps : « élément introuvable »
-  if (t === 'media') renderMediaBarRow(); // barre d'état au-dessus des médias (98-phone-params.js)
-  if (t === 'qr') renderPairPanel();
+  _navTab = tab;
+  if (key !== _navKey) { _navKey = key; if (sc) sc.scrollTop = _navScroll[key] || 0; }
+  if (sub === 'seq') renderSeq(); // éléments supprimés entre-temps : « élément introuvable »
+  if (tab === 'media') renderMediaBarRow(); // barre d'état au-dessus des médias (98-phone-params.js)
+  if (tab === 'screens') renderPairPanel();
   else remoteStopPairCode(true); // le code ne reste actif que sur l'onglet d'appairage
 }
+// ══════════════════════════ COQUE DE LA TÉLÉCOMMANDE : « EN COURS », BADGES, CLAVIER ══════════════════════════
+// Phase 3 de la refonte. L'en-tête fixe porte, sous l'aperçu, une barre
+// « en cours » avec UN seul « Tout arrêter » (stroboscope, effet, média,
+// torche) ; la barre d'onglets du bas porte des pastilles :
+//   · point sur Lumière  : stroboscope ou torche en marche
+//   · point sur Effets   : effet en cours
+//   · point sur Média    : média diffusé
+//   · Écrans             : nombre d'écrans hors ligne (pastille jaune) et
+//                          point orange quand un appairage attend sa
+//                          vérification (rien pour un écran qui vient de se
+//                          connecter).
+// « Tout arrêter » ne fait QUE couper : il n'active rien, donc ne contourne
+// jamais l'avertissement stroboscope (46-strobe-warning.js), qui garde la main
+// sur toute (ré)activation.
+const _NV_TXT = {
+  strobe: 'Stroboscope actif',
+  effect: (name) => 'Effet ' + name + ' en cours',
+  media: 'Média en cours',
+  torch: 'Torche allumée',
+  more: (n) => ' · +' + n,
+  screensLabel: 'Écrans',
+  offline: (n) => ', ' + n + ' hors ligne',
+  verify: ', vérification en attente',
+};
 
+// Ce qui tourne : [{ k, txt }] dans l'ordre d'importance
+function navRunning() {
+  const r = [];
+  if (typeof strobeActive !== 'undefined' && strobeActive) {
+    const hz = String(Math.round(strobeFreq * 10) / 10).replace('.', ',');
+    r.push({ k: 'strobe', tab: 'light', txt: _NV_TXT.strobe + (strobeMode === 'random' ? '' : ' · ' + hz + ' Hz') });
+  }
+  if (typeof activeScreenEffect !== 'undefined' && activeScreenEffect) {
+    const c = typeof EFFECT_CONFIG !== 'undefined' ? EFFECT_CONFIG[activeScreenEffect] : null;
+    r.push({ k: 'effect', tab: 'effects', txt: _NV_TXT.effect(c ? c.name : activeScreenEffect) });
+  }
+  if (typeof _activeMediaId !== 'undefined' && _activeMediaId) r.push({ k: 'media', tab: 'media', txt: _NV_TXT.media });
+  if (typeof remoteTorchOn !== 'undefined' && (remoteTorchOn || activeEffect)) r.push({ k: 'torch', tab: 'light', txt: _NV_TXT.torch });
+  return r;
+}
+
+function renderNavStatus() {
+  const strip = document.getElementById('nvStrip');
+  if (!strip) return;
+  const run = navRunning();
+  strip.style.display = run.length ? 'flex' : 'none';
+  strip.classList.toggle('on', run.length > 0);
+  const txt = document.getElementById('nvStripTxt');
+  if (txt) txt.textContent = run.length ? run[0].txt + (run.length > 1 ? _NV_TXT.more(run.length - 1) : '') : '';
+  for (const t of ['light', 'effects', 'media']) {
+    const b = document.getElementById('tab-' + t);
+    if (b) b.classList.toggle('run', run.some((x) => x.tab === t));
+  }
+}
+
+// Nombre d'écrans hors ligne (liaison établie) : la pastille jaune de l'onglet Écrans
+function navOfflineCount() {
+  if (typeof _pairedScreens === 'undefined' || !remoteLinkUp()) return 0;
+  return _offlineScreens(Date.now()).length;
+}
+function renderNavBadges() {
+  const tab = document.getElementById('tab-screens');
+  if (!tab) return;
+  const n = navOfflineCount(), pend = typeof pairVerifyPending === 'function' && pairVerifyPending();
+  const b = document.getElementById('screensBadge');
+  if (b) { b.textContent = String(n); b.style.display = n ? '' : 'none'; }
+  tab.classList.toggle('pend', pend);
+  tab.setAttribute('aria-label', _NV_TXT.screensLabel + (n ? _NV_TXT.offline(n) : '') + (pend ? _NV_TXT.verify : ''));
+}
+
+// « Tout arrêter » : coupe strobe, effet, média et torche — jamais une activation
+function stopEverything() {
+  if (strobeActive) stopStrobe();
+  if (activeScreenEffect) stopAllEffects();
+  if (_activeMediaId) stopMediaBroadcast();
+  if (remoteTorchOn) onRemoteTorchToggle(); // éteint aussi le motif de torche en cours
+  else if (activeEffect) sendTorchEffect('stop');
+  renderNavStatus();
+}
+
+// Clavier (Android surtout) : un champ de texte actif masque la barre d'onglets,
+// qui ne remonte pas au-dessus du clavier ni ne vole de hauteur à la saisie.
+const _NV_TEXT_FIELD = 'input[type=text],input[type=search],input[type=number],input[type=tel],input[type=email],input[type=url],input[type=password],input:not([type]),textarea';
+function navKeyboardSync() {
+  const a = document.activeElement;
+  document.body.classList.toggle('nv-kb', !!(a && a.matches && a.matches(_NV_TEXT_FIELD) && a.closest('#remote-mode')));
+}
+document.addEventListener('focusin', navKeyboardSync);
+document.addEventListener('focusout', () => setTimeout(navKeyboardSync, 0));
 // ══════════════════════════ STATUS ══════════════════════════
 // Télécommande : pastille de liaison dans l'en-tête et liste des écrans
 // appairés (onglet d'appairage). Un écran est « hors ligne » s'il n'a rien
@@ -12306,6 +12527,7 @@ function onStrobeToggle(acked) {
   strobeActive=tog.checked;
   document.getElementById('strobeActiveBadge').style.display=strobeActive?'block':'none';
   if(strobeActive){sendMsg(buildStrobePayload());runLocalStrobePreview();}else stopStrobe();
+  renderNavStatus();
 }
 function onStrobeParamChange() {
   strobeFreq=parseFloat(document.getElementById('freqSlider').value);
@@ -12317,6 +12539,7 @@ function onStrobeParamChange() {
   document.getElementById('freqMaxVal').innerHTML=strobeFreqMax.toFixed(1)+'<span> Hz</span>';
   document.getElementById('flashDurMaxVal').innerHTML=strobeFlashDurMax+'<span> ms</span>';
   if(strobeActive){sendMsg(buildStrobePayload());runLocalStrobePreview();}
+  renderNavStatus(); // la fréquence apparaît dans la barre « en cours »
 }
 function buildStrobePayload(){const ts=document.getElementById('torchSyncToggle');return{type:'strobe',active:strobeActive,torch:ts?ts.checked:false,random:strobeMode==='random',freq:strobeFreq,dur:strobeFlashDur,freqMin:strobeFreq,freqMax:strobeFreqMax,durMin:strobeFlashDur,durMax:strobeFlashDurMax};}
 function stopStrobe() {
@@ -12324,6 +12547,7 @@ function stopStrobe() {
   if(document.getElementById('strobeToggle'))document.getElementById('strobeToggle').checked=false;
   if(document.getElementById('strobeActiveBadge'))document.getElementById('strobeActiveBadge').style.display='none';
   sendMsg({type:'strobe',active:false}); stopLocalStrobePreview();
+  renderNavStatus();
 }
 function runLocalStrobePreview() {
   stopLocalStrobePreview();
@@ -12379,7 +12603,7 @@ function stopLocalStrobePreview(){
 // TV (palette et lissage choisis par l'opérateur ; par défaut deux teintes de
 // luminance voisine, fondues), Pulse BPM (sinusoïde, 1 Hz par défaut ; plus de
 // 3 cycles/s seulement au-delà de 180 BPM : limite connue, non bloquante).
-// Torche LED de l'écran de jeu (onglet Flash) : « Clignotement rapide »
+// Torche LED de l'écran de jeu (Lumière › Flash) : « Clignotement rapide »
 // (80/80 ms ≈ 6 flashs/s) et « Police » (rafales à 10 Hz) ; SOS, lent et
 // battement restent à 3 flashs/s au plus.
 //
@@ -12798,12 +13022,12 @@ function loadEffectParamsToUI(name, p, dir) {
   onEffectParamChange();
 }
 
-// ── Aperçu live : les swatches (preview + carte sticky) rejouent en local
+// ── Aperçu live : le swatch de l'en-tête rejoue en local
 // exactement ce que l'écran de jeu affiche (effets, strobe, média) —
 // à l'exception de l'état écran ON/OFF.
 function _pvApplyBg(r, g, b, transMs) {
   const css = `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
-  for (const id of ['previewSwatch', 'stickySwatch']) {
+  for (const id of ['previewSwatch']) {
     const el = document.getElementById(id);
     if (!el) continue;
     el.style.transition = transMs > 0 ? `background-color ${transMs}ms ease` : 'none';
@@ -12811,32 +13035,29 @@ function _pvApplyBg(r, g, b, transMs) {
   }
 }
 let _lastEffectParams = null;
-let _pvFxMain = null, _pvFxSticky = null; // instanciés après la définition du moteur
+let _pvFxMain = null; // instancié après la définition du moteur
 
 function _pvFxStop() {
   if (_pvFxMain) _pvFxMain.stop();
-  if (_pvFxSticky) _pvFxSticky.stop();
 }
 
 // (Re)démarre la bonne simulation dans l'aperçu selon l'état courant.
 function refreshPreviewFx(params) {
   if (params) _lastEffectParams = params;
-  if (!_pvFxMain) { _pvFxMain = makeFxRenderer('previewFxCanvas'); _pvFxSticky = makeFxRenderer('stickyFxCanvas'); }
+  if (!_pvFxMain) _pvFxMain = makeFxRenderer('previewFxCanvas');
   if (strobeActive) { _pvFxStop(); return; } // le strobe pilote déjà l'aperçu
   if (activeScreenEffect && _lastEffectParams) {
     if (_pvFxMain.current() === activeScreenEffect) {
       _pvFxMain.update({ ..._lastEffectParams });
-      _pvFxSticky.update({ ..._lastEffectParams });
     } else {
       _pvFxMain.start(activeScreenEffect, { ..._lastEffectParams });
-      _pvFxSticky.start(activeScreenEffect, { ..._lastEffectParams });
     }
   } else { _pvFxStop(); _pvRestoreBase(); }
 }
 
 // Remet l'aperçu sur la couleur de base (fin d'effet / de strobe)
 function _pvRestoreBase() {
-  for (const id of ['previewSwatch', 'stickySwatch']) {
+  for (const id of ['previewSwatch']) {
     const el = document.getElementById(id);
     if (el) { el.style.transition = ''; el.style.backgroundColor = currentColor; }
   }
@@ -12849,17 +13070,13 @@ function updateStatusRings() {
   const mediaOn = typeof _activeMediaId !== 'undefined' && !!_activeMediaId;
   const offOn = typeof remoteBlackout !== 'undefined' && remoteBlackout;
   const cls = offOn ? 'st-off' : (mediaOn ? 'st-media' : (fxOn ? 'st-effect' : null));
-  for (const id of ['previewSwatch', 'stickySwatch']) {
+  for (const id of ['previewSwatch']) {
     const el = document.getElementById(id);
     if (!el) continue;
     el.classList.remove('st-off', 'st-media', 'st-effect');
     if (cls) el.classList.add(cls);
   }
-  // Chaque onglet signale ce qu'il est en train de diffuser
-  const tabFx = document.getElementById('tab-effects');
-  if (tabFx) tabFx.classList.toggle('st-effect', fxOn);
-  const tabMedia = document.getElementById('tab-media');
-  if (tabMedia) tabMedia.classList.toggle('st-media', mediaOn);
+  renderNavStatus(); // points sur les onglets, bandeau « Tout arrêter » (31-nav-status.js)
 }
 
 // Vignette du média en cours de diffusion, par-dessus la couleur (comme
@@ -12867,7 +13084,7 @@ function updateStatusRings() {
 function _pvUpdateMedia() {
   const it = (typeof _mediaPool !== 'undefined' && _activeMediaId)
     ? _mediaPool.find(m => m.id === _activeMediaId) : null;
-  for (const id of ['previewSwatch', 'stickySwatch']) {
+  for (const id of ['previewSwatch']) {
     const el = document.getElementById(id);
     if (!el) continue;
     if (it && it.thumb) {
@@ -13581,6 +13798,7 @@ function applyStrobeState(s){
   const badge=document.getElementById('strobeActiveBadge'); if(badge) badge.style.display=strobeActive?'block':'none';
   if(strobeActive){ sendMsg(buildStrobePayload()); runLocalStrobePreview(); }
   else { sendMsg({type:'strobe',active:false}); stopLocalStrobePreview(); }
+  renderNavStatus();
 }
 // Couleur affichée pour une mémoire (même calcul que recomputeColor).
 function memorySwatch(s){
@@ -13704,7 +13922,6 @@ function applyColor(hex,meta){
   // Ne pas écraser l'animation de l'aperçu quand un effet/strobe est simulé
   if(!strobeActive && !activeScreenEffect){
     document.getElementById('previewSwatch').style.backgroundColor=hex;
-    const ss=document.getElementById('stickySwatch'); if(ss) ss.style.backgroundColor=hex;
   }
 }
 function rgbToHex(r,g,b){return'#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');}
@@ -13818,7 +14035,7 @@ function sendCaps() {
   sendMsg(caps);
 }
 
-// Télécommande : applique les capacités reçues à l'onglet Flash (transport
+// Télécommande : applique les capacités reçues à la vue Flash de Lumière (transport
 // vidéo de chaque écran : scrState(id).caps, 28-screens.js)
 function applyReceiverCaps(caps) {
   const flash = document.getElementById('content-flash');
@@ -13840,6 +14057,7 @@ function onRemoteTorchToggle() {
   document.getElementById('torchDimSection').classList.toggle('torch-dim-disabled', !remoteTorchOn);
   if (!remoteTorchOn) stopActiveEffect();
   sendMsg({ type:'torch-onoff', on: remoteTorchOn });
+  renderNavStatus();
 }
 
 function onTorchDimChange() {
@@ -13853,7 +14071,7 @@ function sendTorchEffect(effect, acked) {
   // Clignotement rapide de la torche : avertissement photosensibilité d'abord (46-strobe-warning.js)
   if (!acked && needsFlashWarning('torch', effect)) { openFlashWarning(() => sendTorchEffect(effect, true)); return; }
   stopActiveEffect();
-  if (effect === 'stop') { sendMsg({ type:'torch-effect', effect:'stop' }); return; }
+  if (effect === 'stop') { sendMsg({ type:'torch-effect', effect:'stop' }); renderNavStatus(); return; }
   activeEffect = effect;
   document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById('efx-' + effect);
@@ -13865,6 +14083,7 @@ function sendTorchEffect(effect, acked) {
     document.getElementById('remoteTorchIcon').innerHTML = icon('lightbulb');
   }
   sendMsg({ type:'torch-effect', effect });
+  renderNavStatus();
 }
 
 function stopActiveEffect() {
@@ -13939,16 +14158,15 @@ let remoteBlackout = false, screenBlackoutOn = false;
 let _blackoutTouched = false;
 
 function renderRemoteBlackout() {
-  const btn = document.getElementById('blackoutBtn');
-  if (btn) btn.classList.toggle('on', remoteBlackout);
-  const lbl = document.getElementById('blackoutLabel');
-  if (lbl) lbl.textContent = remoteBlackout ? 'Écran OFF — appuyer pour rallumer' : 'Écran ON — appuyer pour éteindre';
-  const ic = document.getElementById('blackoutIcon');
-  if (ic) ic.innerHTML = icon(remoteBlackout ? 'power-off' : 'power');
-  // Bouton compact de la mini-carte sticky
-  const sb = document.getElementById('stickyBlackoutBtn');
-  if (sb) { sb.classList.toggle('on', remoteBlackout); sb.textContent = remoteBlackout ? 'Écran OFF' : 'Écran ON'; }
+  // Segmenté « Allumé | Noir » de l'en-tête (un seul segment coché à la fois)
+  const on = document.getElementById('blackoutOn'), off = document.getElementById('blackoutOff');
+  if (on) { on.classList.toggle('on', !remoteBlackout); on.setAttribute('aria-checked', remoteBlackout ? 'false' : 'true'); }
+  if (off) { off.classList.toggle('on', remoteBlackout); off.setAttribute('aria-checked', remoteBlackout ? 'true' : 'false'); }
   updateStatusRings();
+}
+// Un segment impose l'état voulu (un second toucher sur le segment déjà actif ne fait rien)
+function setRemoteBlackout(on) {
+  if (!!on !== remoteBlackout) toggleBlackout();
 }
 
 // — Télécommande : envoie l'ordre à l'écran —
@@ -17157,8 +17375,7 @@ function projectSeeSequences() {
   closeSettings();
   switchTab('seq');
   setSeqView('saved');
-  const rm = document.getElementById('remote-mode'), el = document.getElementById('seqTab-cur');
-  if (rm && el) rm.scrollTop += el.getBoundingClientRect().top - 120;
+  navScrollTo(document.getElementById('seqTab-cur'), 72);
 }
 
 // ══════════ 45e · Erreurs ══════════
@@ -24951,14 +25168,14 @@ function toggleFlashWarningSetting() {
   renderSettings();
 }
 
-// Même effet que « Nouvelle session » (onglet QR) : nouveau secret, tous les
+// Même effet que « Nouvelle session » (onglet Écrans) : nouveau secret, tous les
 // écrans révoqués ; on revient sur le nouveau QR pour les réappairer.
 function settingsForgetScreens() {
   if (!confirm('Oublier tous les écrans appairés : ils seront déconnectés et devront scanner le nouveau QR. Continuer ?')) return;
   newRemoteSession();
   closeSettings();
-  switchTab('qr');
-  document.getElementById('remote-mode').scrollTop = 0;
+  switchTab('screens');
+  const sc = navScroller(); if (sc) sc.scrollTop = 0;
 }
 
 // Confirmé comme le bouton Accueil de l'en-tête (30-navigation.js)
@@ -26592,22 +26809,6 @@ loadSavedSeqs();       // 96-sequences-saved.js
 renderSeq();
 // Aperçu, Réglages › Licence, vérification de la licence (sans effet hors version officielle)
 licBootUi();
-
-// ── Mini-carte sticky : apparaît dès que la preview commence à être masquée ──
-(function initStickyPreview() {
-  const row = document.getElementById('previewRow');
-  const bar = document.getElementById('stickyPreview');
-  const scroller = document.getElementById('remote-mode');
-  if (!row || !bar || !scroller) return;
-  function update() {
-    // Dès que le haut de la preview passe sous le bord supérieur de l'écran
-    // (début de coupure), la carte s'affiche.
-    bar.classList.toggle('visible', row.getBoundingClientRect().top < 8);
-  }
-  scroller.addEventListener('scroll', update, { passive: true });
-  window.addEventListener('resize', update);
-  update();
-})();
 
 // Initialiser tous les sliders avec boutons +/- et valeurs cliquables
 document.querySelectorAll('input[type="range"]').forEach(slider => {

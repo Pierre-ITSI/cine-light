@@ -137,47 +137,48 @@
 </div>
 
 <div id="remote-mode">
-  <!-- Mini-carte sticky : apparaît quand la preview principale sort de l'écran -->
-  <div id="stickyPreview">
-    <div class="sticky-swatch" id="stickySwatch"><canvas class="pv-fx-canvas" id="stickyFxCanvas" width="160" height="34"></canvas></div>
-    <button class="sticky-blackout" id="stickyBlackoutBtn" onclick="toggleBlackout()">Écran ON</button>
-  </div>
-  <div class="remote-header">
-    <div class="remote-header-end">
+  <!-- Phase 3 : coque de la télécommande. En-tête fixe (aperçu, liaison, réglages, cible, Allumé/Noir, « Tout arrêter »),
+       contenu seul à défiler (#nv-scroll), barre de 5 onglets fixe en bas (rail latéral dès 700 px de large ou en paysage bas). -->
+  <div id="nv-main">
+  <header id="nv-head">
+    <div class="nv-r1">
+      <div class="swatch" id="previewSwatch" style="background:#fff"><canvas class="pv-fx-canvas" id="previewFxCanvas" width="96" height="96"></canvas></div>
+      <div class="nv-val" id="previewRow">
+        <div class="swatch-hex" id="previewHex">#FFFFFF</div>
+        <div class="swatch-label" id="previewMeta">—</div>
+        <div class="autosend-badge" id="autosendBadge"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-arrow-up-right"></use></svg> envoyé</div>
+      </div>
       <button type="button" class="link-pill reconnecting" id="linkPill" onclick="openLinkDetail()" aria-label="État de la liaison — détail par écran"><span class="link-dot"></span><span id="linkPillLabel">Connexion…</span></button>
-      <button type="button" class="hdr-gear" id="homeBtn" aria-label="Menu principal" title="Menu principal" onclick="askGoBack()"><svg class="ic" aria-hidden="true"><use href="#i-house"></use></svg></button>
       <button type="button" class="hdr-gear" id="settingsBtn" aria-label="Réglages" onclick="openSettings()"><svg class="ic" aria-hidden="true"><use href="#i-settings"></use></svg></button>
     </div>
-  </div>
-  <div class="swatch-row" id="previewRow">
-    <div class="swatch" id="previewSwatch" style="background:#fff"><canvas class="pv-fx-canvas" id="previewFxCanvas" width="96" height="96"></canvas></div>
-    <div class="swatch-info">
-      <div class="swatch-hex" id="previewHex">#FFFFFF</div>
-      <div class="swatch-label" id="previewMeta">—</div>
-      <div class="autosend-badge" id="autosendBadge"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-arrow-up-right"></use></svg> envoyé</div>
+    <div class="nv-r2">
+      <!-- Cible des commandes : toujours visible, même avec un seul écran -->
+      <button type="button" class="target-btn" id="targetBtn" onclick="openTargetSheet()" aria-haspopup="dialog">
+        <svg class="ic tb-icon" aria-hidden="true"><use href="#i-target"></use></svg>
+        <span class="tb-label" id="targetBtnLabel">Cible : <b>Aucun écran</b></span>
+        <svg class="ic ic-sm" aria-hidden="true"><use href="#i-chevron-down"></use></svg>
+      </button>
+      <!-- Allumé / Noir de l'écran de jeu (remplace « Écran ON — appuyer pour éteindre ») -->
+      <div class="nv-seg" id="blackoutSeg" role="radiogroup" aria-label="Écran de jeu">
+        <button type="button" class="on" role="radio" aria-checked="true" id="blackoutOn" onclick="setRemoteBlackout(false)"><svg class="ic" aria-hidden="true"><use href="#i-power"></use></svg><span>Allumé</span></button>
+        <button type="button" role="radio" aria-checked="false" id="blackoutOff" onclick="setRemoteBlackout(true)"><span>Noir</span></button>
+      </div>
     </div>
-  </div>
-  <!-- Cible des commandes (maquette 6) : visible dès deux écrans appairés -->
-  <button type="button" class="target-btn" id="targetBtn" style="display:none" onclick="openTargetSheet()" aria-haspopup="dialog">
-    <svg class="ic tb-icon" aria-hidden="true"><use href="#i-target"></use></svg>
-    <span class="tb-label" id="targetBtnLabel">Cible : <b>Tous les écrans</b></span>
-    <svg class="ic ic-sm" aria-hidden="true"><use href="#i-chevron-down"></use></svg>
-  </button>
-  <button class="screen-toggle-btn" id="blackoutBtn" onclick="toggleBlackout()">
-    <span id="blackoutIcon"><svg class="ic" aria-hidden="true"><use href="#i-power"></use></svg></span><span id="blackoutLabel">Écran ON — appuyer pour éteindre</span>
-  </button>
+    <!-- Ce qui tourne (stroboscope, effet, média, torche) et un seul « Tout arrêter » -->
+    <div class="nv-strip" id="nvStrip" role="status" style="display:none">
+      <svg class="ic" aria-hidden="true"><use href="#i-zap"></use></svg>
+      <span class="nv-strip-txt" id="nvStripTxt"></span>
+      <button type="button" id="nvStopAll" onclick="stopEverything()"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> Tout arrêter</button>
+    </div>
+  </header>
 
-  <!-- 7 onglets : icône au-dessus du libellé ; sous 375 px, la barre défile horizontalement -->
-  <div class="tabs" id="tabsBar">
-    <button class="tab-btn active" onclick="switchTab('color')" id="tab-color"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-palette"></use></svg></span> Couleur</button>
-    <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-sparkles"></use></svg></span> Effets</button>
-    <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg></span> Flash</button>
-    <button class="tab-btn" onclick="switchTab('media')" id="tab-media"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-film"></use></svg></span> Média</button>
-    <button class="tab-btn" onclick="switchTab('call')" id="tab-call"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg></span> Tel</button>
-    <button class="tab-btn" onclick="switchTab('seq')" id="tab-seq"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-clapperboard"></use></svg></span> Séquence</button>
-    <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-qr-code"></use></svg></span> QR</button>
-  </div>
-
+  <main id="nv-scroll">
+  <!-- Lumière : segmenté « Couleur | Flash » (l'ancien onglet Flash est la vue « Flash ») -->
+  <div class="tab-content active" id="content-light">
+  <div class="nv-sub"><div class="nv-seg2" role="tablist" aria-label="Lumière">
+    <button type="button" class="active" role="tab" aria-selected="true" id="lightSeg-color" onclick="switchTab('color')"><svg class="ic" aria-hidden="true"><use href="#i-palette"></use></svg> Couleur</button>
+    <button type="button" role="tab" aria-selected="false" id="lightSeg-flash" onclick="switchTab('flash')"><svg class="ic" aria-hidden="true"><use href="#i-zap"></use></svg> Flash</button>
+  </div></div>
   <div class="tab-content active" id="content-color">
     <div class="panel">
       <div class="panel-label">Intensité (Dimmer)</div>
@@ -285,6 +286,22 @@
     </div>
 
     <div class="panel">
+      <div class="panel-label">Mémoires de couleur</div>
+      <div class="memory-actions">
+        <button class="memory-save-btn" onclick="saveColorMemory()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Enregistrer</button>
+        <button class="memory-update-btn" id="memoryUpdateBtn" onclick="updateColorMemory()" disabled><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Mettre à jour</button>
+      </div>
+      <div id="memoryGrid" class="memory-grid"></div>
+      <div id="memoryEmpty" class="media-pool-empty">Réglez une couleur puis « Enregistrer » pour créer une mémoire.</div>
+      <div id="memoryHint" class="memory-hint" style="display:none">Touchez pour rappeler · appui long (ou la croix) pour supprimer.</div>
+    </div>
+  </div>
+
+
+  <!-- Vue « Flash » de Lumière : stroboscope, torche du récepteur, vibration -->
+  <div class="tab-content" id="content-flash">
+    <p class="nv-intro">Stroboscope, torche du récepteur et vibration. « Tout arrêter » (en-tête) coupe tout ce qui tourne.</p>
+    <div class="panel">
       <div class="toggle-row">
         <div><div class="toggle-label">Stroboscope</div><div class="toggle-sub">Flash sur l'écran distant</div></div>
         <label class="toggle-switch">
@@ -319,44 +336,20 @@
         </div>
       </div>
       <div class="strobe-preview">Aperçu local<div class="strobe-flash" id="strobeFlashPreview"></div></div>
-      <div style="height:1px;background:var(--border);margin:14px 0"></div>
-      <div class="panel-label">Effets sur le récepteur</div>
-      <div class="toggle-row" style="margin-bottom:10px">
+      <div class="toggle-row" style="margin:16px 0 0">
         <div><div class="toggle-label"><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg> Torche synchronisée</div><div class="toggle-sub">Flash la torche du récepteur avec le strobe</div></div>
         <label class="toggle-switch">
           <input type="checkbox" id="torchSyncToggle" onchange="onStrobeParamChange()">
           <div class="toggle-track"></div><div class="toggle-thumb"></div>
         </label>
       </div>
-      <div class="panel-label" style="margin-top:4px"><svg class="ic" aria-hidden="true"><use href="#i-vibrate"></use></svg> Vibration rapide</div>
-      <div class="chips-wrap">
-        <button class="chip" onclick="sendVibrate([80])">Court</button>
-        <button class="chip" onclick="sendVibrate([300])">Long</button>
-        <button class="chip" onclick="sendVibrate([80,80,80])">Double</button>
-        <button class="chip" onclick="sendVibrate([80,60,80,60,300])">Alerte</button>
-        <button class="chip" onclick="sendVibrate([50,30,50,30,50,30,300,50,300,50,300,50,50,30,50,30,50])">SOS</button>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-label">Mémoires de couleur</div>
-      <div class="memory-actions">
-        <button class="memory-save-btn" onclick="saveColorMemory()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Enregistrer</button>
-        <button class="memory-update-btn" id="memoryUpdateBtn" onclick="updateColorMemory()" disabled><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Mettre à jour</button>
-      </div>
-      <div id="memoryGrid" class="memory-grid"></div>
-      <div id="memoryEmpty" class="media-pool-empty">Réglez une couleur puis « Enregistrer » pour créer une mémoire.</div>
-      <div id="memoryHint" class="memory-hint" style="display:none">Touchez pour rappeler · appui long (ou la croix) pour supprimer.</div>
-    </div>
-  </div>
-
-  <div class="tab-content" id="content-flash">
-    <div class="flash-unavail-notice" id="flashUnavailNotice" style="display:none">
-      <strong><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg> Non disponible sur iPhone</strong>
-      Le récepteur est un iPhone : iOS ne permet pas de piloter la torche LED ni le vibreur depuis le web. Utilisez le strobe par l'écran (onglet Effets) ou un récepteur Android.
     </div>
     <div class="panel">
-      <div class="panel-label">Torche récepteur</div>
+      <div class="panel-label">Torche du récepteur <span class="nv-tag">Bêta</span></div>
+      <div class="flash-unavail-notice" id="flashUnavailNotice" style="display:none">
+        <strong><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg> Non disponible sur iPhone</strong>
+        Le récepteur est un iPhone : iOS ne permet pas de piloter la torche LED ni le vibreur depuis le web. Utilisez le stroboscope de l'écran (ci-dessus) ou un récepteur Android.
+      </div>
       <button class="torch-onoff-btn" id="remoteTorchBtn" onclick="onRemoteTorchToggle()">
         <span id="remoteTorchIcon"><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg></span><span id="remoteTorchLabel">Allumer la torche</span>
       </button>
@@ -370,7 +363,7 @@
       </div>
     </div>
     <div class="panel">
-      <div class="panel-label">Effets</div>
+      <div class="panel-label">Motifs de torche</div>
       <div class="effect-grid">
         <button class="effect-btn" id="efx-sos" onclick="sendTorchEffect('sos')">
           SOS
@@ -392,7 +385,18 @@
         </button>
       </div>
     </div>
+    <div class="panel">
+      <div class="panel-label"><svg class="ic" aria-hidden="true"><use href="#i-vibrate"></use></svg> Vibration rapide</div>
+      <div class="chips-wrap">
+        <button class="chip" onclick="sendVibrate([80])">Court</button>
+        <button class="chip" onclick="sendVibrate([300])">Long</button>
+        <button class="chip" onclick="sendVibrate([80,80,80])">Double</button>
+        <button class="chip" onclick="sendVibrate([80,60,80,60,300])">Alerte</button>
+        <button class="chip" onclick="sendVibrate([50,30,50,30,50,30,300,50,300,50,300,50,50,30,50,30,50])">SOS</button>
+      </div>
+    </div>
   </div>
+  </div><!-- /content-light -->
 
   <div class="tab-content" id="content-effects">
     <div id="effectActiveBadge" class="effect-active-row" style="display:none">
@@ -655,6 +659,12 @@
     </div>
   </div>
 
+  <!-- Scénario : segmenté « Tel | Séquence » (anciens onglets Tel et Séquence) -->
+  <div class="tab-content" id="content-scn">
+  <div class="nv-sub"><div class="nv-seg2" role="tablist" aria-label="Scénario">
+    <button type="button" class="active" role="tab" aria-selected="true" id="scnSeg-call" onclick="switchTab('call')"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg> Tel</button>
+    <button type="button" role="tab" aria-selected="false" id="scnSeg-seq" onclick="switchTab('seq')"><svg class="ic" aria-hidden="true"><use href="#i-clapperboard"></use></svg> Séquence</button>
+  </div></div>
   <div class="tab-content" id="content-call">
     <!-- Aperçu sans licence (maquettes 39 / 39b) : version officielle seulement, 77-licence-ui.js -->
     <div class="lic-pv" id="licPvTel" style="display:none">
@@ -927,36 +937,58 @@
       <div class="cl-note" id="seqSavedNote"></div>
     </div>
   </div>
+  </div><!-- /content-scn -->
 
-  <div class="tab-content" id="content-qr">
-    <div class="panel pair-panel">
-      <div class="panel-label">Appairer un écran de jeu</div>
-      <div class="pair-qr" id="pairQr" role="img" aria-label="QR code d'appairage"></div>
-      <div class="pair-steps">Sur chaque écran de jeu : <b>Écran projecteur</b> → <b>Scanner</b><br><span>Autant d'écrans que nécessaire, ils jouent ensemble.</span></div>
-      <div class="pair-or">ou avec le code</div>
-      <div class="pair-code-row">
-        <span class="pair-code" id="pairCode">···&nbsp;···</span>
-        <button type="button" class="pair-refresh" aria-label="Générer un nouveau code" onclick="remoteNewPairCode()">
-          <svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg>
-        </button>
-      </div>
-      <div class="pair-note">Code valable 2 min · un nouveau code par écran</div>
-      <div class="pair-wait"><span class="pair-wait-dot"></span>En attente d'un écran…</div>
-    </div>
-    <div class="panel pair-screens" id="pairScreens" style="display:none">
-      <div class="pair-screens-head"><div class="panel-label">Écrans appairés (<span id="pairScreensCount">0</span>)</div><button type="button" class="pair-manage" onclick="openScreensView()">Gérer</button></div>
+  <!-- Écrans : écrans de jeu et groupes, ajout d'un écran, liaison et plateau (anciens onglet QR et « Écrans appairés ») -->
+  <div class="tab-content" id="content-screens">
+    <div class="panel pair-screens" id="pairScreens">
+      <div class="nv-h"><div class="panel-label">Écrans de jeu (<span id="pairScreensCount">0</span>)</div><button type="button" class="pair-manage" id="identifyAllBtn" onclick="scrIdentifyAll()">Identifier tous</button></div>
       <div id="pairScreensList" class="pair-screens-list"></div>
+      <div class="nv-empty" id="pairScreensEmpty">Aucun écran appairé : scannez le QR ci-dessous sur chaque écran de jeu.</div>
+      <div class="nv-groups" id="pairGroups"></div>
     </div>
-    <!-- Passerelle DMX : visible partout ; hors de l'app native, la vue explique qu'il faut l'app (validé) -->
-    <button type="button" class="media-btn gw-entry" id="gwEntryBtn" onclick="openDmxGateway()"><span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-sliders-horizontal"></use></svg></span> Passerelle DMX <span class="gw-entry-state" id="gwEntryState"></span></button>
-    <!-- Tourner sans réseau (maquette 10) : liaison et préparation des écrans -->
-    <button type="button" class="media-btn gw-entry" id="offEntryBtn" onclick="openOfflineView()"><span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-wifi-off"></use></svg></span> Tourner sans réseau <span class="gw-entry-state" id="offEntryState"></span></button>
-    <button class="media-btn pair-renew" onclick="confirmNewSession()"><span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg></span> Nouvelle session</button>
+    <div class="panel pair-panel" id="pairPanel">
+      <div class="nv-h"><div class="panel-label">Ajouter un écran</div><span class="nv-h-sub">code valable 2 min</span></div>
+      <div class="nv-add">
+        <div class="pair-qr" id="pairQr" role="img" aria-label="QR code d'appairage"></div>
+        <div class="nv-add-r">
+          <div class="pair-steps">Sur chaque écran de jeu : <b>Écran projecteur</b> → <b>Scanner</b><br><span>Autant d'écrans que nécessaire, ils jouent ensemble.</span></div>
+          <div class="pair-or">ou avec le code</div>
+          <div class="pair-code-row">
+            <span class="pair-code" id="pairCode">···&nbsp;···</span>
+            <button type="button" class="pair-refresh" aria-label="Générer un nouveau code" onclick="remoteNewPairCode()">
+              <svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg>
+            </button>
+          </div>
+          <div class="pair-note">Un nouveau code par écran</div>
+          <div class="pair-wait"><span class="pair-wait-dot"></span>En attente d'un écran…</div>
+        </div>
+      </div>
+    </div>
+    <div class="nv-grp">Liaison et plateau</div>
+    <div class="st-card st-rows nv-link-card">
+      <!-- Passerelle DMX : visible partout ; hors de l'app native, la vue explique qu'il faut l'app (validé) -->
+      <button type="button" class="st-row nv-lead" id="offEntryBtn" onclick="openOfflineView()"><svg class="ic" aria-hidden="true"><use href="#i-wifi-off"></use></svg><span class="st-row-main"><span class="st-row-label">Tourner sans réseau <span class="gw-entry-state" id="offEntryState"></span></span><span class="st-row-sub">Wi-Fi local, Bluetooth · préparer les écrans</span></span><svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+      <button type="button" class="st-row nv-lead" id="gwEntryBtn" onclick="openDmxGateway()"><svg class="ic" aria-hidden="true"><use href="#i-sliders-horizontal"></use></svg><span class="st-row-main"><span class="st-row-label">Passerelle DMX <span class="gw-entry-state" id="gwEntryState"></span></span><span class="st-row-sub">sACN / Art-Net vers les écrans</span></span><svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+    </div>
+    <button type="button" class="st-btn st-danger pair-renew" onclick="confirmNewSession()"><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Nouvelle session — déconnecte tout</button>
     <div class="pair-e2e">
       <svg class="ic ic-sm" aria-hidden="true"><use href="#i-lock"></use></svg>
       Chiffré de bout en bout : seuls vos appareils lisent les messages et les médias
     </div>
   </div>
+  </main>
+
+  </div><!-- /nv-main -->
+
+  <!-- Barre de 5 onglets : fixe en bas (téléphone portrait), rail latéral dès 700 px de large ou en paysage bas -->
+  <nav id="nv-tabs" role="tablist" aria-label="Sections de la télécommande">
+    <button type="button" role="tab" class="active" id="tab-light" aria-selected="true" aria-controls="content-light" onclick="switchTab('light')"><span class="nt-ic"><svg class="ic" aria-hidden="true"><use href="#i-lightbulb"></use></svg></span><span class="nt-lbl">Lumière</span></button>
+    <button type="button" role="tab" id="tab-effects" aria-selected="false" aria-controls="content-effects" onclick="switchTab('effects')"><span class="nt-ic"><svg class="ic" aria-hidden="true"><use href="#i-sparkles"></use></svg></span><span class="nt-lbl">Effets</span></button>
+    <button type="button" role="tab" id="tab-media" aria-selected="false" aria-controls="content-media" onclick="switchTab('media')"><span class="nt-ic"><svg class="ic" aria-hidden="true"><use href="#i-film"></use></svg></span><span class="nt-lbl">Média</span></button>
+    <button type="button" role="tab" id="tab-scenario" aria-selected="false" aria-controls="content-scn" onclick="switchTab('scenario')"><span class="nt-ic"><svg class="ic" aria-hidden="true"><use href="#i-clapperboard"></use></svg></span><span class="nt-lbl">Scénario</span></button>
+    <button type="button" role="tab" id="tab-screens" aria-selected="false" aria-controls="content-screens" onclick="switchTab('screens')"><span class="nt-ic"><svg class="ic" aria-hidden="true"><use href="#i-monitor-smartphone"></use></svg><span class="nt-badge" id="screensBadge" style="display:none"></span></span><span class="nt-lbl">Écrans</span></button>
+  </nav>
 </div>
 
 <!-- Écrans connectés & groupes (maquette 5) -->
@@ -1304,7 +1336,8 @@
     </button>
   </div>
   <button type="button" class="st-btn st-danger" onclick="settingsForgetScreens()">Oublier tous les écrans appairés</button>
-  <button type="button" class="st-btn" onclick="settingsGoHome()">Retour à l'accueil</button>
+  <!-- Accueil : seulement ici (plus dans l'en-tête), toujours confirmé (askGoBack) -->
+  <button type="button" class="st-btn nv-home" onclick="settingsGoHome()"><svg class="ic" aria-hidden="true"><use href="#i-house"></use></svg><span class="nv-home-t"><b>Retour à l'accueil</b><small>Quitte la télécommande · les écrans restent appairés, ce qui est en cours s'arrête</small></span></button>
   <div class="st-foot">
     <a href="confidentialite.html" class="st-policy" onclick="event.preventDefault();openPrivacyPolicy()">Politique de confidentialité</a>
     <span>Aucun compte · aucune publicité · aucun suivi</span>

@@ -105,7 +105,7 @@ function sendCaps() {
   sendMsg(caps);
 }
 
-// Télécommande : applique les capacités reçues à l'onglet Flash (transport
+// Télécommande : applique les capacités reçues à la vue Flash de Lumière (transport
 // vidéo de chaque écran : scrState(id).caps, 28-screens.js)
 function applyReceiverCaps(caps) {
   const flash = document.getElementById('content-flash');
@@ -127,6 +127,7 @@ function onRemoteTorchToggle() {
   document.getElementById('torchDimSection').classList.toggle('torch-dim-disabled', !remoteTorchOn);
   if (!remoteTorchOn) stopActiveEffect();
   sendMsg({ type:'torch-onoff', on: remoteTorchOn });
+  renderNavStatus();
 }
 
 function onTorchDimChange() {
@@ -140,7 +141,7 @@ function sendTorchEffect(effect, acked) {
   // Clignotement rapide de la torche : avertissement photosensibilité d'abord (46-strobe-warning.js)
   if (!acked && needsFlashWarning('torch', effect)) { openFlashWarning(() => sendTorchEffect(effect, true)); return; }
   stopActiveEffect();
-  if (effect === 'stop') { sendMsg({ type:'torch-effect', effect:'stop' }); return; }
+  if (effect === 'stop') { sendMsg({ type:'torch-effect', effect:'stop' }); renderNavStatus(); return; }
   activeEffect = effect;
   document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById('efx-' + effect);
@@ -152,6 +153,7 @@ function sendTorchEffect(effect, acked) {
     document.getElementById('remoteTorchIcon').innerHTML = icon('lightbulb');
   }
   sendMsg({ type:'torch-effect', effect });
+  renderNavStatus();
 }
 
 function stopActiveEffect() {

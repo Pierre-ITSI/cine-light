@@ -366,12 +366,12 @@ function loadEffectParamsToUI(name, p, dir) {
   onEffectParamChange();
 }
 
-// ── Aperçu live : les swatches (preview + carte sticky) rejouent en local
+// ── Aperçu live : le swatch de l'en-tête rejoue en local
 // exactement ce que l'écran de jeu affiche (effets, strobe, média) —
 // à l'exception de l'état écran ON/OFF.
 function _pvApplyBg(r, g, b, transMs) {
   const css = `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
-  for (const id of ['previewSwatch', 'stickySwatch']) {
+  for (const id of ['previewSwatch']) {
     const el = document.getElementById(id);
     if (!el) continue;
     el.style.transition = transMs > 0 ? `background-color ${transMs}ms ease` : 'none';
@@ -379,32 +379,29 @@ function _pvApplyBg(r, g, b, transMs) {
   }
 }
 let _lastEffectParams = null;
-let _pvFxMain = null, _pvFxSticky = null; // instanciés après la définition du moteur
+let _pvFxMain = null; // instancié après la définition du moteur
 
 function _pvFxStop() {
   if (_pvFxMain) _pvFxMain.stop();
-  if (_pvFxSticky) _pvFxSticky.stop();
 }
 
 // (Re)démarre la bonne simulation dans l'aperçu selon l'état courant.
 function refreshPreviewFx(params) {
   if (params) _lastEffectParams = params;
-  if (!_pvFxMain) { _pvFxMain = makeFxRenderer('previewFxCanvas'); _pvFxSticky = makeFxRenderer('stickyFxCanvas'); }
+  if (!_pvFxMain) _pvFxMain = makeFxRenderer('previewFxCanvas');
   if (strobeActive) { _pvFxStop(); return; } // le strobe pilote déjà l'aperçu
   if (activeScreenEffect && _lastEffectParams) {
     if (_pvFxMain.current() === activeScreenEffect) {
       _pvFxMain.update({ ..._lastEffectParams });
-      _pvFxSticky.update({ ..._lastEffectParams });
     } else {
       _pvFxMain.start(activeScreenEffect, { ..._lastEffectParams });
-      _pvFxSticky.start(activeScreenEffect, { ..._lastEffectParams });
     }
   } else { _pvFxStop(); _pvRestoreBase(); }
 }
 
 // Remet l'aperçu sur la couleur de base (fin d'effet / de strobe)
 function _pvRestoreBase() {
-  for (const id of ['previewSwatch', 'stickySwatch']) {
+  for (const id of ['previewSwatch']) {
     const el = document.getElementById(id);
     if (el) { el.style.transition = ''; el.style.backgroundColor = currentColor; }
   }
@@ -417,17 +414,13 @@ function updateStatusRings() {
   const mediaOn = typeof _activeMediaId !== 'undefined' && !!_activeMediaId;
   const offOn = typeof remoteBlackout !== 'undefined' && remoteBlackout;
   const cls = offOn ? 'st-off' : (mediaOn ? 'st-media' : (fxOn ? 'st-effect' : null));
-  for (const id of ['previewSwatch', 'stickySwatch']) {
+  for (const id of ['previewSwatch']) {
     const el = document.getElementById(id);
     if (!el) continue;
     el.classList.remove('st-off', 'st-media', 'st-effect');
     if (cls) el.classList.add(cls);
   }
-  // Chaque onglet signale ce qu'il est en train de diffuser
-  const tabFx = document.getElementById('tab-effects');
-  if (tabFx) tabFx.classList.toggle('st-effect', fxOn);
-  const tabMedia = document.getElementById('tab-media');
-  if (tabMedia) tabMedia.classList.toggle('st-media', mediaOn);
+  renderNavStatus(); // points sur les onglets, bandeau « Tout arrêter » (31-nav-status.js)
 }
 
 // Vignette du média en cours de diffusion, par-dessus la couleur (comme
@@ -435,7 +428,7 @@ function updateStatusRings() {
 function _pvUpdateMedia() {
   const it = (typeof _mediaPool !== 'undefined' && _activeMediaId)
     ? _mediaPool.find(m => m.id === _activeMediaId) : null;
-  for (const id of ['previewSwatch', 'stickySwatch']) {
+  for (const id of ['previewSwatch']) {
     const el = document.getElementById(id);
     if (!el) continue;
     if (it && it.thumb) {

@@ -24,7 +24,7 @@
 // TV (palette et lissage choisis par l'opérateur ; par défaut deux teintes de
 // luminance voisine, fondues), Pulse BPM (sinusoïde, 1 Hz par défaut ; plus de
 // 3 cycles/s seulement au-delà de 180 BPM : limite connue, non bloquante).
-// Torche LED de l'écran de jeu (onglet Flash) : « Clignotement rapide »
+// Torche LED de l'écran de jeu (Lumière › Flash) : « Clignotement rapide »
 // (80/80 ms ≈ 6 flashs/s) et « Police » (rafales à 10 Hz) ; SOS, lent et
 // battement restent à 3 flashs/s au plus.
 //

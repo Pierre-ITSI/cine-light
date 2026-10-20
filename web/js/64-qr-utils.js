@@ -45,7 +45,6 @@ function applyColor(hex,meta){
   // Ne pas écraser l'animation de l'aperçu quand un effet/strobe est simulé
   if(!strobeActive && !activeScreenEffect){
     document.getElementById('previewSwatch').style.backgroundColor=hex;
-    const ss=document.getElementById('stickySwatch'); if(ss) ss.style.backgroundColor=hex;
   }
 }
 function rgbToHex(r,g,b){return'#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');}

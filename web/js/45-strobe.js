@@ -20,6 +20,7 @@ function onStrobeToggle(acked) {
   strobeActive=tog.checked;
   document.getElementById('strobeActiveBadge').style.display=strobeActive?'block':'none';
   if(strobeActive){sendMsg(buildStrobePayload());runLocalStrobePreview();}else stopStrobe();
+  renderNavStatus();
 }
 function onStrobeParamChange() {
   strobeFreq=parseFloat(document.getElementById('freqSlider').value);
@@ -31,6 +32,7 @@ function onStrobeParamChange() {
   document.getElementById('freqMaxVal').innerHTML=strobeFreqMax.toFixed(1)+'<span> Hz</span>';
   document.getElementById('flashDurMaxVal').innerHTML=strobeFlashDurMax+'<span> ms</span>';
   if(strobeActive){sendMsg(buildStrobePayload());runLocalStrobePreview();}
+  renderNavStatus(); // la fréquence apparaît dans la barre « en cours »
 }
 function buildStrobePayload(){const ts=document.getElementById('torchSyncToggle');return{type:'strobe',active:strobeActive,torch:ts?ts.checked:false,random:strobeMode==='random',freq:strobeFreq,dur:strobeFlashDur,freqMin:strobeFreq,freqMax:strobeFreqMax,durMin:strobeFlashDur,durMax:strobeFlashDurMax};}
 function stopStrobe() {
@@ -38,6 +40,7 @@ function stopStrobe() {
   if(document.getElementById('strobeToggle'))document.getElementById('strobeToggle').checked=false;
   if(document.getElementById('strobeActiveBadge'))document.getElementById('strobeActiveBadge').style.display='none';
   sendMsg({type:'strobe',active:false}); stopLocalStrobePreview();
+  renderNavStatus();
 }
 function runLocalStrobePreview() {
   stopLocalStrobePreview();

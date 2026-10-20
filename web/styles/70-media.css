@@ -43,7 +43,4 @@
 .blackout-btn.on{background:#000;border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 24px rgba(0,0,0,.8)}
 
 /* GLOBAL SCREEN ON/OFF (au-dessus des onglets) */
-.screen-toggle-btn{width:100%;padding:13px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px}
-.screen-toggle-btn:hover{border-color:var(--accent)}
-.screen-toggle-btn.on{background:#000;border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 22px rgba(0,0,0,.85)}
 
