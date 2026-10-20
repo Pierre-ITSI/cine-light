@@ -136,6 +136,7 @@ async function _scrRevoke(id) {
   _kx.delete(id);
   const st = _scrStates.get(id);
   if (st && st.call) sendMsg({ type: 'call:end', target: { screens: [id] } });
+  if (st && st.chatShown) sendMsg({ type: 'chat:close', target: { screens: [id] } });
   sendMsg({ type: 'screen:revoked', target: { screens: [id] } });
   // 2. Nouvelle session ; clés des écrans qui suivent (avant tout oubli)
   const next = SRP.createPairing();

@@ -1006,6 +1006,21 @@ const SPECS = {
     doc: 'État du faux appel côté écran.',
     fields: { state: req(oneOf('ringing', 'incall', 'declined', 'ended'), 'état') },
   },
+  'tel:state': {
+    dir: 's2r', src: ['web'],
+    doc: 'Couche Tel actuellement affichée par l’écran (appel, SMS, notification ou discussion), envoyée juste après caps '
+      + '(connexion, réponse à hello) pour qu’une télécommande rechargée ou reconnectée la retrouve (« Retirer de l’écran », '
+      + 'Raccrocher, « le dernier envoi gagne »). tel null = rien d’affiché. Message à part, et non un champ de caps : '
+      + 'une ancienne télécommande (liste blanche stricte) écarte ce seul message au lieu de rejeter tout caps. '
+      + 'Ni texte de message, ni photo, ni présentation ; les états du faux téléphone d’une séquence (phone:state) ne sont pas rapportés.',
+    fields: {
+      tel: req(nullable(object({
+        kind: req(oneOf('call', 'sms', 'notif', 'chat'), 'appel, SMS, notification ou discussion (chat) affichés'),
+        state: req(oneOf('ringing', 'incall', 'notif', 'open'), 'appel qui sonne / en ligne ; SMS ou notification affichés ; discussion ouverte'),
+        name: opt(line(40), 'nom affiché (appelant, expéditeur, titre, contact), déjà connu de la télécommande qui l’a envoyé'),
+      })), 'couche affichée, ou null'),
+    },
+  },
 };
 
 // ─────────────────────────── API ───────────────────────────

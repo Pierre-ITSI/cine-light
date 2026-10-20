@@ -40,7 +40,7 @@ const SCR_NAME_MAX = 40;      // = LIMITS.screenNameChars
 const SCR_GLOBAL_TYPES = ['hello', 'media:order', 'media:evict'];
 // Ordres qui modifient l'état attendu d'un écran
 const SCR_TRACKED = new Set(['color', 'effect', 'strobe', 'blackout', 'screen:brightness', 'media:autoadvance',
-  'media:endmode', 'media:show', 'media-stop', 'media-img-start', 'media:evict', 'call:start', 'call:end', 'dmx:look']);
+  'media:endmode', 'media:show', 'media-stop', 'media-img-start', 'media:evict', 'call:start', 'call:end', 'dmx:look', 'chat:open', 'chat:close']);
 
 let _scrReg = _scrEmptyReg(null);
 const _scrStates = new Map();  // screenId → état attendu
@@ -322,7 +322,7 @@ function scrState(id) {
     s = Object.assign(_scrLook(scrAll()), {
       cached: new Set(),  // médias accusés en cache par l'écran
       sent: new Map(),    // fragments envoyés (photo, bande son, fond, sons importés) → contenu
-      caps: null, rtcBroken: false, progress: null, call: null, colorSent: false, dmxLive: false, dmxColor: null,
+      caps: null, rtcBroken: false, progress: null, call: null, chatShown: null, colorSent: false, dmxLive: false, dmxColor: null,
       reportedActive: undefined, needsConfig: false,
     });
     _scrStates.set(id, s);
@@ -375,6 +375,8 @@ function _scrApply(s, m, x) {
       break;
     case 'call:start': s.call = { kind: m.kind, name: m.name || '', state: null }; break;
     case 'call:end': s.call = null; break;
+    // La discussion de la télécommande prend (ou rend) l'écran : plus de couche « étrangère » retenue (remoteOnTelState)
+    case 'chat:open': case 'chat:close': s.chatShown = null; break;
     case 'dmx:look': s.dmxLive = !!m.live; s.dmxColor = m.look && m.look.color; break;
   }
 }
@@ -403,6 +405,29 @@ function scrOnCaps(id, caps) {
   }
   scrRefreshCachedView();
   scrChanged();
+}
+// Couche Tel annoncée par un écran (tel:state, juste après son « caps ») : une télécommande
+// rechargée ou reconnectée retrouve l'appel, le SMS, la notification ou la discussion affichés ;
+// sans cela « Retirer de l'écran », Raccrocher et « le dernier envoi gagne » (27-tab-gate.js)
+// ignoreraient une couche restée sur l'écran. tel null : rien n'est affiché (une couche
+// supposée affichée, d'avant la coupure, est oubliée). La discussion de CETTE télécommande
+// (_chat) reste maîtresse de l'écran qu'elle ouvre ; sinon elle est retenue dans st.chatShown
+// (autre fil, fil changé, mémoire perdue) pour pouvoir être fermée sans toucher au fil local.
+// Un écran sans tel:state (ancien) ne change rien.
+function remoteOnTelState(tel) {
+  const id = _rxFrom && scrKnown(_rxFrom) ? _rxFrom : null;
+  if (mode !== 'remote' || !id) return;
+  const st = scrState(id);
+  const wasCall = !!(st.call && st.call.kind === 'call');
+  st.call = null; st.chatShown = null;
+  if (tel && tel.kind === 'chat') st.chatShown = chatIsOpenOn(id) ? null : { name: tel.name || '' };
+  else if (tel) st.call = { kind: tel.kind, name: tel.name || '', state: tel.kind === 'call' ? tel.state : null };
+  scrChanged();
+  if (!scrInTarget(id) || typeof telCallPhase !== 'function') return;
+  // Barre Tel : Raccrocher / Décrocher pour l'appel retrouvé, retour au repos s'il n'y en a plus
+  if (tel && tel.kind === 'call') telCallPhase(tel.state === 'incall' ? 'incall' : 'ringing');
+  else if (wasCall && typeof _telCall !== 'undefined' && _telCall.phase !== 'idle') telCallPhase('idle');
+  else if (typeof renderTelBar === 'function') renderTelBar();
 }
 // Noir annoncé par un écran : repris tant que l'utilisateur n'y a pas touché
 // (une télécommande rechargée ne rallume jamais un écran éteint)

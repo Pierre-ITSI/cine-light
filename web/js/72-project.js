@@ -1368,7 +1368,7 @@ function projectLiveBusy() {
   try {
     if (typeof _seqRun !== 'undefined' && (_seqRun.state === 'running' || _seqRun.state === 'stopped')) return true;
     if (typeof _chat !== 'undefined' && _chat.open) return true;
-    if (typeof scrList === 'function' && scrList().some((id) => scrKnown(id) && scrState(id).call)) return true;
+    if (typeof scrList === 'function' && scrList().some((id) => scrKnown(id) && (scrState(id).call || scrState(id).chatShown))) return true;
   } catch (_) {}
   return false;
 }

@@ -5559,6 +5559,21 @@ const SPECS = {
     doc: 'État du faux appel côté écran.',
     fields: { state: req(oneOf('ringing', 'incall', 'declined', 'ended'), 'état') },
   },
+  'tel:state': {
+    dir: 's2r', src: ['web'],
+    doc: 'Couche Tel actuellement affichée par l’écran (appel, SMS, notification ou discussion), envoyée juste après caps '
+      + '(connexion, réponse à hello) pour qu’une télécommande rechargée ou reconnectée la retrouve (« Retirer de l’écran », '
+      + 'Raccrocher, « le dernier envoi gagne »). tel null = rien d’affiché. Message à part, et non un champ de caps : '
+      + 'une ancienne télécommande (liste blanche stricte) écarte ce seul message au lieu de rejeter tout caps. '
+      + 'Ni texte de message, ni photo, ni présentation ; les états du faux téléphone d’une séquence (phone:state) ne sont pas rapportés.',
+    fields: {
+      tel: req(nullable(object({
+        kind: req(oneOf('call', 'sms', 'notif', 'chat'), 'appel, SMS, notification ou discussion (chat) affichés'),
+        state: req(oneOf('ringing', 'incall', 'notif', 'open'), 'appel qui sonne / en ligne ; SMS ou notification affichés ; discussion ouverte'),
+        name: opt(line(40), 'nom affiché (appelant, expéditeur, titre, contact), déjà connu de la télécommande qui l’a envoyé'),
+      })), 'couche affichée, ou null'),
+    },
+  },
 };
 
 function explainInvalid(msg, opts = {}) {
@@ -10098,6 +10113,18 @@ const MSG_ROUTES = {
     handle: (m) => remoteOnPhoneGesture(m),
   },
   'call:state':        { roles: ['remote'], validate: (m) => _P.oneOf(m.state, ['ringing', 'incall', 'declined', 'ended']), handle: (m) => remoteOnCallState(m) },
+  // Couche Tel affichée par l'écran (resynchronisation, 80-call-simulator.js) : normalisée, sinon écartée
+  'tel:state': {
+    roles: ['remote'],
+    validate(m) {
+      const t = m.tel;
+      if (t === null) return true;
+      if (!_P.isObj(t) || !_P.oneOf(t.kind, ['call', 'sms', 'notif', 'chat']) || !_P.oneOf(t.state, ['ringing', 'incall', 'notif', 'open'])) return false;
+      m.tel = { kind: t.kind, state: t.state, name: _P.text(t.name, PROTO.NAME_MAX).replace(/[\u0000-\u001F\u007F]/g, ' ') };
+      return true;
+    },
+    handle: (m) => remoteOnTelState(m.tel),
+  },
   'media:advanced':    { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenAdvanced(m.id) },
   'media:need':        { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenNeeds(m.id) },
   'key:answer': {
@@ -10821,7 +10848,14 @@ function tabSendClear(ids, opts) {
   const live = ids.filter((id) => scrState(id).call);
   if (live.length) sendMsg({ type: 'call:end', target: { screens: live } });
   if (chatIds.length) _tgCloseChat(chatIds, opts.undo !== false);
-  return live.length > 0 || chatIds.length > 0;
+  const foreign = _tgForeignChat(ids, chatIds);
+  if (foreign.length) sendMsg({ type: 'chat:close', target: { screens: foreign } });
+  return live.length > 0 || chatIds.length > 0 || foreign.length > 0;
+}
+// Écrans de ids dont la discussion affichée n'est pas celle de cette télécommande (retrouvée à
+// la reconnexion : tel:state, st.chatShown) : fermée par un simple chat:close, le fil local n'est pas touché.
+function _tgForeignChat(ids, except) {
+  return ids.filter((id) => scrState(id).chatShown && !(except || []).includes(id));
 }
 // Ferme la discussion sur ces écrans (tout le fil s'ils sont tous ceux de la discussion).
 // undo : bandeau « Annuler » qui la rouvre.
@@ -10848,6 +10882,8 @@ function telRemoveFromScreen(kind) {
   if (kind === 'chat') {
     const chatIds = _chat.open ? (_chat.screens ? ids.filter((id) => _chat.screens.includes(id)) : ids.slice()) : [];
     if (chatIds.length) _tgCloseChat(chatIds, false);
+    const foreign = _tgForeignChat(ids, chatIds);
+    if (foreign.length) sendMsg({ type: 'chat:close', target: { screens: foreign } });
   } else {
     const withCall = ids.filter((id) => scrState(id).call && (!kind || scrState(id).call.kind === kind));
     if (withCall.length) sendMsg({ type: 'call:end', target: { screens: withCall } });
@@ -10865,7 +10901,10 @@ function telOnScreenItems() {
     const c = scrState(id).call;
     if (c) add(c.kind === 'call' ? 'call' : c.kind === 'notif' ? 'notif' : 'sms', c.name || '…', id);
   }
-  if (_chat.open) for (const id of ids) if (!_chat.screens || _chat.screens.includes(id)) add('chat', _chat.name || '…', id);
+  for (const id of ids) {
+    if (_chat.open && (!_chat.screens || _chat.screens.includes(id))) add('chat', _chat.name || '…', id);
+    else if (scrState(id).chatShown) add('chat', scrState(id).chatShown.name || '…', id); // discussion retrouvée à la reconnexion
+  }
   return out;
 }
 function renderTelOn() {
@@ -10990,7 +11029,7 @@ const SCR_NAME_MAX = 40;      // = LIMITS.screenNameChars
 const SCR_GLOBAL_TYPES = ['hello', 'media:order', 'media:evict'];
 // Ordres qui modifient l'état attendu d'un écran
 const SCR_TRACKED = new Set(['color', 'effect', 'strobe', 'blackout', 'screen:brightness', 'media:autoadvance',
-  'media:endmode', 'media:show', 'media-stop', 'media-img-start', 'media:evict', 'call:start', 'call:end', 'dmx:look']);
+  'media:endmode', 'media:show', 'media-stop', 'media-img-start', 'media:evict', 'call:start', 'call:end', 'dmx:look', 'chat:open', 'chat:close']);
 
 let _scrReg = _scrEmptyReg(null);
 const _scrStates = new Map();  // screenId → état attendu
@@ -11272,7 +11311,7 @@ function scrState(id) {
     s = Object.assign(_scrLook(scrAll()), {
       cached: new Set(),  // médias accusés en cache par l'écran
       sent: new Map(),    // fragments envoyés (photo, bande son, fond, sons importés) → contenu
-      caps: null, rtcBroken: false, progress: null, call: null, colorSent: false, dmxLive: false, dmxColor: null,
+      caps: null, rtcBroken: false, progress: null, call: null, chatShown: null, colorSent: false, dmxLive: false, dmxColor: null,
       reportedActive: undefined, needsConfig: false,
     });
     _scrStates.set(id, s);
@@ -11325,6 +11364,8 @@ function _scrApply(s, m, x) {
       break;
     case 'call:start': s.call = { kind: m.kind, name: m.name || '', state: null }; break;
     case 'call:end': s.call = null; break;
+    // La discussion de la télécommande prend (ou rend) l'écran : plus de couche « étrangère » retenue (remoteOnTelState)
+    case 'chat:open': case 'chat:close': s.chatShown = null; break;
     case 'dmx:look': s.dmxLive = !!m.live; s.dmxColor = m.look && m.look.color; break;
   }
 }
@@ -11353,6 +11394,29 @@ function scrOnCaps(id, caps) {
   }
   scrRefreshCachedView();
   scrChanged();
+}
+// Couche Tel annoncée par un écran (tel:state, juste après son « caps ») : une télécommande
+// rechargée ou reconnectée retrouve l'appel, le SMS, la notification ou la discussion affichés ;
+// sans cela « Retirer de l'écran », Raccrocher et « le dernier envoi gagne » (27-tab-gate.js)
+// ignoreraient une couche restée sur l'écran. tel null : rien n'est affiché (une couche
+// supposée affichée, d'avant la coupure, est oubliée). La discussion de CETTE télécommande
+// (_chat) reste maîtresse de l'écran qu'elle ouvre ; sinon elle est retenue dans st.chatShown
+// (autre fil, fil changé, mémoire perdue) pour pouvoir être fermée sans toucher au fil local.
+// Un écran sans tel:state (ancien) ne change rien.
+function remoteOnTelState(tel) {
+  const id = _rxFrom && scrKnown(_rxFrom) ? _rxFrom : null;
+  if (mode !== 'remote' || !id) return;
+  const st = scrState(id);
+  const wasCall = !!(st.call && st.call.kind === 'call');
+  st.call = null; st.chatShown = null;
+  if (tel && tel.kind === 'chat') st.chatShown = chatIsOpenOn(id) ? null : { name: tel.name || '' };
+  else if (tel) st.call = { kind: tel.kind, name: tel.name || '', state: tel.kind === 'call' ? tel.state : null };
+  scrChanged();
+  if (!scrInTarget(id) || typeof telCallPhase !== 'function') return;
+  // Barre Tel : Raccrocher / Décrocher pour l'appel retrouvé, retour au repos s'il n'y en a plus
+  if (tel && tel.kind === 'call') telCallPhase(tel.state === 'incall' ? 'incall' : 'ringing');
+  else if (wasCall && typeof _telCall !== 'undefined' && _telCall.phase !== 'idle') telCallPhase('idle');
+  else if (typeof renderTelBar === 'function') renderTelBar();
 }
 // Noir annoncé par un écran : repris tant que l'utilisateur n'y a pas touché
 // (une télécommande rechargée ne rallume jamais un écran éteint)
@@ -11641,6 +11705,7 @@ async function _scrRevoke(id) {
   _kx.delete(id);
   const st = _scrStates.get(id);
   if (st && st.call) sendMsg({ type: 'call:end', target: { screens: [id] } });
+  if (st && st.chatShown) sendMsg({ type: 'chat:close', target: { screens: [id] } });
   sendMsg({ type: 'screen:revoked', target: { screens: [id] } });
   // 2. Nouvelle session ; clés des écrans qui suivent (avant tout oubli)
   const next = SRP.createPairing();
@@ -13063,6 +13128,7 @@ function scrNowText(id) {
     return (st.call.state === 'incall' ? 'En ligne · ' : 'Appel entrant · ') + who;
   }
   if (chatIsOpenOn(id)) return 'Discussion · ' + chatContactName();
+  if (st.chatShown) return 'Discussion · ' + (st.chatShown.name || 'Contact');
   if (st.dmxLive) return 'Console DMX';
   if (st.blackout) return 'Écran noir';
   const it = st.media ? _mediaPool.find((m) => m.id === st.media) : null;
@@ -14974,6 +15040,7 @@ function sendCaps() {
   // pas ; sans elle, la télécommande garde celle de la dernière annonce
   if (linkBleOnly() && JSON.stringify(caps).length > LINK_CAPS_BLE_MAX) delete caps.cached;
   sendMsg(caps);
+  screenSendTel(); // couche Tel affichée, pour une télécommande rechargée (80-call-simulator.js)
 }
 
 // Télécommande : applique les capacités reçues à la vue Flash de Lumière (transport
@@ -17828,7 +17895,7 @@ function projectLiveBusy() {
   try {
     if (typeof _seqRun !== 'undefined' && (_seqRun.state === 'running' || _seqRun.state === 'stopped')) return true;
     if (typeof _chat !== 'undefined' && _chat.open) return true;
-    if (typeof scrList === 'function' && scrList().some((id) => scrKnown(id) && scrState(id).call)) return true;
+    if (typeof scrList === 'function' && scrList().some((id) => scrKnown(id) && (scrState(id).call || scrState(id).chatShown))) return true;
   } catch (_) {}
   return false;
 }
@@ -18331,6 +18398,7 @@ function _pjuBusyWhat() {
     if (typeof _seqRun !== 'undefined' && (_seqRun.state === 'running' || _seqRun.state === 'stopped')) return 'seq';
     if (typeof _chat !== 'undefined' && _chat.open) return 'chat';
     if (scrList().some((id) => scrKnown(id) && scrState(id).call)) return 'call';
+    if (scrList().some((id) => scrKnown(id) && scrState(id).chatShown)) return 'chat';
   } catch (_) {}
   return projectLiveBusy() ? 'seq' : null;
 }
@@ -20314,6 +20382,22 @@ function remoteOnCallState(m) {
   else if (m.state === 'declined') telCallPhase('idle', 'Refusé sur l\'écran');
   else if (m.state === 'ended') telCallPhase('idle', 'Terminé');
 }
+
+// — Écran : couche Tel affichée, rapportée à la télécommande —
+// Après chaque « caps » (connexion, réponse à « hello »), l'écran dit quelle couche Tel il
+// montre : appel (sonne / en ligne), SMS, notification ou discussion ouverte. Une télécommande
+// rechargée ou reconnectée retrouve ainsi « Retirer de l'écran », Raccrocher et « le dernier
+// envoi gagne » (27-tab-gate.js). Rien d'autre que le type, l'état et le nom déjà connu d'elle :
+// ni texte de message, ni photo. Les états du faux téléphone d'une séquence (phone:state) ne sont
+// pas rapportés : la séquence tient l'écran. Un ancien écran n'envoie rien (état inconnu).
+function screenTelState() {
+  const line = (v) => String(v || '').replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, 40);
+  const withName = (o, n) => (n ? Object.assign(o, { name: n }) : o);
+  if (_callState !== 'idle' && _callCfg) return withName({ kind: _callCfg.kind, state: _callState }, line(_callCfg.name));
+  if (typeof _scChat !== 'undefined' && _scChat) return withName({ kind: 'chat', state: 'open' }, line(_scChat.name));
+  return null;
+}
+function screenSendTel() { sendMsg({ type: 'tel:state', tel: screenTelState() }); }
 
 // — Écran : sons (WebAudio) —
 // Sons intégrés synthétisés (aucun fichier), ou son importé reçu en fragments
@@ -22361,11 +22445,18 @@ function sendImprovisedChat() {
   const ta = document.getElementById('dcWriteText');
   const text = ta ? ta.value.trim().slice(0, CHAT_TEXT_MAX) : '';
   if (!text || _chat.msgs.length >= CHAT_MAX) return;
+  // Garde de la séquence (27-tab-gate.js) AVANT d'ajouter le message : refusée (écrans tenus par la
+  // séquence), la confirmation « Reprendre la main » s'ouvre et rien n'est ajouté au fil ; une fois
+  // la main reprise, le texte resté dans la zone est renvoyé
+  if (!_chat.open) {
+    const { free, held } = tabSplit(scrTargetIds());
+    if (held.length && !free.length) { tabAskTakeOver(() => sendImprovisedChat()); return; }
+  }
   const m = { id: _chatNewId(), from: 'contact', text, impro: true }; // improvisé : « ↶ » le retire du fil
   Object.assign(m, chatTimingDefaults('contact'));
   const i = _chat.msgs.findIndex((x) => !_chatSent(x));
   _chat.msgs.splice(i < 0 ? _chat.msgs.length : i, 0, m);
-  if (!_chat.open) { if (openChatOnTarget() === false) return; }
+  if (!_chat.open) { if (openChatOnTarget() === false) { _chat.msgs.splice(_chat.msgs.indexOf(m), 1); return; } }
   else _chatSyncTexts(); // le nouveau message et l'ordre, avant de le poster
   _chatDefsSent.set(m.id, m.from + '|' + m.text);
   Object.assign(m, chatTimingDefaults('contact'));
@@ -25586,6 +25677,7 @@ function seqConflicts() {
     if (st.media) { const it = _mediaPool.find((m) => m.id === st.media); found.push(it ? _tgTpl(_TG_TXT.cutMedia, { nom: it.name }) : _TG_TXT.cutMediaUnknown); }
     if (st.call) found.push(_tgTpl(_TG_TXT[st.call.kind === 'call' ? 'cutCall' : st.call.kind === 'notif' ? 'cutNotif' : 'cutSms'], { nom: st.call.name || '…' }));
     if (_chat.open && (!_chat.screens || _chat.screens.includes(id))) found.push(_tgTpl(_TG_TXT.cutChat, { nom: _chat.name }));
+    else if (st.chatShown) found.push(_tgTpl(_TG_TXT.cutChat, { nom: st.chatShown.name || '…' }));
     if (found.length) { names.push(id); for (const f of found) add(f); }
   }
   return { lines, names: _tgNames(names) };

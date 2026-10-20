@@ -396,6 +396,18 @@ const MSG_ROUTES = {
     handle: (m) => remoteOnPhoneGesture(m),
   },
   'call:state':        { roles: ['remote'], validate: (m) => _P.oneOf(m.state, ['ringing', 'incall', 'declined', 'ended']), handle: (m) => remoteOnCallState(m) },
+  // Couche Tel affichée par l'écran (resynchronisation, 80-call-simulator.js) : normalisée, sinon écartée
+  'tel:state': {
+    roles: ['remote'],
+    validate(m) {
+      const t = m.tel;
+      if (t === null) return true;
+      if (!_P.isObj(t) || !_P.oneOf(t.kind, ['call', 'sms', 'notif', 'chat']) || !_P.oneOf(t.state, ['ringing', 'incall', 'notif', 'open'])) return false;
+      m.tel = { kind: t.kind, state: t.state, name: _P.text(t.name, PROTO.NAME_MAX).replace(/[\u0000-\u001F\u007F]/g, ' ') };
+      return true;
+    },
+    handle: (m) => remoteOnTelState(m.tel),
+  },
   'media:advanced':    { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenAdvanced(m.id) },
   'media:need':        { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenNeeds(m.id) },
   'key:answer': {

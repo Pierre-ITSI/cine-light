@@ -122,7 +122,14 @@ function tabSendClear(ids, opts) {
   const live = ids.filter((id) => scrState(id).call);
   if (live.length) sendMsg({ type: 'call:end', target: { screens: live } });
   if (chatIds.length) _tgCloseChat(chatIds, opts.undo !== false);
-  return live.length > 0 || chatIds.length > 0;
+  const foreign = _tgForeignChat(ids, chatIds);
+  if (foreign.length) sendMsg({ type: 'chat:close', target: { screens: foreign } });
+  return live.length > 0 || chatIds.length > 0 || foreign.length > 0;
+}
+// Écrans de ids dont la discussion affichée n'est pas celle de cette télécommande (retrouvée à
+// la reconnexion : tel:state, st.chatShown) : fermée par un simple chat:close, le fil local n'est pas touché.
+function _tgForeignChat(ids, except) {
+  return ids.filter((id) => scrState(id).chatShown && !(except || []).includes(id));
 }
 // Ferme la discussion sur ces écrans (tout le fil s'ils sont tous ceux de la discussion).
 // undo : bandeau « Annuler » qui la rouvre.
@@ -149,6 +156,8 @@ function telRemoveFromScreen(kind) {
   if (kind === 'chat') {
     const chatIds = _chat.open ? (_chat.screens ? ids.filter((id) => _chat.screens.includes(id)) : ids.slice()) : [];
     if (chatIds.length) _tgCloseChat(chatIds, false);
+    const foreign = _tgForeignChat(ids, chatIds);
+    if (foreign.length) sendMsg({ type: 'chat:close', target: { screens: foreign } });
   } else {
     const withCall = ids.filter((id) => scrState(id).call && (!kind || scrState(id).call.kind === kind));
     if (withCall.length) sendMsg({ type: 'call:end', target: { screens: withCall } });
@@ -166,7 +175,10 @@ function telOnScreenItems() {
     const c = scrState(id).call;
     if (c) add(c.kind === 'call' ? 'call' : c.kind === 'notif' ? 'notif' : 'sms', c.name || '…', id);
   }
-  if (_chat.open) for (const id of ids) if (!_chat.screens || _chat.screens.includes(id)) add('chat', _chat.name || '…', id);
+  for (const id of ids) {
+    if (_chat.open && (!_chat.screens || _chat.screens.includes(id))) add('chat', _chat.name || '…', id);
+    else if (scrState(id).chatShown) add('chat', scrState(id).chatShown.name || '…', id); // discussion retrouvée à la reconnexion
+  }
   return out;
 }
 function renderTelOn() {

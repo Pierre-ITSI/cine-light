@@ -260,6 +260,7 @@ function scrNowText(id) {
     return (st.call.state === 'incall' ? 'En ligne · ' : 'Appel entrant · ') + who;
   }
   if (chatIsOpenOn(id)) return 'Discussion · ' + chatContactName();
+  if (st.chatShown) return 'Discussion · ' + (st.chatShown.name || 'Contact');
   if (st.dmxLive) return 'Console DMX';
   if (st.blackout) return 'Écran noir';
   const it = st.media ? _mediaPool.find((m) => m.id === st.media) : null;

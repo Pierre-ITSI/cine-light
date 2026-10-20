@@ -374,6 +374,22 @@ function remoteOnCallState(m) {
   else if (m.state === 'ended') telCallPhase('idle', 'Terminé');
 }
 
+// — Écran : couche Tel affichée, rapportée à la télécommande —
+// Après chaque « caps » (connexion, réponse à « hello »), l'écran dit quelle couche Tel il
+// montre : appel (sonne / en ligne), SMS, notification ou discussion ouverte. Une télécommande
+// rechargée ou reconnectée retrouve ainsi « Retirer de l'écran », Raccrocher et « le dernier
+// envoi gagne » (27-tab-gate.js). Rien d'autre que le type, l'état et le nom déjà connu d'elle :
+// ni texte de message, ni photo. Les états du faux téléphone d'une séquence (phone:state) ne sont
+// pas rapportés : la séquence tient l'écran. Un ancien écran n'envoie rien (état inconnu).
+function screenTelState() {
+  const line = (v) => String(v || '').replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, 40);
+  const withName = (o, n) => (n ? Object.assign(o, { name: n }) : o);
+  if (_callState !== 'idle' && _callCfg) return withName({ kind: _callCfg.kind, state: _callState }, line(_callCfg.name));
+  if (typeof _scChat !== 'undefined' && _scChat) return withName({ kind: 'chat', state: 'open' }, line(_scChat.name));
+  return null;
+}
+function screenSendTel() { sendMsg({ type: 'tel:state', tel: screenTelState() }); }
+
 // — Écran : sons (WebAudio) —
 // Sons intégrés synthétisés (aucun fichier), ou son importé reçu en fragments
 // et gardé en cache (__ring_…) : en boucle pour un appel qui sonne, une fois

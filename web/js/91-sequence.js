@@ -481,6 +481,7 @@ function seqConflicts() {
     if (st.media) { const it = _mediaPool.find((m) => m.id === st.media); found.push(it ? _tgTpl(_TG_TXT.cutMedia, { nom: it.name }) : _TG_TXT.cutMediaUnknown); }
     if (st.call) found.push(_tgTpl(_TG_TXT[st.call.kind === 'call' ? 'cutCall' : st.call.kind === 'notif' ? 'cutNotif' : 'cutSms'], { nom: st.call.name || '…' }));
     if (_chat.open && (!_chat.screens || _chat.screens.includes(id))) found.push(_tgTpl(_TG_TXT.cutChat, { nom: _chat.name }));
+    else if (st.chatShown) found.push(_tgTpl(_TG_TXT.cutChat, { nom: st.chatShown.name || '…' }));
     if (found.length) { names.push(id); for (const f of found) add(f); }
   }
   return { lines, names: _tgNames(names) };

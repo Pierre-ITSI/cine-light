@@ -35,6 +35,7 @@ test('rejette les charges d’attaque de la revue et leurs variantes', () => {
 
 test('rejette le mauvais sens', () => {
   assert.equal(validate({ type: 'caps', torch: true, vibrate: true }, { direction: 'r2s' }), false);
+  assert.equal(validate({ type: 'tel:state', tel: null }, { direction: 'r2s' }), false);
   assert.equal(validate({ type: 'color', color: '#ffffff' }, { direction: 's2r' }), false);
   const ice = { type: 'rtc-ice', from: 'remote', candidate: { candidate: 'candidate:1 1 udp 1 1.2.3.4 1 typ host' } };
   assert.equal(validate(ice, { direction: 'r2s' }), true);
@@ -139,6 +140,7 @@ test('tout message valide pour le schéma tient dans MAX_MESSAGE_BYTES (pires ca
   const worst = [
     { type: 'media:order', ids, target },
     { type: 'caps', torch: false, vibrate: false, videoMode: 'none', media: false, cached: ids, active: id64(0), blackout: false, screenId: pad('S', 0, 32), name: lone(LIMITS.screenNameChars), groups },
+    { type: 'tel:state', tel: { kind: 'notif', state: 'notif', name: lone(40) } },
     { type: 'rtc-offer', kind: 'file', sdp: { type: 'offer', sdp: esc(LIMITS.sdpChars) }, target },
     { type: 'rtc-answer', sdp: { type: 'answer', sdp: esc(LIMITS.sdpChars) } },
     { type: 'rtc-ice', from: 'remote', candidate: { candidate: esc(LIMITS.iceCandidateChars), sdpMid: lone(64), sdpMLineIndex: 255, usernameFragment: lone(256) }, target },

@@ -103,6 +103,7 @@ function sendCaps() {
   // pas ; sans elle, la télécommande garde celle de la dernière annonce
   if (linkBleOnly() && JSON.stringify(caps).length > LINK_CAPS_BLE_MAX) delete caps.cached;
   sendMsg(caps);
+  screenSendTel(); // couche Tel affichée, pour une télécommande rechargée (80-call-simulator.js)
 }
 
 // Télécommande : applique les capacités reçues à la vue Flash de Lumière (transport

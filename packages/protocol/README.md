@@ -287,6 +287,19 @@ Des tests de **dérive** relisent `web/js/*.js` (ou `index.html` à défaut) et
   `screen:revoked` dans la session ; `key:confirm`, `key:ok`,
   `session:rekey`, `rekey:ok` scellés pairwise). `caps.kx` (échange pris en
   charge) et `caps.kid` (identifiant de la clé détenue).
+- `tel:state { tel }` (écran → télécommande, optionnel) : la **couche Tel
+  actuellement affichée**, envoyée juste après `caps` (connexion, réponse à
+  `hello`), pour qu'une télécommande rechargée ou reconnectée la retrouve
+  (« Retirer de l'écran », Raccrocher, « le dernier envoi gagne »). `tel` est
+  `null` (rien d'affiché) ou l'objet strict
+  `{ kind: 'call'|'sms'|'notif'|'chat', state: 'ringing'|'incall'|'notif'|'open', name?: ligne ≤ 40 }`
+  (`chat` = discussion ouverte). Aucun texte de message, photo ni mode de
+  présentation : seulement ce qu'il faut pour écrire « Appel « Maman » affiché
+  sur … » et le retirer. Un **ancien écran** n'en envoie pas (la télécommande
+  garde ce qu'elle sait) ; une **ancienne télécommande** (liste blanche stricte)
+  écarte ce seul message : c'est pourquoi il n'est pas un champ de `caps`, qu'elle
+  aurait rejeté en entier. Les états du faux téléphone d'une Séquence
+  (`phone:state`) ne sont pas rapportés : la séquence tient l'écran.
 - `screen:identify { target: { screens: [...] } }` : l'écran ciblé clignote
   3 s (« Identifier » du moniteur de la passerelle), sans changer son état.
 

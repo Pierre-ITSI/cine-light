@@ -354,11 +354,18 @@ function sendImprovisedChat() {
   const ta = document.getElementById('dcWriteText');
   const text = ta ? ta.value.trim().slice(0, CHAT_TEXT_MAX) : '';
   if (!text || _chat.msgs.length >= CHAT_MAX) return;
+  // Garde de la séquence (27-tab-gate.js) AVANT d'ajouter le message : refusée (écrans tenus par la
+  // séquence), la confirmation « Reprendre la main » s'ouvre et rien n'est ajouté au fil ; une fois
+  // la main reprise, le texte resté dans la zone est renvoyé
+  if (!_chat.open) {
+    const { free, held } = tabSplit(scrTargetIds());
+    if (held.length && !free.length) { tabAskTakeOver(() => sendImprovisedChat()); return; }
+  }
   const m = { id: _chatNewId(), from: 'contact', text, impro: true }; // improvisé : « ↶ » le retire du fil
   Object.assign(m, chatTimingDefaults('contact'));
   const i = _chat.msgs.findIndex((x) => !_chatSent(x));
   _chat.msgs.splice(i < 0 ? _chat.msgs.length : i, 0, m);
-  if (!_chat.open) { if (openChatOnTarget() === false) return; }
+  if (!_chat.open) { if (openChatOnTarget() === false) { _chat.msgs.splice(_chat.msgs.indexOf(m), 1); return; } }
   else _chatSyncTexts(); // le nouveau message et l'ordre, avant de le poster
   _chatDefsSent.set(m.id, m.from + '|' + m.text);
   Object.assign(m, chatTimingDefaults('contact'));

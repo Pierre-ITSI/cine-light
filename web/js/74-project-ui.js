@@ -171,6 +171,7 @@ function _pjuBusyWhat() {
     if (typeof _seqRun !== 'undefined' && (_seqRun.state === 'running' || _seqRun.state === 'stopped')) return 'seq';
     if (typeof _chat !== 'undefined' && _chat.open) return 'chat';
     if (scrList().some((id) => scrKnown(id) && scrState(id).call)) return 'call';
+    if (scrList().some((id) => scrKnown(id) && scrState(id).chatShown)) return 'chat';
   } catch (_) {}
   return projectLiveBusy() ? 'seq' : null;
 }
