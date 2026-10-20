@@ -535,28 +535,6 @@ function _scStyle(s) {
   s = legacy[s] || s;
   return _SC_STYLES.includes(s) ? s : 'glass';
 }
-function _scInitial(m) {
-  return escapeHtml(String(m.name || '?').trim().charAt(0).toUpperCase() || '?');
-}
-function _scAvatarHtml(m, cls) {
-  return m.photo
-    ? '<div class="' + (cls || 'sc-avatar') + '" style="background-image:url(' + m.photo + ')"></div>'
-    : '<div class="' + (cls || 'sc-avatar') + '">' + _scInitial(m) + '</div>';
-}
-// Fond : photo floutée (mode avatar) ou photo plein écran nette + voile
-function _scBg(m) {
-  if (!m.photo || m.style === 'minimal') return '';
-  if (m.photoMode === 'full') {
-    return '<div class="sc-bg full" style="background-image:url(' + m.photo + ')"></div>'
-      + '<div class="sc-fullshade"></div>';
-  }
-  return m.style === 'glass' ? '<div class="sc-bg" style="background-image:url(' + m.photo + ')"></div>' : '';
-}
-// Avatar masqué quand la photo occupe déjà tout l'écran
-function _scHeadAvatar(m) {
-  return (m.photoMode === 'full' && m.photo && m.style !== 'minimal') ? '' : _scAvatarHtml(m);
-}
-
 // Photo de l'appel : celle préparée pour cet appel enregistré (photoId), sinon
 // __callphoto. Photo préparée absente : aucune (jamais celle d'un autre appel).
 function _cachedCallPhoto(photoId, slot) {
@@ -618,14 +596,12 @@ function screenCallStart(m) {
       // Notification sur faux écran verrouillé (plein écran)
       el.classList.remove('notif');
       // Écran verrouillé déjà affiché : pas de nouveau fondu (flash de la couleur de fond), seule la notification glisse
-      const again = !!el.querySelector('.sc-lock:not(.sc-lockout)');
-      _scRenderLock();
-      if (again) el.querySelector('.sc-lock').classList.add('sc-still');
+      _scRenderLock(!!el.querySelector('.ph-lock:not(.ph-out)'));
       // Comme un vrai téléphone : l'écran se rendort tout seul après ~10 s
       _callAutoTimer = setTimeout(() => { if (_callState === 'notif') screenCallEnd(); }, 10000);
     } else {
       el.classList.add('notif');
-      el.innerHTML = _scNotifCard(_callCfg, '');
+      _scRenderNotifBar();
     }
     _playNotifSound(_callCfg);
     if (_callCfg.vib) screenVibrate(SCREEN_VIB_SHORT);
@@ -653,189 +629,72 @@ function screenVibrateStop() {
 
 // Application fictive affichée sur les notifications (nom + couleur réglables)
 function _scApp(m) {
-  return { name: m.appName || 'SMS', color: m.appColor || '#2f8cf0', icon: _SCI.bubble };
+  return { name: m.appName || 'SMS', color: m.appColor || '#2f8cf0' };
 }
-// Carte de notification (bannière ou écran verrouillé), selon le style
-function _scNotifCard(m, extraCls) {
-  if (m.kind === 'notif') return notifCardHtml(m, extraCls); // 84-notification.js
+// Notification (SMS ou application) → données de la carte partagée (PhoneUI.notification,
+// 71-phone-ui.js), la même que celle de l'écran verrouillé de la Séquence
+function _scNotifData(m) {
+  if (m.kind === 'notif') return { id: 'n0', kind: 'app', app: m.appName, name: m.name, msg: m.msg, when: notifReceivedLabel(m.received, notifPhoneNow(m.phone)), img: m.photo };
   const app = _scApp(m);
-  const cls = 'sc-notif ' + m.style + (extraCls ? ' ' + extraCls : '');
-  const click = extraCls ? '' : ' onclick="event.stopPropagation();screenNotifTap()"';
-  const name = escapeHtml(m.name || ''), msg = escapeHtml(m.msg || ''), appName = escapeHtml(app.name);
-  if (m.style === 'tonal') {
-    // En-tête discret (pastille + nom d'app), avatar de l'expéditeur à droite
-    return '<div class="' + cls + '"' + click + '>'
-      + '<div class="sc-notif-body">'
-      + '<div class="n-head"><span class="n-dot" style="background:' + app.color + '">' + app.icon + '</span>'
-      + appName + ' · maintenant</div>'
-      + '<div class="sc-notif-name">' + name + '</div>'
-      + '<div class="sc-notif-msg">' + msg + '</div>'
-      + '</div>'
-      + _scAvatarHtml(m, 'n-avatar')
-      + '</div>';
-  }
-  return '<div class="' + cls + '"' + click + '>'
-    + '<div class="sc-notif-icon" style="background:' + app.color + '">' + app.icon + '</div>'
-    + '<div class="sc-notif-body">'
-    + '<div class="n-title"><span class="sc-notif-name">' + name + '</span><span class="n-time">maintenant</span></div>'
-    + '<div class="sc-notif-msg">' + msg + '</div>'
-    + (m.style === 'minimal' ? '<div class="n-app">' + appName + '</div>' : '')
-    + '</div></div>';
+  return { id: 'n0', kind: 'sms', app: app.name, name: m.name, msg: m.msg, when: 'maintenant', color: app.color };
+}
+// Calque du faux téléphone dans #screen-call, au style de l'appel
+function _scHtml(cls, body, attrs) {
+  return PhoneUI.root({ style: _callCfg.style, cls, body, attrs });
 }
 
 // — Faux écran verrouillé : fond choisi, date + horloge, notification,
-// raccourcis et barre de navigation, déclinés selon le style. —
-function _scLockDate(d) {
-  const j = ['Dim.', 'Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.'];
-  const mo = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-  return j[d.getDay()] + ' ' + d.getDate() + ' ' + mo[d.getMonth()];
-}
-function _scRenderLock() {
+// lampe et appareil photo, déclinés selon le style (PhoneUI.lock). —
+function _scRenderLock(again) {
   const m = _callCfg, el = document.getElementById('screen-call');
-  // Notification : son propre fond (__notifwall), date longue du faux téléphone
+  // Notification : son propre fond (__notifwall), date et heure du faux téléphone
   const notif = m.kind === 'notif';
   const wall = _mediaCache.get(notif ? '__notifwall' : '__lockwall');
   const wallUrl = wall && wall.kind === 'img' ? safeImageData(wall.data) : null;
-  const now = notif ? notifPhoneNow(m.phone) : new Date();
-  const time = m.lock.time || (String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'));
-  const date = m.lock.date || (notif ? notifLongDate(now) : _scLockDate(now));
-  // Tonal : heures et minutes empilées
-  const clock = m.style === 'tonal'
-    ? escapeHtml(time).replace(':', '<br>')
-    : escapeHtml(time);
-  const shortcuts = m.style === 'minimal' ? '' :
-    '<div class="sc-lock-bottom">'
-    + '<button class="sc-lock-circle" onclick="event.stopPropagation()">' + (m.style === 'tonal' ? _SCI.handset : _SCI.flash) + '</button>'
-    + '<button class="sc-lock-circle" onclick="event.stopPropagation()">' + _SCI.camera + '</button>'
-    + '</div>';
-  el.innerHTML = '<div class="sc-lock ' + m.style + '"' + (wallUrl ? ' style="background-image:url(' + wallUrl + ')"' : '')
-    + ' onclick="event.stopPropagation();screenCallEnd()">'
-    + '<div class="sc-lock-shade"></div>'
-    + '<div class="sc-lock-date">' + escapeHtml(date) + '</div>'
-    + '<div class="sc-lock-time">' + clock + '</div>'
-    + _scNotifCard(m, 'in-lock')
-    + shortcuts
-    + '<div class="sc-lock-home"></div>'
-    + '</div>';
+  const now = notif ? notifPhoneNow(m.phone) : phoneClockNow();
+  const clock = { time: m.lock.time || PhoneUI.hm(now), date: m.lock.date || PhoneUI.longDate(now) };
+  el.innerHTML = _scHtml('ph-lock' + (again ? '' : ' ph-enter'), PhoneUI.lock({ style: m.style, clock, notifs: [_scNotifData(m)], max: 1, newIds: new Set(['n0']) }), ' data-act="end"');
+  PhoneUI.paintWall(el.firstChild, wallUrl);
 }
 
-// Icônes SVG génériques (aucun logo d'application tierce)
-const _HANDSET_PATH = 'M6.62 10.79c1.44 2.83 3.76 5.15 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z';
-const _SCI = {
-  handset: '<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor"><path d="' + _HANDSET_PATH + '"/></svg>',
-  handsetDown: '<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor"><g transform="rotate(135 12 12)"><path d="' + _HANDSET_PATH + '"/></g></svg>',
-  micSlash: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="4.5" y1="3.5" x2="19.5" y2="20.5"/></svg>',
-  keypad: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">' + [4.5, 9, 13.5, 18].map(y => [7, 12, 17].map(x => '<circle cx="' + x + '" cy="' + y + '" r="1.7"/>').join('')).join('') + '</svg>',
-  speaker: '<svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M3 9v6h4l5 4.5v-15L7 9H3z"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M15.5 8.5a5 5 0 0 1 0 7M18 6a9 9 0 0 1 0 12"/></svg>',
-  plus: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="4.5" x2="12" y2="19.5"/><line x1="4.5" y1="12" x2="19.5" y2="12"/></svg>',
-  video: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><rect x="2" y="6.5" width="13.5" height="11" rx="3.2"/><path d="M17 10.6l4.3-2.8c.3-.2.7 0 .7.4v7.6c0 .4-.4.6-.7.4L17 13.4v-2.8z"/></svg>',
-  contacts: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5v.5H3V19z"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.6 14.3c2.8.3 5.4 2.1 5.4 4.7v.5h-4.2c0-2-.4-3.8-1.2-5.2z"/></svg>',
-  pause: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>',
-  clock: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg>',
-  bubble: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 3C6.5 3 2 6.9 2 11.7c0 2.8 1.5 5.3 3.9 6.9-.1 1-.5 2.3-1.6 3.4 1.9-.2 3.4-1 4.4-1.7 1 .2 2.1.4 3.3.4 5.5 0 10-3.9 10-8.7S17.5 3 12 3z"/></svg>',
-  chat: '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#fff" d="M5 3.5h14a2.5 2.5 0 0 1 2.5 2.5v9a2.5 2.5 0 0 1-2.5 2.5H10l-4.6 3.6c-.4.3-.9 0-.9-.5v-3.1A2.5 2.5 0 0 1 2.5 15V6A2.5 2.5 0 0 1 5 3.5z"/><g fill="rgba(0,0,0,.35)"><circle cx="8" cy="10.5" r="1.3"/><circle cx="12" cy="10.5" r="1.3"/><circle cx="16" cy="10.5" r="1.3"/></g></svg>',
-  flash: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M8.5 2h7v3.2L13.6 8.6v10.9a1.6 1.6 0 0 1-3.2 0V8.6L8.5 5.2V2z"/><rect x="8.5" y="3.4" width="7" height="1.3" fill="#000" fill-opacity=".25"/></svg>',
-  camera: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M4.5 7h2.6l1.5-2h6.8l1.5 2h2.6A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-9A1.5 1.5 0 0 1 4.5 7z"/><circle cx="12" cy="12.8" r="3.6" fill="#3a3a42"/><circle cx="12" cy="12.8" r="2.2" fill="#fff"/></svg>',
-};
-
-// Boutons d'action (même handler pour les 3 styles) : gestes du comédien,
-// rapportés à une Séquence qui les attend (94-sequence-phone.js)
-const _SC_DECLINE = 'event.stopPropagation();screenTapDecline()';
-const _SC_ANSWER = 'event.stopPropagation();screenTapAnswer()';
-const _SC_HANGUP = 'event.stopPropagation();screenTapHangup()';
-
 function _scRenderIncoming() {
-  const m = _callCfg, el = document.getElementById('screen-call');
-  const name = escapeHtml(m.name || 'Inconnu');
-  let html;
-  if (m.style === 'glass') {
-    html = _scBg(m)
-      + '<div class="sc-head">' + _scHeadAvatar(m)
-      + '<div class="sc-name">' + name + '</div>'
-      + '<div class="sc-sub">' + escapeHtml(m.label || 'mobile') + '</div></div>'
-      + '<div class="sc-bottom">'
-      + '<div class="sc-row" style="padding:0 16px">'
-      + '<div class="sc-col"><button class="sc-btn sc-mini">' + _SCI.clock + '</button><span>Me le rappeler</span></div>'
-      + '<div class="sc-col"><button class="sc-btn sc-mini">' + _SCI.bubble + '</button><span>Message</span></div>'
-      + '</div>'
-      + '<div class="sc-row" style="padding:0 8px">'
-      + '<div class="sc-col"><button class="sc-btn sc-round sc-no" onclick="' + _SC_DECLINE + '">' + _SCI.handsetDown + '</button><span>Refuser</span></div>'
-      + '<div class="sc-col"><button class="sc-btn sc-round sc-ok" onclick="' + _SC_ANSWER + '">' + _SCI.handset + '</button><span>Accepter</span></div>'
-      + '</div></div>';
-  } else if (m.style === 'tonal') {
-    html = _scBg(m)
-      + '<div class="sc-kicker">Appel entrant</div>'
-      + '<div class="sc-head">' + _scHeadAvatar(m)
-      + '<div class="sc-name">' + name + '</div>'
-      + '<div class="sc-sub">' + escapeHtml(m.label || 'Mobile') + '</div></div>'
-      + '<div class="sc-bottom"><div class="sc-row" style="gap:16px;justify-content:center">'
-      + '<button class="sc-btn sc-pill sc-no" onclick="' + _SC_DECLINE + '">' + _SCI.handsetDown + 'Refuser</button>'
-      + '<button class="sc-btn sc-pill sc-ok" onclick="' + _SC_ANSWER + '">' + _SCI.handset + 'Répondre</button>'
-      + '</div></div>';
-  } else {
-    html = _scAvatarHtml(m)
-      + '<div class="sc-name">' + name + '</div>'
-      + '<div class="sc-sub" style="margin-top:6px">' + escapeHtml(m.label || 'Appel entrant') + '</div>'
-      + '<div class="sc-bottom"><div class="sc-row">'
-      + '<div class="sc-col"><button class="sc-btn sc-round sc-no" onclick="' + _SC_DECLINE + '">' + _SCI.handsetDown + '</button><span>Refuser</span></div>'
-      + '<div class="sc-col"><button class="sc-btn sc-round sc-ok" onclick="' + _SC_ANSWER + '">' + _SCI.handset + '</button><span>Répondre</span></div>'
-      + '</div></div>';
-  }
-  el.innerHTML = '<div class="sc-call ' + m.style + '">' + html + '</div>';
+  const el = document.getElementById('screen-call');
+  el.innerHTML = _scHtml('ph-call', PhoneUI.incoming(_callCfg));
 }
 
 function _scRenderInCall() {
-  const m = _callCfg, el = document.getElementById('screen-call');
-  const name = escapeHtml(m.name || 'Inconnu');
-  const g = (icon, lbl) => '<div class="sc-col"><button class="sc-btn sc-gbtn">' + icon + '</button><span>' + lbl + '</span></div>';
-  let html;
-  if (m.style === 'minimal') {
-    html = _scAvatarHtml(m)
-      + '<div class="sc-name">' + name + '</div>'
-      + '<div class="sc-timer" id="scCallTimer">00:00</div>'
-      + '<div class="sc-bottom" style="align-items:center">'
-      + '<div class="sc-col"><button class="sc-btn sc-round sc-no" onclick="' + _SC_HANGUP + '">' + _SCI.handsetDown + '</button><span>Raccrocher</span></div>'
-      + '</div>';
-  } else {
-    const tonal = m.style === 'tonal';
-    html = _scBg(m)
-      + '<div class="sc-head">'
-      + (tonal ? _scHeadAvatar(m) : '')
-      + '<div class="sc-name" style="font-size:1.7rem">' + name + '</div>'
-      + '<div class="sc-timer" id="scCallTimer">00:00</div></div>'
-      + '<div class="sc-grid">'
-      + g(_SCI.micSlash, tonal ? 'Muet' : 'muet') + g(_SCI.keypad, tonal ? 'Clavier' : 'clavier') + g(_SCI.speaker, tonal ? 'Haut-parleur' : 'haut-parleur')
-      + g(_SCI.plus, tonal ? 'Ajouter' : 'ajouter') + g(_SCI.video, tonal ? 'Vidéo' : 'vidéo') + (tonal ? g(_SCI.pause, 'Attente') : g(_SCI.contacts, 'contacts'))
-      + '</div>'
-      + '<div class="sc-bottom" style="align-items:center">'
-      + (tonal
-        ? '<button class="sc-btn sc-hangup sc-no" onclick="' + _SC_HANGUP + '">' + _SCI.handsetDown + '</button>'
-        : '<button class="sc-btn sc-round sc-no" onclick="' + _SC_HANGUP + '">' + _SCI.handsetDown + '</button>')
-      + '</div>';
-  }
-  el.innerHTML = '<div class="sc-call ' + m.style + '">' + html + '</div>';
+  const el = document.getElementById('screen-call');
+  el.innerHTML = _scHtml('ph-call', PhoneUI.inCall(Object.assign({}, _callCfg, { timer: '00:00' })));
 }
 
 // Bandeau d'appel entrant en haut (téléphone en cours d'utilisation)
 function _scRenderCallBar() {
-  const m = _callCfg, el = document.getElementById('screen-call');
-  const info = '<div class="cb-info"><div class="cb-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
-    + '<div class="cb-sub">' + escapeHtml(m.label || 'Appel entrant') + '</div></div>';
-  let html;
-  if (m.style === 'tonal') {
-    // Tonal : boutons pilule libellés sous l'identité de l'appelant
-    html = _scAvatarHtml(m, 'cb-avatar') + info
-      + '<div class="cb-actions">'
-      + '<button class="sc-btn sc-pill sc-no" onclick="' + _SC_DECLINE + '">Refuser</button>'
-      + '<button class="sc-btn sc-pill sc-ok" onclick="' + _SC_ANSWER + '">Répondre</button>'
-      + '</div>';
-  } else {
-    html = _scAvatarHtml(m, 'cb-avatar') + info
-      + '<button class="sc-btn cb-btn sc-no" onclick="' + _SC_DECLINE + '">' + _SCI.handsetDown + '</button>'
-      + '<button class="sc-btn cb-btn sc-ok" onclick="' + _SC_ANSWER + '">' + _SCI.handset + '</button>';
-  }
-  el.innerHTML = '<div class="sc-callbar ' + m.style + '">' + html + '</div>';
+  const el = document.getElementById('screen-call');
+  el.innerHTML = _scHtml('ph-overlay', PhoneUI.callBanner(_callCfg));
 }
+// Bandeau de SMS ou de notification d'application
+function _scRenderNotifBar() {
+  const el = document.getElementById('screen-call');
+  el.innerHTML = _scHtml('ph-overlay', PhoneUI.notifBanner(_scNotifData(_callCfg)));
+}
+// Gestes du comédien sur le faux appel / la notification (attributs data-act de PhoneUI),
+// rapportés à une Séquence qui les attend (94-sequence-phone.js)
+(function initCallTouch() {
+  const el = document.getElementById('screen-call');
+  if (!el) return;
+  el.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-act]');
+    if (!t) return;
+    e.stopPropagation();
+    switch (t.dataset.act) {
+      case 'decline': screenTapDecline(); break;
+      case 'answer': screenTapAnswer(); break;
+      case 'hangup': screenTapHangup(); break;
+      case 'notif': screenNotifTap(); break;
+      case 'end': screenCallEnd(); break;
+    }
+  });
+})();
 function _scTickInCall() {
   const el = document.getElementById('scCallTimer'); if (!el) return;
   const s = Math.floor((Date.now() - _callT0Scr) / 1000);
@@ -905,17 +764,16 @@ function screenCallHide() {
   if (!el) return;
   // Sortie animée : bannières/bandeaux remontent vers le haut, écran verrouillé
   // en fondu ; sinon disparition immédiate.
-  // (l'écran verrouillé contient lui-même une carte .sc-notif : on le teste en premier)
-  const lock = el.querySelector('.sc-lock');
-  const notif = lock ? null : el.querySelector('.sc-notif, .sc-callbar');
+  const lock = el.querySelector('.ph-lock');
+  const notif = lock ? null : el.querySelector('.pb-wrap');
   // Jeton : un nouvel appel déclenché pendant l'animation ne doit pas être effacé
   const tok = ++_callHideSeq;
   const done = () => {
     if (tok !== _callHideSeq) return;
     el.style.display = 'none'; el.innerHTML = ''; el.classList.remove('notif');
   };
-  if (lock) { lock.classList.add('sc-lockout'); setTimeout(done, 400); }
-  else if (notif) { notif.classList.add('sc-out'); setTimeout(done, 340); }
+  if (lock) { lock.classList.add('ph-out'); setTimeout(done, 400); }
+  else if (notif) { notif.classList.add('pb-out'); setTimeout(done, 340); }
   else done();
 }
 let _callHideSeq = 0;

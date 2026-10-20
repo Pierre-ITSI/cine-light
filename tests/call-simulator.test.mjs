@@ -42,11 +42,11 @@ for (const kind of KINDS) {
         assert.equal(o.display, 'block');
         if (kind === 'call') {
           assert.equal(o.state, 'ringing');
-          if (variant === 'full') { assert.ok(!o.notif); assert.match(o.html, new RegExp(`class="sc-call ${style}"`)); }
-          else { assert.ok(o.notif); assert.match(o.html, new RegExp(`class="sc-callbar ${style}"`)); }
+          if (variant === 'full') { assert.ok(!o.notif); assert.match(o.html, new RegExp(`class="ph ph-${style} ph-call"`)); }
+          else { assert.ok(o.notif); assert.match(o.html, new RegExp(`class="ph ph-${style} ph-overlay"`)); }
           assert.match(o.html, /Maman/);
           // Décrocher par un vrai clic sur le bouton vert
-          await page.locator('#screen-call .sc-ok').first().click();
+          await page.locator('#screen-call [data-act=answer]').first().click();
           const inc = await overlay(page);
           assert.equal(inc.state, 'incall');
           assert.ok(!inc.notif, "l'appel décroché passe en plein écran");
@@ -54,7 +54,7 @@ for (const kind of KINDS) {
           await page.waitForTimeout(1100);
           assert.match(await page.textContent('#scCallTimer'), /^00:0[1-2]$/);
           // Raccrocher (bouton rouge)
-          await page.locator('#screen-call .sc-no').first().click();
+          await page.locator('#screen-call [data-act=hangup]').first().click();
           const end = await overlay(page);
           assert.equal(end.state, 'idle');
           assert.equal(end.display, 'none', 'plein écran : fermeture immédiate');
@@ -62,16 +62,16 @@ for (const kind of KINDS) {
           assert.equal(o.state, 'notif');
           if (variant === 'lock') {
             assert.ok(!o.notif);
-            assert.match(o.html, new RegExp(`class="sc-lock ${style}"`));
-            assert.match(o.html, /sc-notif [a-z]+ in-lock/);
+            assert.match(o.html, new RegExp(`class="ph ph-${style} ph-lock`));
+            assert.match(o.html, /class="pn pn-k-sms/);
             // Heure/date vides → celles de l'écran
             const now = await page.evaluate(() => { const d = new Date(); return [d.getHours(), d.getMinutes()].map((v) => String(v).padStart(2, '0')); });
-            assert.ok(o.html.includes(`sc-lock-time">${now[0]}${style === 'tonal' ? '<br>' : ':'}${now[1]}<`)
-              || /sc-lock-time">\d\d(:|<br>)\d\d</.test(o.html), 'horloge écran');
-            assert.match(o.html, /sc-lock-date">[A-Z][a-z]{2}\. \d{1,2} [a-zéû.]+</);
+            assert.ok(o.html.includes(`pl-time">${now[0]}${style === 'tonal' ? '<br class="pl-br"><span class="pl-colon">:</span>' : ':'}${now[1]}<`)
+              || /pl-time">\d\d(:|<br class="pl-br"><span class="pl-colon">:<\/span>)\d\d</.test(o.html), 'horloge écran');
+            assert.match(o.html, /pl-date">[a-zéû]+ \d{1,2} [a-zéû]+</);
           } else {
             assert.ok(o.notif);
-            assert.match(o.html, new RegExp(`class="sc-notif ${style}"`));
+            assert.match(o.html, new RegExp(`class="pn pn-k-(sms|app)"`));
           }
           assert.match(o.html, /Tu es où \?\?/);
           // Toucher la notification la ferme (sortie animée)
@@ -89,7 +89,7 @@ test('refuser un appel en bandeau', async () => {
   const { page } = ctx;
   await reset(page);
   await page.evaluate(() => screenCallStart({ kind: 'call', style: 'minimal', present: 'banner', name: 'X', ring: 'silent' }));
-  await page.locator('#screen-call .sc-no').click();
+  await page.locator('#screen-call [data-act=decline]').click();
   const o = await overlay(page);
   assert.equal(o.state, 'idle');
   await waitFor(page, () => document.getElementById('screen-call').style.display === 'none');
@@ -149,7 +149,7 @@ test('sécurité : photo / nom / couleur forgés ne s’exécutent pas', async (
   assert.equal(await page.evaluate(() => window.__p), undefined);
   assert.equal(await page.evaluate(() => document.querySelectorAll('#screen-call img').length), 0);
   assert.equal(await page.evaluate(() => _callCfg.photo), okPhoto);
-  assert.match(await page.evaluate(() => document.getElementById('screen-call').innerHTML), /background-image:url\(data:image\/png;base64,/);
+  assert.match(await page.evaluate(() => document.getElementById('screen-call').innerHTML), /url\(data:image\/png;base64,/);
   // Sans hasPhoto, la photo en cache n'est pas affichée
   await page.evaluate(() => screenCallStart({ kind: 'call', style: 'glass', name: 'Sans', ring: 'silent' }));
   assert.equal(await page.evaluate(() => _callCfg.photo), null);

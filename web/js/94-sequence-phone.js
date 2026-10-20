@@ -49,23 +49,11 @@
 // Textes affichés regroupés pour la traduction ; contenus reçus en textContent.
 const _SP_TXT = {
   unlockHint: 'Touchez pour déverrouiller',
-  codeTitle: 'Saisir le code',
   now: 'maintenant',
   agoMin: 'il y a {n} min',
   agoH: 'il y a {n} h',
-  keypad: 'Clavier du code',
-  batteryTitle: 'Batterie faible',
-  batteryMsg: 'Il reste {n} % de batterie.',
-  batteryClose: 'Fermer',
-  netTitle: 'Aucun réseau',
-  netMsg: 'Le réseau mobile n\'est plus disponible. Les appels et les SMS ne fonctionneront pas.',
-  netClose: 'OK',
 };
 const SP_POWER_FADE_MS = 600, SP_LOGO_MS = 1500, SP_BOOT_MS = 1200;
-// Logo neutre (aucune marque) : cercle et trait d'alimentation
-const _SP_LOGO = '<svg class="pp-logo" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" aria-hidden="true"><path d="M20.5 17.5a19 19 0 1 0 23 0"/><path d="M32 9v22"/></svg>';
-// Appelant sans lettre (numéro seul) : silhouette neutre
-const _SP_PERSON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5v.5H4z"/></svg>';
 const SP_GESTURE_GAP_MS = 400, SP_GESTURE_BURST = 5, SP_RELOCK_GUARD_MS = 1500, SP_REFRESH_MS = 15000;
 
 let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, wall, watch: Set, sleep, alert, power }
@@ -82,12 +70,6 @@ const _spGestureAt = new Map(); // geste → dernier envoi
 let _spBurst = [];
 
 function _spTpl(s, v) { return s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : '')); }
-function _spEl(tag, cls, text) {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (text !== undefined) e.textContent = text;
-  return e;
-}
 
 // ── Réception (phone:state, déjà validé et borné par _validPhoneState) ──
 function screenPhoneState(m) {
@@ -108,7 +90,7 @@ function screenPhoneState(m) {
   const fresh = !!prev && notifs.some((n) => !prev.notifs.some((o) => o.id === n.id));
   const alertNew = !!m.alert && !(prev && prev.alert && prev.alert.id === m.alert.id);
   if (!m.alert || (_spAlertClosed && m.alert.id !== _spAlertClosed)) _spAlertClosed = null;
-  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, wall: !!m.wall, watch: new Set(m.watch), sleep: m.sleep || null, alert: m.alert || null, power: m.power === 'off' ? 'off' : 'on' };
+  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, homeWall: m.homeWall === true, wall: !!m.wall, watch: new Set(m.watch), sleep: m.sleep || null, alert: m.alert || null, power: m.power === 'off' ? 'off' : 'on' };
   screenSeqBar(m.bar); // 97-phone-status.js
   _spRender();
   _spRenderAlert();
@@ -140,12 +122,10 @@ function screenPhoneOnHomeCached() { if (_scPhone && _scPhone.mode === 'home') _
 function screenPhoneOnWallCached() { _spPaintWall(); }
 function _spPaintWall() {
   const p = _scPhone;
-  const root = document.querySelector('#screen-phone .sp-lock, #screen-phone .sp-code');
+  const root = document.querySelector('#screen-phone .ph-lock, #screen-phone .ph-code');
   if (!root) return;
   const c = p && p.wall ? _mediaCache.get('__seqwall') : null;
-  const img = c && c.kind === 'img' ? safeImageData(c.data) : null;
-  if (img) root.style.setProperty('--sp-wall', 'url(' + img + ')'); else root.style.removeProperty('--sp-wall');
-  root.classList.toggle('has-wall', !!img);
+  PhoneUI.paintWall(root, c && c.kind === 'img' ? safeImageData(c.data) : null);
 }
 
 // ── Gestes ──
@@ -210,40 +190,14 @@ function _spWhen(at) {
   if (s < 3600) return _spTpl(_SP_TXT.agoMin, { n: Math.floor(s / 60) });
   return _spTpl(_SP_TXT.agoH, { n: Math.floor(s / 3600) });
 }
-// Initiales d'un appelant (« Maman » → M, « Paul Martin » → PM) ; '' sans lettre (numéro seul)
-function _spInitials(name) {
-  const w = String(name || '').trim().split(/\s+/).filter((x) => /^\p{L}/u.test(x));
-  if (!w.length) return '';
-  const first = (x) => Array.from(x)[0].toUpperCase();
-  return w.length > 1 ? first(w[0]) + first(w[w.length - 1]) : first(w[0]);
-}
 // Image préparée (icône, photo de l'appelant) déjà en cache, sinon null
 function _spImg(id) {
   const c = id ? _mediaCache.get(id) : null;
   return c && c.kind === 'img' ? safeImageData(c.data) : null;
 }
-function _spIcon(n) {
-  const i = _spEl('div', 'sp-icon');
-  const img = n.kind === 'sms' ? null : _spImg(n.img);
-  if (n.kind === 'missed' && n.who) {
-    // Appel manqué (maquette 44) : avatar rond, initiales ou photo, pastille rouge au combiné
-    i.classList.add('sp-avatar');
-    if (img) { i.classList.add('has-img'); i.style.backgroundImage = 'url(' + img + ')'; }
-    else {
-      const t = _spInitials(n.who);
-      if (t) i.appendChild(_spEl('span', 'sp-initials', t)); else i.innerHTML = _SP_PERSON;
-    }
-    const b = _spEl('span', 'sp-badge');
-    b.innerHTML = _SCI.handset;
-    i.appendChild(b);
-    return i;
-  }
-  if (n.kind === 'missed') { i.classList.add('sp-missed'); i.innerHTML = _SCI.handset; }
-  else if (n.kind === 'sms') { i.classList.add('sp-sms'); i.innerHTML = _SCI.bubble; }
-  else if (img) { i.classList.add('has-img'); i.style.backgroundImage = 'url(' + img + ')'; return i; } // icône importée
-  else i.textContent = Array.from((n.app || '?').trim())[0]?.toUpperCase() || '?';
-  if (n.color) i.style.background = n.color;
-  return i;
+// Notification de la pile → données de la carte partagée (PhoneUI.notification, 71-phone-ui.js)
+function _spData(n) {
+  return { id: n.id, kind: n.kind, app: n.app, name: n.name, msg: n.msg, when: _spWhen(n.at), color: n.color, who: n.who, img: n.kind === 'sms' ? null : _spImg(n.img) };
 }
 // Icône ou photo arrivée en cache après l'état (75-media-screen.js) : posée sans redessiner l'écran
 function screenPhoneOnImgCached(id) {
@@ -251,94 +205,85 @@ function screenPhoneOnImgCached(id) {
   if (!p || p.mode !== 'locked') return;
   for (const n of p.notifs) {
     if (n.img !== id) continue;
-    const c = document.querySelector('#screen-phone .sp-card[data-n="' + n.id + '"]'); // id : [A-Za-z0-9_-] (validé)
-    const old = c && c.querySelector('.sp-icon');
-    if (old) old.replaceWith(_spIcon(n));
+    const c = document.querySelector('#screen-phone .pn[data-n="' + n.id + '"]'); // id : [A-Za-z0-9_-] (validé)
+    const old = c && c.querySelector('.pn-icon');
+    if (!old) continue;
+    const t = document.createElement('div');
+    t.innerHTML = PhoneUI.notification(_spData(n));
+    const fresh = t.querySelector('.pn-icon');
+    if (fresh) old.replaceWith(fresh);
   }
-}
-function _spCard(n) {
-  const c = _spEl('div', 'sp-card');
-  c.dataset.n = n.id;
-  const body = _spEl('div', 'sp-body');
-  const top = _spEl('div', 'sp-top');
-  top.append(_spEl('span', 'sp-app', n.app), _spEl('span', 'sp-when', _spWhen(n.at)));
-  body.append(top, _spEl('div', 'sp-name', n.name));
-  if (n.msg) body.appendChild(_spEl('div', 'sp-msg', n.msg));
-  c.append(_spIcon(n), body);
-  return c;
 }
 function _spClock() {
   const d = phoneClockNow(); // 97-phone-status.js
-  return { time: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'), date: notifLongDate(d) };
+  return { time: PhoneUI.hm(d), date: PhoneUI.longDate(d) };
 }
+// Portrait : au plus 4 cartes sur l'écran verrouillé (« + N notifications » au-delà), la plus récente en haut ;
+// paysage (téléphone couché) : toute la pile, qui défile
+const SP_LOCK_MAX = 4;
+const _spLandscape = () => typeof matchMedia === 'function' && matchMedia('(orientation:landscape) and (max-height:500px)').matches;
 function _spRender() {
   const el = document.getElementById('screen-phone');
   const p = _scPhone;
   if (!el) return;
-  if (_spRefreshTimer && (!p || p.mode !== 'locked')) { clearInterval(_spRefreshTimer); _spRefreshTimer = null; }
+  const home = p && p.mode === 'home';
+  const live = !!p && (p.mode === 'locked' || (home && !_spHomeImg(p)) || (home && p.homeWall));
+  if (_spRefreshTimer && !live) { clearInterval(_spRefreshTimer); _spRefreshTimer = null; }
   if (!p || p.mode === 'off') { el.style.display = 'none'; el.textContent = ''; _spShown.mode = null; _spShown.ids.clear(); return; }
   const enter = _spShown.mode !== p.mode || el.style.display !== 'block';
   const seen = enter ? new Set() : _spShown.ids;
   _spShown.mode = p.mode;
   _spShown.ids = new Set(p.mode === 'locked' ? p.notifs.map((n) => n.id) : []);
-  el.textContent = '';
-  el.className = p.style;
+  el.className = '';
   el.style.display = 'block';
+  const k = _spClock(), ent = enter ? ' ph-enter' : '';
   if (p.mode === 'locked') {
-    const root = _spEl('div', 'sp-lock' + (enter ? ' sp-enter' : ''));
-    const head = _spEl('div', 'sp-lock-head');
-    const k = _spClock();
-    head.append(_spEl('div', 'sp-date', k.date), _spEl('div', 'sp-time', k.time));
-    const stack = _spEl('div', 'sp-stack');
-    for (const n of p.notifs.slice().reverse()) { const c = _spCard(n); if (!seen.has(n.id)) c.classList.add('sp-new'); stack.appendChild(c); } // la plus récente en haut
-    root.append(head, stack, _spEl('div', 'sp-hint', _SP_TXT.unlockHint));
-    el.appendChild(root);
+    const notifs = p.notifs.slice().reverse().map(_spData); // la plus récente en haut
+    const newIds = new Set(notifs.filter((n) => !seen.has(n.id)).map((n) => n.id));
+    el.innerHTML = PhoneUI.root({ style: p.style, cls: 'ph-lock' + ent, body: PhoneUI.lock({ style: p.style, clock: k, notifs, hint: _SP_TXT.unlockHint, max: _spLandscape() ? 99 : SP_LOCK_MAX, newIds }) });
     _spPaintWall();
-    if (!_spRefreshTimer) _spRefreshTimer = setInterval(_spRefresh, SP_REFRESH_MS);
   } else if (p.mode === 'code') {
-    const root = _spEl('div', 'sp-code' + (enter ? ' sp-enter' : ''));
-    root.appendChild(_spEl('div', 'sp-code-title', _SP_TXT.codeTitle));
-    root.appendChild(_spEl('div', 'sp-dots'));
-    const keys = _spEl('div', 'sp-keys');
-    keys.setAttribute('aria-label', _SP_TXT.keypad);
-    for (const d of ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '']) {
-      if (!d) { keys.appendChild(_spEl('span', 'sp-key-gap')); continue; }
-      const b = _spEl('button', 'sp-key', d);
-      b.type = 'button';
-      keys.appendChild(b);
-    }
-    root.appendChild(keys);
-    el.appendChild(root);
+    el.innerHTML = PhoneUI.root({ style: p.style, cls: 'ph-code' + ent, body: PhoneUI.code({ len: p.unlock.code, typed: _spTyped }) });
     _spPaintWall();
-    _spRenderDots();
   } else if (p.mode === 'home') {
-    const root = _spEl('div', 'sp-home');
-    const c = p.home ? _mediaCache.get('__seqhome') : null;
-    const img = c && c.kind === 'img' ? safeImageData(c.data) : null;
-    if (img) { root.style.backgroundImage = 'url(' + img + ')'; root.classList.add('has-img'); }
-    el.appendChild(root);
+    // Image de l'utilisateur : seule et plein écran (souvent une capture complète) ; en option, fond d'écran
+    // sous les icônes génériques. Sans image : accueil générique sur le dégradé du style.
+    const img = _spHomeImg(p);
+    if (img && !p.homeWall) el.innerHTML = PhoneUI.root({ style: p.style, cls: 'ph-homeimg' + ent, body: PhoneUI.homeImage(img) });
+    else {
+      el.innerHTML = PhoneUI.root({ style: p.style, cls: 'ph-homewall' + (img ? '' : ' ph-homegen') + ent, body: PhoneUI.home({ clock: k }) });
+      PhoneUI.paintWall(el.firstChild, img);
+    }
   } else {
-    el.appendChild(_spEl('div', 'sp-unlocked'));
+    el.innerHTML = PhoneUI.root({ style: p.style, cls: 'ph-unlocked' + ent });
   }
+  if (live && !_spRefreshTimer) _spRefreshTimer = setInterval(_spRefresh, SP_REFRESH_MS);
+}
+// Image d'accueil de l'utilisateur en cache (__seqhome), sinon null
+function _spHomeImg(p) {
+  const c = p.home ? _mediaCache.get('__seqhome') : null;
+  return c && c.kind === 'img' ? safeImageData(c.data) : null;
 }
 function _spRenderDots() {
-  const box = document.querySelector('#screen-phone .sp-dots');
+  const box = document.querySelector('#screen-phone .pk-dots');
   const p = _scPhone;
   if (!box || !p || !p.unlock) return;
-  box.textContent = '';
-  for (let i = 0; i < p.unlock.code; i++) box.appendChild(_spEl('span', 'sp-dot' + (i < _spTyped ? ' on' : '')));
+  box.innerHTML = PhoneUI.dots(p.unlock.code, _spTyped);
 }
 // Heures relatives et horloge à jour
 function _spRefresh() {
   const p = _scPhone;
-  if (!p || p.mode !== 'locked') return;
-  const k = _spClock();
-  const t = document.querySelector('#screen-phone .sp-time'), d = document.querySelector('#screen-phone .sp-date');
-  if (t) t.textContent = k.time;
+  if (!p || (p.mode !== 'locked' && p.mode !== 'home')) return;
+  const k = _spClock(), q = (s) => document.querySelector('#screen-phone ' + s);
+  const t = q('.pl-time'), d = q('.pl-date');
+  if (t) t.innerHTML = PhoneUI.clockHtml(p.style, k.time);
   if (d) d.textContent = k.date;
-  document.querySelectorAll('#screen-phone .sp-card').forEach((c) => {
+  const wt = q('.phw-big'), wd = q('.phw-s');
+  if (wt) wt.textContent = k.time;
+  if (wd) wd.textContent = k.date;
+  document.querySelectorAll('#screen-phone .pn').forEach((c) => {
     const n = p.notifs.find((x) => x.id === c.dataset.n);
-    const w = c.querySelector('.sp-when');
+    const w = c.querySelector('.pn-when');
     if (n && w) w.textContent = _spWhen(n.at);
   });
 }
@@ -352,8 +297,9 @@ function _spRefresh() {
     e.stopPropagation();
     const p = _scPhone;
     if (!p || Date.now() - swipedAt < 400) return;
-    if (p.mode === 'locked') { const c = e.target.closest('.sp-card'); _spLockTouch(c ? c.dataset.n : null); }
-    else if (p.mode === 'code') { if (e.target.closest('.sp-key')) _spKey(); }
+    if (e.target.closest('[data-act="noop"]')) return; // lampe, appareil photo : décor
+    if (p.mode === 'locked') { const c = e.target.closest('.pn'); _spLockTouch(c ? c.dataset.n : null); }
+    else if (p.mode === 'code') { if (e.target.closest('.pk-key[data-key]')) _spKey(); }
     else if (p.mode === 'home') phoneGesture('home');
     else phoneGesture('touch');
   });
@@ -427,7 +373,7 @@ function _spApplyPower(wasOff) {
   if (!pw) return;
   if (off && wasOff !== true) {
     const tok = ++_spPowerSeq;
-    pw.innerHTML = _SP_LOGO;
+    pw.innerHTML = PhoneUI.power();
     pw.style.display = 'flex';
     if (wasOff === null) { pw.className = 'on instant'; _sbRefresh(); return; } // écran rechargé : déjà éteint
     // Fondu au noir, logo neutre, puis noir
@@ -442,7 +388,7 @@ function _spApplyPower(wasOff) {
   } else if (!off && wasOff === true) {
     // Rallumage : logo neutre sur fond noir, puis le téléphone (endormi s'il est en veille)
     const tok = ++_spPowerSeq;
-    pw.innerHTML = _SP_LOGO;
+    pw.innerHTML = PhoneUI.power();
     pw.className = 'on logo'; pw.style.display = 'flex';
     setTimeout(() => { if (tok !== _spPowerSeq) return; pw.className = 'on'; _spPaint(); }, SP_BOOT_MS);
   }
@@ -483,19 +429,20 @@ function _spRenderAlert() {
   const net = a.kind === 'net'; // « Aucun réseau » (maquette 44b)
   const lv = net ? 'net' : String(a.level);
   if (el.dataset.id === a.id && el.style.display === 'flex' && el.dataset.level === lv) return;
-  el.textContent = '';
-  el.className = p.style;
+  el.className = '';
   el.dataset.id = a.id; el.dataset.level = lv;
-  const card = _spEl('div', 'pa-card' + (net ? ' pa-net' : ''));
-  const close = _spEl('button', 'pa-close', net ? _SP_TXT.netClose : _SP_TXT.batteryClose);
-  close.type = 'button';
-  close.addEventListener('click', (e) => { e.stopPropagation(); _spAlertClose(); });
-  card.append(_spEl('div', 'pa-title', net ? _SP_TXT.netTitle : _SP_TXT.batteryTitle),
-    _spEl('div', 'pa-msg', net ? _SP_TXT.netMsg : _spTpl(_SP_TXT.batteryMsg, { n: a.level })), close);
-  el.onclick = (e) => e.stopPropagation();
-  el.appendChild(card);
+  el.innerHTML = PhoneUI.root({ style: p.style, cls: 'ph-overlay', body: PhoneUI.alertBox({ kind: net ? 'net' : 'battery', level: a.level }) });
   el.style.display = 'flex';
 }
+// Toucher : « Fermer » / « OK » rapporte le geste dismiss ; rien ne traverse l'alerte
+(function initAlertTouch() {
+  const el = document.getElementById('screen-palert');
+  if (!el) return;
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (e.target.closest('[data-act="alert-close"]')) _spAlertClose();
+  });
+})();
 function _spAlertClose() {
   const p = _scPhone;
   if (!p || !p.alert) return;
@@ -504,3 +451,5 @@ function _spAlertClose() {
   _spPoke();
   phoneGesture('dismiss');
 }
+// Téléphone tourné : la pile de l'écran verrouillé est redessinée (toutes les cartes en paysage, 3 en portrait)
+window.addEventListener('resize', () => { if (_scPhone && _scPhone.mode === 'locked') _spRender(); });

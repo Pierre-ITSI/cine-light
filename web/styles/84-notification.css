@@ -41,13 +41,3 @@
 .nt-note{font-size:var(--fs-caption);color:var(--text-2);text-align:center;margin-top:12px}
 .nt-wall-preview{width:36px;height:62px;border-radius:8px;background:var(--mid2);background-size:cover;background-position:center;border:1px solid var(--border);flex-shrink:0}
 
-/* Écran — carte de notification d'application (bandeau / écran verrouillé) */
-.nt-card .sc-notif-icon{background:linear-gradient(135deg,#3a7bd5,#00d2ff);background-size:cover;background-position:center;font-weight:700;font-size:1rem;color:#fff}
-.nt-card .sc-notif-icon.nt-img,.nt-card .n-dot.nt-img{background-color:#000}
-.nt-card .n-dot{background:linear-gradient(135deg,#3a7bd5,#00d2ff);background-size:cover;background-position:center;font-size:.6875rem;font-weight:700;color:#fff;border-radius:6px}
-.nt-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:.8125rem;opacity:.8}
-.nt-head .n-time{opacity:1;font-size:.8125rem}
-.nt-head .nt-app,.n-head .nt-app{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.nt-card.glass .sc-notif-name{margin-top:2px}
-.nt-card.glass.in-lock{background:rgba(255,255,255,.16);backdrop-filter:blur(28px) saturate(1.4);box-shadow:none}
-.nt-card.glass.in-lock{top:calc(196px + env(safe-area-inset-top));bottom:auto}

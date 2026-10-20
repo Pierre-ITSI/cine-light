@@ -44,7 +44,7 @@ const _ntDateOk = (v) => typeof v === 'string' && SRP.DATE_RE.test(v);
 function _ntDate(ymd) { const [y, mo, d] = ymd.split('-').map(Number); return new Date(y, mo - 1, d); }
 // « ven. 17 oct. » (télécommande) et « vendredi 17 octobre » (écran verrouillé)
 function notifShortDate(ymd) { const d = _ntDate(ymd); return _NT_DAYS_SHORT[d.getDay()] + ' ' + d.getDate() + ' ' + _NT_MONTHS_SHORT[d.getMonth()]; }
-function notifLongDate(d) { return _NT_DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + _NT_MONTHS[d.getMonth()]; }
+function notifLongDate(d) { return PhoneUI.longDate(d); } // 71-phone-ui.js : UN SEUL format de date
 
 // Maintenant sur le faux téléphone : date et/ou heure imposées, le reste réel
 function notifPhoneNow(phone, real) {
@@ -255,39 +255,5 @@ function notifScreenCfg(m) {
     received: m.received || { mode: 'now' },
   };
 }
-// Icône : image en cache validée, sinon initiale du nom de l'application
-function _ntIconHtml(m, cls) {
-  const ini = escapeHtml(String(m.appName || '?').trim().charAt(0).toUpperCase() || '?');
-  return m.photo
-    ? '<div class="' + cls + ' nt-img" style="background-image:url(' + m.photo + ')"></div>'
-    : '<div class="' + cls + ' nt-ini">' + ini + '</div>';
-}
-// Carte de notification d'application (bandeau ou écran verrouillé), selon le style
-function notifCardHtml(m, extraCls) {
-  const cls = 'sc-notif nt-card ' + m.style + (extraCls ? ' ' + extraCls : '');
-  const click = extraCls ? '' : ' onclick="event.stopPropagation();screenNotifTap()"';
-  const when = escapeHtml(notifReceivedLabel(m.received, notifPhoneNow(m.phone)));
-  const app = escapeHtml(m.appName || ''), title = escapeHtml(m.name || ''), body = escapeHtml(m.msg || '');
-  if (m.style === 'tonal') {
-    return '<div class="' + cls + '"' + click + '><div class="sc-notif-body">'
-      + '<div class="n-head">' + _ntIconHtml(m, 'n-dot') + '<span class="nt-app">' + app + '</span> · ' + when + '</div>'
-      + '<div class="sc-notif-name">' + title + '</div>'
-      + '<div class="sc-notif-msg">' + body + '</div>'
-      + '</div></div>';
-  }
-  if (m.style === 'minimal') {
-    return '<div class="' + cls + '"' + click + '>' + _ntIconHtml(m, 'sc-notif-icon')
-      + '<div class="sc-notif-body">'
-      + '<div class="n-title"><span class="sc-notif-name">' + title + '</span><span class="n-time">' + when + '</span></div>'
-      + '<div class="sc-notif-msg">' + body + '</div>'
-      + '<div class="n-app">' + app + '</div>'
-      + '</div></div>';
-  }
-  // Verre (maquette 25) : application et heure en tête, titre, contenu
-  return '<div class="' + cls + '"' + click + '>' + _ntIconHtml(m, 'sc-notif-icon')
-    + '<div class="sc-notif-body">'
-    + '<div class="nt-head"><span class="nt-app">' + app + '</span><span class="n-time">' + when + '</span></div>'
-    + '<div class="sc-notif-name">' + title + '</div>'
-    + '<div class="sc-notif-msg">' + body + '</div>'
-    + '</div></div>';
-}
+// La carte de notification de l'écran (bandeau ou écran verrouillé) est rendue par PhoneUI.notification
+// (71-phone-ui.js), la même que celle de l'écran verrouillé de la Séquence ; données : _scNotifData (80-call-simulator.js).

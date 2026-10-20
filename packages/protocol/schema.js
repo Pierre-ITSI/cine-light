@@ -817,6 +817,7 @@ const SPECS = {
         then: req(oneOf('app', 'home'), 'ensuite : l’app visée ou l’écran d’accueil (image)'),
       }), 'déverrouillage attendu : toucher l’écran verrouillé demande le code'),
       home: opt(bool, 'image d’écran d’accueil préchargée (__seqhome)'),
+      homeWall: opt(bool, 'écran d’accueil : l’image préchargée (__seqhome) sert de fond d’écran sous les icônes génériques (absent : l’image seule, plein écran)'),
       wall: opt(bool, 'fond d’écran de la séquence préchargé (__seqwall) : écran verrouillé et pavé du code'),
       watch: opt(arrayOf(oneOf(...PHONE_GESTURES.filter((g) => !PHONE_GESTURES_ALWAYS.includes(g))), PHONE_GESTURES.length), 'gestes attendus de cet écran'),
       chime: opt(object({

@@ -191,6 +191,7 @@ export const REAL_MESSAGES = [
     },
   },
   { direction: 'r2s', where: '_seqPushPhones (pavé du code, 6 chiffres)', msg: { type: 'phone:state', mode: 'code', style: 'tonal', notifs: [], unlock: { code: 6, then: 'app' } } },
+  { direction: 'r2s', where: '_seqPushPhones (accueil : image en fond d’écran sous les icônes, phase 5)', msg: { type: 'phone:state', mode: 'home', style: 'glass', notifs: [], home: true, homeWall: true } },
   { direction: 'r2s', where: '_seqPushPhones (fond d’écran de la séquence, maquette 42)', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [], wall: true } },
   { direction: 'r2s', where: '_seqPushPhones (écran d’accueil, geste attendu)', msg: { type: 'phone:state', mode: 'home', style: 'minimal', notifs: [], home: true, watch: ['home', 'hangup'] } },
   { direction: 'r2s', where: 'seqRestart (téléphone remis à zéro)', msg: { type: 'phone:state', mode: 'off', style: 'glass', notifs: [] } },

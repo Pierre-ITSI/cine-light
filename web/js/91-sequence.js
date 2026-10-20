@@ -151,7 +151,8 @@ const _SEQ_TXT = {
   code4: 'Code 4 chiffres', code6: 'Code 6 chiffres', swipe: 'Glisser seul',
   thenApp: 'Ouvrir l\'app visée', thenHome: 'Écran d\'accueil (image)',
   homeChange: 'Changer l\'image', homePick: 'Choisir l\'image', homeNote: 'toucher l\'image ouvre l\'étape suivante',
-  homeNone: 'Aucune image : fond dégradé',
+  homeNone: 'Aucune image : accueil générique',
+  homeImageOnly: 'Image seule', homeAsWall: 'Fond d\'écran',
   homeBad: '⚠ Image illisible',
   startGo: 'Au GO', startAfter: 'Après un délai', startGesture: 'Geste du comédien',
   afterLabel: 'Délai', afterLabelN: 'Délai après l\'étape {n}', fallbackLabel: 'Sinon après', never: 'jamais', seconds: '{n} s',
@@ -281,7 +282,7 @@ function seqSanitizeStep(s) {
   } else if (s.kind === 'unlock') {
     const o = s.opt || {};
     out.opt = {
-      code: [0, 4, 6].includes(o.code) ? o.code : 4, then: o.then === 'home' ? 'home' : 'app',
+      code: [0, 4, 6].includes(o.code) ? o.code : 4, then: o.then === 'home' ? 'home' : 'app', homeWall: o.homeWall === true,
       img: typeof o.img === 'string' && _SEQ_SIG_RE.test(o.img) ? o.img : null, imgName: _seqLine(o.imgName, 60),
     };
   } else if (s.kind === 'sleep') {
@@ -520,7 +521,7 @@ function remoteOnPhoneGesture(m) {
     const cfg = _seqUnlockFor(sid);
     if (p && (p.mode === 'locked' || p.mode === 'code')) {
       p.mode = cfg && cfg.then === 'home' ? 'home' : 'unlocked';
-      if (p.mode === 'home') p.home = cfg.img || null;
+      if (p.mode === 'home') { p.home = cfg.img || null; p.homeWall = cfg.homeWall === true; }
       p.awaitUnlock = null;
       p.sleep = null; // déverrouillé : réveillé pour de bon (maquette 29b)
     }
@@ -908,6 +909,7 @@ function _seqPhoneMsg(sid, homeOk, wallOk, imgOk) {
   };
   if (u) m.unlock = { code: u.code, then: u.then };
   if (homeOk) m.home = true;
+  if (homeOk && p.mode === 'home' && p.homeWall) m.homeWall = true; // phase 5 : l'image sert de fond d'écran sous les icônes
   if (wallOk) m.wall = true;
   const w = _seqWatchFor(sid);
   if (w.length) m.watch = w;
@@ -940,7 +942,7 @@ async function _seqPushPhones(only, force) {
     const chime = p && p.chime && m.notifs.some((n) => n.id === p.chime.id) ? p.chime : null;
     if (p) delete p.chime;
     const b = m.bar;
-    const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id + (n.img ? '/' + n.img : '')), m.unlock, m.home, m.wall, m.watch,
+    const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id + (n.img ? '/' + n.img : '')), m.unlock, m.home, m.homeWall, m.wall, m.watch,
       b ? [b.clock.mode, b.clock.date, b.clock.time, b.net, b.bat] : null, m.sleep, m.alert, m.power]);
     if (!force && !chime && _seqPhoneSent.get(sid) === sig) continue;
     if (!p && !m.watch && !_seqPhoneSent.has(sid)) continue; // rien à dire à cet écran
@@ -1432,9 +1434,9 @@ function renderSeqStep() {
       + '<span class="ss-label ss-sub">' + escapeHtml(T.labelThen) + '</span><div class="ss-row">'
       + _seqOpt(o.then === 'app', 'seqEditThen(\'app\')', T.thenApp) + _seqOpt(o.then === 'home', 'seqEditThen(\'home\')', T.thenHome) + '</div>';
     if (o.then === 'home') {
-      h += '<div class="ss-home"><button type="button" class="ss-home-thumb" id="ssHomeThumb" aria-label="' + escapeHtml(o.img ? T.homeChange : T.homePick) + '" onclick="document.getElementById(\'seqHomeInput\').click()"></button>'
-        + '<span class="ss-home-txt">' + escapeHtml(o.img ? (o.imgName || 'image') : T.homeNone) + '<br>'
-        + '<button type="button" class="ss-link" onclick="document.getElementById(\'seqHomeInput\').click()">' + escapeHtml(o.img ? T.homeChange : T.homePick) + '</button> · ' + escapeHtml(T.homeNote) + '</span></div>';
+      h += '<div class="ss-row">' + _seqOpt(!o.homeWall, 'seqEditHomeWall(false)', _SEQ_TXT.homeImageOnly) + _seqOpt(o.homeWall === true, 'seqEditHomeWall(true)', _SEQ_TXT.homeAsWall) + '</div><div class="ss-home"><button type="button" class="ss-home-thumb" id="ssHomeThumb" aria-label="' + escapeHtml(o.img ? _SEQ_TXT.homeChange : _SEQ_TXT.homePick) + '" onclick="document.getElementById(\'seqHomeInput\').click()"></button>'
+        + '<span class="ss-home-txt">' + escapeHtml(o.img ? (o.imgName || 'image') : _SEQ_TXT.homeNone) + '<br>'
+        + '<button type="button" class="ss-link" onclick="document.getElementById(\'seqHomeInput\').click()">' + escapeHtml(o.img ? _SEQ_TXT.homeChange : _SEQ_TXT.homePick) + '</button> · ' + escapeHtml(_SEQ_TXT.homeNote) + '</span></div>';
     }
   } else {
     const list = _seqRefList(s.kind);
@@ -1568,6 +1570,7 @@ function seqEditRef(id) {
 }
 function seqEditEnd(v) { if (_seqEdit) { _seqEdit.step.opt.end = v; renderSeqStep(); } }
 function seqEditCode(n) { if (_seqEdit) { _seqEdit.step.opt.code = [0, 4, 6].includes(n) ? n : 4; renderSeqStep(); } }
+function seqEditHomeWall(on) { if (_seqEdit) { _seqEdit.step.opt.homeWall = on === true; renderSeqStep(); } }
 function seqEditThen(v) { if (_seqEdit) { _seqEdit.step.opt.then = v === 'home' ? 'home' : 'app'; renderSeqStep(); } }
 function seqEditTrig(k) {
   const e = _seqEdit;

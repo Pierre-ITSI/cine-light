@@ -25,7 +25,7 @@ const textNodes = () => {
   const out = [];
   const vis = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
   for (const e of document.querySelectorAll('#remote-mode *')) {
-    if (e.closest('.ts-prev,.sp-card,.pp-prev,svg,script,style,canvas') || !vis(e)) continue;
+    if (e.closest('.ts-prev,.pn,.pp-prev,svg,script,style,canvas') || !vis(e)) continue;
     if (![...e.childNodes].some((n) => n.nodeType === 3 && n.nodeValue.trim())) continue;
     out.push({ el: (e.id ? '#' + e.id : '') + '.' + String(e.className).trim().split(/\s+/)[0] + '<' + e.tagName + '>', px: parseFloat(getComputedStyle(e).fontSize), text: e.textContent.trim().slice(0, 30) });
   }
@@ -58,7 +58,7 @@ test('polices : Lato pour le texte, DM Mono réservé aux valeurs ; casse de phr
   const { page, errors, close } = await remote();
   const r = await page.evaluate(() => {
     const ff = (s) => getComputedStyle(document.querySelector(s)).fontFamily.split(',')[0].replace(/["']/g, '');
-    const tt = new Set([...document.querySelectorAll('#remote-mode *')].filter((e) => !e.closest('.ts-prev,.sp-card,.pp-prev')).map((e) => getComputedStyle(e).textTransform));
+    const tt = new Set([...document.querySelectorAll('#remote-mode *')].filter((e) => !e.closest('.ts-prev,.pn,.pp-prev')).map((e) => getComputedStyle(e).textTransform));
     return { label: ff('.panel-label'), tab: ff('#nv-tabs button'), btn: ff('#blackoutOn'), hex: ff('#previewHex'), val: ff('#dimmerVal'), transforms: [...tt] };
   });
   assert.deepEqual(r, { label: 'Lato', tab: 'Lato', btn: 'Lato', hex: 'DM Mono', val: 'DM Mono', transforms: ['none'] });

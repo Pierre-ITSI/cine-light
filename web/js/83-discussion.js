@@ -1125,61 +1125,68 @@ function _sccEl(tag, cls, text) {
 }
 function _sccAvatar() {
   const c = _scChat;
-  const a = _sccEl('div', 'scc-avatar');
+  const a = _sccEl('div', 'pt-av');
   const cache = c.hasAvatar ? _mediaCache.get('__chatavatar') : null;
   const img = cache && cache.kind === 'img' ? safeImageData(cache.data) : null;
   if (img) a.style.backgroundImage = 'url(' + img + ')';
   else a.textContent = c.name.trim().charAt(0).toUpperCase() || '?';
   return a;
 }
+// Discussion de l'écran : composant PhoneChat de la maquette 5g (71-phone-ui.js pour les icônes et
+// l'habillage .ph-glass / .ph-tonal / .ph-minimal, 79-phone-ui.css) ; fil ancré en bas.
 function _sccRender(first) {
   const el = document.getElementById('screen-chat'), c = _scChat;
   if (!el || !c) return;
-  let root = el.querySelector('.scc');
+  let root = el.querySelector('.pt');
   if (!root || first) {
     el.textContent = '';
-    root = _sccEl('div', 'scc');
+    root = _sccEl('div', 'pt');
     root.addEventListener('click', (e) => { e.stopPropagation(); _sccFocus(); });
-    const head = _sccEl('div', 'scc-head');
-    const list = _sccEl('div', 'scc-list');
-    const comp = _sccEl('div', 'scc-compose');
-    const field = _sccEl('div', 'scc-field');
+    const head = _sccEl('div', 'pt-head');
+    const list = _sccEl('div', 'pt-list');
+    const comp = _sccEl('div', 'pt-comp');
+    const plus = _sccEl('span', 'pt-plus');
+    plus.innerHTML = PhoneUI.ic('plus');
+    const field = _sccEl('div', 'pt-field');
     const keys = document.createElement('input');
-    keys.id = 'sccKeys'; keys.className = 'scc-keys'; keys.type = 'text';
+    keys.id = 'sccKeys'; keys.className = 'pt-keys'; keys.type = 'text';
     for (const [k, v] of [['autocomplete', 'off'], ['autocorrect', 'off'], ['autocapitalize', 'off'], ['spellcheck', 'false'], ['enterkeyhint', 'send'], ['aria-label', 'Clavier']]) keys.setAttribute(k, v);
     keys.value = _SCC_KEYS_FILL;
     keys.addEventListener('input', _sccOnInput);
     keys.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); screenChatSend(); } });
-    const send = _sccEl('button', 'scc-send');
+    const send = _sccEl('button', 'pt-send');
     send.type = 'button'; send.setAttribute('aria-label', 'Envoyer');
-    send.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+    send.innerHTML = PhoneUI.ic('send');
     send.addEventListener('click', (e) => { e.stopPropagation(); screenChatSend(); _sccFocus(); });
-    field.append(_sccEl('span', 'scc-typed'), _sccEl('span', 'scc-caret'), _sccEl('span', 'scc-ph', 'Message'), keys);
-    comp.append(field, send);
+    field.append(_sccEl('span', 'pt-typed'), _sccEl('span', 'pt-caret'), _sccEl('span', 'pt-ph', 'Message'), keys);
+    comp.append(plus, field, send);
     root.append(head, list, comp);
     el.appendChild(root);
   }
-  root.className = 'scc ' + c.style + (c.instant ? ' scc-instant' : '');
+  root.className = 'ph ph-' + c.style + ' pt' + (c.instant ? ' pt-instant' : '');
   el.style.display = 'block';
-  // En-tête : avatar et nom du contact
-  const head = root.querySelector('.scc-head');
+  // En-tête : retour, avatar et nom du contact
+  const head = root.querySelector('.pt-head');
   head.textContent = '';
-  head.append(_sccAvatar(), _sccEl('div', 'scc-name', c.name));
-  // Bulles postées, dans l'ordre de publication
-  const list = root.querySelector('.scc-list');
+  const back = _sccEl('span', 'pt-back');
+  back.innerHTML = PhoneUI.ic('chevron-left');
+  head.append(back, _sccAvatar(), _sccEl('div', 'pt-name', c.name));
+  // Bulles postées, dans l'ordre de publication, sous l'heure du jour
+  const list = root.querySelector('.pt-list');
   list.textContent = '';
+  list.appendChild(_sccEl('div', 'pt-day', 'Aujourd’hui ' + PhoneUI.hm(phoneClockNow())));
   for (const id of c.sent) {
     const m = _scChatMsgs.get(id);
     if (!m) continue;
-    const b = _sccEl('div', 'scc-b ' + (m.from === 'actor' ? 'out' : 'in') + (_sccAnim.has(id) ? ' scc-new' : ''), m.text);
+    const b = _sccEl('div', 'pt-b ' + (m.from === 'actor' ? 'out' : 'in') + (_sccAnim.has(id) ? ' pt-new' : ''), m.text);
     list.appendChild(b);
-    if (c.pend.includes(id)) list.appendChild(_sccEl('div', 'scc-und', _CHAT_TXT.undelivered)); // point rouge (maquette 34)
+    if (c.pend.includes(id)) list.appendChild(_sccEl('div', 'pt-und', _CHAT_TXT.undelivered)); // point rouge (maquette 34)
   }
   _sccAnim.clear();
   if (_sccTypingOn) {
-    const t = _sccEl('div', 'scc-b in scc-typing');
+    const t = _sccEl('div', 'pt-b in pt-typing');
     t.setAttribute('aria-label', 'écrit…');
-    for (let i = 0; i < 3; i++) t.appendChild(_sccEl('span', 'scc-dot'));
+    for (let i = 0; i < 3; i++) t.appendChild(_sccEl('span', 'pt-dot'));
     list.appendChild(t);
   }
   list.scrollTop = list.scrollHeight;
@@ -1195,11 +1202,11 @@ function _sccRenderCompose() {
   const typed = cur ? Array.from(cur.text).slice(0, c.typed).join('') : '';
   const done = !!cur && c.typed >= _chatLen(cur.text);
   const q = (s) => el.querySelector(s);
-  if (!q('.scc-field')) return;
-  q('.scc-typed').textContent = typed;
-  q('.scc-ph').style.display = typed ? 'none' : '';
-  q('.scc-field').classList.toggle('ready', !!cur);
-  const send = q('.scc-send');
+  if (!q('.pt-field')) return;
+  q('.pt-typed').textContent = typed;
+  q('.pt-ph').style.display = typed ? 'none' : '';
+  q('.pt-field').classList.toggle('ready', !!cur);
+  const send = q('.pt-send');
   send.disabled = !done;
   send.classList.toggle('on', done);
 }
