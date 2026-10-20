@@ -126,9 +126,9 @@ test('Importer : aperçu d\'un .rem et d\'un ancien .setremote, Ajouter, Remplac
   assert.match(await text(page, '#pjMode-merge'), /À la suite de « Mon projet » ; doublons : « \(2\) »\./);
   await page.click('#pjMode-replace');
   assert.match(await text(page, '#pjImpWarn'), /1 séquence de « Mon projet » seront supprimés/);
-  assert.equal(await text(page, '#pjImpGo'), 'REMPLACER ET IMPORTER');
+  assert.equal(await text(page, '#pjImpGo'), 'Remplacer et importer');
   await page.click('#pjMode-new');
-  assert.equal(await text(page, '#pjImpGo'), 'OUVRIR LE PROJET');
+  assert.equal(await text(page, '#pjImpGo'), 'Ouvrir le projet');
   assert.equal(await page.getAttribute('#pjImp-seq', 'aria-disabled'), 'true', 'nouveau projet : rangé en entier');
   // Ajouter, sans les mémoires
   await page.click('#pjMode-merge');
@@ -143,7 +143,7 @@ test('Importer : aperçu d\'un .rem et d\'un ancien .setremote, Ajouter, Remplac
   assert.match(await text(page, '#pjRep-media'), /non inclus/);
   assert.deepEqual(await page.evaluate(() => [seqSaved.length, colorMemories.length]), [5, 0]);
   // « VOIR LES SÉQUENCES » est proposé ; FERMER revient aux Réglages
-  assert.equal(await page.locator('#pjBody .prj-primary').innerText(), 'VOIR LES SÉQUENCES');
+  assert.equal(await page.locator('#pjBody .prj-primary').innerText(), 'Voir les séquences');
   await page.click('#pjBody .st-btn');
   assert.equal(await page.locator('#project-view').isVisible(), false);
   // Remplacer, depuis l'ancienne extension .setremote
@@ -290,7 +290,7 @@ test('« + Nouvelle séquence » : aussitôt sans modification ; sinon Enregistr
   });
   const state = () => page.evaluate(() => ({ steps: _seq.steps.length, saved: seqSaved.map((e) => e.name), sheet: _sheet && _sheet.kind }));
   await page.evaluate(() => switchTab('seq'));
-  assert.equal(await text(page, '#seqNewBtn'), '+ NOUVELLE SÉQUENCE');
+  assert.equal(await text(page, '#seqNewBtn'), '+ Nouvelle séquence');
   await dirty();
   await page.click('#seqNewBtn');
   assert.equal(await text(page, '#srSheetTitle'), 'Enregistrer « Séq. 12 » avant ?');
@@ -328,7 +328,7 @@ test('« + Nouvelle discussion » : fil vierge ; Enregistrer / Ne pas enregistre
   const state = () => page.evaluate(() => ({ msgs: _chat.msgs.length, name: _chat.name, actor: _chat.actor, saved: chatSaved.map((e) => e.name), sheet: _sheet && _sheet.kind }));
   const dirty = () => page.evaluate(() => { _chat.name = 'Léa'; _chat.msgs.push({ id: 'x1', from: 'contact', text: 'Salut' }); chatSave(); renderChatPanel(); });
   await page.evaluate(() => { switchTab('call'); setCallKind('discussion'); });
-  assert.equal(await text(page, '#dcNewBtn'), '+ NOUVELLE DISCUSSION');
+  assert.equal(await text(page, '#dcNewBtn'), '+ Nouvelle discussion');
   // Fil d'exemple, inchangé : aussitôt
   await page.click('#dcNewBtn');
   await waitFor(page, () => _chat.msgs.length === 0);

@@ -258,7 +258,7 @@ test('préparation : chaque écran ne reçoit que ce qui lui manque, avec progre
     ['idle', 'Téléphone de Julie', 'Incomplet', '1/2 médias · manque fond d\'écran, bande son'],
     ['idle', 'TV salon', 'Incomplet', '1/2 médias · manque sonnerie, fond d\'écran, bande son, photo d\'appel'],
   ]);
-  assert.equal(await rp.textContent('#offPrepBtn'), 'TOUT PRÉPARER MAINTENANT');
+  assert.equal(await rp.textContent('#offPrepBtn'), 'Tout préparer maintenant');
   // États montrés pendant la préparation
   await rp.evaluate(() => {
     window.__seen = new Set();
@@ -268,12 +268,12 @@ test('préparation : chaque écran ne reçoit que ce qui lui manque, avec progre
   for (const s of [A, B]) await s.page.evaluate(() => { window.__shown = 0; const o = window.showScreenMedia; window.showScreenMedia = function (...a) { window.__shown++; return o.apply(this, a); }; });
   broker.clear(); hub.clear();
   await rp.click('#offPrepBtn');
-  await waitFor(rp, () => document.getElementById('offPrepBtn').textContent === 'TOUT EST PRÊT', null, { timeout: 60000 });
+  await waitFor(rp, () => document.getElementById('offPrepBtn').textContent === 'Tout est prêt', null, { timeout: 60000 });
   const ready = '2/2 médias · sonnerie · fond d\'écran · bande son · photo d\'appel';
   assert.deepEqual(await offRows(rp), [['ready', 'Téléphone de Julie', 'Prêt', ready], ['ready', 'TV salon', 'Prêt', ready]]);
   assert.equal(await rp.evaluate(() => document.getElementById('offPrepBtn').disabled), true);
   const seen = await rp.evaluate(() => [...window.__seen]);
-  assert.ok(seen.includes('btn:PRÉPARATION EN COURS…'), seen.join());
+  assert.ok(seen.includes('btn:Préparation en cours…'), seen.join());
   assert.ok(seen.some((s) => /^busy:\d+ %$/.test(s)), 'progression en % : ' + seen.join());
   // Seul ce qui manquait est parti, à chaque écran
   await broker.flush();
@@ -389,7 +389,7 @@ test('navigateur seul : Wi-Fi local et Bluetooth désactivés (« Nécessite l\'
   // Préparation : par Internet
   await waitFor(rp, () => !document.getElementById('offPrepBtn').disabled);
   await rp.click('#offPrepBtn');
-  await waitFor(rp, () => document.getElementById('offPrepBtn').textContent === 'TOUT EST PRÊT', null, { timeout: 15000 });
+  await waitFor(rp, () => document.getElementById('offPrepBtn').textContent === 'Tout est prêt', null, { timeout: 15000 });
   assert.deepEqual(await offRows(rp), [['ready', 'Écran 1', 'Prêt', 'fond d\'écran']]);
   assert.equal(await screen.page.evaluate(() => _mediaCache.has('__lockwall')), true);
   // Fermer la vue ramène aux Réglages

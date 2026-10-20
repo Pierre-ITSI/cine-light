@@ -434,7 +434,6 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .effect-card{border:1px solid var(--border);border-radius:8px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;background:var(--mid2);transition:all .2s;touch-action:manipulation;font-family:'DM Mono',monospace;width:100%}
 .effect-card:hover,.effect-card:active{border-color:rgba(255,255,255,.2);transform:scale(.97)}
 .effect-card.active{border-color:var(--accent);background:rgba(232,201,122,.1);box-shadow:0 0 14px rgba(232,201,122,.1)}
-.effect-card-icon{font-size:1.8rem}
 .effect-card-name{font-size:var(--fs-caption);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.3}
 .effect-card.active .effect-card-name{color:var(--accent)}
 .effect-active-row{display:flex;flex-direction:row;align-items:center;gap:10px;margin-bottom:12px}
@@ -1788,6 +1787,432 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
 .st-dot{width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block;flex:none}
 .st-dot.ok{background:var(--success)}
 .st-dot.ko{background:var(--danger)}
+/* Composants du système visuel (phase 2) : les classes existantes (.panel,
+   .chip, .media-btn, .st-row…) sont rattachées aux composants canoniques
+   (carte, bouton primaire / secondaire / destructif / fantôme, segmenté,
+   puce, interrupteur, ligne de liste, en-tête de vue, feuille, dialogue).
+   Feuille non stratifiée : elle l'emporte sur @layer legacy (voir build.mjs).
+   Règle des contrastes : un contrôle qui ne se distingue que par son contour
+   (3:1) ne se pose jamais sur surface-3 (2,7:1) ; sur surface-3 il est plein. */
+/* ═════════════ 4. PONT « LEGACY » ═════════════
+   Anciennes classes → composants. À supprimer quand le HTML/JS emploie .ui-*. */
+
+/* ── Fonds de vue : uni (fin du dégradé bleu, quasi OLED) ── */
+#splash,#remote-mode,#settings-view,#project-view,#screens-view,#seq-step-view,#phone-params-view,#tel-style-view,#policy-view,#offline-view,#dmx-gateway{background:var(--bg)}
+#remote-mode{padding-left:calc(16px + env(safe-area-inset-left));padding-right:calc(16px + env(safe-area-inset-right));padding-top:calc(12px + env(safe-area-inset-top))}
+#settings-view,#project-view,#screens-view{padding:calc(8px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));gap:var(--sp-3)}
+
+/* ── En-tête de la télécommande ── */
+/* Pas de logotype (décision propriétaire) : état de la liaison à gauche, accueil et réglages à droite */
+.remote-header{margin-bottom:var(--sp-4);padding-bottom:var(--sp-3);border-bottom-color:var(--border);min-height:56px}
+.remote-header-end{flex:1;min-width:0;gap:var(--sp-2)}
+.remote-header-end .link-pill{margin-right:auto}
+.hdr-gear{width:var(--tap);height:var(--tap);border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface-1);color:var(--text-2)}
+.hdr-gear .ic{width:22px;height:22px}
+.hdr-gear:active{transform:none;background:var(--surface-3)}
+.link-pill{position:relative;height:32px;padding:0 var(--sp-3);border-radius:var(--r-pill);font:700 var(--fs-caption)/1 var(--font-ui);gap:6px}
+.link-pill::after{content:'';position:absolute;inset:-6px 0}
+.link-dot{width:8px;height:8px}
+.link-pill.online{color:var(--success);background:var(--success-soft)}
+.link-pill.reconnecting{color:var(--accent-text);background:var(--accent-soft)}
+.link-pill.offline,.link-pill.skew{color:var(--danger);background:var(--danger-soft)}
+
+/* ── Aperçu (swatch) ── */
+.swatch-row{gap:var(--sp-3);margin-bottom:var(--sp-3)}
+.swatch{width:56px;height:56px;border-radius:var(--r-md);border:1px solid var(--border-strong)}
+.swatch-hex{font-size:24px;font-weight:500;line-height:1.2;color:var(--text)}
+.swatch-label{font-size:var(--fs-label);color:var(--text-2);margin-top:2px}
+.autosend-badge{font:700 var(--fs-caption)/1.4 var(--font-ui);color:var(--success);margin-top:2px}
+#stickyPreview{background:rgba(11,11,13,.86);border-bottom-color:var(--border);padding-bottom:var(--sp-2)}
+.sticky-swatch{height:36px;border-radius:var(--r-md);border-color:var(--border-strong)}
+.sticky-blackout{height:var(--btn-m);border-radius:var(--r-md);background:var(--surface-3);border:1px solid var(--border);font:700 14px/1 var(--font-ui);padding:0 var(--sp-4)}
+.sticky-blackout.on{background:#000;border-color:var(--accent);color:var(--accent-text)}
+
+/* ── Cible et Allumé/Noir ── */
+.target-btn{height:var(--btn-l);border-radius:var(--r-md);border:1px solid var(--border-strong);background:var(--surface-1);font:400 var(--fs-body)/1.2 var(--font-ui);padding:0 var(--sp-4);gap:var(--sp-3)}
+.target-btn b{font-weight:700}
+.target-btn .tb-icon{color:var(--accent-text);width:var(--icon-md);height:var(--icon-md)}
+.target-btn.subset{border-color:var(--accent);background:var(--accent-soft)}
+.screen-toggle-btn{height:var(--btn-l);padding:0 var(--sp-4);border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface-3);
+  color:var(--text);font:700 15px/1.2 var(--font-ui);margin-bottom:var(--sp-4);gap:var(--sp-2)}
+.screen-toggle-btn .ic{color:var(--success)}
+.screen-toggle-btn.on{background:#000;border-color:var(--accent);color:var(--accent-text)}
+.screen-toggle-btn.on .ic{color:var(--accent-text)}
+.screen-toggle-btn:hover{border-color:var(--border-strong)}
+
+/* ── Barre de 7 onglets (structure conservée en phase 2) ── */
+.tabs{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);padding:4px;gap:2px;margin-bottom:var(--sp-4)}
+.tab-btn{position:relative;flex:1 1 auto;min-width:0;min-height:56px;padding:6px 1px 5px;border-radius:var(--r-md);color:var(--text-2);
+  font:700 var(--fs-caption)/1.2 var(--font-ui);letter-spacing:-.01em;display:flex;flex-direction:column;align-items:center;gap:4px;white-space:nowrap}
+.tab-ic{display:block;font-size:0;line-height:0}
+.tab-ic .ic,.tab-btn>.ic-wrap .ic{width:22px;height:22px}
+.tab-btn.active{background:var(--surface-3);color:var(--accent-text);box-shadow:inset 0 0 0 1px var(--border-strong)}
+
+/* ── Card (panel, st-card, sv-card…) ── */
+.panel,.st-card,.sv-card,.sv-groups,.sq-list,.sq-now{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg)}
+.panel{padding:var(--sp-4);margin-bottom:var(--sp-3)}
+.st-card{padding:var(--sp-4);gap:var(--sp-3)}
+.st-rows{padding:var(--sp-2) var(--sp-4) 0}
+.panel-label,.st-label,.sv-label,.sr-sublabel,.fx-family{font:700 var(--fs-body)/1.35 var(--font-ui);color:var(--text);margin-bottom:var(--sp-3)}
+.st-rows>.st-label{padding-top:var(--sp-2);margin-bottom:0}
+.fx-family{font-size:var(--fs-label);color:var(--text-2);margin:var(--sp-4) 0 var(--sp-2)}
+.fx-family:first-of-type{margin-top:0}
+.sr-sublabel{font-size:var(--fs-label);color:var(--text-2);margin:var(--sp-3) 0 var(--sp-2)}
+
+/* ── Curseurs ── */
+.slider-block{margin-bottom:var(--sp-4)}
+.slider-header{margin-bottom:var(--sp-1);align-items:center}
+.slider-header label{font-size:var(--fs-secondary);color:var(--text-2)}
+.slider-val{font-size:20px;font-weight:500;color:var(--text)}
+.slider-val span{font-size:var(--fs-label);color:var(--text-2);font-family:var(--font-ui)}
+.slider-val-click{padding:var(--sp-1) var(--sp-2);border-radius:var(--r-sm)}
+.slider-row{gap:var(--sp-3);min-height:var(--tap)}
+.slider-btn{width:var(--tap);height:var(--tap);border-radius:var(--r-md);background:var(--surface-3);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;padding:0}
+.slider-btn .ic{width:var(--icon-md);height:var(--icon-md)}
+.slider-btn:active{background:#34343B;border-color:var(--border-strong)}
+.kelvin-labels,.green-labels{font-size:var(--fs-caption);color:var(--text-3)}
+
+/* ── Chips → Chip ; groupes de mode (.chips-wrap.seg) → Segmented ── */
+.chips-wrap{gap:var(--sp-2)}
+.chip{position:relative;height:36px;padding:0 var(--sp-3);border-radius:var(--r-pill);border:1px solid var(--border-strong);background:transparent;color:var(--text);
+  font:400 var(--fs-secondary)/1 var(--font-ui);display:inline-flex;align-items:center;gap:6px;margin:4px 0}
+.chip::after{content:'';position:absolute;inset:-5px 0}
+.chip:hover{border-color:var(--border-strong);color:var(--text);background:transparent}
+.chip.active,.chip.active:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-text);font-weight:700}
+.chip .ic{width:var(--icon-sm);height:var(--icon-sm)}
+.chips-wrap.chips-mono .chip{font-family:var(--font-mono);font-size:var(--fs-label)}
+.chips-wrap.seg{display:flex;flex-wrap:nowrap;gap:2px;padding:3px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);min-height:var(--tap)}
+.chips-wrap.seg .chip{flex:1;height:36px;margin:0;justify-content:center;border-radius:7px;border-color:transparent;color:var(--text-2);font-weight:700}
+.chips-wrap.seg .chip::after{display:none}
+.chips-wrap.seg .chip.active{background:var(--surface-3);border-color:var(--border-strong);color:var(--text)}
+
+/* ── Segmented (gw-seg-btn et ses groupes) ── */
+.tel-kinds,.dc-tabs,.st-seg,.cl-kinds,.gw-seg,.nt-seg{gap:2px;padding:3px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md)}
+.dc-tabs{display:flex;margin-bottom:var(--sp-3)}
+.gw-seg-btn,.st-seg-btn{height:40px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--text-2);font:700 var(--fs-secondary)/1.2 var(--font-ui);
+  display:flex;align-items:center;justify-content:center;gap:6px;padding:0 var(--sp-1);letter-spacing:0}
+.gw-seg-btn.active,.st-seg-btn.active{background:var(--surface-3);border-color:var(--border-strong);color:var(--text)}
+.gw-seg-btn .ic,.st-seg-btn .ic{width:18px;height:18px}
+.tel-kinds{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tel-kinds .tel-kind-wide{grid-column:auto}
+.tel-kinds .gw-seg-btn{font-size:var(--fs-secondary);gap:6px}
+.tel-kinds .gw-seg-btn .ic{width:16px;height:16px}
+.dc-tabs .gw-seg-btn,.nt-seg .gw-seg-btn,.dc-edit-seg .gw-seg-btn{font-size:var(--fs-secondary);height:40px}
+
+/* ── Interrupteur ── */
+.toggle-row{margin-bottom:var(--sp-4);gap:var(--sp-3)}
+.toggle-label{font-size:var(--fs-body);font-weight:700;color:var(--text)}
+.toggle-sub{font-size:var(--fs-label);color:var(--text-2);margin-top:2px}
+.toggle-switch{width:52px;height:32px;flex:none}
+.toggle-switch::after{content:'';position:absolute;inset:-6px -4px} /* zone tactile 44 */
+.toggle-track{border-radius:var(--r-pill);background:var(--surface-3);border:1px solid var(--border-strong)}
+.toggle-thumb{top:4px;left:4px;width:24px;height:24px;background:var(--text-2);box-shadow:none}
+.toggle-switch input:checked~.toggle-thumb{transform:translateX(20px);background:#000}
+
+/* ── Buttons : primaire ── */
+.screen-go-btn,.pv-ok,.sr-ok,.cl-go,.prj-primary,.srv-join,.sq-go,.lic-pv-buy,.st-lic-buy,.gw-primary,.off-go{
+  background:var(--accent);color:var(--on-accent);border:1px solid transparent;border-radius:var(--r-md);font:700 var(--fs-body)/1 var(--font-ui);height:var(--btn-l);cursor:pointer}
+:is(.screen-go-btn,.pv-ok,.sr-ok,.cl-go,.prj-primary,.srv-join,.sq-go):active{background:var(--accent-pressed)}
+/* ── Buttons : secondaire ── */
+.media-btn,.sr-cancel,.pv-cancel,.rv-cancel,.st-btn,.prj-sec,.sq-back,.sv-btn,.lic-pv-id,.st-lic-act,.st-lic-wide,.memory-save-btn,.memory-update-btn,.fx-tap-btn,
+.tel-save,.cl-save,.sr-add,.prj-newbtn,.sq-add,.screen-menu-btn,.srv-home,.fx-dice-btn{
+  background:var(--surface-3);color:var(--text);border:1px solid var(--border);border-style:solid;border-radius:var(--r-md);
+  font:700 var(--fs-body)/1.2 var(--font-ui);min-height:var(--btn-l);height:auto;padding:0 var(--sp-4);display:flex;align-items:center;justify-content:center;gap:var(--sp-2);cursor:pointer}
+.media-btn:hover{border-color:var(--border-strong);color:var(--text)}
+.media-btn .media-icon{font-size:0}
+.media-btn .ic,.media-btn .media-icon .ic{width:var(--icon-md);height:var(--icon-md)}
+.media-btn.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-text)}
+.memory-save-btn .ic,.tel-save .ic,.cl-save .ic,.sr-add .ic,.prj-newbtn .ic,.sq-add .ic{color:var(--accent-text)}
+.memory-update-btn:disabled,.sq-ctl button:disabled,.sq-add:disabled,.sr-add:disabled{opacity:.45}
+.memory-actions{gap:var(--sp-2);margin-bottom:var(--sp-3)}
+.prj-newbtn{width:100%;margin:0 0 var(--sp-3);height:var(--btn-l)}
+.sq>.prj-newbtn{margin-bottom:var(--sp-1)}
+.sq-add{min-height:var(--btn-m);height:var(--btn-m);font-size:15px;padding:0 var(--sp-3)}
+.fx-tap-btn,.fx-dice-btn{min-height:var(--btn-m);font-size:var(--fs-secondary)}
+/* ── Buttons : destructif ── */
+.st-danger,.cl-del,.sr-del,.pair-renew,.media-btn.pair-renew,.sq-stop,.screen-menu-btn.danger,.rv-ok,#mediaStopBtn{
+  background:var(--danger-soft);color:var(--danger);border:1px solid rgba(255,122,112,.45)}
+.rv-ok{background:var(--danger-fill);color:#fff;border-color:transparent}
+/* ── Buttons : fantôme (liens) ── */
+.tel-link,.pair-manage,.sq-restart,.st-policy,.screen-back{background:none;border:none;color:var(--accent-text);font:700 var(--fs-secondary)/1.2 var(--font-ui);
+  min-height:var(--tap);display:inline-flex;align-items:center;gap:2px;padding:0 var(--sp-1);cursor:pointer}
+.mbar-edit span:last-child,.tel-sum b,.prj-accent{color:var(--accent-text);font:700 var(--fs-secondary)/1.2 var(--font-ui);display:inline-flex;align-items:center}
+
+/* ── Champs ── */
+.text-input,.prj-input{height:48px;border-radius:var(--r-md);border:1px solid var(--border-strong);background:var(--bg);color:var(--text);font:400 var(--fs-body) var(--font-ui);padding:0 var(--sp-3)}
+.text-input::placeholder,.prj-input::placeholder{color:var(--text-3)}
+.text-input:focus,.prj-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* ── Notes, vides, aides ── */
+.media-pool-empty,.sq-empty,.sv-empty{font-size:var(--fs-secondary);line-height:1.5;color:var(--text-2);border:1px dashed var(--border-strong);border-radius:var(--r-md);padding:var(--sp-4)}
+.st-note,.cl-note,.sr-sheet-note,.prj-sub,.memory-hint,.sv-note,.ts-note{font-size:var(--fs-secondary);line-height:1.5;color:var(--text-2)}
+.st-note,.cl-note{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-4)}
+.media-status{font-size:var(--fs-secondary);color:var(--text-2);margin-top:var(--sp-2)}
+.media-status.live{color:var(--success)}
+
+/* ── Couleur : stroboscope, mémoires ── */
+.strobe-preview{height:var(--btn-m);border-radius:var(--r-md);background:var(--bg);border:1px dashed var(--border-strong);font:400 var(--fs-label)/1 var(--font-ui);color:var(--text-2)}
+.strobe-active-badge{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 var(--sp-3);background:var(--accent-soft);border:none;border-radius:var(--r-pill);font:700 var(--fs-caption)/1 var(--font-ui);color:var(--accent-text);animation:none}
+.memory-item{min-height:var(--tap);border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface-3);padding:var(--sp-2) var(--sp-3)}
+.memory-item.active{border-color:var(--accent);background:var(--accent-soft)}
+.memory-name{font-size:var(--fs-secondary);color:var(--text)}
+.memory-item.active .memory-name{color:var(--accent-text)}
+.memory-swatch{width:24px;height:24px;border-radius:var(--r-sm);border-color:var(--border-strong)}
+.memory-del{min-width:var(--tap);min-height:var(--tap);margin:-8px -12px -8px 0;color:var(--text-3)}
+
+/* ── Effets ── */
+.effects-grid{gap:var(--sp-2)}
+.effect-card{min-height:56px;padding:var(--sp-2) var(--sp-1);justify-content:center;border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface-3)}
+.effect-card:hover,.effect-card:active{border-color:var(--border-strong);transform:none}
+.effect-card-name{font:700 var(--fs-label)/1.25 var(--font-ui);color:var(--text)}
+.effect-card.active{border-color:var(--accent);background:var(--accent-soft);box-shadow:none}
+.effect-card.active .effect-card-name{color:var(--accent-text)}
+
+/* ── Média ── */
+.media-add-row{gap:var(--sp-2)}
+.media-add-row .media-btn{flex:1;margin-bottom:var(--sp-3)}
+.pool-tile{border-radius:var(--r-md);border-color:var(--border)}
+.pool-tile .pool-name{font:700 var(--fs-caption)/1.2 var(--font-ui);padding:12px 6px 4px}
+.pool-tile .pool-num{min-width:20px;height:20px;line-height:20px;font:700 var(--fs-caption)/20px var(--font-mono);top:4px;left:4px}
+.pool-tile .pool-del{width:28px;height:28px;top:0;right:0}
+.pool-tile .pool-del::after{content:'';position:absolute;inset:-8px}
+.mbar{gap:var(--sp-2);margin:var(--sp-1) 0 var(--sp-3)}
+.mbar-toggle{font:400 var(--fs-body)/1.3 var(--font-ui);min-height:var(--tap)}
+.mbar-edit,.tel-sum,.sq-phone{min-height:var(--btn-l);padding:var(--sp-2) var(--sp-3);border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface-2);
+  color:var(--text-2);font:400 var(--fs-label)/1.4 var(--font-ui);align-items:center}
+
+/* ── Tel ── */
+.tel-head{margin-bottom:var(--sp-2);min-height:var(--tap)}
+.tel-head .panel-label{margin:0}
+.tel-sum-row{margin-top:var(--sp-4)}
+.tel-sum-row .panel-label{margin-bottom:var(--sp-2)}
+#callWhoPanel .text-input{margin-bottom:var(--sp-3)}
+#callPhotoPreview{width:48px;height:48px;border-color:var(--border-strong);background-color:var(--surface-3)}
+.tel-save{width:100%;margin-top:var(--sp-3)}
+.tel-saved{font:700 var(--fs-secondary)/1.4 var(--font-ui);color:var(--success)}
+.lic-pv{border-radius:var(--r-lg);padding:var(--sp-4);gap:var(--sp-3)}
+.lic-pv-tag{font:700 var(--fs-caption)/1 var(--font-ui);border:none;background:var(--accent-soft);color:var(--accent-text);border-radius:var(--r-pill);padding:6px 10px}
+.lic-pv p{font-size:var(--fs-secondary);color:var(--text-2)}
+
+/* ── Séquence ── */
+.sq{gap:var(--sp-3)}
+.sq-head{padding-bottom:var(--sp-2);border-bottom-color:var(--border);min-height:52px}
+.sq-title{font:700 var(--fs-title-s)/1.3 var(--font-ui)}
+.sq-sub{font-size:var(--fs-label);color:var(--text-2)}
+.sq-phone{width:100%;color:var(--text);font-size:var(--fs-secondary)}
+.sq-phone-l{display:inline-flex;align-items:center;gap:var(--sp-2);font-weight:700}
+.sq-phone-v{font-size:var(--fs-caption);color:var(--text-2)}
+.sq-list{padding:var(--sp-1);gap:2px}
+.sq-row{grid-template-columns:20px 22px minmax(0,1fr) auto;gap:var(--sp-2);min-height:var(--tap);padding:var(--sp-1) var(--sp-2);border-radius:var(--r-md)}
+.sq-row.cur{border-color:var(--accent);background:var(--accent-soft)}
+.sq-row.next{border:1px dashed var(--border-strong)}
+.sq-row.done{opacity:.55}
+.sq-num{font-size:var(--fs-caption);color:var(--text-3);text-align:right}
+.sq-ic{display:flex;color:var(--text-2);font-size:0}
+.sq-ic .ic{width:var(--icon-md);height:var(--icon-md)}
+.sq-row.cur .sq-ic{color:var(--accent-text)}
+.sq-label{font-size:var(--fs-secondary);color:var(--text)}
+.sq-badge{font:700 var(--fs-caption)/1 var(--font-ui);height:24px;display:inline-flex;align-items:center;padding:0 var(--sp-2);border:none;border-radius:var(--r-pill)}
+.sq-badge.go{background:var(--accent-soft)} .sq-badge.auto{background:rgba(111,180,255,.14)} .sq-badge.actor{background:var(--success-soft)}
+.sq-legend{font:400 var(--fs-caption)/1.4 var(--font-ui);color:var(--text-2);gap:var(--sp-3)}
+.sq-now{font-size:var(--fs-secondary);color:var(--text-2);padding:var(--sp-3) var(--sp-4)}
+.sq-ctl{gap:var(--sp-2);padding-top:var(--sp-3);background:linear-gradient(to top,var(--bg) 72%,rgba(11,11,13,0))}
+.sq-ctl button{height:56px;border-radius:var(--r-md);font:700 var(--fs-body)/1 var(--font-ui)}
+.sq-go{font-size:20px;letter-spacing:.04em}
+.sq-back .ic{width:var(--icon-lg);height:var(--icon-lg)}
+
+/* ── Réglages, Projets : ViewHeader + ListRow ── */
+.st-head{justify-content:flex-start;gap:var(--sp-1);min-height:56px;padding-bottom:0;border-bottom-color:var(--border)}
+.st-back{width:var(--tap);height:var(--tap);margin:0 0 0 -10px;padding:0;font-size:0;color:var(--text);display:flex;align-items:center;justify-content:center;border-radius:var(--r-md)}
+.st-back .ic{width:var(--icon-lg);height:var(--icon-lg)}
+.st-back .ic-txt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.st-title{font:700 var(--fs-title-s)/1.3 var(--font-ui);flex:1}
+.st-spacer{display:none}
+.st-row,.cr-row,.sr-row{min-height:56px;border-bottom:1px solid var(--border);gap:var(--sp-3)}
+.st-row{padding:var(--sp-2) 0}
+.st-row-label,.cr-name,.sr-row-label,.prj-pn{font-size:var(--fs-body);line-height:1.35;color:var(--text)}
+.st-row-sub,.cr-meta,.prj-pm{font-size:var(--fs-label);line-height:1.4;color:var(--text-2);margin-top:2px}
+.st-row-val{font-size:var(--fs-secondary);color:var(--text-2);display:inline-flex;align-items:center;gap:2px}
+.st-row-val.on{color:var(--success);font-weight:700}
+.st-row-val.off{color:var(--accent-text);font-weight:700}
+.st-row-val .ic-trail,.prj-accent .ic-trail{width:var(--icon-md);height:var(--icon-md);color:var(--text-3)}
+.prj-accent .ic-trail{color:var(--accent-text)}
+.st-btn{min-height:var(--btn-l);height:var(--btn-l)}
+.st-foot{font-size:var(--fs-label);color:var(--text-2);gap:var(--sp-2);padding-top:var(--sp-4)}
+.st-policy{font-size:var(--fs-secondary)}
+.prj-proj{min-height:72px;border-bottom:1px solid var(--border);gap:var(--sp-3);padding:var(--sp-2) 0}
+.prj-proj.act{border-left:3px solid var(--accent);margin-left:-16px;padding-left:13px;width:calc(100% + 16px)}
+.prj-proj.act .prj-pn{color:var(--text);font-weight:700}
+#project-view .prj-tag{text-transform:capitalize}
+.prj-tag{display:inline-flex;align-items:center;height:22px;font:700 var(--fs-caption)/1 var(--font-ui);color:var(--accent-text);background:var(--accent-soft);border:none;border-radius:var(--r-pill);padding:0 var(--sp-2);margin-left:var(--sp-2);vertical-align:1px}
+.prj-pm{font-variant-numeric:tabular-nums}
+.prj-more,.cr-more,.cl-more{min-width:var(--tap);min-height:var(--tap);width:var(--tap);height:var(--tap);display:flex;align-items:center;justify-content:center;border-radius:var(--r-md);color:var(--text-2);padding:0;margin-right:-8px}
+:is(.prj-more,.cr-more,.cl-more) .ic{width:var(--icon-lg);height:var(--icon-lg)}
+.prj-sec{height:var(--btn-l)}
+
+/* ── Feuille du bas (sr-sheet) ── */
+#sr-sheet{background:var(--scrim)}
+.sr-sheet{background:var(--surface-2);border-top:1px solid var(--border);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:var(--sp-2) var(--sp-4) calc(var(--sp-5) + env(safe-area-inset-bottom));gap:var(--sp-1);box-shadow:var(--e3)}
+.sr-sheet-grip{width:36px;height:4px;background:var(--border-strong);margin-bottom:var(--sp-3)}
+.sr-sheet h2{font:700 var(--fs-title)/1.3 var(--font-ui);margin:0 0 var(--sp-2)}
+.cr-av{width:40px;height:40px;font:700 var(--fs-secondary)/1 var(--font-ui)}
+.cr-row.on .cr-name{color:var(--accent-text);font-weight:700}
+.sr-add{margin-top:var(--sp-3);width:100%}
+.sr-actions{gap:var(--sp-2);margin-top:var(--sp-4)}
+.sr-cancel,.sr-ok,.sr-del{height:var(--btn-l)}
+
+/* ── Dialogues ── */
+#pair-verify,#sr-revoke{background:var(--scrim)}
+.pv-dialog,.rv-dialog{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--e3);padding:var(--sp-5)}
+.pv-dialog h2,.rv-dialog h2{font:700 var(--fs-title)/1.3 var(--font-ui)}
+.pv-text,.rv-text{font-size:var(--fs-body);color:var(--text-2);line-height:1.5}
+.pv-warn,.rv-sub,.pv-foot{font-size:var(--fs-secondary);color:var(--text-2)}
+.pv-sas{font-size:var(--fs-numeric);font-weight:500;letter-spacing:.06em}
+.pv-cancel,.pv-ok,.rv-cancel,.rv-ok{height:var(--btn-l)}
+
+/* ── Écran de jeu : rejoindre (screen-connect) ── */
+#screen-connect{background:var(--bg);gap:var(--sp-4);padding-top:max(32px,env(safe-area-inset-top))}
+#screen-connect h2{font:700 var(--fs-display)/1.2 var(--font-ui);color:var(--text)}
+.pj-sub{font-size:var(--fs-secondary);color:var(--text-2);margin-top:calc(-1 * var(--sp-2))}
+.pj-viewfinder{width:256px;height:292px;border-radius:var(--r-xl);background:var(--surface-1);border:1px solid var(--border)}
+.pj-corners{inset:auto;top:-7px;left:-7px;width:270px;height:270px}
+.pj-cam-label{bottom:10px;font-size:var(--fs-label);color:var(--text-2)}
+.pair-or{font:700 var(--fs-label)/1.4 var(--font-ui);color:var(--text-3);gap:var(--sp-3)}
+.pair-or::before,.pair-or::after{background:var(--border)}
+.pj-form{gap:var(--sp-2)}
+.pj-field input{height:56px;background:var(--surface-1);border:1px solid var(--border-strong);border-radius:var(--r-md);font-size:24px;letter-spacing:.14em;text-transform:uppercase}
+.pj-field input::placeholder{color:var(--text-3)}
+.pj-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.pj-form .screen-go-btn{height:56px;padding:0 var(--sp-5);font-size:var(--fs-body)}
+.pj-help{font-size:var(--fs-secondary);color:var(--text-2);line-height:1.5}
+#screen-connect .screen-back{color:var(--text-2);font:700 var(--fs-body)/1 var(--font-ui);height:var(--btn-l);padding:0 var(--sp-4)}
+
+/* ── Écran de jeu : menu (screen-menu) ── */
+#screen-menu{background:rgba(11,11,13,.94);gap:var(--sp-3);padding:max(32px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(32px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left))}
+.screen-menu-info{font:400 var(--fs-secondary)/1.5 var(--font-ui);color:var(--text-2);margin-bottom:var(--sp-3);max-width:320px}
+.screen-menu-btn{max-width:320px;height:52px;padding:0 var(--sp-4);font-size:var(--fs-body)}
+#screen-menu .screen-menu-btn:first-of-type{background:var(--accent);color:var(--on-accent);border-color:transparent}
+#screen-menu .screen-menu-btn.danger{margin-top:var(--sp-5)}
+#screen-revoked{background:var(--bg)}
+.srv-title{font:700 var(--fs-display)/1.2 var(--font-ui)}
+.srv-text{font-size:var(--fs-body);color:var(--text-2);max-width:320px}
+.srv-join{padding:0 var(--sp-5)}
+.srv-home{background:transparent;border-color:transparent;color:var(--accent-text)}
+
+/* ── Curseurs : zone tactile de 44 px de haut, piste de 8 px (dégradé via --track) ── */
+:where(#remote-mode,#tel-style-view,#seq-step-view,#screens-view) input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:var(--tap);margin:0;padding:0;border:none;border-radius:0;background:transparent;cursor:pointer}
+:where(#remote-mode,#tel-style-view,#seq-step-view,#screens-view) input[type=range]::-webkit-slider-runnable-track{
+  height:8px;border-radius:4px;background:var(--track,var(--border-strong))}
+:where(#remote-mode,#tel-style-view,#seq-step-view,#screens-view) input[type=range]::-moz-range-track{
+  height:8px;border-radius:4px;border:none;background:var(--track,var(--border-strong))}
+:where(#remote-mode,#tel-style-view,#seq-step-view,#screens-view) input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:28px;height:28px;margin-top:-10px;border-radius:50%;background:var(--text);border:none;
+  box-shadow:0 1px 6px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.35);cursor:grab}
+:where(#remote-mode,#tel-style-view,#seq-step-view,#screens-view) input[type=range]::-moz-range-thumb{
+  width:28px;height:28px;border-radius:50%;background:var(--text);border:none;
+  box-shadow:0 1px 6px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.35);cursor:grab}
+
+/* ═════ Autres vues : écrans connectés, étape de séquence, téléphone, style,
+   sans réseau, passerelle DMX, licence, avertissements ═════ */
+
+/* ── Cartes et libellés ── */
+.off-card,.ss-card,.dc-saved,.dc-timing-panel,.gw-card,.lic-pv,.prj-warn,.prj-done,.sw-limits{border-radius:var(--r-lg)}
+.off-card,.ss-card,.gw-card{background:var(--surface-1);border:1px solid var(--border);padding:var(--sp-4);gap:var(--sp-3)}
+.off-label,.ss-label,.gw-label,.prj-label{font:700 var(--fs-body)/1.35 var(--font-ui);color:var(--text);margin:0}
+.ss-label.ss-sub,.gw-label.gw-sub{font-size:var(--fs-label);color:var(--text-2);margin-top:var(--sp-2)}
+.ss-text,.off-desc,.off-note,.off-detail,.off-empty,.ss-note,.ss-home-txt,.ss-err,.sq-sub,.gw-ip-sub,.gw-foot,.gw-uni-meta,.gw-pnote,.dc-help,.dc-back-hint,.dc-saved-hint,.dc-saved-meta,.rt-meta,.rt-note,.cl-meta,.pp-note,.pp-cap,.pp-wall-note,.prj-sub,.prj-opt-s,.ts-note{
+  font-size:var(--fs-label);line-height:1.5;color:var(--text-2)}
+.off-sub{font-size:var(--fs-secondary);color:var(--text-2)}
+.off-tip{border-radius:var(--r-lg);padding:var(--sp-3) var(--sp-4)}
+.off-warn,.sq-warn{font-size:var(--fs-secondary);line-height:1.5}
+
+/* ── En-têtes de vue (ViewHeader) : retour · titre · action ── */
+.ss-head,.sv-head,.off-head,.gw-head{min-height:56px;gap:var(--sp-1);padding-bottom:0;border-bottom:1px solid var(--border)}
+.ss-title,.sv-title,.off-title,.gw-title,.gw-head-title{font:700 var(--fs-title-s)/1.3 var(--font-ui);text-align:left}
+.ss-back,.sv-back,.gw-back,.off-back{min-width:var(--tap);min-height:var(--tap);width:auto;padding:0 var(--sp-2) 0 0;margin:0 0 0 -4px;border:none;background:none;color:var(--text-2);
+  font:700 var(--fs-secondary)/1.2 var(--font-ui);display:inline-flex;align-items:center;gap:2px;cursor:pointer;white-space:nowrap}
+.ss-spacer{display:none}
+.ss-title{flex:1;text-align:center}
+
+/* ── Boutons : primaire, secondaire, destructif ── */
+.sw-ok,.nt-send,.ss-save,.off-go,.dc-go,.dc-auto-play,.gw-primary,.gw-run.start,.dc-edit-ok,.dc-write-send,.lic-pv-buy{
+  background:var(--accent);color:var(--on-accent);border:1px solid transparent;border-radius:var(--r-md);font:700 var(--fs-body)/1.2 var(--font-ui);
+  min-height:var(--btn-l);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2)}
+:is(.sw-ok,.nt-send,.ss-save,.off-go,.dc-go,.dc-auto-play,.gw-primary,.dc-edit-ok,.dc-write-send,.lic-pv-buy):active{background:var(--accent-pressed)}
+:is(.sw-ok,.nt-send,.ss-save,.off-go,.dc-go,.dc-auto-play,.gw-primary,.gw-run,.dc-edit-ok,.dc-write-send):disabled{background:var(--surface-3);color:var(--text-2);opacity:1}
+.sw-cancel,.sv-btn,.sv-pair,.sv-icon,.gw-btn,.gw-head-btn,.gw-pdf-btn,.dc-menu-btn,.dc-edit-resume,.dc-ctl-btn,.dc-add,.rt-import,.cl-upd-btn,.dc-auto-pause,.dc-auto-back,.dc-back,
+.torch-onoff-btn,.blackout-btn,.pp-wall-btn,.ss-del.ss-cancel,.gw-run{
+  background:var(--surface-3);color:var(--text);border:1px solid var(--border);border-radius:var(--r-md);font:700 var(--fs-secondary)/1.2 var(--font-ui);
+  min-height:var(--btn-m);padding:0 var(--sp-4);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2)}
+.sv-icon,.sv-pair{padding:0 var(--sp-3)}
+.sv-icon{width:var(--tap);height:var(--tap);padding:0}
+.sw-cancel,.sw-ok{height:var(--btn-l);flex:1}
+.ss-del,.sv-icon.sv-revoke,.dc-menu-btn.danger,.dc-edit-actions .cl-del{
+  background:var(--danger-soft);color:var(--danger);border:1px solid rgba(255,122,112,.45);border-radius:var(--r-md);font:700 var(--fs-secondary)/1.2 var(--font-ui)}
+.ss-actions button{height:var(--btn-l)}
+.ss-save{flex:1.6}
+.ss-step-btn{width:var(--tap);height:var(--tap);border-radius:var(--r-md);background:var(--surface-3);border:1px solid var(--border);color:var(--text);font:700 var(--fs-body)/1 var(--font-ui);display:flex;align-items:center;justify-content:center;padding:0}
+.ss-step-val{min-width:64px;font:500 var(--fs-body)/1 var(--font-mono);color:var(--text)}
+.ss-link,.nt-link,.sq-restart{font:700 var(--fs-secondary)/1.2 var(--font-ui);color:var(--accent-text);min-height:var(--tap);display:inline-flex;align-items:center}
+.nt-link-dim{color:var(--text-2)}
+.nt-links{gap:var(--sp-4)}
+
+/* ── Choix : segments et puces d'étape ── */
+.off-seg,.dc-edit-seg,.gw-unit,.gw-modes{gap:2px;padding:3px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md)}
+.off-seg-btn{height:40px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--text-2);font:700 var(--fs-secondary)/1.2 var(--font-ui);padding:0 var(--sp-1)}
+.off-seg-btn.active{background:var(--surface-3);border-color:var(--border-strong);color:var(--text)}
+.ss-opt{min-height:var(--tap);padding:var(--sp-1) var(--sp-2);border-radius:var(--r-md);border:1px solid var(--border-strong);background:transparent;color:var(--text);font:400 var(--fs-secondary)/1.25 var(--font-ui);display:flex;align-items:center;justify-content:center;gap:6px;text-align:center}
+.ss-opt.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-text);font-weight:700}
+.ss-kinds .ss-opt{min-height:var(--tap);padding:var(--sp-1) var(--sp-1)}
+.sv-chip{height:36px;border-radius:var(--r-pill);border:1px solid var(--border-strong);background:transparent;color:var(--text);font:400 var(--fs-secondary)/1 var(--font-ui);padding:0 var(--sp-3)}
+.sv-chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-text);font-weight:700}
+.sv-chip.add,.sv-group.none{border:1px dashed var(--border-strong);color:var(--text-2);background:transparent}
+.sv-group{height:32px;border-radius:var(--r-pill);border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent-text);font:700 var(--fs-caption)/1 var(--font-ui);padding:0 var(--sp-3)}
+.prj-opt{border:1px solid var(--border-strong);border-radius:var(--r-md);background:transparent;padding:var(--sp-3) var(--sp-4);font-family:var(--font-ui);min-height:var(--tap)}
+.prj-opt.on{border-color:var(--accent);background:var(--accent-soft)}
+.prj-opt-t{font-size:var(--fs-body)}
+.prj-opt.on .prj-opt-t{color:var(--accent-text);font-weight:700}
+
+/* ── Lignes de liste ── */
+.sv-name,.cl-name,.rt-name,.dc-saved-name,.dc-row .dc-text,.gw-pname,.gw-uni-name,.ps-name{font-size:var(--fs-body);color:var(--text)}
+.sv-now,.ps-link{font-size:var(--fs-label);color:var(--text-2)}
+.sv-link,.ss-note.ss-play-note{font-size:var(--fs-caption);font-weight:700}
+.cl-row,.rt-row,.dc-saved-row{min-height:56px;border-radius:var(--r-md);background:var(--surface-2);border:1px solid var(--border)}
+.cl-row.selected,.rt-row.selected,.dc-saved-row.selected{background:var(--accent-soft);border-color:var(--accent)}
+.cl-row.selected .cl-num,.cl-row.on .cl-name,.rt-row.selected .rt-name,.dc-saved-row.selected .dc-saved-name{color:var(--accent-text)}
+.cl-more,.dc-saved-more,.rt-del,.cr-more{min-width:var(--tap);min-height:var(--tap);color:var(--text-2)}
+.sv-empty,.sq-empty,.dc-saved-empty,.gw-uni-empty,.cr-empty{font-size:var(--fs-secondary);color:var(--text-2)}
+
+/* ── Champs ── */
+.pp-dt input,.nt-ago input,.gw-field input,.gw-field select,.dc-edit textarea,.dc-write-box textarea,.dc-name,.nt-row .text-input,.nt-app-main .text-input,.nt-title,.nt-body,.dc-typing input{
+  background:var(--bg);border:1px solid var(--border-strong);border-radius:var(--r-md);color:var(--text);font:400 var(--fs-body)/1.4 var(--font-ui);min-height:var(--tap)}
+.nt-ago input,.pp-dt input{text-align:center;font-family:var(--font-mono)}
+.nt-app-main .text-input,.nt-row .text-input,.nt-title{height:var(--btn-l)}
+.nt-body{height:auto;min-height:72px}
+.dc-name:focus,.gw-field input:focus,.gw-field select:focus,.nt-ago input:focus{border-color:var(--accent)}
+
+/* ── Avertissements : bandeaux teintés ── */
+.prj-warn{border:1px solid rgba(255,122,112,.45);background:var(--danger-soft);color:var(--text);font-size:var(--fs-secondary)}
+.prj-warn-soft{border-color:rgba(255,107,44,.5);background:var(--accent-soft)}
+.prj-done{border:1px solid rgba(95,223,138,.45);background:var(--success-soft);color:var(--text);font-size:var(--fs-secondary)}
+.flash-unavail-notice{font-size:var(--fs-label);line-height:1.55;color:var(--text-2);background:var(--warning-soft);border:1px solid rgba(255,196,64,.4);border-radius:var(--r-lg)}
+.flash-unavail-notice strong{color:var(--warning);font-size:var(--fs-secondary);letter-spacing:0}
+
+/* ── Dialogues et feuilles ── */
+.sw-dialog{background:var(--surface-2);border:1px solid rgba(255,196,64,.45);border-radius:var(--r-xl);padding:var(--sp-5);box-shadow:var(--e3)}
+.sw-head h2{font:700 var(--fs-title)/1.3 var(--font-ui)}
+.sw-text{font-size:var(--fs-secondary);color:var(--text-2);line-height:1.55}
+.sw-limits{background:var(--surface-3);font-size:var(--fs-label);color:var(--text-2)}
+.sw-skip{font-size:var(--fs-secondary);min-height:var(--tap)}
+.sw-actions{gap:var(--sp-2)}
+#strobe-warn{background:var(--scrim)}
+#app-confirm{background:var(--scrim)}
+
+/* ── Destructif doux (partout hors dialogue de confirmation) ── */
+.chip.danger,.effect-btn.danger,.media-btn.danger{background:var(--danger-soft);color:var(--danger);border:1px solid rgba(255,122,112,.45)}
+.chip.danger:hover,.effect-btn.danger:hover{background:var(--danger-soft);color:var(--danger);border-color:rgba(255,122,112,.45)}
+.media-times{display:flex;justify-content:space-between;font-size:var(--fs-caption);color:var(--text-2);margin-top:var(--sp-1)}
 </style>
 </head>
 <body>
@@ -2152,7 +2577,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
       <div style="height:1px;background:var(--border);margin:14px 0"></div>
       <div class="panel-label">Effets sur le récepteur</div>
       <div class="toggle-row" style="margin-bottom:10px">
-        <div><div class="toggle-label" style="font-size:.75rem">🔦 Torche synchronisée</div><div class="toggle-sub">Flash la torche du récepteur avec le strobe</div></div>
+        <div><div class="toggle-label">🔦 Torche synchronisée</div><div class="toggle-sub">Flash la torche du récepteur avec le strobe</div></div>
         <label class="toggle-switch">
           <input type="checkbox" id="torchSyncToggle" onchange="onStrobeParamChange()">
           <div class="toggle-track"></div><div class="toggle-thumb"></div>
@@ -2217,7 +2642,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
         <button class="effect-btn" id="efx-heartbeat" onclick="sendTorchEffect('heartbeat')">
           <span class="effect-icon">💓</span>Battement
         </button>
-        <button class="effect-btn" id="efx-stop" onclick="sendTorchEffect('stop')" style="border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.7)">
+        <button class="effect-btn danger" id="efx-stop" onclick="sendTorchEffect('stop')">
           <span class="effect-icon">⏹</span>Stop effet
         </button>
       </div>
@@ -2227,7 +2652,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
   <div class="tab-content" id="content-effects">
     <div id="effectActiveBadge" class="effect-active-row" style="display:none">
       <span class="strobe-active-badge" id="effectBadgeText">✨ Actif</span>
-      <button class="chip" style="border-color:rgba(220,80,80,.5);color:rgba(220,80,80,.8)" onclick="stopAllEffects()">⏹ Stop</button>
+      <button class="chip danger" onclick="stopAllEffects()">⏹ Stop</button>
     </div>
     <div class="panel">
       <div class="panel-label">Laboratoire d'effets</div>
@@ -2378,7 +2803,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
       <div id="effectTvBlocksPanel" style="display:none">
         <div class="slider-header" style="margin-bottom:10px">
           <label>Blocs couleurs</label>
-          <button class="chip" id="tvAddBlockBtn" onclick="tvAddBlock()" style="padding:3px 12px">+ Bloc</button>
+          <button class="chip" id="tvAddBlockBtn" onclick="tvAddBlock()">+ Bloc</button>
         </div>
         <div class="tv-blocks-strip" id="tvBlocksStrip"></div>
         <div class="tv-block-editor">
@@ -2473,9 +2898,9 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
       </div>
       <div id="mediaTimeline" style="display:none;margin:4px 0 12px">
         <input type="range" id="mediaSeek" min="0" max="100" step="0.1" value="0"
-               style="background:linear-gradient(to right,var(--accent),var(--accent) 0%,#333 0%)"
+               style="--track:linear-gradient(to right,var(--accent) 0%,var(--border-strong) 0%)"
                oninput="onSeekInput()" onchange="onSeekEnd()">
-        <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums">
+        <div class="media-times">
           <span id="mediaCurTime">0:00</span><span id="mediaDurTime">0:00</span>
         </div>
       </div>
@@ -2492,7 +2917,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
       <p>Exemples prêts à jouer sur l'écran, non modifiables. La licence débloque vos propres appels, SMS et discussions.</p>
       <div class="lic-pv-row">
         <button type="button" class="lic-pv-id" aria-label="Copier l'identifiant de cet appareil" onclick="licCopyId(this)"><span>ID</span><b class="lic-id-txt">····-····</b>⧉</button>
-        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
+        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">Obtenir une licence ›</button>
       </div>
     </div>
     <div class="panel">
@@ -2535,7 +2960,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
     </div>
     <div class="panel" id="callLockPanel" style="display:none">
       <div class="toggle-row" style="margin-bottom:12px">
-        <div><div class="toggle-label" style="font-size:.8rem">Écran verrouillé</div><div class="toggle-sub">La notification arrive sur un faux écran verrouillé</div></div>
+        <div><div class="toggle-label">Écran verrouillé</div><div class="toggle-sub">La notification arrive sur un faux écran verrouillé</div></div>
         <label class="toggle-switch">
           <input type="checkbox" id="lockToggle">
           <div class="toggle-track"></div><div class="toggle-thumb"></div>
@@ -2622,7 +3047,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
       <button class="media-btn" id="callTriggerBtn" onclick="triggerCall()"><span class="media-icon">📞</span> Faire sonner</button>
       <div style="display:flex;gap:10px">
         <button class="media-btn" style="flex:1" id="callAnswerBtn" onclick="sendMsg({type:'call:answer'})">✅ Décrocher</button>
-        <button class="media-btn" style="flex:1;border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)" onclick="sendMsg({type:'call:end'})">⏹ Terminer</button>
+        <button class="media-btn danger" style="flex:1" onclick="sendMsg({type:'call:end'})">⏹ Terminer</button>
       </div>
       <div class="media-status" id="callStatus">—</div>
     </div>
@@ -2633,7 +3058,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
       <button type="button" class="gw-seg-btn" id="dcTab-saved" onclick="setChatView('saved')">Enregistrées (0)</button>
     </div>
     <!-- Nouvelle discussion (maquette 47b) : fil vierge, « Enregistrer avant ? » si le fil a changé -->
-    <button type="button" class="prj-newbtn" id="dcNewBtn" style="display:none" onclick="chatNewAsk()">+ NOUVELLE DISCUSSION</button>
+    <button type="button" class="prj-newbtn" id="dcNewBtn" style="display:none" onclick="chatNewAsk()">+ Nouvelle discussion</button>
     <div class="dc-saved" id="dcSavedPanel" style="display:none">
       <div class="dc-saved-rows" id="dcSavedRows"></div>
       <div class="dc-saved-empty" id="dcSavedEmpty">Aucune discussion enregistrée pour l'instant.</div>
@@ -2665,8 +3090,8 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
       <div class="dc-auto-head"><span class="panel-label">Lecture automatique</span><span class="dc-auto-state" id="dcAutoState" role="status"></span></div>
       <div class="dc-auto-bar"><i id="dcAutoFill"></i></div>
       <div class="dc-auto-row">
-        <button type="button" class="dc-auto-play" id="dcAutoPlay" onclick="chatAutoStart()">▶ LECTURE AUTO</button>
-        <button type="button" class="dc-auto-pause" id="dcAutoPause" onclick="chatAutoPause()" disabled>⏸ PAUSE</button>
+        <button type="button" class="dc-auto-play" id="dcAutoPlay" onclick="chatAutoStart()">▶ Lecture auto</button>
+        <button type="button" class="dc-auto-pause" id="dcAutoPause" onclick="chatAutoPause()" disabled>⏸ Pause</button>
         <button type="button" class="dc-auto-back" id="dcAutoBack" onclick="chatAutoBack()" aria-label="Pause et revenir d'un message" title="Pause et revenir d'un message" disabled>↶</button>
       </div>
     </div>
@@ -2724,7 +3149,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
       <p>Exemples prêts à jouer sur l'écran, non modifiables. La licence débloque vos propres séquences.</p>
       <div class="lic-pv-row">
         <button type="button" class="lic-pv-id" aria-label="Copier l'identifiant de cet appareil" onclick="licCopyId(this)"><span>ID</span><b class="lic-id-txt">····-····</b>⧉</button>
-        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
+        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">Obtenir une licence ›</button>
       </div>
     </div>
     <div class="dc-tabs">
@@ -2733,20 +3158,20 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
     </div>
     <div class="sq" id="seqCurView">
       <!-- Nouvelle séquence (maquette 47) : séquence vide, « Enregistrer avant ? » si la séquence a changé -->
-      <button type="button" class="prj-newbtn" id="seqNewBtn" onclick="seqNewAsk()">+ NOUVELLE SÉQUENCE</button>
-      <div class="sq-head"><span class="sq-title">Séquence</span><button type="button" class="sq-add" id="seqAddBtn" onclick="openSeqStep(null)">+ ÉTAPE</button></div>
+      <button type="button" class="prj-newbtn" id="seqNewBtn" onclick="seqNewAsk()">+ Nouvelle séquence</button>
+      <div class="sq-head"><span class="sq-title">Séquence</span><button type="button" class="sq-add" id="seqAddBtn" onclick="openSeqStep(null)">+ Étape</button></div>
       <div class="sq-sub"><span id="seqName"></span><span id="seqTarget"></span></div>
       <!-- Téléphone au départ (maquette 28b) : barre d'état de la séquence -->
       <button type="button" class="sq-phone" id="seqPhoneBtn" onclick="openPhoneParams('seq')"><span class="sq-phone-l">📱 Téléphone au départ</span><span class="sq-phone-v" id="seqPhoneSum"></span></button>
       <div class="sq-list" id="seqRows"></div>
-      <div class="sq-empty" id="seqEmpty">Aucune étape. « + ÉTAPE » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.</div>
+      <div class="sq-empty" id="seqEmpty">Aucune étape. « + Étape » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.</div>
       <div class="sq-legend"><span class="go">● GO</span><span class="auto">● automatique</span><span class="actor">● geste du comédien</span></div>
       <div class="sq-now" id="seqNow" role="status"></div>
       <div class="sq-warn" id="seqWarn" role="alert" style="display:none"></div>
       <div class="sq-ctl">
         <button type="button" class="sq-go" id="seqGoBtn" onclick="seqGoTap()">GO</button>
         <button type="button" class="sq-back" id="seqBackBtn" aria-label="Revenir d'une étape" title="Revenir d'une étape" onclick="seqBack()">↶</button>
-        <button type="button" class="sq-stop" id="seqStopBtn" onclick="seqStop()">STOP</button>
+        <button type="button" class="sq-stop" id="seqStopBtn" onclick="seqStop()">Stop</button>
       </div>
     </div>
     <div class="dc-saved" id="seqSavedView" style="display:none">
@@ -2817,8 +3242,8 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
   <div class="ss-err" id="ssErr" role="alert" style="display:none"></div>
   <input type="file" id="seqHomeInput" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onSeqHomeImage(this.files);this.value=''">
   <div class="ss-actions">
-    <button type="button" class="ss-del" id="ssDel" onclick="seqStepDelete()">SUPPRIMER</button>
-    <button type="button" class="ss-save" id="ssSave" onclick="seqStepSave()">ENREGISTRER</button>
+    <button type="button" class="ss-del" id="ssDel" onclick="seqStepDelete()">Supprimer</button>
+    <button type="button" class="ss-save" id="ssSave" onclick="seqStepSave()">Enregistrer</button>
   </div>
 </div>
 
@@ -3078,17 +3503,17 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
     <div class="st-lic-state"><span class="st-lic-dot" id="stLicDot"></span><span id="stLicState">Aucune licence</span><span class="st-lic-until" id="stLicUntil"></span></div>
     <div class="st-lic-rows" id="stLicRows"></div>
     <div class="st-lic-msg" id="stLicMsg" role="status"></div>
-    <button type="button" class="st-lic-wide" id="stLicCheck" onclick="licCheckNow()">VÉRIFIER MAINTENANT</button>
+    <button type="button" class="st-lic-wide" id="stLicCheck" onclick="licCheckNow()">Vérifier maintenant</button>
   </div>
   <div class="st-card" id="stLicIdCard" style="display:none">
     <span class="st-label">Identifiant de cet appareil</span>
     <div class="st-lic-id lic-id-txt" id="stLicId">····-····</div>
     <div class="st-lic-acts">
-      <button type="button" class="st-lic-act" onclick="licCopyId(this)">COPIER</button>
-      <button type="button" class="st-lic-act" onclick="licShareId(this)">PARTAGER</button>
+      <button type="button" class="st-lic-act" onclick="licCopyId(this)">Copier</button>
+      <button type="button" class="st-lic-act" onclick="licShareId(this)">Partager</button>
     </div>
     <p class="st-note" id="stLicBuyNote" style="display:none"></p>
-    <button type="button" class="st-lic-wide st-lic-buy" id="stLicBuy" style="display:none" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
+    <button type="button" class="st-lic-wide st-lic-buy" id="stLicBuy" style="display:none" onclick="licOpenBuy()">Obtenir une licence ›</button>
   </div>
   <!-- Projet (maquette 45, 74-project-ui.js) : projet ouvert, exporter, importer -->
   <div class="st-card st-rows" id="stProject">
@@ -3133,8 +3558,8 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
       <span class="st-row-val" id="stLinkVal">Auto</span>
     </button>
   </div>
-  <button type="button" class="st-btn st-danger" onclick="settingsForgetScreens()">OUBLIER TOUS LES ÉCRANS APPAIRÉS</button>
-  <button type="button" class="st-btn" onclick="settingsGoHome()">RETOUR À L'ACCUEIL</button>
+  <button type="button" class="st-btn st-danger" onclick="settingsForgetScreens()">Oublier tous les écrans appairés</button>
+  <button type="button" class="st-btn" onclick="settingsGoHome()">Retour à l'accueil</button>
   <div class="st-foot">
     <a href="confidentialite.html" class="st-policy" onclick="event.preventDefault();openPrivacyPolicy()">Politique de confidentialité</a>
     <span>Aucun compte · aucune publicité · aucun suivi</span>
@@ -3180,7 +3605,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
     <span class="off-label">Préparation des écrans</span>
     <div class="off-rows" id="offPrepRows"></div>
   </div>
-  <button type="button" class="off-go" id="offPrepBtn" onclick="prepRunAll()">TOUT PRÉPARER MAINTENANT</button>
+  <button type="button" class="off-go" id="offPrepBtn" onclick="prepRunAll()">Tout préparer maintenant</button>
   <div class="off-note" id="offPrepNote" role="status" style="display:none"></div>
   <div class="off-tip"><b>Wi-Fi local sans Internet :</b> connectez tous les appareils au même mini-routeur de voyage, ou au partage de connexion d'un des téléphones.</div>
 </div>
@@ -12003,38 +12428,38 @@ const EFFECT_FAMILIES = [
 
 const EFFECT_CONFIG = {
   // — Spatiaux —
-  chaser:    { icon:'💫', name:'Chaser', family:'spatial', speedLabel:'Vitesse', min:0.1, max:6, step:0.1, def:1, intDef:100,
+  chaser:    { name:'Chaser', family:'spatial', speedLabel:'Vitesse', min:0.1, max:6, step:0.1, def:1, intDef:100,
                color1:'#ffffff', color2:'#05050a', c1Label:'Bande', c2Label:'Fond',
                count:{ label:'Nombre de bandes', min:1, max:12, def:1 }, dir:true, mode:true, shape:true,
                width:20, wing:1, rot:0, lead:120, fade:120, fadeLabel:'Traîne arrière', chaosDef:0 },
-  noise:     { icon:'📶', name:'Noise', family:'spatial', speedLabel:'Vitesse (img/s)', min:1, max:30, step:1, def:12, intDef:100,
+  noise:     { name:'Noise', family:'spatial', speedLabel:'Vitesse (img/s)', min:1, max:30, step:1, def:12, intDef:100,
                color1:'#ffffff', c1Label:'Teinte',
                count:{ label:'Taille de grain', min:2, max:32, def:8 } },
-  aurora:    { icon:'🌌', name:'Aurora', family:'spatial', speedLabel:'Dérive des nappes', min:0.05, max:2, step:0.05, def:0.3, intDef:100,
+  aurora:    { name:'Aurora', family:'spatial', speedLabel:'Dérive des nappes', min:0.05, max:2, step:0.05, def:0.3, intDef:100,
                color1:'#20e0a0', color2:'#3040ff', c1Label:'Nappe 1', c2Label:'Nappe 2' },
-  water:     { icon:'🌊', name:'Caustiques', family:'spatial', speedLabel:'Vitesse', min:0.1, max:3, step:0.1, def:0.8, intDef:100,
+  water:     { name:'Caustiques', family:'spatial', speedLabel:'Vitesse', min:0.1, max:3, step:0.1, def:0.8, intDef:100,
                color1:'#25c8e8', color2:'#021620', c1Label:'Eau', c2Label:'Fond' },
   // — Rythmiques —
-  pulse:     { icon:'💓', name:'Pulse BPM', family:'rythm', speedLabel:'BPM', min:20, max:240, step:1, def:60, intDef:100,
+  pulse:     { name:'Pulse BPM', family:'rythm', speedLabel:'BPM', min:20, max:240, step:1, def:60, intDef:100,
                color1:'#ffffff', color2:'#000000', c1Label:'Crête', c2Label:'Creux', tap:true },
-  traffic:   { icon:'🚗', name:'Phares', family:'rythm', speedLabel:'Passages / s', min:0.05, max:2, step:0.05, def:0.3, intDef:100,
+  traffic:   { name:'Phares', family:'rythm', speedLabel:'Passages / s', min:0.05, max:2, step:0.05, def:0.3, intDef:100,
                color1:'#ffb054', color2:'#050508', c1Label:'Phares', c2Label:'Nuit' },
-  weld:      { icon:'🔩', name:'Soudure', family:'rythm', speedLabel:'Cadence', min:0.2, max:6, step:0.1, def:1.5, intDef:100,
+  weld:      { name:'Soudure', family:'rythm', speedLabel:'Cadence', min:0.2, max:6, step:0.1, def:1.5, intDef:100,
                color1:'#cfe4ff', color2:'#05060a', c1Label:'Arc', c2Label:'Fond' },
-  neon:      { icon:'🏮', name:'Néon HS', family:'rythm', speedLabel:'Nervosité', min:0.2, max:6, step:0.1, def:1.5, intDef:100,
+  neon:      { name:'Néon HS', family:'rythm', speedLabel:'Nervosité', min:0.2, max:6, step:0.1, def:1.5, intDef:100,
                color1:'#ff2e88', c1Label:'Néon' },
-  police:    { icon:'🚨', name:'Police', family:'rythm', speedLabel:'Vitesse alternance', min:0.5, max:8, step:0.5, def:3, intDef:100,
+  police:    { name:'Police', family:'rythm', speedLabel:'Vitesse alternance', min:0.5, max:8, step:0.5, def:3, intDef:100,
                color1:'#ff2020', color2:'#2040ff', c1Label:'Couleur A', c2Label:'Couleur B' },
-  lightning: { icon:'⚡', name:'Éclair', family:'rythm', speedLabel:'Fréquence', min:0.1, max:3, step:0.1, def:0.8, intDef:100,
+  lightning: { name:'Éclair', family:'rythm', speedLabel:'Fréquence', min:0.1, max:3, step:0.1, def:0.8, intDef:100,
                color1:'#f4f0ff', color2:'#03030a', c1Label:'Éclair', c2Label:'Ambiance' },
-  paparazzi: { icon:'📸', name:'Paparazzi', family:'rythm', speedLabel:'Rafales / s', min:0.2, max:4, step:0.1, def:1, intDef:100,
+  paparazzi: { name:'Paparazzi', family:'rythm', speedLabel:'Rafales / s', min:0.2, max:4, step:0.1, def:1, intDef:100,
                color1:'#fffce6', color2:'#080808', c1Label:'Flash', c2Label:'Ambiance',
                count:{ label:'Flashes / rafale', min:1, max:10, def:3 } },
   // — Ambiances —
-  tv:        { icon:'📺', name:'TV', family:'ambiance', speedLabel:'Vitesse (img/s)', min:0.5, max:15, step:0.5, def:4, intDef:100, blocks:true, smooth:30 },
-  candle:    { icon:'🕯', name:'Bougie', family:'ambiance', speedLabel:'Vacillement', min:0.2, max:5, step:0.1, def:1.2, intDef:100,
+  tv:        { name:'TV', family:'ambiance', speedLabel:'Vitesse (img/s)', min:0.5, max:15, step:0.5, def:4, intDef:100, blocks:true, smooth:30 },
+  candle:    { name:'Bougie', family:'ambiance', speedLabel:'Vacillement', min:0.2, max:5, step:0.1, def:1.2, intDef:100,
                color1:'#ff7814', c1Label:'Flamme' },
-  fire:      { icon:'🔥', name:'Feu', family:'ambiance', speedLabel:'Intensité rapide', min:0.5, max:10, step:0.5, def:3, intDef:100,
+  fire:      { name:'Feu', family:'ambiance', speedLabel:'Intensité rapide', min:0.5, max:10, step:0.5, def:3, intDef:100,
                color1:'#ff7314', color2:'#3c0a00', c1Label:'Flamme', c2Label:'Braise' },
 };
 
@@ -12050,7 +12475,7 @@ function buildEffectCards() {
       b.className = 'effect-card';
       b.id = 'efxcard-' + key;
       b.onclick = () => selectEffect(key);
-      b.innerHTML = `<span class="effect-card-icon">${cfg.icon}</span><span class="effect-card-name">${cfg.name}</span>`;
+      b.innerHTML = `<span class="effect-card-name">${cfg.name}</span>`;
       grid.appendChild(b);
     }
   }
@@ -12178,7 +12603,7 @@ function selectEffect(name, acked) {
   if (badge) badge.style.display = 'flex';
   const cfg = EFFECT_CONFIG[name];
   const badgeText = document.getElementById('effectBadgeText');
-  if (badgeText && cfg) badgeText.textContent = cfg.icon + ' ' + cfg.name + ' actif';
+  if (badgeText && cfg) badgeText.textContent = cfg.name + ' actif';
   const panel = document.getElementById('effectSettingsPanel');
   if (panel && cfg) {
     panel.style.display = 'block';
@@ -13083,11 +13508,10 @@ function renderFxMemories() {
   if (upBtn) upBtn.disabled = !selectedFxMemId;
   grid.innerHTML = '';
   for (const m of fxMemories) {
-    const cfg = EFFECT_CONFIG[m.effect] || {};
     const d = document.createElement('div');
     d.className = 'memory-item' + (m.id === selectedFxMemId ? ' active' : '');
     d.onclick = () => applyFxMemory(m.id);
-    d.innerHTML = `<span style="font-size:1rem">${cfg.icon || '✨'}</span><span class="memory-name">${escapeHtml(m.name)}</span>`;
+    d.innerHTML = `<span class="memory-name">${escapeHtml(m.name)}</span>`;
     const del = document.createElement('button');
     del.className = 'memory-del'; del.textContent = '✕';
     del.onclick = (e) => { e.stopPropagation(); deleteFxMemory(m.id); };
@@ -13684,7 +14108,7 @@ function fmtTime(s) {
 }
 function paintSeek(pct) {
   const s = document.getElementById('mediaSeek');
-  if (s) s.style.background = `linear-gradient(to right,var(--accent) ${pct}%,#333 ${pct}%)`;
+  if (s) s.style.setProperty('--track', `linear-gradient(to right,var(--accent) ${pct}%,var(--border-strong) ${pct}%)`);
 }
 // Message en cours venu d'un écran de la cible (ou d'un écran inconnu : ancien comportement)
 function _mediaFromTarget() { const sid = _rxFrom; return !sid || !scrKnown(sid) || scrInTarget(sid); }
@@ -16110,20 +16534,20 @@ const _PJU_TXT = {
   nameLabel: 'Nom du projet', fileLine: 'Fichier : « {fichier} »', content: 'Contenu',
   always: 'Toujours compris : la séquence en cours et le fil de discussion en cours. Jamais : appairage, écrans, licence.',
   missing: 'Certaines étapes des séquences utiliseront des éléments non exportés ({sections}) : elles arriveront « introuvables ».',
-  size: 'Taille estimée', sizeVal: '≈ {taille}', exportBtn: 'EXPORTER', exporting: 'EXPORT…',
+  size: 'Taille estimée', sizeVal: '≈ {taille}', exportBtn: 'Exporter', exporting: 'Export…',
   exportWeb: 'Téléchargement de « {fichier} »', exportApp: 'Partager, enregistrer dans Fichiers…',
   exported: '« {fichier} » exporté.',
   // 45c
   toImport: 'À importer', howTo: 'Comment l\'importer', notIn: 'Non inclus dans ce fichier', exportedOn: 'Exporté {quand}',
   modes: {
-    merge: ['Ajouter à mes données', 'À la suite de « {projet} » ; doublons : « (2) ».', 'IMPORTER'],
-    replace: ['Remplacer', 'Sections cochées vidées, puis remplies.', 'REMPLACER ET IMPORTER'],
-    new: ['Ouvrir comme nouveau projet', '« {projet} » reste tel quel.', 'OUVRIR LE PROJET'],
+    merge: ['Ajouter à mes données', 'À la suite de « {projet} » ; doublons : « (2) ».', 'Importer'],
+    replace: ['Remplacer', 'Sections cochées vidées, puis remplies.', 'Remplacer et importer'],
+    new: ['Ouvrir comme nouveau projet', '« {projet} » reste tel quel.', 'Ouvrir le projet'],
   },
   newAll: 'Le projet est rangé en entier ; les médias cochés rejoignent le pool, commun à tous les projets.',
   replaceWarn: '⚠ {liste} de « {projet} » seront supprimés. Exportez-le d\'abord pour les garder.',
   replaceRings: 'Les sonneries importées sont remplacées aussi : un appel dont le son disparaît reprend « Classique ».',
-  and: ' et ', importing: 'IMPORT…',
+  and: ' et ', importing: 'Import…',
   // 45d
   okMerge: '« {nom} » ajouté à « {projet} »', okReplace: '« {projet} » : sections remplacées par « {nom} »', okNew: '« {nom} » ouvert comme nouveau projet',
   okNewStored: '« {nom} » rangé dans vos projets',
@@ -16138,7 +16562,7 @@ const _PJU_TXT = {
   preview: 'Aperçu sans licence : les données importées sont gardées ; elles apparaîtront avec la licence.',
   seqNote: 'Les étapes des séquences importées pointent vers les appels, discussions et mémoires importés avec elles.',
   notOpened: 'Le projet n\'a pas été ouvert : {raison}',
-  seeSeqs: 'VOIR LES SÉQUENCES', close: 'FERMER',
+  seeSeqs: 'Voir les séquences', close: 'Fermer',
   // 45e
   errTitle: {
     'not-zip': 'Fichier non reconnu', 'not-project': 'Fichier non reconnu', 'too-large': 'Fichier trop volumineux', version: 'Version plus récente',
@@ -16147,9 +16571,9 @@ const _PJU_TXT = {
   errNotProject: '« {fichier} » n\'est pas un projet SetRemote (.rem).',
   errTooLarge: '« {fichier} » dépasse {max} Mo. Exportez-le sans les médias.',
   nothing: 'Rien n\'a été modifié.', partial: 'Les sections déjà écrites le restent.',
-  pickOther: 'CHOISIR UN AUTRE FICHIER',
+  pickOther: 'Choisir un autre fichier',
   // 46
-  newProject: '+ NOUVEAU PROJET', importProject: 'IMPORTER UN PROJET…',
+  newProject: '+ Nouveau projet', importProject: 'Importer un projet…',
   listNote: 'Toucher un projet : l\'ouvrir. Écrans appairés, licence et réglages sont communs à tous les projets ; le pool média aussi.',
   more: 'Ouvrir, renommer, dupliquer, exporter, supprimer',
   menu: { open: 'Ouvrir', rename: 'Renommer', duplicate: 'Dupliquer', export: 'Exporter…', remove: 'Supprimer' },
@@ -17062,12 +17486,12 @@ const _LIC_TXT = {
   textTel: 'Exemples prêts à jouer sur l\'écran, non modifiables. La licence débloque vos propres appels, SMS et discussions.',
   textSeq: 'Exemples prêts à jouer sur l\'écran, non modifiables. La licence débloque vos propres séquences.',
   idChip: 'ID', idNone: '····-····', copyAria: 'Copier l\'identifiant de cet appareil',
-  buy: 'OBTENIR UNE LICENCE ›', example: ' · exemple 🔒',
+  buy: 'Obtenir une licence ›', example: ' · exemple 🔒',
   none: 'Aucune licence', active: 'Active', until: 'jusqu\'au {date}', soon: 'expire dans {n} j',
   holder: 'Titulaire', devices: 'Appareils', devicesVal: '{n} sur {max}', includes: 'Comprend', checked: 'Vérifiée',
   offline: 'Hors ligne', offlineVal: 'valable jusqu\'au {date}', feat: { tel: 'Tel', seq: 'Séquence' }, nothing: '—',
-  checkNow: 'VÉRIFIER MAINTENANT', checking: 'VÉRIFICATION…',
-  copy: 'COPIER', share: 'PARTAGER', copied: 'COPIÉ ✓',
+  checkNow: 'Vérifier maintenant', checking: 'Vérification…',
+  copy: 'Copier', share: 'Partager', copied: 'Copié ✓',
   buyNote: 'Transmettez cet identifiant lors de l\'achat sur {site} : la licence s\'active toute seule, sans rien saisir.',
   agoNow: 'à l\'instant', agoMin: 'il y a {n} min', agoH: 'il y a {n} h', agoD: 'il y a {n} j',
   err: {
@@ -22514,7 +22938,7 @@ const _CHSV_TXT = {
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Discussion',
   // « + Nouvelle discussion » (maquette 47b)
-  newBtn: '+ NOUVELLE DISCUSSION',
+  newBtn: '+ Nouvelle discussion',
   newAsk: 'Enregistrer « {nom} » avant ?',
   newAskText: 'Le fil en cours a des modifications non enregistrées. La nouvelle discussion part d\'un fil vide (même comédien, même style).',
   newDiscard: 'Ne pas enregistrer',
@@ -23032,7 +23456,7 @@ const _SEQ_TXT = {
   all: 'Tous',
   missing: 'élément introuvable',
   noScreen: 'aucun écran',
-  empty: 'Aucune étape. « + ÉTAPE » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.',
+  empty: 'Aucune étape. « + Étape » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.',
   kind: {
     color: 'Couleur', effect: 'Effet', media: 'Média', call: 'Appel', sms: 'SMS', notif: 'Notif',
     missed: 'Manqué', unlock: 'Déverrouil.', chat: 'Discussion',
@@ -23125,7 +23549,7 @@ const _SEQ_TXT = {
   },
   refMissing: 'L\'élément de cette étape a été supprimé : choisissez-en un autre.',
   needRef: 'Choisissez l\'élément à jouer.',
-  del: 'SUPPRIMER', cancel: 'ANNULER', save: 'ENREGISTRER',
+  del: 'Supprimer', cancel: 'Annuler', save: 'Enregistrer',
   confirmDel: 'Supprimer l\'étape {n} ?',
   leaveTitle: 'Abandonner les modifications ?', leaveNewTitle: 'Abandonner cette étape ?',
   leaveText: 'Les réglages de l\'étape n\'ont pas été enregistrés.',
@@ -24703,12 +25127,12 @@ function renderOfflineView() {
       + '<div class="off-detail">' + escapeHtml(s.detail) + '</div></div>';
   }).join('') : '<div class="off-empty">Aucun écran appairé : appairez les écrans (onglet QR), puis préparez-les ici.</div>');
   const btn = document.getElementById('offPrepBtn'), note = document.getElementById('offPrepNote');
-  let label = 'TOUT PRÉPARER MAINTENANT', on = false, why = '';
+  let label = 'Tout préparer maintenant', on = false, why = '';
   const reach = list.filter((s) => scrOnline(s) && scrMediaReachable(s));
   const work = reach.some((s) => items.some((it) => !prepHas(s, it)));
-  if (_prep && _prep.running) label = 'PRÉPARATION EN COURS…';
+  if (_prep && _prep.running) label = 'Préparation en cours…';
   else if (!list.length) why = '';
-  else if (list.every((s) => items.every((it) => prepHas(s, it)))) label = 'TOUT EST PRÊT';
+  else if (list.every((s) => items.every((it) => prepHas(s, it)))) label = 'Tout est prêt';
   else if (!mediaLinkUp()) why = IN_NATIVE_APP ? 'Pour préparer les écrans, il faut Internet ou le Wi-Fi local : le Bluetooth ne porte que les commandes.'
     : 'Pour préparer les écrans, il faut Internet.';
   else if (!work) why = 'Les écrans à préparer ne sont joignables ni par Internet ni en Wi-Fi local.';
@@ -25395,7 +25819,7 @@ const _SQSV_TXT = {
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Séquence',
   // « + Nouvelle séquence » (maquette 47)
-  newBtn: '+ NOUVELLE SÉQUENCE',
+  newBtn: '+ Nouvelle séquence',
   newAsk: 'Enregistrer « {nom} » avant ?',
   newAskText: 'La séquence en cours a des modifications non enregistrées. La nouvelle séquence part de zéro.',
   newAskTextSaved: 'La séquence en cours a des modifications non enregistrées. La nouvelle séquence part de zéro ; « {nom} » enregistrée reste telle quelle.',
@@ -25891,7 +26315,7 @@ const _PP_TXT = {
   mediaEdit: 'Régler ›',
   // Fond d'écran (maquette 42)
   labelWall: 'Fond d\'écran', wallNote: 'Écran verrouillé et code du téléphone, pendant toute la séquence.',
-  wallNone: 'Aucun fond : dégradé sombre', wallChange: 'CHANGER…', wallPick: 'CHOISIR…', wallRemove: 'RETIRER',
+  wallNone: 'Aucun fond : dégradé sombre', wallChange: 'Changer…', wallPick: 'Choisir…', wallRemove: 'Retirer',
   wallBad: '⚠ Image illisible', wallThumbAria: 'Aperçu du fond d\'écran',
 };
 const _ppTpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));

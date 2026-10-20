@@ -54,7 +54,7 @@ test('strobe : avertissement avant l\'activation, textes de la maquette ; « Ann
     text: 'Les flashs rapides peuvent déclencher des crises chez les personnes photosensibles. Prévenez l\'équipe et les comédiens avant de lancer l\'effet.',
     limits: 'Fréquence limitée à 30 Hz · flash de 15 ms minimum.',
     skip: 'Ne plus demander pour ce projet', skipChecked: false,
-    buttons: [['Annuler', 'uppercase'], ['Activer', 'uppercase']],
+    buttons: [['Annuler', 'none'], ['Activer', 'none']],
     caps: [30, 15],
   });
   // Les chiffres annoncés sont les plafonds réels (protocole, schéma, passerelle DMX)

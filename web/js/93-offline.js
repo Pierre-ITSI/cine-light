@@ -168,12 +168,12 @@ function renderOfflineView() {
       + '<div class="off-detail">' + escapeHtml(s.detail) + '</div></div>';
   }).join('') : '<div class="off-empty">Aucun écran appairé : appairez les écrans (onglet QR), puis préparez-les ici.</div>');
   const btn = document.getElementById('offPrepBtn'), note = document.getElementById('offPrepNote');
-  let label = 'TOUT PRÉPARER MAINTENANT', on = false, why = '';
+  let label = 'Tout préparer maintenant', on = false, why = '';
   const reach = list.filter((s) => scrOnline(s) && scrMediaReachable(s));
   const work = reach.some((s) => items.some((it) => !prepHas(s, it)));
-  if (_prep && _prep.running) label = 'PRÉPARATION EN COURS…';
+  if (_prep && _prep.running) label = 'Préparation en cours…';
   else if (!list.length) why = '';
-  else if (list.every((s) => items.every((it) => prepHas(s, it)))) label = 'TOUT EST PRÊT';
+  else if (list.every((s) => items.every((it) => prepHas(s, it)))) label = 'Tout est prêt';
   else if (!mediaLinkUp()) why = IN_NATIVE_APP ? 'Pour préparer les écrans, il faut Internet ou le Wi-Fi local : le Bluetooth ne porte que les commandes.'
     : 'Pour préparer les écrans, il faut Internet.';
   else if (!work) why = 'Les écrans à préparer ne sont joignables ni par Internet ni en Wi-Fi local.';

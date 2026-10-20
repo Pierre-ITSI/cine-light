@@ -12,38 +12,38 @@ const EFFECT_FAMILIES = [
 
 const EFFECT_CONFIG = {
   // — Spatiaux —
-  chaser:    { icon:'💫', name:'Chaser', family:'spatial', speedLabel:'Vitesse', min:0.1, max:6, step:0.1, def:1, intDef:100,
+  chaser:    { name:'Chaser', family:'spatial', speedLabel:'Vitesse', min:0.1, max:6, step:0.1, def:1, intDef:100,
                color1:'#ffffff', color2:'#05050a', c1Label:'Bande', c2Label:'Fond',
                count:{ label:'Nombre de bandes', min:1, max:12, def:1 }, dir:true, mode:true, shape:true,
                width:20, wing:1, rot:0, lead:120, fade:120, fadeLabel:'Traîne arrière', chaosDef:0 },
-  noise:     { icon:'📶', name:'Noise', family:'spatial', speedLabel:'Vitesse (img/s)', min:1, max:30, step:1, def:12, intDef:100,
+  noise:     { name:'Noise', family:'spatial', speedLabel:'Vitesse (img/s)', min:1, max:30, step:1, def:12, intDef:100,
                color1:'#ffffff', c1Label:'Teinte',
                count:{ label:'Taille de grain', min:2, max:32, def:8 } },
-  aurora:    { icon:'🌌', name:'Aurora', family:'spatial', speedLabel:'Dérive des nappes', min:0.05, max:2, step:0.05, def:0.3, intDef:100,
+  aurora:    { name:'Aurora', family:'spatial', speedLabel:'Dérive des nappes', min:0.05, max:2, step:0.05, def:0.3, intDef:100,
                color1:'#20e0a0', color2:'#3040ff', c1Label:'Nappe 1', c2Label:'Nappe 2' },
-  water:     { icon:'🌊', name:'Caustiques', family:'spatial', speedLabel:'Vitesse', min:0.1, max:3, step:0.1, def:0.8, intDef:100,
+  water:     { name:'Caustiques', family:'spatial', speedLabel:'Vitesse', min:0.1, max:3, step:0.1, def:0.8, intDef:100,
                color1:'#25c8e8', color2:'#021620', c1Label:'Eau', c2Label:'Fond' },
   // — Rythmiques —
-  pulse:     { icon:'💓', name:'Pulse BPM', family:'rythm', speedLabel:'BPM', min:20, max:240, step:1, def:60, intDef:100,
+  pulse:     { name:'Pulse BPM', family:'rythm', speedLabel:'BPM', min:20, max:240, step:1, def:60, intDef:100,
                color1:'#ffffff', color2:'#000000', c1Label:'Crête', c2Label:'Creux', tap:true },
-  traffic:   { icon:'🚗', name:'Phares', family:'rythm', speedLabel:'Passages / s', min:0.05, max:2, step:0.05, def:0.3, intDef:100,
+  traffic:   { name:'Phares', family:'rythm', speedLabel:'Passages / s', min:0.05, max:2, step:0.05, def:0.3, intDef:100,
                color1:'#ffb054', color2:'#050508', c1Label:'Phares', c2Label:'Nuit' },
-  weld:      { icon:'🔩', name:'Soudure', family:'rythm', speedLabel:'Cadence', min:0.2, max:6, step:0.1, def:1.5, intDef:100,
+  weld:      { name:'Soudure', family:'rythm', speedLabel:'Cadence', min:0.2, max:6, step:0.1, def:1.5, intDef:100,
                color1:'#cfe4ff', color2:'#05060a', c1Label:'Arc', c2Label:'Fond' },
-  neon:      { icon:'🏮', name:'Néon HS', family:'rythm', speedLabel:'Nervosité', min:0.2, max:6, step:0.1, def:1.5, intDef:100,
+  neon:      { name:'Néon HS', family:'rythm', speedLabel:'Nervosité', min:0.2, max:6, step:0.1, def:1.5, intDef:100,
                color1:'#ff2e88', c1Label:'Néon' },
-  police:    { icon:'🚨', name:'Police', family:'rythm', speedLabel:'Vitesse alternance', min:0.5, max:8, step:0.5, def:3, intDef:100,
+  police:    { name:'Police', family:'rythm', speedLabel:'Vitesse alternance', min:0.5, max:8, step:0.5, def:3, intDef:100,
                color1:'#ff2020', color2:'#2040ff', c1Label:'Couleur A', c2Label:'Couleur B' },
-  lightning: { icon:'⚡', name:'Éclair', family:'rythm', speedLabel:'Fréquence', min:0.1, max:3, step:0.1, def:0.8, intDef:100,
+  lightning: { name:'Éclair', family:'rythm', speedLabel:'Fréquence', min:0.1, max:3, step:0.1, def:0.8, intDef:100,
                color1:'#f4f0ff', color2:'#03030a', c1Label:'Éclair', c2Label:'Ambiance' },
-  paparazzi: { icon:'📸', name:'Paparazzi', family:'rythm', speedLabel:'Rafales / s', min:0.2, max:4, step:0.1, def:1, intDef:100,
+  paparazzi: { name:'Paparazzi', family:'rythm', speedLabel:'Rafales / s', min:0.2, max:4, step:0.1, def:1, intDef:100,
                color1:'#fffce6', color2:'#080808', c1Label:'Flash', c2Label:'Ambiance',
                count:{ label:'Flashes / rafale', min:1, max:10, def:3 } },
   // — Ambiances —
-  tv:        { icon:'📺', name:'TV', family:'ambiance', speedLabel:'Vitesse (img/s)', min:0.5, max:15, step:0.5, def:4, intDef:100, blocks:true, smooth:30 },
-  candle:    { icon:'🕯', name:'Bougie', family:'ambiance', speedLabel:'Vacillement', min:0.2, max:5, step:0.1, def:1.2, intDef:100,
+  tv:        { name:'TV', family:'ambiance', speedLabel:'Vitesse (img/s)', min:0.5, max:15, step:0.5, def:4, intDef:100, blocks:true, smooth:30 },
+  candle:    { name:'Bougie', family:'ambiance', speedLabel:'Vacillement', min:0.2, max:5, step:0.1, def:1.2, intDef:100,
                color1:'#ff7814', c1Label:'Flamme' },
-  fire:      { icon:'🔥', name:'Feu', family:'ambiance', speedLabel:'Intensité rapide', min:0.5, max:10, step:0.5, def:3, intDef:100,
+  fire:      { name:'Feu', family:'ambiance', speedLabel:'Intensité rapide', min:0.5, max:10, step:0.5, def:3, intDef:100,
                color1:'#ff7314', color2:'#3c0a00', c1Label:'Flamme', c2Label:'Braise' },
 };
 
@@ -59,7 +59,7 @@ function buildEffectCards() {
       b.className = 'effect-card';
       b.id = 'efxcard-' + key;
       b.onclick = () => selectEffect(key);
-      b.innerHTML = `<span class="effect-card-icon">${cfg.icon}</span><span class="effect-card-name">${cfg.name}</span>`;
+      b.innerHTML = `<span class="effect-card-name">${cfg.name}</span>`;
       grid.appendChild(b);
     }
   }
@@ -187,7 +187,7 @@ function selectEffect(name, acked) {
   if (badge) badge.style.display = 'flex';
   const cfg = EFFECT_CONFIG[name];
   const badgeText = document.getElementById('effectBadgeText');
-  if (badgeText && cfg) badgeText.textContent = cfg.icon + ' ' + cfg.name + ' actif';
+  if (badgeText && cfg) badgeText.textContent = cfg.name + ' actif';
   const panel = document.getElementById('effectSettingsPanel');
   if (panel && cfg) {
     panel.style.display = 'block';

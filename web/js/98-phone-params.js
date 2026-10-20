@@ -40,7 +40,7 @@ const _PP_TXT = {
   mediaEdit: 'Régler ›',
   // Fond d'écran (maquette 42)
   labelWall: 'Fond d\'écran', wallNote: 'Écran verrouillé et code du téléphone, pendant toute la séquence.',
-  wallNone: 'Aucun fond : dégradé sombre', wallChange: 'CHANGER…', wallPick: 'CHOISIR…', wallRemove: 'RETIRER',
+  wallNone: 'Aucun fond : dégradé sombre', wallChange: 'Changer…', wallPick: 'Choisir…', wallRemove: 'Retirer',
   wallBad: '⚠ Image illisible', wallThumbAria: 'Aperçu du fond d\'écran',
 };
 const _ppTpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));

@@ -50,7 +50,7 @@ const _SQSV_TXT = {
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Séquence',
   // « + Nouvelle séquence » (maquette 47)
-  newBtn: '+ NOUVELLE SÉQUENCE',
+  newBtn: '+ Nouvelle séquence',
   newAsk: 'Enregistrer « {nom} » avant ?',
   newAskText: 'La séquence en cours a des modifications non enregistrées. La nouvelle séquence part de zéro.',
   newAskTextSaved: 'La séquence en cours a des modifications non enregistrées. La nouvelle séquence part de zéro ; « {nom} » enregistrée reste telle quelle.',

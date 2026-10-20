@@ -431,7 +431,7 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     await page.locator('#ssKinds .ss-opt', { hasText: 'Appel' }).first().click();
     await page.click('#ssSave');
     assert.equal(await page.textContent('#ssErr'), 'Choisissez l\'élément à jouer.');
-    assert.equal(await page.textContent('#ssDel'), 'ANNULER', 'nouvelle étape : rien à supprimer');
+    assert.equal(await page.textContent('#ssDel'), 'Annuler', 'nouvelle étape : rien à supprimer');
     await page.click('#ssDel');
     await page.click('#acOk'); // brouillon modifié : abandon confirmé
     assert.equal((await rows(page)).length, 1);
@@ -505,7 +505,7 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
       onPhoneWallImage([new File([blob], 'plage-julie.png', { type: 'image/png' })]);
     });
     await waitFor(rp, () => !!_seq.wall && !!document.querySelector('#ppWallThumb.has-img'));
-    assert.deepEqual(await rp.$$eval('#ppWall .pp-wall-btn', (b) => b.map((x) => x.textContent)), ['CHANGER…', 'RETIRER']);
+    assert.deepEqual(await rp.$$eval('#ppWall .pp-wall-btn', (b) => b.map((x) => x.textContent)), ['Changer…', 'Retirer']);
     assert.equal(await rp.textContent('#ppWall .pp-wall-name'), 'plage-julie.png');
     const stored = await rp.evaluate(() => localStorage.getItem('setremote-seq-v1'));
     assert.match(stored, /"wall":\{"img":"[0-9a-f]{8}-\d+","name":"plage-julie.png"\}/);
@@ -611,7 +611,7 @@ describe('garde-fous du plateau : GO, éditeur d\'étape', () => {
     const confirmShown = () => page.evaluate(() => getComputedStyle(document.getElementById('app-confirm')).display === 'block');
     // Nouvelle étape intacte : ANNULER (neutre) ferme sans question
     await page.click('#seqAddBtn');
-    assert.equal(await page.textContent('#ssDel'), 'ANNULER');
+    assert.equal(await page.textContent('#ssDel'), 'Annuler');
     assert.equal(await page.evaluate(() => document.getElementById('ssDel').classList.contains('ss-cancel')), true);
     await page.click('#ssDel');
     assert.deepEqual([await editor(), await confirmShown()], [false, false]);
@@ -631,7 +631,7 @@ describe('garde-fous du plateau : GO, éditeur d\'étape', () => {
     assert.equal((await rows(page)).length, 1, 'rien d\'ajouté');
     // Étape existante : SUPPRIMER ; intacte, « ← Séquence » ferme directement ; modifiée, confirmation
     await page.locator('#seqRows .sq-row').nth(0).click();
-    assert.equal(await page.textContent('#ssDel'), 'SUPPRIMER');
+    assert.equal(await page.textContent('#ssDel'), 'Supprimer');
     await page.click('.ss-back');
     assert.deepEqual([await editor(), await confirmShown()], [false, false]);
     await page.locator('#seqRows .sq-row').nth(0).click();

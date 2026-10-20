@@ -59,11 +59,10 @@ function renderFxMemories() {
   if (upBtn) upBtn.disabled = !selectedFxMemId;
   grid.innerHTML = '';
   for (const m of fxMemories) {
-    const cfg = EFFECT_CONFIG[m.effect] || {};
     const d = document.createElement('div');
     d.className = 'memory-item' + (m.id === selectedFxMemId ? ' active' : '');
     d.onclick = () => applyFxMemory(m.id);
-    d.innerHTML = `<span style="font-size:1rem">${cfg.icon || '✨'}</span><span class="memory-name">${escapeHtml(m.name)}</span>`;
+    d.innerHTML = `<span class="memory-name">${escapeHtml(m.name)}</span>`;
     const del = document.createElement('button');
     del.className = 'memory-del'; del.textContent = '✕';
     del.onclick = (e) => { e.stopPropagation(); deleteFxMemory(m.id); };

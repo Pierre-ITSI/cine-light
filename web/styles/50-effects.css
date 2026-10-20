@@ -14,7 +14,6 @@
 .effect-card{border:1px solid var(--border);border-radius:8px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;background:var(--mid2);transition:all .2s;touch-action:manipulation;font-family:'DM Mono',monospace;width:100%}
 .effect-card:hover,.effect-card:active{border-color:rgba(255,255,255,.2);transform:scale(.97)}
 .effect-card.active{border-color:var(--accent);background:rgba(232,201,122,.1);box-shadow:0 0 14px rgba(232,201,122,.1)}
-.effect-card-icon{font-size:1.8rem}
 .effect-card-name{font-size:var(--fs-caption);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.3}
 .effect-card.active .effect-card-name{color:var(--accent)}
 .effect-active-row{display:flex;flex-direction:row;align-items:center;gap:10px;margin-bottom:12px}

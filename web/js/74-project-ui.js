@@ -50,20 +50,20 @@ const _PJU_TXT = {
   nameLabel: 'Nom du projet', fileLine: 'Fichier : « {fichier} »', content: 'Contenu',
   always: 'Toujours compris : la séquence en cours et le fil de discussion en cours. Jamais : appairage, écrans, licence.',
   missing: 'Certaines étapes des séquences utiliseront des éléments non exportés ({sections}) : elles arriveront « introuvables ».',
-  size: 'Taille estimée', sizeVal: '≈ {taille}', exportBtn: 'EXPORTER', exporting: 'EXPORT…',
+  size: 'Taille estimée', sizeVal: '≈ {taille}', exportBtn: 'Exporter', exporting: 'Export…',
   exportWeb: 'Téléchargement de « {fichier} »', exportApp: 'Partager, enregistrer dans Fichiers…',
   exported: '« {fichier} » exporté.',
   // 45c
   toImport: 'À importer', howTo: 'Comment l\'importer', notIn: 'Non inclus dans ce fichier', exportedOn: 'Exporté {quand}',
   modes: {
-    merge: ['Ajouter à mes données', 'À la suite de « {projet} » ; doublons : « (2) ».', 'IMPORTER'],
-    replace: ['Remplacer', 'Sections cochées vidées, puis remplies.', 'REMPLACER ET IMPORTER'],
-    new: ['Ouvrir comme nouveau projet', '« {projet} » reste tel quel.', 'OUVRIR LE PROJET'],
+    merge: ['Ajouter à mes données', 'À la suite de « {projet} » ; doublons : « (2) ».', 'Importer'],
+    replace: ['Remplacer', 'Sections cochées vidées, puis remplies.', 'Remplacer et importer'],
+    new: ['Ouvrir comme nouveau projet', '« {projet} » reste tel quel.', 'Ouvrir le projet'],
   },
   newAll: 'Le projet est rangé en entier ; les médias cochés rejoignent le pool, commun à tous les projets.',
   replaceWarn: '⚠ {liste} de « {projet} » seront supprimés. Exportez-le d\'abord pour les garder.',
   replaceRings: 'Les sonneries importées sont remplacées aussi : un appel dont le son disparaît reprend « Classique ».',
-  and: ' et ', importing: 'IMPORT…',
+  and: ' et ', importing: 'Import…',
   // 45d
   okMerge: '« {nom} » ajouté à « {projet} »', okReplace: '« {projet} » : sections remplacées par « {nom} »', okNew: '« {nom} » ouvert comme nouveau projet',
   okNewStored: '« {nom} » rangé dans vos projets',
@@ -78,7 +78,7 @@ const _PJU_TXT = {
   preview: 'Aperçu sans licence : les données importées sont gardées ; elles apparaîtront avec la licence.',
   seqNote: 'Les étapes des séquences importées pointent vers les appels, discussions et mémoires importés avec elles.',
   notOpened: 'Le projet n\'a pas été ouvert : {raison}',
-  seeSeqs: 'VOIR LES SÉQUENCES', close: 'FERMER',
+  seeSeqs: 'Voir les séquences', close: 'Fermer',
   // 45e
   errTitle: {
     'not-zip': 'Fichier non reconnu', 'not-project': 'Fichier non reconnu', 'too-large': 'Fichier trop volumineux', version: 'Version plus récente',
@@ -87,9 +87,9 @@ const _PJU_TXT = {
   errNotProject: '« {fichier} » n\'est pas un projet SetRemote (.rem).',
   errTooLarge: '« {fichier} » dépasse {max} Mo. Exportez-le sans les médias.',
   nothing: 'Rien n\'a été modifié.', partial: 'Les sections déjà écrites le restent.',
-  pickOther: 'CHOISIR UN AUTRE FICHIER',
+  pickOther: 'Choisir un autre fichier',
   // 46
-  newProject: '+ NOUVEAU PROJET', importProject: 'IMPORTER UN PROJET…',
+  newProject: '+ Nouveau projet', importProject: 'Importer un projet…',
   listNote: 'Toucher un projet : l\'ouvrir. Écrans appairés, licence et réglages sont communs à tous les projets ; le pool média aussi.',
   more: 'Ouvrir, renommer, dupliquer, exporter, supprimer',
   menu: { open: 'Ouvrir', rename: 'Renommer', duplicate: 'Dupliquer', export: 'Exporter…', remove: 'Supprimer' },

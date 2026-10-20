@@ -63,7 +63,7 @@ const _SEQ_TXT = {
   all: 'Tous',
   missing: 'élément introuvable',
   noScreen: 'aucun écran',
-  empty: 'Aucune étape. « + ÉTAPE » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.',
+  empty: 'Aucune étape. « + Étape » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.',
   kind: {
     color: 'Couleur', effect: 'Effet', media: 'Média', call: 'Appel', sms: 'SMS', notif: 'Notif',
     missed: 'Manqué', unlock: 'Déverrouil.', chat: 'Discussion',
@@ -156,7 +156,7 @@ const _SEQ_TXT = {
   },
   refMissing: 'L\'élément de cette étape a été supprimé : choisissez-en un autre.',
   needRef: 'Choisissez l\'élément à jouer.',
-  del: 'SUPPRIMER', cancel: 'ANNULER', save: 'ENREGISTRER',
+  del: 'Supprimer', cancel: 'Annuler', save: 'Enregistrer',
   confirmDel: 'Supprimer l\'étape {n} ?',
   leaveTitle: 'Abandonner les modifications ?', leaveNewTitle: 'Abandonner cette étape ?',
   leaveText: 'Les réglages de l\'étape n\'ont pas été enregistrés.',

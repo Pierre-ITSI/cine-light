@@ -45,7 +45,7 @@ const _CHSV_TXT = {
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Discussion',
   // « + Nouvelle discussion » (maquette 47b)
-  newBtn: '+ NOUVELLE DISCUSSION',
+  newBtn: '+ Nouvelle discussion',
   newAsk: 'Enregistrer « {nom} » avant ?',
   newAskText: 'Le fil en cours a des modifications non enregistrées. La nouvelle discussion part d\'un fil vide (même comédien, même style).',
   newDiscard: 'Ne pas enregistrer',

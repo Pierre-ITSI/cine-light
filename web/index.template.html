@@ -323,7 +323,7 @@
       <div style="height:1px;background:var(--border);margin:14px 0"></div>
       <div class="panel-label">Effets sur le récepteur</div>
       <div class="toggle-row" style="margin-bottom:10px">
-        <div><div class="toggle-label" style="font-size:.75rem">🔦 Torche synchronisée</div><div class="toggle-sub">Flash la torche du récepteur avec le strobe</div></div>
+        <div><div class="toggle-label">🔦 Torche synchronisée</div><div class="toggle-sub">Flash la torche du récepteur avec le strobe</div></div>
         <label class="toggle-switch">
           <input type="checkbox" id="torchSyncToggle" onchange="onStrobeParamChange()">
           <div class="toggle-track"></div><div class="toggle-thumb"></div>
@@ -388,7 +388,7 @@
         <button class="effect-btn" id="efx-heartbeat" onclick="sendTorchEffect('heartbeat')">
           <span class="effect-icon">💓</span>Battement
         </button>
-        <button class="effect-btn" id="efx-stop" onclick="sendTorchEffect('stop')" style="border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.7)">
+        <button class="effect-btn danger" id="efx-stop" onclick="sendTorchEffect('stop')">
           <span class="effect-icon">⏹</span>Stop effet
         </button>
       </div>
@@ -398,7 +398,7 @@
   <div class="tab-content" id="content-effects">
     <div id="effectActiveBadge" class="effect-active-row" style="display:none">
       <span class="strobe-active-badge" id="effectBadgeText">✨ Actif</span>
-      <button class="chip" style="border-color:rgba(220,80,80,.5);color:rgba(220,80,80,.8)" onclick="stopAllEffects()">⏹ Stop</button>
+      <button class="chip danger" onclick="stopAllEffects()">⏹ Stop</button>
     </div>
     <div class="panel">
       <div class="panel-label">Laboratoire d'effets</div>
@@ -549,7 +549,7 @@
       <div id="effectTvBlocksPanel" style="display:none">
         <div class="slider-header" style="margin-bottom:10px">
           <label>Blocs couleurs</label>
-          <button class="chip" id="tvAddBlockBtn" onclick="tvAddBlock()" style="padding:3px 12px">+ Bloc</button>
+          <button class="chip" id="tvAddBlockBtn" onclick="tvAddBlock()">+ Bloc</button>
         </div>
         <div class="tv-blocks-strip" id="tvBlocksStrip"></div>
         <div class="tv-block-editor">
@@ -644,9 +644,9 @@
       </div>
       <div id="mediaTimeline" style="display:none;margin:4px 0 12px">
         <input type="range" id="mediaSeek" min="0" max="100" step="0.1" value="0"
-               style="background:linear-gradient(to right,var(--accent),var(--accent) 0%,#333 0%)"
+               style="--track:linear-gradient(to right,var(--accent) 0%,var(--border-strong) 0%)"
                oninput="onSeekInput()" onchange="onSeekEnd()">
-        <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums">
+        <div class="media-times">
           <span id="mediaCurTime">0:00</span><span id="mediaDurTime">0:00</span>
         </div>
       </div>
@@ -663,7 +663,7 @@
       <p>Exemples prêts à jouer sur l'écran, non modifiables. La licence débloque vos propres appels, SMS et discussions.</p>
       <div class="lic-pv-row">
         <button type="button" class="lic-pv-id" aria-label="Copier l'identifiant de cet appareil" onclick="licCopyId(this)"><span>ID</span><b class="lic-id-txt">····-····</b>⧉</button>
-        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
+        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">Obtenir une licence ›</button>
       </div>
     </div>
     <div class="panel">
@@ -706,7 +706,7 @@
     </div>
     <div class="panel" id="callLockPanel" style="display:none">
       <div class="toggle-row" style="margin-bottom:12px">
-        <div><div class="toggle-label" style="font-size:.8rem">Écran verrouillé</div><div class="toggle-sub">La notification arrive sur un faux écran verrouillé</div></div>
+        <div><div class="toggle-label">Écran verrouillé</div><div class="toggle-sub">La notification arrive sur un faux écran verrouillé</div></div>
         <label class="toggle-switch">
           <input type="checkbox" id="lockToggle">
           <div class="toggle-track"></div><div class="toggle-thumb"></div>
@@ -793,7 +793,7 @@
       <button class="media-btn" id="callTriggerBtn" onclick="triggerCall()"><span class="media-icon">📞</span> Faire sonner</button>
       <div style="display:flex;gap:10px">
         <button class="media-btn" style="flex:1" id="callAnswerBtn" onclick="sendMsg({type:'call:answer'})">✅ Décrocher</button>
-        <button class="media-btn" style="flex:1;border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)" onclick="sendMsg({type:'call:end'})">⏹ Terminer</button>
+        <button class="media-btn danger" style="flex:1" onclick="sendMsg({type:'call:end'})">⏹ Terminer</button>
       </div>
       <div class="media-status" id="callStatus">—</div>
     </div>
@@ -804,7 +804,7 @@
       <button type="button" class="gw-seg-btn" id="dcTab-saved" onclick="setChatView('saved')">Enregistrées (0)</button>
     </div>
     <!-- Nouvelle discussion (maquette 47b) : fil vierge, « Enregistrer avant ? » si le fil a changé -->
-    <button type="button" class="prj-newbtn" id="dcNewBtn" style="display:none" onclick="chatNewAsk()">+ NOUVELLE DISCUSSION</button>
+    <button type="button" class="prj-newbtn" id="dcNewBtn" style="display:none" onclick="chatNewAsk()">+ Nouvelle discussion</button>
     <div class="dc-saved" id="dcSavedPanel" style="display:none">
       <div class="dc-saved-rows" id="dcSavedRows"></div>
       <div class="dc-saved-empty" id="dcSavedEmpty">Aucune discussion enregistrée pour l'instant.</div>
@@ -836,8 +836,8 @@
       <div class="dc-auto-head"><span class="panel-label">Lecture automatique</span><span class="dc-auto-state" id="dcAutoState" role="status"></span></div>
       <div class="dc-auto-bar"><i id="dcAutoFill"></i></div>
       <div class="dc-auto-row">
-        <button type="button" class="dc-auto-play" id="dcAutoPlay" onclick="chatAutoStart()">▶ LECTURE AUTO</button>
-        <button type="button" class="dc-auto-pause" id="dcAutoPause" onclick="chatAutoPause()" disabled>⏸ PAUSE</button>
+        <button type="button" class="dc-auto-play" id="dcAutoPlay" onclick="chatAutoStart()">▶ Lecture auto</button>
+        <button type="button" class="dc-auto-pause" id="dcAutoPause" onclick="chatAutoPause()" disabled>⏸ Pause</button>
         <button type="button" class="dc-auto-back" id="dcAutoBack" onclick="chatAutoBack()" aria-label="Pause et revenir d'un message" title="Pause et revenir d'un message" disabled>↶</button>
       </div>
     </div>
@@ -895,7 +895,7 @@
       <p>Exemples prêts à jouer sur l'écran, non modifiables. La licence débloque vos propres séquences.</p>
       <div class="lic-pv-row">
         <button type="button" class="lic-pv-id" aria-label="Copier l'identifiant de cet appareil" onclick="licCopyId(this)"><span>ID</span><b class="lic-id-txt">····-····</b>⧉</button>
-        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
+        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">Obtenir une licence ›</button>
       </div>
     </div>
     <div class="dc-tabs">
@@ -904,20 +904,20 @@
     </div>
     <div class="sq" id="seqCurView">
       <!-- Nouvelle séquence (maquette 47) : séquence vide, « Enregistrer avant ? » si la séquence a changé -->
-      <button type="button" class="prj-newbtn" id="seqNewBtn" onclick="seqNewAsk()">+ NOUVELLE SÉQUENCE</button>
-      <div class="sq-head"><span class="sq-title">Séquence</span><button type="button" class="sq-add" id="seqAddBtn" onclick="openSeqStep(null)">+ ÉTAPE</button></div>
+      <button type="button" class="prj-newbtn" id="seqNewBtn" onclick="seqNewAsk()">+ Nouvelle séquence</button>
+      <div class="sq-head"><span class="sq-title">Séquence</span><button type="button" class="sq-add" id="seqAddBtn" onclick="openSeqStep(null)">+ Étape</button></div>
       <div class="sq-sub"><span id="seqName"></span><span id="seqTarget"></span></div>
       <!-- Téléphone au départ (maquette 28b) : barre d'état de la séquence -->
       <button type="button" class="sq-phone" id="seqPhoneBtn" onclick="openPhoneParams('seq')"><span class="sq-phone-l">📱 Téléphone au départ</span><span class="sq-phone-v" id="seqPhoneSum"></span></button>
       <div class="sq-list" id="seqRows"></div>
-      <div class="sq-empty" id="seqEmpty">Aucune étape. « + ÉTAPE » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.</div>
+      <div class="sq-empty" id="seqEmpty">Aucune étape. « + Étape » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.</div>
       <div class="sq-legend"><span class="go">● GO</span><span class="auto">● automatique</span><span class="actor">● geste du comédien</span></div>
       <div class="sq-now" id="seqNow" role="status"></div>
       <div class="sq-warn" id="seqWarn" role="alert" style="display:none"></div>
       <div class="sq-ctl">
         <button type="button" class="sq-go" id="seqGoBtn" onclick="seqGoTap()">GO</button>
         <button type="button" class="sq-back" id="seqBackBtn" aria-label="Revenir d'une étape" title="Revenir d'une étape" onclick="seqBack()">↶</button>
-        <button type="button" class="sq-stop" id="seqStopBtn" onclick="seqStop()">STOP</button>
+        <button type="button" class="sq-stop" id="seqStopBtn" onclick="seqStop()">Stop</button>
       </div>
     </div>
     <div class="dc-saved" id="seqSavedView" style="display:none">
@@ -988,8 +988,8 @@
   <div class="ss-err" id="ssErr" role="alert" style="display:none"></div>
   <input type="file" id="seqHomeInput" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onSeqHomeImage(this.files);this.value=''">
   <div class="ss-actions">
-    <button type="button" class="ss-del" id="ssDel" onclick="seqStepDelete()">SUPPRIMER</button>
-    <button type="button" class="ss-save" id="ssSave" onclick="seqStepSave()">ENREGISTRER</button>
+    <button type="button" class="ss-del" id="ssDel" onclick="seqStepDelete()">Supprimer</button>
+    <button type="button" class="ss-save" id="ssSave" onclick="seqStepSave()">Enregistrer</button>
   </div>
 </div>
 
@@ -1249,17 +1249,17 @@
     <div class="st-lic-state"><span class="st-lic-dot" id="stLicDot"></span><span id="stLicState">Aucune licence</span><span class="st-lic-until" id="stLicUntil"></span></div>
     <div class="st-lic-rows" id="stLicRows"></div>
     <div class="st-lic-msg" id="stLicMsg" role="status"></div>
-    <button type="button" class="st-lic-wide" id="stLicCheck" onclick="licCheckNow()">VÉRIFIER MAINTENANT</button>
+    <button type="button" class="st-lic-wide" id="stLicCheck" onclick="licCheckNow()">Vérifier maintenant</button>
   </div>
   <div class="st-card" id="stLicIdCard" style="display:none">
     <span class="st-label">Identifiant de cet appareil</span>
     <div class="st-lic-id lic-id-txt" id="stLicId">····-····</div>
     <div class="st-lic-acts">
-      <button type="button" class="st-lic-act" onclick="licCopyId(this)">COPIER</button>
-      <button type="button" class="st-lic-act" onclick="licShareId(this)">PARTAGER</button>
+      <button type="button" class="st-lic-act" onclick="licCopyId(this)">Copier</button>
+      <button type="button" class="st-lic-act" onclick="licShareId(this)">Partager</button>
     </div>
     <p class="st-note" id="stLicBuyNote" style="display:none"></p>
-    <button type="button" class="st-lic-wide st-lic-buy" id="stLicBuy" style="display:none" onclick="licOpenBuy()">OBTENIR UNE LICENCE ›</button>
+    <button type="button" class="st-lic-wide st-lic-buy" id="stLicBuy" style="display:none" onclick="licOpenBuy()">Obtenir une licence ›</button>
   </div>
   <!-- Projet (maquette 45, 74-project-ui.js) : projet ouvert, exporter, importer -->
   <div class="st-card st-rows" id="stProject">
@@ -1304,8 +1304,8 @@
       <span class="st-row-val" id="stLinkVal">Auto</span>
     </button>
   </div>
-  <button type="button" class="st-btn st-danger" onclick="settingsForgetScreens()">OUBLIER TOUS LES ÉCRANS APPAIRÉS</button>
-  <button type="button" class="st-btn" onclick="settingsGoHome()">RETOUR À L'ACCUEIL</button>
+  <button type="button" class="st-btn st-danger" onclick="settingsForgetScreens()">Oublier tous les écrans appairés</button>
+  <button type="button" class="st-btn" onclick="settingsGoHome()">Retour à l'accueil</button>
   <div class="st-foot">
     <a href="confidentialite.html" class="st-policy" onclick="event.preventDefault();openPrivacyPolicy()">Politique de confidentialité</a>
     <span>Aucun compte · aucune publicité · aucun suivi</span>
@@ -1351,7 +1351,7 @@
     <span class="off-label">Préparation des écrans</span>
     <div class="off-rows" id="offPrepRows"></div>
   </div>
-  <button type="button" class="off-go" id="offPrepBtn" onclick="prepRunAll()">TOUT PRÉPARER MAINTENANT</button>
+  <button type="button" class="off-go" id="offPrepBtn" onclick="prepRunAll()">Tout préparer maintenant</button>
   <div class="off-note" id="offPrepNote" role="status" style="display:none"></div>
   <div class="off-tip"><b>Wi-Fi local sans Internet :</b> connectez tous les appareils au même mini-routeur de voyage, ou au partage de connexion d'un des téléphones.</div>
 </div>

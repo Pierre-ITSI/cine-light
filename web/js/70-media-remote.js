@@ -67,7 +67,7 @@ function fmtTime(s) {
 }
 function paintSeek(pct) {
   const s = document.getElementById('mediaSeek');
-  if (s) s.style.background = `linear-gradient(to right,var(--accent) ${pct}%,#333 ${pct}%)`;
+  if (s) s.style.setProperty('--track', `linear-gradient(to right,var(--accent) ${pct}%,var(--border-strong) ${pct}%)`);
 }
 // Message en cours venu d'un écran de la cible (ou d'un écran inconnu : ancien comportement)
 function _mediaFromTarget() { const sid = _rxFrom; return !sid || !scrKnown(sid) || scrInTarget(sid); }

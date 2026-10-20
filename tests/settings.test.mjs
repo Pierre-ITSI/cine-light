@@ -80,7 +80,7 @@ test('en-tête : engrenage « Réglages » à la place de « ← Retour » ; vue
       ['Fréquence max du strobo', 'Sécurité photosensibilité', '30 Hz'],
       ['Liaison par défaut', 'Internet, Wi-Fi local, Bluetooth', 'Auto'], // tests/offline.test.mjs
     ],
-    buttons: ['OUBLIER TOUS LES ÉCRANS APPAIRÉS', 'RETOUR À L\'ACCUEIL'],
+    buttons: ['Oublier tous les écrans appairés', 'Retour à l\'accueil'],
     foot: ['Politique de confidentialité', 'Aucun compte · aucune publicité · aucun suivi', `SetRemote ${APP_JSON_VERSION} · by Pikoo`],
     policyHref: 'confidentialite.html',
   });
