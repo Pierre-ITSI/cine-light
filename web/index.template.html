@@ -66,7 +66,7 @@
     <button class="splash-btn primary" onclick="startMode('remote')">Télécommande</button>
     <button class="splash-btn" onclick="startMode('screen')">Écran projecteur</button>
   </div>
-  <button id="installBtn" class="install-btn" style="display:none" onclick="installPWA()">⬇ Installer l'application</button>
+  <button id="installBtn" class="install-btn" style="display:none" onclick="installPWA()"><svg class="ic" aria-hidden="true"><use href="#i-download"></use></svg> Installer l'application</button>
   <div class="splash-credit">by Pikoo</div>
 </div>
 
@@ -91,16 +91,16 @@
     <button type="submit" class="screen-go-btn">OK</button>
   </form>
   <p class="pj-help" id="pairCodeHelp">Avec le code, un nombre à 6 chiffres s'affichera ici et sur la télécommande pour confirmer l'appairage.</p>
-  <button class="screen-back" onclick="goBackToSplash()">← Retour</button>
+  <button class="screen-back" onclick="goBackToSplash()"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Retour</button>
 </div>
 
 <!-- Écran de jeu retiré par la télécommande (maquette 5c) -->
 <div id="screen-revoked" role="alertdialog" aria-labelledby="srvTitle" aria-describedby="srvText">
-  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#a8a8a8" stroke-width="1.6" aria-hidden="true"><path d="M15 7l2-2a3.5 3.5 0 015 5l-2 2M9 17l-2 2a3.5 3.5 0 01-5-5l2-2M8 8l8 8"/></svg>
+  <svg class="ic ic-xl" aria-hidden="true"><use href="#i-link-2-off"></use></svg>
   <div class="srv-title" id="srvTitle">Écran retiré</div>
   <p class="srv-text" id="srvText">La télécommande a retiré cet écran de la session. Il ne reçoit plus aucune commande.</p>
   <button type="button" class="srv-join" onclick="screenRevokedJoin()">Rejoindre une session</button>
-  <button type="button" class="srv-home" onclick="screenRevokedHome()">← Accueil</button>
+  <button type="button" class="srv-home" onclick="screenRevokedHome()"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Accueil</button>
 </div>
 
 <div id="screen-mode" onclick="requestFS()">
@@ -143,11 +143,10 @@
     <button class="sticky-blackout" id="stickyBlackoutBtn" onclick="toggleBlackout()">Écran ON</button>
   </div>
   <div class="remote-header">
-    <h2>SetRemote</h2>
     <div class="remote-header-end">
       <button type="button" class="link-pill reconnecting" id="linkPill" onclick="openLinkDetail()" aria-label="État de la liaison — détail par écran"><span class="link-dot"></span><span id="linkPillLabel">Connexion…</span></button>
-      <button type="button" class="hdr-gear" id="homeBtn" aria-label="Menu principal" title="Menu principal" onclick="askGoBack()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></button>
-      <button type="button" class="hdr-gear" id="settingsBtn" aria-label="Réglages" onclick="openSettings()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+      <button type="button" class="hdr-gear" id="homeBtn" aria-label="Menu principal" title="Menu principal" onclick="askGoBack()"><svg class="ic" aria-hidden="true"><use href="#i-house"></use></svg></button>
+      <button type="button" class="hdr-gear" id="settingsBtn" aria-label="Réglages" onclick="openSettings()"><svg class="ic" aria-hidden="true"><use href="#i-settings"></use></svg></button>
     </div>
   </div>
   <div class="swatch-row" id="previewRow">
@@ -155,28 +154,28 @@
     <div class="swatch-info">
       <div class="swatch-hex" id="previewHex">#FFFFFF</div>
       <div class="swatch-label" id="previewMeta">—</div>
-      <div class="autosend-badge" id="autosendBadge">↗ envoyé</div>
+      <div class="autosend-badge" id="autosendBadge"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-arrow-up-right"></use></svg> envoyé</div>
     </div>
   </div>
   <!-- Cible des commandes (maquette 6) : visible dès deux écrans appairés -->
   <button type="button" class="target-btn" id="targetBtn" style="display:none" onclick="openTargetSheet()" aria-haspopup="dialog">
-    <svg class="tb-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>
+    <svg class="ic tb-icon" aria-hidden="true"><use href="#i-target"></use></svg>
     <span class="tb-label" id="targetBtnLabel">Cible : <b>Tous les écrans</b></span>
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    <svg class="ic ic-sm" aria-hidden="true"><use href="#i-chevron-down"></use></svg>
   </button>
   <button class="screen-toggle-btn" id="blackoutBtn" onclick="toggleBlackout()">
-    <span id="blackoutIcon">⚫</span><span id="blackoutLabel">Écran ON — appuyer pour éteindre</span>
+    <span id="blackoutIcon"><svg class="ic" aria-hidden="true"><use href="#i-power"></use></svg></span><span id="blackoutLabel">Écran ON — appuyer pour éteindre</span>
   </button>
 
   <!-- 7 onglets : icône au-dessus du libellé ; sous 375 px, la barre défile horizontalement -->
   <div class="tabs" id="tabsBar">
-    <button class="tab-btn active" onclick="switchTab('color')" id="tab-color"><span class="tab-ic">🎨</span> Couleur</button>
-    <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects"><span class="tab-ic">✨</span> Effets</button>
-    <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash"><span class="tab-ic">🔦</span> Flash<span class="beta-badge">Bêta</span></button>
-    <button class="tab-btn" onclick="switchTab('media')" id="tab-media"><span class="tab-ic">🎞</span> Média</button>
-    <button class="tab-btn" onclick="switchTab('call')" id="tab-call"><span class="tab-ic">📞</span> Tel</button>
-    <button class="tab-btn" onclick="switchTab('seq')" id="tab-seq"><span class="tab-ic">🎬</span> Séquence</button>
-    <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr"><span class="tab-ic">📡</span> QR</button>
+    <button class="tab-btn active" onclick="switchTab('color')" id="tab-color"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-palette"></use></svg></span> Couleur</button>
+    <button class="tab-btn" onclick="switchTab('effects')" id="tab-effects"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-sparkles"></use></svg></span> Effets</button>
+    <button class="tab-btn" onclick="switchTab('flash')" id="tab-flash"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg></span> Flash</button>
+    <button class="tab-btn" onclick="switchTab('media')" id="tab-media"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-film"></use></svg></span> Média</button>
+    <button class="tab-btn" onclick="switchTab('call')" id="tab-call"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg></span> Tel</button>
+    <button class="tab-btn" onclick="switchTab('seq')" id="tab-seq"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-clapperboard"></use></svg></span> Séquence</button>
+    <button class="tab-btn" onclick="switchTab('qr')" id="tab-qr"><span class="tab-ic"><svg class="ic" aria-hidden="true"><use href="#i-qr-code"></use></svg></span> QR</button>
   </div>
 
   <div class="tab-content active" id="content-color">
@@ -293,7 +292,7 @@
           <div class="toggle-track"></div><div class="toggle-thumb"></div>
         </label>
       </div>
-      <div id="strobeActiveBadge" style="display:none"><span class="strobe-active-badge">⚡ Strobe actif</span></div>
+      <div id="strobeActiveBadge" style="display:none"><span class="strobe-active-badge"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-zap"></use></svg> Strobe actif</span></div>
       <div class="panel-label" style="margin:14px 0 8px">Mode</div>
       <div class="chips-wrap seg" style="margin-bottom:16px">
         <button class="chip active" onclick="setStrobeMode('regular')" id="chip-regular">Régulier</button>
@@ -323,13 +322,13 @@
       <div style="height:1px;background:var(--border);margin:14px 0"></div>
       <div class="panel-label">Effets sur le récepteur</div>
       <div class="toggle-row" style="margin-bottom:10px">
-        <div><div class="toggle-label">🔦 Torche synchronisée</div><div class="toggle-sub">Flash la torche du récepteur avec le strobe</div></div>
+        <div><div class="toggle-label"><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg> Torche synchronisée</div><div class="toggle-sub">Flash la torche du récepteur avec le strobe</div></div>
         <label class="toggle-switch">
           <input type="checkbox" id="torchSyncToggle" onchange="onStrobeParamChange()">
           <div class="toggle-track"></div><div class="toggle-thumb"></div>
         </label>
       </div>
-      <div class="panel-label" style="margin-top:4px">📳 Vibration rapide</div>
+      <div class="panel-label" style="margin-top:4px"><svg class="ic" aria-hidden="true"><use href="#i-vibrate"></use></svg> Vibration rapide</div>
       <div class="chips-wrap">
         <button class="chip" onclick="sendVibrate([80])">Court</button>
         <button class="chip" onclick="sendVibrate([300])">Long</button>
@@ -342,24 +341,24 @@
     <div class="panel">
       <div class="panel-label">Mémoires de couleur</div>
       <div class="memory-actions">
-        <button class="memory-save-btn" onclick="saveColorMemory()">＋ Enregistrer</button>
-        <button class="memory-update-btn" id="memoryUpdateBtn" onclick="updateColorMemory()" disabled>⟳ Mettre à jour</button>
+        <button class="memory-save-btn" onclick="saveColorMemory()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Enregistrer</button>
+        <button class="memory-update-btn" id="memoryUpdateBtn" onclick="updateColorMemory()" disabled><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Mettre à jour</button>
       </div>
       <div id="memoryGrid" class="memory-grid"></div>
       <div id="memoryEmpty" class="media-pool-empty">Réglez une couleur puis « Enregistrer » pour créer une mémoire.</div>
-      <div id="memoryHint" class="memory-hint" style="display:none">Touchez pour rappeler · appui long (ou ✕) pour supprimer.</div>
+      <div id="memoryHint" class="memory-hint" style="display:none">Touchez pour rappeler · appui long (ou la croix) pour supprimer.</div>
     </div>
   </div>
 
   <div class="tab-content" id="content-flash">
     <div class="flash-unavail-notice" id="flashUnavailNotice" style="display:none">
-      <strong>🔦 Non disponible sur iPhone</strong>
+      <strong><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg> Non disponible sur iPhone</strong>
       Le récepteur est un iPhone : iOS ne permet pas de piloter la torche LED ni le vibreur depuis le web. Utilisez le strobe par l'écran (onglet Effets) ou un récepteur Android.
     </div>
     <div class="panel">
       <div class="panel-label">Torche récepteur</div>
       <button class="torch-onoff-btn" id="remoteTorchBtn" onclick="onRemoteTorchToggle()">
-        <span id="remoteTorchIcon">🔦</span><span id="remoteTorchLabel">Allumer la torche</span>
+        <span id="remoteTorchIcon"><svg class="ic" aria-hidden="true"><use href="#i-flashlight"></use></svg></span><span id="remoteTorchLabel">Allumer la torche</span>
       </button>
       <div id="torchDimSection">
         <div class="torch-level-bar"><div class="torch-level-fill" id="torchLevelFill" style="width:100%"></div></div>
@@ -374,22 +373,22 @@
       <div class="panel-label">Effets</div>
       <div class="effect-grid">
         <button class="effect-btn" id="efx-sos" onclick="sendTorchEffect('sos')">
-          <span class="effect-icon">🆘</span>SOS
+          SOS
         </button>
         <button class="effect-btn" id="efx-blink-slow" onclick="sendTorchEffect('blink-slow')">
-          <span class="effect-icon">🔁</span>Clignotement lent
+          Clignotement lent
         </button>
         <button class="effect-btn" id="efx-blink-fast" onclick="sendTorchEffect('blink-fast')">
-          <span class="effect-icon">⚡</span>Clignotement rapide
+          Clignotement rapide
         </button>
         <button class="effect-btn" id="efx-police" onclick="sendTorchEffect('police')">
-          <span class="effect-icon">🚨</span>Police
+          Police
         </button>
         <button class="effect-btn" id="efx-heartbeat" onclick="sendTorchEffect('heartbeat')">
-          <span class="effect-icon">💓</span>Battement
+          Battement
         </button>
         <button class="effect-btn danger" id="efx-stop" onclick="sendTorchEffect('stop')">
-          <span class="effect-icon">⏹</span>Stop effet
+          Stop effet
         </button>
       </div>
     </div>
@@ -397,8 +396,8 @@
 
   <div class="tab-content" id="content-effects">
     <div id="effectActiveBadge" class="effect-active-row" style="display:none">
-      <span class="strobe-active-badge" id="effectBadgeText">✨ Actif</span>
-      <button class="chip danger" onclick="stopAllEffects()">⏹ Stop</button>
+      <span class="strobe-active-badge" id="effectBadgeText">Actif</span>
+      <button class="chip danger" onclick="stopAllEffects()"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> Stop</button>
     </div>
     <div class="panel">
       <div class="panel-label">Laboratoire d'effets</div>
@@ -412,7 +411,7 @@
     <div class="panel" id="effectSettingsPanel" style="display:none">
       <div class="slider-header" style="margin-bottom:12px">
         <div class="panel-label" id="effectSettingsTitle" style="margin-bottom:0">Réglages</div>
-        <button class="fx-dice-btn" onclick="randomizeEffect()">🎲 Randomiser</button>
+        <button class="fx-dice-btn" onclick="randomizeEffect()"><svg class="ic" aria-hidden="true"><use href="#i-dice-5"></use></svg> Randomiser</button>
       </div>
       <div class="slider-block">
         <div class="slider-header">
@@ -444,16 +443,16 @@
       <div id="effectShapeBlock" style="display:none;margin-bottom:14px">
         <div class="slider-header"><label>Forme</label></div>
         <div class="chips-wrap">
-          <button class="chip active" id="fxshape-band" onclick="setFxShape('band')">▬ Bande</button>
-          <button class="chip" id="fxshape-circle" onclick="setFxShape('circle')">◯ Rond</button>
-          <button class="chip" id="fxshape-diamond" onclick="setFxShape('diamond')">◇ Losange</button>
+          <button class="chip active" id="fxshape-band" onclick="setFxShape('band')"><svg class="ic" aria-hidden="true"><use href="#i-rectangle-horizontal"></use></svg> Bande</button>
+          <button class="chip" id="fxshape-circle" onclick="setFxShape('circle')"><svg class="ic" aria-hidden="true"><use href="#i-circle"></use></svg> Rond</button>
+          <button class="chip" id="fxshape-diamond" onclick="setFxShape('diamond')"><svg class="ic" aria-hidden="true"><use href="#i-diamond"></use></svg> Losange</button>
         </div>
       </div>
       <div id="effectDirBlock" style="display:none;margin-bottom:14px">
         <div class="slider-header"><label>Direction</label></div>
         <div class="chips-wrap">
-          <button class="chip active" id="fxdir-h" onclick="setFxDir('h')">↔ Horizontal</button>
-          <button class="chip" id="fxdir-v" onclick="setFxDir('v')">↕ Vertical</button>
+          <button class="chip active" id="fxdir-h" onclick="setFxDir('h')"><svg class="ic" aria-hidden="true"><use href="#i-move-horizontal"></use></svg> Horizontal</button>
+          <button class="chip" id="fxdir-v" onclick="setFxDir('v')"><svg class="ic" aria-hidden="true"><use href="#i-move-vertical"></use></svg> Vertical</button>
           <button class="chip" id="fxdir-d" onclick="setFxDir('d')">⤢ Diagonale</button>
         </div>
       </div>
@@ -467,9 +466,9 @@
       <div id="effectChaserModeBlock" style="display:none;margin-bottom:14px">
         <div class="slider-header"><label>Course</label></div>
         <div class="chips-wrap">
-          <button class="chip active" id="fxmode-loop" onclick="setFxChaserMode('loop')">↻ Loop</button>
-          <button class="chip" id="fxmode-bounce" onclick="setFxChaserMode('bounce')">⇄ Bounce</button>
-          <button class="chip" id="fxmode-invert" onclick="setFxInvert(!fxInvert)">⮌ Invert</button>
+          <button class="chip active" id="fxmode-loop" onclick="setFxChaserMode('loop')"><svg class="ic" aria-hidden="true"><use href="#i-repeat"></use></svg> Loop</button>
+          <button class="chip" id="fxmode-bounce" onclick="setFxChaserMode('bounce')"><svg class="ic" aria-hidden="true"><use href="#i-arrow-left-right"></use></svg> Bounce</button>
+          <button class="chip" id="fxmode-invert" onclick="setFxInvert(!fxInvert)"><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg> Invert</button>
         </div>
       </div>
       <div class="slider-block" id="effectWidthBlock" style="display:none">
@@ -578,8 +577,8 @@
     <div class="panel">
       <div class="panel-label">Mémoires d'effets</div>
       <div class="memory-actions">
-        <button class="memory-save-btn" onclick="saveFxMemory()">＋ Enregistrer</button>
-        <button class="memory-update-btn" id="fxMemUpdateBtn" onclick="updateFxMemory()" disabled>⟳ Mettre à jour</button>
+        <button class="memory-save-btn" onclick="saveFxMemory()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Enregistrer</button>
+        <button class="memory-update-btn" id="fxMemUpdateBtn" onclick="updateFxMemory()" disabled><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Mettre à jour</button>
       </div>
       <div id="fxMemGrid" class="memory-grid"></div>
       <div id="fxMemEmpty" class="media-pool-empty">Lancez un effet, réglez-le, puis « Enregistrer ».</div>
@@ -598,10 +597,10 @@
       <div class="panel-label">Pool média</div>
       <div class="media-add-row">
         <button class="media-btn" id="mediaImgBtn" onclick="document.getElementById('mediaImgInput').click()">
-          <span class="media-icon">🖼</span> Images
+          <span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-image"></use></svg></span> Images
         </button>
         <button class="media-btn" id="mediaVidBtn" onclick="document.getElementById('mediaVidInput').click()">
-          <span class="media-icon">🎬</span> Vidéos
+          <span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-video"></use></svg></span> Vidéos
         </button>
       </div>
       <input type="file" id="mediaImgInput" accept="image/*" multiple style="display:none" onchange="onAddImages(this.files);this.value=''">
@@ -609,8 +608,8 @@
       <div id="mediaPool" class="media-pool"></div>
       <div id="mediaPoolEmpty" class="media-pool-empty">Ajoutez des images ou vidéos, puis touchez-les pour les diffuser.</div>
       <div id="mediaNav" style="display:none;gap:8px;margin:8px 0">
-        <button class="media-btn" onclick="advancePool(-1)" style="flex:1">◀ Précédent</button>
-        <button class="media-btn" onclick="advancePool(1)" style="flex:1">Suivant ▶</button>
+        <button class="media-btn" onclick="advancePool(-1)" style="flex:1"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Précédent</button>
+        <button class="media-btn" onclick="advancePool(1)" style="flex:1">Suivant <svg class="ic" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
       </div>
       <label id="mediaAutoAdvRow" style="display:none;align-items:center;justify-content:space-between;gap:12px;font-size:.72rem;color:var(--text);margin:6px 2px 10px;cursor:pointer">
         <span>Avancer au clic sur l'écran de jeu</span>
@@ -628,18 +627,18 @@
             <span class="toggle-track"></span><span class="toggle-thumb"></span>
           </span>
         </label>
-        <button type="button" class="mbar-edit" id="mediaBarEdit" onclick="openPhoneParams('media')"><span id="mediaBarSum"></span><span id="mediaBarEditLbl">Régler ›</span></button>
+        <button type="button" class="mbar-edit" id="mediaBarEdit" onclick="openPhoneParams('media')"><span id="mediaBarSum"></span><span id="mediaBarEditLbl">Régler <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span></button>
       </div>
       <div class="media-status" id="mediaStatus">Aucun média diffusé</div>
       <button class="media-btn" id="mediaPlayBtn" onclick="toggleVideoPlayback()" style="display:none">
-        <span class="media-icon" id="mediaPlayIcon">⏸</span><span id="mediaPlayLabel">Pause</span>
+        <span class="media-icon" id="mediaPlayIcon"><svg class="ic" aria-hidden="true"><use href="#i-pause"></use></svg></span><span id="mediaPlayLabel">Pause</span>
       </button>
       <div id="videoModeRow" style="display:none;margin:4px 0 10px">
         <div class="panel-label" style="margin-bottom:8px">Fin de lecture</div>
         <div class="chips-wrap seg">
-          <button class="chip active" id="vmode-loop" onclick="setVideoEndMode('loop')">🔁 Boucle</button>
-          <button class="chip" id="vmode-pause" onclick="setVideoEndMode('pause')">⏯ 1× puis pause</button>
-          <button class="chip" id="vmode-off" onclick="setVideoEndMode('off')">⏹ 1× puis off</button>
+          <button class="chip active" id="vmode-loop" onclick="setVideoEndMode('loop')"><svg class="ic" aria-hidden="true"><use href="#i-repeat"></use></svg> Boucle</button>
+          <button class="chip" id="vmode-pause" onclick="setVideoEndMode('pause')"><svg class="ic" aria-hidden="true"><use href="#i-step-forward"></use></svg> 1× puis pause</button>
+          <button class="chip" id="vmode-off" onclick="setVideoEndMode('off')"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> 1× puis off</button>
         </div>
       </div>
       <div id="mediaTimeline" style="display:none;margin:4px 0 12px">
@@ -651,7 +650,7 @@
         </div>
       </div>
       <button class="media-btn" id="mediaStopBtn" onclick="stopMediaBroadcast()" style="display:none;border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)">
-        <span class="media-icon">⏹</span> Arrêter la diffusion
+        <span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg></span> Arrêter la diffusion
       </button>
     </div>
   </div>
@@ -663,36 +662,36 @@
       <p>Exemples prêts à jouer sur l'écran, non modifiables. La licence débloque vos propres appels, SMS et discussions.</p>
       <div class="lic-pv-row">
         <button type="button" class="lic-pv-id" aria-label="Copier l'identifiant de cet appareil" onclick="licCopyId(this)"><span>ID</span><b class="lic-id-txt">····-····</b>⧉</button>
-        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">Obtenir une licence ›</button>
+        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">Obtenir une licence <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
       </div>
     </div>
     <div class="panel">
       <div class="panel-label">Type</div>
       <!-- Onglet Tel (maquettes 24 et 26) : appel, SMS, notification d'application, discussion -->
       <div class="tel-kinds">
-        <button type="button" class="gw-seg-btn active" id="callkind-call" onclick="setCallKind('call')">📞 Appel</button>
-        <button type="button" class="gw-seg-btn" id="callkind-sms" onclick="setCallKind('sms')">✉️ SMS</button>
-        <button type="button" class="gw-seg-btn" id="callkind-notif" onclick="setCallKind('notif')">🔔 Notification</button>
-        <button type="button" class="gw-seg-btn tel-kind-wide" id="callkind-discussion" onclick="setCallKind('discussion')">💬 Discussion</button>
+        <button type="button" class="gw-seg-btn active" id="callkind-call" onclick="setCallKind('call')"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg> Appel</button>
+        <button type="button" class="gw-seg-btn" id="callkind-sms" onclick="setCallKind('sms')"><svg class="ic" aria-hidden="true"><use href="#i-mail"></use></svg> SMS</button>
+        <button type="button" class="gw-seg-btn" id="callkind-notif" onclick="setCallKind('notif')"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg> Notification</button>
+        <button type="button" class="gw-seg-btn tel-kind-wide" id="callkind-discussion" onclick="setCallKind('discussion')"><svg class="ic" aria-hidden="true"><use href="#i-message-circle"></use></svg> Discussion</button>
       </div>
       <!-- Style et sonnerie / Style et son (maquette 36) : résumé, réglages dans la vue #tel-style-view -->
       <div class="tel-sum-row" id="telStyleRow">
         <div class="panel-label" id="telStyleLabel">Style et sonnerie</div>
-        <button type="button" class="tel-sum" id="telStyleBtn" onclick="openTelStyle()"><span id="telStyleSum"></span><b>Régler ›</b></button>
+        <button type="button" class="tel-sum" id="telStyleBtn" onclick="openTelStyle()"><span id="telStyleSum"></span><b>Régler <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></b></button>
       </div>
     </div>
     <div class="panel" id="callWhoPanel">
       <!-- Appelants enregistrés (maquette 36e) : feuille « Enregistrés (n) › », 79-callers.js -->
-      <div class="tel-head"><div class="panel-label" id="callWhoLabel">Appelant</div><button type="button" class="tel-link" id="callWhoSaved" onclick="openCallersSheet()">Enregistrés (0) ›</button></div>
+      <div class="tel-head"><div class="panel-label" id="callWhoLabel">Appelant</div><button type="button" class="tel-link" id="callWhoSaved" onclick="openCallersSheet()">Enregistrés (0) <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button></div>
       <input type="text" id="callName" class="text-input" placeholder="Nom affiché (ex : Maman)" value="Maman" style="width:100%;margin-bottom:10px" oninput="renderCallerState()">
       <input type="text" id="callLabel" class="text-input" placeholder="Sous-titre (ex : mobile)" value="mobile" style="width:100%;margin-bottom:10px" oninput="renderCallerState()">
       <div style="display:flex;gap:10px;align-items:center">
         <div id="callPhotoPreview" style="width:46px;height:46px;border-radius:50%;background:var(--mid2);border:1px solid var(--border);background-size:cover;background-position:center;flex-shrink:0"></div>
-        <button class="media-btn" id="callPhotoBtn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()">🖼 Photo (option)</button>
+        <button class="media-btn" id="callPhotoBtn" style="margin-bottom:0;flex:1" onclick="document.getElementById('callPhotoInput').click()"><svg class="ic" aria-hidden="true"><use href="#i-image"></use></svg> Photo (option)</button>
         <input type="file" id="callPhotoInput" accept="image/*" style="display:none" onchange="onCallPhoto(this.files);this.value=''">
       </div>
-      <button type="button" class="tel-save" id="callerSaveBtn" onclick="saveCurrentCaller()">☆ Enregistrer comme appelant</button>
-      <div class="tel-saved" id="callerSavedNote" style="display:none">✓ Appelant enregistré</div>
+      <button type="button" class="tel-save" id="callerSaveBtn" onclick="saveCurrentCaller()"><svg class="ic" aria-hidden="true"><use href="#i-star"></use></svg> Enregistrer comme appelant</button>
+      <div class="tel-saved" id="callerSavedNote" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg> Appelant enregistré</div>
     </div>
     <div class="panel" id="callMsgPanel" style="display:none">
       <div class="panel-label">Message</div>
@@ -718,7 +717,7 @@
       </div>
       <div style="display:flex;gap:10px;align-items:center">
         <div id="lockWallPreview" style="width:36px;height:62px;border-radius:8px;background:var(--mid2);background-size:cover;background-position:center;border:1px solid var(--border);flex-shrink:0"></div>
-        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('lockWallInput').click()">🖼 Fond d'écran</button>
+        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('lockWallInput').click()"><svg class="ic" aria-hidden="true"><use href="#i-image"></use></svg> Fond d'écran</button>
         <input type="file" id="lockWallInput" accept="image/*" style="display:none" onchange="onLockWall(this.files);this.value=''">
       </div>
       <div class="media-status" id="lockWallStatus">Sans fond : dégradé sombre. Heure/date vides : celles de l'écran.</div>
@@ -765,10 +764,10 @@
       <textarea id="ntBody" class="text-input nt-body" maxlength="200" placeholder="Contenu">Vous avez reçu 2 400,00 € de SARL Prod Nord. Solde disponible : 3 182,45 €.</textarea>
     </div>
     <div class="nt-actions" id="ntSendPanel" style="display:none">
-      <button type="button" class="nt-send" id="ntSendBtn" onclick="triggerCall()">🔔 Envoyer la notification</button>
+      <button type="button" class="nt-send" id="ntSendBtn" onclick="triggerCall()"><svg class="ic" aria-hidden="true"><use href="#i-bell"></use></svg> Envoyer la notification</button>
       <div class="tel-sum-row nt-sum-row">
         <div class="panel-label">Style et son</div>
-        <button type="button" class="tel-sum" id="ntStyleBtn" onclick="openTelStyle()"><span id="ntStyleSum"></span><b>Régler ›</b></button>
+        <button type="button" class="tel-sum" id="ntStyleBtn" onclick="openTelStyle()"><span id="ntStyleSum"></span><b>Régler <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></b></button>
       </div>
       <div class="nt-note">Réglages propres aux notifications, indépendants des SMS.</div>
     </div>
@@ -776,10 +775,10 @@
     <div class="panel" id="callAnswerBlock">
       <div class="panel-label">Au décroché · bande son</div>
       <div class="rt-row rt-answer" id="callAudioRow" style="display:none">
-        <svg class="rt-wave" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 10v4"/></svg>
+        <svg class="ic rt-wave" aria-hidden="true"><use href="#i-audio-waveform"></use></svg>
         <span class="rt-main"><span class="rt-name"><span id="callAudioName"></span><span class="rt-dim" id="callAudioDur"></span></span></span>
         <span class="rt-onscreen" id="callAudioState"></span>
-        <button type="button" class="rt-del" id="callAudioClear" aria-label="Retirer la bande son" onclick="clearCallAudio()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <button type="button" class="rt-del" id="callAudioClear" aria-label="Retirer la bande son" onclick="clearCallAudio()"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
       </div>
       <button type="button" class="rt-import" id="callAudioPick" onclick="document.getElementById('callAudioInput').click()">+ Choisir la voix du correspondant (8 Mo)</button>
       <input type="file" id="callAudioInput" accept="audio/*,.mp3,.m4a,.aac,.wav" style="display:none" onchange="onCallAudio(this.files);this.value=''">
@@ -790,10 +789,10 @@
       </div>
     </div>
     <div class="panel" id="callTriggerPanel">
-      <button class="media-btn" id="callTriggerBtn" onclick="triggerCall()"><span class="media-icon">📞</span> Faire sonner</button>
+      <button class="media-btn" id="callTriggerBtn" onclick="triggerCall()"><span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg></span> Faire sonner</button>
       <div style="display:flex;gap:10px">
-        <button class="media-btn" style="flex:1" id="callAnswerBtn" onclick="sendMsg({type:'call:answer'})">✅ Décrocher</button>
-        <button class="media-btn danger" style="flex:1" onclick="sendMsg({type:'call:end'})">⏹ Terminer</button>
+        <button class="media-btn" style="flex:1" id="callAnswerBtn" onclick="sendMsg({type:'call:answer'})"><svg class="ic" aria-hidden="true"><use href="#i-circle-check"></use></svg> Décrocher</button>
+        <button class="media-btn danger" style="flex:1" onclick="sendMsg({type:'call:end'})"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> Terminer</button>
       </div>
       <div class="media-status" id="callStatus">—</div>
     </div>
@@ -804,7 +803,7 @@
       <button type="button" class="gw-seg-btn" id="dcTab-saved" onclick="setChatView('saved')">Enregistrées (0)</button>
     </div>
     <!-- Nouvelle discussion (maquette 47b) : fil vierge, « Enregistrer avant ? » si le fil a changé -->
-    <button type="button" class="prj-newbtn" id="dcNewBtn" style="display:none" onclick="chatNewAsk()">+ Nouvelle discussion</button>
+    <button type="button" class="prj-newbtn" id="dcNewBtn" style="display:none" onclick="chatNewAsk()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Nouvelle discussion</button>
     <div class="dc-saved" id="dcSavedPanel" style="display:none">
       <div class="dc-saved-rows" id="dcSavedRows"></div>
       <div class="dc-saved-empty" id="dcSavedEmpty">Aucune discussion enregistrée pour l'instant.</div>
@@ -813,7 +812,7 @@
       <div class="cl-note">Une discussion enregistrée garde le contact (nom, photo), le comédien, le style et tous les messages. Le point de reprise n'est pas enregistré.</div>
     </div>
     <div class="panel dc-contact" id="dcContactPanel" style="display:none">
-      <div class="tel-head dc-contact-head"><div class="panel-label">Contact</div><button type="button" class="tel-link" id="dcCallersLink" onclick="openCallersSheet()">Enregistrés (0) ›</button></div>
+      <div class="tel-head dc-contact-head"><div class="panel-label">Contact</div><button type="button" class="tel-link" id="dcCallersLink" onclick="openCallersSheet()">Enregistrés (0) <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button></div>
       <div class="dc-contact-row">
         <button type="button" class="dc-avatar" id="dcAvatar" aria-label="Photo du contact" onclick="document.getElementById('dcAvatarInput').click()"></button>
         <input type="file" id="dcAvatarInput" accept="image/*" style="display:none" onchange="onChatAvatar(this.files);this.value=''">
@@ -836,9 +835,9 @@
       <div class="dc-auto-head"><span class="panel-label">Lecture automatique</span><span class="dc-auto-state" id="dcAutoState" role="status"></span></div>
       <div class="dc-auto-bar"><i id="dcAutoFill"></i></div>
       <div class="dc-auto-row">
-        <button type="button" class="dc-auto-play" id="dcAutoPlay" onclick="chatAutoStart()">▶ Lecture auto</button>
-        <button type="button" class="dc-auto-pause" id="dcAutoPause" onclick="chatAutoPause()" disabled>⏸ Pause</button>
-        <button type="button" class="dc-auto-back" id="dcAutoBack" onclick="chatAutoBack()" aria-label="Pause et revenir d'un message" title="Pause et revenir d'un message" disabled>↶</button>
+        <button type="button" class="dc-auto-play" id="dcAutoPlay" onclick="chatAutoStart()"><svg class="ic" aria-hidden="true"><use href="#i-play"></use></svg> Lecture auto</button>
+        <button type="button" class="dc-auto-pause" id="dcAutoPause" onclick="chatAutoPause()" disabled><svg class="ic" aria-hidden="true"><use href="#i-pause"></use></svg> Pause</button>
+        <button type="button" class="dc-auto-back" id="dcAutoBack" onclick="chatAutoBack()" aria-label="Pause et revenir d'un message" title="Pause et revenir d'un message" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg></button>
       </div>
     </div>
     <div class="panel dc-help-card" id="dcActorPanel" style="display:none">
@@ -848,7 +847,7 @@
     <div class="dc-send" id="dcSendPanel" style="display:none">
       <div class="dc-send-row">
         <button type="button" class="dc-go" id="dcGo" onclick="sendNextChatMessage()"></button>
-        <button type="button" class="dc-back" id="dcBackBtn" aria-label="Revenir d'un message" title="Revenir d'un message" onclick="rewindChat()" disabled>↶</button>
+        <button type="button" class="dc-back" id="dcBackBtn" aria-label="Revenir d'un message" title="Revenir d'un message" onclick="rewindChat()" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg></button>
         <button type="button" class="dc-write" id="dcWriteBtn" onclick="toggleChatWrite()">Écrire…</button>
       </div>
       <div class="dc-write-box" id="dcWriteBox" style="display:none">
@@ -895,7 +894,7 @@
       <p>Exemples prêts à jouer sur l'écran, non modifiables. La licence débloque vos propres séquences.</p>
       <div class="lic-pv-row">
         <button type="button" class="lic-pv-id" aria-label="Copier l'identifiant de cet appareil" onclick="licCopyId(this)"><span>ID</span><b class="lic-id-txt">····-····</b>⧉</button>
-        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">Obtenir une licence ›</button>
+        <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">Obtenir une licence <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
       </div>
     </div>
     <div class="dc-tabs">
@@ -904,19 +903,19 @@
     </div>
     <div class="sq" id="seqCurView">
       <!-- Nouvelle séquence (maquette 47) : séquence vide, « Enregistrer avant ? » si la séquence a changé -->
-      <button type="button" class="prj-newbtn" id="seqNewBtn" onclick="seqNewAsk()">+ Nouvelle séquence</button>
-      <div class="sq-head"><span class="sq-title">Séquence</span><button type="button" class="sq-add" id="seqAddBtn" onclick="openSeqStep(null)">+ Étape</button></div>
+      <button type="button" class="prj-newbtn" id="seqNewBtn" onclick="seqNewAsk()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Nouvelle séquence</button>
+      <div class="sq-head"><span class="sq-title">Séquence</span><button type="button" class="sq-add" id="seqAddBtn" onclick="openSeqStep(null)"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Étape</button></div>
       <div class="sq-sub"><span id="seqName"></span><span id="seqTarget"></span></div>
       <!-- Téléphone au départ (maquette 28b) : barre d'état de la séquence -->
-      <button type="button" class="sq-phone" id="seqPhoneBtn" onclick="openPhoneParams('seq')"><span class="sq-phone-l">📱 Téléphone au départ</span><span class="sq-phone-v" id="seqPhoneSum"></span></button>
+      <button type="button" class="sq-phone" id="seqPhoneBtn" onclick="openPhoneParams('seq')"><span class="sq-phone-l"><svg class="ic" aria-hidden="true"><use href="#i-smartphone"></use></svg> Téléphone au départ</span><span class="sq-phone-v" id="seqPhoneSum"></span></button>
       <div class="sq-list" id="seqRows"></div>
-      <div class="sq-empty" id="seqEmpty">Aucune étape. « + Étape » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.</div>
+      <div class="sq-empty" id="seqEmpty">Aucune étape. « Étape » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.</div>
       <div class="sq-legend"><span class="go">● GO</span><span class="auto">● automatique</span><span class="actor">● geste du comédien</span></div>
       <div class="sq-now" id="seqNow" role="status"></div>
       <div class="sq-warn" id="seqWarn" role="alert" style="display:none"></div>
       <div class="sq-ctl">
         <button type="button" class="sq-go" id="seqGoBtn" onclick="seqGoTap()">GO</button>
-        <button type="button" class="sq-back" id="seqBackBtn" aria-label="Revenir d'une étape" title="Revenir d'une étape" onclick="seqBack()">↶</button>
+        <button type="button" class="sq-back" id="seqBackBtn" aria-label="Revenir d'une étape" title="Revenir d'une étape" onclick="seqBack()"><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg></button>
         <button type="button" class="sq-stop" id="seqStopBtn" onclick="seqStop()">Stop</button>
       </div>
     </div>
@@ -938,7 +937,7 @@
       <div class="pair-code-row">
         <span class="pair-code" id="pairCode">···&nbsp;···</span>
         <button type="button" class="pair-refresh" aria-label="Générer un nouveau code" onclick="remoteNewPairCode()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+          <svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg>
         </button>
       </div>
       <div class="pair-note">Code valable 2 min · un nouveau code par écran</div>
@@ -949,12 +948,12 @@
       <div id="pairScreensList" class="pair-screens-list"></div>
     </div>
     <!-- Passerelle DMX : visible partout ; hors de l'app native, la vue explique qu'il faut l'app (validé) -->
-    <button type="button" class="media-btn gw-entry" id="gwEntryBtn" onclick="openDmxGateway()"><span class="media-icon">🎛</span> Passerelle DMX <span class="gw-entry-state" id="gwEntryState"></span></button>
+    <button type="button" class="media-btn gw-entry" id="gwEntryBtn" onclick="openDmxGateway()"><span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-sliders-horizontal"></use></svg></span> Passerelle DMX <span class="gw-entry-state" id="gwEntryState"></span></button>
     <!-- Tourner sans réseau (maquette 10) : liaison et préparation des écrans -->
-    <button type="button" class="media-btn gw-entry" id="offEntryBtn" onclick="openOfflineView()"><span class="media-icon">📶</span> Tourner sans réseau <span class="gw-entry-state" id="offEntryState"></span></button>
-    <button class="media-btn pair-renew" onclick="confirmNewSession()"><span class="media-icon">⟳</span> Nouvelle session</button>
+    <button type="button" class="media-btn gw-entry" id="offEntryBtn" onclick="openOfflineView()"><span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-wifi-off"></use></svg></span> Tourner sans réseau <span class="gw-entry-state" id="offEntryState"></span></button>
+    <button class="media-btn pair-renew" onclick="confirmNewSession()"><span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg></span> Nouvelle session</button>
     <div class="pair-e2e">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      <svg class="ic ic-sm" aria-hidden="true"><use href="#i-lock"></use></svg>
       Chiffré de bout en bout : seuls vos appareils lisent les messages et les médias
     </div>
   </div>
@@ -963,7 +962,7 @@
 <!-- Écrans connectés & groupes (maquette 5) -->
 <div id="screens-view" role="dialog" aria-labelledby="svTitle">
   <div class="sv-head">
-    <button type="button" class="sv-back" aria-label="Retour à la télécommande" onclick="closeScreensView()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <button type="button" class="sv-back" aria-label="Retour à la télécommande" onclick="closeScreensView()"><svg class="ic ic-lg" aria-hidden="true"><use href="#i-chevron-left"></use></svg></button>
     <span class="sv-title" id="svTitle">Écrans connectés</span>
     <button type="button" class="sv-pair" onclick="screensViewPair()">+ Appairer</button>
   </div>
@@ -978,7 +977,7 @@
 <!-- Séquence : éditer une étape (maquette 29) -->
 <div id="seq-step-view" role="dialog" aria-modal="true" aria-labelledby="ssTitle">
   <div class="ss-head">
-    <button type="button" class="ss-back" onclick="seqStepLeave()">← Séquence</button>
+    <button type="button" class="ss-back" onclick="seqStepLeave()"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Séquence</button>
     <span class="ss-title" id="ssTitle">Étape</span>
     <span class="ss-spacer"></span>
   </div>
@@ -996,7 +995,7 @@
 <!-- Téléphone au départ (maquette 28b) ; aussi « Barre d'état du téléphone » de l'onglet Média -->
 <div id="phone-params-view" role="dialog" aria-modal="true" aria-labelledby="ppTitle">
   <div class="ss-head">
-    <button type="button" class="ss-back" id="ppBack" onclick="closePhoneParams()">← Séquence</button>
+    <button type="button" class="ss-back" id="ppBack" onclick="closePhoneParams()"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Séquence</button>
     <span class="ss-title" id="ppTitle">Téléphone au départ</span>
     <span class="ss-spacer"></span>
   </div>
@@ -1013,7 +1012,7 @@
 <!-- Style et sonnerie / Style et son de l'onglet Tel (maquette 36b) : aperçu, style, son, vibreur (78-tel-style.js) -->
 <div id="tel-style-view" role="dialog" aria-modal="true" aria-labelledby="tsTitle">
   <div class="ss-head">
-    <button type="button" class="ss-back" id="tsBack" onclick="closeTelStyle()">← Tel</button>
+    <button type="button" class="ss-back" id="tsBack" onclick="closeTelStyle()"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Tel</button>
     <span class="ss-title" id="tsTitle">Style et sonnerie</span>
     <span class="ss-spacer"></span>
   </div>
@@ -1056,7 +1055,7 @@
       <div class="panel-label">Fond de l'écran verrouillé</div>
       <div style="display:flex;gap:10px;align-items:center">
         <div id="ntWallPreview" class="nt-wall-preview"></div>
-        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('ntWallInput').click()">🖼 Fond d'écran</button>
+        <button class="media-btn" style="margin-bottom:0;flex:1" onclick="document.getElementById('ntWallInput').click()"><svg class="ic" aria-hidden="true"><use href="#i-image"></use></svg> Fond d'écran</button>
         <input type="file" id="ntWallInput" accept="image/*" style="display:none" onchange="onNotifWall(this.files);this.value=''">
       </div>
       <div class="media-status" id="ntWallStatus">Sans fond : dégradé sombre. Propre aux notifications.</div>
@@ -1106,7 +1105,7 @@
 <!-- Retirer un écran : confirmation (maquette 5b) -->
 <div id="sr-revoke" onclick="if(event.target===this)closeRevokeDialog()">
   <div class="rv-dialog" role="dialog" aria-modal="true" aria-labelledby="rvTitle">
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ff7a70" stroke-width="1.8" aria-hidden="true"><path d="M15 7l2-2a3.5 3.5 0 015 5l-2 2M9 17l-2 2a3.5 3.5 0 01-5-5l2-2M8 8l8 8"/></svg>
+    <svg class="ic ic-xl ic-danger" aria-hidden="true"><use href="#i-link-2-off"></use></svg>
     <h2 id="rvTitle">Retirer cet écran ?</h2>
     <p class="rv-text">Cet écran est déconnecté et ne pourra plus rien recevoir ni déchiffrer.</p>
     <p class="rv-sub">Les autres écrans passent automatiquement sur de nouvelles clés, sans interruption visible. Pour réutiliser cet appareil, il faudra l'appairer à nouveau.</p>
@@ -1138,10 +1137,10 @@
         <div class="gw-kicker">Mode passerelle</div>
         <div class="gw-title">Console → écrans</div>
       </div>
-      <button type="button" class="gw-back" onclick="closeDmxGateway()">← Télécommande</button>
+      <button type="button" class="gw-back" onclick="closeDmxGateway()"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Télécommande</button>
     </div>
     <div class="flash-unavail-notice" id="gwNeedsApp" style="display:none">
-      <strong>🎛 Nécessite l'app SetRemote</strong>
+      <strong><svg class="ic" aria-hidden="true"><use href="#i-sliders-horizontal"></use></svg> Nécessite l'app SetRemote</strong>
       Un navigateur ne peut pas recevoir le sACN ni l'Art-Net (UDP). Ouvrez SetRemote dans l'app iPhone, iPad ou Android pour faire de cet appareil la passerelle de la console.
     </div>
     <div class="gw-card">
@@ -1180,7 +1179,7 @@
 
   <section class="gw-view" id="gwViewPatch">
     <div class="gw-head">
-      <button type="button" class="gw-back" onclick="gwShowView('gateway')">← Passerelle</button>
+      <button type="button" class="gw-back" onclick="gwShowView('gateway')"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Passerelle</button>
       <span class="gw-head-title">Patch</span>
       <button type="button" class="gw-head-btn" onclick="gwAutoAddress()">Auto-adresser</button>
     </div>
@@ -1196,7 +1195,7 @@
 
   <section class="gw-view" id="gwViewMonitor">
     <div class="gw-head">
-      <button type="button" class="gw-back" onclick="gwShowView('patch')">← Patch</button>
+      <button type="button" class="gw-back" onclick="gwShowView('patch')"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Patch</button>
       <span class="gw-head-title" id="gwMonName">Écran</span>
       <span class="gw-console" id="gwMonConsole" hidden>Console</span>
     </div>
@@ -1226,7 +1225,7 @@
 
   <section class="gw-view" id="gwViewChannels">
     <div class="gw-head">
-      <button type="button" class="gw-back" onclick="gwShowView('patch')">← Patch</button>
+      <button type="button" class="gw-back" onclick="gwShowView('patch')"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Patch</button>
       <span class="gw-head-title" id="gwChTitle">Étendu 16</span>
       <button type="button" class="gw-head-btn gw-pdf-btn" id="gwPdfBtn" onclick="gwChannelsPdf()">PDF</button>
     </div>
@@ -1239,7 +1238,7 @@
 <!-- Réglages (maquette 13), ouverts par l'engrenage de l'en-tête de la télécommande (maquette 1) -->
 <div id="settings-view" role="dialog" aria-modal="true" aria-labelledby="stTitle">
   <div class="st-head">
-    <button type="button" class="st-back" onclick="closeSettings()">← Retour</button>
+    <button type="button" class="st-back" onclick="closeSettings()"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg><span class="ic-txt">Retour</span></button>
     <span class="st-title" id="stTitle">Réglages</span>
     <span class="st-spacer"></span>
   </div>
@@ -1259,22 +1258,22 @@
       <button type="button" class="st-lic-act" onclick="licShareId(this)">Partager</button>
     </div>
     <p class="st-note" id="stLicBuyNote" style="display:none"></p>
-    <button type="button" class="st-lic-wide st-lic-buy" id="stLicBuy" style="display:none" onclick="licOpenBuy()">Obtenir une licence ›</button>
+    <button type="button" class="st-lic-wide st-lic-buy" id="stLicBuy" style="display:none" onclick="licOpenBuy()">Obtenir une licence <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
   </div>
   <!-- Projet (maquette 45, 74-project-ui.js) : projet ouvert, exporter, importer -->
   <div class="st-card st-rows" id="stProject">
     <span class="st-label prj-label">Projet</span>
     <button type="button" class="st-row" id="stPrjOpen" onclick="openProjectsView()">
       <span class="st-row-main"><span class="st-row-label" id="stPrjName">Mon projet</span><span class="st-row-sub" id="stPrjSub">Projet ouvert</span></span>
-      <span class="st-row-val prj-accent">Projets ›</span>
+      <span class="st-row-val prj-accent">Projets <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span>
     </button>
     <button type="button" class="st-row" id="stPrjExport" onclick="openProjectExport()">
       <span class="st-row-main"><span class="st-row-label">Exporter le projet…</span><span class="st-row-sub">Fichier .rem à envoyer ou à archiver</span></span>
-      <span class="st-row-val">›</span>
+      <span class="st-row-val"><svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span>
     </button>
     <button type="button" class="st-row prj-last" id="stPrjImport" onclick="projectImportPick()">
       <span class="st-row-main"><span class="st-row-label">Importer un projet…</span><span class="st-row-sub">Ajouter, remplacer, ou ouvrir comme nouveau projet</span></span>
-      <span class="st-row-val">›</span>
+      <span class="st-row-val"><svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span>
     </button>
   </div>
   <p class="st-note prj-lastexp" id="stPrjLast" style="display:none"></p>
@@ -1316,7 +1315,7 @@
 <!-- Projets (maquettes 45b à 46, 74-project-ui.js) : liste, export, aperçu de l'import, compte rendu, erreurs -->
 <div id="project-view" role="dialog" aria-modal="true" aria-labelledby="pjTitle">
   <div class="st-head">
-    <button type="button" class="st-back" onclick="projectViewBack()">← Retour</button>
+    <button type="button" class="st-back" onclick="projectViewBack()"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg><span class="ic-txt">Retour</span></button>
     <span class="st-title" id="pjTitle">Projets</span>
     <span class="st-spacer"></span>
   </div>
@@ -1327,13 +1326,13 @@
 <div id="offline-view" role="dialog" aria-modal="true" aria-labelledby="offTitle">
   <div class="off-head">
     <div class="off-head-row">
-      <button type="button" class="sv-back" aria-label="Retour" onclick="closeOfflineView()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <button type="button" class="sv-back" aria-label="Retour" onclick="closeOfflineView()"><svg class="ic ic-lg" aria-hidden="true"><use href="#i-chevron-left"></use></svg></button>
       <span class="off-title" id="offTitle">Tourner sans réseau</span>
     </div>
     <p class="off-sub">Préparez les écrans tant que vous avez du réseau ; sur le plateau, seules les commandes circulent.</p>
   </div>
   <div class="flash-unavail-notice" id="offNeedsApp" style="display:none">
-    <strong>📶 Nécessite l'app SetRemote</strong>
+    <strong><svg class="ic" aria-hidden="true"><use href="#i-wifi-off"></use></svg> Nécessite l'app SetRemote</strong>
     Un navigateur ne peut ouvrir ni Wi-Fi local ni Bluetooth entre appareils. Ouvrez SetRemote dans l'app iPhone, iPad ou Android pour tourner sans Internet. Ici, la préparation des écrans passe par Internet.
   </div>
   <div class="off-card">
@@ -1359,7 +1358,7 @@
 <!-- Politique de confidentialité dans l'app (Apple 5.1.1, Google Play) : page statique embarquée -->
 <div id="policy-view" role="dialog" aria-modal="true" aria-labelledby="policyTitle">
   <div class="st-head">
-    <button type="button" class="st-back" onclick="closePrivacyPolicy()">← Retour</button>
+    <button type="button" class="st-back" onclick="closePrivacyPolicy()"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg><span class="ic-txt">Retour</span></button>
     <span class="st-title" id="policyTitle">Confidentialité</span>
     <span class="st-spacer"></span>
   </div>
@@ -1370,7 +1369,7 @@
 <div id="strobe-warn">
   <div class="sw-dialog" role="alertdialog" aria-modal="true" aria-labelledby="swTitle" aria-describedby="swDesc">
     <div class="sw-head">
-      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ffc440" stroke-width="1.8" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5"/><circle cx="12" cy="18" r="0.6" fill="#ffc440"/></svg>
+      <svg class="ic ic-xl ic-warn" aria-hidden="true"><use href="#i-triangle-alert"></use></svg>
       <h2 id="swTitle">Lumière stroboscopique</h2>
     </div>
     <p class="sw-text" id="swDesc">Les flashs rapides peuvent déclencher des crises chez les personnes photosensibles. Prévenez l'équipe et les comédiens avant de lancer l'effet.</p>
@@ -1386,7 +1385,7 @@
 <!-- Vérification du nombre (appairage par code), sur la télécommande comme sur l'écran -->
 <div id="pair-verify">
   <div class="pv-dialog" role="dialog" aria-modal="true" aria-labelledby="pvTitle">
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF6B2C" stroke-width="1.8" aria-hidden="true"><path d="M12 3l7 3v5c0 4.4-3 8.4-7 10-4-1.6-7-5.6-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+    <svg class="ic ic-xl ic-accent" aria-hidden="true"><use href="#i-shield-check"></use></svg>
     <h2 id="pvTitle">Vérifiez le nombre</h2>
     <p class="pv-text" id="pvText">L'écran de jeu affiche maintenant un nombre. Il doit être <b>identique</b> à celui-ci&nbsp;:</p>
     <div class="pv-sas" id="pvSas">000 000</div>

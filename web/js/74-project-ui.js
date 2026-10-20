@@ -182,7 +182,7 @@ function renderSettingsProject() {
   return _pjuTrack(_pjuLoadList().then(() => {
     const a = _pjuActive();
     if (!a) return;
-    const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+    const set = (id, t) => { setIconText(document.getElementById(id), t); };
     set('stPrjName', a.name);
     set('stPrjSub', _PJU_TXT.open + ' · ' + _pjuCountsLong(a.counts));
     const last = document.getElementById('stPrjLast');
@@ -241,7 +241,7 @@ function _pjuListHtml() {
     return '<div class="prj-proj' + (m.active ? ' act' : '') + '" data-id="' + m.id + '" onclick="projectRowTap(\'' + m.id + '\')">'
       + '<span class="st-row-main"><span class="prj-pn">' + _pjuEsc(m.name) + (m.active ? '<span class="prj-tag">' + _PJU_TXT.tagOpen + '</span>' : '') + '</span>'
       + '<span class="prj-pm">' + _pjuEsc(when) + '<br>' + _pjuEsc(_pjuCountsShort(m.counts, m.size)) + '</span></span>'
-      + '<button type="button" class="prj-more" aria-label="' + _pjuEsc(_PJU_TXT.more) + '" onclick="event.stopPropagation();openProjectMenu(\'' + m.id + '\')">⋯</button></div>';
+      + '<button type="button" class="prj-more" aria-label="' + _pjuEsc(_PJU_TXT.more) + '" onclick="event.stopPropagation();openProjectMenu(\'' + m.id + '\')">' + icon('ellipsis', 'ic-lg') + '</button></div>';
   }).join('');
   return '<div class="st-card st-rows prj-projs">' + rows + '</div>'
     + '<button type="button" class="prj-sec prj-dash" id="pjNewBtn" onclick="openNewProjectSheet()">' + _PJU_TXT.newProject + '</button>'
@@ -553,7 +553,7 @@ function _pjuImportHtml() {
   if (mode === 'replace') {
     const lost = want.filter((k) => I.cur.counts[k] > 0).map((k) => _pjuN(k, I.cur.counts[k]));
     const parts = [];
-    if (lost.length) parts.push(_pjuEsc(_pjuTpl(T.replaceWarn, { liste: _pjuList(lost), projet: cur })));
+    if (lost.length) parts.push(iconizeText(_pjuTpl(T.replaceWarn, { liste: _pjuList(lost), projet: cur })));
     if (want.includes('rings') && (I.cur.counts.rings > 0 || info.counts.rings > 0)) parts.push(_pjuEsc(T.replaceRings));
     if (parts.length) warn = '<div class="prj-warn" id="pjImpWarn" role="alert">' + parts.join('<br>') + '</div>';
   }
@@ -643,7 +643,7 @@ function _pjuReportHtml() {
   const W = (r.warnings || []).filter((w) => T.warn[w.section]);
   const warns = W.slice(0, 3).map((w) => _pjuEsc(_pjuTpl(T.warn[w.section], { nom: w.name }))).concat(W.length > 3 ? [_pjuEsc(_pjuTpl(T.warnMore, { n: W.length - 3 }))] : []);
   const seqIn = mode === 'new' ? (r.counts && r.counts.seq) : (r.sections && r.sections.seq && r.sections.seq.added);
-  return '<div class="st-card"><div class="prj-ok"><i>✓</i><span id="pjRepHead">' + _pjuEsc(_pjuTpl(head, { nom: info.name, projet: cur })) + '</span></div></div>'
+  return '<div class="st-card"><div class="prj-ok"><i>' + icon('check', 'ic-sm') + '</i><span id="pjRepHead">' + _pjuEsc(_pjuTpl(head, { nom: info.name, projet: cur })) + '</span></div></div>'
     + '<div class="st-card st-rows">' + rows + '</div>'
     + (mode === 'new' && !r.opened && r.why ? '<div class="prj-warn" role="alert">' + _pjuEsc(_pjuTpl(T.notOpened, { raison: r.why })) + '</div>' : '')
     + (warns.length ? '<div class="prj-warn prj-warn-soft" role="status">' + warns.join('<br>') + '</div>' : '')

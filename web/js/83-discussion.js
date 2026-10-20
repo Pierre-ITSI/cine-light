@@ -83,7 +83,7 @@ const _CHAT_TXT = {
   autoLabel: 'Lecture automatique',
   autoRun: '● en cours · {n} / {total}', autoPaused: '⏸ en pause · {n} / {total}', autoReady: 'prête · {n} / {total}',
   autoActor: '● attend {comedien} · {n} / {total}', autoButton: '● attend « Envoyer » · {n} / {total}', autoDone: 'terminée · {n} / {total}',
-  autoPlay: '▶ LECTURE AUTO', autoPause: '⏸ PAUSE', autoBack: '↶', autoBackAria: 'Pause et revenir d\'un message',
+  autoPlay: '▶ Lecture auto', autoPause: '⏸ Pause', autoBack: '↶', autoBackAria: 'Pause et revenir d\'un message',
   undelivered: 'Non distribué',
 };
 // Timings d'un message (maquette 26d) ; valeurs par défaut = comportement d'avant
@@ -615,7 +615,7 @@ function _chatAutoInfo() {
 function _chatRenderAuto() {
   const st = document.getElementById('dcAutoState'), fill = document.getElementById('dcAutoFill');
   const info = _chatAutoInfo();
-  if (st) { st.textContent = info.text; st.classList.toggle('on', info.live); }
+  if (st) { setIconText(st, info.text); st.classList.toggle('on', info.live); }
   if (fill) fill.style.width = info.pct + '%';
   if (typeof seqRenderChatStatus === 'function') seqRenderChatStatus(); // 91-sequence.js : état sous l'étape en cours
   const play = document.getElementById('dcAutoPlay'), pause = document.getElementById('dcAutoPause'), back = document.getElementById('dcAutoBack');
@@ -661,7 +661,7 @@ function _chatScreensLabel() {
   return 'Discussion ouverte sur l\'écran';
 }
 function _chatRenderHead() {
-  const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+  const set = (id, t) => { setIconText(document.getElementById(id), t); };
   const av = document.getElementById('dcAvatar');
   if (av) {
     av.style.backgroundImage = _chatAvatar ? 'url(' + _chatAvatar + ')' : '';
@@ -792,7 +792,8 @@ function _chatTimingEditor(m) {
     el('span', 'dc-timing-quote', '« ' + (m.text || '…') + ' »'));
   const stepper = (label, val, k) => {
     const r = el('div', 'dc-tstep');
-    const minus = el('button', 'dc-tbtn', '−'), plus = el('button', 'dc-tbtn', '+');
+    const minus = el('button', 'dc-tbtn'), plus = el('button', 'dc-tbtn');
+    minus.innerHTML = icon('minus', 'ic-sm'); plus.innerHTML = icon('plus', 'ic-sm');
     minus.type = plus.type = 'button'; minus.setAttribute('aria-label', label + ' −'); plus.setAttribute('aria-label', label + ' +');
     minus.onclick = () => setChatTiming(m.id, k, -1); plus.onclick = () => setChatTiming(m.id, k, 1);
     r.append(el('span', '', label), minus, el('b', 'dc-tval', _tplChat(_CHAT_TXT.seconds, { n: val })), plus);

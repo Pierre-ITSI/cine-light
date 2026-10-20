@@ -11,19 +11,19 @@
 .rt-main{flex:1;min-width:0}
 .rt-name,.rt-meta{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rt-name{font-size:.75rem;color:var(--text)}
-.rt-row.selected .rt-name{color:#FF8a55}
-.rt-meta{font-size:var(--fs-caption);color:#a8a8a8;margin-top:2px}
-.rt-del{width:36px;height:36px;border-radius:6px;border:none;background:transparent;color:#a8a8a8;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;padding:0}
-.rt-import{display:block;width:100%;min-height:46px;padding:8px 10px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:transparent;color:#d0d0d0;font-family:'DM Mono',monospace;font-size:var(--fs-label);letter-spacing:0;line-height:1.4;cursor:pointer}
+.rt-row.selected .rt-name{color:var(--accent-text)}
+.rt-meta{font-size:var(--fs-caption);color:var(--text-2);margin-top:2px}
+.rt-del{width:36px;height:36px;border-radius:6px;border:none;background:transparent;color:var(--text-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;padding:0}
+.rt-import{display:block;width:100%;min-height:46px;padding:8px 10px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:var(--fs-label);letter-spacing:0;line-height:1.4;cursor:pointer}
 .rt-status{text-align:left;margin-top:8px}
-.media-status.rt-warn{color:#ff7a70}
+.media-status.rt-warn{color:var(--danger)}
 .rt-vol{margin:14px 0 0}
 .rt-sub{margin-top:18px}
 .rt-answer{cursor:default;gap:8px}
 .rt-answer .rt-del{width:30px}
-.rt-wave{flex-shrink:0;color:#c8c8c8}
-.rt-dim{color:#a8a8a8}
-.rt-onscreen{font-size:var(--fs-caption);color:#a8a8a8;flex-shrink:0;white-space:nowrap}
+.rt-wave{flex-shrink:0;color:var(--text-2)}
+.rt-dim{color:var(--text-2)}
+.rt-onscreen{font-size:var(--fs-caption);color:var(--text-2);flex-shrink:0;white-space:nowrap}
 .rt-onscreen.on{color:var(--green)}
 .rt-auto{margin:14px 0 0}
-.rt-note{margin-top:16px;font-size:var(--fs-label);color:#a8a8a8;line-height:1.6;text-align:center}
+.rt-note{margin-top:16px;font-size:var(--fs-label);color:var(--text-2);line-height:1.6;text-align:center}

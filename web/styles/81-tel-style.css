@@ -5,19 +5,19 @@
    ss-card, pp-cap) ; aperçu simplifié de l'écran de jeu ; vibreur ; en-tête
    « Enregistrés (n) › » et feuille des appelants enregistrés. */
 .tel-sum-row{margin-top:14px}
-.tel-sum{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#252528;color:#d8d8d8;font-family:'DM Mono',monospace;font-size:var(--fs-label);text-align:left;line-height:1.5;cursor:pointer}
-.tel-sum b{color:#FF8a55;font-weight:500;white-space:nowrap}
+.tel-sum{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#252528;color:var(--text);font-family:'DM Mono',monospace;font-size:var(--fs-label);text-align:left;line-height:1.5;cursor:pointer}
+.tel-sum b{color:var(--accent-text);font-weight:500;white-space:nowrap}
 .tel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
 .tel-head .panel-label{margin:0}
-.tel-link{background:none;border:none;color:#FF8a55;font-family:'DM Mono',monospace;font-size:var(--fs-label);padding:0;cursor:pointer;white-space:nowrap}
-.tel-save{width:100%;margin-top:10px;min-height:42px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:transparent;color:#d0d0d0;font-family:'DM Mono',monospace;font-size:var(--fs-label);cursor:pointer}
-.tel-saved{width:100%;margin-top:10px;font-size:var(--fs-label);color:#5fdf8a;text-align:center}
+.tel-link{background:none;border:none;color:var(--accent-text);font-family:'DM Mono',monospace;font-size:var(--fs-label);padding:0;cursor:pointer;white-space:nowrap}
+.tel-save{width:100%;margin-top:10px;min-height:42px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:transparent;color:var(--text);font-family:'DM Mono',monospace;font-size:var(--fs-label);cursor:pointer}
+.tel-saved{width:100%;margin-top:10px;font-size:var(--fs-label);color:var(--success);text-align:center}
 
 /* Vue « Style et sonnerie » */
 #tel-style-view .ss-card .panel-label{margin-bottom:8px}
 #tel-style-view #callRingPanel .rt-note{margin-top:8px}
 .ts-vib{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.8125rem;color:#F5F2EC;cursor:pointer}
-.ts-note{font-size:var(--fs-label);color:#a8a8a8;line-height:1.55}
+.ts-note{font-size:var(--fs-label);color:var(--text-2);line-height:1.55}
 /* Aperçu : simple maquette de l'écran de jeu, selon le style */
 .ts-prev{margin:4px 0 0;height:150px;flex:none;border-radius:14px;background:linear-gradient(160deg,#3a4656,#12161c);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-family:-apple-system,system-ui,sans-serif;position:relative;overflow:hidden}
 .ts-prev.tonal{background:linear-gradient(160deg,#2c3a3a,#161c1c)}
@@ -65,8 +65,8 @@
 .cr-main{min-width:0;flex:1}
 .cr-name,.cr-meta{display:block}
 .cr-name{font-size:.8125rem;color:#F5F2EC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cr-row.on .cr-name{color:#FF8a55}
-.cr-meta{font-size:var(--fs-label);color:#a8a8a8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cr-more{margin-left:auto;min-width:36px;min-height:36px;border:none;background:transparent;color:#8f8f8f;font-size:1.1rem;cursor:pointer}
-.cr-empty{font-size:var(--fs-label);color:#a8a8a8;padding:12px 4px}
+.cr-row.on .cr-name{color:var(--accent-text)}
+.cr-meta{font-size:var(--fs-label);color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-more{margin-left:auto;min-width:36px;min-height:36px;border:none;background:transparent;color:var(--text-3);font-size:1.1rem;cursor:pointer}
+.cr-empty{font-size:var(--fs-label);color:var(--text-2);padding:12px 4px}
 .sr-add:disabled{opacity:.5;cursor:default}

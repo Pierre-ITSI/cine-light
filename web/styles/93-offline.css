@@ -18,36 +18,36 @@
 .off-head{padding-bottom:12px;border-bottom:1px solid var(--border);flex-shrink:0}
 .off-head-row{display:flex;align-items:center;gap:8px}
 .off-title{flex:1;min-width:0;font-family:'Lato',sans-serif;font-weight:600;font-size:1.25rem}
-.off-sub{margin:6px 0 0;font-size:var(--fs-label);color:#b0b0b0;line-height:1.5}
+.off-sub{margin:6px 0 0;font-size:var(--fs-label);color:var(--text-2);line-height:1.5}
 
 /* Cartes */
 .off-card{background:var(--mid);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;flex-shrink:0}
 .off-prep{gap:12px}
-.off-label{font-size:var(--fs-caption);letter-spacing:.2em;text-transform:uppercase;color:#a8a8a8}
+.off-label{font-size:var(--fs-caption);letter-spacing:.2em;text-transform:uppercase;color:var(--text-2)}
 .off-seg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.off-seg-btn{height:40px;padding:0 2px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:#d0d0d0;font-family:'DM Mono',monospace;font-size:var(--fs-caption);cursor:pointer}
-.off-seg-btn.active{border-color:var(--accent);background:rgba(255,107,44,.1);color:#FF8a55}
+.off-seg-btn{height:40px;padding:0 2px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:var(--fs-caption);cursor:pointer}
+.off-seg-btn.active{border-color:var(--accent);background:rgba(255,107,44,.1);color:var(--accent-text)}
 .off-seg-btn:disabled{opacity:.4;cursor:default}
-.off-desc{font-size:var(--fs-label);color:#c4c4c4;line-height:1.55}
+.off-desc{font-size:var(--fs-label);color:var(--text-2);line-height:1.55}
 .off-warn{font-size:var(--fs-label);color:#f0dca8;line-height:1.55}
 
 /* Préparation : un écran par ligne (nom, état, barre, détail) */
 .off-rows{display:flex;flex-direction:column;gap:12px}
-.off-row{--st:#a8a8a8;display:flex;flex-direction:column;gap:6px}
-.off-row.ready{--st:#5fdf8a}
-.off-row.busy{--st:#FF8a55}
-.off-row.fail{--st:#ff7a70}
+.off-row{--st:var(--text-2);display:flex;flex-direction:column;gap:6px}
+.off-row.ready{--st:var(--success)}
+.off-row.busy{--st:var(--accent-text)}
+.off-row.fail{--st:var(--danger)}
 .off-row-head{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.8125rem}
 .off-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .off-state{font-size:var(--fs-label);color:var(--st);white-space:nowrap;flex-shrink:0}
 .off-bar{height:6px;border-radius:3px;background:rgba(245,242,236,.12);overflow:hidden}
 .off-bar div{height:6px;background:var(--st);transition:width .3s}
-.off-detail{font-size:var(--fs-caption);color:#a8a8a8;line-height:1.5}
-.off-empty{font-size:var(--fs-label);color:#a8a8a8;line-height:1.55}
+.off-detail{font-size:var(--fs-caption);color:var(--text-2);line-height:1.5}
+.off-empty{font-size:var(--fs-label);color:var(--text-2);line-height:1.55}
 
 /* « Tout préparer maintenant », note, conseil Wi-Fi local */
 .off-go{height:52px;flex-shrink:0;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;letter-spacing:.08em;cursor:pointer}
 .off-go:disabled{opacity:.45;cursor:default}
-.off-note{font-size:var(--fs-label);color:#c4c4c4;line-height:1.55;text-align:center}
+.off-note{font-size:var(--fs-label);color:var(--text-2);line-height:1.55;text-align:center}
 .off-tip{margin-top:auto;flex-shrink:0;background:rgba(111,180,255,.08);border:1px solid rgba(111,180,255,.3);border-radius:10px;padding:12px 14px;font-size:var(--fs-label);color:#c9ddf5;line-height:1.6}
 .off-tip b{color:var(--text)}

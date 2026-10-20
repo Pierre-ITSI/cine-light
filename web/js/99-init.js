@@ -72,7 +72,7 @@ document.querySelectorAll('input[type="range"]').forEach(slider => {
   // Bouton -
   const btnMinus = document.createElement('button');
   btnMinus.className = 'slider-btn';
-  btnMinus.textContent = '−';
+  btnMinus.innerHTML = icon('minus'); btnMinus.setAttribute('aria-label', 'Diminuer');
   btnMinus.type = 'button';
   btnMinus.onclick = (e) => { e.preventDefault(); nudge(-1); };
 
@@ -82,7 +82,7 @@ document.querySelectorAll('input[type="range"]').forEach(slider => {
   // Bouton +
   const btnPlus = document.createElement('button');
   btnPlus.className = 'slider-btn';
-  btnPlus.textContent = '+';
+  btnPlus.innerHTML = icon('plus'); btnPlus.setAttribute('aria-label', 'Augmenter');
   btnPlus.type = 'button';
   btnPlus.onclick = (e) => { e.preventDefault(); nudge(1); };
 

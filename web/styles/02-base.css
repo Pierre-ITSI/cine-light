@@ -59,3 +59,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
 .st-dot{width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block;flex:none}
 .st-dot.ok{background:var(--success)}
 .st-dot.ko{background:var(--danger)}
+.ic-sm{width:var(--icon-sm);height:var(--icon-sm);vertical-align:-2px}
+.ic-lg{width:var(--icon-lg);height:var(--icon-lg)}
+.ic-xl{width:44px;height:44px;vertical-align:0}
+.ic-danger{color:var(--danger)} .ic-warn{color:var(--warning)} .ic-accent{color:var(--accent)}

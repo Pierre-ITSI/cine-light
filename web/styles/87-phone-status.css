@@ -61,7 +61,7 @@
 .pp-preview .pb-sig{height:13px;gap:2px}
 .pp-preview .pb-sig i{width:4px}
 .pp-preview .pb-sig i:nth-child(1){height:4px}.pp-preview .pb-sig i:nth-child(2){height:7px}.pp-preview .pb-sig i:nth-child(3){height:10px}.pp-preview .pb-sig i:nth-child(4){height:13px}
-.pp-cap{font-size:var(--fs-caption);color:#a8a8a8;text-align:center;margin-top:-2px}
+.pp-cap{font-size:var(--fs-caption);color:var(--text-2);text-align:center;margin-top:-2px}
 .pp-dt-row{display:flex;gap:6px}
 .pp-dt{position:relative;display:flex;align-items:center;height:38px;box-sizing:border-box;padding:0 10px;background:#000;border:1px solid rgba(255,255,255,.14);border-radius:6px;font-size:.8125rem;color:var(--text);min-width:0;overflow:hidden;white-space:nowrap;cursor:pointer}
 .pp-dt.pp-date{flex:1.5}
@@ -80,19 +80,19 @@
 .pp-level input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:linear-gradient(to right,var(--accent) var(--v,50%),#333 var(--v,50%));margin:0}
 .pp-level input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:transparent;border:none;cursor:pointer}
 .pp-level input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:transparent;border:none;cursor:pointer}
-.pp-note{font-size:var(--fs-caption);color:#a8a8a8;line-height:1.6}
+.pp-note{font-size:var(--fs-caption);color:var(--text-2);line-height:1.6}
 /* Fond d'écran de la séquence (maquette 42) : vignette portrait, nom, note, CHANGER… / RETIRER */
 .pp-wall{display:flex;gap:12px;align-items:center}
 .pp-wall-thumb{position:relative;width:54px;height:96px;flex:none;border-radius:10px;padding:0;border:1px solid rgba(255,255,255,.2);background:linear-gradient(180deg,#24324a 0%,#0e1420 100%);background-size:cover;background-position:center;overflow:hidden;cursor:pointer}
 .pp-wall-thumb span{position:absolute;top:14px;left:0;right:0;text-align:center;color:#fff;font:600 13px -apple-system,system-ui,Roboto,'Segoe UI',sans-serif;text-shadow:0 1px 3px rgba(0,0,0,.45)}
 .pp-wall-col{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
 .pp-wall-name{font-size:.75rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pp-wall-note{font-size:var(--fs-label);color:#a8a8a8;line-height:1.5}
-.pp-wall-note.ss-warn{color:#ff8f86}
+.pp-wall-note{font-size:var(--fs-label);color:var(--text-2);line-height:1.5}
+.pp-wall-note.ss-warn{color:var(--danger)}
 .pp-wall-btns{display:flex;gap:8px}
 .pp-wall-btn{flex:1;height:38px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text);font-family:'DM Mono',monospace;font-size:var(--fs-label);cursor:pointer}
-.pp-wall-btn.danger{flex:none;padding:0 12px;color:#ff8f86;border-color:rgba(255,90,79,.45);background:transparent}
+.pp-wall-btn.danger{flex:none;padding:0 12px;color:var(--danger);border-color:rgba(255,90,79,.45);background:transparent}
 .mbar{display:flex;flex-direction:column;gap:6px;margin:6px 2px 10px}
 .mbar-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:var(--fs-label);color:var(--text);cursor:pointer}
-.mbar-edit{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:#a8a8a8;font-family:'DM Mono',monospace;font-size:var(--fs-caption);cursor:pointer;text-align:left}
-.mbar-edit span:last-child{color:#FF8a55;flex:none}
+.mbar-edit{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--mid2);color:var(--text-2);font-family:'DM Mono',monospace;font-size:var(--fs-caption);cursor:pointer;text-align:left}
+.mbar-edit span:last-child{color:var(--accent-text);flex:none}

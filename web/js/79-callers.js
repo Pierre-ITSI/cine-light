@@ -224,15 +224,15 @@ function deleteCaller(id) {
 // ── Rendu dans l'onglet ──
 function renderCallerState() {
   const link = _crTpl(_CR_TXT.link, { n: callers.length });
-  for (const id of ['callWhoSaved', 'dcCallersLink']) { const el = document.getElementById(id); if (el) el.textContent = link; }
+  for (const id of ['callWhoSaved', 'dcCallersLink']) { setIconText(document.getElementById(id), link); }
   const saved = callerIsSaved(), named = !!_crCurrent().name;
   const btn = document.getElementById('callerSaveBtn'), note = document.getElementById('callerSavedNote');
   if (btn) {
-    btn.textContent = _CR_TXT.saveBtn;
+    setIconText(btn, _CR_TXT.saveBtn);
     btn.style.display = saved ? 'none' : '';
     btn.disabled = !named || (!_crMatch(_crCurrent()) && callers.length >= CALLERS_MAX);
   }
-  if (note) { note.textContent = _CR_TXT.savedNote; note.style.display = saved ? '' : 'none'; }
+  if (note) { setIconText(note, _CR_TXT.savedNote); note.style.display = saved ? '' : 'none'; }
   if (_sheet && _sheet.kind === 'callers') renderSheet();
 }
 
@@ -271,10 +271,10 @@ function callersSheetContent(s) {
     const cur = _crCurrent(), on = _crMatch(cur), saved = callerIsSaved();
     const rows = callers.map((e) => '<div class="cr-row' + (on === e ? ' on' : '') + '" data-id="' + e.id + '" onclick="applyCaller(\'' + e.id + '\')">'
       + _crAvatarHtml(e) + '<span class="cr-main"><span class="cr-name">' + esc(e.name) + '</span><span class="cr-meta">' + esc(_crMeta(e)) + '</span></span>'
-      + '<button type="button" class="cr-more" aria-label="' + esc(T.more) + '" onclick="event.stopPropagation();openCallerMenu(\'' + e.id + '\')">⋯</button></div>').join('');
+      + '<button type="button" class="cr-more" aria-label="' + esc(T.more) + '" onclick="event.stopPropagation();openCallerMenu(\'' + e.id + '\')">' + icon('ellipsis', 'ic-lg') + '</button></div>').join('');
     const full = !on && callers.length >= CALLERS_MAX;
     const add = !cur.name ? '' : '<button type="button" class="sr-add" id="crAdd" onclick="callersSheetAdd()"' + (saved || full ? ' disabled' : '') + '>'
-      + esc(saved ? _crTpl(T.added, { nom: cur.name }) : full ? _crTpl(T.full, { max: CALLERS_MAX }) : _crTpl(T.add, { nom: cur.name })) + '</button>';
+      + iconizeText(saved ? _crTpl(T.added, { nom: cur.name }) : full ? _crTpl(T.full, { max: CALLERS_MAX }) : _crTpl(T.add, { nom: cur.name })) + '</button>';
     return {
       title: T.title, form: false,
       html: (rows || '<div class="cr-empty">' + esc(T.empty) + '</div>') + add + '<p class="sr-sheet-note">' + esc(T.note) + '</p>' + cancel('closeSheet()', T.close),

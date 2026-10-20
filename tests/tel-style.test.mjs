@@ -44,7 +44,7 @@ test('36 · appel : rangée résumé, vue « Style et sonnerie », panneau « Au
   assert.equal(await shown(page, 'tel-style-view'), false);
   assert.equal(await page.textContent('#telStyleLabel'), 'Style et sonnerie');
   assert.equal(await page.innerHTML('#telStyleSum'), 'Verre · Plein écran · Avatar<br>Sonnerie Classique · 100 % · Vibreur non');
-  assert.equal(await page.textContent('#telStyleBtn b'), 'Régler ›');
+  assert.equal((await page.textContent('#telStyleBtn b')).trim(), 'Régler');
   // « Au décroché » : son propre panneau (bande son, décroché automatique)
   assert.equal(await shown(page, 'callAnswerBlock'), true);
   assert.match(await page.textContent('#callAnswerBlock .panel-label'), /^Au décroché · bande son$/);
@@ -52,7 +52,7 @@ test('36 · appel : rangée résumé, vue « Style et sonnerie », panneau « Au
   await page.click('#telStyleBtn');
   assert.equal(await shown(page, 'tel-style-view'), true);
   assert.deepEqual(await page.evaluate(() => ['tsTitle', 'tsBack', 'tsCap', 'ringPanelLabel'].map((id) => document.getElementById(id).textContent)),
-    ['Style et sonnerie', '← Tel', 'Aperçu de l\'appel sur l\'écran de jeu', 'Sonnerie']);
+    ['Style et sonnerie', 'Tel', 'Aperçu de l\'appel sur l\'écran de jeu', 'Sonnerie']);
   assert.equal(await page.textContent('#tsVibNote'), 'Vibre avec la sonnerie, même en Silencieux. Écran de jeu Android ou app SetRemote : iPhone dans Safari ne sait pas vibrer.');
   assert.equal(await page.textContent('#tsPreview .tp-nm'), 'Maman');
   assert.equal(await page.evaluate(() => !!document.querySelector('#tsPreview .tp-vib')), false, 'vibreur coupé : pas de badge');
@@ -218,17 +218,17 @@ test('36e · appelants : enregistrer, liste, appliquer (appel, SMS, discussion),
   const { page, errors, close } = await openPage(browser);
   await remote(page);
   assert.equal(await page.textContent('#callWhoLabel'), 'Appelant');
-  assert.equal(await page.textContent('#callWhoSaved'), 'Enregistrés (0) ›');
+  assert.equal(await page.textContent('#callWhoSaved'), 'Enregistrés (0)');
   assert.equal(await shown(page, 'callerSaveBtn'), true);
-  assert.equal(await page.textContent('#callerSaveBtn'), '☆ Enregistrer comme appelant');
+  assert.equal(await page.textContent('#callerSaveBtn'), 'Enregistrer comme appelant');
   // « ☆ Enregistrer comme appelant » : Maman, mobile, avec photo
   const red = await photo(page, '#c08060');
   await page.evaluate((p) => { _callPhoto = p; renderCallerState(); }, red);
   await page.click('#callerSaveBtn');
   await waitFor(page, () => callers.length === 1);
   assert.equal(await shown(page, 'callerSaveBtn'), false);
-  assert.equal(await page.textContent('#callerSavedNote'), '✓ Appelant enregistré');
-  assert.equal(await page.textContent('#callWhoSaved'), 'Enregistrés (1) ›');
+  assert.equal(await page.textContent('#callerSavedNote'), 'Appelant enregistré');
+  assert.equal(await page.textContent('#callWhoSaved'), 'Enregistrés (1)');
   // Photo changée : plus « enregistré » tel quel
   await page.evaluate(() => { _callPhoto = null; renderCallerState(); });
   assert.equal(await shown(page, 'callerSaveBtn'), true);
@@ -237,22 +237,22 @@ test('36e · appelants : enregistrer, liste, appliquer (appel, SMS, discussion),
   assert.equal(await page.textContent('#callWhoLabel'), 'Contact');
   await page.click('#callWhoSaved');
   assert.equal(await page.textContent('#srSheetTitle'), 'Appelants enregistrés');
-  assert.equal(await page.textContent('#crAdd'), '+ Enregistrer « Agence immobilière » (actuel)');
+  assert.equal(await page.textContent('#crAdd'), 'Enregistrer « Agence immobilière » (actuel)');
   await page.click('#crAdd');
   await waitFor(page, () => callers.length === 2);
   await waitFor(page, () => document.querySelectorAll('#srSheetBody .cr-av[style*="background-image"]').length === 1);
   assert.deepEqual(await sheetRows(page), [['Maman', 'mobile · photo', false], ['Agence immobilière', 'bureau', true]]);
-  assert.equal(await page.textContent('#crAdd'), '✓ « Agence immobilière » enregistré');
+  assert.equal(await page.textContent('#crAdd'), '« Agence immobilière » enregistré');
   assert.equal(await page.isDisabled('#crAdd'), true);
   assert.match(await page.textContent('#srSheetBody .sr-sheet-note'), /^Un appelant enregistré sert aux appels, SMS et discussions/);
   // Toucher « Maman » : nom, sous-titre et photo dans le formulaire du SMS
   await page.locator('#srSheetBody .cr-row').nth(0).click();
   await waitFor(page, () => !_sheet);
   assert.deepEqual(await page.evaluate(() => [document.getElementById('callName').value, document.getElementById('callLabel').value, _callPhoto]), ['Maman', 'mobile', red]);
-  assert.equal(await page.textContent('#callerSavedNote'), '✓ Appelant enregistré');
+  assert.equal(await page.textContent('#callerSavedNote'), 'Appelant enregistré');
   // Discussion : en-tête « Contact · Enregistrés (2) › » ; l'appelant devient le contact (nom et photo)
   await page.evaluate(() => setCallKind('discussion'));
-  assert.equal(await page.textContent('#dcCallersLink'), 'Enregistrés (2) ›');
+  assert.equal(await page.textContent('#dcCallersLink'), 'Enregistrés (2)');
   await page.click('#dcCallersLink');
   await page.locator('#srSheetBody .cr-row').nth(0).click();
   await waitFor(page, () => _chat.name === 'Maman' && _chatAvatar);

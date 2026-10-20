@@ -34,12 +34,12 @@ const _LIC_TXT = {
   textTel: 'Exemples prêts à jouer sur l\'écran, non modifiables. La licence débloque vos propres appels, SMS et discussions.',
   textSeq: 'Exemples prêts à jouer sur l\'écran, non modifiables. La licence débloque vos propres séquences.',
   idChip: 'ID', idNone: '····-····', copyAria: 'Copier l\'identifiant de cet appareil',
-  buy: 'Obtenir une licence ›', example: ' · exemple 🔒',
+  buy: 'Obtenir une licence ›', example: ' · exemple',
   none: 'Aucune licence', active: 'Active', until: 'jusqu\'au {date}', soon: 'expire dans {n} j',
   holder: 'Titulaire', devices: 'Appareils', devicesVal: '{n} sur {max}', includes: 'Comprend', checked: 'Vérifiée',
   offline: 'Hors ligne', offlineVal: 'valable jusqu\'au {date}', feat: { tel: 'Tel', seq: 'Séquence' }, nothing: '—',
   checkNow: 'Vérifier maintenant', checking: 'Vérification…',
-  copy: 'Copier', share: 'Partager', copied: 'Copié ✓',
+  copy: 'Copier', share: 'Partager', copied: '✓ Copié',
   buyNote: 'Transmettez cet identifiant lors de l\'achat sur {site} : la licence s\'active toute seule, sans rien saisir.',
   agoNow: 'à l\'instant', agoMin: 'il y a {n} min', agoH: 'il y a {n} h', agoD: 'il y a {n} j',
   err: {
@@ -260,7 +260,7 @@ function renderLicenceSettings() {
   const card = document.getElementById('stLicCard');
   if (!LIC_ON || !card) return;
   const st = licStatus(), p = st.payload, T = _LIC_TXT;
-  const set = (k, t) => { const el = document.getElementById(k); if (el) el.textContent = t; };
+  const set = (k, t) => { setIconText(document.getElementById(k), t); };
   set('stLicState', st.active ? T.active : T.none);
   document.getElementById('stLicDot').classList.toggle('on', st.active);
   const until = document.getElementById('stLicUntil');
@@ -310,7 +310,7 @@ function _licFlash(btn, text) {
   const old = btn.dataset.licOld || btn.innerHTML;
   btn.dataset.licOld = old;
   btn.classList.add('lic-done');
-  if (text) btn.textContent = text;
+  if (text) setIconText(btn, text);
   clearTimeout(btn._licT);
   btn._licT = setTimeout(() => { btn.innerHTML = old; delete btn.dataset.licOld; btn.classList.remove('lic-done'); }, 1500);
 }

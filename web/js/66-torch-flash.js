@@ -123,7 +123,7 @@ function onRemoteTorchToggle() {
   const btn = document.getElementById('remoteTorchBtn');
   btn.classList.toggle('on', remoteTorchOn);
   document.getElementById('remoteTorchLabel').textContent = remoteTorchOn ? 'Torche allumée' : 'Allumer la torche';
-  document.getElementById('remoteTorchIcon').textContent = remoteTorchOn ? '💡' : '🔦';
+  document.getElementById('remoteTorchIcon').innerHTML = icon(remoteTorchOn ? 'lightbulb' : 'flashlight');
   document.getElementById('torchDimSection').classList.toggle('torch-dim-disabled', !remoteTorchOn);
   if (!remoteTorchOn) stopActiveEffect();
   sendMsg({ type:'torch-onoff', on: remoteTorchOn });
@@ -149,7 +149,7 @@ function sendTorchEffect(effect, acked) {
     remoteTorchOn = true;
     document.getElementById('remoteTorchBtn').classList.add('on');
     document.getElementById('remoteTorchLabel').textContent = 'Torche allumée';
-    document.getElementById('remoteTorchIcon').textContent = '💡';
+    document.getElementById('remoteTorchIcon').innerHTML = icon('lightbulb');
   }
   sendMsg({ type:'torch-effect', effect });
 }

@@ -25,7 +25,7 @@ function setIconLabel(el, name, text) {
 // Glyphe ou emoji en tête d'un message → icône. Les textes de statut gardent
 // leur glyphe d'origine dans le code (⚠ ⏳ 🎬…) : il est converti à l'affichage.
 const _ICON_LEAD = {
-  '⚠': 'triangle-alert', '⏳': 'hourglass', '🎬': 'clapperboard', '🖼': 'image', '📤': 'send', '📥': 'download',
+  '⚠': 'triangle-alert', '⏳': 'hourglass', '🎬': 'video', '🖼': 'image', '📤': 'send', '📥': 'download',
   '🌐': 'globe', '✓': 'check', '✅': 'circle-check', '📞': 'phone', '🔔': 'bell', '💬': 'message-circle',
   '⏹': 'square', '▶': 'play', '⏸': 'pause', '🔦': 'flashlight', '💡': 'lightbulb', '📳': 'vibrate', '♪': 'music',
   '🔁': 'repeat', '⏯': 'step-forward', '↻': 'refresh-cw', '⟳': 'refresh-cw', '↺': 'rotate-ccw', '↶': 'undo-2',

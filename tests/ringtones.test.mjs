@@ -54,7 +54,7 @@ const status = (page) => page.evaluate(() => document.getElementById('ringStatus
 async function importFile(page, file) {
   await page.evaluate(() => _ringSetStatus(''));
   await page.setInputFiles('#ringImportInput', file);
-  await waitFor(page, () => { const t = document.getElementById('ringStatus').textContent; return !!t && !t.startsWith('⏳'); }, null, { timeout: 15000 });
+  await waitFor(page, () => { const t = document.getElementById('ringStatus').textContent; return !!t && !t.startsWith('Vérification'); }, null, { timeout: 15000 });
   return status(page);
 }
 const rows = (page) => page.evaluate(() => [...document.querySelectorAll('#ringLibRows .rt-row')].map((r) => ({
@@ -75,7 +75,7 @@ test('import : bon fichier (nom, durée, IndexedDB), 5 Mo au plus, pas un son, i
   assert.equal(await shown(page, 'ringLibLabel'), false, 'bibliothèque vide : pas de titre « Vos sonneries »');
   assert.deepEqual(await activeChips(page), ['callring-classic'], 'par défaut : Classique');
   // Bon fichier : importé, sélectionné pour l'appel, nom et durée affichés
-  assert.match(await importFile(page, tone('sonnerie-prod.wav', 2, 440)), /^✓ « sonnerie-prod\.wav » importée/);
+  assert.match(await importFile(page, tone('sonnerie-prod.wav', 2, 440)), /^« sonnerie-prod\.wav » importée/);
   const [t] = await page.evaluate(() => ringLib);
   assert.match(t.id, RING_RE, 'id dérivé du contenu');
   assert.deepEqual([t.name, t.dur, t.mime], ['sonnerie-prod.wav', 2, 'audio/wav']);

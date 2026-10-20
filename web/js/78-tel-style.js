@@ -74,7 +74,7 @@ function telStyleIsOpen() { return _tsOpen; }
 // Rangées résumé (onglet) et, ouverte, la vue
 function renderTelStyle() {
   const k = callKind, T = _TS_TXT;
-  const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+  const set = (id, t) => { setIconText(document.getElementById(id), t); };
   const title = k === 'call' ? T.titleCall : T.titleOther;
   set('telStyleLabel', title);
   const sum = telStyleSummary(k).map(escapeHtml).join('<br>');

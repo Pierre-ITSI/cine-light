@@ -95,7 +95,7 @@ test('fil mixte : automatique jusqu\'au message tapé par le comédien, attente,
   await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 3, null, { timeout: 3000 });
   // Pause pendant la « pause avant » du n° 4 : rien ne part ; ▶ repart
   await rp.click('#dcAutoPause');
-  assert.equal(await rp.textContent('#dcAutoState'), '⏸ en pause · 4 / 4');
+  assert.equal(await rp.textContent('#dcAutoState'), 'en pause · 4 / 4');
   await sleep(2400);
   assert.equal((await bubbles(sp)).length, 3);
   await rp.click('#dcAutoPlay');
@@ -181,7 +181,7 @@ test('Séquence : étape « Discussion » avec « ▶ Auto · le comédien tape 
   await rp.click('#seqAddBtn');
   await rp.locator('#ssKinds .ss-opt', { hasText: 'Discussion' }).click();
   assert.match(await rp.textContent('#ssRefCard'), /Lecture/);
-  await rp.locator('#ssRefCard .ss-opt', { hasText: '▶ Auto · le comédien tape' }).click();
+  await rp.locator('#ssRefCard .ss-opt', { hasText: 'Auto · le comédien tape' }).click();
   await rp.locator('#ssTrigCard .ss-opt', { hasText: 'Téléphone' }).or(rp.locator('#ssTrigCard .ss-opt').last()).first().click();
   await rp.click('#ssSave');
   assert.equal(await rp.textContent('#seqRows .sq-label'), 'Discussion « Maman » · auto (comédien tape)');
@@ -204,7 +204,7 @@ test('Séquence, « ▶ Auto · le comédien tape » : messages du contact « au
   });
   await rp.click('#seqAddBtn');
   await rp.locator('#ssKinds .ss-opt', { hasText: 'Discussion' }).click();
-  await rp.locator('#ssRefCard .ss-opt', { hasText: '▶ Auto · le comédien tape' }).click();
+  await rp.locator('#ssRefCard .ss-opt', { hasText: 'Auto · le comédien tape' }).click();
   await rp.click('#ssSave');
   await rp.evaluate(async () => { seqGo(); await _seqChain; });
   await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b:not(.scc-typing)').length === 2, null, { timeout: 6000 });
@@ -229,9 +229,9 @@ test('Séquence, « ▶ Auto · tout automatique » (maquette 41) : les réponse
   await rp.click('#seqAddBtn');
   await rp.locator('#ssKinds .ss-opt', { hasText: 'Discussion' }).click();
   assert.deepEqual(await rp.$$eval('#ssRefCard .ss-play .ss-opt', (b) => b.map((x) => [x.textContent, x.classList.contains('on')])),
-    [['Manuelle', true], ['▶ Auto · le comédien tape', false], ['▶ Auto · tout automatique', false]]);
+    [['Manuelle', true], ['Auto · le comédien tape', false], ['Auto · tout automatique', false]]);
   assert.equal(await rp.textContent('#ssRefCard .ss-play-note'), 'Tout automatique : les réponses de Julie s\'écrivent aussi toutes seules, avec leurs durées enregistrées. « Le comédien tape » : le fil attend que Julie tape sur l\'écran.');
-  await rp.locator('#ssRefCard .ss-opt', { hasText: '▶ Auto · tout automatique' }).click();
+  await rp.locator('#ssRefCard .ss-opt', { hasText: 'Auto · tout automatique' }).click();
   assert.deepEqual(await rp.evaluate(() => _seqEdit.step.opt), { auto: true, full: true });
   await rp.click('#ssSave');
   assert.equal(await rp.textContent('#seqRows .sq-label'), 'Discussion « Maman » → réponse · auto complète');

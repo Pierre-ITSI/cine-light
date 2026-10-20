@@ -13,7 +13,7 @@ let _remotePlaying = false, _remoteDur = 0, _remoteCur = 0, _mediaIsVideo = fals
 
 function setMediaStatus(txt, live) {
   const el = document.getElementById('mediaStatus');
-  if (el) { el.textContent = txt; el.classList.toggle('live', !!live); }
+  if (el) { setIconText(el, txt); el.classList.toggle('live', !!live); }
 }
 function showMediaStop(show) {
   const b = document.getElementById('mediaStopBtn');
@@ -39,7 +39,7 @@ function setVideoEndMode(m) {
 function setPlayBtn(playing) {
   const ic = document.getElementById('mediaPlayIcon');
   const lb = document.getElementById('mediaPlayLabel');
-  if (ic) ic.textContent = playing ? '⏸' : '▶';
+  if (ic) ic.innerHTML = icon(playing ? 'pause' : 'play');
   if (lb) lb.textContent = playing ? 'Pause' : 'Lecture';
 }
 function toggleVideoPlayback() {
@@ -257,12 +257,12 @@ function renderPool() {
     const active = it.id === _activeMediaId;
     const thumb = it.thumb
       ? `<img src="${it.thumb}" alt="">`
-      : `<div class="pool-fallback">${it.kind === 'vid' ? '🎬' : '🖼'}</div>`;
+      : `<div class="pool-fallback">${icon(it.kind === 'vid' ? 'video' : 'image', 'ic-lg')}</div>`;
     return `<div class="pool-tile${active ? ' active live-dot' : ''}" data-id="${it.id}" onclick="selectMedia('${it.id}')">`
       + thumb
       + `<span class="pool-num">${idx + 1}</span>`
-      + `<span class="pool-kind">${it.kind === 'vid' ? '🎬' : '🖼'}</span>`
-      + `<button class="pool-del" onclick="event.stopPropagation();removeMedia('${it.id}')">×</button>`
+      + `<span class="pool-kind">${icon(it.kind === 'vid' ? 'video' : 'image', 'ic-sm')}</span>`
+      + `<button class="pool-del" aria-label="Retirer" onclick="event.stopPropagation();removeMedia('${it.id}')">${icon('x', 'ic-sm')}</button>`
       + `<span class="pool-name">${escapeHtml(it.name)}</span></div>`;
   }).join('');
   _pvUpdateMedia(); // l'aperçu affiche la vignette du média diffusé

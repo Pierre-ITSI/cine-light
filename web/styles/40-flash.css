@@ -6,7 +6,6 @@
 .effect-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .effect-btn{border:1px solid var(--border);border-radius:6px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--mid2);transition:all .15s;touch-action:manipulation;font-family:'DM Mono',monospace;color:var(--muted);font-size:var(--fs-caption);letter-spacing:.07em;text-transform:uppercase}
 .effect-btn:hover,.effect-btn.active{border-color:rgba(255,255,255,.25);color:var(--text);transform:scale(.97)}
-.effect-btn .effect-icon{font-size:1.4rem}
 .torch-level-bar{height:8px;border-radius:4px;background:linear-gradient(to right,#333,#ffe664);margin-bottom:14px;overflow:hidden;position:relative}
 .torch-level-fill{height:100%;background:#ffe664;border-radius:4px;transition:width .1s;box-shadow:0 0 8px rgba(255,230,100,.5)}
 

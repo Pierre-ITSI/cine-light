@@ -4,12 +4,12 @@
    compteur du jour), verrous de l'aperçu, Réglages › Licence (37, 37b).
    Préfixe lic- (st-lic- dans les réglages). */
 .lic-pv{border:1px solid rgba(255,107,44,.55);background:rgba(255,107,44,.07);border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;flex-direction:column;gap:9px;font-family:'DM Mono',monospace}
-.lic-pv-tag{align-self:flex-start;font-size:var(--fs-caption);letter-spacing:.16em;text-transform:uppercase;color:#FF8a55;border:1px solid rgba(255,107,44,.5);border-radius:10px;padding:3px 8px}
-.lic-pv p{margin:0;font-size:var(--fs-label);line-height:1.55;color:#c8c8c8}
+.lic-pv-tag{align-self:flex-start;font-size:var(--fs-caption);letter-spacing:.16em;text-transform:uppercase;color:var(--accent-text);border:1px solid rgba(255,107,44,.5);border-radius:10px;padding:3px 8px}
+.lic-pv p{margin:0;font-size:var(--fs-label);line-height:1.55;color:var(--text-2)}
 .lic-pv-row{display:flex;gap:8px}
 .lic-pv-id,.lic-pv-buy{flex:1;min-width:0;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'DM Mono',monospace;font-size:var(--fs-label);cursor:pointer;white-space:nowrap}
 .lic-pv-id{border:1px solid rgba(255,255,255,.14);background:var(--mid2);color:var(--text)}
-.lic-pv-id span{color:#a8a8a8}
+.lic-pv-id span{color:var(--text-2)}
 .lic-pv-id b{font-weight:400}
 .lic-pv-buy{border:none;background:var(--accent);color:#000;font-weight:500;letter-spacing:.04em}
 .lic-pv-id:active,.lic-pv-buy:active{transform:scale(.97)}
@@ -21,16 +21,16 @@
 
 /* Réglages › Licence */
 .st-lic-state{display:flex;align-items:center;gap:10px;font-size:.875rem}
-.st-lic-dot{width:9px;height:9px;border-radius:50%;background:#777;flex-shrink:0}
+.st-lic-dot{width:9px;height:9px;border-radius:50%;background:var(--text-3);flex-shrink:0}
 .st-lic-dot.on{background:var(--green)}
-.st-lic-until{margin-left:auto;font-size:var(--fs-label);color:#a8a8a8;text-align:right}
-.st-lic-until.soon{color:#FF8a55}
+.st-lic-until{margin-left:auto;font-size:var(--fs-label);color:var(--text-2);text-align:right}
+.st-lic-until.soon{color:var(--accent-text)}
 .st-lic-rows{display:flex;flex-direction:column;gap:10px}
 .st-lic-rows:empty{display:none}
 .st-lic-kv{display:flex;justify-content:space-between;gap:12px;font-size:.75rem}
-.st-lic-kv span:first-child{color:#b8b8b8}
+.st-lic-kv span:first-child{color:var(--text-2)}
 .st-lic-kv span:last-child{text-align:right}
-.st-lic-msg{font-size:var(--fs-label);color:#FF8a55;line-height:1.5}
+.st-lic-msg{font-size:var(--fs-label);color:var(--accent-text);line-height:1.5}
 .st-lic-msg:empty{display:none}
 .st-lic-id{font-family:'Lato',sans-serif;font-weight:700;font-size:1.875rem;letter-spacing:.06em;text-align:center;padding:6px 0;user-select:all;-webkit-user-select:all}
 .st-lic-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}

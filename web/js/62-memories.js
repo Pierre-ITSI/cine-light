@@ -64,7 +64,7 @@ function renderFxMemories() {
     d.onclick = () => applyFxMemory(m.id);
     d.innerHTML = `<span class="memory-name">${escapeHtml(m.name)}</span>`;
     const del = document.createElement('button');
-    del.className = 'memory-del'; del.textContent = '✕';
+    del.className = 'memory-del'; del.setAttribute('aria-label', 'Supprimer'); del.innerHTML = icon('x', 'ic-sm');
     del.onclick = (e) => { e.stopPropagation(); deleteFxMemory(m.id); };
     d.appendChild(del);
     grid.appendChild(d);
@@ -180,7 +180,7 @@ function renderColorMemories(){
   colorMemories.forEach(m=>{
     const item=document.createElement('div');
     item.className='memory-item'+(m.id===selectedMemoryId?' active':'');
-    item.innerHTML=`<div class="memory-swatch" style="background:${memorySwatch(m.spec)}"></div><div class="memory-name"></div><button class="memory-del" title="Supprimer">✕</button>`;
+    item.innerHTML=`<div class="memory-swatch" style="background:${memorySwatch(m.spec)}"></div><div class="memory-name"></div><button class="memory-del" title="Supprimer" aria-label="Supprimer">${icon('x', 'ic-sm')}</button>`;
     item.querySelector('.memory-name').textContent=m.name;
     item.onclick=()=>applyColorMemory(m.id);
     item.querySelector('.memory-del').onclick=(e)=>{e.stopPropagation();deleteColorMemory(m.id);};

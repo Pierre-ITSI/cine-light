@@ -417,7 +417,7 @@ function _ringSetStatus(text, tone, waitId) {
   _ringStatusWait = waitId || null;
   const st = document.getElementById('ringStatus');
   if (!st) return;
-  st.textContent = text || '';
+  setIconText(st, text || '');
   st.style.display = text ? 'block' : 'none';
   st.classList.toggle('live', tone === 'live');
   st.classList.toggle('rt-warn', tone === 'warn');
@@ -451,7 +451,7 @@ function renderRingPanel() {
   // Autre type affiché : le message du type précédent n'a plus de sens
   if (_ringRenderedKind !== null && _ringRenderedKind !== k) _ringSetStatus('');
   _ringRenderedKind = k;
-  const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+  const set = (id, t) => { setIconText(document.getElementById(id), t); };
   set('ringPanelLabel', _RING_TXT[k].label);
   set('ringVolLabel', _RING_TXT[k].vol);
   RING_BUILTINS.forEach((x) => {

@@ -141,7 +141,7 @@ function ntOpenPicker(ev, id) {
 }
 
 function renderNotifForm() {
-  const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+  const set = (id, t) => { setIconText(document.getElementById(id), t); };
   const act = (pre, list, v) => list.forEach((x) => { const b = document.getElementById(pre + x); if (b) b.classList.toggle('active', x === v); });
   // Icône : image choisie, sinon initiale du nom de l'application
   const ic = document.getElementById('ntIconPreview');
@@ -177,7 +177,7 @@ function renderNotifForm() {
 function _ntIconStatus(t) {
   const el = document.getElementById('ntIconStatus');
   if (!el) return;
-  el.textContent = t || '';
+  setIconText(el, t || '');
   el.style.display = t ? 'block' : 'none';
   el.classList.toggle('rt-warn', !!t);
 }
@@ -219,9 +219,9 @@ function onNotifWall(files) {
     _notifWallData = data;
     renderNotifForm();
     const st = document.getElementById('ntWallStatus');
-    if (st) st.textContent = "📤 Envoi du fond d'écran…";
+    if (st) setIconText(st, "📤 Envoi du fond d'écran…");
     await ensureSlotImage('__notifwall', _notifWallData);
-    if (st) st.textContent = "✓ Fond d'écran prêt sur l'écran";
+    if (st) setIconText(st, "✓ Fond d'écran prêt sur l'écran");
   };
   img.onerror = () => URL.revokeObjectURL(img.src);
   img.src = URL.createObjectURL(files[0]);

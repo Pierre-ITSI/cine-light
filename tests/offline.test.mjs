@@ -134,7 +134,7 @@ test('Bluetooth seul : les commandes passent, aucun média ; trame trop grande r
   // Nouvelle image : rien ne part, l'interface le dit
   await addImage(rp, 'rouge.png', '#ff0000');
   await rp.evaluate(() => selectMedia('m2'));
-  assert.equal(await rp.textContent('#mediaStatus'), '⚠ Bluetooth : « rouge.png » n\'est pas préparé sur 2 écrans — il faut Internet ou le Wi-Fi local');
+  assert.equal(await rp.textContent('#mediaStatus'), 'Bluetooth : « rouge.png » n\'est pas préparé sur 2 écrans — il faut Internet ou le Wi-Fi local');
   await sleep(600); await hub.flush();
   const viaBle = await hub.sent(rp, { mode: 'ble' });
   assert.ok(viaBle.some((m) => m.type === 'color') && viaBle.some((m) => m.type === 'media:show'));
@@ -374,14 +374,14 @@ test('navigateur seul : Wi-Fi local et Bluetooth désactivés (« Nécessite l\'
   const v = await rp.evaluate(() => ({
     open: getComputedStyle(document.getElementById('offline-view')).display,
     notice: getComputedStyle(document.getElementById('offNeedsApp')).display,
-    noticeTitle: document.querySelector('#offNeedsApp strong').textContent,
+    noticeTitle: document.querySelector('#offNeedsApp strong').textContent.trim(),
     seg: [...document.querySelectorAll('.off-seg-btn')].map((b) => [b.textContent, b.disabled, b.classList.contains('active')]),
     desc: document.getElementById('offLinkDesc').textContent,
     pref: setLinkPref('lan'), stored: localStorage.getItem('setremote-link-v1'),
     bridge: typeof window.ReactNativeWebView, modes: linkModesWanted(), peers: linkPeerCount(),
   }));
   assert.deepEqual(v, {
-    open: 'flex', notice: 'block', noticeTitle: '📶 Nécessite l\'app SetRemote',
+    open: 'flex', notice: 'block', noticeTitle: 'Nécessite l\'app SetRemote',
     seg: [['Auto', false, true], ['Internet', false, false], ['Wi-Fi local', true, false], ['Bluetooth', true, false]],
     desc: 'Auto : Internet si disponible, sinon Wi-Fi local, sinon Bluetooth (commandes uniquement).',
     pref: false, stored: null, bridge: 'undefined', modes: [], peers: 0,

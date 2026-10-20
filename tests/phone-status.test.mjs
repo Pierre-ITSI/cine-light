@@ -551,11 +551,11 @@ test('éditeur d\'étape : veille (29b), batterie, extinction, réseau ; libell�
   assert.match(await page.textContent('#ssRefCard'), /Écran noir, verrouillé\. Rien ne s'affiche tant que rien n'arrive\./);
   assert.equal(await page.textContent('#ssOptVal'), '8 s');
   await page.locator('#ssRefCard .ss-opt', { hasText: 'au toucher' }).click();
-  await page.locator('#ssRefCard .ss-step-btn', { hasText: '+' }).click();
+  await page.locator('#ssRefCard .ss-step-btn[aria-label="Augmenter"]').click();
   await page.click('#ssSave');
   await page.click('#seqAddBtn');
   await page.locator('#ssKinds .ss-opt', { hasText: 'Batterie' }).click();
-  await page.locator('#ssRefCard .ss-step-btn', { hasText: '+' }).click();
+  await page.locator('#ssRefCard .ss-step-btn[aria-label="Augmenter"]').click();
   await page.click('#ssSave');
   await page.click('#seqAddBtn');
   await page.locator('#ssKinds .ss-opt', { hasText: 'Extinction' }).click();

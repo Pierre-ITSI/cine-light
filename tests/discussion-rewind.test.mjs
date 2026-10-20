@@ -28,7 +28,7 @@ test('télécommande seule : bouton « ↶ », « Repartir de zéro », repère 
   await page.evaluate(() => { startMode('remote'); switchTab('call'); setCallKind('discussion'); });
   // Entre « Envoyer n°X » et « Écrire… » ; inactif tant que rien n'est affiché
   assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#dcSendPanel .dc-send-row button')].map((b) => b.id)), ['dcGo', 'dcBackBtn', 'dcWriteBtn']);
-  assert.equal(await page.textContent('#dcBackBtn'), '↶');
+  assert.equal(await page.getAttribute('#dcBackBtn use', 'href'), '#i-undo-2');
   assert.equal(await page.getAttribute('#dcBackBtn', 'aria-label'), 'Revenir d\'un message');
   assert.equal(await page.isDisabled('#dcBackBtn'), true);
   assert.equal(await page.textContent('#dcRestartBtn'), 'Repartir de zéro');

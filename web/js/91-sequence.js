@@ -202,7 +202,8 @@ const SEQ_OPT_KINDS = new Set(['unlock', 'sleep', 'battery', 'off', 'net']);
 const SEQ_KIND_ROWS = [['color', 'effect', 'media'], ['call', 'sms', 'notif'], ['sleep', 'missed', 'unlock', 'chat'], ['battery', 'off', 'net']];
 const SEQ_SLEEP_DEF = 8, SEQ_BATTERY_DEF = 5;
 const SEQ_GESTURES = ['touch', 'notif', 'hangup', 'answer', 'unlock', 'chat', 'home'];
-const SEQ_ICONS = { color: '🎨', effect: '✨', media: '🎞', call: '📞', sms: '✉️', notif: '🔔', missed: '📵', unlock: '🔓', chat: '💬', sleep: '😴', battery: '🔋', off: '📴', net: '📶' };
+// Icône Lucide de chaque type d'étape (nom du <symbol> du sprite : web/js/02-icons.js)
+const SEQ_ICONS = { color: 'palette', effect: 'sparkles', media: 'film', call: 'phone', sms: 'mail', notif: 'bell', missed: 'phone-missed', unlock: 'lock-open', chat: 'message-circle', sleep: 'moon', battery: 'battery-low', off: 'power-off', net: 'signal' };
 const _SEQ_ID_RE = /^[A-Za-z0-9_-]{1,40}$/;
 const _SEQ_SIG_RE = /^[0-9a-f]{8}-\d{1,9}$/;
 
@@ -978,7 +979,7 @@ function renderSeq() {
     row.onclick = () => openSeqStep(s.id);
     const b = seqTrigBadge(s);
     const num = document.createElement('span'); num.className = 'sq-num'; num.textContent = String(i + 1);
-    const ic = document.createElement('span'); ic.className = 'sq-ic'; ic.textContent = SEQ_ICONS[s.kind];
+    const ic = document.createElement('span'); ic.className = 'sq-ic'; ic.innerHTML = icon(SEQ_ICONS[s.kind]);
     const lb = document.createElement('span'); lb.className = 'sq-label'; lb.textContent = seqStepLabel(s);
     const bd = document.createElement('span'); bd.className = 'sq-badge ' + b.cls; bd.textContent = b.text;
     row.append(num, ic, lb, bd);
@@ -1056,7 +1057,7 @@ function _seqRenderNow() {
   }
   if (cur && _seqRun.state !== 'running') {
     const r = document.createElement('button');
-    r.type = 'button'; r.className = 'sq-restart'; r.id = 'seqRestartBtn'; r.textContent = _SEQ_TXT.restart;
+    r.type = 'button'; r.className = 'sq-restart'; r.id = 'seqRestartBtn'; setIconText(r, _SEQ_TXT.restart);
     r.onclick = seqRestart;
     box.appendChild(r);
   }
@@ -1121,7 +1122,7 @@ function _seqEditDefaults(s) {
 function _seqRefList(kind) {
   switch (kind) {
     case 'color': return colorMemories.map((m) => ({ id: m.id, label: m.name, sw: memorySwatch(m.spec) }));
-    case 'effect': return fxMemories.filter((m) => EFFECT_CONFIG[m.effect]).map((m) => ({ id: m.id, label: (EFFECT_CONFIG[m.effect].icon || '') + ' ' + m.name }));
+    case 'effect': return fxMemories.filter((m) => EFFECT_CONFIG[m.effect]).map((m) => ({ id: m.id, label: m.name }));
     case 'media': return _mediaPool.map((m) => ({ id: m.id, label: (m.kind === 'vid' ? '🎬 ' : '🖼 ') + m.name }));
     case 'call': case 'missed': case 'sms': case 'notif':
       return callList[kind === 'missed' ? 'call' : kind].map((e, i) => ({ id: e.id, label: (i + 1) + ' · ' + callEntryName(e) })); // nom de l'enregistrement (maquette 43)
@@ -1130,8 +1131,8 @@ function _seqRefList(kind) {
   return [];
 }
 const _seqRefLabels = { color: 'labelColor', effect: 'labelEffect', media: 'labelMedia', call: 'labelCall', missed: 'labelCall', sms: 'labelSms', notif: 'labelNotif', chat: 'labelChat' };
-function _seqOpt(on, fn, label, extra) {
-  return '<button type="button" class="ss-opt' + (on ? ' on' : '') + (extra || '') + '" onclick="' + fn + '">' + escapeHtml(label) + '</button>';
+function _seqOpt(on, fn, label, extra, iconName) {
+  return '<button type="button" class="ss-opt' + (on ? ' on' : '') + (extra || '') + '" onclick="' + fn + '">' + (iconName ? icon(iconName, 'ic-sm') : '') + iconizeText(label) + '</button>';
 }
 const _seqArg = (v) => '\'' + String(v).replace(/[^A-Za-z0-9_-]/g, '') + '\'';
 function renderSeqStep() {
@@ -1143,7 +1144,7 @@ function renderSeqStep() {
   _seqSet('ssTitle', idx >= 0 ? _seqTpl(_SEQ_TXT.stepTitle, { n: idx + 1 }) : _SEQ_TXT.stepNew);
   // Type (maquette 29b : 3, 3, 4, puis les étapes du téléphone)
   document.getElementById('ssKinds').innerHTML = SEQ_KIND_ROWS.map((r) => '<div class="ss-row">'
-    + r.map((k) => _seqOpt(s.kind === k, 'seqEditKind(' + _seqArg(k) + ')', SEQ_ICONS[k] + ' ' + _SEQ_TXT.kind[k])).join('') + '</div>').join('');
+    + r.map((k) => _seqOpt(s.kind === k, 'seqEditKind(' + _seqArg(k) + ')', _SEQ_TXT.kind[k], '', SEQ_ICONS[k])).join('') + '</div>').join('');
   // Élément enregistré, ou réglages du déverrouillage
   let h = '';
   if (s.kind === 'sleep' || s.kind === 'battery' || s.kind === 'off' || s.kind === 'net') {
@@ -1213,16 +1214,16 @@ function renderSeqStep() {
 function _seqStepper(label, n, fn, zeroNever) {
   const val = zeroNever && !n ? _SEQ_TXT.never : _seqTpl(_SEQ_TXT.seconds, { n });
   return '<div class="ss-stepper"><span>' + escapeHtml(label) + '</span>'
-    + '<button type="button" class="ss-step-btn" aria-label="−" onclick="' + fn + '(-1)">−</button>'
+    + '<button type="button" class="ss-step-btn" aria-label="Diminuer" onclick="' + fn + '(-1)">' + icon('minus') + '</button>'
     + '<b class="ss-step-val" id="ssDelayVal">' + escapeHtml(val) + '</b>'
-    + '<button type="button" class="ss-step-btn" aria-label="+" onclick="' + fn + '(1)">+</button></div>';
+    + '<button type="button" class="ss-step-btn" aria-label="Augmenter" onclick="' + fn + '(1)">' + icon('plus') + '</button></div>';
 }
 // Réglages des étapes du téléphone : veille (maquette 29b), batterie faible, extinction, réseau
 function _seqWideStepper(label, val, fn) {
   return '<span class="ss-label ss-sub">' + escapeHtml(label) + '</span><div class="ss-stepper ss-wide">'
-    + '<button type="button" class="ss-step-btn" aria-label="−" onclick="' + fn + '(-1)">−</button>'
+    + '<button type="button" class="ss-step-btn" aria-label="Diminuer" onclick="' + fn + '(-1)">' + icon('minus') + '</button>'
     + '<b class="ss-step-val" id="ssOptVal">' + escapeHtml(val) + '</b>'
-    + '<button type="button" class="ss-step-btn" aria-label="+" onclick="' + fn + '(1)">+</button></div>';
+    + '<button type="button" class="ss-step-btn" aria-label="Augmenter" onclick="' + fn + '(1)">' + icon('plus') + '</button></div>';
 }
 function _seqPhoneStepCard(s) {
   const o = s.opt, lbl = (k) => '<span class="ss-label">' + escapeHtml(_SEQ_TXT[k]) + '</span>';

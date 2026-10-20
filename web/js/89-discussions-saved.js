@@ -232,7 +232,7 @@ function renderSavedChats() {
     const nm = document.createElement('span'); nm.className = 'dc-saved-name'; nm.textContent = e.name;
     const meta = document.createElement('span'); meta.className = 'dc-saved-meta'; meta.textContent = _chsvMeta(e);
     main.append(nm, meta);
-    const more = document.createElement('button'); more.type = 'button'; more.className = 'dc-saved-more'; more.textContent = '⋯';
+    const more = document.createElement('button'); more.type = 'button'; more.className = 'dc-saved-more'; more.innerHTML = icon('ellipsis', 'ic-lg');
     more.setAttribute('aria-label', _CHSV_TXT.rename + ', ' + _CHSV_TXT.duplicate.toLowerCase() + ', ' + _CHSV_TXT.remove.toLowerCase());
     more.onclick = (ev) => { ev.stopPropagation(); openSavedChatMenu(e.id); };
     row.append(main, more);

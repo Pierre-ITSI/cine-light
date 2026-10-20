@@ -87,7 +87,7 @@ function renderPhoneParams() {
   const e = _pp;
   if (!e) return;
   const cfg = e.cfg, c = cfg.clock, n = cfg.net, b = cfg.bat;
-  const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+  const set = (id, t) => { setIconText(document.getElementById(id), t); };
   set('ppTitle', e.ctx === 'media' ? _PP_TXT.titleMedia : _PP_TXT.titleSeq);
   set('ppBack', e.ctx === 'media' ? _PP_TXT.backMedia : _PP_TXT.backSeq);
   set('ppCap', _PP_TXT.preview);
@@ -268,5 +268,5 @@ function renderMediaBarRow() {
   const sum = document.getElementById('mediaBarSum');
   if (sum) sum.textContent = phoneParamsSummary(st.cfg);
   const ed = document.getElementById('mediaBarEditLbl');
-  if (ed) ed.textContent = _PP_TXT.mediaEdit;
+  if (ed) setIconText(ed, _PP_TXT.mediaEdit);
 }

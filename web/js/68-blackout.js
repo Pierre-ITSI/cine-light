@@ -15,7 +15,7 @@ function renderRemoteBlackout() {
   const lbl = document.getElementById('blackoutLabel');
   if (lbl) lbl.textContent = remoteBlackout ? 'Écran OFF — appuyer pour rallumer' : 'Écran ON — appuyer pour éteindre';
   const ic = document.getElementById('blackoutIcon');
-  if (ic) ic.textContent = remoteBlackout ? '⬛' : '⚫';
+  if (ic) ic.innerHTML = icon(remoteBlackout ? 'power-off' : 'power');
   // Bouton compact de la mini-carte sticky
   const sb = document.getElementById('stickyBlackoutBtn');
   if (sb) { sb.classList.toggle('on', remoteBlackout); sb.textContent = remoteBlackout ? 'Écran OFF' : 'Écran ON'; }

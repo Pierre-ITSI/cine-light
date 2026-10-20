@@ -163,7 +163,7 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
   assert.deepEqual([tel.saved, tel.callers], [['Maman'], ['Maman']]);
   assert.ok(tel.inert.every(Boolean), 'réglages et enregistrements verrouillés');
   assert.ok(tel.free.every((v) => !v), 'envois libres');
-  assert.equal(tel.ex, '" · exemple 🔒"');
+  assert.equal(tel.ex, '" · exemple"');
   // Jouer les démos, sans limite ; les verrous tiennent aussi par le code
   const played = await p.page.evaluate(async () => {
     for (let i = 0; i < 8; i++) await triggerCall();

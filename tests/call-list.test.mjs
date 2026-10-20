@@ -175,7 +175,7 @@ test('nom de l\'enregistrement (feuille), entrée chargée : mettre à jour / en
   await page.locator('#callListRows .cl-row').nth(0).click();
   await waitFor(page, () => document.getElementById('callName').value === 'Maman');
   assert.equal(await shown(page, 'callListSave'), false);
-  assert.deepEqual(await page.$$eval('#callListUpd button', (b) => b.map((x) => x.textContent)), ['↻ Mettre à jour « Maman — scène 12 »', '+ Enregistrer comme nouveau']);
+  assert.deepEqual(await page.$$eval('#callListUpd button', (b) => b.map((x) => x.textContent)), ['Mettre à jour « Maman — scène 12 »', 'Enregistrer comme nouveau']);
   // Mettre à jour : même id, même numéro, même nom ; une photo là où il n'y en avait pas
   const id1 = await page.evaluate(() => callList.call[0].id);
   const red = await photoOf(page, '#ff0000');
@@ -235,7 +235,7 @@ test('nom de l\'enregistrement (feuille), entrée chargée : mettre à jour / en
   assert.deepEqual(await menu(page), ['Charger dans l\'onglet', 'Renommer', 'Dupliquer', 'Supprimer', 'Fermer']);
   await page.locator('#srSheetBody .dc-menu-btn', { hasText: 'Charger dans l\'onglet' }).click();
   await waitFor(page, () => callKind === 'call' && document.getElementById('callName').value === 'Agence');
-  assert.equal(await page.textContent('#callListUpdate'), '↻ Mettre à jour « Agence — rappel »');
+  assert.equal(await page.textContent('#callListUpdate'), 'Mettre à jour « Agence — rappel »');
   // Changer d'onglet de liste : fin de l'entrée chargée
   await page.evaluate(() => { setCallListKind('sms'); setCallListKind('call'); });
   assert.equal(await shown(page, 'callListUpd'), false);

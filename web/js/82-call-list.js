@@ -300,7 +300,7 @@ function renderCallList() {
       + '<span class="cl-num">' + (i + 1) + '</span>'
       + '<span class="cl-main"><span class="cl-name">' + escapeHtml(callEntryName(e)) + '</span><span class="cl-meta">' + escapeHtml(_clMeta(e)) + '</span></span>'
       + '<span class="cl-dmx">' + callEntryDmxRange(i, kind) + '</span>'
-      + '<button type="button" class="cl-more" aria-label="' + escapeHtml(_CL_TXT.menuAria) + '" onclick="event.stopPropagation();openCallEntryMenu(\'' + e.id + '\')">⋯</button>'
+      + '<button type="button" class="cl-more" aria-label="' + escapeHtml(_CL_TXT.menuAria) + '" onclick="event.stopPropagation();openCallEntryMenu(\'' + e.id + '\')">' + icon('ellipsis', 'ic-lg') + '</button>'
       + '<span class="cl-grip" aria-label="Déplacer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 9h14M5 15h14"/></svg></span>'
       + '</div>').join('');
   }
@@ -329,9 +329,9 @@ function renderCallListSaveLabel() {
   const upd = document.getElementById('callListUpd');
   if (upd) upd.style.display = loaded ? '' : 'none';
   const u = document.getElementById('callListUpdate');
-  if (u && loaded) u.textContent = _clTpl(_CL_TXT.update, { nom: callEntryName(loaded) });
+  if (u && loaded) setIconText(u, _clTpl(_CL_TXT.update, { nom: callEntryName(loaded) }));
   const n = document.getElementById('callListSaveNew');
-  if (n) { n.textContent = _CL_TXT.saveNew; n.disabled = !!loaded && callList[_clListOf(loaded.kind)].length >= CALL_LIST_MAX; }
+  if (n) { setIconText(n, _CL_TXT.saveNew); n.disabled = !!loaded && callList[_clListOf(loaded.kind)].length >= CALL_LIST_MAX; }
 }
 
 function setCallListKind(k) {

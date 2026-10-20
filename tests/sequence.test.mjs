@@ -190,7 +190,7 @@ describe('exemple du propriétaire, de bout en bout', () => {
     await rp.click('#seqGoBtn');
     await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 3);
     await rp.click('#seqStopBtn');
-    assert.equal(await rp.textContent('#seqRestartBtn'), '↺ Recommencer');
+    assert.equal(await rp.textContent('#seqRestartBtn'), 'Recommencer');
     await rp.click('#seqRestartBtn');
     await waitFor(sp, () => document.getElementById('screen-phone').style.display === 'none');
     assert.equal(await pos(rp), 0);
@@ -403,11 +403,11 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     page.on('dialog', (d) => d.accept());
     await page.click('#seqAddBtn');
     assert.equal(await page.textContent('#ssTitle'), 'Nouvelle étape');
-    assert.deepEqual(await page.$$eval('#ssKinds .ss-opt', (b) => b.map((x) => x.textContent)), ['🎨 Couleur', '✨ Effet', '🎞 Média', '📞 Appel', '✉️ SMS', '🔔 Notif', '😴 Veille', '📵 Manqué', '🔓 Déverrouil.', '💬 Discussion', '🔋 Batterie', '📴 Extinction', '📶 Réseau']);
+    assert.deepEqual(await page.$$eval('#ssKinds .ss-opt', (b) => b.map((x) => x.textContent)), ['Couleur', 'Effet', 'Média', 'Appel', 'SMS', 'Notif', 'Veille', 'Manqué', 'Déverrouil.', 'Discussion', 'Batterie', 'Extinction', 'Réseau']);
     await page.locator('#ssKinds .ss-opt', { hasText: 'SMS' }).click();
     await page.locator('#ssRefCard .ss-opt', { hasText: '2 · Maman' }).click();
     await page.locator('#ssTrigCard .ss-opt', { hasText: 'Après N s' }).click();
-    await page.locator('#ssTrigCard .ss-step-btn', { hasText: '+' }).click();
+    await page.locator('#ssTrigCard .ss-step-btn[aria-label="Augmenter"]').click();
     assert.equal(await page.textContent('#ssDelayVal'), '5 s');
     await page.click('#ssSave');
     assert.deepEqual(await rows(page), [['1', 'SMS « Rappelle-moi stp »', 'après 5 s', 'next']]);
@@ -417,7 +417,7 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     await page.locator('#ssRefCard .ss-opt', { hasText: 'Code 6 chiffres' }).click();
     await page.locator('#ssTrigCard .ss-opt', { hasText: 'Geste du comédien' }).click();
     await page.locator('#ssTrigCard .ss-opt', { hasText: 'raccroche' }).click();
-    for (let i = 0; i < 3; i++) await page.locator('#ssTrigCard .ss-step-btn', { hasText: '+' }).click();
+    for (let i = 0; i < 3; i++) await page.locator('#ssTrigCard .ss-step-btn[aria-label="Augmenter"]').click();
     await page.click('#ssSave');
     assert.deepEqual((await rows(page))[1], ['2', 'Déverrouillage code 6 chiffres', 'refuse / 3 s', '']);
     // Modifier puis supprimer
@@ -496,7 +496,7 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     await rp.evaluate(() => openPhoneParams('media'));
     assert.equal(await rp.textContent('#ppWall'), '');
     await rp.evaluate(() => { closePhoneParams(); openPhoneParams('seq'); });
-    assert.match(await rp.textContent('#ppWall'), /Fond d'écran.*Aucun fond : dégradé sombre.*Écran verrouillé et code du téléphone, pendant toute la séquence\.CHOISIR…$/);
+    assert.match(await rp.textContent('#ppWall'), /Fond d'écran.*Aucun fond : dégradé sombre.*Écran verrouillé et code du téléphone, pendant toute la séquence\.Choisir…$/);
     // Image importée (comme l'image d'accueil) : réduite, gardée hors localStorage
     await rp.evaluate(async () => {
       const c = document.createElement('canvas'); c.width = 1600; c.height = 3200;

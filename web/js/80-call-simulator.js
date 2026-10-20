@@ -68,8 +68,8 @@ function setCallKind(k) {
   renderCallerState();        // 79-callers.js : « Enregistrés (n) », appelant enregistré ?
   const btn = document.getElementById('callTriggerBtn');
   if (btn) btn.innerHTML = call
-    ? '<span class="media-icon">📞</span> Faire sonner'
-    : '<span class="media-icon">💬</span> Envoyer la notification';
+    ? '<span class="media-icon">' + icon('phone') + '</span> Faire sonner'
+    : '<span class="media-icon">' + icon('message-circle') + '</span> Envoyer la notification';
   // Liste enregistrée : l'onglet suit le type choisi (Appels, SMS, Notifs)
   if (CALL_LISTS.includes(k) && callListKind !== k) setCallListKind(k);
   renderCallListSaveLabel(); // « + Enregistrer l'appel / le SMS / la notification actuel(le) »
@@ -182,7 +182,7 @@ function renderCallAudioRow(message) {
   const st = document.getElementById('callAudioStatus');
   if (st) {
     const t = message || (has ? '' : _CALL_AUDIO_NONE);
-    st.textContent = t;
+    setIconText(st, t);
     st.style.display = t ? 'block' : 'none';
     st.classList.toggle('rt-warn', !!message);
   }
@@ -236,9 +236,9 @@ function onLockWall(files) {
     const pv = document.getElementById('lockWallPreview');
     if (pv) pv.style.backgroundImage = 'url(' + _lockWallData + ')';
     const st = document.getElementById('lockWallStatus');
-    if (st) st.textContent = "📤 Envoi du fond d'écran…";
+    if (st) setIconText(st, "📤 Envoi du fond d'écran…");
     await ensureLockWall();
-    if (st) st.textContent = "✓ Fond d'écran prêt sur l'écran";
+    if (st) setIconText(st, "✓ Fond d'écran prêt sur l'écran");
   };
   img.onerror = () => URL.revokeObjectURL(img.src);
   img.src = URL.createObjectURL(files[0]);
@@ -344,7 +344,7 @@ async function triggerCall() {
 }
 function _setCallStatusUI(t) {
   const el = document.getElementById('callStatus');
-  if (el) el.textContent = t;
+  setIconText(el, t);
 }
 function remoteOnCallState(m) {
   // État de l'appel de cet écran (liste « Écrans connectés »)

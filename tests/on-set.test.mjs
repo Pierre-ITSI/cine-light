@@ -245,9 +245,9 @@ test('« Nouvelle session » s\'affiche en rouge (bouton destructif)', async () 
   const { page, errors, close } = await openPage(browser);
   await page.evaluate(() => { startMode('remote'); switchTab('qr'); });
   const c = await page.evaluate(() => { const b = document.querySelector('.pair-renew'); const s = getComputedStyle(b); return [s.color, s.borderTopColor]; });
-  assert.deepEqual(c, ['rgba(220, 80, 80, 0.8)', 'rgba(220, 80, 80, 0.4)']);
+  assert.deepEqual(c, ['rgb(255, 122, 112)', 'rgba(255, 122, 112, 0.45)']);
   await page.hover('.pair-renew');
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.pair-renew')).color), 'rgba(220, 80, 80, 0.8)', 'pas d\'orange au survol');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.pair-renew')).color), 'rgb(255, 122, 112)', 'pas d\'orange au survol');
   assert.deepEqual(errors, []);
   await close();
 });

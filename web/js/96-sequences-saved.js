@@ -171,7 +171,7 @@ function renderSavedSeqs() {
     const nm = document.createElement('span'); nm.className = 'dc-saved-name'; nm.textContent = e.name;
     const meta = document.createElement('span'); meta.className = 'dc-saved-meta'; meta.textContent = _sqsvMeta(e);
     main.append(nm, meta);
-    const more = document.createElement('button'); more.type = 'button'; more.className = 'dc-saved-more'; more.textContent = '⋯';
+    const more = document.createElement('button'); more.type = 'button'; more.className = 'dc-saved-more'; more.innerHTML = icon('ellipsis', 'ic-lg');
     more.setAttribute('aria-label', _SQSV_TXT.rename + ', ' + _SQSV_TXT.duplicate.toLowerCase() + ', ' + _SQSV_TXT.remove.toLowerCase());
     more.onclick = (ev) => { ev.stopPropagation(); openSavedSeqMenu(e.id); };
     row.append(main, more);

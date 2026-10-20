@@ -150,7 +150,7 @@ test('migration : entrées « messagerie » → SMS, son de la messagerie → no
   assert.doesNotMatch(ls[1], /"chat"/);
   assert.equal(await page.evaluate(() => !!document.getElementById('callkind-chat')), false);
   assert.equal(await page.evaluate(() => (setCallKind('chat'), callKind)), 'sms', 'ancien nom de type → SMS');
-  assert.equal(await page.textContent('#tab-call'), '📞 Tel');
+  assert.equal((await page.textContent('#tab-call')).trim(), 'Tel');
   assert.deepEqual(errors, []);
   await close();
 });

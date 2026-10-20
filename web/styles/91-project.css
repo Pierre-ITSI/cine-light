@@ -6,7 +6,7 @@
 .prj-body{display:flex;flex-direction:column;gap:12px}
 .prj-label{padding-top:10px}
 .prj-last,.st-row.prj-last{border-bottom:none}
-.prj-accent{color:#FF8a55}
+.prj-accent{color:var(--accent-text)}
 #stProject .st-row:last-child{border-bottom:none}
 .prj-lastexp{margin-top:-4px}
 
@@ -16,11 +16,11 @@
 .prj-chk.on:after{content:'✓';font-weight:700}
 .prj-chk.lock{opacity:.55}
 .prj-absent .prj-chk{opacity:.35}
-.prj-absent .st-row-label,.prj-absent .prj-cnt{color:#8f8f8f}
+.prj-absent .st-row-label,.prj-absent .prj-cnt{color:var(--text-3)}
 .prj-srow{cursor:pointer}
 .prj-srow[aria-disabled="true"]{cursor:default}
 .prj-cnt{font-size:.75rem;color:var(--text);white-space:nowrap}
-.prj-cnt small{color:#a8a8a8;font-size:var(--fs-caption)}
+.prj-cnt small{color:var(--text-2);font-size:var(--fs-caption)}
 .prj-tog{width:40px;height:24px;border-radius:12px;background:#3a3a3e;position:relative;flex:none}
 .prj-tog:after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#bdbdbd}
 .prj-tog.on{background:var(--accent)}
@@ -30,8 +30,8 @@
 /* Champ, textes, taille, bouton principal */
 .prj-input{height:44px;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:#1a1a1e;color:var(--text);font:.875rem 'DM Mono',monospace;padding:0 12px;width:100%;box-sizing:border-box}
 .prj-input:focus{border-color:var(--accent)}
-.prj-sub{font-size:var(--fs-caption);color:#a8a8a8;line-height:1.55;margin:0}
-.prj-size{display:flex;justify-content:space-between;font-size:var(--fs-label);color:#c8c8c8}
+.prj-sub{font-size:var(--fs-caption);color:var(--text-2);line-height:1.55;margin:0}
+.prj-size{display:flex;justify-content:space-between;font-size:var(--fs-label);color:var(--text-2)}
 .prj-size b{color:var(--text);font-weight:500}
 .prj-primary{height:50px;flex-shrink:0;border-radius:8px;border:none;background:var(--accent);color:#000;font:500 .75rem 'DM Mono',monospace;letter-spacing:.08em;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}
 .prj-primary small{font-size:var(--fs-caption);letter-spacing:.02em;font-weight:400;opacity:.75;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 12px}
@@ -53,8 +53,8 @@
 .prj-opt.on .prj-radio{border-color:var(--accent)}
 .prj-opt.on .prj-radio:after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--accent)}
 .prj-opt-t{display:block;font-size:.8125rem;color:var(--text)}
-.prj-opt.on .prj-opt-t{color:#FF8a55}
-.prj-opt-s{display:block;font-size:var(--fs-caption);color:#a8a8a8;line-height:1.5;margin-top:3px}
+.prj-opt.on .prj-opt-t{color:var(--accent-text)}
+.prj-opt-s{display:block;font-size:var(--fs-caption);color:var(--text-2);line-height:1.5;margin-top:3px}
 
 /* Avertissements, compte rendu */
 .prj-warn{border:1px solid rgba(255,90,79,.5);background:rgba(255,90,79,.08);border-radius:8px;padding:10px 12px;font-size:var(--fs-label);color:#ffb0a8;line-height:1.55;flex-shrink:0}
@@ -62,29 +62,29 @@
 .prj-done{border:1px solid rgba(76,217,100,.45);background:rgba(76,217,100,.08);border-radius:8px;padding:10px 12px;font-size:var(--fs-label);color:#a6ecb3;line-height:1.55;flex-shrink:0}
 .prj-ok{display:flex;gap:10px;align-items:center;font:600 .9375rem 'Lato',sans-serif;color:var(--text)}
 .prj-ok i{width:28px;height:28px;border-radius:50%;background:rgba(76,217,100,.15);color:#4cd964;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:.875rem;flex:none}
-.prj-err i{background:rgba(255,90,79,.15);color:#ff7a70}
-.prj-err-text{font-size:var(--fs-label);color:#c8c8c8}
+.prj-err i{background:rgba(255,90,79,.15);color:var(--danger)}
+.prj-err-text{font-size:var(--fs-label);color:var(--text-2)}
 .prj-plus{color:#4cd964}
-.prj-skip{color:#FF8a55}
-.prj-dim{color:#8f8f8f}
+.prj-skip{color:var(--accent-text)}
+.prj-dim{color:var(--text-3)}
 
 /* Liste des projets (maquette 46) */
 .prj-projs{padding-top:2px}
 .prj-proj{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;box-sizing:border-box}
 .prj-proj:last-child{border-bottom:none}
 .prj-proj.act{border-left:3px solid var(--accent);margin-left:-14px;padding-left:11px;width:calc(100% + 14px)}
-.prj-proj.act .prj-pn{color:#FF8a55}
+.prj-proj.act .prj-pn{color:var(--accent-text)}
 .prj-pn{font-size:.8125rem;color:var(--text);overflow-wrap:anywhere}
-.prj-tag{font-size:var(--fs-caption);letter-spacing:.14em;text-transform:uppercase;color:#FF8a55;border:1px solid rgba(255,107,44,.5);border-radius:9px;padding:2px 6px;margin-left:6px;vertical-align:2px}
-.prj-pm{display:block;font-size:var(--fs-caption);color:#a8a8a8;margin-top:4px;line-height:1.45}
-.prj-more{color:#a8a8a8;font-size:1.15rem;padding:0 4px;min-width:44px;min-height:44px;background:none;border:none;cursor:pointer}
+.prj-tag{font-size:var(--fs-caption);letter-spacing:.14em;text-transform:uppercase;color:var(--accent-text);border:1px solid rgba(255,107,44,.5);border-radius:9px;padding:2px 6px;margin-left:6px;vertical-align:2px}
+.prj-pm{display:block;font-size:var(--fs-caption);color:var(--text-2);margin-top:4px;line-height:1.45}
+.prj-more{color:var(--text-2);font-size:1.15rem;padding:0 4px;min-width:44px;min-height:44px;background:none;border:none;cursor:pointer}
 .prj-sec{height:46px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:#252528;color:var(--text);font:.6875rem 'DM Mono',monospace;letter-spacing:.06em;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
-.prj-dash{border-style:dashed;color:#FF8a55;border-color:rgba(255,107,44,.6);background:transparent}
+.prj-dash{border-style:dashed;color:var(--accent-text);border-color:rgba(255,107,44,.6);background:transparent}
 
 /* Feuilles : texte d'explication, erreur */
-.prj-sheet-text{font-size:.75rem;line-height:1.6;color:#c8c8c8}
-.prj-sheet-err{color:#ff7a70}
+.prj-sheet-text{font-size:.75rem;line-height:1.6;color:var(--text-2)}
+.prj-sheet-err{color:var(--danger)}
 
 /* « + Nouvelle séquence » / « + Nouvelle discussion » (maquettes 47, 47b) */
-.prj-newbtn{display:flex;align-items:center;justify-content:center;width:100%;height:40px;border-radius:8px;border:1px dashed rgba(255,107,44,.6);background:transparent;color:#FF8a55;font:.6875rem 'DM Mono',monospace;letter-spacing:.04em;margin:0 0 12px;cursor:pointer}
+.prj-newbtn{display:flex;align-items:center;justify-content:center;width:100%;height:40px;border-radius:8px;border:1px dashed rgba(255,107,44,.6);background:transparent;color:var(--accent-text);font:.6875rem 'DM Mono',monospace;letter-spacing:.04em;margin:0 0 12px;cursor:pointer}
 .sq>.prj-newbtn{margin-bottom:2px}

@@ -6,8 +6,8 @@
 .sw-head{display:flex;align-items:center;gap:12px}
 .sw-head svg{flex-shrink:0}
 .sw-head h2{margin:0;font-family:'Lato',sans-serif;font-weight:600;font-size:1.25rem}
-.sw-text{margin:0;font-size:.75rem;color:#d0d0d0;line-height:1.65}
-.sw-limits{background:var(--mid2);border-radius:8px;padding:10px 12px;font-size:var(--fs-label);color:#c4c4c4;line-height:1.6}
+.sw-text{margin:0;font-size:.75rem;color:var(--text);line-height:1.65}
+.sw-limits{background:var(--mid2);border-radius:8px;padding:10px 12px;font-size:var(--fs-label);color:var(--text-2);line-height:1.6}
 .sw-limits b{color:var(--text)}
 .sw-skip{display:flex;align-items:center;gap:10px;min-height:44px;font-size:.75rem;cursor:pointer}
 .sw-skip input{width:20px;height:20px;margin:0;accent-color:var(--accent);flex-shrink:0;cursor:pointer}

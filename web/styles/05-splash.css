@@ -13,16 +13,16 @@
 .splash-btn{padding:16px 36px;border:1px solid var(--border);background:var(--mid);color:var(--text);font-family:'DM Mono',monospace;font-size:.85rem;letter-spacing:.1em;cursor:pointer;border-radius:4px;transition:all .2s;text-transform:uppercase}
 .splash-btn:hover{border-color:var(--accent);color:var(--accent)}
 .splash-btn.primary{background:#F5F2EC;color:var(--dark);border-color:#F5F2EC;font-weight:500}
-.install-btn{margin-top:8px;padding:12px 28px;border:1px dashed var(--accent);background:rgba(232,201,122,.08);color:var(--accent);font-family:'DM Mono',monospace;font-size:var(--fs-label);letter-spacing:.12em;cursor:pointer;border-radius:30px;transition:all .2s;text-transform:uppercase}
-.install-btn:hover{background:rgba(232,201,122,.16)}
+.install-btn{margin-top:8px;padding:12px 28px;border:1px dashed var(--accent);background:var(--accent-soft);color:var(--accent);font-family:'DM Mono',monospace;font-size:var(--fs-label);letter-spacing:.12em;cursor:pointer;border-radius:30px;transition:all .2s;text-transform:uppercase}
+.install-btn:hover{background:var(--accent-soft)}
 /* Installer l'application : feuille du bas (maquettes 35) */
-.pwa-sub{margin:-2px 0 10px;font-size:var(--fs-label);color:#a8a8a8}
+.pwa-sub{margin:-2px 0 10px;font-size:var(--fs-label);color:var(--text-2)}
 .pwa-why{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
-.pwa-why span{font-size:var(--fs-caption);padding:5px 9px;border-radius:12px;background:var(--mid2);color:#d0d0d0}
+.pwa-why span{font-size:var(--fs-caption);padding:5px 9px;border-radius:12px;background:var(--mid2);color:var(--text)}
 .pwa-steps{list-style:none;margin:0 0 6px;padding:0;display:flex;flex-direction:column;gap:10px}
-.pwa-steps li{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:center;font-size:.75rem;line-height:1.5;color:#d8d8d8}
+.pwa-steps li{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:center;font-size:.75rem;line-height:1.5;color:var(--text)}
 .pwa-steps b,.pwa-warn b{color:var(--text)}
-.pwa-n{width:26px;height:26px;border-radius:50%;border:1px solid var(--accent);color:#FF8a55;display:flex;align-items:center;justify-content:center;font-size:var(--fs-label)}
+.pwa-n{width:26px;height:26px;border-radius:50%;border:1px solid var(--accent);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:var(--fs-label)}
 .pwa-ico{display:inline-flex;vertical-align:-4px;padding:2px 5px;border-radius:5px;background:#2e2e32;margin:0 2px}
 .pwa-warn{margin-top:4px;background:rgba(255,196,64,.08);border:1px solid rgba(255,196,64,.35);border-radius:8px;padding:10px 12px;font-size:var(--fs-label);color:#f0dca8;line-height:1.55}
 .flash-unavail-notice{background:rgba(220,120,80,.1);border:1px solid rgba(220,120,80,.35);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:var(--fs-caption);line-height:1.6;color:var(--muted);letter-spacing:.03em}
