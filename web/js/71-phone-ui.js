@@ -62,6 +62,7 @@ const _PH_ICONS = {
 };
 const _PH_TXT = {
   incoming: 'Appel entrant', mobile: 'mobile', unknown: 'Inconnu', remind: 'Me le rappeler', message: 'Message',
+  slide: 'faire glisser pour répondre', slideGroup: 'Répondre à l\'appel', slideAria: 'Répondre : faire glisser vers la droite, ou toucher',
   decline: 'Refuser', answer: 'Répondre', accept: 'Accepter', hangup: 'Raccrocher',
   mute: 'Muet', keypad: 'Clavier', speaker: 'Haut-parleur', add: 'Ajouter', video: 'Vidéo', contacts: 'Contacts', hold: 'Attente',
   torch: 'Lampe torche', camera: 'Appareil photo', more: '+ {n} notifications', now: 'maintenant',
@@ -160,8 +161,22 @@ const PhoneUI = (() => {
   // Avatar masqué quand la photo occupe déjà tout l'écran
   const callAvatar = (m) => (m.photoMode === 'full' && m.photo && m.style !== 'minimal' ? '' : avatar(m));
   const callBtn = (cls, icon, a, label) => '<div class="pc-col"><button type="button" class="pc-btn ' + cls + '" aria-label="' + esc(label) + '"' + act(a) + '>' + ic(icon) + '</button>' + esc(label) + '</div>';
+  // Appel Verre sur téléphone VERROUILLÉ (lock non nul) : nom en haut, trois mini ronds
+  // (Me le rappeler / Refuser / Message) et la piste « faire glisser pour répondre ».
+  // Le rond vert est un vrai bouton (toucher, Entrée, Espace = repli accessible) ;
+  // le glissement est géré par 80-call-simulator.js (initCallSlider).
+  function incomingLocked(m) {
+    const T = _PH_TXT;
+    const mini = (cls, icon, a, l) => '<div class="pc-col"><button type="button" class="pc-btn mini ' + cls + '" aria-label="' + esc(l) + '"' + act(a) + '>' + ic(icon) + '</button>' + esc(l) + '</div>';
+    const head = '<div class="pc-info"><div class="pc-name">' + esc(m.name || T.unknown) + '</div><div class="pc-sub">' + esc(m.label || T.mobile) + '</div></div>';
+    const bot = '<div class="pc-bottom"><div class="pc-row pc-extra">' + mini('', 'clock', 'noop', T.remind) + mini('no', 'phone', 'decline', T.decline) + mini('', 'message-square', 'noop', T.message) + '</div>'
+      + '<div class="pc-slide" role="group" aria-label="' + esc(T.slideGroup) + '"><span class="pc-slide-label">' + esc(T.slide) + '</span>'
+      + '<button type="button" class="pc-slide-h" aria-label="' + esc(T.slideAria) + '"' + act('answer') + '>' + ic('phone') + '</button></div></div>';
+    return callBg(m) + '<div class="pc pc-locked">' + head + bot + '</div><div class="ph-home-ind"></div>';
+  }
   function incoming(m) {
     const st = m.style, T = _PH_TXT;
+    if (st === 'glass' && m.lock) return incomingLocked(m);
     const head = '<div class="pc-info">' + (st === 'tonal' ? '<div class="pc-kicker">' + T.incoming + '</div>' : '') + callAvatar(m) + '<div class="pc-name">' + esc(m.name || T.unknown) + '</div><div class="pc-sub">' + esc(m.label || (st === 'minimal' ? T.incoming : T.mobile)) + '</div></div>';
     let bot;
     if (st === 'tonal') {

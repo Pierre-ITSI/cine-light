@@ -25,7 +25,7 @@ const _TS_TXT = {
   capNotif: 'Aperçu de la notification sur l\'écran de jeu', capChat: 'Aperçu de la discussion sur l\'écran de jeu',
   vibNote: 'Vibre avec la sonnerie, même en Silencieux. Écran de jeu Android ou app SetRemote : iPhone dans Safari ne sait pas vibrer.',
   vibBadge: '〰 vibreur',
-  presFull: 'Plein écran', presBanner: 'Bandeau haut', photoAvatar: 'Avatar', photoFull: 'Photo plein écran',
+  presFull: 'Plein écran', presLock: 'Verrouillé', presBanner: 'Bandeau haut', photoAvatar: 'Avatar', photoFull: 'Photo plein écran',
   ring: 'Sonnerie {son}', sound: 'Son {son}', chatSound: 'Son des messages {son}', vol: '{n} %',
   vibYes: 'Vibreur oui', vibNo: 'Vibreur non', wall: 'Fond {fond}', wallPhoto: 'Photo', wallGradient: 'Dégradé',
   sep: ' · ', unknown: 'Inconnu', label: 'mobile', smsMsg: 'Tu es où ??', chatIn: 'Tu es où ?', chatOut: 'j\'arrive',
@@ -38,6 +38,8 @@ function telSoundName(sound) { return _TS_SOUNDS[sound] || ringName(sound) || _T
 // Style affiché du type (la discussion a le sien, la notification aussi)
 function _tsStyle(k) { return k === 'discussion' ? chatStyleNow() : k === 'notif' ? notifStyle : callStyle; }
 
+// Présentation de l'appel pour les résumés : « Verrouillé » seulement en Verre
+const _tsPresent = (T) => callPresent === 'banner' ? T.presBanner : callLockedNow() ? T.presLock : T.presFull;
 // Résumé de la rangée, en lignes (maquettes 36, 36c, 36d, 36f)
 function telStyleSummary(k) {
   const r = ringSettings[_ringKind(k)], T = _TS_TXT;
@@ -45,7 +47,7 @@ function telStyleSummary(k) {
   const son = telSoundName(r.sound), vol = _tsTpl(T.vol, { n: Math.round(r.vol * 100) }), vib = r.vib ? T.vibYes : T.vibNo;
   const j = (a) => a.join(T.sep);
   if (k === 'call') {
-    const first = [style, callPresent === 'banner' ? T.presBanner : T.presFull];
+    const first = [style, _tsPresent(T)];
     if (callStyle !== 'minimal') first.push(callPhotoMode === 'full' ? T.photoFull : T.photoAvatar);
     return [j(first), j([_tsTpl(T.ring, { son }), vol, vib])];
   }
@@ -62,7 +64,7 @@ function telRowSummary(k) {
   const j = (a) => a.filter(Boolean).join(T.sep);
   const vib = r.vib ? T.vibOn : '';
   if (k === 'call') {
-    return { look: j([style, (callPresent === 'banner' ? T.presBanner : T.presFull).toLowerCase()]), sound: j([son, vol, vib]) };
+    return { look: j([style, _tsPresent(T).toLowerCase()]), sound: j([son, vol, vib]) };
   }
   if (k === 'notif') return { all: j([style, son, vol]) };
   if (k === 'discussion') return { all: j([style, son, vib]) };

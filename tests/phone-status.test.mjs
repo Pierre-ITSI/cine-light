@@ -126,6 +126,7 @@ describe('barre d\'état de la séquence (28b) : partout sur l\'écran visé, ri
     assert.equal(await bar(sp), null, 'hors séquence : rien ne change');
     await setSeq(rp, [st('q1', 'color', 'k1', T)]);
     await go(rp);
+    await sleep(400); await showMedia(sp); // le premier GO a coupé le média (lot 6) : on remet l'image sous la séquence
     await waitFor(sp, () => document.getElementById('screen-sbar').style.display === 'flex');
     assert.equal((await bar(sp)).band, true);
     await rp.evaluate(async () => { seqRestart(); await _seqChain; });
@@ -481,6 +482,7 @@ describe('onglet Média : barre d\'état hors séquence, priorité de la séquen
     // Séquence en cours sur cet écran : ses réglages priment (18 %)
     await setSeq(rp, [st('m1', 'color', 'k1', { k: 'screen', id: sid })]);
     await go(rp);
+    await sleep(400); await showMedia(sp); // le premier GO a coupé le média (lot 6)
     await waitFor(sp, () => !!_sb.seq);
     await waitFor(sp, () => document.querySelector('#screen-sbar .psb-pct').textContent === '18 %');
     // En pause auto (ex-STOP) : la séquence garde la main jusqu'à « Recommencer »

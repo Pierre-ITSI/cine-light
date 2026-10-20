@@ -91,11 +91,14 @@ function _syncCallStyleChips() {
   if (h) h.textContent = callKind === 'discussion' ? (_CHAT_STYLE_HINTS[s] || '') : (_CALL_STYLE_HINTS[s] || '');
 }
 
-// Présentation de l'appel entrant : plein écran ou bandeau haut
+// Présentation de l'appel entrant : plein écran, téléphone verrouillé (Verre : piste « faire
+// glisser pour répondre ») ou bandeau haut. « Verrouillé » part sur le fil en present:'full'
+// + lock (champ existant de call:start), et seul le style Verre le dessine.
+function callLockedNow() { return callKind === 'call' && callPresent === 'lock' && callStyle === 'glass'; }
 let callPresent = 'full', callPhotoMode = 'avatar';
 function setCallPresent(v) {
   callPresent = v;
-  ['full','banner'].forEach(x => {
+  ['full','lock','banner'].forEach(x => {
     const b = document.getElementById('callpres-' + x);
     if (b) b.classList.toggle('active', x === v);
   });
@@ -263,6 +266,7 @@ function ensureSlotImage(key, data, screens) {
 function callFormFields() {
   if (callKind === 'notif') return notifFormFields(); // 84-notification.js
   const lockOn = callKind === 'sms' && document.getElementById('lockToggle').checked;
+  const callLock = callLockedNow();
   return Object.assign({
     kind: callKind,
     style: callStyle,
@@ -273,14 +277,14 @@ function callFormFields() {
     appColor: document.getElementById('callAppColor').value,
     hasPhoto: !!_callPhoto,
   }, ringFormFields(callKind), {
-    present: callPresent,
+    present: callPresent === 'banner' ? 'banner' : 'full',
     photoMode: (callStyle !== 'minimal') ? callPhotoMode : 'avatar',
     hasAudio: !!_callAudioData,
     autoAnswer: parseInt(document.getElementById('callAutoSlider').value) || 0,
     lock: lockOn ? {
       time: (document.getElementById('lockTime').value || '').slice(0, 8),
       date: (document.getElementById('lockDate').value || '').slice(0, 30),
-    } : null,
+    } : callLock ? { time: '', date: '' } : null,
   });
 }
 
@@ -323,6 +327,7 @@ function ensureCallAssets(photo, audio, rings, screens, photoKey) {
 }
 
 async function triggerCall() {
+  if (!tabSendIds('tel')) return; // écrans tenus par une séquence : confirmation 27-tab-gate.js
   const fields = callFormFields();
   const notif = fields.kind === 'notif';
   const photo = notif ? _notifIcon : _callPhoto, pk = notif ? '__notificon' : '__callphoto';
@@ -694,7 +699,47 @@ function _scRenderNotifBar() {
       case 'end': screenCallEnd(); break;
     }
   });
+  initCallSlider(el);
 })();
+// Piste « faire glisser pour répondre » de l'appel Verre verrouillé (PhoneUI.incomingLocked) :
+// glisser le rond vert jusqu'à CALL_SLIDE_OK de la course = geste « répondre » (rapporté à la
+// Séquence par screenTapAnswer) ; relâché avant, il revient. Le rond reste un bouton :
+// toucher, Entrée et Espace répondent aussi (repli accessible, via l'écouteur de clic).
+const CALL_SLIDE_OK = 0.85;
+function initCallSlider(el) {
+  let d = null, justDragged = false;
+  el.addEventListener('pointerdown', (e) => {
+    const h = e.target.closest && e.target.closest('.pc-slide-h');
+    if (!h) return;
+    const tr = h.parentElement;
+    d = { h, tr, x0: e.clientX, max: Math.max(1, tr.clientWidth - h.offsetWidth - 8), dx: 0, moved: false };
+    try { h.setPointerCapture(e.pointerId); } catch (_) {}
+    h.classList.add('drag');
+  });
+  el.addEventListener('pointermove', (e) => {
+    if (!d) return;
+    d.dx = Math.max(0, Math.min(d.max, e.clientX - d.x0));
+    if (d.dx > 6) d.moved = true;
+    d.h.style.transform = 'translateX(' + d.dx + 'px)';
+    d.tr.style.setProperty('--p', (d.dx / d.max).toFixed(3));
+  });
+  const end = (e) => {
+    if (!d) return;
+    const { h, tr, max, dx, moved } = d; d = null;
+    h.classList.remove('drag');
+    if (moved) { justDragged = true; setTimeout(() => { justDragged = false; }, 60); }
+    if (e.type !== 'pointercancel' && dx >= max * CALL_SLIDE_OK) {
+      h.style.transform = 'translateX(' + max + 'px)'; tr.style.setProperty('--p', 1);
+      screenTapAnswer();
+    } else { h.style.transform = ''; tr.style.setProperty('--p', 0); }
+  };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+  // Le clic qui suit un glissement (réussi ou raté) ne vaut pas « toucher »
+  el.addEventListener('click', (e) => {
+    if (justDragged && e.target.closest && e.target.closest('.pc-slide-h')) { e.stopImmediatePropagation(); e.stopPropagation(); }
+  }, true);
+}
 function _scTickInCall() {
   const el = document.getElementById('scCallTimer'); if (!el) return;
   const s = Math.floor((Date.now() - _callT0Scr) / 1000);

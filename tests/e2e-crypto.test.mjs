@@ -35,10 +35,12 @@ test('relais : topic opaque, trames illisibles (ni type, ni contenu, ni média e
   await rp.evaluate(() => {
     setKelvin(2700);
     document.getElementById('callName').value = 'Maman Secrète';
-    triggerCall();
     onAddImages([window.__files['rouge.png']]);
   });
-  await waitFor(sp, () => _mediaCache.has('m1') && _callState === 'ringing', null, { timeout: 10000 });
+  // « Le dernier envoi gagne » : un média envoyé après l'appel le retirerait ; l'appel part donc après
+  await waitFor(sp, () => _mediaCache.has('m1'), null, { timeout: 10000 });
+  await rp.evaluate(() => triggerCall());
+  await waitFor(sp, () => _callState === 'ringing', null, { timeout: 10000 });
   // Resynchronisation de l'écran (adressée à lui, après son « caps ») comprise
   await waitFor(rp, () => _resyncTimer === null);
   await sleep(200);

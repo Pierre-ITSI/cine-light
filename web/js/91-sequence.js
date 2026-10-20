@@ -425,7 +425,8 @@ function seqGestureIds(i) {
 // state : idle (pas commencé) · running · stopped · ended (plus d'étape)
 // noAuto : après ↶, pas de minuterie (GO ou le geste attendu repartent)
 // clockT0 : départ de l'horloge du téléphone (premier GO), pour « L'heure avance »
-const _seqRun = { state: 'idle', curId: null, started: new Map(), undo: new Map(), timer: null, tick: null, warn: '', noAuto: false, clockT0: null };
+const _seqRun = { state: 'idle', curId: null, started: new Map(), undo: new Map(), timer: null, tick: null, warn: '', noAuto: false, clockT0: null, released: false };
+// released : l'utilisateur a repris la main (27-tab-gate.js) ; les écrans sont libérés jusqu'au prochain GO ou Recommencer
 let _seqChain = Promise.resolve();
 function seqPos() { return _seqRun.curId ? _seq.steps.findIndex((s) => s.id === _seqRun.curId) : -1; }
 function seqPending() { return _seq.steps[seqPos() + 1] || null; }
@@ -442,12 +443,74 @@ function seqFlashRisk() {
   return false;
 }
 // GO : lance l'étape suivante, quel que soit son départ (premier GO : avertissement stroboscope)
-function seqGo(acked) {
+function seqGo(acked, cutOk) {
   if (_seqRun.state === 'ended' || !seqPending()) return;
-  if (_seqRun.state === 'idle' && !acked && seqFlashRisk()) { openFlashWarning(() => seqGo(true)); return; }
-  if (_seqRun.state === 'idle') _seqRun.clockT0 = Date.now(); // l'horloge du téléphone part au premier GO
+  if (_seqRun.state === 'idle' && !acked && seqFlashRisk()) { openFlashWarning(() => seqGo(true, cutOk)); return; }
+  // Premier GO : les séquences prennent le dessus. Ce qui est affiché par ailleurs sur leurs
+  // écrans est coupé ; une confirmation seulement s'il y a vraiment quelque chose à perdre
+  if (_seqRun.state === 'idle' && !cutOk) {
+    const lost = seqConflicts();
+    if (lost.lines.length) {
+      openAppConfirm({ title: _TG_TXT.cutTitle, text: _tgTpl(_TG_TXT.cutText, { ecrans: lost.names, liste: lost.lines.map((l) => '• ' + l).join('\n') }), ok: _TG_TXT.cutOk }, () => seqGo(true, true));
+      return;
+    }
+  }
+  if (_seqRun.state === 'idle') { _seqRun.clockT0 = Date.now(); seqCutOthers(); } // l'horloge du téléphone part au premier GO
+  _seqRun.released = false;
   _seqRun.state = 'running';
   _seqStartNext();
+}
+// Ce que le premier GO coupera : lignes lisibles et noms des écrans de la séquence concernés
+function seqConflicts() {
+  const all = new Set(_seq.steps.flatMap((s) => seqStepIds(s)));
+  const lines = [], names = [];
+  const add = (l) => { if (!lines.includes(l)) lines.push(l); };
+  for (const id of all) {
+    if (!scrKnown(id)) continue;
+    const st = Object.assign({}, scrState(id)), found = [], own = _seqOwn.get(id) || {};
+    if (own.color === st.color) st.colorSent = false;
+    if (own.effect && st.effect && own.effect === st.effect.name) st.effect = null;
+    if (own.strobe && st.strobe) st.strobe = null;
+    if (own.media && own.media === st.media) st.media = null;
+    if (own.call && st.call && own.call === st.call.kind + '|' + st.call.name) st.call = null;
+    const col = st.colorSent && st.color && String(st.color).toLowerCase() !== '#000000';
+    if (col && st.effect) found.push(_tgTpl(_TG_TXT.cutLight, { couleur: String(st.color).toUpperCase() }) + _TG_TXT.andJoin + _tgTpl(_TG_TXT.cutEffect, { nom: (EFFECT_CONFIG[st.effect.name] || {}).name || st.effect.name }));
+    else if (col) found.push(_tgTpl(_TG_TXT.cutLight, { couleur: String(st.color).toUpperCase() }));
+    else if (st.effect) found.push(_tgTpl(_TG_TXT.cutEffect, { nom: (EFFECT_CONFIG[st.effect.name] || {}).name || st.effect.name }));
+    if (st.strobe) found.push(_TG_TXT.cutStrobe);
+    if (st.media) { const it = _mediaPool.find((m) => m.id === st.media); found.push(it ? _tgTpl(_TG_TXT.cutMedia, { nom: it.name }) : _TG_TXT.cutMediaUnknown); }
+    if (st.call) found.push(_tgTpl(_TG_TXT[st.call.kind === 'call' ? 'cutCall' : st.call.kind === 'notif' ? 'cutNotif' : 'cutSms'], { nom: st.call.name || '…' }));
+    if (_chat.open && (!_chat.screens || _chat.screens.includes(id))) found.push(_tgTpl(_TG_TXT.cutChat, { nom: _chat.name }));
+    if (found.length) { names.push(id); for (const f of found) add(f); }
+  }
+  return { lines, names: _tgNames(names) };
+}
+// Coupe tout le reste sur les écrans de la séquence : appel, SMS, notification, discussion,
+// effet, stroboscope, torche, média ; la couleur passe au noir (pas « Noir » : ce calque
+// masquerait le faux téléphone). Ordres explicites, suivis par scrTrack (état attendu juste).
+function seqCutOthers() {
+  const ids = [...new Set(_seq.steps.flatMap((s) => seqStepIds(s)))].filter(scrKnown);
+  if (!ids.length) return;
+  const t = _seqTarget(ids);
+  const chatIds = _chat.open ? (_chat.screens ? ids.filter((id) => _chat.screens.includes(id)) : ids) : [];
+  if (chatIds.length) _tgCloseChat(chatIds, false); // fil de la télécommande fermé (chat:close envoyé aux écrans concernés)
+  sendMsg({ type: 'call:end', target: t });
+  const noChat = ids.filter((id) => !chatIds.includes(id));
+  if (noChat.length) sendMsg({ type: 'chat:close', target: _seqTarget(noChat) });
+  sendMsg({ type: 'effect', name: null, active: false, target: t });
+  sendMsg({ type: 'strobe', active: false, target: t });
+  sendMsg({ type: 'torch-effect', effect: 'stop', target: t });
+  sendMsg({ type: 'torch-onoff', on: false, target: t });
+  _vidStopJobs(ids);
+  sendMsg({ type: 'media-stop', target: t });
+  sendMsg({ type: 'color', color: '#000000', target: t });
+  for (const id of ids) scrState(id).colorSpec = null;
+  _seqRefreshView(ids);
+}
+// Reprendre la main (27-tab-gate.js) : Pause auto, écrans libérés jusqu'au prochain GO
+function seqTakeOver() {
+  _seqRun.released = true;
+  seqStop();
 }
 // GO touché sur la télécommande : un second GO dans les 600 ms qui suivent un
 // départ d'étape est ignoré (un double toucher ne saute pas d'étape), et une
@@ -480,9 +543,18 @@ function _seqStartNext() {
   _seqArm();
   renderSeq();
   _seqQueue(async () => {
-    if (it && ids.length) await _seqExec(s, it, ids);
+    if (it && ids.length) { await _seqExec(s, it, ids); _seqNoteOwn(ids); }
     await _seqPushPhones();
   });
+}
+// Ce que la séquence a elle-même posé sur chaque écran (couleur, effet, média, appel) : au
+// prochain premier GO (après Recommencer), ce n'est pas « un autre envoi » à confirmer
+const _seqOwn = new Map();
+function _seqNoteOwn(ids) {
+  for (const id of ids) {
+    const st = scrState(id);
+    _seqOwn.set(id, { color: st.color, effect: st.effect && st.effect.name, strobe: !!st.strobe, media: st.media, call: st.call && st.call.kind + '|' + st.call.name });
+  }
 }
 // Minuterie de l'étape suivante : « Après N s » ou délai de secours d'un geste,
 // comptés depuis le départ de l'étape qui vient de démarrer
@@ -570,6 +642,7 @@ function seqRestart() {
   _seqClearTimer();
   const calls = new Set(), chat = [..._seqRun.undo.values()].some((u) => u.chat);
   for (const u of _seqRun.undo.values()) for (const id of u.callIds || []) calls.add(id);
+  _seqRun.released = false;
   _seqRun.state = 'idle'; _seqRun.curId = null; _seqRun.started.clear(); _seqRun.undo.clear(); _seqRun.warn = ''; _seqRun.clockT0 = null;
   for (const p of _seqPhones.values()) Object.assign(p, _seqPhoneBlank(p.style));
   renderSeq();
@@ -651,7 +724,16 @@ async function _seqExec(s, it, ids) {
         sendMsg({ type: 'call:start', kind: 'notif', style: _CALL_STYLE_HINTS[it.style] ? it.style : 'glass', appName: _SEQ_TXT.missedApp, name: _SEQ_TXT.noCallTitle, msg: _SEQ_TXT.noCallMsg,
           ring: 'silent', present: 'banner', received: { mode: 'now' }, target: _seqTarget(failBanner) });
       }
-      if (ring.length) { u.callIds = ring; await sendCallEntry(it, [_seqTarget(ring)]); }
+      if (ring.length) {
+        u.callIds = ring;
+        // Téléphone verrouillé (verrouillé ou code) : l'appel Verre arrive sur l'écran verrouillé
+        // (piste « faire glisser pour répondre », champ lock de call:start) ; un bandeau n'existe
+        // pas sur un téléphone verrouillé. Les autres : l'entrée telle qu'enregistrée.
+        const lockedIds = ring.filter((id) => { const p = _seqPhones.get(id); return p && (p.mode === 'locked' || p.mode === 'code'); });
+        const openIds = ring.filter((id) => !lockedIds.includes(id));
+        if (lockedIds.length) await sendCallEntry(Object.assign({}, it, { present: 'full', lock: { time: '', date: '' } }), [_seqTarget(lockedIds)]);
+        if (openIds.length) await sendCallEntry(it, [_seqTarget(openIds)]);
+      }
       break;
     }
     case 'sms': case 'notif': {
@@ -1085,6 +1167,7 @@ function renderSeq() {
   if (playBtn) playBtn.disabled = !n;
   // Plateau
   _seqRenderPlay(pos);
+  renderTabHold(); // séquence prioritaire : bandeau et voile (27-tab-gate.js)
   // Mode, barre, vues
   const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
   const saved = _seqView === 'saved';

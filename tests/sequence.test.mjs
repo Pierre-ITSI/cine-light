@@ -129,8 +129,10 @@ describe('exemple du propriétaire, de bout en bout', () => {
 
   test('GO : couleur, puis notification SMS sur l\'écran verrouillé', async () => {
     await rp.click('#seqGoBtn');
-    await waitFor(sp, () => screenBaseColor !== '#1a1a1a');
-    assert.equal(await sp.evaluate(() => screenBaseColor), await rp.evaluate(() => memorySwatch(colorMemories[0].spec)));
+    // Le premier GO coupe d'abord le reste (couleur noire), puis l'étape pose sa couleur
+    const swatch = await rp.evaluate(() => memorySwatch(colorMemories[0].spec));
+    await waitFor(sp, (c) => screenBaseColor === c, swatch);
+    assert.equal(await sp.evaluate(() => screenBaseColor), swatch);
     await rp.click('#seqGoBtn');
     await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 1);
     assert.deepEqual(await phone(sp), { mode: 'locked', cards: [['SMS', 'Maman', 'Tu es où ?', 'maintenant']], dots: '' });
@@ -351,7 +353,8 @@ describe('plusieurs écrans : cible de chaque étape, resynchronisation d\'un é
     assert.notEqual(await A.page.evaluate(() => screenBaseColor), night);
     await r.broker.flush();
     const sent = await r.broker.sent(rp);
-    for (const m of sent.filter((m) => m.type === 'phone:state' || m.type === 'color')) assert.deepEqual(m.target, { screens: [B.id] }, m.type);
+    // (le premier GO coupe le reste sur TOUS les écrans de la séquence : couleur noire, hors de ce contrôle)
+    for (const m of sent.filter((m) => m.type === 'phone:state' || (m.type === 'color' && m.color !== '#000000'))) assert.deepEqual(m.target, { screens: [B.id] }, m.type);
     await rp.click('#seqGoBtn'); // « Tous » : les deux écrans sonnent
     await waitFor(A.page, () => _callState === 'ringing');
     await waitFor(B.page, () => _callState === 'ringing');

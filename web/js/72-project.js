@@ -475,7 +475,8 @@ function _prjCallEntry(e, list) {
   else if (m.kind === 'call') m.present = e.present === 'banner' ? 'banner' : 'full';
   else delete m.present;
   if (m.kind === 'call') m.photoMode = e.photoMode === 'full' ? 'full' : 'avatar'; else delete m.photoMode;
-  if (m.kind !== 'sms') m.lock = null;
+  if (m.kind === 'call') m.lock = m.lock && e.style !== 'tonal' && e.style !== 'minimal' ? m.lock : null; // appel verrouillé : Verre seulement
+  else if (m.kind !== 'sms') m.lock = null;
   // Champs absents de l'entrée d'origine : laissés absents (valeurs par défaut du module)
   for (const k of _CALL_ENTRY_FIELDS) if (e[k] === undefined && k !== 'kind' && k !== 'hasPhoto' && k !== 'hasAudio') delete m[k];
   if (m.ringId === null) delete m.ringId;

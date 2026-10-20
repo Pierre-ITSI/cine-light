@@ -230,9 +230,15 @@ function _chatSendAvatar(only) {
   const ids = only || _chat.screens;
   return ensureSlotImage('__chatavatar', _chatAvatar, ids && ids.length ? ids : undefined);
 }
-// Ouvre la discussion sur la cible courante (chip « Cible »)
-function openChatOnTarget(history) {
-  const ids = scrTargetIds();
+// Ouvre la discussion sur la cible courante (chip « Cible »), ou sur les écrans donnés.
+// Cible tenue par une séquence : suspendu (confirmation), renvoie faux ; cible partielle :
+// écrans libres seulement (27-tab-gate.js)
+function openChatOnTarget(history, only) {
+  let ids = only || scrTargetIds();
+  if (!only || only !== _chat.screens) {
+    ids = tabSendIds('tel', ids, () => openChatOnTarget(history));
+    if (!ids) return false;
+  }
   _chat.screens = ids.length ? ids : null;
   _chat.open = true;
   _chatSendRing();
@@ -241,6 +247,7 @@ function openChatOnTarget(history) {
   chatSave();
   renderChatPanel();
   if (typeof scrChanged === 'function') scrChanged();
+  return true;
 }
 function closeChat() {
   if (_chat.open) sendMsg(Object.assign({ type: 'chat:close' }, _chatTarget()));
@@ -301,7 +308,7 @@ function resumeChatAt(id) {
   _chat.progress = null;
   _chat.resumeAt = i > 0 ? id : null; // au n° 1 : comme « Repartir de zéro »
   _chatEditId = null;
-  if (!_chat.open) openChatOnTarget(true);
+  if (!_chat.open) { if (openChatOnTarget(true) === false) return; }
   else { _chatFlushTexts(); _chatSendOpen(undefined, true); }
   chatSave();
   renderChatPanel();
@@ -320,7 +327,7 @@ function _chatResumeLabel(n) {
 function sendNextChatMessage() {
   const m = chatNextContact();
   if (!m) return;
-  if (!_chat.open) openChatOnTarget();
+  if (!_chat.open) { if (openChatOnTarget() === false) return; }
   else _chatFlushEdits();
   // Lecture auto : « … écrit » pendant la durée d'écriture du message, puis la lecture continue
   const auto = _chatAuto.on;
@@ -351,7 +358,7 @@ function sendImprovisedChat() {
   Object.assign(m, chatTimingDefaults('contact'));
   const i = _chat.msgs.findIndex((x) => !_chatSent(x));
   _chat.msgs.splice(i < 0 ? _chat.msgs.length : i, 0, m);
-  if (!_chat.open) openChatOnTarget();
+  if (!_chat.open) { if (openChatOnTarget() === false) return; }
   else _chatSyncTexts(); // le nouveau message et l'ordre, avant de le poster
   _chatDefsSent.set(m.id, m.from + '|' + m.text);
   Object.assign(m, chatTimingDefaults('contact'));

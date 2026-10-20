@@ -282,7 +282,7 @@ function _clMeta(e) {
   const tone = e.ringId ? ringName(e.ringId) : null; // son importé (s'il est encore dans la bibliothèque)
   if (tone) parts.push('♪ ' + tone);
   if (e.kind === 'call' && e.autoAnswer > 0) parts.push('décroché auto ' + e.autoAnswer + ' s');
-  if (e.lock) parts.push('écran verrouillé');
+  if (e.lock) parts.push(e.kind === 'call' ? 'verrouillé' : 'écran verrouillé');
   if (e.kind === 'call' && e.present === 'banner') parts.push('bandeau');
   return parts.join(' · ');
 }
@@ -361,7 +361,7 @@ function _clFormEntry() {
   e.ringVolume = ringSettings[_ringKind(e.kind)].vol;
   // Réglages masqués pour ce type : non enregistrés (bande son et décroché
   // n'existent que pour un appel, l'écran verrouillé que pour un message)
-  if (e.kind === 'call') delete e.lock;
+  if (e.kind === 'call') { if (!e.lock) delete e.lock; } // appel : lock = « verrouillé » (Verre)
   else if (e.kind === 'notif') { delete e.lock; delete e.label; e.autoAnswer = 0; e.hasAudio = false; delete e.photoMode; }
   else { e.autoAnswer = 0; e.hasAudio = false; delete e.present; delete e.photoMode; }
   // Notification : l'icône est rangée comme la photo de l'entrée
@@ -528,7 +528,7 @@ async function loadCallEntryIntoForm(e) {
     return;
   }
   setCallStyle(_CALL_STYLE_NAMES[e.style] ? e.style : 'glass');
-  setCallPresent(e.present === 'banner' ? 'banner' : 'full');
+  setCallPresent(e.present === 'banner' ? 'banner' : e.kind === 'call' && e.lock ? 'lock' : 'full');
   setCallPhotoMode(e.photoMode === 'full' ? 'full' : 'avatar');
   ringApplyEntry(e); // son et volume de l'entrée pour son type
   val('callName', e.name || ''); val('callLabel', e.label || ''); val('callMsgText', e.msg || '');
@@ -537,7 +537,7 @@ async function loadCallEntryIntoForm(e) {
     val('callAppName', e.appName || ''); val('callAppColor', safeHexColor(e.appColor, '#2f8cf0'));
     for (const id of ['callAppName', 'callAppColor']) { const el = document.getElementById(id); if (el) el.dataset.touched = '1'; }
   }
-  const lt = document.getElementById('lockToggle'); if (lt) lt.checked = !!e.lock;
+  const lt = document.getElementById('lockToggle'); if (lt) lt.checked = e.kind === 'sms' && !!e.lock;
   val('lockTime', e.lock ? e.lock.time || '' : ''); val('lockDate', e.lock ? e.lock.date || '' : '');
   val('callAutoSlider', String(e.autoAnswer || 0)); onCallAutoChange();
   renderCallListSaveLabel();
@@ -565,12 +565,15 @@ async function loadCallEntryIntoForm(e) {
 async function playCallEntry(id) {
   const kind = _clKindOf(id);
   if (!kind) return;
+  const free = tabSendIds('tel'); // écrans tenus par une séquence : suspendu ; cible partielle : écrans libres
+  if (!free) return;
   const e = callList[kind].find((x) => x.id === id);
   const n = callList[kind].indexOf(e) + 1;
   const text = _clTpl(e.kind === 'call' ? _CL_TXT.sentCall : e.kind === 'notif' ? _CL_TXT.sentNotif : _CL_TXT.sentSms, { n });
   _setCallStatusUI(text);
   telCallSent(e.kind, e.kind === 'call' ? (e.autoAnswer || 0) : 0, text);
-  await sendCallEntry(e);
+  const held = scrTargetIds().length - free.length;
+  await sendCallEntry(e, held > 0 ? [{ screens: free }] : undefined);
 }
 async function triggerSelectedCallEntry() {
   const e = _clSelected(callListKind);

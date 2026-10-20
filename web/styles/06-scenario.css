@@ -385,3 +385,24 @@ body.nv-plateau #content-scn .sq-mode{margin-top:var(--sp-3)}
 .dc-timing-panel{margin-bottom:0}
 #tel-bar #dcGo .nb-lbl b{font-size:15px;letter-spacing:0}
 #tel-bar #dcGo{padding:0 var(--sp-2)}
+
+/* ═════════════ « Retirer de l'écran » (barre de Tel) et séquence prioritaire (lot 6) ═════════════ */
+#telOn{display:flex;flex-direction:column;gap:var(--sp-2)}
+#telOn .on-row{display:flex;align-items:center;gap:var(--sp-2);min-height:44px;padding:6px 0 6px var(--sp-3);border-radius:var(--r-md);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--border)}
+#telOn .on-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;font:400 12px/1.25 var(--font-ui);color:var(--text-2)}
+#telOn .on-t b{color:var(--text);font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#telOn .on-t span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nb #telOn .on-x{flex:none;align-self:stretch;height:auto;min-height:44px;padding:0 var(--sp-3);border-radius:0 var(--r-md) var(--r-md) 0;gap:6px;background:none;color:var(--danger);font:700 14px var(--font-ui);box-shadow:inset 1px 0 0 var(--border)}
+.nb #telOn .on-x .ic{width:18px;height:18px}
+.tab-hold{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:var(--sp-3);margin:0 0 var(--sp-3);padding:10px var(--sp-3);border-radius:var(--r-md);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.tab-hold.soft{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--border)}
+.tab-hold .th-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font:400 13px/1.3 var(--font-ui);color:var(--text-2)}
+.tab-hold .th-t b{color:var(--text);font-size:15px;font-weight:700}
+.tab-hold .th-b{flex:none;min-height:44px;padding:0 var(--sp-3);border-radius:var(--r-md);border:0;background:var(--accent);color:var(--on-accent);font:700 14px var(--font-ui);cursor:pointer}
+.tab-hold .nb-dot{background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+/* Voile : l'onglet reste visible mais ses envois sont suspendus ; arrêts et transport média restent au-dessus */
+.tab-content.tg-held{position:relative}
+.tg-veil{position:absolute;inset:0;z-index:5;background:color-mix(in srgb,var(--bg) 58%,transparent);cursor:not-allowed;border-radius:var(--r-md)}
+.tg-veil:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.tg-held .tg-allow{position:relative;z-index:6}
+#acText{white-space:pre-line}

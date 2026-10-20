@@ -29,6 +29,8 @@ function renderScreensUi(now) {
   renderPairedScreens(now || Date.now()); // lignes de l'onglet Écrans (32-status.js)
   renderTargetBtn();
   renderScreensView();
+  renderTelOn();   // « Retirer de l'écran » (27-tab-gate.js)
+  renderTabHold(); // séquence prioritaire : bandeau et voile
   if (_sheet && (_sheet.kind === 'target' || _sheet.kind === 'screenGroups' || _sheet.kind === 'screen')) renderSheet();
   if (typeof renderOfflineView === 'function') renderOfflineView(); // préparation de chaque écran (maquette 10)
 }

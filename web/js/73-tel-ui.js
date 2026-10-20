@@ -86,6 +86,7 @@ function renderTelBar() {
   const tg = scrTargetText(), nScr = scrList().length;
   const sub = nScr ? _tuTpl(_TU_TXT.on, { cible: tg.name + tg.count }) : _TU_TXT.noScreen;
   const status = (document.getElementById('callStatus') || {}).textContent || '';
+  renderTelOn(); // « Retirer de l'écran » (27-tab-gate.js)
   _tuShow('telSaveBtn', !inCall);
   _tuShow('callTriggerBtn', !disc && !inCall);
   _tuShow('callHangBtn', !disc && inCall);

@@ -333,6 +333,8 @@ const seqScene = (extra) => multiScreen(async (page) => {
       { id: 'a7', kind: 'chat', ref: 'cm', target: T, trig: { k: 'gesture', g: 'unlock' } },
       { id: 'a8', kind: 'media', ref: { id: 'm1', name: 'photo plage', kind: 'img' }, target: { k: 'screen', id: tv }, trig: { k: 'go' }, opt: { end: 'loop' } },
     ]) };
+    // Écrans « vierges » : l'appel et l'effet de la mise en place ne sont pas des envois à couper au premier GO
+    for (const id of scrList()) Object.assign(scrState(id), { call: null, effect: null, strobe: null, media: null, colorSent: false });
     switchTab('seq');
   }, [SCR_IDS[0], SCR_IDS[1], seqHomeImage.toString()]);
   if (extra) await extra(page);
@@ -530,6 +532,15 @@ export const SCENES = {
     await page.clock.runFor(600);
   },
   'screen-call-glass': screenCall({ kind: 'call', style: 'glass', name: 'Maman', label: 'mobile' }),
+  // 6a · Appel Verre sur téléphone verrouillé : nom en haut, Me le rappeler / Refuser / Message, « faire glisser pour répondre »
+  'screen-call-glass-locked': screenCall({ kind: 'call', style: 'glass', name: 'Maman', label: 'mobile', lock: { time: '', date: '' } }),
+  // 6a · … le rond vert tenu à mi-course : le libellé s'estompe, relâché avant 85 % il reviendrait
+  'screen-call-glass-locked-slide': screenCall({ kind: 'call', style: 'glass', name: 'Maman', label: 'mobile', lock: { time: '', date: '' } }, async (page) => {
+    const h = await page.locator('.pc-slide-h').boundingBox(), tr = await page.locator('.pc-slide').boundingBox();
+    await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(h.x + h.width / 2 + (tr.width - 68) * 0.55, h.y + h.height / 2, { steps: 6 });
+  }),
   'screen-call-tonal-banner': screenCall({ kind: 'call', style: 'tonal', name: 'Agent Martin', label: 'Bureau', present: 'banner' }),
   'screen-incall-tonal': screenCall({ kind: 'call', style: 'tonal', name: 'Maman' }, (page) => page.evaluate(() => screenCallAnswer())),
   'screen-incall-glass': screenCall({ kind: 'call', style: 'glass', name: 'Maman' }, (page) => page.evaluate(() => screenCallAnswer())),
@@ -1013,6 +1024,16 @@ Object.assign(SCENES, {
   'remote-tel-list-menu': telScene((page) => page.evaluate(() => openCallEntryMenu('e3'))),
   // 4e3 · Signet d'une entrée chargée : mettre à jour / enregistrer comme nouveau
   'remote-tel-save-loaded': telScene((page) => page.evaluate(() => openSaveCallSheet())),
+  // 6b · « Retirer de l'écran » : un SMS affiché sur l'écran de Julie, une ligne dans la barre fixe de Tel
+  'remote-tel-onscreen-sms': telKind('sms', async (page) => {
+    await page.evaluate(async () => { document.getElementById('callMsgText').value = 'Tu es où ??'; await triggerCall(); });
+    await page.clock.runFor(300);
+  }),
+  // 6b · … une discussion ouverte (l'appel de la mise en place est retiré)
+  'remote-tel-onscreen-discussion': telKind('discussion', async (page) => {
+    await page.evaluate(() => { for (const id of scrTargetIds()) scrState(id).call = null; openChatOnTarget(); sendNextChatMessage(); });
+    await page.clock.runFor(300);
+  }),
   // 4f · Séquence, Préparer : carte, étapes, « + Étape » et « Jouer la séquence »
   'remote-seq-prepare': seqScene(),
   // 4f2 · Préparer sans licence : bandeau d'aperçu, liste en lecture seule
@@ -1028,6 +1049,37 @@ Object.assign(SCENES, {
       await _seqChain;
     });
     await page.clock.runFor(1500);
+  }),
+  // 6c · Séquence en cours sur l'écran de Julie : envois de Lumière suspendus, bandeau « Reprendre la main »
+  'remote-seq-hold-light': seqScene(async (page) => {
+    await page.evaluate(async (julie) => { scrSetTarget({ k: 'screen', id: julie }); setSeqMode('play'); for (let i = 0; i < 3; i++) seqGo(); await _seqChain; switchTab('light'); }, SCR_IDS[0]);
+    await page.clock.runFor(300);
+  }),
+  // 6c · … toucher le voile ou « Reprendre la main » : confirmation, puis Pause auto
+  'remote-seq-hold-confirm': seqScene(async (page) => {
+    await page.evaluate(async (julie) => { scrSetTarget({ k: 'screen', id: julie }); setSeqMode('play'); for (let i = 0; i < 3; i++) seqGo(); await _seqChain; switchTab('light'); }, SCR_IDS[0]);
+    await page.clock.runFor(300);
+    await page.click('#tabHoldTake');
+    await page.clock.runFor(200);
+  }),
+  // 6c · Cible partielle (groupe Salon, seul Julie est tenu) : bandeau discret, envois vers la TV seulement
+  'remote-seq-hold-partial': seqScene(async (page) => {
+    await page.evaluate(async () => {
+      _seq.steps = _seq.steps.filter((s) => s.id !== 'a8');
+      scrSetTarget({ k: 'group', id: _scrReg.groups[0].id }); setSeqMode('play'); for (let i = 0; i < 3; i++) seqGo(); await _seqChain; switchTab('light');
+    });
+    await page.clock.runFor(300);
+  }),
+  // 6d · Premier GO alors que l'écran de Julie montre déjà une lumière, un effet et un média : « Couper et lancer »
+  'remote-seq-first-go-confirm': seqScene(async (page) => {
+    await page.evaluate((julie) => {
+      scrSetTarget({ k: 'screen', id: julie });
+      sendMsg({ type: 'color', color: '#E02020' });
+      sendMsg({ type: 'effect', name: 'police', active: true, params: {} });
+      scrState(julie).media = 'm1';
+      setSeqMode('play'); seqGo();
+    }, SCR_IDS[0]);
+    await page.clock.runFor(300);
   }),
   // 4h · Éditeur d'étape en quatre questions : phrase de synthèse, Quoi ? Lequel ? Quand ? Sur quel écran ?
   'remote-seq-step-questions': seqScene((page) => page.evaluate(() => { openSeqStep('a3'); })),

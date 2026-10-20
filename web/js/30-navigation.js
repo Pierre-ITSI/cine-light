@@ -371,6 +371,7 @@ function switchTab(t) {
   navBarUpdate();
   if (sub === 'seq') renderSeq(); // éléments supprimés entre-temps : « élément introuvable »
   if (sub === 'call') renderTelBar();
+  renderTabHold(); // séquence prioritaire : bandeau et voile (27-tab-gate.js)
   if (tab === 'media') renderMediaBarRow(); // barre d'état au-dessus des médias (98-phone-params.js)
   if (tab === 'screens') renderPairPanel();
   else remoteStopPairCode(true); // le code ne reste actif que sur l'onglet d'appairage

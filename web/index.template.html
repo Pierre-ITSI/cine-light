@@ -380,7 +380,7 @@
         <button class="effect-btn" id="efx-heartbeat" onclick="sendTorchEffect('heartbeat')">
           Battement
         </button>
-        <button class="effect-btn danger" id="efx-stop" onclick="sendTorchEffect('stop')">
+        <button class="effect-btn danger tg-allow" id="efx-stop" onclick="sendTorchEffect('stop')">
           Stop effet
         </button>
       </div>
@@ -401,7 +401,7 @@
   <div class="tab-content" id="content-effects">
     <div id="effectActiveBadge" class="effect-active-row" style="display:none">
       <span class="strobe-active-badge" id="effectBadgeText">Actif</span>
-      <button class="chip danger" onclick="stopAllEffects()"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> Stop</button>
+      <button class="chip danger tg-allow" onclick="stopAllEffects()"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> Stop</button>
     </div>
     <div class="panel">
       <div class="panel-label">Laboratoire d'effets</div>
@@ -634,7 +634,7 @@
         <button type="button" class="mbar-edit" id="mediaBarEdit" onclick="openPhoneParams('media')"><span id="mediaBarSum"></span><span id="mediaBarEditLbl">Régler <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span></button>
       </div>
       <div class="media-status" id="mediaStatus">Aucun média diffusé</div>
-      <button class="media-btn" id="mediaPlayBtn" onclick="toggleVideoPlayback()" style="display:none">
+      <button class="media-btn tg-allow" id="mediaPlayBtn" onclick="toggleVideoPlayback()" style="display:none">
         <span class="media-icon" id="mediaPlayIcon"><svg class="ic" aria-hidden="true"><use href="#i-pause"></use></svg></span><span id="mediaPlayLabel">Pause</span>
       </button>
       <div id="videoModeRow" style="display:none;margin:4px 0 10px">
@@ -645,7 +645,7 @@
           <button class="chip" id="vmode-off" onclick="setVideoEndMode('off')"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> 1× puis off</button>
         </div>
       </div>
-      <div id="mediaTimeline" style="display:none;margin:4px 0 12px">
+      <div id="mediaTimeline" class="tg-allow" style="display:none;margin:4px 0 12px">
         <input type="range" id="mediaSeek" min="0" max="100" step="0.1" value="0"
                style="--track:linear-gradient(to right,var(--accent) 0%,var(--border-strong) 0%)"
                oninput="onSeekInput()" onchange="onSeekEnd()">
@@ -653,7 +653,7 @@
           <span id="mediaCurTime">0:00</span><span id="mediaDurTime">0:00</span>
         </div>
       </div>
-      <button class="media-btn" id="mediaStopBtn" onclick="stopMediaBroadcast()" style="display:none;border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)">
+      <button class="media-btn tg-allow" id="mediaStopBtn" onclick="stopMediaBroadcast()" style="display:none;border-color:rgba(220,80,80,.4);color:rgba(220,80,80,.8)">
         <span class="media-icon"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg></span> Arrêter la diffusion
       </button>
     </div>
@@ -882,6 +882,7 @@
     </div>
     <!-- Tel : une action par type (Faire sonner, Envoyer le SMS, Envoyer la notification, Ouvrir sur l'écran), puis ses états -->
     <div class="nb" id="tel-bar" data-bar="tel">
+      <div id="telOn" class="nb-on" style="display:none"></div>
       <div class="nb-live" id="telLive"><i class="nb-dot" id="telDot"></i><span id="callStatus"></span></div>
       <div class="nb-prog" id="telProg" style="display:none"><i id="telProgFill"></i></div>
       <div class="nb-live" id="dcLive" style="display:none"><i class="nb-dot"></i><span id="dcAutoState"></span></div>
@@ -1117,6 +1118,7 @@
       <div class="panel-label">Présentation</div>
       <div class="chips-wrap">
         <button class="chip active" id="callpres-full" onclick="setCallPresent('full')">Plein écran</button>
+        <button class="chip" id="callpres-lock" onclick="setCallPresent('lock')">Verrouillé</button>
         <button class="chip" id="callpres-banner" onclick="setCallPresent('banner')">Bandeau haut</button>
       </div>
     </div>

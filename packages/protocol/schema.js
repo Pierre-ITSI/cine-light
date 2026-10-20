@@ -639,7 +639,7 @@ const SPECS = {
       lock: opt(nullable(object({
         time: req(line(8), 'heure affichée'),
         date: req(line(30), 'date affichée'),
-      })), 'faux écran verrouillé (SMS)'),
+      })), 'faux écran verrouillé : SMS ; appel Verre = téléphone verrouillé (nom en haut, piste « faire glisser pour répondre », geste answer) ; ignoré d’un ancien écran (rendu plein écran habituel)'),
       phone: opt(object({
         date: opt(DATE, 'date du faux téléphone AAAA-MM-JJ (absente : celle de l’écran)'),
         time: opt(TIME, 'heure du faux téléphone HH:MM (absente : celle de l’écran)'),

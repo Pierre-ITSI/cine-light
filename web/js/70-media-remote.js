@@ -400,6 +400,9 @@ function selectMedia(id) {
 // de la télécommande (réglage de fin de lecture de la cible joint).
 function mediaShowOn(it, ids, fromUi) {
   ids = ids.filter(scrKnown);
+  // Choix de la télécommande : séquence prioritaire (écrans tenus suspendus) et « le dernier
+  // envoi gagne » (couches Tel retirées), 27-tab-gate.js. La séquence passe fromUi = faux.
+  if (fromUi) { ids = tabSendIds('media', ids); if (!ids) { setMediaStatus('⏸ Envoi suspendu : une séquence est en cours'); return; } }
   if (!ids.length) return;
   for (const s of ids) scrState(s).media = it.id;
   const have = ids.filter((s) => scrState(s).cached.has(it.id));

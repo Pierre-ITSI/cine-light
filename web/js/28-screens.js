@@ -282,6 +282,12 @@ function scrAddress(m) {
   if (m.target !== undefined && m.target !== null) {
     return Array.isArray(m.target.screens) && !m.target.screens.length ? null : m;
   }
+  // Ordre de l'interface (cible implicite) : porte des séquences prioritaires (27-tab-gate.js)
+  if (!SCR_GLOBAL_TYPES.includes(m.type) && typeof tabGateMsg === 'function') {
+    m = tabGateMsg(m);
+    if (!m) return null;
+    if (m.target !== undefined && m.target !== null) return m;
+  }
   if (SCR_GLOBAL_TYPES.includes(m.type) || _scrReg.target.k === 'all') return m;
   const ids = scrTargetIds();
   return ids.length ? Object.assign({}, m, { target: { screens: ids } }) : null;
@@ -316,7 +322,7 @@ function scrState(id) {
     s = Object.assign(_scrLook(scrAll()), {
       cached: new Set(),  // médias accusés en cache par l'écran
       sent: new Map(),    // fragments envoyés (photo, bande son, fond, sons importés) → contenu
-      caps: null, rtcBroken: false, progress: null, call: null, dmxLive: false, dmxColor: null,
+      caps: null, rtcBroken: false, progress: null, call: null, colorSent: false, dmxLive: false, dmxColor: null,
       reportedActive: undefined, needsConfig: false,
     });
     _scrStates.set(id, s);
@@ -351,7 +357,7 @@ function scrTrack(m) {
 }
 function _scrApply(s, m, x) {
   switch (m.type) {
-    case 'color': s.color = m.color; s.colorSpec = x.spec ? _scrClone(x.spec) : null; s.colorMeta = x.meta || null; break;
+    case 'color': s.color = m.color; s.colorSent = true; s.colorSpec = x.spec ? _scrClone(x.spec) : null; s.colorMeta = x.meta || null; break;
     case 'effect': s.effect = m.active && m.name ? { name: m.name, params: _scrClone(m.params || {}), tvBlocks: x.tvBlocks ? _scrClone(x.tvBlocks) : null } : null; break;
     case 'strobe': { if (!m.active) { s.strobe = null; break; } const p = _scrClone(m); delete p.target; s.strobe = p; break; }
     case 'blackout': s.blackout = !!m.on; s.blackoutTouched = true; break;
