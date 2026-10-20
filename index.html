@@ -2443,19 +2443,20 @@ body.nv-kb #nv-tabs{display:none}
 #nv-main[data-bar="tel"] #tel-bar,#nv-main[data-bar="seq"] #seq-bar{display:flex}
 body.nv-kb #nv-main[data-bar] #nv-bar .nb{display:none}
 .nb-row{display:flex;gap:var(--sp-2);align-items:stretch}
-.nb button{height:56px;min-width:0;border:0;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;gap:var(--sp-2);padding:0 var(--sp-3);
+.nb button{height:56px;min-width:0;border:0;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;gap:var(--sp-2);padding:0 var(--sp-3);overflow:hidden;
   background:var(--surface-3);color:var(--text);font:700 16px/1.1 var(--font-ui);cursor:pointer}
 .nb button .ic{width:22px;height:22px;flex:none;vertical-align:0}
 .nb button:disabled{opacity:.45;cursor:default}
 .nb .nb-ico{flex:none;width:56px;padding:0}
-.nb .nb-pri{flex:1;background:var(--accent);color:var(--on-accent)}
+.nb .nb-pri{flex:1 1 0;background:var(--accent);color:var(--on-accent)}
 .nb .nb-pri:active{background:var(--accent-pressed)}
 .nb .nb-pri:disabled{background:var(--surface-3);color:var(--text-3);opacity:1}
 .nb .nb-dng{flex:1;background:var(--danger-fill);color:#fff}
 .nb .nb-sec{flex:none;min-width:96px}
-.nb .nb-ghost{flex:none;width:92px;background:transparent;box-shadow:inset 0 0 0 1px var(--border-strong);padding:0 var(--sp-2)}
-.nb .nb-ghost b{font-size:15px;font-weight:700;letter-spacing:0;white-space:nowrap}
+.nb .nb-ghost{flex:none;width:80px;background:transparent;box-shadow:inset 0 0 0 1px var(--border-strong);padding:0 6px;gap:4px}
+.nb .nb-ghost b{font-size:14px;font-weight:700;letter-spacing:0;white-space:nowrap}
 .nb .nb-ghost.on{box-shadow:inset 0 0 0 1.5px var(--accent);color:var(--accent-text)}
+@media (max-width:399px){#dcGo>.ic,#dcOpenBtn>.ic{display:none}#dcGo .nb-lbl b{font-size:15px;letter-spacing:0}.nb .nb-ico{width:48px}.nb .nb-ghost{width:76px;padding:0 4px}.nb #dcGo{padding:0 8px}}
 .nb-lbl{display:flex;flex-direction:column;align-items:center;min-width:0;max-width:100%;text-align:center;gap:2px}
 .nb-lbl b{font-size:16px;font-weight:700;letter-spacing:.02em;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .nb-lbl small{font-size:12px;font-weight:400;opacity:.85;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
@@ -2724,7 +2725,7 @@ body.nv-plateau #content-scn .sq-mode{margin-top:var(--sp-3)}
 .sq-reset::after{content:'';position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--danger)}
 .sq-reset.holding::after{width:100%;transition:width var(--hold,600ms) linear}
 .nb .sq-ctl button{flex:1 1 0}
-@media (max-width:399px){.nb .sq-ctl button .ic{display:none}}
+@media (max-width:479px){.nb .sq-ctl button .ic{display:none}}
 .sq-hint{min-height:0;text-align:center;font:400 13px/1.3 var(--font-ui);color:var(--text-2)}
 .sq-hint:empty{display:none}
 #nv-scroll .sq-ctl{bottom:auto;padding-bottom:0}
@@ -3762,7 +3763,7 @@ body.nv-plateau #content-scn .sq-mode{margin-top:var(--sp-3)}
         <button type="button" class="nb-pri" id="callAnswerBtn" onclick="sendMsg({type:'call:answer'})"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg><span class="nb-lbl"><b>Décrocher</b></span></button>
         <button type="button" class="nb-pri" id="dcOpenBtn" onclick="openChatOnTarget()"><svg class="ic" aria-hidden="true"><use href="#i-message-circle"></use></svg><span class="nb-lbl"><b>OUVRIR SUR L'ÉCRAN</b><small id="dcOpenSub"></small></span></button>
         <button type="button" class="nb-ico" id="dcBackBtn" aria-label="Pause et revenir d'un message" title="Revenir d'un message" onclick="chatAutoBack()" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg></button>
-        <button type="button" class="nb-ghost" id="dcAutoPlay" onclick="chatAutoToggle()"><svg class="ic" aria-hidden="true"><use href="#i-play"></use></svg><b>Lecture auto</b></button>
+        <button type="button" class="nb-ghost" id="dcAutoPlay" aria-label="Lecture automatique" onclick="chatAutoToggle()"><svg class="ic" aria-hidden="true"><use href="#i-play"></use></svg><b>Auto</b></button>
         <button type="button" class="nb-pri" id="dcGo" onclick="sendNextChatMessage()"><svg class="ic" aria-hidden="true"><use href="#i-send"></use></svg><span class="nb-lbl"><b id="dcGoLbl">ENVOYER</b><small id="dcGoSub"></small></span></button>
       </div>
     </div>
@@ -22089,7 +22090,7 @@ const _CHAT_TXT = {
   autoLabel: 'Lecture automatique',
   autoRun: '● en cours · {n} / {total}', autoPaused: '⏸ en pause · {n} / {total}', autoReady: 'prête · {n} / {total}',
   autoActor: '● attend {comedien} · {n} / {total}', autoButton: '● attend « Envoyer » · {n} / {total}', autoDone: 'terminée · {n} / {total}',
-  autoPlay: 'Lecture auto', autoPause: 'Pause', autoBack: '↶', autoBackAria: 'Pause et revenir d\'un message',
+  autoPlay: 'Auto', autoPlayAria: 'Lecture automatique', autoPause: 'Pause', autoPauseAria: 'Mettre la lecture automatique en pause', autoBack: '↶', autoBackAria: 'Pause et revenir d\'un message',
   threadTitle1: 'Fil · 1 message', threadTitleN: 'Fil · {n} messages', threadTitle0: 'Fil · aucun message',
   moveUp: 'Monter le message', moveDown: 'Descendre le message',
   menuTitle: 'Fil de la discussion', menuNew: 'Nouvelle discussion', menuSave: 'Enregistrer le fil', menuRestart: 'Repartir de zéro', menuClose: 'Fermer sur l\'écran',
@@ -22655,6 +22656,7 @@ function _chatRenderAuto() {
       play.innerHTML = icon(on ? 'pause' : 'play') + '<b>' + escapeHtml(on ? _CHAT_TXT.autoPause : _CHAT_TXT.autoPlay) + '</b>';
       play.classList.toggle('on', on);
       play.setAttribute('aria-pressed', on ? 'true' : 'false');
+      play.setAttribute('aria-label', on ? _CHAT_TXT.autoPauseAria : _CHAT_TXT.autoPlayAria); // le libellé visible est court (« Auto »)
     }
     play.disabled = !on && !_chatNextMsg(); // en cours : « Pause » reste actif
   }

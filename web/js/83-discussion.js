@@ -83,7 +83,7 @@ const _CHAT_TXT = {
   autoLabel: 'Lecture automatique',
   autoRun: '● en cours · {n} / {total}', autoPaused: '⏸ en pause · {n} / {total}', autoReady: 'prête · {n} / {total}',
   autoActor: '● attend {comedien} · {n} / {total}', autoButton: '● attend « Envoyer » · {n} / {total}', autoDone: 'terminée · {n} / {total}',
-  autoPlay: 'Lecture auto', autoPause: 'Pause', autoBack: '↶', autoBackAria: 'Pause et revenir d\'un message',
+  autoPlay: 'Auto', autoPlayAria: 'Lecture automatique', autoPause: 'Pause', autoPauseAria: 'Mettre la lecture automatique en pause', autoBack: '↶', autoBackAria: 'Pause et revenir d\'un message',
   threadTitle1: 'Fil · 1 message', threadTitleN: 'Fil · {n} messages', threadTitle0: 'Fil · aucun message',
   moveUp: 'Monter le message', moveDown: 'Descendre le message',
   menuTitle: 'Fil de la discussion', menuNew: 'Nouvelle discussion', menuSave: 'Enregistrer le fil', menuRestart: 'Repartir de zéro', menuClose: 'Fermer sur l\'écran',
@@ -649,6 +649,7 @@ function _chatRenderAuto() {
       play.innerHTML = icon(on ? 'pause' : 'play') + '<b>' + escapeHtml(on ? _CHAT_TXT.autoPause : _CHAT_TXT.autoPlay) + '</b>';
       play.classList.toggle('on', on);
       play.setAttribute('aria-pressed', on ? 'true' : 'false');
+      play.setAttribute('aria-label', on ? _CHAT_TXT.autoPauseAria : _CHAT_TXT.autoPlayAria); // le libellé visible est court (« Auto »)
     }
     play.disabled = !on && !_chatNextMsg(); // en cours : « Pause » reste actif
   }

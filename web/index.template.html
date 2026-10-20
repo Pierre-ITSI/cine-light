@@ -894,7 +894,7 @@
         <button type="button" class="nb-pri" id="callAnswerBtn" onclick="sendMsg({type:'call:answer'})"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg><span class="nb-lbl"><b>Décrocher</b></span></button>
         <button type="button" class="nb-pri" id="dcOpenBtn" onclick="openChatOnTarget()"><svg class="ic" aria-hidden="true"><use href="#i-message-circle"></use></svg><span class="nb-lbl"><b>OUVRIR SUR L'ÉCRAN</b><small id="dcOpenSub"></small></span></button>
         <button type="button" class="nb-ico" id="dcBackBtn" aria-label="Pause et revenir d'un message" title="Revenir d'un message" onclick="chatAutoBack()" disabled><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg></button>
-        <button type="button" class="nb-ghost" id="dcAutoPlay" onclick="chatAutoToggle()"><svg class="ic" aria-hidden="true"><use href="#i-play"></use></svg><b>Lecture auto</b></button>
+        <button type="button" class="nb-ghost" id="dcAutoPlay" aria-label="Lecture automatique" onclick="chatAutoToggle()"><svg class="ic" aria-hidden="true"><use href="#i-play"></use></svg><b>Auto</b></button>
         <button type="button" class="nb-pri" id="dcGo" onclick="sendNextChatMessage()"><svg class="ic" aria-hidden="true"><use href="#i-send"></use></svg><span class="nb-lbl"><b id="dcGoLbl">ENVOYER</b><small id="dcGoSub"></small></span></button>
       </div>
     </div>
