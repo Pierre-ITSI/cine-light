@@ -96,17 +96,6 @@ body.nv-kb #nv-tabs{display:none}
 /* ── Lumière : torche indisponible (iPhone) ── */
 #content-flash .flash-unavail-notice{margin-bottom:var(--sp-3)}
 
-/* Réglages › Retour à l'accueil */
-.st-btn.nv-home{height:auto;min-height:64px;display:flex;align-items:center;gap:14px;padding:10px var(--sp-4);text-align:left;border-color:var(--border-strong)}
-.nv-home .ic{flex:none;width:22px;height:22px;color:var(--text-2)}
-.nv-home-t{display:flex;flex-direction:column;gap:2px;font-family:var(--font-ui)}
-.nv-home-t b{font-size:var(--fs-body)}
-.nv-home-t small{font-size:var(--fs-label);font-weight:400;line-height:1.35;color:var(--text-2)}
-/* ── Portrait peu haut (iPhone SE…) : l'en-tête garde l'essentiel sur une ligne de texte ── */
-@media (max-height:699px){
-  #previewMeta{display:none}
-  #nv-head{gap:6px;padding-bottom:8px}
-}
 /* ── Écrans ── */
 .nv-h{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)}
 .nv-h .panel-label{margin:0}
@@ -148,6 +137,12 @@ body.nv-kb #nv-tabs{display:none}
 .nv-lead .st-row-main{text-align:left}
 .pair-renew{width:100%;display:flex;align-items:center;justify-content:center;gap:var(--sp-2);margin-top:var(--sp-3)}
 #content-screens .pair-e2e{margin-top:var(--sp-4)}
+/* Réglages › Retour à l'accueil */
+.st-btn.nv-home{height:auto;min-height:64px;display:flex;align-items:center;gap:14px;padding:10px var(--sp-4);text-align:left;border-color:var(--border-strong)}
+.nv-home .ic{flex:none;width:22px;height:22px;color:var(--text-2)}
+.nv-home-t{display:flex;flex-direction:column;gap:2px;font-family:var(--font-ui)}
+.nv-home-t b{font-size:var(--fs-body)}
+.nv-home-t small{font-size:var(--fs-label);font-weight:400;line-height:1.35;color:var(--text-2)}
 /* Feuille « Écran » : actions de la ligne touchée */
 .sr-act{display:flex;align-items:center;gap:var(--sp-3);width:100%;min-height:56px;padding:0 var(--sp-1);border:0;border-bottom:1px solid var(--border);background:none;color:var(--text);
   font:inherit;text-align:left;cursor:pointer}
@@ -157,6 +152,11 @@ body.nv-kb #nv-tabs{display:none}
 .sr-act .ic-trail{color:var(--text-3)}
 .sr-act.danger .sr-act-label{color:var(--danger)}
 
+/* ── Portrait peu haut (iPhone SE…) : l'en-tête garde l'essentiel sur une ligne de texte ── */
+@media (max-height:699px){
+  #previewMeta{display:none}
+  #nv-head{gap:6px;padding-bottom:8px}
+}
 /* ── Très étroit (360 px) ── */
 @media (max-width:374px){
   #nv-head .target-btn .tb-icon{display:none}
@@ -168,3 +168,27 @@ body.nv-kb #nv-tabs{display:none}
   .nv-add .pair-code-row{justify-content:center}
 }
 
+/* ── Tablette (≥ 700 px de large) et téléphone couché : rail latéral, contenu sur 2 colonnes ── */
+@media (min-width:700px),(orientation:landscape) and (max-height:500px){
+  #remote-mode{flex-direction:row}
+  #nv-tabs{order:-1;flex-direction:column;justify-content:flex-start;gap:6px;width:calc(92px + env(safe-area-inset-left));min-height:0;
+    padding:20px 6px 20px calc(6px + env(safe-area-inset-left));border-top:0;border-right:1px solid var(--border-strong)}
+  #nv-tabs button{flex:none;height:76px}
+  #nv-head{flex-direction:row;flex-wrap:wrap;align-items:center;gap:var(--sp-3) var(--sp-4);padding:var(--sp-3) calc(24px + env(safe-area-inset-right)) var(--sp-3) 24px}
+  #nv-head .nv-r1{flex:1 1 300px}
+  #nv-head .nv-r2{flex:1 1 320px;max-width:520px}
+  #nv-head .nv-strip{flex:1 0 100%}
+  #nv-scroll{padding:0 calc(24px + env(safe-area-inset-right)) var(--sp-5) 24px}
+  .nv-sub{margin-left:-24px;margin-right:calc(-1 * (24px + env(safe-area-inset-right)));padding-left:24px;padding-right:calc(24px + env(safe-area-inset-right))}
+  #content-color.active,#content-flash.active,#content-effects.active,#content-media.active,#content-screens.active,#content-call.active{column-count:2;column-gap:var(--sp-4)}
+  #content-color.active>*,#content-flash.active>*,#content-effects.active>*,#content-media.active>*,#content-screens.active>*,#content-call.active>*{break-inside:avoid}
+  #content-seq.active{column-count:1}
+  .nv-intro{column-span:all}
+  #content-screens .pair-e2e{column-span:all}
+}
+@media (max-height:500px){
+  #nv-tabs{gap:2px;padding-top:8px;padding-bottom:8px}
+  #nv-tabs button{height:64px}
+  #nv-head{padding-top:var(--sp-2);padding-bottom:var(--sp-2)}
+  #previewMeta{display:none}
+}
