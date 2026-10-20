@@ -107,8 +107,9 @@ jour** qu'elles montraient :
   champs, photos, sons, appelants enregistrés, enregistrer / supprimer /
   réordonner / renommer, ajout et édition d'étapes, « Téléphone au départ »,
   séquences et discussions enregistrées ;
-- **libre et sans limite** : Faire sonner, Envoyer, Appeler n°…, discussion
-  (GO, ↶, lecture auto), Séquence GO / ↶ / STOP / Recommencer, console DMX.
+- **libre et sans limite** : Faire sonner, Envoyer, ▶ des lignes enregistrées,
+  discussion (Ouvrir sur l'écran, Envoyer n°…, ↶, lecture auto), Séquence au
+  Plateau (GO, Revenir, Pause auto, Recommencer), console DMX.
 
 Les données de l'utilisateur ne sont **ni lues ni écrites** pendant l'aperçu :
 les clés de stockage des onglets sont masquées par une copie en mémoire (la

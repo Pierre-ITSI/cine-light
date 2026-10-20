@@ -68,7 +68,7 @@ const _LIC_LOCKS = {
     ex: ['telPlayTitle'],
     banner: 'licPvTel',
   },
-  seq: { dim: ['seqAddBtn', 'seqPhoneBtn', 'seqTab-saved', 'seqNewBtn'], ro: ['seqRows'], ex: [], banner: 'licPvSeq' },
+  seq: { dim: ['seqAddBtn', 'seqAddRow', 'seqPhoneBtn', 'seqSavedBtn', 'seqNewBtn', 'seqMoreBtn', 'seqSortBtn'], ro: ['seqRows'], ex: [], banner: 'licPvSeq' },
 };
 function _licLockUi(f, on) {
   const L = _LIC_LOCKS[f];

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ SÉQUENCE (télécommande) ══════════════════════════
 // Onglet « Séquence » : maquettes validées 28 (liste des étapes, GO / ↶ /
-// STOP) et 29 (éditer une étape). Une séquence enchaîne des ÉTATS ENREGISTRÉS
+// Pause auto, ex-« Stop ») et 29 (éditer une étape) ; phase 4 : modes Préparer / Plateau
+// (maquettes 4f à 4g2) et éditeur en quatre questions (4h, 4i). Une séquence enchaîne des ÉTATS ENREGISTRÉS
 // des autres onglets et des étapes du faux téléphone :
 //   Couleur (mémoire de couleur), Effet (mémoire d'effet), Média (pool, avec
 //   la fin de lecture), Appel / SMS / Notification (liste enregistrée de
@@ -16,7 +17,7 @@
 // « Téléphone au départ » (maquette 28b, 98-phone-params.js) : barre d'état
 // propre à la séquence (heure qui avance / figée / réelle, réseau, Wi-Fi,
 // batterie), enregistrée avec elle, affichée partout sur les écrans visés du
-// premier GO à « Recommencer » (STOP compris : rien ne s'éteint) ; elle prime
+// premier GO à « Recommencer » (Pause auto comprise : rien ne s'éteint) ; elle prime
 // sur la barre de l'onglet Média. Les étapes Batterie faible / Réseau /
 // Extinction la font évoluer ; ↶ rend les valeurs d'avant. Avec elle, un fond
 // d'écran facultatif (maquette 42) : écran verrouillé et pavé du code, pendant
@@ -44,7 +45,8 @@
 // GO lance toujours l'étape suivante, quel que soit son départ ; ↶ revient
 // d'une étape en la défaisant (notification retirée, appel raccroché,
 // téléphone reverrouillé, discussion fermée, couleur / effet / média d'avant) ;
-// STOP arrête les minuteries et l'écoute des gestes sans rien éteindre.
+// « Pause auto » (ex-STOP) arrête les minuteries et l'écoute des gestes sans rien éteindre ;
+// GO relance.
 // Le faux téléphone (écran verrouillé, notifications empilées, pavé du code,
 // image d'accueil) est tenu ICI, écran par écran, et renvoyé en entier
 // (phone:state) à chaque changement et à la resynchronisation d'un écran.
@@ -104,25 +106,34 @@ const _SEQ_TXT = {
   gestureShort: { touch: 'touche l\'écran', notif: 'touche la notif', hangup: 'refuse', answer: 'décroche', unlock: 'déverrouillé', chat: 'répond', home: 'touche l\'accueil' },
   gestureChip: { touch: 'touche l\'écran', notif: 'touche la notif', hangup: 'raccroche', answer: 'décroche', unlock: 'déverrouille', chat: 'envoie un message', home: 'touche l\'accueil' },
   gestureVerb: { touch: 'touche l\'écran', notif: 'touche la notif', hangup: 'refuse', answer: 'décroche', unlock: 'déverrouille', chat: 'répond', home: 'touche l\'accueil' },
-  legendGo: '● GO', legendAuto: '● automatique', legendActor: '● geste du comédien',
-  nowLabel: 'En cours : ',
-  nowSince: ' — depuis {n} s',
-  nowRinging: ' — sonne depuis {n} s',
-  nowInCall: ' — en ligne depuis {n} s',
-  next: 'Suivant : {n} · {nom} ({quand})',
+  noneNext: 'Plus d\'étape après celle-ci.',
+  skipped: 'Étape {n} sautée : {raison}.',
+  // Plateau (maquettes 4g, 4g2)
+  nowReady: 'Prêt', noSteps: 'Aucune étape', readyGo: 'GO lance l\'étape 1',
+  nowLabel: 'En cours · {n}', pausedTag: 'en pause auto', sinceFirst: '{t} depuis le 1er GO',
+  nowSince: 'Joué depuis {n}', nowRinging: 'Sonne depuis {n}', nowInCall: 'En ligne depuis {n}',
+  nextLabel: 'Ensuite · {n}', chipAfter: 'dans {n} s', chipElse: 'sinon dans {n} s',
   whenGo: 'au GO',
   whenAfter: 'après {n} s',
   whenGesture: 'si le comédien {geste}',
   whenGestureFallback: 'si le comédien {geste}, ou après {n} s',
-  ready: 'Prêt : GO lance l\'étape 1 · {nom}',
   ended: 'Séquence terminée',
-  stopped: 'Arrêtée — GO reprend.',
-  restart: '↺ Recommencer',
-  noneNext: 'Plus d\'étape après celle-ci.',
-  skipped: 'Étape {n} sautée : {raison}.',
+  // « STOP » ne coupait que les minuteries et l'écoute des gestes (rien n'est éteint) : « Pause auto »
+  stopped: 'En pause auto : GO relance.',
+  restart: 'Recommencer', restartHint: 'Appui long pour recommencer',
+  restartAskTitle: 'Recommencer la séquence ?', restartAskText: 'Le téléphone est remis à zéro, l\'appel et la discussion de la séquence sont fermés, le déroulé repart avant l\'étape 1.',
+  goSub: 'déclenche l\'étape {n}', goAria: 'GO, déclenche l\'étape {n}', goNone: 'plus d\'étape',
+  done1: '1 étape jouée', doneN: '{n} étapes jouées',
+  steps0: 'aucune étape', steps1: '1 étape', stepsN: '{n} étapes', stepsTitle: 'Étapes · {n}', noTarget: 'sans cible',
+  moveUp: 'Monter l\'étape {n}', moveDown: 'Descendre l\'étape {n}',
+  subLocked: 'verrouillé', subMsg1: '1 message', subMsgN: '{n} messages', subVideo: 'vidéo', subImage: 'image', subHome: 'puis écran d\'accueil', subApp: 'puis l\'app visée',
+  stateDone: 'jouée', stateCur: 'en cours', stateNext: 'prochaine (GO)', stateTodo: 'à venir',
+  detailKind: 'Type', detailItem: 'Élément', detailWhen: 'Départ', detailTarget: 'Cible', detailState: 'État',
+  detailNote: 'Lecture seule pendant le jeu : repassez en Préparer pour modifier cette étape.',
+  close: 'Fermer', cardSave: 'Enregistrer la séquence', cardRename: 'Renommer la séquence', cardSaved: 'Séquences enregistrées',
   // Éditeur d'étape (maquette 29)
   back: '← Séquence',
-  stepTitle: 'Étape {n}',
+  stepTitle: 'Étape {n} sur {total}',
   stepNew: 'Nouvelle étape',
   labelType: 'Type',
   labelStart: 'Démarre',
@@ -142,8 +153,23 @@ const _SEQ_TXT = {
   homeChange: 'Changer l\'image', homePick: 'Choisir l\'image', homeNote: 'toucher l\'image ouvre l\'étape suivante',
   homeNone: 'Aucune image : fond dégradé',
   homeBad: '⚠ Image illisible',
-  startGo: 'Au GO', startAfter: 'Après N s', startGesture: 'Geste du comédien',
-  afterLabel: 'Après', fallbackLabel: 'Sinon après', never: 'jamais', seconds: '{n} s',
+  startGo: 'Au GO', startAfter: 'Après un délai', startGesture: 'Geste du comédien',
+  afterLabel: 'Délai', afterLabelN: 'Délai après l\'étape {n}', fallbackLabel: 'Sinon après', never: 'jamais', seconds: '{n} s',
+  // Éditeur en quatre questions (maquette 4h)
+  q2Which: 'Lequel ?', q2Settings: 'Réglages', q3: 'Quand ?', q4: 'Sur quel écran ?', change: 'Changer',
+  targetHint: 'Changer : tous les écrans, un groupe, un écran', groupPrefix: 'Groupe ',
+  duplicate: 'Dupliquer', moveUpStep: 'Monter d\'un rang', moveDownStep: 'Descendre d\'un rang', menuDirty: 'Enregistrez l\'étape pour la dupliquer ou la déplacer.',
+  listFull: 'Liste pleine ({max} entrées).', unknownName: 'Inconnu',
+  newCall: 'Nouvel appel ici', newSms: 'Nouveau SMS ici', newNotif: 'Nouvelle notification ici',
+  nwTitleCall: 'Nouvel appel', nwTitleSms: 'Nouveau SMS', nwTitleNotif: 'Nouvelle notification', nwHint: 'Il rejoint la liste de l\'onglet Tel (n° {n}) et se sélectionne ici.',
+  nwNamePh: 'Nom affiché (ex : Maman)', nwLabelPh: 'Sous-titre (ex : mobile)', nwSenderPh: 'Expéditeur (ex : Maman)', nwMsgPh: 'Texte du message', nwTitlePh: 'Titre', nwBodyPh: 'Contenu',
+  nwListLabel: 'Nom dans la liste', nwListPh: 'Facultatif', nwCreate: 'Créer et choisir',
+  // Phrase de synthèse
+  sumGo: 'Au GO', sumAfter: '{n} s', sumAfterPrev: 'après {prev}', sumAfterStart: 'après le départ', sumGesture: 'Dès que le comédien', sumGestureOr: ', ou après {n} s',
+  sumAll: 'chaque écran', sumGroup: 'le groupe ', sumScreen: 'l\'écran ', sumNoItem: 'n\'a pas encore d\'élément choisi',
+  sumCall: 'reçoit un appel de', sumSms: 'reçoit un SMS de', sumNotif: 'reçoit la notification', sumMissed: 'affiche un appel manqué de', sumChat: 'ouvre la discussion',
+  sumColor: 'passe en', sumEffect: 'lance l\'effet', sumMedia: 'affiche', sumUnlockCode: 'se déverrouille (code {n} chiffres)', sumUnlockSwipe: 'se déverrouille par glissement',
+  sumSleep: 'se met en veille', sumBattery: 'affiche une batterie faible à', sumOff: 's\'éteint', sumNetLost: 'perd le réseau', sumNetBack: 'retrouve le réseau', sumLocked: ' sur l\'écran verrouillé', sumUnknown: 'Inconnu',
   endLoop: '🔁 Boucle', endPause: '⏯ 1× puis pause', endOff: '⏹ 1× puis off',
   none: {
     color: 'Aucune mémoire de couleur : enregistrez-en une dans Lumière › Couleur.',
@@ -157,7 +183,7 @@ const _SEQ_TXT = {
   refMissing: 'L\'élément de cette étape a été supprimé : choisissez-en un autre.',
   needRef: 'Choisissez l\'élément à jouer.',
   del: 'Supprimer', cancel: 'Annuler', save: 'Enregistrer',
-  confirmDel: 'Supprimer l\'étape {n} ?',
+  deletedStep: 'Étape {n} supprimée',
   leaveTitle: 'Abandonner les modifications ?', leaveNewTitle: 'Abandonner cette étape ?',
   leaveText: 'Les réglages de l\'étape n\'ont pas été enregistrés.',
   leaveOk: 'Abandonner', leaveCancel: 'Continuer',
@@ -530,7 +556,7 @@ function seqBack() {
     await _seqPushPhones();
   });
 }
-// STOP : minuteries et écoute des gestes arrêtées ; rien n'est éteint
+// Pause auto (ex-STOP) : minuteries et écoute des gestes arrêtées ; rien n'est éteint
 function seqStop() {
   _seqClearTimer();
   if (_seqRun.state === 'running') _seqRun.state = 'stopped';
@@ -962,57 +988,159 @@ function seqGcImages(dropped) {
   for (const sig of dropped) if (sig && !used.has(sig)) callAssetDelete(seqHomeKey(sig));
 }
 
-// ── Rendu de la liste (maquette 28) ──
-let _seqView = 'cur';
-function _seqSet(id, t) { const el = document.getElementById(id); if (el) el.textContent = t; }
+// ── Rendu : Préparer / Plateau (maquettes 4f à 4g2) ──
+// Préparer : carte de la séquence, liste des étapes (toucher = éditeur, glisser ou ↑ ↓ = ordre),
+// ajout. Plateau : EN COURS, ENSUITE, étapes jouées repliées, liste restante verrouillée (toucher =
+// fiche en lecture seule). Le mode n'est gardé qu'en mémoire (Préparer au démarrage).
+let _seqView = 'cur';          // 'cur' (Préparer / Plateau) | 'saved' (séquences enregistrées)
+let _seqMode = 'prep';         // 'prep' | 'play'
+let _seqSort = false;          // Préparer : boutons ↑ ↓ sur chaque étape
+let _seqDoneOpen = false;      // Plateau : étapes jouées dépliées
+function _seqSet(id, t) { const el = document.getElementById(id); if (el && el.textContent !== t) el.textContent = t; }
+const _seqCut = (t, n) => { const a = Array.from(String(t || '')); return a.length > n ? a.slice(0, n - 1).join('') + '…' : a.join(''); };
+// Sous-titre d'une étape (liste) : ce que l'élément référencé apporte de plus
+function seqStepSub(s) {
+  const it = seqRefItem(s);
+  if (!it) return '';
+  switch (s.kind) {
+    case 'call': case 'missed': return it.label || '';
+    case 'sms': return _seqCut(it.msg, 36) + (_seqSmsLock(it) ? (it.msg ? ' · ' : '') + _SEQ_TXT.subLocked : '');
+    case 'notif': return _seqCut(it.msg, 40);
+    case 'chat': return _seqTpl(it.msgs.length === 1 ? _SEQ_TXT.subMsg1 : _SEQ_TXT.subMsgN, { n: it.msgs.length });
+    case 'media': return it.kind === 'vid' ? _SEQ_TXT.subVideo : _SEQ_TXT.subImage;
+    case 'unlock': return s.opt.then === 'home' ? _SEQ_TXT.subHome : _SEQ_TXT.subApp;
+  }
+  return '';
+}
+// Ligne d'étape (Préparer, jouées, restantes) : numéro, icône, nom + sous-titre, départ ; pos : étape en cours
+function _seqRowEl(s, i, pos, opts) {
+  const row = document.createElement('div');
+  const missing = !seqRefItem(s);
+  row.className = 'sq-row' + (i < pos ? ' done' : '') + (i === pos ? ' cur' : '') + (i === pos + 1 && _seqRun.state !== 'ended' ? ' next' : '') + (missing ? ' missing' : '');
+  row.dataset.id = s.id;
+  row.onclick = opts.onclick;
+  const b = seqTrigBadge(s);
+  const num = document.createElement('span'); num.className = 'sq-num'; num.textContent = String(i + 1);
+  const ic = document.createElement('span'); ic.className = 'sq-ic'; ic.innerHTML = icon(i < pos && opts.doneIcon ? 'circle-check' : SEQ_ICONS[s.kind]);
+  const lb = document.createElement('span'); lb.className = 'sq-label';
+  const t = document.createElement('b'); t.textContent = seqStepLabel(s); lb.appendChild(t);
+  const sub = seqStepSub(s);
+  if (sub) { const sm = document.createElement('small'); sm.textContent = sub; lb.appendChild(sm); }
+  const bd = document.createElement('span'); bd.className = 'sq-badge ' + b.cls; bd.textContent = b.text;
+  row.append(num, ic, lb);
+  if (opts.sort) {
+    const mv = document.createElement('span'); mv.className = 'sq-mv';
+    const btn = (d, ico, label, off) => {
+      const x = document.createElement('button'); x.type = 'button'; x.innerHTML = icon(ico); x.disabled = off;
+      x.setAttribute('aria-label', _seqTpl(label, { n: i + 1 }));
+      x.onclick = (ev) => { ev.stopPropagation(); seqMoveStep(s.id, d); };
+      return x;
+    };
+    mv.append(btn(-1, 'arrow-up', _SEQ_TXT.moveUp, i === 0), btn(1, 'arrow-down', _SEQ_TXT.moveDown, i === _seq.steps.length - 1));
+    row.appendChild(mv);
+  }
+  row.appendChild(bd);
+  return row;
+}
+// Monter / descendre une étape d'un rang (↑ ↓ de « Trier », et menu ⋯ de l'éditeur)
+function seqMoveStep(id, d) {
+  if (licLocked('seq')) return false;
+  const i = _seq.steps.findIndex((x) => x.id === id), j = i + (d < 0 ? -1 : 1);
+  if (i < 0 || j < 0 || j >= _seq.steps.length) return false;
+  [_seq.steps[i], _seq.steps[j]] = [_seq.steps[j], _seq.steps[i]];
+  seqSave();
+  _seqArm();
+  renderSeq();
+  _seqQueue(() => _seqPushPhones());
+  return true;
+}
+function toggleSeqSort() { _seqSort = !_seqSort; renderSeq(); }
+
 function renderSeq() {
   if (mode !== 'remote') return;
   const rows = document.getElementById('seqRows');
   if (!rows) return;
-  const pos = seqPos();
+  const pos = seqPos(), n = _seq.steps.length;
+  const play = _seqMode === 'play';
+  // Préparer
   rows.textContent = '';
-  _seq.steps.forEach((s, i) => {
-    const row = document.createElement('div');
-    const missing = !seqRefItem(s);
-    row.className = 'sq-row' + (i < pos ? ' done' : '') + (i === pos ? ' cur' : '') + (i === pos + 1 && _seqRun.state !== 'ended' ? ' next' : '') + (missing ? ' missing' : '');
-    row.dataset.id = s.id;
-    row.onclick = () => openSeqStep(s.id);
-    const b = seqTrigBadge(s);
-    const num = document.createElement('span'); num.className = 'sq-num'; num.textContent = String(i + 1);
-    const ic = document.createElement('span'); ic.className = 'sq-ic'; ic.innerHTML = icon(SEQ_ICONS[s.kind]);
-    const lb = document.createElement('span'); lb.className = 'sq-label'; lb.textContent = seqStepLabel(s);
-    const bd = document.createElement('span'); bd.className = 'sq-badge ' + b.cls; bd.textContent = b.text;
-    row.append(num, ic, lb, bd);
-    rows.appendChild(row);
-    // Discussion en cours (maquette 40) : où en est le fil, sous son étape
-    if (i === pos && s.kind === 'chat' && (_seqRun.state === 'running' || _seqRun.state === 'ended')) {
-      const st = document.createElement('div'); st.className = 'sq-chat'; st.id = 'seqChatStatus';
-      rows.appendChild(st);
-    }
-  });
-  seqRenderChatStatus();
+  rows.classList.toggle('sq-sorting', _seqSort);
+  _seq.steps.forEach((s, i) => rows.appendChild(_seqRowEl(s, i, pos, { onclick: () => openSeqStep(s.id), sort: _seqSort })));
   const empty = document.getElementById('seqEmpty');
-  if (empty) empty.style.display = _seq.steps.length ? 'none' : '';
-  rows.style.display = _seq.steps.length ? '' : 'none';
+  if (empty) empty.style.display = n ? 'none' : '';
+  rows.parentElement.style.display = n ? '' : 'none';
   _seqSet('seqName', _seq.name || _SEQ_TXT.untitled);
+  _seqSet('seqCount', n === 0 ? _SEQ_TXT.steps0 : n === 1 ? _SEQ_TXT.steps1 : _seqTpl(_SEQ_TXT.stepsN, { n }));
   _seqSet('seqPhoneSum', phoneParamsSummary(seqPhoneCfg())); // 98-phone-params.js
   const main = seqMainTarget();
-  _seqSet('seqTarget', main ? _seqTpl(_SEQ_TXT.target, { cible: seqTargetName(main) }) : '');
-  const add = document.getElementById('seqAddBtn');
-  if (add) add.disabled = _seq.steps.length >= SEQ_STEPS_MAX;
-  _seqRenderNow();
-  const go = document.getElementById('seqGoBtn'), back = document.getElementById('seqBackBtn'), stop = document.getElementById('seqStopBtn');
-  if (go) go.disabled = !seqPending() || _seqRun.state === 'ended';
+  _seqSet('seqTarget', main ? _seqTpl(_SEQ_TXT.target, { cible: seqTargetName(main) }) : _SEQ_TXT.noTarget);
+  _seqSet('seqStepsTitle', _seqTpl(_SEQ_TXT.stepsTitle, { n }));
+  const sort = document.getElementById('seqSortBtn');
+  if (sort) { sort.style.display = n > 1 ? '' : 'none'; sort.setAttribute('aria-pressed', _seqSort ? 'true' : 'false'); sort.classList.toggle('on', _seqSort); }
+  const full = n >= SEQ_STEPS_MAX;
+  for (const id of ['seqAddBtn', 'seqAddRow']) { const el = document.getElementById(id); if (el) el.disabled = full; }
+  const playBtn = document.getElementById('seqPlayBtn');
+  if (playBtn) playBtn.disabled = !n;
+  // Plateau
+  _seqRenderPlay(pos);
+  // Mode, barre, vues
+  const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
+  const saved = _seqView === 'saved';
+  show('seqPrepView', !saved && !play);
+  show('seqPlayView', !saved && play);
+  show('seqSavedView', saved);
+  show('seqBarPrep', !play);
+  show('seqBarPlay', play);
+  document.querySelectorAll('#content-seq .sq-mode').forEach((el) => { el.style.display = saved ? 'none' : ''; });
+  for (const m of ['prep', 'play']) {
+    const b = document.getElementById('seqMode-' + m);
+    if (b) { b.classList.toggle('active', _seqMode === m); b.setAttribute('aria-selected', _seqMode === m ? 'true' : 'false'); }
+  }
+  // Barre du Plateau : GO, Revenir, Pause auto, Recommencer
+  const go = document.getElementById('seqGoBtn'), back = document.getElementById('seqBackBtn'), stop = document.getElementById('seqStopBtn'), reset = document.getElementById('seqRestartBtn');
+  const pending = seqPending();
+  if (go) {
+    go.disabled = !pending || _seqRun.state === 'ended';
+    _seqSet('seqGoSub', pending ? _seqTpl(_SEQ_TXT.goSub, { n: pos + 2, nom: _SEQ_TXT.kindLong[pending.kind] }) : _SEQ_TXT.goNone);
+    go.setAttribute('aria-label', pending ? _seqTpl(_SEQ_TXT.goAria, { n: pos + 2 }) : _SEQ_TXT.goNone);
+  }
   if (back) back.disabled = pos < 0;
   if (stop) stop.disabled = _seqRun.state !== 'running';
-  const w = document.getElementById('seqWarn');
-  if (w) { w.textContent = _seqRun.warn; w.style.display = _seqRun.warn ? '' : 'none'; }
+  if (reset) reset.disabled = pos < 0 && _seqRun.state === 'idle';
   if (typeof renderSavedSeqs === 'function') renderSavedSeqs();
+  navBarUpdate();
   // Durée affichée « depuis N s » : rafraîchie chaque seconde pendant le déroulé
   const live = pos >= 0 && (_seqRun.state === 'running' || _seqRun.state === 'ended');
   if (live && !_seqRun.tick) _seqRun.tick = setInterval(_seqRenderNow, 1000);
   if (!live && _seqRun.tick) { clearInterval(_seqRun.tick); _seqRun.tick = null; }
 }
+// Plateau : panneaux, étapes jouées, liste restante
+function _seqRenderPlay(pos) {
+  const n = _seq.steps.length;
+  _seqSet('seqPlayName', _seq.name || _SEQ_TXT.untitled);
+  _seqSet('seqPlayPos', (pos + 1) + ' / ' + n);
+  _seqRenderNow();
+  const done = document.getElementById('seqDoneRows'), doneBtn = document.getElementById('seqDoneBtn');
+  if (done && doneBtn) {
+    done.textContent = '';
+    const k = Math.max(0, pos);
+    doneBtn.style.display = k ? '' : 'none';
+    done.style.display = k && _seqDoneOpen ? '' : 'none';
+    doneBtn.setAttribute('aria-expanded', _seqDoneOpen ? 'true' : 'false');
+    _seqSet('seqDoneTxt', k === 1 ? _SEQ_TXT.done1 : _seqTpl(_SEQ_TXT.doneN, { n: k }));
+    _seq.steps.slice(0, k).forEach((s, i) => done.appendChild(_seqRowEl(s, i, pos, { onclick: () => openSeqDetail(s.id), doneIcon: true })));
+  }
+  const rest = document.getElementById('seqPlayRows');
+  if (rest) {
+    rest.textContent = '';
+    _seq.steps.forEach((s, i) => { if (i > pos + 1) rest.appendChild(_seqRowEl(s, i, pos, { onclick: () => openSeqDetail(s.id) })); });
+  }
+  const w = document.getElementById('seqWarn');
+  if (w) { w.textContent = _seqRun.warn; w.style.display = _seqRun.warn ? '' : 'none'; }
+  const ph = document.getElementById('seqPlayPhone');
+  if (ph) ph.innerHTML = '<b>' + escapeHtml(_SEQ_TXT.phoneRow) + '</b> · ' + escapeHtml(phoneParamsSummary(seqPhoneCfg()));
+}
+function toggleSeqDone() { _seqDoneOpen = !_seqDoneOpen; renderSeq(); }
 function seqRenderChatStatus() {
   const box = document.getElementById('seqChatStatus');
   if (!box) return;
@@ -1026,50 +1154,132 @@ function seqRenderChatStatus() {
   fill.style.width = info.pct + '%';
   bar.appendChild(fill);
 }
+const _seqMmss = (s) => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+// EN COURS et ENSUITE (Plateau) : durées rafraîchies chaque seconde
 function _seqRenderNow() {
-  const box = document.getElementById('seqNow');
-  if (!box) return;
-  box.textContent = '';
+  const box = document.getElementById('seqNow'), nx = document.getElementById('seqNext');
+  if (!box || !nx) return;
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+  box.textContent = ''; nx.textContent = '';
   const pos = seqPos(), cur = _seq.steps[pos], next = seqPending();
-  const line = (cls) => { const d = document.createElement('div'); if (cls) d.className = cls; box.appendChild(d); return d; };
-  if (!_seq.steps.length) { box.style.display = 'none'; return; }
-  box.style.display = '';
+  box.classList.toggle('idle', !cur);
+  if (!_seq.steps.length) {
+    const e = el('div', 'e'); e.append(el('span', '', _SEQ_TXT.nowReady));
+    box.append(e, el('h3', '', _SEQ_TXT.noSteps));
+    return;
+  }
   if (!cur) {
-    line().textContent = _seqTpl(_SEQ_TXT.ready, { nom: _SEQ_TXT.kindLong[_seq.steps[0].kind] });
+    // Avant le premier GO
+    const e = el('div', 'e'); e.append(el('span', '', _SEQ_TXT.nowReady), el('span', '', ''));
+    box.append(e, el('h3', '', _SEQ_TXT.readyGo));
   } else {
-    const l1 = line();
-    l1.append(_SEQ_TXT.nowLabel);
-    const b = document.createElement('b'); b.textContent = (pos + 1) + ' · ' + _SEQ_TXT.kindLong[cur.kind]; l1.appendChild(b);
-    const t0 = _seqRun.started.get(cur.id);
+    const e = el('div', 'e');
+    const t0 = _seqRun.started.get(cur.id), c0 = _seqRun.clockT0;
+    e.append(el('span', '', _seqTpl(_SEQ_TXT.nowLabel, { n: pos + 1 })),
+      el('span', '', _seqRun.state === 'stopped' ? _SEQ_TXT.pausedTag : c0 ? _seqTpl(_SEQ_TXT.sinceFirst, { t: _seqMmss(Math.max(0, Math.floor((Date.now() - c0) / 1000))) }) : ''));
+    box.append(e, el('h3', '', seqStepLabel(cur)));
+    const p = el('p');
     if (t0 && _seqRun.state !== 'stopped') {
-      const n = Math.max(0, Math.floor((Date.now() - t0) / 1000));
+      const s = Math.max(0, Math.floor((Date.now() - t0) / 1000));
       let tpl = _SEQ_TXT.nowSince;
       if (cur.kind === 'call') {
         const st = seqStepIds(cur).map((id) => scrState(id).call).find(Boolean);
         tpl = st && st.state === 'incall' ? _SEQ_TXT.nowInCall : st ? _SEQ_TXT.nowRinging : _SEQ_TXT.nowSince;
       }
-      l1.append(_seqTpl(tpl, { n }));
+      const [a, b] = tpl.split('{n}');
+      p.append(a, el('b', '', s + ' s'), b + ' · ' + seqTargetName(cur.target));
+    } else p.textContent = _seqRun.state === 'stopped' ? _SEQ_TXT.stopped : seqTargetName(cur.target);
+    box.appendChild(p);
+    // Discussion en cours : où en est le fil, sous l'étape (maquette 4g2)
+    if (cur.kind === 'chat' && (_seqRun.state === 'running' || _seqRun.state === 'ended' || _seqRun.state === 'stopped')) {
+      const st = el('div', 'sq-chat'); st.id = 'seqChatStatus';
+      box.appendChild(st);
+      seqRenderChatStatus();
     }
-    const l2 = line('sq-now-next');
-    if (_seqRun.state === 'stopped') l2.textContent = _SEQ_TXT.stopped;
-    else if (next) l2.textContent = _seqTpl(_SEQ_TXT.next, { n: pos + 2, nom: _SEQ_TXT.kindLong[next.kind], quand: _seqWhenText(next) });
-    else l2.textContent = _SEQ_TXT.ended;
   }
-  if (cur && _seqRun.state !== 'running') {
-    const r = document.createElement('button');
-    r.type = 'button'; r.className = 'sq-restart'; r.id = 'seqRestartBtn'; setIconText(r, _SEQ_TXT.restart);
-    r.onclick = seqRestart;
-    box.appendChild(r);
+  // ENSUITE : départ en puces + minuterie de secours
+  if (next) {
+    const k = pos + 2;
+    nx.append(el('div', 'e', _seqTpl(_SEQ_TXT.nextLabel, { n: k })), el('h4', '', seqStepLabel(next)));
+    const chips = el('div', 'chips'), tr = next.trig;
+    const chip = (cls, text) => chips.appendChild(el('span', 'sq-chip ' + cls, text));
+    if (tr.k === 'after') chip('auto', _seqTpl(_SEQ_TXT.chipAfter, { n: tr.s }));
+    else if (tr.k === 'gesture') {
+      chip('actor', _seqTpl(_SEQ_TXT.whenGesture, { geste: _SEQ_TXT.gestureVerb[tr.g] }));
+      if (tr.t) chip('auto', _seqTpl(_SEQ_TXT.chipElse, { n: tr.t }));
+    } else chip('go', _SEQ_TXT.whenGo);
+    nx.appendChild(chips);
+    // Minuterie : avance de « Après N s » ou du délai de secours, depuis le départ de l'étape en cours
+    const sec = tr.k === 'after' ? tr.s : tr.k === 'gesture' ? tr.t : 0;
+    const t0 = cur && _seqRun.started.get(cur.id);
+    if (sec > 0 && t0 && _seqRun.state === 'running' && !_seqRun.noAuto) {
+      const bar = el('div', 'nb-prog'), fill = document.createElement('i');
+      fill.style.width = Math.min(100, (Date.now() - t0) / (sec * 10)) + '%';
+      bar.appendChild(fill); nx.appendChild(bar);
+    }
+  } else if (cur) {
+    nx.append(el('div', 'e', _SEQ_TXT.ended));
   }
 }
-function setSeqView(v) {
-  _seqView = v === 'saved' ? 'saved' : 'cur';
-  const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
-  show('seqCurView', _seqView === 'cur');
-  show('seqSavedView', _seqView === 'saved');
-  for (const k of ['cur', 'saved']) { const b = document.getElementById('seqTab-' + k); if (b) b.classList.toggle('active', _seqView === k); }
+// Mode de la vue Séquence : Préparer (liste, éditeur) ou Plateau (jeu : GO, ↶, Pause auto, Recommencer)
+function setSeqMode(m) {
+  _seqMode = m === 'play' ? 'play' : 'prep';
+  if (_seqView === 'saved') _seqView = 'cur';
   renderSeq();
 }
+// Pastille de liaison : elle rejoint la barre de mode au Plateau (l'en-tête perd sa ligne d'aperçu)
+function seqPlaceLinkPill(plateau) {
+  const pill = document.getElementById('linkPill');
+  if (!pill) return;
+  const slot = document.getElementById('seqPillSlot'), gear = document.getElementById('settingsBtn');
+  if (plateau && slot && pill.parentElement !== slot) slot.appendChild(pill);
+  else if (!plateau && gear && pill.parentElement === slot) gear.parentElement.insertBefore(pill, gear);
+}
+// Séquences enregistrées : liste plein contenu (charger, ⋯), puis retour à Préparer
+function openSeqSaved() { _seqView = 'saved'; renderSeq(); }
+function closeSeqSaved() { _seqView = 'cur'; renderSeq(); }
+// Ancienne API : 'cur' (séquence en cours : Préparer ou Plateau) | 'saved'
+function setSeqView(v) { if (v === 'saved') openSeqSaved(); else closeSeqSaved(); }
+// ⋯ de la carte de séquence : enregistrer, renommer l'entrée chargée, séquences enregistrées
+function openSeqMenu() { _sheet = { kind: 'seqCard' }; renderSheet(); }
+// Fiche d'une étape au Plateau : lecture seule (jamais l'éditeur)
+function openSeqDetail(id) {
+  if (!_seq.steps.some((x) => x.id === id)) return;
+  _sheet = { kind: 'seqDetail', id }; renderSheet();
+}
+
+// ── Recommencer : appui long (600 ms) ; un simple toucher montre l'indication ──
+// Au clavier ou à l'assistance (clic sans pointeur) : confirmation par la boîte de l'app
+const SEQ_RESTART_HOLD_MS = 600;
+(function initSeqRestartHold() {
+  const b = document.getElementById('seqRestartBtn');
+  if (!b) return;
+  let timer = null, fired = false, hintTimer = null;
+  const hint = (t) => {
+    const h = document.getElementById('seqRestartHint');
+    if (!h) return;
+    h.textContent = t;
+    if (hintTimer) clearTimeout(hintTimer);
+    if (t) hintTimer = setTimeout(() => { h.textContent = ''; }, 3000);
+  };
+  const stop = () => { if (timer) { clearTimeout(timer); timer = null; } b.classList.remove('holding'); };
+  b.style.setProperty('--hold', SEQ_RESTART_HOLD_MS + 'ms');
+  b.addEventListener('pointerdown', (e) => {
+    if (b.disabled || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    fired = false;
+    b.classList.add('holding');
+    timer = setTimeout(() => { timer = null; fired = true; b.classList.remove('holding'); hint(''); if (screenVibrate) screenVibrate([30]); seqRestart(); }, SEQ_RESTART_HOLD_MS);
+  });
+  // Après l'appui (le clic éventuel suit aussitôt) : l'état « recommencé par appui long » est oublié
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, () => { stop(); setTimeout(() => { fired = false; }, 60); });
+  b.addEventListener('contextmenu', (e) => e.preventDefault());
+  b.addEventListener('click', (e) => {
+    if (b.disabled) return;
+    if (fired) { fired = false; return; } // l'appui long vient de recommencer
+    if (e.detail === 0) openAppConfirm({ title: _SEQ_TXT.restartAskTitle, text: _SEQ_TXT.restartAskText, ok: _SEQ_TXT.restart, cancel: _SEQ_TXT.leaveCancel }, seqRestart);
+    else hint(_SEQ_TXT.restartHint);
+  });
+})();
 
 // ── Éditeur d'étape (maquette 29) ──
 let _seqEdit = null; // { id (null : nouvelle), step (brouillon), err }
@@ -1082,7 +1292,7 @@ function openSeqStep(id) {
   const last = _seq.steps[_seq.steps.length - 1];
   const draft = s ? JSON.parse(JSON.stringify(s)) : { id: _seqNewId(), kind: 'color', ref: null, target: last ? Object.assign({}, last.target) : _seqSanTarget(scrTarget()), trig: { k: 'go' }, opt: {} };
   if (s) Object.assign(draft, seqSanitizeStep(draft) || {}); // réglages complétés (anciennes étapes)
-  _seqEdit = { id: s ? s.id : null, step: draft, err: '' };
+  _seqEdit = { id: s ? s.id : null, step: draft, err: '', kindsOpen: !s };
   if (!s) _seqEditDefaults(draft);
   const v = document.getElementById('seq-step-view');
   if (v) { v.style.display = 'flex'; v.scrollTop = 0; }
@@ -1118,15 +1328,66 @@ function _seqEditDefaults(s) {
     if (s.kind === 'chat') s.opt = { auto: false, full: false };
   }
 }
-// Éléments proposés pour un type : [{ id, label, sw (couleur d'aperçu) }]
+// Phrase de synthèse de l'étape (en tête de l'éditeur) : « 6 s après le SMS, l'écran « Téléphone de Julie »
+// reçoit un appel de « Maman ». » Renvoie des morceaux { t, b } (b : en gras) ; seqStepSummaryText les met bout à bout.
+const _SEQ_PREV = { color: 'la couleur', effect: 'l\'effet', media: 'le média', call: 'l\'appel', sms: 'le SMS', notif: 'la notification', missed: 'l\'appel manqué', unlock: 'le déverrouillage', chat: 'la discussion', sleep: 'la veille', battery: 'la batterie faible', off: 'l\'extinction', net: 'le réseau' };
+function seqStepSummary(s, idx) {
+  const T = _SEQ_TXT, parts = [];
+  const add = (t, b) => parts.push({ t, b: !!b });
+  const prev = idx > 0 ? _seq.steps[idx - 1] : null;
+  const tr = s.trig;
+  // Quand
+  if (tr.k === 'after') {
+    add(_seqTpl(T.sumAfter, { n: tr.s }), true);
+    add(' ' + (prev ? T.sumAfterPrev.replace('{prev}', _SEQ_PREV[prev.kind]) : T.sumAfterStart));
+  } else if (tr.k === 'gesture') {
+    add(T.sumGesture, false);
+    add(' ' + T.gestureVerb[tr.g], true);
+    if (tr.t) add(_seqTpl(T.sumGestureOr, { n: tr.t }));
+  } else add(T.sumGo, true);
+  add(', ');
+  // Sur quel écran
+  const t = s.target;
+  add(t.k === 'group' ? T.sumGroup : t.k === 'screen' ? T.sumScreen : T.sumAll);
+  if (t.k !== 'all') add('« ' + seqTargetName(t) + ' »', true);
+  add(' ');
+  // Quoi
+  const it = seqRefItem(s);
+  const q = (v) => '« ' + v + ' »';
+  if (!it) add(T.sumNoItem);
+  else switch (s.kind) {
+    case 'call': add(T.sumCall + ' '); add(q(it.name || T.sumUnknown), true); break;
+    case 'sms': add(T.sumSms + ' '); add(q(it.name || T.sumUnknown), true); if (_seqSmsLock(it)) add(T.sumLocked); break;
+    case 'notif': add(T.sumNotif + ' '); add(q(it.name || it.appName || T.sumUnknown), true); if (_seqNotifLock(it)) add(T.sumLocked); break;
+    case 'missed': add(T.sumMissed + ' '); add(q(it.name || T.sumUnknown), true); break;
+    case 'chat': add(T.sumChat + ' '); add(q(it.name || it.contact || T.sumUnknown), true); break;
+    case 'color': add(T.sumColor + ' '); add(_seqColorSpecText(it.spec) || it.name, true); break;
+    case 'effect': add(T.sumEffect + ' '); add(q(it.name), true); break;
+    case 'media': add(T.sumMedia + ' '); add(q(it.name), true); break;
+    case 'unlock': add(it.code ? _seqTpl(T.sumUnlockCode, { n: it.code }) : T.sumUnlockSwipe); break;
+    case 'sleep': add(T.sumSleep); break;
+    case 'battery': add(T.sumBattery + ' '); add(_seqTpl(T.percent, { n: it.level }), true); break;
+    case 'off': add(T.sumOff); break;
+    case 'net': add(it.lost ? T.sumNetLost : T.sumNetBack); break;
+  }
+  parts[parts.length - 1].t = parts[parts.length - 1].t.replace(/\s+$/, '') + '.';
+  return parts;
+}
+function seqStepSummaryText(s, idx) { return seqStepSummary(s, idx).map((p) => p.t).join(''); }
+function _seqSummaryHtml(s, idx) {
+  const parts = seqStepSummary(s, idx);
+  return '« ' + parts.map((p) => (p.b ? '<b>' + escapeHtml(p.t) + '</b>' : escapeHtml(p.t))).join('') + ' »';
+}
+
+// Éléments proposés pour un type : [{ id, label, sub, sw (couleur d'aperçu) }]
 function _seqRefList(kind) {
   switch (kind) {
     case 'color': return colorMemories.map((m) => ({ id: m.id, label: m.name, sw: memorySwatch(m.spec) }));
     case 'effect': return fxMemories.filter((m) => EFFECT_CONFIG[m.effect]).map((m) => ({ id: m.id, label: m.name }));
-    case 'media': return _mediaPool.map((m) => ({ id: m.id, label: (m.kind === 'vid' ? '🎬 ' : '🖼 ') + m.name }));
+    case 'media': return _mediaPool.map((m) => ({ id: m.id, label: m.name, sub: m.kind === 'vid' ? _SEQ_TXT.subVideo : _SEQ_TXT.subImage }));
     case 'call': case 'missed': case 'sms': case 'notif':
-      return callList[kind === 'missed' ? 'call' : kind].map((e, i) => ({ id: e.id, label: (i + 1) + ' · ' + callEntryName(e) })); // nom de l'enregistrement (maquette 43)
-    case 'chat': return chatSaved.map((e) => ({ id: e.id, label: e.name }));
+      return callList[kind === 'missed' ? 'call' : kind].map((e) => ({ id: e.id, label: callEntryName(e), sub: _clMeta(e) })); // nom de l'enregistrement (maquette 43)
+    case 'chat': return chatSaved.map((e) => ({ id: e.id, label: e.name, sub: _tplChat(_CHSV_TXT.meta, { contact: e.contact || 'Contact', comedien: e.actor || 'Comédien', n: e.msgs.length === 1 ? _CHSV_TXT.msgs1 : _tplChat(_CHSV_TXT.msgsN, { n: e.msgs.length }), style: _chsvStyleName(e.style) }) }));
   }
   return [];
 }
@@ -1134,83 +1395,99 @@ const _seqRefLabels = { color: 'labelColor', effect: 'labelEffect', media: 'labe
 function _seqOpt(on, fn, label, extra, iconName) {
   return '<button type="button" class="ss-opt' + (on ? ' on' : '') + (extra || '') + '" onclick="' + fn + '">' + (iconName ? icon(iconName, 'ic-sm') : '') + iconizeText(label) + '</button>';
 }
+// Élément de la liste « Lequel ? » : nom, puis ses réglages en petit
+function _seqRefOpt(on, fn, r) {
+  return '<button type="button" class="ss-opt' + (on ? ' on' : '') + '" aria-pressed="' + (on ? 'true' : 'false') + '"' + (r.sw ? ' style="--sw:' + r.sw + '"' : '') + ' onclick="' + fn + '">'
+    + '<span>' + escapeHtml(r.label) + '</span>' + (r.sub ? '<span class="ss-sub2">' + escapeHtml(r.sub) + '</span>' : '') + '</button>';
+}
 const _seqArg = (v) => '\'' + String(v).replace(/[^A-Za-z0-9_-]/g, '') + '\'';
+const _SEQ_NEW_KINDS = { call: 'newCall', missed: 'newCall', sms: 'newSms', notif: 'newNotif' };
 function renderSeqStep() {
   const e = _seqEdit;
   const v = document.getElementById('seq-step-view');
   if (!e || !v) return;
-  const s = e.step;
+  const s = e.step, T = _SEQ_TXT;
   const idx = e.id ? _seq.steps.findIndex((x) => x.id === e.id) : -1;
-  _seqSet('ssTitle', idx >= 0 ? _seqTpl(_SEQ_TXT.stepTitle, { n: idx + 1 }) : _SEQ_TXT.stepNew);
-  // Type (maquette 29b : 3, 3, 4, puis les étapes du téléphone)
-  document.getElementById('ssKinds').innerHTML = SEQ_KIND_ROWS.map((r) => '<div class="ss-row">'
-    + r.map((k) => _seqOpt(s.kind === k, 'seqEditKind(' + _seqArg(k) + ')', _SEQ_TXT.kind[k], '', SEQ_ICONS[k])).join('') + '</div>').join('');
-  // Élément enregistré, ou réglages du déverrouillage
+  _seqSet('ssTitle', idx >= 0 ? _seqTpl(T.stepTitle, { n: idx + 1, total: _seq.steps.length }) : T.stepNew);
+  // Phrase de synthèse (tient à jour tout ce que les quatre questions décident)
+  document.getElementById('ssSummary').innerHTML = _seqSummaryHtml(s, idx >= 0 ? idx : _seq.steps.length);
+  // 1. Quoi ? : le type, « Changer » ouvre la grille des 13 types
+  const kb = document.getElementById('ssKindBtn');
+  kb.innerHTML = icon(SEQ_ICONS[s.kind], 'ic-lead') + '<span class="ss-cur-main"><b>' + escapeHtml(T.kindLong[s.kind]) + '</b></span><span class="ss-chg">' + escapeHtml(T.change) + '</span>';
+  kb.setAttribute('aria-expanded', e.kindsOpen ? 'true' : 'false');
+  const kinds = document.getElementById('ssKinds');
+  kinds.style.display = e.kindsOpen ? '' : 'none';
+  kinds.innerHTML = SEQ_KIND_ROWS.map((r) => '<div class="ss-row">'
+    + r.map((k) => _seqOpt(s.kind === k, 'seqEditKind(' + _seqArg(k) + ')', T.kind[k], '', SEQ_ICONS[k])).join('') + '</div>').join('');
+  // 2. Lequel ? : éléments enregistrés (+ « Nouvel appel ici »), ou les réglages de l'étape
   let h = '';
+  const optKind = s.kind === 'sleep' || s.kind === 'battery' || s.kind === 'off' || s.kind === 'net' || s.kind === 'unlock';
+  document.getElementById('ssQ2label').textContent = optKind ? T.q2Settings : T.q2Which;
   if (s.kind === 'sleep' || s.kind === 'battery' || s.kind === 'off' || s.kind === 'net') {
     h += _seqPhoneStepCard(s);
   } else if (s.kind === 'unlock') {
     const o = s.opt;
-    h += '<span class="ss-label">' + escapeHtml(_SEQ_TXT.labelUnlock) + '</span><div class="ss-row">'
-      + _seqOpt(o.code === 4, 'seqEditCode(4)', _SEQ_TXT.code4) + _seqOpt(o.code === 6, 'seqEditCode(6)', _SEQ_TXT.code6) + _seqOpt(o.code === 0, 'seqEditCode(0)', _SEQ_TXT.swipe) + '</div>'
-      + '<span class="ss-label ss-sub">' + escapeHtml(_SEQ_TXT.labelThen) + '</span><div class="ss-row">'
-      + _seqOpt(o.then === 'app', 'seqEditThen(\'app\')', _SEQ_TXT.thenApp) + _seqOpt(o.then === 'home', 'seqEditThen(\'home\')', _SEQ_TXT.thenHome) + '</div>';
+    h += '<span class="ss-label">' + escapeHtml(T.labelUnlock) + '</span><div class="ss-row">'
+      + _seqOpt(o.code === 4, 'seqEditCode(4)', T.code4) + _seqOpt(o.code === 6, 'seqEditCode(6)', T.code6) + _seqOpt(o.code === 0, 'seqEditCode(0)', T.swipe) + '</div>'
+      + '<span class="ss-label ss-sub">' + escapeHtml(T.labelThen) + '</span><div class="ss-row">'
+      + _seqOpt(o.then === 'app', 'seqEditThen(\'app\')', T.thenApp) + _seqOpt(o.then === 'home', 'seqEditThen(\'home\')', T.thenHome) + '</div>';
     if (o.then === 'home') {
-      h += '<div class="ss-home"><button type="button" class="ss-home-thumb" id="ssHomeThumb" aria-label="' + escapeHtml(o.img ? _SEQ_TXT.homeChange : _SEQ_TXT.homePick) + '" onclick="document.getElementById(\'seqHomeInput\').click()"></button>'
-        + '<span class="ss-home-txt">' + escapeHtml(o.img ? (o.imgName || 'image') : _SEQ_TXT.homeNone) + '<br>'
-        + '<button type="button" class="ss-link" onclick="document.getElementById(\'seqHomeInput\').click()">' + escapeHtml(o.img ? _SEQ_TXT.homeChange : _SEQ_TXT.homePick) + '</button> · ' + escapeHtml(_SEQ_TXT.homeNote) + '</span></div>';
+      h += '<div class="ss-home"><button type="button" class="ss-home-thumb" id="ssHomeThumb" aria-label="' + escapeHtml(o.img ? T.homeChange : T.homePick) + '" onclick="document.getElementById(\'seqHomeInput\').click()"></button>'
+        + '<span class="ss-home-txt">' + escapeHtml(o.img ? (o.imgName || 'image') : T.homeNone) + '<br>'
+        + '<button type="button" class="ss-link" onclick="document.getElementById(\'seqHomeInput\').click()">' + escapeHtml(o.img ? T.homeChange : T.homePick) + '</button> · ' + escapeHtml(T.homeNote) + '</span></div>';
     }
   } else {
     const list = _seqRefList(s.kind);
     const sel = s.kind === 'media' ? (_seqMediaItem(s.ref) || {}).id : s.ref;
-    h += '<span class="ss-label">' + escapeHtml(_SEQ_TXT[_seqRefLabels[s.kind]]) + '</span>';
-    if (!list.length) h += '<div class="ss-note">' + escapeHtml(_SEQ_TXT.none[s.kind === 'missed' ? 'call' : s.kind]) + '</div>';
+    if (!list.length) h += '<div class="ss-note">' + escapeHtml(T.none[s.kind === 'missed' ? 'call' : s.kind]) + '</div>';
     else {
-      h += '<div class="ss-grid">' + list.map((r) => _seqOpt(r.id === sel, 'seqEditRef(' + _seqArg(r.id) + ')',
-        r.label, r.sw ? '" style="--sw:' + r.sw : '')).join('') + '</div>';
-      if (s.ref && !seqRefItem(s)) h += '<div class="ss-note ss-warn">' + escapeHtml(_SEQ_TXT.refMissing) + '</div>';
+      h += '<div class="ss-grid" id="ssRefs">' + list.map((r) => _seqRefOpt(r.id === sel, 'seqEditRef(' + _seqArg(r.id) + ')', r)).join('');
+      // « + Nouvel appel ici » : création sur place, sans quitter l'éditeur
+      if (_SEQ_NEW_KINDS[s.kind] && !licLocked('tel')) h += '<button type="button" class="ss-opt ss-new" id="ssNewHere" onclick="seqCreateInline()">' + icon('plus', 'ic-sm') + escapeHtml(T[_SEQ_NEW_KINDS[s.kind]]) + '</button>';
+      h += '</div>';
+      if (s.ref && !seqRefItem(s)) h += '<div class="ss-note ss-warn">' + escapeHtml(T.refMissing) + '</div>';
     }
+    if (!list.length && _SEQ_NEW_KINDS[s.kind] && !licLocked('tel')) h += '<div class="ss-grid"><button type="button" class="ss-opt ss-new" id="ssNewHere" onclick="seqCreateInline()">' + icon('plus', 'ic-sm') + escapeHtml(T[_SEQ_NEW_KINDS[s.kind]]) + '</button></div>';
     if (s.kind === 'media') {
       const it = _seqMediaItem(s.ref);
       if (it && it.kind === 'vid') {
-        h += '<span class="ss-label ss-sub">' + escapeHtml(_SEQ_TXT.labelEnd) + '</span><div class="ss-row">'
-          + _seqOpt(s.opt.end === 'loop', 'seqEditEnd(\'loop\')', _SEQ_TXT.endLoop) + _seqOpt(s.opt.end === 'pause', 'seqEditEnd(\'pause\')', _SEQ_TXT.endPause)
-          + _seqOpt(s.opt.end === 'off', 'seqEditEnd(\'off\')', _SEQ_TXT.endOff) + '</div>';
+        h += '<span class="ss-label ss-sub">' + escapeHtml(T.labelEnd) + '</span><div class="ss-row">'
+          + _seqOpt(s.opt.end === 'loop', 'seqEditEnd(\'loop\')', T.endLoop) + _seqOpt(s.opt.end === 'pause', 'seqEditEnd(\'pause\')', T.endPause)
+          + _seqOpt(s.opt.end === 'off', 'seqEditEnd(\'off\')', T.endOff) + '</div>';
       }
     }
     // Discussion : lecture manuelle, auto (le comédien tape) ou tout automatique (maquette 41)
     if (s.kind === 'chat') {
       const o = s.opt, it = seqRefItem(s);
-      h += '<span class="ss-label ss-sub">' + escapeHtml(_SEQ_TXT.labelPlay) + '</span><div class="ss-row ss-play">'
-        + _seqOpt(!o.auto, 'seqEditPlay(\'manual\')', _SEQ_TXT.playManual) + _seqOpt(o.auto && !o.full, 'seqEditPlay(\'actor\')', _SEQ_TXT.playActor)
-        + _seqOpt(!!o.full, 'seqEditPlay(\'full\')', _SEQ_TXT.playFull) + '</div>'
-        + '<div class="ss-note ss-play-note">' + escapeHtml(_seqTpl(_SEQ_TXT.playNote, { comedien: (it && it.actor) || _SEQ_TXT.actorDefault })) + '</div>';
+      h += '<span class="ss-label ss-sub">' + escapeHtml(T.labelPlay) + '</span><div class="ss-row ss-play">'
+        + _seqOpt(!o.auto, 'seqEditPlay(\'manual\')', T.playManual) + _seqOpt(o.auto && !o.full, 'seqEditPlay(\'actor\')', T.playActor)
+        + _seqOpt(!!o.full, 'seqEditPlay(\'full\')', T.playFull) + '</div>'
+        + '<div class="ss-note ss-play-note">' + escapeHtml(_seqTpl(T.playNote, { comedien: (it && it.actor) || T.actorDefault })) + '</div>';
     }
   }
   document.getElementById('ssRefCard').innerHTML = h;
   if (s.kind === 'unlock' && s.opt.then === 'home') _seqPaintHomeThumb(s.opt.img);
-  // Démarre : au GO, après N s, geste du comédien (+ délai de secours)
-  const tr = s.trig;
-  let t = '<span class="ss-label">' + escapeHtml(_SEQ_TXT.labelStart) + '</span><div class="ss-row">'
-    + _seqOpt(tr.k === 'go', 'seqEditTrig(\'go\')', _SEQ_TXT.startGo) + _seqOpt(tr.k === 'after', 'seqEditTrig(\'after\')', _SEQ_TXT.startAfter)
-    + _seqOpt(tr.k === 'gesture', 'seqEditTrig(\'gesture\')', _SEQ_TXT.startGesture) + '</div>';
-  if (tr.k === 'after') t += _seqStepper(_SEQ_TXT.afterLabel, tr.s, 'seqEditDelay', false);
+  // 3. Quand ? : au GO, après un délai, geste du comédien (+ délai de secours)
+  const tr = s.trig, nPrev = idx >= 0 ? idx : _seq.steps.length;
+  let t = '<div class="ss-row ss-when" role="radiogroup" aria-label="' + escapeHtml(T.q3) + '">'
+    + _seqOpt(tr.k === 'go', 'seqEditTrig(\'go\')', T.startGo) + _seqOpt(tr.k === 'after', 'seqEditTrig(\'after\')', T.startAfter)
+    + _seqOpt(tr.k === 'gesture', 'seqEditTrig(\'gesture\')', T.startGesture) + '</div>';
+  if (tr.k === 'after') t += _seqStepper(nPrev > 0 ? _seqTpl(T.afterLabelN, { n: nPrev }) : T.afterLabel, tr.s, 'seqEditDelay', false);
   if (tr.k === 'gesture') {
-    t += '<div class="ss-grid">' + SEQ_GESTURES.map((g) => _seqOpt(tr.g === g, 'seqEditGesture(' + _seqArg(g) + ')', _SEQ_TXT.gestureChip[g])).join('') + '</div>';
-    t += _seqStepper(_SEQ_TXT.fallbackLabel, tr.t, 'seqEditDelay', true);
+    t += '<div class="ss-grid" id="ssGestures">' + SEQ_GESTURES.map((g) => _seqOpt(tr.g === g, 'seqEditGesture(' + _seqArg(g) + ')', T.gestureChip[g])).join('') + '</div>';
+    t += _seqStepper(T.fallbackLabel, tr.t, 'seqEditDelay', true);
   }
-  // Cible : tous, chaque groupe, chaque écran
-  const tg = s.target;
-  const opts = [{ t: { k: 'all' }, label: _SEQ_TXT.all }].concat(_scrReg.groups.map((g) => ({ t: { k: 'group', id: g.id }, label: g.name })), scrList().map((id) => ({ t: { k: 'screen', id }, label: scrName(id) })));
-  if (!opts.some((o) => _seqSameTarget(o.t, tg))) opts.push({ t: tg, label: seqTargetName(tg) });
-  t += '<span class="ss-label ss-sub">' + escapeHtml(_SEQ_TXT.labelTarget) + '</span><div class="ss-grid" id="ssTargets">'
-    + opts.map((o) => _seqOpt(_seqSameTarget(o.t, tg), 'seqEditTarget(' + _seqArg(o.t.k) + (o.t.id ? ',' + _seqArg(o.t.id) : '') + ')', o.label)).join('') + '</div>';
   document.getElementById('ssTrigCard').innerHTML = t;
+  // 4. Sur quel écran ? : une rangée, la feuille liste Tous / groupes / écrans
+  document.getElementById('ssTargetBtn').innerHTML = '<span class="ss-cur-main"><b>' + escapeHtml(seqTargetName(s.target)) + '</b><small>' + escapeHtml(T.targetHint) + '</small></span>' + icon('chevron-right', 'tl-tr');
   const err = document.getElementById('ssErr');
   if (err) { setIconText(err, e.err); err.style.display = e.err ? '' : 'none'; }
-  const del = document.getElementById('ssDel');
-  if (del) { del.textContent = e.id ? _SEQ_TXT.del : _SEQ_TXT.cancel; del.classList.toggle('ss-cancel', !e.id); }
+  // Pied : Annuler · Enregistrer l'étape · ⋯ (étape existante : supprimer, dupliquer, monter, descendre)
+  const more = document.getElementById('ssMore');
+  if (more) more.style.display = e.id ? '' : 'none';
 }
+function seqToggleKinds() { const e = _seqEdit; if (e) { e.kindsOpen = !e.kindsOpen; renderSeqStep(); } }
+
 function _seqStepper(label, n, fn, zeroNever) {
   const val = zeroNever && !n ? _SEQ_TXT.never : _seqTpl(_SEQ_TXT.seconds, { n });
   return '<div class="ss-stepper"><span>' + escapeHtml(label) + '</span>'
@@ -1276,7 +1553,7 @@ function seqEditKind(k) {
   const e = _seqEdit;
   if (!e || !SEQ_KINDS.includes(k) || e.step.kind === k) return;
   const old = e.step.kind === 'unlock' ? e.step.opt.img : null;
-  e.step.kind = k; e.err = '';
+  e.step.kind = k; e.err = ''; e.kindsOpen = false;
   _seqEditDefaults(e.step);
   if (old) seqGcImages([old]);
   renderSeqStep();
@@ -1380,17 +1657,31 @@ function seqStepDelete() {
   if (!e.id) { seqStepLeave(); return; } // nouvelle étape : ANNULER
   const i = _seq.steps.findIndex((x) => x.id === e.id);
   if (i < 0) { closeSeqStep(); return; }
-  if (!confirm(_seqTpl(_SEQ_TXT.confirmDel, { n: i + 1 }))) return;
+  closeSeqStep(); // avant le retrait : l'image d'accueil de l'étape reste gardée tant que l'annulation est possible
   const s = _seq.steps[i];
+  const prevCur = _seqRun.curId, undo = _seqRun.undo.get(s.id), started = _seqRun.started.get(s.id);
   // Étape en cours supprimée : le déroulé se place sur la précédente
   if (_seqRun.curId === s.id) _seqRun.curId = i > 0 ? _seq.steps[i - 1].id : null;
   _seq.steps.splice(i, 1);
   _seqRun.undo.delete(s.id);
   seqSave();
-  closeSeqStep();
-  if (s.kind === 'unlock' && s.opt.img) seqGcImages([s.opt.img]);
   renderSeq();
   _seqQueue(() => _seqPushPhones());
+  undoSnack({
+    text: _seqTpl(_SEQ_TXT.deletedStep, { n: i + 1 }),
+    undo: () => {
+      if (_seq.steps.length >= SEQ_STEPS_MAX || _seq.steps.some((x) => x.id === s.id)) return;
+      _seq.steps.splice(Math.min(i, _seq.steps.length), 0, s);
+      if (prevCur === s.id) _seqRun.curId = s.id;
+      if (undo) _seqRun.undo.set(s.id, undo);
+      if (started) _seqRun.started.set(s.id, started);
+      seqSave();
+      _seqArm();
+      renderSeq();
+      _seqQueue(() => _seqPushPhones());
+    },
+    commit: () => { if (s.kind === 'unlock' && s.opt.img) seqGcImages([s.opt.img]); },
+  });
 }
 
 // ── Réordonnancement : appui maintenu sur une ligne puis glisser (comme la liste des appels) ──
@@ -1402,7 +1693,7 @@ let _seqDrag = null, _seqSuppressClick = false;
   const blockScroll = (e) => e.preventDefault();
   box.addEventListener('pointerdown', (e) => {
     const row = e.target.closest('.sq-row');
-    if (!row || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    if (!row || (e.pointerType === 'mouse' && e.button !== 0) || e.target.closest('.sq-mv')) return;
     _seqDrag = { row, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, active: false, ghost: null };
     _seqDrag.timer = setTimeout(start, HOLD);
   });
@@ -1454,4 +1745,166 @@ function seqReorder(order) {
   _seqArm();
   renderSeq();
   _seqQueue(() => _seqPushPhones());
+}
+
+// ── Feuilles de l'éditeur et du Plateau (39-screens-ui.js : _sheet, renderSheet) ──
+// seqTarget : « Sur quel écran ? » · seqStepMenu : ⋯ du pied de l'éditeur · seqDetail : fiche d'une étape
+// au Plateau (lecture seule) · seqCard : ⋯ de la carte de séquence · seqNewEntry : « + Nouvel appel ici »
+function openSeqTargetSheet() { if (_seqEdit) { _sheet = { kind: 'seqTarget' }; renderSheet(); } }
+function seqTargetPick(k, id) { seqEditTarget(k, id); closeSheet(); }
+function openSeqStepMenu() { if (_seqEdit && _seqEdit.id) { _sheet = { kind: 'seqStepMenu' }; renderSheet(); } }
+function seqEditSheetContent(s) {
+  const T = _SEQ_TXT, esc = escapeHtml;
+  const close = (label) => '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + esc(label || T.close) + '</button></div>';
+  const btn = (cls, fn, label, ico, off, id) => '<button type="button" class="dc-menu-btn' + cls + '"' + (id ? ' id="' + id + '"' : '') + (off ? ' disabled' : '') + ' onclick="' + fn + '">' + (ico ? icon(ico) : '') + esc(label) + '</button>';
+  if (s.kind === 'seqTarget') {
+    const e = _seqEdit;
+    if (!e) return null;
+    const tg = e.step.target;
+    const opts = [{ t: { k: 'all' }, label: T.allScreens }].concat(_scrReg.groups.map((g) => ({ t: { k: 'group', id: g.id }, label: T.groupPrefix + g.name })),
+      scrList().map((id) => ({ t: { k: 'screen', id }, label: scrName(id) })));
+    if (!opts.some((o) => _seqSameTarget(o.t, tg))) opts.push({ t: tg, label: seqTargetName(tg) });
+    return {
+      title: T.q4, form: false,
+      html: '<div id="ssTargets">' + opts.map((o) => btn(_seqSameTarget(o.t, tg) ? ' on' : '', 'seqTargetPick(' + _seqArg(o.t.k) + (o.t.id ? ',' + _seqArg(o.t.id) : '') + ')', o.label, _seqSameTarget(o.t, tg) ? 'check' : null)).join('') + '</div>' + close(),
+    };
+  }
+  if (s.kind === 'seqStepMenu') {
+    const e = _seqEdit, i = e && e.id ? _seq.steps.findIndex((x) => x.id === e.id) : -1;
+    if (i < 0) return null;
+    const dirty = seqStepDirty();
+    return {
+      title: _seqTpl(T.stepTitle, { n: i + 1, total: _seq.steps.length }), form: false,
+      html: btn('', 'seqStepDuplicate()', T.duplicate, 'copy', dirty || _seq.steps.length >= SEQ_STEPS_MAX, 'ssMenuDup')
+        + btn('', 'seqStepMove(-1)', T.moveUpStep, 'arrow-up', dirty || i === 0, 'ssMenuUp')
+        + btn('', 'seqStepMove(1)', T.moveDownStep, 'arrow-down', dirty || i === _seq.steps.length - 1, 'ssMenuDown')
+        + (dirty ? '<p class="sr-sheet-note">' + esc(T.menuDirty) + '</p>' : '')
+        + btn(' danger', 'closeSheet();seqStepDelete()', T.del, 'trash-2', false, 'ssMenuDel') + close(),
+    };
+  }
+  if (s.kind === 'seqDetail') {
+    const i = _seq.steps.findIndex((x) => x.id === s.id);
+    if (i < 0) return null;
+    const st = _seq.steps[i], pos = seqPos();
+    const state = i < pos ? T.stateDone : i === pos ? T.stateCur : i === pos + 1 ? T.stateNext : T.stateTodo;
+    const dt = (k, v) => '<div class="dt"><span>' + esc(k) + '</span><b>' + esc(v) + '</b></div>';
+    const sub = seqStepSub(st);
+    return {
+      title: _seqTpl(T.stepTitle, { n: i + 1, total: _seq.steps.length }), form: false,
+      html: '<div class="sr-detail">' + dt(T.detailKind, T.kindLong[st.kind]) + dt(T.detailItem, seqStepLabel(st) + (sub && !seqStepLabel(st).includes(sub) ? ' · ' + sub : '')) + dt(T.detailWhen, _seqWhenText(st)) + dt(T.detailTarget, seqTargetName(st.target)) + dt(T.detailState, state) + '</div>'
+        + '<p class="sr-sheet-note">' + esc(T.detailNote) + '</p>' + close(),
+    };
+  }
+  if (s.kind === 'seqCard') {
+    return {
+      title: _seq.name || T.untitled, form: false,
+      html: btn('', 'closeSheet();openSaveSeqSheet()', T.cardSave, 'bookmark', licLocked('seq') || seqSaved.length >= SEQ_SAVED_MAX)
+        + (_seq.savedId && !licLocked('seq') ? btn('', 'closeSheet();openRenameSavedSeq(\'' + _seq.savedId.replace(/[^A-Za-z0-9_-]/g, '') + '\')', T.cardRename, 'pencil') : '')
+        + btn('', 'closeSheet();openSeqSaved()', T.cardSaved, 'film') + close(),
+    };
+  }
+  if (s.kind === 'seqNewEntry') return _seqNewEntryContent();
+  return null;
+}
+
+// ── « + Nouvel appel ici » : création sur place (maquette 4i) ──
+// Le composeur de l'onglet Tel prend le type créé : Apparence, Sonnerie, Au décroché… sont ses vues
+// habituelles (passant devant la feuille) ; « Créer et choisir » enregistre l'élément (n° suivant de
+// la liste) et le sélectionne dans l'étape.
+let _nw = null; // brouillon de la feuille : { kind, name, label, msg, title, body, list }
+function seqCreateInline() {
+  const e = _seqEdit;
+  if (!e || licLocked('tel') || !_SEQ_NEW_KINDS[e.step.kind]) return;
+  const k = e.step.kind === 'missed' ? 'call' : e.step.kind;
+  if (callList[k].length >= CALL_LIST_MAX) { e.err = _seqTpl(_SEQ_TXT.listFull, { max: CALL_LIST_MAX }); renderSeqStep(); return; }
+  setCallKind(k);
+  const v = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+  _nw = { kind: k, name: v('callName'), label: v('callLabel'), msg: v('callMsgText'), title: v('ntTitle'), body: v('ntBody'), list: '' };
+  _sheet = { kind: 'seqNewEntry' };
+  renderSheet();
+}
+function _nwSnap() {
+  if (!_nw) return;
+  const v = (id) => { const el = document.getElementById(id); return el ? el.value : null; };
+  for (const [key, id] of [['name', 'nwName'], ['label', 'nwLabel'], ['msg', 'nwMsg'], ['title', 'nwTitle'], ['body', 'nwBody'], ['list', 'nwList']]) {
+    const x = v(id); if (x !== null) _nw[key] = x;
+  }
+}
+// Rangée de la feuille : ouvre la vue de réglage du composeur (par-dessus la feuille)
+function seqNewRow(what) {
+  _nwSnap();
+  if (what === 'style') openTelStyle(); else openTelDetail(what);
+}
+function _seqNewEntryContent() {
+  const T = _SEQ_TXT, esc = escapeHtml, k = _nw && _nw.kind;
+  if (!_nw) return null;
+  const row = (what, ico, label, val) => '<button type="button" class="tl-row tl-nav" id="nwRow-' + what + '" onclick="seqNewRow(\'' + what + '\')">' + icon(ico, 'tl-lead') + '<span class="tl-k"><b>' + esc(label) + '</b></span><span class="tl-v">' + val + '</span>' + icon('chevron-right', 'tl-tr') + '</button>';
+  const sum = telRowSummary(k);
+  const text = (id, ph, val) => '<input type="text" id="' + id + '" class="text-input" placeholder="' + esc(ph) + '" value="' + esc(val) + '" maxlength="40" autocomplete="off">';
+  let ident, rows;
+  const ini = (n) => esc(String(n || '?').trim().charAt(0).toUpperCase() || '?');
+  if (k === 'call') {
+    ident = '<div class="sr-new-id"><span class="tl-av">' + ini(_nw.name) + '</span><div>' + text('nwName', T.nwNamePh, _nw.name) + text('nwLabel', T.nwLabelPh, _nw.label) + '</div></div>';
+    rows = row('style', 'smartphone', 'Apparence', esc(sum.look)) + row('style', 'music', 'Sonnerie', esc(sum.sound)) + row('answer', 'audio-waveform', 'Au décroché', esc((document.getElementById('telAnswerVal') || {}).textContent || ''));
+  } else if (k === 'sms') {
+    ident = '<div class="sr-new-id"><span class="tl-av">' + ini(_nw.name) + '</span><div>' + text('nwName', T.nwSenderPh, _nw.name) + '</div></div>'
+      + '<textarea id="nwMsg" class="text-input" maxlength="200" placeholder="' + esc(T.nwMsgPh) + '" aria-label="' + esc(T.nwMsgPh) + '" style="height:72px;resize:none">' + esc(_nw.msg) + '</textarea>';
+    rows = row('app', 'mail', 'Application', esc((document.getElementById('callAppName') || {}).value || 'SMS')) + row('style', 'music', 'Style et son', esc(sum.all));
+  } else {
+    ident = text('nwTitle', T.nwTitlePh, _nw.title)
+      + '<textarea id="nwBody" class="text-input" maxlength="200" placeholder="' + esc(T.nwBodyPh) + '" aria-label="' + esc(T.nwBodyPh) + '" style="height:72px;resize:none">' + esc(_nw.body) + '</textarea>';
+    rows = row('ntapp', 'bell', 'Application', esc((document.getElementById('ntAppName') || {}).value || '')) + row('ntshow', 'rectangle-horizontal', 'Affichage', esc((document.getElementById('telNtShowVal') || {}).textContent || '')) + row('style', 'music', 'Style et son', esc(sum.all));
+  }
+  const n = callList[k].length + 1;
+  return {
+    title: k === 'call' ? T.nwTitleCall : k === 'sms' ? T.nwTitleSms : T.nwTitleNotif, form: true,
+    html: '<form class="sr-new" onsubmit="event.preventDefault();seqCreateInlineSave()">'
+      + '<p class="sr-sheet-note">' + esc(_seqTpl(T.nwHint, { n })) + '</p>' + ident
+      + '<div class="tl-card">' + rows + '</div>'
+      + '<div class="tl-field" style="padding:0;border:0"><label for="nwList">' + esc(T.nwListLabel) + '</label>' + text('nwList', T.nwListPh, _nw.list) + '</div>'
+      + (_nw.err ? '<p class="sr-sheet-note prj-sheet-err" role="alert">' + esc(_nw.err) + '</p>' : '')
+      + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="seqCreateInlineCancel()">' + esc(T.cancel) + '</button>'
+      + '<button type="submit" class="sr-ok" id="nwCreate">' + esc(T.nwCreate) + '</button></div></form>',
+  };
+}
+function seqCreateInlineCancel() { _nw = null; closeSheet(); }
+async function seqCreateInlineSave() {
+  const e = _seqEdit;
+  if (!_nw || !e) return;
+  _nwSnap();
+  const n = _nw, k = n.kind;
+  const over = k === 'call' ? { name: n.name.trim().slice(0, 40) || _SEQ_TXT.unknownName, label: n.label.trim().slice(0, 40) }
+    : k === 'sms' ? { name: n.name.trim().slice(0, 40) || _SEQ_TXT.unknownName, msg: n.msg.slice(0, 200) }
+      : { name: n.title.trim().slice(0, 40), msg: n.body.slice(0, 200) };
+  const id = await saveCurrentCall(n.list, over);
+  if (!id) { n.err = _seqTpl(_SEQ_TXT.listFull, { max: CALL_LIST_MAX }); renderSheet(); return; }
+  _nw = null;
+  closeSheet();
+  if (_seqEdit === e) seqEditRef(id); // l'élément créé est choisi dans l'étape
+}
+
+// ── ⋯ de l'éditeur : dupliquer, monter, descendre (étape enregistrée, brouillon intact) ──
+function seqStepMove(d) {
+  const e = _seqEdit;
+  if (!e || !e.id || seqStepDirty()) return false;
+  const ok = seqMoveStep(e.id, d);
+  closeSheet();
+  renderSeqStep();
+  return ok;
+}
+function seqStepDuplicate() {
+  const e = _seqEdit;
+  if (!e || !e.id || seqStepDirty() || _seq.steps.length >= SEQ_STEPS_MAX) return null;
+  const i = _seq.steps.findIndex((x) => x.id === e.id);
+  if (i < 0) return null;
+  const copy = JSON.parse(JSON.stringify(_seq.steps[i]));
+  copy.id = _seqNewId();
+  _seq.steps.splice(i + 1, 0, copy);
+  seqSave();
+  closeSheet();
+  closeSeqStep();
+  _seqArm();
+  renderSeq();
+  _seqQueue(() => _seqPushPhones());
+  return copy.id;
 }

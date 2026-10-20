@@ -320,16 +320,18 @@ test('en-tête : une ligne de texte sous 700 px de haut (méta masquée), compl�
   }
 });
 
-test('Séquence : GO / retour / Stop restent à 16 px au moins de la barre d\'onglets', async () => {
+test('Séquence : au Plateau, GO et ses commandes restent à 12 px au moins de la barre d\'onglets, quel que soit le défilement', async () => {
   const { page, errors, close } = await remote();
-  await page.evaluate(() => switchTab('seq'));
+  await page.evaluate(() => { switchTab('seq'); setSeqMode('play'); });
   const gap = async () => {
-    const go = await rect(page, '#seqGoBtn'), bar = await rect(page, '#nv-tabs');
-    return bar.top - go.bottom;
+    const ctl = await rect(page, '#seqBackBtn'), go = await rect(page, '#seqGoBtn'), bar = await rect(page, '#nv-tabs');
+    assert.ok(go.bottom <= ctl.top, 'GO au-dessus de Revenir / Pause auto / Recommencer');
+    return bar.top - ctl.bottom;
   };
-  assert.ok(await gap() >= 16, 'au repos : ' + await gap());
-  await page.evaluate(() => { document.getElementById('seqRows').style.minHeight = '1600px'; const s = document.getElementById('nv-scroll'); s.scrollTop = 0; });
-  assert.ok(await gap() >= 16, 'collé pendant le défilement : ' + await gap());
+  assert.ok(await gap() >= 12, 'au repos : ' + await gap());
+  assert.equal((await rect(page, '#seqGoBtn')).h, 96, 'GO : 96 px');
+  await page.evaluate(() => { document.getElementById('seqPlayRows').style.minHeight = '1600px'; document.getElementById('nv-scroll').scrollTop = 400; });
+  assert.ok(await gap() >= 12, 'barre fixe pendant le défilement : ' + await gap());
   assert.deepEqual(errors, []);
   await close();
 });
@@ -375,3 +377,73 @@ test('cibles tactiles : en-tête, segmentés et onglets d\'au moins 44 px', asyn
   assert.deepEqual(errors, []);
   await close();
 });
+
+// Tel (4 types, avec la barre dans ses états), Séquence (Préparer, Plateau), éditeur d'étape et vue de réglage :
+// ni débordement horizontal ni cible tactile < 44 px, à 360 et 390 px
+for (const width of [360, 390]) {
+  test(`Tel et Séquence à ${width} px : aucun débordement horizontal, cibles tactiles d'au moins 44 px`, async () => {
+    const { page, errors, close } = await remote({ viewport: { width, height: 740 } });
+    await addScreens(page, 2);
+    await page.evaluate(() => {
+      setCallRing('silent');
+      document.getElementById('callName').value = 'Un contact au nom vraiment très long pour la rangée';
+      document.getElementById('callLabel').value = 'mobile professionnel de nuit';
+      renderCallerState();
+      for (const n of ['Un', 'Deux']) { document.getElementById('callName').value = n; saveCurrentCall(); }
+      chatSaved.push({ id: 'c1', name: 'Séq. 12 — Maman inquiète avec un nom très long', contact: 'Maman', actor: 'Julie', style: 'glass', msgs: _chat.msgs.map((m) => chatMsgCopy(m)), hasPhoto: false, photoSig: null });
+      renderSavedChats();
+    });
+    const issues = [];
+    const check = async (label) => {
+      const r = await page.evaluate(() => {
+        const out = [];
+        for (const id of ['remote-mode', 'nv-main', 'nv-scroll', 'nv-bar']) { const e = document.getElementById(id); if (e.scrollWidth > e.clientWidth + 1) out.push(id + ' déborde ' + e.scrollWidth + '>' + e.clientWidth); }
+        if (document.documentElement.scrollWidth > innerWidth) out.push('document ' + document.documentElement.scrollWidth);
+        const vis = (e) => { const b = e.getBoundingClientRect(); return b.width > 0 && b.height > 0 && getComputedStyle(e).visibility !== 'hidden'; };
+        for (const e of document.querySelectorAll('#nv-bar *, #content-call *, #content-seq *')) {
+          if (!vis(e)) continue;
+          const b = e.getBoundingClientRect();
+          if (b.right > innerWidth + 1 || b.left < -1) out.push((e.id || e.className) + ' hors fenêtre');
+        }
+        for (const e of document.querySelectorAll('#nv-bar button, #content-call button, #content-seq button, #content-call .tl-row, #content-seq .tl-row')) {
+          if (!vis(e) || e.closest('[style*="display: none"]') || e.disabled) continue;
+          const b = e.getBoundingClientRect();
+          if (b.width < 44 || b.height < 44) out.push((e.id || e.className) + ' ' + Math.round(b.width) + '×' + Math.round(b.height));
+        }
+        return out;
+      });
+      issues.push(...r.map((x) => label + ' : ' + x));
+    };
+    await page.evaluate(() => switchTab('call'));
+    for (const k of ['call', 'sms', 'notif', 'discussion']) {
+      await page.evaluate((k) => setCallKind(k), k);
+      await check('Tel ' + k);
+      if (k === 'discussion') {
+        await page.evaluate(() => { openChatOnTarget(); editChatMessage(_chat.msgs[1].id); });
+        await check('Tel discussion ouverte, message touché');
+        await page.evaluate(() => closeChat());
+      }
+    }
+    await page.evaluate(() => { setCallKind('call'); callListKind = 'call'; _clSort = true; renderCallList(); });
+    await check('Tel liste, mode Trier');
+    await page.evaluate(() => { _clSort = false; telCallSent('call', 8); remoteOnCallState({ state: 'ringing' }); });
+    await check('Tel appel qui sonne');
+    await page.evaluate(() => telCallPhase('idle', ''));
+    await page.evaluate(() => { _sheet = { kind: 'callMenu', id: callList.call[0].id }; renderSheet(); });
+    await check('Tel menu ⋯');
+    await page.evaluate(() => closeSheet());
+    await page.evaluate(() => { switchTab('seq'); _seq.steps = ['color', 'call', 'sms', 'notif', 'chat'].map((k, i) => ({ id: 's' + i, kind: k, ref: null, target: { k: 'all' }, trig: i % 2 ? { k: 'after', s: 6 } : { k: 'go' }, opt: {} })); renderSeq(); });
+    await check('Séquence Préparer');
+    await page.evaluate(() => { _seqSort = true; renderSeq(); });
+    await check('Séquence Préparer, mode Trier');
+    await page.evaluate(() => { _seqSort = false; setSeqMode('play'); });
+    await check('Séquence Plateau');
+    await page.evaluate(() => { setSeqMode('prep'); openSeqStep('s1'); });
+    await check('Éditeur d\'étape');
+    await page.evaluate(() => { closeSeqStep(); openTelDetail('who'); });
+    await check('Vue Appelant');
+    assert.deepEqual(issues, []);
+    assert.deepEqual(errors, []);
+    await close();
+  });
+}

@@ -170,8 +170,8 @@ L'effet utilise ses propres couleurs ; son intensité suit le Dimmer
 - Les **notifications d'application** (liste « Notifs » de l'onglet Tel) et la
   **discussion** ne se déclenchent jamais depuis la console : le canal SMS ne
   vise que la liste des SMS. Une ancienne entrée « messagerie » est devenue un
-  SMS et se déclenche comme tel. La **Séquence** (onglet Séquence : GO, ↶,
-  STOP, faux téléphone) ne se pilote pas non plus depuis la console ; quand la
+  SMS et se déclenche comme tel. La **Séquence** (onglet Scénario › Séquence : GO, Revenir,
+  Pause auto, faux téléphone) ne se pilote pas non plus depuis la console ; quand la
   console a la priorité, ses étapes Couleur, Effet et Média sont ignorées par
   les écrans patchés, comme tout ordre de look de la télécommande.
 - Programmez ces canaux **sans fondu** (snap / « jump ») : un fondu de 30 à 0

@@ -771,7 +771,7 @@
     </div>
   </div>
 
-  <!-- Séquence (maquettes 28 et 29) : étapes qui référencent les états enregistrés des autres onglets, GO / ↶ / STOP -->
+  <!-- Séquence « Préparer / Plateau » (phase 4, maquettes 4f à 4g2) : étapes qui référencent les états enregistrés des autres onglets ; l'action est la barre fixe #seq-bar -->
   <div class="tab-content" id="content-seq">
     <!-- Aperçu sans licence (maquettes 39 / 39b) : version officielle seulement, 77-licence-ui.js -->
     <div class="lic-pv" id="licPvSeq" style="display:none">
@@ -782,31 +782,51 @@
         <button type="button" class="lic-pv-buy" onclick="licOpenBuy()">Obtenir une licence <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
       </div>
     </div>
-    <div class="dc-tabs">
-      <button type="button" class="gw-seg-btn active" id="seqTab-cur" onclick="setSeqView('cur')">Séquence en cours</button>
-      <button type="button" class="gw-seg-btn" id="seqTab-saved" onclick="setSeqView('saved')">Enregistrées (0)</button>
-    </div>
-    <div class="sq" id="seqCurView">
-      <!-- Nouvelle séquence (maquette 47) : séquence vide, « Enregistrer avant ? » si la séquence a changé -->
-      <button type="button" class="prj-newbtn" id="seqNewBtn" onclick="seqNewAsk()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Nouvelle séquence</button>
-      <div class="sq-head"><span class="sq-title">Séquence</span><button type="button" class="sq-add" id="seqAddBtn" onclick="openSeqStep(null)"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Étape</button></div>
-      <div class="sq-sub"><span id="seqName"></span><span id="seqTarget"></span></div>
-      <!-- Téléphone au départ (maquette 28b) : barre d'état de la séquence -->
-      <button type="button" class="sq-phone" id="seqPhoneBtn" onclick="openPhoneParams('seq')"><span class="sq-phone-l"><svg class="ic" aria-hidden="true"><use href="#i-smartphone"></use></svg> Téléphone au départ</span><span class="sq-phone-v" id="seqPhoneSum"></span></button>
-      <div class="sq-list" id="seqRows"></div>
-      <div class="sq-empty" id="seqEmpty">Aucune étape. « Étape » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.</div>
-      <div class="sq-legend"><span class="go">● GO</span><span class="auto">● automatique</span><span class="actor">● geste du comédien</span></div>
-      <div class="sq-now" id="seqNow" role="status"></div>
-      <div class="sq-warn" id="seqWarn" role="alert" style="display:none"></div>
-      <div class="sq-ctl">
-        <button type="button" class="sq-go" id="seqGoBtn" onclick="seqGoTap()">GO</button>
-        <button type="button" class="sq-back" id="seqBackBtn" aria-label="Revenir d'une étape" title="Revenir d'une étape" onclick="seqBack()"><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg></button>
-        <button type="button" class="sq-stop" id="seqStopBtn" onclick="seqStop()">Stop</button>
+    <div class="sq-mode">
+      <div class="sq-seg" role="tablist" aria-label="Mode de la séquence">
+        <button type="button" role="tab" class="active" aria-selected="true" id="seqMode-prep" onclick="setSeqMode('prep')"><svg class="ic" aria-hidden="true"><use href="#i-pencil"></use></svg> Préparer</button>
+        <button type="button" role="tab" aria-selected="false" id="seqMode-play" onclick="setSeqMode('play')"><svg class="ic" aria-hidden="true"><use href="#i-play"></use></svg> Plateau</button>
       </div>
+      <span id="seqPillSlot"></span>
     </div>
-    <div class="dc-saved" id="seqSavedView" style="display:none">
-      <div class="dc-saved-rows" id="seqSavedRows"></div>
-      <div class="dc-saved-empty" id="seqSavedEmpty"></div>
+    <!-- Préparer : carte de séquence, étapes, ajout -->
+    <div class="sq" id="seqPrepView">
+      <div class="tl-card">
+        <div class="sq-card-head">
+          <span class="tl-k"><b id="seqName"></b><small id="seqMeta"><span id="seqCount"></span> · <span id="seqTarget"></span></small></span>
+          <button type="button" class="tl-ib" id="seqMoreBtn" aria-label="Séquence : enregistrer, renommer" onclick="openSeqMenu()"><svg class="ic" aria-hidden="true"><use href="#i-ellipsis"></use></svg></button>
+        </div>
+        <!-- Rangée « Téléphone au départ » (maquette 28b) : barre d état de la séquence, modifiable ici seulement -->
+        <button type="button" class="tl-row tl-nav" id="seqPhoneBtn" onclick="openPhoneParams('seq')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-smartphone"></use></svg><span class="tl-k"><b>Téléphone au départ</b><small id="seqPhoneSum"></small></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+        <button type="button" class="tl-row tl-nav" id="seqSavedBtn" onclick="openSeqSaved()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-film"></use></svg><span class="tl-k"><b>Séquences enregistrées</b><small>Charger, dupliquer, supprimer</small></span><span class="tl-v" id="seqSavedCount">0</span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+      </div>
+      <!-- Nouvelle séquence (maquette 47) : séquence vide, « Enregistrer avant ? » si la séquence a changé -->
+      <button type="button" class="sq-new" id="seqNewBtn" onclick="seqNewAsk()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Nouvelle séquence</button>
+      <div class="tl-h"><b id="seqStepsTitle">Étapes · 0</b><button type="button" class="tl-link" id="seqSortBtn" aria-pressed="false" onclick="toggleSeqSort()"><svg class="ic" aria-hidden="true"><use href="#i-list-ordered"></use></svg> Trier</button></div>
+      <div class="tl-card"><div class="sq-list" id="seqRows"></div></div>
+      <div class="sq-empty" id="seqEmpty">Aucune étape. « + Étape » ajoute la première : couleur, effet, média, appel, SMS, notification, veille, déverrouillage, discussion, batterie, réseau.</div>
+      <button type="button" class="sq-addrow" id="seqAddRow" onclick="openSeqStep(null)"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Ajouter une étape</button>
+    </div>
+    <!-- Plateau : EN COURS, ENSUITE, étapes jouées repliées, liste restante verrouillée -->
+    <div class="sq" id="seqPlayView" style="display:none">
+      <div class="sq-pl-head"><span id="seqPlayName"></span><b id="seqPlayPos"></b></div>
+      <div class="sq-now" id="seqNow" role="status"></div>
+      <div class="sq-next" id="seqNext"></div>
+      <div class="tl-card" id="seqPlayList">
+        <button type="button" class="sq-done" id="seqDoneBtn" aria-expanded="false" onclick="toggleSeqDone()"><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg><span id="seqDoneTxt"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-down"></use></svg></button>
+        <div class="sq-list" id="seqDoneRows" style="display:none"></div>
+        <div class="sq-list" id="seqPlayRows"></div>
+      </div>
+      <div class="sq-warn" id="seqWarn" role="alert" style="display:none"></div>
+      <div class="sq-pl-phone" id="seqPlayPhone"></div>
+    </div>
+    <!-- Séquences enregistrées : liste (charger, ⋯ renommer · dupliquer · supprimer), enregistrer la séquence en cours -->
+    <div id="seqSavedView" style="display:none">
+      <div class="tl-h"><b id="seqSavedTitle">Séquences enregistrées · 0</b><button type="button" class="tl-link" onclick="closeSeqSaved()">Fermer</button></div>
+      <div class="tl-card">
+        <div class="dc-saved-rows" id="seqSavedRows"></div>
+        <div class="dc-saved-empty" id="seqSavedEmpty"></div>
+      </div>
       <div class="dc-saved-hint" id="seqSavedHint"></div>
       <button type="button" class="cl-save" id="seqSaveBtn" onclick="openSaveSeqSheet()">+ Enregistrer la séquence en cours</button>
       <div class="cl-note" id="seqSavedNote"></div>
@@ -877,6 +897,22 @@
         <button type="button" class="nb-pri" id="dcGo" onclick="sendNextChatMessage()"><svg class="ic" aria-hidden="true"><use href="#i-send"></use></svg><span class="nb-lbl"><b id="dcGoLbl">ENVOYER</b><small id="dcGoSub"></small></span></button>
       </div>
     </div>
+    <!-- Séquence : Préparer (+ Étape, Jouer la séquence) ou Plateau (GO, Revenir, Pause auto, Recommencer) -->
+    <div class="nb" id="seq-bar" data-bar="seq">
+      <div class="nb-row" id="seqBarPrep">
+        <button type="button" class="nb-sec" id="seqAddBtn" onclick="openSeqStep(null)"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg><span class="nb-lbl"><b>Étape</b></span></button>
+        <button type="button" class="nb-pri nb-wide" id="seqPlayBtn" onclick="setSeqMode('play')"><svg class="ic" aria-hidden="true"><use href="#i-play"></use></svg><span class="nb-lbl"><b>JOUER LA SÉQUENCE</b><small>passe en mode Plateau</small></span></button>
+      </div>
+      <div id="seqBarPlay">
+        <button type="button" class="sq-go" id="seqGoBtn" onclick="seqGoTap()"><b>GO</b><small id="seqGoSub"></small></button>
+        <div class="sq-ctl">
+          <button type="button" id="seqBackBtn" onclick="seqBack()"><svg class="ic" aria-hidden="true"><use href="#i-undo-2"></use></svg> Revenir</button>
+          <button type="button" class="sq-pause" id="seqStopBtn" onclick="seqStop()"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> Pause auto</button>
+          <button type="button" class="sq-reset" id="seqRestartBtn" aria-describedby="seqRestartHint"><svg class="ic" aria-hidden="true"><use href="#i-rotate-ccw"></use></svg> Recommencer</button>
+        </div>
+        <div class="sq-hint" id="seqRestartHint" role="status"></div>
+      </div>
+    </div>
   </div>
 
   </div><!-- /nv-main -->
@@ -906,21 +942,37 @@
   <div class="sv-note">« Identifier » fait clignoter l'écran concerné pour le reconnaître sur le décor.</div>
 </div>
 
-<!-- Séquence : éditer une étape (maquette 29) -->
+<!-- Séquence : éditer une étape en quatre questions (maquettes 29 et 4h) : Quoi ? Lequel ? Quand ? Sur quel écran ? -->
 <div id="seq-step-view" role="dialog" aria-modal="true" aria-labelledby="ssTitle">
   <div class="ss-head">
     <button type="button" class="ss-back" onclick="seqStepLeave()"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Séquence</button>
     <span class="ss-title" id="ssTitle">Étape</span>
     <span class="ss-spacer"></span>
   </div>
-  <div class="ss-card"><span class="ss-label">Type</span><div class="ss-kinds" id="ssKinds"></div></div>
-  <div class="ss-card" id="ssRefCard"></div>
-  <div class="ss-card" id="ssTrigCard"></div>
+  <div class="ss-sum" id="ssSummary" role="status"></div>
+  <section class="ss-q" id="ssQ1" aria-labelledby="ssQ1t">
+    <h2 id="ssQ1t"><i>1</i> Quoi ?</h2>
+    <button type="button" class="ss-cur" id="ssKindBtn" aria-expanded="false" onclick="seqToggleKinds()"></button>
+    <div class="ss-card ss-kinds" id="ssKinds" style="display:none"></div>
+  </section>
+  <section class="ss-q" id="ssQ2" aria-labelledby="ssQ2t">
+    <h2 id="ssQ2t"><i>2</i> <span id="ssQ2label">Lequel ?</span></h2>
+    <div id="ssRefCard"></div>
+  </section>
+  <section class="ss-q" id="ssQ3" aria-labelledby="ssQ3t">
+    <h2 id="ssQ3t"><i>3</i> Quand ?</h2>
+    <div id="ssTrigCard"></div>
+  </section>
+  <section class="ss-q" id="ssQ4" aria-labelledby="ssQ4t">
+    <h2 id="ssQ4t"><i class="g">4</i> Sur quel écran ?</h2>
+    <button type="button" class="ss-cur" id="ssTargetBtn" onclick="openSeqTargetSheet()"></button>
+  </section>
   <div class="ss-err" id="ssErr" role="alert" style="display:none"></div>
   <input type="file" id="seqHomeInput" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onSeqHomeImage(this.files);this.value=''">
   <div class="ss-actions">
-    <button type="button" class="ss-del" id="ssDel" onclick="seqStepDelete()">Supprimer</button>
-    <button type="button" class="ss-save" id="ssSave" onclick="seqStepSave()">Enregistrer</button>
+    <button type="button" class="ss-cancel" id="ssCancel" onclick="seqStepLeave()">Annuler</button>
+    <button type="button" class="ss-save" id="ssSave" onclick="seqStepSave()">Enregistrer l'étape</button>
+    <button type="button" class="ss-more" id="ssMore" aria-label="Plus : supprimer, dupliquer, monter, descendre" onclick="openSeqStepMenu()"><svg class="ic" aria-hidden="true"><use href="#i-ellipsis"></use></svg></button>
   </div>
 </div>
 

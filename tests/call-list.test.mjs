@@ -173,7 +173,7 @@ test('nom de l\'enregistrement (feuille), entrée chargée : mettre à jour / en
   await waitFor(page, () => callList.call.length === 2);
   assert.deepEqual((await rows(page)).map((x) => x.name), ['Maman — scène 12', 'Agence']);
   assert.deepEqual(await page.evaluate(() => callList.call.map((e) => e.title)), ['Maman — scène 12', undefined]);
-  assert.equal(await page.evaluate(() => _seqRefList('call').map((x) => x.label).join(' | ')), '1 · Maman — scène 12 | 2 · Agence');
+  assert.equal(await page.evaluate(() => _seqRefList('call').map((x) => x.label).join(' | ')), 'Maman — scène 12 | Agence');
   assert.equal(await page.evaluate(() => !!callListLoadedEntry()), false, 'rien de chargé : le signet enregistre une nouvelle entrée');
   // Toucher l'entrée n° 1 : chargée → le signet propose « Mettre à jour » et « Enregistrer comme nouveau »
   await page.locator('#callListRows .cl-row').nth(0).click();

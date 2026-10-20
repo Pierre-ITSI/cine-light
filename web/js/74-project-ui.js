@@ -657,7 +657,7 @@ function projectSeeSequences() {
   closeSettings();
   switchTab('seq');
   setSeqView('saved');
-  navScrollTo(document.getElementById('seqTab-cur'), 72);
+  navScrollTo(document.getElementById('seqSavedView'), 72);
 }
 
 // ══════════ 45e · Erreurs ══════════

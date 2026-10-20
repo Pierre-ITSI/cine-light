@@ -483,7 +483,7 @@ describe('onglet Média : barre d\'état hors séquence, priorité de la séquen
     await go(rp);
     await waitFor(sp, () => !!_sb.seq);
     await waitFor(sp, () => document.querySelector('#screen-sbar .pb-pct').textContent === '18 %');
-    // Arrêtée (STOP) : la séquence garde la main jusqu'à « Recommencer »
+    // En pause auto (ex-STOP) : la séquence garde la main jusqu'à « Recommencer »
     await rp.evaluate(async () => { seqStop(); await _seqChain; });
     assert.equal(await sp.textContent('#screen-sbar .pb-pct'), '18 %');
     await rp.evaluate(async () => { seqRestart(); await _seqChain; });
@@ -502,7 +502,8 @@ describe('onglet Média : barre d\'état hors séquence, priorité de la séquen
 test('séquences enregistrées : « Téléphone au départ » réglé dans l\'éditeur, gardé, rechargé ; anciennes séquences : valeurs par défaut', async () => {
   const { page, errors, close } = await openPage(browser);
   await page.evaluate(() => { startMode('remote'); switchTab('seq'); });
-  page.on('dialog', (d) => d.accept());
+  let dialogs = 0;
+  page.on('dialog', (d) => { dialogs++; d.accept(); });
   assert.equal(await page.textContent('#seqPhoneSum'), 'Heure réelle · 4G · 80 %');
   await page.click('#seqPhoneBtn');
   assert.equal(await page.textContent('#ppTitle'), 'Téléphone au départ');
@@ -521,14 +522,16 @@ test('séquences enregistrées : « Téléphone au départ » réglé dans l\'é
   assert.equal(await page.textContent('#seqPhoneSum'), '23:47 figée · 5G · 80 %');
   // Enregistrer, modifier, recharger la séquence enregistrée
   await page.evaluate(() => { _seq.steps = seqSanitizeSteps([{ id: 'x1', kind: 'sleep', target: { k: 'all' }, trig: { k: 'go' }, opt: {} }]); seqSave(); });
-  await page.click('#seqTab-saved');
+  await page.click('#seqSavedBtn');
   await page.click('#seqSaveBtn');
   await page.fill('#srName', 'Séq. 33');
   await page.click('#sr-sheet .sr-ok');
   await page.evaluate(() => { _seq.phone.net.type = '3G'; seqSave(); });
   assert.equal(await page.evaluate(() => seqHasUnsavedChanges()), true, 'réglage modifié : non enregistré');
   await page.locator('#seqSavedRows .dc-saved-row').nth(0).click();
+  await page.click('#acOk'); // séquence modifiée : confirmation de l'app (plus de boîte du navigateur)
   assert.equal(await page.evaluate(() => _seq.phone.net.type), '5G');
+  assert.equal(dialogs, 0);
   await page.reload();
   await page.evaluate(() => { startMode('remote'); switchTab('seq'); });
   assert.equal(await page.textContent('#seqPhoneSum'), '23:47 figée · 5G · 80 %');

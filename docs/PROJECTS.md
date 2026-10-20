@@ -313,8 +313,8 @@ rendus asynchrones (tests, captures).
 | 46 | « Projets » | projet ouvert en tête (orange, « ouvert »), puis du plus récemment modifié ; « Modifié aujourd'hui, 14:02 » / « Importé le 2 oct. », « 4 séq. · 3 disc. · 8 appels et SMS · 6,4 Mo » ; toucher : ouvrir (projet ouvert : son menu) ; « ⋯ » : Ouvrir, Renommer, Dupliquer, Exporter…, Supprimer (projet ouvert : ni Ouvrir ni Supprimer) ; + NOUVEAU PROJET ; IMPORTER UN PROJET… |
 | 46b | feuille « Nouveau projet » | nom, Vide / À partir du projet actuel (sans les médias) ; créé **puis ouvert** |
 | 46c | feuilles « Ouvrir « … » ? » et « Impossible pour l'instant » | refus pendant le jeu (séquence lancée, discussion ouverte, appel en cours), aussi pour « Nouveau projet » et « Ouvrir comme nouveau projet » |
-| 47 | « + NOUVELLE SÉQUENCE » sous les sous-onglets (Séquence en cours) | séquence modifiée : « Enregistrer « Nom » avant ? » — Enregistrer (nouvelle entrée), Ne pas enregistrer, Annuler |
-| 47b | « + NOUVELLE DISCUSSION » sous les sous-onglets (Fil en cours) | même question ; discussion ouverte sur les écrans : refus |
+| 47 | « Nouvelle séquence » : bouton visible sous la carte de séquence (Préparer, phase 4) | séquence modifiée : « Enregistrer « Nom » avant ? » — Enregistrer (nouvelle entrée), Ne pas enregistrer, Annuler |
+| 47b | « Nouvelle discussion » : ⋯ du titre « Fil » (Tel › Discussion, phase 4) | même question ; discussion ouverte sur les écrans : refus |
 
 Choix :
 - **Ouvrir comme nouveau projet** range le fichier **en entier** (cases

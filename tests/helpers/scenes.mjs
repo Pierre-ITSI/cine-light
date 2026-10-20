@@ -159,6 +159,7 @@ const LIC_ACTIVE_TOKEN = {
 export const SCENE_INIT = {
   'remote-call-preview': licenceInit({ fixedDevice: true }),
   'remote-seq-preview': licenceInit({ fixedDevice: true }),
+  'remote-seq-prepare-preview': licenceInit({ fixedDevice: true }),
   'remote-settings-licence': licenceInit({ fixedDevice: true }),
   'remote-settings-licence-active': licenceInit({ fixedDevice: true, token: LIC_ACTIVE_TOKEN }),
 };
@@ -478,7 +479,7 @@ export const SCENES = {
     }, SCR_IDS[0]);
     await scrollTo('dcThreadPanel', 84)(page);
   }),
-  // 26c · Discussions enregistrées : quatre entrées, la première chargée dans « Fil en cours »
+  // 26c / 4d · Discussions enregistrées (liste sous le fil, ▶ charge) : quatre entrées, la première chargée dans le fil
   'remote-call-discussion-saved': remote('call', async (page) => {
     await page.evaluate(() => {
       const msgs = (n) => Array.from({ length: n }, (_, i) => ({ id: 'm' + (i + 1), from: i % 2 ? 'actor' : 'contact', text: 'Message ' + (i + 1) }));
@@ -711,7 +712,7 @@ export const SCENES = {
     await page.evaluate(() => { screenApplyConfig({ type: 'screen:config', name: 'TV salon', groups: [] }); openScreenMenu(); });
     await page.clock.runFor(300);
   },
-  // 28 · Séquence : huit étapes, 1 à 3 jouées, l'appel sonne depuis 4 s
+  // 28 · Séquence en Préparer : huit étapes, 1 à 3 jouées (repères), l'appel sonne depuis 4 s
   'remote-seq': seqScene(async (page) => {
     await page.evaluate(async () => { seqGo(); seqGo(); seqGo(); await _seqChain; });
     await page.clock.runFor(4000); // sans défilement : la mini-carte collante ne s'en mêle pas (rendu stable)
@@ -781,11 +782,11 @@ export const SCENES = {
     _seq.steps.unshift(seqSanitizeStep({ id: 'a0', kind: 'sleep', target: _seq.steps[0].target, trig: { k: 'go' }, opt: { notif: true, touch: true, after: 8 } }));
     openSeqStep('a0');
   })),
-  // 47 · « + NOUVELLE SÉQUENCE » sous les sous-onglets
-  'remote-seq-new': seqScene(scrollTo('seqTab-cur', 80)),
+  // 47 · « Nouvelle séquence » : bouton visible sous la carte de séquence (Préparer)
+  'remote-seq-new': seqScene(scrollTo('seqNewBtn', 120)),
   // 47 · Séquence modifiée : « Enregistrer « … » avant ? » (Enregistrer / Ne pas enregistrer / Annuler)
   'remote-seq-new-ask': seqScene(async (page) => {
-    await scrollTo('seqTab-cur', 80)(page);
+    await scrollTo('seqNewBtn', 120)(page);
     await page.evaluate(() => seqNewAsk());
   }),
   // 46c · Refus : une séquence est lancée sur les écrans, pas d'autre projet
@@ -796,7 +797,7 @@ export const SCENES = {
       openSettings(); await openProjectsView(); askOpenProject(_pju.list.list[1].id);
     });
   }),
-  // 47b · « + NOUVELLE DISCUSSION » sous les sous-onglets du fil
+  // 47b · « Nouvelle discussion » : ⋯ du titre « Fil » (menu : nouvelle, enregistrer, repartir de zéro, fermer)
   'remote-call-discussion-new': remote('call', async (page) => {
     await page.evaluate(() => { setCallKind('discussion'); openChatThreadMenu(); });
     await scrollTo('dcThreadPanel', 84)(page);
@@ -926,6 +927,12 @@ const telChat = (extra) => telKind('discussion', async (page) => {
   });
   if (extra) await extra(page);
 });
+// Séquence : le déroulé jusqu'à l'étape n (GO répétés), mode Plateau
+const seqPlay = (n, extra) => seqScene(async (page) => {
+  await page.evaluate(async (n) => { setSeqMode('play'); for (let i = 0; i < n; i++) seqGo(); await _seqChain; }, n);
+  if (extra) await extra(page);
+  await page.clock.runFor(4000);
+});
 Object.assign(SCENES, {
   // 4a · Appel : « À jouer », trois appels enregistrés avec leur ▶, une seule barre « FAIRE SONNER »
   'remote-tel-call': telScene(),
@@ -959,7 +966,28 @@ Object.assign(SCENES, {
   'remote-tel-list-menu': telScene((page) => page.evaluate(() => openCallEntryMenu('e3'))),
   // 4e3 · Signet d'une entrée chargée : mettre à jour / enregistrer comme nouveau
   'remote-tel-save-loaded': telScene((page) => page.evaluate(() => openSaveCallSheet())),
+  // 4f · Séquence, Préparer : carte, étapes, « + Étape » et « Jouer la séquence »
+  'remote-seq-prepare': seqScene(),
+  // 4f2 · Préparer sans licence : bandeau d'aperçu, liste en lecture seule
+  'remote-seq-prepare-preview': licScene('seq'),
+  // 4g · Plateau : l'appel (étape 3) sonne depuis 4 s ; ENSUITE ; GO 96 px
+  'remote-seq-plateau': seqPlay(3),
+  // 4g2 · Plateau pendant la discussion : lecture auto « le comédien tape » sous l'étape en cours
+  'remote-seq-plateau-chat': seqScene(async (page) => {
+    await page.evaluate(async () => {
+      _seq.steps.find((s) => s.id === 'a7').opt = { auto: true, full: false };
+      setSeqMode('play');
+      for (let i = 0; i < 7; i++) seqGo();
+      await _seqChain;
+    });
+    await page.clock.runFor(1500);
+  }),
+  // 4h · Éditeur d'étape en quatre questions : phrase de synthèse, Quoi ? Lequel ? Quand ? Sur quel écran ?
+  'remote-seq-step-questions': seqScene((page) => page.evaluate(() => { openSeqStep('a3'); })),
+  // 4i · « + Nouvel appel ici » : création sur place, même composeur que Tel
+  'remote-seq-step-new-here': seqScene((page) => page.evaluate(() => { openSeqStep('a3'); seqCreateInline(); })),
 });
+
 // Fenêtre propre à une scène (sinon 390 × 844)
 const LANDSCAPE = { width: 844, height: 390 };
 export const SCENE_VIEWPORT = {

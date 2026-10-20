@@ -201,7 +201,7 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
       text: document.querySelector('#licPvSeq p').textContent,
       sms: __sent.filter((m) => m.type === 'call:start' && m.kind === 'sms').map((m) => m.msg),
       editor: !!_seqEdit, pp: !!_pp, sheet: !!_sheet, saved: seqSaved.length, chatOpt: _seq.steps[2].opt, label: seqStepLabel(_seq.steps[2]),
-      inert: ['seqAddBtn', 'seqPhoneBtn', 'seqTab-saved', 'seqRows', 'seqNewBtn'].map((id) => document.getElementById(id).inert),
+      inert: ['seqAddBtn', 'seqAddRow', 'seqPhoneBtn', 'seqSavedBtn', 'seqRows', 'seqNewBtn'].map((id) => document.getElementById(id).inert),
       ctl: ['seqGoBtn', 'seqBackBtn', 'seqStopBtn'].map((id) => document.getElementById(id).inert),
       prj: ['stPrjOpen', 'stPrjExport', 'stPrjImport', 'project-view'].map((id) => document.getElementById(id).inert || !!document.getElementById(id).closest('[inert]')),
     };
@@ -217,7 +217,7 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
   assert.deepEqual(seq.chatOpt, { auto: true, full: true }, 'démo : discussion tout automatique (maquette 41), jouée sans personne');
   assert.equal(seq.label, 'Discussion « Maman » → réponse · auto complète');
   assert.ok(seq.inert.every(Boolean));
-  assert.ok(seq.ctl.every((v) => !v), 'GO / ↶ / STOP libres');
+  assert.ok(seq.ctl.every((v) => !v), 'GO / Revenir / Pause auto libres');
   assert.deepEqual(seq.prj, [false, false, false, false], 'projets : export, import, liste disponibles en aperçu');
   // Rien n'a touché les données de l'utilisateur
   const after = await p.page.evaluate(() => ['setremote-call-list-v1', 'setremote-seq-v1', 'setremote-chat-v1'].map((k) => localStorage.getItem(k)));

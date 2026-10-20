@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 // ══════════════════════════ SÉQUENCES ENREGISTRÉES (onglet Séquence, télécommande) ══════════════════════════
-// Comme les discussions enregistrées (89-discussions-saved.js) : deux
-// sous-onglets, « Séquence en cours » (91-sequence.js) et « Enregistrées (n) ».
+// Comme les discussions enregistrées (89-discussions-saved.js) : liste ouverte
+// depuis la carte de la séquence en cours (« Séquences enregistrées », 91-sequence.js).
 // Une séquence enregistrée garde son nom et ses étapes : des RÉFÉRENCES aux
 // éléments enregistrés des autres onglets, jamais des copies (une mémoire
 // modifiée est jouée telle quelle, une supprimée devient « élément
@@ -10,10 +10,10 @@
 // d'écran) ; pas le déroulé.
 // Anciennes séquences (sans ces réglages) : valeurs par défaut (heure réelle, sans fond).
 //   • « + Enregistrer la séquence en cours » : demande un nom, ajoute en fin de liste.
-//   • Toucher une ligne : la charge dans « Séquence en cours » (confirmation si
-//     la séquence en cours a des modifications non enregistrées) ; un déroulé
+//   • ▶ (ou toucher une ligne) : la charge dans la séquence en cours (confirmation par
+//     la boîte de l'app si elle a des modifications non enregistrées) ; un déroulé
 //     commencé repart de zéro (Recommencer).
-//   • « ⋯ » : renommer, dupliquer, supprimer (avec confirmation).
+//   • « ⋯ » : renommer, dupliquer, supprimer (bandeau « Annuler » de 6 s, sans confirmation).
 // Stockage : localStorage (au plus SEQ_SAVED_MAX séquences, revalidées au
 // chargement) ; les images d'accueil et fonds d'écran restent dans IndexedDB, partagés par
 // empreinte (seqGcImages efface celles que plus rien n'utilise). Export et
@@ -33,7 +33,7 @@ const _SQSV_TXT = {
   save: '+ Enregistrer la séquence en cours',
   full: 'Liste pleine ({max} séquences)',
   empty: 'Aucune séquence enregistrée pour l\'instant.',
-  hint: 'Toucher : charger dans « Séquence en cours ». ⋯ : renommer · dupliquer · supprimer.',
+  hint: '▶ : charger dans la séquence en cours. ⋯ : renommer · dupliquer · supprimer.',
   note: 'Une séquence enregistrée garde ses étapes, leurs cibles et leurs départs, et son « Téléphone au départ » (fond d\'écran compris). Les couleurs, effets, médias, appels, SMS, notifications et discussions restent ceux de leurs onglets : modifiés là-bas, ils sont joués tels quels.',
   sheetSave: 'Enregistrer la séquence en cours',
   sheetRename: 'Renommer la séquence',
@@ -45,8 +45,9 @@ const _SQSV_TXT = {
   duplicate: 'Dupliquer',
   remove: 'Supprimer',
   copy: '{nom} (copie)',
-  confirmLoad: 'La séquence en cours a des modifications non enregistrées. Charger « {nom} » à la place ?',
-  confirmDelete: 'Supprimer la séquence « {nom} » ?',
+  loadTitle: 'Charger « {nom} » ?', loadText: 'La séquence en cours a des modifications non enregistrées : elles seront perdues.', loadOk: 'Charger', loadCancel: 'Annuler',
+  deleted: '« {nom} » supprimée', playAria: 'Charger « {nom} » dans la séquence en cours',
+  titleSaved: 'Séquences enregistrées · {n}',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Séquence',
   // « + Nouvelle séquence » (maquette 47)
@@ -100,12 +101,16 @@ function saveCurrentSeq(name) {
   return e.id;
 }
 // Toucher une ligne : charge l'entrée dans « Séquence en cours »
-function loadSavedSeq(id) {
+function loadSavedSeq(id, confirmed) {
   const e = seqSaved.find((x) => x.id === id);
   if (!e) return false;
   const dirty = seqHasUnsavedChanges();
   if (e.id === _seq.savedId && !dirty) { setSeqView('cur'); return true; }
-  if (dirty && !confirm(_seqTpl(_SQSV_TXT.confirmLoad, { nom: e.name }))) return false;
+  if (dirty && confirmed !== true) {
+    // Séquence modifiée : confirmation (boîte de l'app) avant de la remplacer
+    openAppConfirm({ title: _seqTpl(_SQSV_TXT.loadTitle, { nom: e.name }), text: _SQSV_TXT.loadText, ok: _SQSV_TXT.loadOk, cancel: _SQSV_TXT.loadCancel }, () => loadSavedSeq(id, true));
+    return false;
+  }
   if (seqPos() >= 0 || _seqRun.state !== 'idle') seqRestart();
   const dropped = _sqsvImages(_seq.steps, _seq.wall);
   _seq = { name: e.name, steps: _sqsvClone(e.steps), savedId: e.id, phone: _sqsvClone(e.phone), wall: e.wall ? Object.assign({}, e.wall) : null };
@@ -137,12 +142,22 @@ function duplicateSavedSeq(id) {
 function deleteSavedSeq(id) {
   const i = seqSaved.findIndex((x) => x.id === id);
   if (i < 0) return false;
-  if (!confirm(_seqTpl(_SQSV_TXT.confirmDelete, { nom: seqSaved[i].name }))) return false;
   const [e] = seqSaved.splice(i, 1);
+  const wasCur = _seq.savedId === id;
   _sqsvPersist();
-  if (_seq.savedId === id) { _seq.savedId = null; seqSave(); }
-  seqGcImages(_sqsvImages(e.steps, e.wall));
+  if (wasCur) { _seq.savedId = null; seqSave(); }
   renderSeq();
+  undoSnack({
+    text: _seqTpl(_SQSV_TXT.deleted, { nom: e.name }),
+    undo: () => {
+      if (seqSaved.length >= SEQ_SAVED_MAX || seqSaved.some((x) => x.id === e.id)) return;
+      seqSaved.splice(Math.min(i, seqSaved.length), 0, e);
+      _sqsvPersist();
+      if (wasCur && !_seq.savedId) { _seq.savedId = e.id; seqSave(); }
+      renderSeq();
+    },
+    commit: () => { seqGcImages(_sqsvImages(e.steps, e.wall)); },
+  });
   return true;
 }
 
@@ -156,9 +171,8 @@ function _sqsvMeta(e) {
   return t;
 }
 function renderSavedSeqs() {
-  _seqSet('seqTab-cur', _SQSV_TXT.tabCur);
-  _seqSet('seqTab-saved', _seqTpl(_SQSV_TXT.tab, { n: seqSaved.length }));
-  setIconText(document.getElementById('seqNewBtn'), _SQSV_TXT.newBtn);
+  _seqSet('seqSavedCount', String(seqSaved.length));
+  _seqSet('seqSavedTitle', _seqTpl(_SQSV_TXT.titleSaved, { n: seqSaved.length }));
   const rows = document.getElementById('seqSavedRows');
   if (!rows) return;
   rows.textContent = '';
@@ -171,10 +185,13 @@ function renderSavedSeqs() {
     const nm = document.createElement('span'); nm.className = 'dc-saved-name'; nm.textContent = e.name;
     const meta = document.createElement('span'); meta.className = 'dc-saved-meta'; meta.textContent = _sqsvMeta(e);
     main.append(nm, meta);
+    const play = document.createElement('button'); play.type = 'button'; play.className = 'cl-play'; play.innerHTML = icon('play');
+    play.setAttribute('aria-label', _seqTpl(_SQSV_TXT.playAria, { nom: e.name }));
+    play.onclick = (ev) => { ev.stopPropagation(); loadSavedSeq(e.id); };
     const more = document.createElement('button'); more.type = 'button'; more.className = 'dc-saved-more'; more.innerHTML = icon('ellipsis', 'ic-lg');
     more.setAttribute('aria-label', _SQSV_TXT.rename + ', ' + _SQSV_TXT.duplicate.toLowerCase() + ', ' + _SQSV_TXT.remove.toLowerCase());
     more.onclick = (ev) => { ev.stopPropagation(); openSavedSeqMenu(e.id); };
-    row.append(main, more);
+    row.append(main, play, more);
     rows.appendChild(row);
   }
   _seqSet('seqSavedEmpty', _SQSV_TXT.empty);
@@ -208,6 +225,8 @@ function openRenameSavedSeq(id) {
 }
 // Contenu d'une feuille de séquence : { title, html, form } ; null : entrée disparue
 function seqSheetContent(s) {
+  // Éditeur d'étape, fiche du Plateau, carte de séquence, création sur place (91-sequence.js)
+  if (['seqTarget', 'seqStepMenu', 'seqDetail', 'seqCard', 'seqNewEntry'].includes(s.kind)) return seqEditSheetContent(s);
   if (s.kind === 'seqNew') {
     const saved = seqSaved.find((x) => x.id === _seq.savedId);
     return {

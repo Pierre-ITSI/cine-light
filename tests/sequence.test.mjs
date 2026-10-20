@@ -4,7 +4,7 @@
 // l'exemple du propriétaire de bout en bout (notification SMS → appel → appel
 // manqué → SMS → toucher l'écran verrouillé → code → discussion → réponse du
 // comédien), chaque départ (GO, après N s, geste, délai de secours), GO qui
-// passe outre, ↶, STOP, la cible, un élément supprimé, les séquences
+// passe outre, ↶, Pause auto, la cible, un élément supprimé, les séquences
 // enregistrées, la resynchronisation d'un écran rechargé en pleine séquence et
 // l'avertissement stroboscope.
 import { test, describe, before, after, beforeEach } from 'node:test';
@@ -24,7 +24,7 @@ async function rig(n, seed) {
   const rp = remote.page;
   // Les tests enchaînent les GO plus vite qu'un doigt : anti-rebond levé ici
   // (il a son propre test, « GO : anti-rebond… »)
-  await rp.evaluate(() => { startMode('remote'); switchTab('seq'); SEQ_GO_GUARD_MS = 0; });
+  await rp.evaluate(() => { startMode('remote'); switchTab('seq'); setSeqMode('play'); SEQ_GO_GUARD_MS = 0; });
   await connected(rp);
   const hash = await pairingHash(rp);
   const screens = [];
@@ -40,6 +40,7 @@ async function rig(n, seed) {
   await broker.flush();
   return { broker, remote, rp, screens, close: async () => { for (const s of screens) await s.close(); await remote.close(); } };
 }
+const shownEl = (page, id) => page.evaluate((id) => { const e = document.getElementById(id); return !!e && getComputedStyle(e).display !== 'none'; }, id);
 const noErrors = (r) => { for (const p of [r.remote, ...r.screens]) assert.deepEqual(p.errors, []); };
 
 // Éléments enregistrés des autres onglets (mêmes formes que leurs onglets)
@@ -76,10 +77,18 @@ const phone = (page) => page.evaluate(() => {
 });
 const callShown = (page) => page.evaluate(() => getComputedStyle(document.getElementById('screen-call')).display !== 'none' && _callState);
 const rows = (rp) => rp.evaluate(() => [...document.querySelectorAll('#seqRows .sq-row')].map((r) => [
-  r.querySelector('.sq-num').textContent, r.querySelector('.sq-label').textContent, r.querySelector('.sq-badge').textContent,
+  r.querySelector('.sq-num').textContent, r.querySelector('.sq-label b').textContent, r.querySelector('.sq-badge').textContent,
   ['done', 'cur', 'next', 'missing'].filter((c) => r.classList.contains(c)).join(' '),
 ]));
 const pos = (rp) => rp.evaluate(() => seqPos() + 1);
+// « Recommencer » : appui long (un simple toucher n'affiche que l'indication)
+const holdRestart = async (page) => {
+  const b = await page.locator('#seqRestartBtn').boundingBox();
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(800);
+  await page.mouse.up();
+};
 
 describe('exemple du propriétaire, de bout en bout', () => {
   let r, rp, sp, sid;
@@ -113,7 +122,8 @@ describe('exemple du propriétaire, de bout en bout', () => {
       ['8', 'Effet Bougie 1', 'répond', ''],
     ]);
     assert.equal(await rp.textContent('#seqTarget'), 'Cible : Écran 1');
-    assert.equal(await rp.textContent('#seqNow'), 'Prêt : GO lance l\'étape 1 · Couleur');
+    assert.match(await rp.textContent('#seqNow'), /^PrêtGO lance l'étape 1$|^Prêt.*GO lance l'étape 1$/);
+    assert.match(await rp.textContent('#seqNext'), /^Ensuite · 1Couleur 3200 K · 40 % \(ambiance nuit\)au GO$/);
     assert.equal(await rp.evaluate(() => [document.getElementById('seqBackBtn').disabled, document.getElementById('seqStopBtn').disabled].join()), 'true,true');
   });
 
@@ -130,8 +140,9 @@ describe('exemple du propriétaire, de bout en bout', () => {
   test('après 1 s : l\'appel sonne ; le comédien refuse → appel manqué empilé (la plus récente en haut)', async () => {
     await waitFor(sp, () => _callState === 'ringing', null, { timeout: 3000 });
     assert.equal(await pos(rp), 3);
-    await waitFor(rp, () => /^En cours : 3 · Appel entrant — sonne depuis \d+ s/.test(document.getElementById('seqNow').textContent));
-    assert.match(await rp.textContent('#seqNow'), /Suivant : 4 · Appel manqué \(si le comédien refuse, ou après 12 s\)$/);
+    await waitFor(rp, () => /Sonne depuis \d+ s/.test(document.getElementById('seqNow').textContent));
+    assert.match(await rp.textContent('#seqNow'), /^En cours · 3.*Appel entrant « Maman · mobile ».*Sonne depuis \d+ s · Écran 1$/);
+    assert.match(await rp.textContent('#seqNext'), /^Ensuite · 4Notif « Appel manqué »si le comédien refusesinon dans 12 s/);
     assert.deepEqual((await rows(rp)).map((x) => x[3]), ['done', 'done', 'cur', 'next', '', '', '', '']);
     await sp.locator('#screen-call .sc-no').click();
     await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 2);
@@ -166,7 +177,7 @@ describe('exemple du propriétaire, de bout en bout', () => {
     await sp.keyboard.press('Enter');
     await waitFor(rp, () => seqPos() === 7);
     await waitFor(sp, () => _screenFxR.current() === 'candle');
-    assert.equal(await rp.textContent('#seqNow').then((t) => t.includes('Séquence terminée')), true);
+    assert.equal(await rp.textContent('#seqNext').then((t) => t.includes('Séquence terminée')), true);
     assert.equal(await rp.evaluate(() => document.getElementById('seqGoBtn').disabled), true);
     // Aucun contenu de touche n'a voyagé ; le geste est rapporté sans le code
     await r.broker.flush();
@@ -190,14 +201,14 @@ describe('exemple du propriétaire, de bout en bout', () => {
     await rp.click('#seqGoBtn');
     await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 3);
     await rp.click('#seqStopBtn');
-    assert.equal(await rp.textContent('#seqRestartBtn'), 'Recommencer');
-    await rp.click('#seqRestartBtn');
+    assert.equal((await rp.textContent('#seqRestartBtn')).trim(), 'Recommencer');
+    await holdRestart(rp);
     await waitFor(sp, () => document.getElementById('screen-phone').style.display === 'none');
     assert.equal(await pos(rp), 0);
   });
 });
 
-describe('départs : après N s, geste, délai de secours, GO qui passe outre, STOP', () => {
+describe('départs : après N s, geste, délai de secours, GO qui passe outre, Pause auto', () => {
   let r, rp, sp, sid, T;
   before(async () => {
     r = await rig(1, 37);
@@ -249,7 +260,7 @@ describe('départs : après N s, geste, délai de secours, GO qui passe outre, S
     await restart();
   });
 
-  test('GO passe outre un geste attendu ; STOP arrête les minuteries et l\'écoute, GO reprend', async () => {
+  test('GO passe outre un geste attendu ; Pause auto arrête les minuteries et l\'écoute, GO relance', async () => {
     await setSteps(rp, [
       st('e1', 'sms', 's1', { k: 'go' }, T),
       st('e2', 'notif', 'n1', { k: 'gesture', g: 'touch' }, T),
@@ -262,7 +273,8 @@ describe('départs : après N s, geste, délai de secours, GO qui passe outre, S
     assert.deepEqual((await phone(sp)).cards[0].slice(0, 3), ['Banque Atlas', 'Virement reçu', '2 400,00 €']);
     await rp.click('#seqStopBtn');
     assert.equal(await rp.evaluate(() => _seqRun.state), 'stopped');
-    assert.match(await rp.textContent('#seqNow'), /Arrêtée — GO reprend\./);
+    assert.equal((await rp.textContent('#seqStopBtn')).trim(), 'Pause auto');
+    assert.match(await rp.textContent('#seqNow'), /En pause auto : GO relance\./);
     await sleep(1500);
     assert.equal((await phone(sp)).cards.length, 2, 'minuterie arrêtée');
     assert.equal(await sp.evaluate(() => getComputedStyle(document.getElementById('screen-blackout')).display), 'none', 'rien n\'est éteint');
@@ -388,7 +400,8 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     await rp.click('#seqGoBtn');
     await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 1);
     assert.equal(await rp.evaluate(() => getComputedStyle(document.getElementById('seqWarn')).display), 'none');
-    // L'éditeur le signale aussi (plus aucune mémoire : la liste vide est expliquée)
+    // L'éditeur le signale aussi (plus aucune mémoire : la liste vide est expliquée) — en Préparer
+    await rp.evaluate(() => setSeqMode('prep'));
     await rp.locator('#seqRows .sq-row').nth(0).click();
     assert.match(await rp.textContent('#ssRefCard'), /Aucune mémoire de couleur/);
     await rp.click('.ss-back');
@@ -396,34 +409,65 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     await r.close();
   });
 
-  test('éditeur (maquette 29) : ajouter, régler, enregistrer, supprimer une étape', async () => {
+  test('éditeur en quatre questions (maquette 4h) : ajouter, régler, enregistrer, supprimer (bandeau « Annuler ») une étape', async () => {
     const { page, errors, close } = await openPage(browser);
     await page.evaluate(() => { startMode('remote'); switchTab('seq'); });
     await fixtures(page);
-    page.on('dialog', (d) => d.accept());
+    let dialogs = 0;
+    page.on('dialog', (d) => { dialogs++; d.accept(); });
     await page.click('#seqAddBtn');
     assert.equal(await page.textContent('#ssTitle'), 'Nouvelle étape');
+    // Quatre questions, dans l'ordre
+    assert.deepEqual(await page.$$eval('#seq-step-view .ss-q > h2', (h) => h.map((x) => x.textContent.replace(/\s+/g, ' ').trim())), ['1 Quoi ?', '2 Lequel ?', '3 Quand ?', '4 Sur quel écran ?']);
     assert.deepEqual(await page.$$eval('#ssKinds .ss-opt', (b) => b.map((x) => x.textContent)), ['Couleur', 'Effet', 'Média', 'Appel', 'SMS', 'Notif', 'Veille', 'Manqué', 'Déverrouil.', 'Discussion', 'Batterie', 'Extinction', 'Réseau']);
     await page.locator('#ssKinds .ss-opt', { hasText: 'SMS' }).click();
-    await page.locator('#ssRefCard .ss-opt', { hasText: '2 · Maman' }).click();
-    await page.locator('#ssTrigCard .ss-opt', { hasText: 'Après N s' }).click();
+    assert.equal(await shownEl(page, 'ssKinds'), false, 'la grille des 13 types se referme après le choix');
+    assert.match(await page.textContent('#ssKindBtn'), /^SMSChanger$/);
+    // 2. Lequel ? : les éléments enregistrés, avec leurs réglages en petit, et « + Nouveau SMS ici »
+    assert.deepEqual(await page.$$eval('#ssRefs .ss-opt', (b) => b.map((x) => x.textContent.replace(/\s+/g, ' ').trim())).then((l) => l.map((x) => x.slice(0, 5))), ['Maman', 'Maman', 'Nouve']);
+    await page.locator('#ssRefs .ss-opt').nth(1).click();
+    // 3. Quand ? : Au GO / Après un délai / Geste du comédien
+    assert.deepEqual(await page.$$eval('#ssTrigCard .ss-when .ss-opt', (b) => b.map((x) => x.textContent)), ['Au GO', 'Après un délai', 'Geste du comédien']);
+    await page.locator('#ssTrigCard .ss-opt', { hasText: 'Après un délai' }).click();
     await page.locator('#ssTrigCard .ss-step-btn[aria-label="Augmenter"]').click();
     assert.equal(await page.textContent('#ssDelayVal'), '5 s');
+    // Phrase de synthèse en tête
+    assert.equal(await page.textContent('#ssSummary'), '« 5 s après le départ, chaque écran reçoit un SMS de « Maman ». »');
+    // 4. Sur quel écran ? : rangée → feuille Tous / groupes / écrans
+    assert.match(await page.textContent('#ssTargetBtn'), /^Tous les écrans/);
+    await page.click('#ssTargetBtn');
+    assert.equal(await page.textContent('#srSheetTitle'), 'Sur quel écran ?');
+    assert.deepEqual(await page.$$eval('#ssTargets .dc-menu-btn', (b) => b.map((x) => x.textContent)), ['Tous les écrans']);
+    await page.click('#sr-sheet .sr-cancel');
     await page.click('#ssSave');
     assert.deepEqual(await rows(page), [['1', 'SMS « Rappelle-moi stp »', 'après 5 s', 'next']]);
     // Déverrouillage, geste et délai de secours
     await page.click('#seqAddBtn');
     await page.locator('#ssKinds .ss-opt', { hasText: 'Déverrouil.' }).click();
+    assert.equal(await page.textContent('#ssQ2label'), 'Réglages', 'sans liste d\'éléments : « Réglages »');
     await page.locator('#ssRefCard .ss-opt', { hasText: 'Code 6 chiffres' }).click();
     await page.locator('#ssTrigCard .ss-opt', { hasText: 'Geste du comédien' }).click();
     await page.locator('#ssTrigCard .ss-opt', { hasText: 'raccroche' }).click();
     for (let i = 0; i < 3; i++) await page.locator('#ssTrigCard .ss-step-btn[aria-label="Augmenter"]').click();
+    assert.equal(await page.textContent('#ssSummary'), '« Dès que le comédien refuse, ou après 3 s, chaque écran se déverrouille (code 6 chiffres). »');
     await page.click('#ssSave');
     assert.deepEqual((await rows(page))[1], ['2', 'Déverrouillage code 6 chiffres', 'refuse / 3 s', '']);
-    // Modifier puis supprimer
+    // Modifier puis supprimer : menu ⋯, aucune boîte du navigateur, bandeau « Annuler » qui remet l'étape à son rang
     await page.locator('#seqRows .sq-row').nth(0).click();
-    assert.equal(await page.textContent('#ssTitle'), 'Étape 1');
-    await page.click('#ssDel');
+    assert.equal(await page.textContent('#ssTitle'), 'Étape 1 sur 2');
+    assert.equal(await page.textContent('#ssSummary'), '« 5 s après le départ, chaque écran reçoit un SMS de « Maman ». »');
+    await page.click('#ssMore');
+    assert.deepEqual(await page.$$eval('#srSheetBody .dc-menu-btn', (b) => b.map((x) => x.textContent)), ['Dupliquer', 'Monter d\'un rang', 'Descendre d\'un rang', 'Supprimer']);
+    await page.click('#ssMenuDel');
+    assert.equal(dialogs, 0, 'plus de confirm()');
+    assert.deepEqual((await rows(page)).map((x) => x[1]), ['Déverrouillage code 6 chiffres']);
+    assert.equal(await page.textContent('#usText'), 'Étape 1 supprimée');
+    await page.click('#usUndo');
+    assert.deepEqual((await rows(page)).map((x) => x[1]), ['SMS « Rappelle-moi stp »', 'Déverrouillage code 6 chiffres'], 'remise à son rang');
+    await page.locator('#seqRows .sq-row').nth(0).click();
+    await page.click('#ssMore');
+    await page.click('#ssMenuDel');
+    await page.evaluate(() => _usFlush());
     assert.deepEqual((await rows(page)).map((x) => x[1]), ['Déverrouillage code 6 chiffres']);
     // Une étape sans élément ne s'enregistre pas
     await page.evaluate(() => { callList.call = []; });
@@ -431,29 +475,72 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     await page.locator('#ssKinds .ss-opt', { hasText: 'Appel' }).first().click();
     await page.click('#ssSave');
     assert.equal(await page.textContent('#ssErr'), 'Choisissez l\'élément à jouer.');
-    assert.equal(await page.textContent('#ssDel'), 'Annuler', 'nouvelle étape : rien à supprimer');
-    await page.click('#ssDel');
+    assert.equal(await page.textContent('#ssCancel'), 'Annuler', 'nouvelle étape : Annuler');
+    assert.equal(await shownEl(page, 'ssMore'), false, 'nouvelle étape : rien à supprimer ni à déplacer');
+    await page.click('#ssCancel');
     await page.click('#acOk'); // brouillon modifié : abandon confirmé
     assert.equal((await rows(page)).length, 1);
+    assert.equal(dialogs, 0);
     assert.deepEqual(errors, []);
     await close();
   });
 
-  test('séquences enregistrées : enregistrer, renommer, dupliquer, supprimer, charger ; gardées au rechargement', async () => {
+  test('« + Nouvel appel ici » : crée l\'appel dans la liste de Tel (n° suivant) et le choisit dans l\'étape, sans quitter l\'éditeur', async () => {
+    const { page, errors, close } = await openPage(browser);
+    await page.evaluate(() => { startMode('remote'); switchTab('seq'); setCallRing('silent'); });
+    await fixtures(page);
+    await page.click('#seqAddBtn');
+    await page.locator('#ssKinds .ss-opt', { hasText: 'Appel' }).first().click();
+    assert.equal(await page.textContent('#ssNewHere'), 'Nouvel appel ici');
+    await page.click('#ssNewHere');
+    assert.equal(await page.textContent('#srSheetTitle'), 'Nouvel appel');
+    assert.match(await page.textContent('#srSheetBody .sr-sheet-note'), /Il rejoint la liste de l'onglet Tel \(n° 2\) et se sélectionne ici\./);
+    // Mêmes champs et mêmes rangées que le composeur Tel
+    assert.deepEqual(await page.$$eval('#srSheetBody .tl-row .tl-k b', (b) => b.map((x) => x.textContent)), ['Apparence', 'Sonnerie', 'Au décroché']);
+    await page.fill('#nwName', 'Hôpital');
+    await page.fill('#nwLabel', 'urgences');
+    await page.fill('#nwList', 'Hôpital — annonce');
+    // Une rangée ouvre sa vue habituelle par-dessus la feuille, qui garde sa saisie
+    await page.click('#nwRow-style');
+    assert.equal(await shownEl(page, 'tel-style-view'), true);
+    await page.click('#callstyle-tonal');
+    await page.click('#tsBack');
+    assert.equal(await page.inputValue('#nwName'), 'Hôpital');
+    assert.match(await page.textContent('#nwRow-style .tl-v'), /^Tonal/);
+    await page.click('#nwCreate');
+    await waitFor(page, () => callList.call.length === 2);
+    assert.deepEqual(await page.evaluate(() => callList.call[1] && [callList.call[1].name, callList.call[1].label, callList.call[1].title, callList.call[1].style]), ['Hôpital', 'urgences', 'Hôpital — annonce', 'tonal']);
+    // Créé et sélectionné dans l'étape ; l'éditeur est toujours ouvert
+    assert.equal(await shownEl(page, 'seq-step-view'), true);
+    assert.equal(await page.evaluate(() => _seqEdit.step.ref === callList.call[1].id), true);
+    assert.equal(await page.locator('#ssRefs .ss-opt.on').first().textContent().then((x) => x.replace(/\s+/g, ' ').trim().slice(0, 17)), 'Hôpital — annonce');
+    assert.match(await page.textContent('#ssSummary'), /reçoit un appel de « Hôpital »\. »$/);
+    await page.click('#ssSave');
+    assert.equal((await rows(page))[0][1], 'Appel entrant « Hôpital — annonce »');
+    // L'appel est bien dans la liste de l'onglet Tel, au n° 2
+    await page.evaluate(() => { switchTab('call'); setCallKind('call'); });
+    assert.deepEqual((await page.$$eval('#callListRows .cl-row .cl-name', (n) => n.map((x) => x.textContent))), ['Maman · mobile', 'Hôpital — annonce']);
+    // Aperçu sans licence : pas de création (l'éditeur n'est de toute façon pas ouvrable)
+    assert.deepEqual(errors, []);
+    await close();
+  });
+
+  test('séquences enregistrées : enregistrer, renommer, dupliquer, supprimer (bandeau), charger ; gardées au rechargement', async () => {
     const { page, errors, close } = await openPage(browser);
     await page.evaluate(() => { startMode('remote'); switchTab('seq'); });
     await fixtures(page);
     await setSteps(page, [st('k1', 'sms', 's1', { k: 'go' }, { k: 'all' }), st('k2', 'call', 'c1', { k: 'after', s: 3 }, { k: 'all' })]);
     let confirms = 0;
     page.on('dialog', (d) => { confirms++; d.accept(); });
-    await page.click('#seqTab-saved');
+    await page.click('#seqSavedBtn');
     assert.equal(await page.textContent('#seqSavedEmpty'), 'Aucune séquence enregistrée pour l\'instant.');
     await page.click('#seqSaveBtn');
     await page.fill('#srName', 'Séq. 12 — « Le message »');
     await page.click('#sr-sheet .sr-ok');
     const saved = () => page.$$eval('#seqSavedRows .dc-saved-row', (rs) => rs.map((x) => [x.querySelector('.dc-saved-name').textContent, x.querySelector('.dc-saved-meta').textContent, x.classList.contains('selected')]));
     assert.deepEqual(await saved(), [['Séq. 12 — « Le message »', '2 étapes · Tous les écrans', true]]);
-    assert.equal(await page.textContent('#seqTab-saved'), 'Enregistrées (1)');
+    assert.equal(await page.textContent('#seqSavedTitle'), 'Séquences enregistrées · 1');
+    assert.equal(await page.textContent('#seqSavedCount'), '1');
     assert.equal(await page.textContent('#seqName'), 'Séq. 12 — « Le message »');
     // Dupliquer, renommer, supprimer (menu « ⋯ »)
     await page.locator('#seqSavedRows .dc-saved-more').nth(0).click();
@@ -464,16 +551,28 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     await page.fill('#srName', 'Séq. 14 — Rupture');
     await page.click('#sr-sheet .sr-ok');
     assert.deepEqual((await saved()).map((x) => x[0]), ['Séq. 12 — « Le message »', 'Séq. 14 — Rupture']);
-    // Charger la copie après avoir modifié la séquence en cours : confirmation
+    // Charger la copie après avoir modifié la séquence en cours : confirmation de l'app (plus de boîte du navigateur)
     await page.evaluate(() => { _seq.steps.pop(); seqSave(); });
+    await page.locator('#seqSavedRows .dc-saved-row').nth(1).locator('.cl-play').click();
+    assert.equal(await page.textContent('#acTitle'), 'Charger « Séq. 14 — Rupture » ?');
+    await page.click('#acCancel');
+    assert.equal(await page.evaluate(() => _seq.steps.length), 1, 'refusé : rien ne change');
     await page.locator('#seqSavedRows .dc-saved-row').nth(1).click();
-    assert.equal(confirms, 1);
+    await page.click('#acOk');
+    assert.equal(confirms, 0);
     assert.equal(await page.textContent('#seqName'), 'Séq. 14 — Rupture');
     assert.equal((await rows(page)).length, 2);
-    await page.click('#seqTab-saved');
+    await page.click('#seqSavedBtn');
     await page.locator('#seqSavedRows .dc-saved-more').nth(0).click();
     await page.locator('#srSheetBody .dc-menu-btn', { hasText: 'Supprimer' }).click();
     assert.deepEqual((await saved()).map((x) => x[0]), ['Séq. 14 — Rupture']);
+    assert.equal(await page.textContent('#usText'), '« Séq. 12 — « Le message » » supprimée');
+    await page.click('#usUndo');
+    assert.deepEqual((await saved()).map((x) => x[0]), ['Séq. 12 — « Le message »', 'Séq. 14 — Rupture'], 'remise à son rang');
+    await page.locator('#seqSavedRows .dc-saved-more').nth(0).click();
+    await page.locator('#srSheetBody .dc-menu-btn', { hasText: 'Supprimer' }).click();
+    await page.evaluate(() => _usFlush());
+    assert.equal(confirms, 0, 'aucune confirmation()');
     // Rechargement : séquence en cours et séquences enregistrées retrouvées (références, pas de copies)
     await page.reload();
     await page.evaluate(() => { startMode('remote'); switchTab('seq'); setSeqView('saved'); });
@@ -531,11 +630,11 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     await waitFor(S.page, () => !!document.querySelector('#screen-phone .sp-lock, #screen-phone .sp-code') && !document.querySelector('#screen-phone .has-wall'));
     assert.equal(await rp.evaluate(() => _seq.wall), null);
     assert.ok(await rp.evaluate((d) => callAssetGet(seqHomeKey(seqImageSig(d))), wall), 'encore utilisé par la séquence enregistrée');
-    rp.on('dialog', (d) => d.accept());
     await rp.evaluate(() => { closePhoneParams(); loadSavedSeq(seqSaved[0].id); });
+    await rp.click('#acOk'); // séquence modifiée (fond retiré) : confirmation de l'app
     assert.equal(await rp.evaluate(() => _seq.wall && _seq.wall.name), 'plage-julie.png');
     // Plus rien ne s'en sert : l'image est effacée
-    await rp.evaluate(() => { deleteSavedSeq(seqSaved[0].id); openPhoneParams('seq'); ppRemoveWall(); closePhoneParams(); });
+    await rp.evaluate(() => { deleteSavedSeq(seqSaved[0].id); openPhoneParams('seq'); ppRemoveWall(); closePhoneParams(); _usFlush(); });
     await waitFor(rp, (d) => callAssetGet(seqHomeKey(seqImageSig(d))).then((v) => v === null), wall);
     // Ancienne séquence (sans fond) : relue sans fond
     assert.equal(await rp.evaluate(() => { localStorage.setItem('setremote-seq-v1', JSON.stringify({ v: 1, name: 'x', steps: [] })); seqLoad(); return _seq.wall; }), null);
@@ -575,10 +674,10 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
 });
 
 describe('garde-fous du plateau : GO, éditeur d\'étape', () => {
-  test('GO : anti-rebond de 600 ms (un double toucher ne saute pas d\'étape), vibration courte, ↶ à 16 px', async () => {
+  test('GO : anti-rebond de 600 ms (un double toucher ne saute pas d\'étape), vibration courte, 12 px au moins avec Revenir / Pause auto / Recommencer', async () => {
     const { page, errors, close } = await openPage(browser);
     await page.evaluate(() => {
-      startMode('remote'); switchTab('seq');
+      startMode('remote'); switchTab('seq'); setSeqMode('play');
       window.__vib = [];
       navigator.vibrate = (p) => { window.__vib.push(p); return true; };
     });
@@ -596,8 +695,8 @@ describe('garde-fous du plateau : GO, éditeur d\'étape', () => {
     // seqGo (minuterie, console) n'est pas freiné
     await page.evaluate(() => seqGo());
     assert.equal(await pos(page), 3);
-    const gap = await page.evaluate(() => document.getElementById('seqBackBtn').getBoundingClientRect().left - document.getElementById('seqGoBtn').getBoundingClientRect().right);
-    assert.ok(gap >= 16, 'écart GO / ↶ : ' + gap);
+    const gap = await page.evaluate(() => document.getElementById('seqBackBtn').getBoundingClientRect().top - document.getElementById('seqGoBtn').getBoundingClientRect().bottom);
+    assert.ok(gap >= 12, 'écart GO / commandes : ' + gap);
     assert.deepEqual(errors, []);
     await close();
   });
@@ -611,9 +710,8 @@ describe('garde-fous du plateau : GO, éditeur d\'étape', () => {
     const confirmShown = () => page.evaluate(() => getComputedStyle(document.getElementById('app-confirm')).display === 'block');
     // Nouvelle étape intacte : ANNULER (neutre) ferme sans question
     await page.click('#seqAddBtn');
-    assert.equal(await page.textContent('#ssDel'), 'Annuler');
-    assert.equal(await page.evaluate(() => document.getElementById('ssDel').classList.contains('ss-cancel')), true);
-    await page.click('#ssDel');
+    assert.equal(await page.textContent('#ssCancel'), 'Annuler');
+    await page.click('#ssCancel');
     assert.deepEqual([await editor(), await confirmShown()], [false, false]);
     // Nouvelle étape modifiée : « ← Séquence » demande confirmation ; Continuer garde le brouillon
     await page.click('#seqAddBtn');
@@ -631,11 +729,11 @@ describe('garde-fous du plateau : GO, éditeur d\'étape', () => {
     assert.equal((await rows(page)).length, 1, 'rien d\'ajouté');
     // Étape existante : SUPPRIMER ; intacte, « ← Séquence » ferme directement ; modifiée, confirmation
     await page.locator('#seqRows .sq-row').nth(0).click();
-    assert.equal(await page.textContent('#ssDel'), 'Supprimer');
+    assert.equal(await shownEl(page, 'ssMore'), true, 'étape existante : ⋯ (supprimer, dupliquer, déplacer)');
     await page.click('.ss-back');
     assert.deepEqual([await editor(), await confirmShown()], [false, false]);
     await page.locator('#seqRows .sq-row').nth(0).click();
-    await page.locator('#ssTrigCard .ss-opt', { hasText: 'Après N s' }).click();
+    await page.locator('#ssTrigCard .ss-opt', { hasText: 'Après un délai' }).click();
     await page.click('.ss-back');
     assert.equal(await page.textContent('#acTitle'), 'Abandonner les modifications ?');
     await page.click('#acOk');

@@ -122,8 +122,8 @@ const PRIMARY = {
   effects: ['#content-effects .effect-card', '#content-effects .slider-btn', '#content-effects input[type=range]', '.fx-dice-btn'],
   flash: ['.torch-onoff-btn', '#content-flash .effect-btn', '#content-flash .slider-btn'],
   media: ['#content-media .media-btn', '#content-media .slider-btn', '#content-media input[type=range]'],
-  call: ['#content-call .gw-seg-btn', '#content-call .tel-sum', '#content-call .media-btn', '#content-call .tel-save'],
-  seq: ['#content-seq .sq-add', '#content-seq .prj-newbtn', '#content-seq .sq-ctl button'],
+  call: ['#content-call .tl-kind', '#content-call .tl-row', '#content-call .tl-link', '#content-call .cl-play', '#tel-bar .nb-row button'],
+  seq: ['#content-seq .sq-seg button', '#content-seq .sq-new', '#content-seq .sq-addrow', '#content-seq .tl-row', '#seq-bar .nb-row button'],
   qr: ['#content-screens .st-btn', '#content-screens .nv-lead', '#content-screens .pair-refresh', '#content-screens .pair-manage'],
 };
 test('cibles tactiles : commandes principales d\'au moins 44 px dans chaque onglet', async () => {
