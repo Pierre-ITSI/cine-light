@@ -1908,6 +1908,7 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
 .toggle-switch::after{content:'';position:absolute;inset:-6px -4px} /* zone tactile 44 */
 .toggle-track{border-radius:var(--r-pill);background:var(--surface-3);border:1px solid var(--border-strong)}
 .toggle-thumb{top:4px;left:4px;width:24px;height:24px;background:var(--text-2);box-shadow:none}
+.toggle-switch input:checked+.toggle-track{background:var(--accent);border-color:var(--accent)}
 .toggle-switch input:checked~.toggle-thumb{transform:translateX(20px);background:#000}
 
 /* ── Buttons : primaire ── */

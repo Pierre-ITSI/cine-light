@@ -162,3 +162,19 @@ test('jetons : couleurs, rayons, !important absents hors mouvement réduit, anci
     assert.doesNotMatch(readFileSync(new URL('../web/styles/' + f, import.meta.url), 'utf8'), /!important/, f);
   }
 });
+
+test('interrupteur activé : piste orange (accent), désactivé : piste neutre', async () => {
+  const { page, close } = await openPage(browser);
+  try {
+    await page.evaluate(() => { startMode('remote'); switchTab('media'); });
+    const bg = () => page.evaluate(() => getComputedStyle(document.querySelector('#mediaBarToggle + .toggle-track')).backgroundColor);
+    await page.waitForTimeout(500);
+    const off = await bg();
+    await page.evaluate(() => { document.getElementById('mediaBarToggle').checked = true; });
+    await page.waitForTimeout(500); // transition de la piste
+    const on = await bg();
+    const accent = await page.evaluate(() => { const d = document.createElement('div'); d.style.background = 'var(--accent)'; document.body.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c; });
+    assert.notEqual(on, off);
+    assert.equal(on, accent);
+  } finally { await close(); }
+});
