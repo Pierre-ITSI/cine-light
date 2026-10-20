@@ -158,7 +158,7 @@ function _sqsvMeta(e) {
 function renderSavedSeqs() {
   _seqSet('seqTab-cur', _SQSV_TXT.tabCur);
   _seqSet('seqTab-saved', _seqTpl(_SQSV_TXT.tab, { n: seqSaved.length }));
-  _seqSet('seqNewBtn', _SQSV_TXT.newBtn);
+  setIconText(document.getElementById('seqNewBtn'), _SQSV_TXT.newBtn);
   const rows = document.getElementById('seqSavedRows');
   if (!rows) return;
   rows.textContent = '';

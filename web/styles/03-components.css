@@ -453,3 +453,5 @@
 .install-btn{height:var(--tap);padding:0 var(--sp-5);border:1px solid var(--border-strong);border-radius:var(--r-pill);background:transparent;color:var(--accent-text);font:700 var(--fs-secondary)/1 var(--font-ui);display:inline-flex;align-items:center;gap:var(--sp-2)}
 .install-btn:hover{background:var(--accent-soft)}
 .splash-credit{color:var(--text-3);font-size:var(--fs-caption)}
+.ss-opt{word-break:normal;overflow-wrap:break-word;hyphens:auto}
+.ss-play .ss-opt,.pp-bars .ss-opt{font-size:var(--fs-label);padding:var(--sp-1)}

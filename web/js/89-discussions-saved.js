@@ -219,7 +219,7 @@ function renderSavedChats() {
   const tab = document.getElementById('dcTab-saved');
   if (tab) tab.textContent = _tplChat(_CHSV_TXT.tab, { n: chatSaved.length });
   const nb = document.getElementById('dcNewBtn');
-  if (nb) nb.textContent = _CHSV_TXT.newBtn;
+  setIconText(nb, _CHSV_TXT.newBtn);
   const rows = document.getElementById('dcSavedRows');
   if (!rows) return;
   rows.textContent = '';

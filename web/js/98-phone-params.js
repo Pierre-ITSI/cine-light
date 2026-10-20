@@ -135,7 +135,7 @@ function _ppRenderWall() {
     + '<div class="pp-wall"><button type="button" class="pp-wall-thumb" id="ppWallThumb" aria-label="' + escapeHtml(_PP_TXT.wallThumbAria) + '" onclick="ppPickWall()"><span>' + escapeHtml(e.cfg.clock.mode !== 'real' && e.cfg.clock.time ? e.cfg.clock.time : phoneBarToday().time) + '</span></button>'
     + '<div class="pp-wall-col"><span class="pp-wall-name">' + escapeHtml(w ? w.name || 'image' : _PP_TXT.wallNone) + '</span>'
     + '<span class="pp-wall-note">' + escapeHtml(_PP_TXT.wallNote) + '</span>'
-    + (e.wallErr ? '<span class="pp-wall-note ss-warn">' + escapeHtml(e.wallErr) + '</span>' : '')
+    + (e.wallErr ? '<span class="pp-wall-note ss-warn">' + iconizeText(e.wallErr) + '</span>' : '')
     + '<div class="pp-wall-btns">' + btn('', 'ppPickWall()', w ? _PP_TXT.wallChange : _PP_TXT.wallPick) + (w ? btn(' danger', 'ppRemoveWall()', _PP_TXT.wallRemove) : '') + '</div></div></div>';
   if (w) {
     const sig = w.img;

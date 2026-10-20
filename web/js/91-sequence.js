@@ -184,7 +184,7 @@ const _SEQ_TXT = {
   netLostNote: '« Pas de service » dans la barre d\'état et alerte « Aucun réseau » (une fois, pas en mode avion) : un appel devient « Appel impossible », un message du comédien reste « Non distribué ».',
   netBackNote: 'Les messages restés « Non distribué » partent.',
   // Lecture de l'étape Discussion (maquette 41)
-  labelPlay: 'Lecture', playManual: 'Manuelle', playActor: '▶ Auto · le comédien tape', playFull: '▶ Auto · tout automatique',
+  labelPlay: 'Lecture', playManual: 'Manuelle', playActor: 'Auto · le comédien tape', playFull: 'Auto · tout automatique',
   playNote: 'Tout automatique : les réponses de {comedien} s\'écrivent aussi toutes seules, avec leurs durées enregistrées. « Le comédien tape » : le fil attend que {comedien} tape sur l\'écran.',
   actorDefault: 'le comédien',
 };
@@ -1207,7 +1207,7 @@ function renderSeqStep() {
     + opts.map((o) => _seqOpt(_seqSameTarget(o.t, tg), 'seqEditTarget(' + _seqArg(o.t.k) + (o.t.id ? ',' + _seqArg(o.t.id) : '') + ')', o.label)).join('') + '</div>';
   document.getElementById('ssTrigCard').innerHTML = t;
   const err = document.getElementById('ssErr');
-  if (err) { err.textContent = e.err; err.style.display = e.err ? '' : 'none'; }
+  if (err) { setIconText(err, e.err); err.style.display = e.err ? '' : 'none'; }
   const del = document.getElementById('ssDel');
   if (del) { del.textContent = e.id ? _SEQ_TXT.del : _SEQ_TXT.cancel; del.classList.toggle('ss-cancel', !e.id); }
 }

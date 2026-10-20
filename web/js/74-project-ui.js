@@ -244,7 +244,7 @@ function _pjuListHtml() {
       + '<button type="button" class="prj-more" aria-label="' + _pjuEsc(_PJU_TXT.more) + '" onclick="event.stopPropagation();openProjectMenu(\'' + m.id + '\')">' + icon('ellipsis', 'ic-lg') + '</button></div>';
   }).join('');
   return '<div class="st-card st-rows prj-projs">' + rows + '</div>'
-    + '<button type="button" class="prj-sec prj-dash" id="pjNewBtn" onclick="openNewProjectSheet()">' + _PJU_TXT.newProject + '</button>'
+    + '<button type="button" class="prj-sec prj-dash" id="pjNewBtn" onclick="openNewProjectSheet()">' + iconizeText(_PJU_TXT.newProject) + '</button>'
     + '<button type="button" class="prj-sec" onclick="projectImportPick(\'list\')">' + _PJU_TXT.importProject + '</button>'
     + '<p class="st-note">' + _pjuEsc(_PJU_TXT.listNote) + '</p>';
 }
