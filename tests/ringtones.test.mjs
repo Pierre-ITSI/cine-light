@@ -287,16 +287,16 @@ describe('télécommande et écran reliés', () => {
     assert.deepEqual([start.ring, start.ringId, start.ringVolume], ['classic', A, 0.8]);
     assert.deepEqual(await imgStarts(A), [], 'déjà sur l\'écran : rien à renvoyer');
     // Décroché : la sonnerie s'arrête
-    await sp.locator('#screen-call .sc-ok').first().click();
+    await sp.locator('#screen-call [data-act=answer]').first().click();
     assert.deepEqual(await sp.evaluate(() => [_callState, _ringPlayer]), ['incall', null]);
     assert.equal((await audioLog(sp)).at(-1).ev, 'stop');
-    await sp.locator('#screen-call .sc-no').first().click();
+    await sp.locator('#screen-call [data-act=hangup], #screen-call [data-act=decline]').first().click();
     // Refus
     await clearAudio(sp);
     await rp.click('#callTriggerBtn');
     await ringing();
     await waitFor(sp, () => !!_ringPlayer);
-    await sp.locator('#screen-call .sc-no').first().click();
+    await sp.locator('#screen-call [data-act=hangup], #screen-call [data-act=decline]').first().click();
     assert.deepEqual(await sp.evaluate(() => [_callState, _ringPlayer]), ['idle', null]);
     assert.deepEqual((await audioLog(sp)).map((e) => e.ev), ['start', 'stop']);
     // « Terminer » depuis la télécommande pendant la sonnerie
@@ -331,7 +331,7 @@ describe('télécommande et écran reliés', () => {
     await inView(rp, () => rp.locator('#ringLibRows .rt-row').nth(0).click());
     await clearAudio(sp);
     await rp.click('#ntSendBtn');
-    await waitFor(sp, () => _callState === 'notif' && !!document.querySelector('#screen-call .sc-lock'));
+    await waitFor(sp, () => _callState === 'notif' && !!document.querySelector('#screen-call .ph-lock'));
     await waitFor(sp, () => window.__audio.some((e) => e.ev === 'start'));
     await sleep(500);
     assert.deepEqual(starts(await audioLog(sp)), [{ ev: 'start', loop: false, dur: 3 }]);

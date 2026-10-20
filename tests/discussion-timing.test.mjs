@@ -31,8 +31,8 @@ async function rig(seed) {
   await rp.evaluate((id) => scrSetTarget({ k: 'screen', id }), s.id);
   return { broker, rp, sp: s.page, sid: s.id, errs: [remote.errors, s.errors], close: async () => { await s.close(); await remote.close(); } };
 }
-const bubbles = (page) => page.evaluate(() => [...document.querySelectorAll('#screen-chat .scc-b:not(.scc-typing)')].map((b) => (b.classList.contains('out') ? '> ' : '< ') + b.textContent));
-const typing = (page) => page.evaluate(() => !!document.querySelector('#screen-chat .scc-typing'));
+const bubbles = (page) => page.evaluate(() => [...document.querySelectorAll('#screen-chat .pt-b:not(.pt-typing)')].map((b) => (b.classList.contains('out') ? '> ' : '< ') + b.textContent));
+const typing = (page) => page.evaluate(() => !!document.querySelector('#screen-chat .pt-typing'));
 const setThread = (rp, msgs) => rp.evaluate((msgs) => {
   _chat.msgs = msgs.map(([id, from, text, pause, write, auto, send]) => ({ id, from, text, pause, write, auto, send }));
   _chat.sent = []; _chat.pend = []; chatSave(); renderChatPanel();
@@ -52,16 +52,16 @@ test('lecture auto entièrement automatique : pauses, « … écrit », texte qu
   r.broker.clear();
   await rp.click('#dcAutoPlay');
   assert.equal(await rp.evaluate(() => _chat.open), true, 'la lecture ouvre la discussion sur la cible');
-  await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-typing'));
+  await waitFor(sp, () => !!document.querySelector('#screen-chat .pt-typing'));
   assert.match(await rp.textContent('#dcAutoState'), /^● en cours · 1 \/ 3$/);
-  await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b.in:not(.scc-typing)').length === 1, null, { timeout: 3000 });
+  await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b.in:not(.pt-typing)').length === 1, null, { timeout: 3000 });
   // Pause avant (1 s), puis le texte du comédien s'écrit tout seul : rechargé au milieu, il reprend
-  await waitFor(sp, () => document.querySelector('#screen-chat .scc-typed').textContent.length > 4, null, { timeout: 4000 });
+  await waitFor(sp, () => document.querySelector('#screen-chat .pt-typed').textContent.length > 4, null, { timeout: 4000 });
   await sp.reload();
   await sp.evaluate(() => { if (mode !== 'screen') startMode('screen'); });
   await connected(sp);
-  await waitFor(sp, () => !!document.querySelector('#screen-chat .scc'), null, { timeout: 8000 });
-  await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b.in:not(.scc-typing)').length === 2, null, { timeout: 8000 });
+  await waitFor(sp, () => !!document.querySelector('#screen-chat .pt'), null, { timeout: 8000 });
+  await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b.in:not(.pt-typing)').length === 2, null, { timeout: 8000 });
   assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '> je suis chez Léa, j\'arrive', '< Je t\'ai vue avec lui.']);
   await waitFor(rp, () => _chat.sent.length === 3 && !_chatAuto.on);
   assert.equal(await rp.textContent('#dcAutoState'), 'terminée · 3 / 3');
@@ -85,25 +85,25 @@ test('fil mixte : automatique jusqu\'au message tapé par le comédien, attente,
   ]);
   assert.deepEqual((await rp.$$eval('#dcRows .dc-pill', (p) => p.map((x) => x.textContent)))[1], '0 s · tape');
   await rp.click('#dcAutoPlay');
-  await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 1);
+  await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b').length === 1);
   await waitFor(rp, () => /attend Julie/.test(document.getElementById('dcAutoState').textContent));
   assert.equal(await rp.textContent('#dcAutoState'), '● attend Julie · 2 / 4');
   await sleep(1200);
   assert.equal((await bubbles(sp)).length, 1, 'attend le comédien');
   await sp.keyboard.type('ok');
   await sp.keyboard.press('Enter');
-  await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 3, null, { timeout: 3000 });
+  await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b').length === 3, null, { timeout: 3000 });
   // Pause pendant la « pause avant » du n° 4 : rien ne part ; ▶ repart
   await rp.click('#dcAutoPause');
   assert.equal(await rp.textContent('#dcAutoState'), 'en pause · 4 / 4');
   await sleep(2400);
   assert.equal((await bubbles(sp)).length, 3);
   await rp.click('#dcAutoPlay');
-  await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 4, null, { timeout: 4000 });
+  await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b').length === 4, null, { timeout: 4000 });
   await waitFor(rp, () => /terminée/.test(document.getElementById('dcAutoState').textContent));
   // ↶ : pause et dernier message retiré
   await rp.click('#dcAutoBack');
-  await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 3);
+  await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b').length === 3);
   assert.equal(await rp.evaluate(() => _chatAuto.on), false);
   assert.equal(await rp.textContent('#dcAutoState'), 'prête · 3 / 4');
   for (const e of r.errs) assert.deepEqual(e, []);
@@ -119,8 +119,8 @@ test('envoi « au bouton » du contact : la lecture attend « Envoyer n° X », 
   await sleep(600);
   assert.equal(await typing(sp), false);
   await rp.click('#dcGo');
-  await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-typing'));
-  await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b:not(.scc-typing)').length === 2, null, { timeout: 4000 });
+  await waitFor(sp, () => !!document.querySelector('#screen-chat .pt-typing'));
+  await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b:not(.pt-typing)').length === 2, null, { timeout: 4000 });
   assert.deepEqual(await bubbles(sp), ['< Allô ?', '< Réponds.']);
   for (const e of r.errs) assert.deepEqual(e, []);
   await r.close();
@@ -186,7 +186,7 @@ test('Séquence : étape « Discussion » avec « ▶ Auto · le comédien tape 
   await rp.click('#ssSave');
   assert.equal(await rp.textContent('#seqRows .sq-label'), 'Discussion « Maman » · auto (comédien tape)');
   await rp.evaluate(async () => { seqGo(); await _seqChain; });
-  await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b:not(.scc-typing)').length === 2, null, { timeout: 6000 });
+  await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b:not(.pt-typing)').length === 2, null, { timeout: 6000 });
   assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '< Réponds.']);
   for (const e of r.errs) assert.deepEqual(e, []);
   await r.close();
@@ -207,7 +207,7 @@ test('Séquence, « ▶ Auto · le comédien tape » : messages du contact « au
   await rp.locator('#ssRefCard .ss-opt', { hasText: 'Auto · le comédien tape' }).click();
   await rp.click('#ssSave');
   await rp.evaluate(async () => { seqGo(); await _seqChain; });
-  await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b:not(.scc-typing)').length === 2, null, { timeout: 6000 });
+  await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b:not(.pt-typing)').length === 2, null, { timeout: 6000 });
   assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '< Réponds.']);
   await waitFor(rp, () => /attend Julie · 3 \/ 3/.test(document.getElementById('seqChatStatus').textContent));
   assert.match(await rp.textContent('#seqChatStatus'), /Prochain : Julie « ici »/);
@@ -238,7 +238,7 @@ test('Séquence, « ▶ Auto · tout automatique » (maquette 41) : les réponse
   broker.clear();
   await rp.evaluate(async () => { seqGo(); await _seqChain; });
   // Personne ne tape : la réponse « au bouton », tapée par le comédien d'habitude, s'écrit (1 s au moins) et part
-  await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b:not(.scc-typing)').length === 3, null, { timeout: 8000 });
+  await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b:not(.pt-typing)').length === 3, null, { timeout: 8000 });
   assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '> ici', '< Rentre.']);
   await broker.flush();
   const type = (await broker.sent(rp)).find((m) => m.type === 'chat:type');

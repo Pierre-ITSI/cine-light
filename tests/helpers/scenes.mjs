@@ -392,6 +392,18 @@ const seqAppIcon = (n) => {
   g.fillText('B', n / 2, n * 0.54);
   return c.toDataURL('image/png');
 };
+// Barre d'état de la séquence (phone:state.bar), heure figée 00:10
+const SEQ_BAR = { clock: { mode: 'frozen', date: '2026-07-17', time: '00:10' }, net: { bars: 4, type: '5G', plane: false, wifi: true }, bat: { level: 76, charging: false, pct: false } };
+// Fond d'écran clair de test (ciel et nuages)
+const seqLightWallImage = (w, h) => {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, '#bfe0f7'); gr.addColorStop(0.6, '#e8f3f8'); gr.addColorStop(1, '#f6ecd8');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(255,255,255,.75)';
+  for (const [x, y, r] of [[.2, .3, .09], [.46, .3, .08], [.7, .45, .1], [.58, .47, .12]]) { g.beginPath(); g.ellipse(w * x, h * y, w * r * 1.6, w * r * .6, 0, 0, 7); g.fill(); }
+  return c.toDataURL('image/jpeg', 0.9);
+};
 const screenPhone = (m, after) => async (page) => {
   await joinScreen(page);
   await page.evaluate((m) => screenPhoneState(Object.assign({ unlock: null, home: false, watch: [], chime: null }, m)), m);
@@ -857,6 +869,41 @@ export const SCENES = {
     }, seqHomeImage.toString());
     await page.clock.runFor(600);
   },
+  // ── Phase 5 : faux téléphone harmonisé (73-phone-ui.js, 79-phone-ui.css) ──
+  // Fond d'écran clair : voile et cartes denses (texte ≥ 4,5:1), barre d'état
+  'screen-seq-lock-light': async (page) => {
+    await joinScreen(page);
+    await page.evaluate(([imgFn, notifs, bar]) => {
+      _mediaCache.set('__seqwall', { kind: 'img', data: (0, eval)('(' + imgFn + ')')(390, 844) });
+      screenPhoneState({ mode: 'locked', style: 'glass', notifs, unlock: { code: 4, then: 'home' }, home: false, wall: true, watch: [], chime: null, bar });
+    }, [seqLightWallImage.toString(), SEQ_NOTIFS, SEQ_BAR]);
+    await page.clock.runFor(600);
+  },
+  // Accueil générique (aucune image) : icônes neutres, widgets, dock ; barre d'état
+  'screen-seq-home-generic': screenPhone({ mode: 'home', style: 'glass', notifs: [], unlock: null, watch: ['home'], bar: SEQ_BAR }),
+  // Accueil : l'image de l'utilisateur sert de fond d'écran sous les icônes génériques (Tonal)
+  'screen-seq-home-wall': async (page) => {
+    await joinScreen(page);
+    await page.evaluate(([imgFn, bar]) => {
+      _mediaCache.set('__seqhome', { kind: 'img', data: (0, eval)('(' + imgFn + ')')(390, 844) });
+      screenPhoneState({ mode: 'home', style: 'tonal', notifs: [], unlock: null, home: true, homeWall: true, watch: ['home'], chime: null, bar });
+    }, [seqWallImage.toString(), SEQ_BAR]);
+    await page.clock.runFor(600);
+  },
+  // Discussion (Verre) avec la barre d'état de la séquence
+  'screen-discussion-statusbar': async (page) => {
+    await screenChat('glass')(page);
+    await page.evaluate((bar) => screenSeqBar(bar), SEQ_BAR);
+    await page.clock.runFor(300);
+  },
+  // Appel entrant (Épuré) avec la barre d'état
+  'screen-call-minimal-statusbar': async (page) => {
+    await screenCall({ kind: 'call', style: 'minimal', name: 'Maman', label: 'mobile' })(page);
+    await page.evaluate((bar) => screenSeqBar(bar), SEQ_BAR);
+    await page.clock.runFor(300);
+  },
+  // Pavé du code en paysage (Épuré), deux touches
+  'screen-seq-code-landscape': screenPhone({ mode: 'code', style: 'minimal', notifs: [], unlock: { code: 4, then: 'home' }, bar: SEQ_BAR }, (page) => page.evaluate(() => { _spKey(); _spKey(); })),
   'screen-effect-police': async (page) => {
     await joinScreen(page);
     await page.evaluate(() => receiveEffect({ name: 'police', active: true, params: { speed: 3, intensity: 100, chaos: 0, drift: 0 } }));
@@ -894,6 +941,7 @@ export const SCENE_VIEWPORT = {
   'screen-incall-tonal-landscape': LANDSCAPE,
   'screen-notif-lock-glass-landscape': LANDSCAPE,
   'screen-seq-lock-landscape': LANDSCAPE,
+  'screen-seq-code-landscape': LANDSCAPE,
 };
 
 // Fige les effets canvas sur une frame déterministe : chaque moteur actif est
@@ -914,6 +962,8 @@ export async function captureScene(browser, file, name) {
   const { page, errors, close } = await openPage(browser, { file, clock: true, init, ...(SCENE_VIEWPORT[name] ? { viewport: SCENE_VIEWPORT[name] } : {}) });
   try {
     await SCENES[name](page);
+    // Luminance du fond d'écran du faux téléphone (voile des fonds clairs) : échantillonnée de façon asynchrone
+    await page.waitForFunction(() => typeof PhoneUI === 'undefined' || PhoneUI.pending() === 0);
     await page.evaluate(freezeCanvasFx);
     const png = await page.screenshot({ animations: 'disabled', caret: 'hide', scale: 'css' });
     return { png, errors: [...errors] };

@@ -110,16 +110,16 @@ async function landscapeCall(m, answer) {
 for (const style of ['glass', 'tonal', 'minimal']) {
   test(`paysage 844 × 390 · appel ${style} : Refuser et Accepter entiers et touchables ; Raccrocher aussi`, async () => {
     let { page, errors, close } = await landscapeCall({ kind: 'call', style, name: 'Maman', label: 'mobile' });
-    const act = await rectsOf(page, '#screen-call .sc-no, #screen-call .sc-ok');
+    const act = await rectsOf(page, '#screen-call [data-act=decline], #screen-call [data-act=answer]');
     assert.equal(act.length, 2);
     for (const r of act) { assert.ok(inView(r), JSON.stringify(r)); assert.ok(r.hit, 'touchable'); }
     assert.deepEqual(errors, []);
     await close();
     ({ page, errors, close } = await landscapeCall({ kind: 'call', style, name: 'Maman' }, true));
-    const hang = await rectsOf(page, '#screen-call .sc-no');
+    const hang = await rectsOf(page, '#screen-call [data-act=hangup]');
     assert.equal(hang.length, 1);
     assert.ok(inView(hang[0]) && hang[0].hit, JSON.stringify(hang[0]));
-    for (const r of await rectsOf(page, '#screen-call .sc-gbtn')) assert.ok(inView(r), 'grille de l\'appel en cours visible');
+    for (const r of await rectsOf(page, '#screen-call .pc-gb')) assert.ok(inView(r), 'grille de l\'appel en cours visible');
     assert.deepEqual(errors, []);
     await close();
   });
@@ -129,11 +129,11 @@ for (const style of ['glass', 'tonal', 'minimal']) {
       { kind: 'notif', style, name: 'Virement', appName: 'Banque', msg: 'Vous avez reçu 2 400,00 €.', present: 'lock', phone: { date: '2025-10-17', time: '14:32' }, received: { mode: 'ago', min: 15 } },
     ]) {
       const { page, errors, close } = await landscapeCall(m);
-      const [n] = await rectsOf(page, '#screen-call .sc-notif.in-lock');
-      const [t] = await rectsOf(page, '#screen-call .sc-lock-time');
+      const [n] = await rectsOf(page, '#screen-call .pn');
+      const [t] = await rectsOf(page, '#screen-call .pl-time');
       assert.ok(inView(n) && n.hit, m.kind + ' : ' + JSON.stringify(n));
-      assert.ok(t.bottom <= n.top, m.kind + ' : l\'heure ne recouvre pas la notification');
-      for (const c of await rectsOf(page, '#screen-call .sc-lock-circle')) assert.ok(c.top >= n.bottom, 'torche et caméra sous la notification');
+      assert.ok(t.bottom <= n.top || t.right <= n.left, m.kind + ' : l\'heure ne recouvre pas la notification');
+      for (const c of await rectsOf(page, '#screen-call .pl-circle')) assert.ok(c.top >= n.bottom, 'torche et caméra sous la notification');
       assert.deepEqual(errors, []);
       await close();
     }
@@ -144,15 +144,15 @@ test('paysage 844 × 390 · écran verrouillé de la Séquence : la pile de noti
   await SCENES['screen-seq-lock'](page);
   await settle(page);
   const st = await page.evaluate(() => {
-    const s = document.querySelector('#screen-phone .sp-stack'), cards = s.querySelectorAll('.sp-card');
+    const s = document.querySelector('#screen-phone .pn-stack'), cards = s.querySelectorAll('.pn');
     s.scrollTop = s.scrollHeight;
     const last = cards[cards.length - 1].getBoundingClientRect(), box = s.getBoundingClientRect();
-    return { n: cards.length, scroll: getComputedStyle(s).overflowY, lastIn: last.bottom <= box.bottom + 1 && last.top >= box.top - 1, boxBottom: box.bottom, time: document.querySelector('#screen-phone .sp-time').getBoundingClientRect().bottom, first: box.top };
+    return { n: cards.length, scroll: getComputedStyle(s).overflowY, lastIn: last.bottom <= box.bottom + 1 && last.top >= box.top - 1, boxBottom: box.bottom, time: document.querySelector('#screen-phone .pl-time').getBoundingClientRect().bottom, first: box.top };
   });
   assert.equal(st.n, 4);
   assert.equal(st.scroll, 'auto');
   assert.ok(st.lastIn, 'la dernière carte s\'atteint en faisant défiler');
-  assert.ok(st.boxBottom <= LANDSCAPE.height && st.time <= st.first);
+  assert.ok(st.boxBottom <= LANDSCAPE.height); // paysage : heure à gauche, pile à droite
   assert.deepEqual(errors, []);
   await close();
 });
@@ -160,7 +160,7 @@ test('paysage 844 × 390 · pavé du code de la Séquence : toutes les touches v
   const { page, errors, close } = await openPage(browser, { clock: true, viewport: LANDSCAPE });
   await SCENES['screen-seq-code'](page);
   await settle(page);
-  const keys = await rectsOf(page, '#screen-phone .sp-key');
+  const keys = await rectsOf(page, '#screen-phone .pk-key[data-key]');
   assert.equal(keys.length, 10);
   for (const k of keys) assert.ok(inView(k) && k.hit, JSON.stringify(k));
   assert.deepEqual(errors, []);

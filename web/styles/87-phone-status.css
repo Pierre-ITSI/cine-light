@@ -1,10 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP */
-/* ══ Faux téléphone : barre d'état (28b), veille (29b), batterie faible et extinction (33), pas de réseau (34) ══
-   Barre : heure à gauche ; réseau, Wi-Fi, pourcentage, batterie à droite. Trois
-   styles neutres .glass .tonal .minimal ; .pb-band : bandeau au-dessus d'un
-   média ; .pb-dark : texte sombre sur fond clair (discussion Épurée).
-   z-index de l'écran : barre 96 (au-dessus de l'appel, 95), alerte 97,
-   veille / extinction 98 (sous les contrôles de l'écran, 100). */
+/* ══ Faux téléphone : barre d'état de l'APERÇU de la télécommande (28b) ══
+   La barre, les alertes, la veille et l'extinction de l'écran de jeu sont
+   rendues par 73-phone-ui.js et stylées dans 79-phone-ui.css (phase 5) ; ces
+   règles .pb* ne servent plus qu'à l'aperçu « Téléphone au départ » (98-phone-params.js). */
 .pb{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#fff;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif;font-size:15px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pb-right{display:flex;align-items:center;gap:6px}
 .pb-sig{display:inline-flex;align-items:flex-end;gap:1.5px;height:11px}
@@ -24,37 +22,6 @@
 .pb-bolt{margin-left:-4px}
 .pb.tonal{font-weight:500}
 .pb.minimal{font-weight:500;letter-spacing:.01em}
-
-/* Écran de jeu : barre en haut, sans capter les touchers */
-#screen-sbar{display:none;position:absolute;top:0;left:0;right:0;z-index:96;height:calc(44px + env(safe-area-inset-top));box-sizing:border-box;padding:env(safe-area-inset-top) 18px 0;pointer-events:none;animation:scFadeIn .3s ease}
-#screen-sbar.pb-band{background:rgba(0,0,0,.6)}
-#screen-sbar.pb-dark{color:#111}
-#screen-sbar.pb-dark .pb-bat.low i{background:#e0352b}
-/* Bandeaux (SMS, notification, appel) sous la barre */
-#screen-mode.sb-on .sc-notif:not(.in-lock),#screen-mode.sb-on .sc-callbar{top:calc(48px + env(safe-area-inset-top))}
-
-/* Alerte « Batterie faible » (maquette 33) */
-#screen-palert{display:none;position:absolute;inset:0;z-index:97;align-items:center;justify-content:center;padding:0 34px;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif;color:#fff}
-.pa-card{width:100%;max-width:322px;margin-top:-120px;border-radius:14px;background:rgba(40,44,54,.97);box-shadow:0 20px 50px rgba(0,0,0,.45);text-align:center;overflow:hidden;animation:scFadeIn .3s ease}
-.pa-title{padding:20px 16px 0;font-size:16px;font-weight:600}
-.pa-msg{padding:6px 16px 16px;font-size:13px;opacity:.9}
-.pa-close{display:block;width:calc(100% - 32px);margin:0 16px;padding:12px 0 14px;border:none;border-top:1px solid rgba(255,255,255,.18);background:none;color:#6fb4ff;font-family:inherit;font-size:15px;cursor:pointer}
-#screen-palert.tonal .pa-card{background:rgba(43,46,52,.98);border-radius:26px}
-#screen-palert.tonal .pa-close{color:#a8c7fa}
-#screen-palert.minimal .pa-card{background:#16191f;border:1px solid rgba(255,255,255,.12);border-radius:12px}
-#screen-palert.minimal .pa-close{color:#fff}
-
-/* Veille (maquette 29b) et extinction (maquette 33) : écran noir en fondu, logo neutre */
-#screen-ppower{display:none;position:absolute;inset:0;z-index:98;background:#000;opacity:0;transition:opacity .6s ease;align-items:center;justify-content:center}
-#screen-ppower.on{opacity:1}
-#screen-ppower.instant{transition:none}
-.pp-logo{width:64px;height:64px;color:rgba(255,255,255,.82);opacity:0;transition:opacity .5s ease}
-#screen-ppower.logo .pp-logo{opacity:1}
-
-/* Discussion : message du comédien non distribué (maquette 34) */
-.scc-und{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin:-4px 2px 2px auto;font-size:11px;color:#ff6b62}
-.scc-und::before{content:'!';display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#ff453a;color:#fff;font-size:10px;font-weight:700}
-.scc.minimal .scc-und{color:#d4302a}
 
 /* Télécommande — Téléphone au départ (maquette 28b) ; aussi l'onglet Média */
 .pp-preview{background:#000;border-radius:10px;padding:12px 14px;font-size:14px}

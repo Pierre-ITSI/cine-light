@@ -70,8 +70,8 @@ const phone = (page) => page.evaluate(() => {
   const vis = el.style.display !== 'none' && el.offsetHeight > 0;
   return {
     mode: vis ? (_scPhone && _scPhone.mode) : 'off',
-    cards: [...el.querySelectorAll('.sp-card')].map((c) => [c.querySelector('.sp-app').textContent, c.querySelector('.sp-name').textContent, (c.querySelector('.sp-msg') || {}).textContent || '', c.querySelector('.sp-when').textContent]),
-    dots: [...el.querySelectorAll('.sp-dot')].map((d) => (d.classList.contains('on') ? '●' : '○')).join(''),
+    cards: [...el.querySelectorAll('.pn')].map((c) => [c.querySelector('.pn-app').textContent, c.querySelector('.pn-title').textContent, (c.querySelector('.pn-text') || {}).textContent || '', c.querySelector('.pn-when').textContent]),
+    dots: [...el.querySelectorAll('.pk-dot')].map((d) => (d.classList.contains('on') ? '●' : '○')).join(''),
   };
 });
 const callShown = (page) => page.evaluate(() => getComputedStyle(document.getElementById('screen-call')).display !== 'none' && _callState);
@@ -122,9 +122,9 @@ describe('exemple du propriétaire, de bout en bout', () => {
     await waitFor(sp, () => screenBaseColor !== '#1a1a1a');
     assert.equal(await sp.evaluate(() => screenBaseColor), await rp.evaluate(() => memorySwatch(colorMemories[0].spec)));
     await rp.click('#seqGoBtn');
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 1);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 1);
     assert.deepEqual(await phone(sp), { mode: 'locked', cards: [['SMS', 'Maman', 'Tu es où ?', 'maintenant']], dots: '' });
-    assert.equal(await sp.evaluate(() => document.querySelector('#screen-phone .sp-hint').textContent), 'Touchez pour déverrouiller');
+    assert.equal(await sp.evaluate(() => document.querySelector('#screen-phone .pl-hint').textContent), 'Touchez pour déverrouiller');
   });
 
   test('après 1 s : l\'appel sonne ; le comédien refuse → appel manqué empilé (la plus récente en haut)', async () => {
@@ -133,35 +133,35 @@ describe('exemple du propriétaire, de bout en bout', () => {
     await waitFor(rp, () => /^En cours : 3 · Appel entrant — sonne depuis \d+ s/.test(document.getElementById('seqNow').textContent));
     assert.match(await rp.textContent('#seqNow'), /Suivant : 4 · Appel manqué \(si le comédien refuse, ou après 12 s\)$/);
     assert.deepEqual((await rows(rp)).map((x) => x[3]), ['done', 'done', 'cur', 'next', '', '', '', '']);
-    await sp.locator('#screen-call .sc-no').click();
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 2);
+    await sp.locator('#screen-call [data-act=decline], #screen-call [data-act=hangup]').first().click();
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 2);
     assert.equal(await callShown(sp), false);
     assert.deepEqual((await phone(sp)).cards, [['Téléphone', 'Appel manqué', 'Maman', 'maintenant'], ['SMS', 'Maman', 'Tu es où ?', 'maintenant']]);
     assert.equal(await pos(rp), 4);
   });
 
   test('après 1 s : SMS empilé ; toucher l\'écran verrouillé → pavé du code, chaque touche remplit un point', async () => {
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 3, null, { timeout: 3000 });
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 3, null, { timeout: 3000 });
     assert.deepEqual((await phone(sp)).cards.map((c) => c[2]), ['Rappelle-moi stp', 'Maman', 'Tu es où ?']);
-    await sp.locator('#screen-phone .sp-time').click();
+    await sp.locator('#screen-phone .pl-time').click();
     await waitFor(sp, () => _scPhone.mode === 'code');
-    assert.equal(await sp.evaluate(() => document.querySelector('#screen-phone .sp-code-title').textContent), 'Saisir le code');
+    assert.equal(await sp.evaluate(() => document.querySelector('#screen-phone .pk-title').textContent), 'Saisir le code');
     assert.equal((await phone(sp)).dots, '○○○○');
     await waitFor(rp, () => seqPos() === 5); // geste « touche l'écran » : étape 6 lancée
-    await sp.locator('#screen-phone .sp-key', { hasText: '7' }).click();
-    await sp.locator('#screen-phone .sp-key', { hasText: '7' }).click();
+    await sp.locator('#screen-phone .pk-key', { hasText: '7' }).click();
+    await sp.locator('#screen-phone .pk-key', { hasText: '7' }).click();
     assert.equal((await phone(sp)).dots, '●●○○');
     await sp.keyboard.press('1');
     assert.equal((await phone(sp)).dots, '●●●○');
   });
 
   test('dernier chiffre : déverrouillé, la discussion s\'ouvre ; la réponse du comédien lance l\'étape suivante', async () => {
-    await sp.locator('#screen-phone .sp-key', { hasText: '0' }).click();
-    await waitFor(sp, () => !!document.querySelector('#screen-chat .scc'));
+    await sp.locator('#screen-phone .pk-key', { hasText: '0' }).click();
+    await waitFor(sp, () => !!document.querySelector('#screen-chat .pt'));
     await waitFor(rp, () => seqPos() === 6);
     assert.equal((await phone(sp)).mode, 'unlocked');
-    assert.deepEqual(await sp.evaluate(() => [...document.querySelectorAll('#screen-chat .scc-b')].map((b) => b.textContent)), ['Rappelle-moi stp'], 'message du contact déjà reçu');
-    assert.equal(await sp.evaluate(() => document.querySelector('#screen-chat .scc-name').textContent), 'Maman');
+    assert.deepEqual(await sp.evaluate(() => [...document.querySelectorAll('#screen-chat .pt-b')].map((b) => b.textContent)), ['Rappelle-moi stp'], 'message du contact déjà reçu');
+    assert.equal(await sp.evaluate(() => document.querySelector('#screen-chat .pt-name').textContent), 'Maman');
     await sp.keyboard.type('xx');
     await sp.keyboard.press('Enter');
     await waitFor(rp, () => seqPos() === 7);
@@ -182,13 +182,13 @@ describe('exemple du propriétaire, de bout en bout', () => {
     await rp.click('#seqBackBtn'); // déverrouillage
     await waitFor(sp, () => _scPhone && _scPhone.mode === 'locked');
     await rp.click('#seqBackBtn'); // SMS n° 2
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 2);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 2);
     assert.equal(await pos(rp), 4);
     // Sans minuterie après ↶ : GO relance l'étape 5
     await sleep(1300);
     assert.equal(await pos(rp), 4);
     await rp.click('#seqGoBtn');
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 3);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 3);
     await rp.click('#seqStopBtn');
     assert.equal(await rp.textContent('#seqRestartBtn'), 'Recommencer');
     await rp.click('#seqRestartBtn');
@@ -212,9 +212,9 @@ describe('départs : après N s, geste, délai de secours, GO qui passe outre, S
   test('« Après N s » : compté depuis le départ de l\'étape précédente', async () => {
     await setSteps(rp, [st('b1', 'sms', 's1', { k: 'go' }, T), st('b2', 'sms', 's2', { k: 'after', s: 2 }, T)]);
     await rp.click('#seqGoBtn');
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 1);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 1);
     const t0 = Date.now();
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 2, null, { timeout: 5000 });
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 2, null, { timeout: 5000 });
     const dt = Date.now() - t0;
     assert.ok(dt > 1500 && dt < 3500, dt + ' ms');
     await restart();
@@ -227,7 +227,7 @@ describe('départs : après N s, geste, délai de secours, GO qui passe outre, S
     await waitFor(sp, () => _callState === 'ringing');
     await sleep(1000);
     assert.equal(await sp.evaluate(() => _callState), 'ringing', 'toujours en train de sonner à 1 s');
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 1, null, { timeout: 4000 });
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 1, null, { timeout: 4000 });
     assert.equal(await sp.evaluate(() => _callState), 'idle');
     assert.deepEqual((await phone(sp)).cards[0].slice(0, 3), ['Téléphone', 'Appel manqué', 'Maman']);
     await restart();
@@ -239,11 +239,11 @@ describe('départs : après N s, geste, délai de secours, GO qui passe outre, S
     await rp.click('#seqGoBtn');
     await waitFor(sp, () => _callState === 'ringing');
     await waitFor(sp, () => _scPhone && _scPhone.watch.has('answer'));
-    await sp.locator('#screen-call .sc-ok').click();
+    await sp.locator('#screen-call [data-act=answer]').click();
     const night = await rp.evaluate(() => memorySwatch(colorMemories[0].spec));
     await waitFor(sp, (c) => screenBaseColor === c, night);
     assert.equal(await sp.evaluate(() => _callState), 'incall');
-    await sp.locator('#screen-call .sc-no').click(); // raccroche : plus rien n'est attendu
+    await sp.locator('#screen-call [data-act=decline], #screen-call [data-act=hangup]').first().click(); // raccroche : plus rien n'est attendu
     await r.broker.flush();
     assert.deepEqual((await r.broker.sent(sp, 'phone:gesture')).map((m) => m.g), ['answer']);
     await restart();
@@ -256,9 +256,9 @@ describe('départs : après N s, geste, délai de secours, GO qui passe outre, S
       st('e3', 'sms', 's2', { k: 'after', s: 1 }, T),
     ]);
     await rp.click('#seqGoBtn');
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 1);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 1);
     await rp.click('#seqGoBtn'); // sans attendre le toucher
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 2);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 2);
     assert.deepEqual((await phone(sp)).cards[0].slice(0, 3), ['Banque Atlas', 'Virement reçu', '2 400,00 €']);
     await rp.click('#seqStopBtn');
     assert.equal(await rp.evaluate(() => _seqRun.state), 'stopped');
@@ -267,7 +267,7 @@ describe('départs : après N s, geste, délai de secours, GO qui passe outre, S
     assert.equal((await phone(sp)).cards.length, 2, 'minuterie arrêtée');
     assert.equal(await sp.evaluate(() => getComputedStyle(document.getElementById('screen-blackout')).display), 'none', 'rien n\'est éteint');
     await rp.click('#seqGoBtn');
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 3);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 3);
     await restart();
   });
 
@@ -287,12 +287,12 @@ describe('départs : après N s, geste, délai de secours, GO qui passe outre, S
     ]);
     r.broker.clear();
     await rp.click('#seqGoBtn');
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 1 && _mediaCache.has('__seqhome'));
-    await sp.locator('#screen-phone .sp-card').click(); // touche la notification : glisser seul → déverrouillé
-    await waitFor(sp, () => _scPhone.mode === 'home' && !!document.querySelector('#screen-phone .sp-home.has-img'));
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 1 && _mediaCache.has('__seqhome'));
+    await sp.locator('#screen-phone .pn').click(); // touche la notification : glisser seul → déverrouillé
+    await waitFor(sp, () => _scPhone.mode === 'home' && !!document.querySelector('#screen-phone .ph-homeimg'));
     await waitFor(rp, () => seqPos() === 1 && _seqPhones.get(_seq.steps[0].target.id).mode === 'home');
     const night = await rp.evaluate(() => memorySwatch(colorMemories[0].spec));
-    await sp.locator('#screen-phone .sp-home').click();
+    await sp.locator('#screen-phone .ph-homeimg').click();
     await waitFor(sp, (c) => screenBaseColor === c, night);
     await r.broker.flush();
     assert.deepEqual((await r.broker.sent(sp, 'phone:gesture')).map((m) => m.g), ['notif', 'unlock', 'home']);
@@ -330,7 +330,7 @@ describe('plusieurs écrans : cible de chaque étape, resynchronisation d\'un é
     ]);
     r.broker.clear();
     await rp.click('#seqGoBtn');
-    await waitFor(B.page, () => document.querySelectorAll('#screen-phone .sp-card').length === 1);
+    await waitFor(B.page, () => document.querySelectorAll('#screen-phone .pn').length === 1);
     const night = await rp.evaluate(() => memorySwatch(colorMemories[0].spec));
     await rp.click('#seqGoBtn');
     await waitFor(B.page, (c) => screenBaseColor === c, night);
@@ -358,18 +358,18 @@ describe('plusieurs écrans : cible de chaque étape, resynchronisation d\'un é
     ]);
     await rp.click('#seqGoBtn');
     await rp.click('#seqGoBtn');
-    await waitFor(B.page, () => document.querySelectorAll('#screen-phone .sp-card').length === 2);
+    await waitFor(B.page, () => document.querySelectorAll('#screen-phone .pn').length === 2);
     const before = await phone(B.page);
     await B.page.reload();
     await B.page.evaluate(() => { if (mode !== 'screen') startMode('screen'); });
     await connected(B.page);
-    await waitFor(B.page, () => document.querySelectorAll('#screen-phone .sp-card').length === 2, null, { timeout: 8000 });
+    await waitFor(B.page, () => document.querySelectorAll('#screen-phone .pn').length === 2, null, { timeout: 8000 });
     assert.deepEqual(await phone(B.page), before);
     // Le comédien reprend : toucher, 6 chiffres, la discussion s'ouvre
-    await B.page.locator('#screen-phone .sp-lock').click();
-    await waitFor(B.page, () => _scPhone.mode === 'code' && document.querySelectorAll('.sp-dot').length === 6);
+    await B.page.locator('#screen-phone .ph-lock').click();
+    await waitFor(B.page, () => _scPhone.mode === 'code' && document.querySelectorAll('.pk-dot').length === 6);
     for (let i = 0; i < 6; i++) await B.page.keyboard.press(String(i));
-    await waitFor(B.page, () => !!document.querySelector('#screen-chat .scc'));
+    await waitFor(B.page, () => !!document.querySelector('#screen-chat .pt'));
     assert.equal((await phone(A.page)).mode, 'off');
   });
 });
@@ -386,7 +386,7 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     assert.equal(await rp.textContent('#seqWarn'), 'Étape 1 sautée : élément introuvable.');
     assert.equal(await pos(rp), 1);
     await rp.click('#seqGoBtn');
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 1);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 1);
     assert.equal(await rp.evaluate(() => getComputedStyle(document.getElementById('seqWarn')).display), 'none');
     // L'éditeur le signale aussi (plus aucune mémoire : la liste vide est expliquée)
     await rp.locator('#seqRows .sq-row').nth(0).click();
@@ -515,20 +515,20 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     await rp.evaluate(() => closePhoneParams());
     // Déroulé : écran verrouillé puis pavé du code sur le fond (préchargé sous __seqwall)
     await rp.click('#seqGoBtn');
-    await waitFor(S.page, () => !!document.querySelector('#screen-phone .sp-lock.has-wall'));
+    await waitFor(S.page, () => !!document.querySelector('#screen-phone .ph-lock.has-wall'));
     assert.equal(await S.page.evaluate(() => _mediaCache.get('__seqwall').data), wall);
     await rp.click('#seqGoBtn'); // déverrouillage par code : le pavé s'affiche
-    await waitFor(S.page, () => !!document.querySelector('#screen-phone .sp-code.has-wall'));
+    await waitFor(S.page, () => !!document.querySelector('#screen-phone .ph-code.has-wall'));
     // Écran rechargé : le fond revient avec l'état
     await S.page.reload();
     await S.page.evaluate(() => { if (mode !== 'screen') startMode('screen'); });
     await connected(S.page);
-    await waitFor(S.page, () => !!document.querySelector('#screen-phone .sp-lock.has-wall, #screen-phone .sp-code.has-wall'), null, { timeout: 8000 });
+    await waitFor(S.page, () => !!document.querySelector('#screen-phone .ph-lock.has-wall, #screen-phone .ph-code.has-wall'), null, { timeout: 8000 });
     // Séquence enregistrée : garde son fond ; chargée, elle le rend ; fond retiré : dégradé
     await rp.evaluate(() => saveCurrentSeq('Avec fond'));
     assert.equal(await rp.evaluate(() => JSON.parse(localStorage.getItem('setremote-seq-saved-v1')).list[0].wall.name), 'plage-julie.png');
     await rp.evaluate(() => { openPhoneParams('seq'); ppRemoveWall(); });
-    await waitFor(S.page, () => !!document.querySelector('#screen-phone .sp-lock, #screen-phone .sp-code') && !document.querySelector('#screen-phone .has-wall'));
+    await waitFor(S.page, () => !!document.querySelector('#screen-phone .ph-lock, #screen-phone .ph-code') && !document.querySelector('#screen-phone .has-wall'));
     assert.equal(await rp.evaluate(() => _seq.wall), null);
     assert.ok(await rp.evaluate((d) => callAssetGet(seqHomeKey(seqImageSig(d))), wall), 'encore utilisé par la séquence enregistrée');
     rp.on('dialog', (d) => d.accept());
@@ -559,7 +559,7 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     assert.equal(await pos(rp), 0, 'rien n\'est lancé');
     await rp.click('#seqGoBtn');
     await rp.click('#swOk');
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 1);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 1);
     await rp.click('#seqGoBtn');
     assert.equal(await shown(), false, 'une fois par déroulé');
     await waitFor(sp, () => !!screenStrobeTimer);

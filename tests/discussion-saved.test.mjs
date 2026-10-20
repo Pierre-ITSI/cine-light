@@ -232,7 +232,7 @@ describe('discussion ouverte sur un écran', () => {
   test('charger une discussion : l\'écran repart de zéro avec le nouveau contact, sa photo et son style', async () => {
     // Discussion en cours (2 messages affichés, reprise au n° 3)
     await rp.evaluate(() => resumeChatAt('d3'));
-    await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 2);
+    await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b').length === 2);
     // Discussion enregistrée avec une photo, chargée par la liste
     await rp.evaluate(async () => {
       const k = document.createElement('canvas'); k.width = k.height = 160;
@@ -247,15 +247,15 @@ describe('discussion ouverte sur un écran', () => {
     assert.equal(await rp.evaluate(() => chatHasUnsavedChanges()), false, 'fil d\'exemple : rien à perdre');
     await rp.locator('#dcSavedRows .dc-saved-row').nth(0).click();
     await waitFor(sp, () => !!_scChat && _scChat.name === 'Agence Riviera' && _scChat.hasAvatar);
-    await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-avatar').style.backgroundImage);
-    assert.deepEqual(await sp.evaluate(() => [document.querySelectorAll('#screen-chat .scc-b').length, document.querySelector('#screen-chat .scc').className, document.querySelector('#screen-chat .scc-name').textContent]),
-      [0, 'scc tonal scc-instant', 'Agence Riviera']);
+    await waitFor(sp, () => !!document.querySelector('#screen-chat .pt-av').style.backgroundImage);
+    assert.deepEqual(await sp.evaluate(() => [document.querySelectorAll('#screen-chat .pt-b').length, document.querySelector('#screen-chat .pt').className, document.querySelector('#screen-chat .pt-name').textContent]),
+      [0, 'ph ph-tonal pt pt-instant', 'Agence Riviera']);
     assert.equal(await rp.textContent('#dcGo'), 'Envoyer n°1 (Agence Riviera)');
     await rp.click('#dcGo');
-    await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 1);
+    await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b').length === 1);
     await sp.keyboard.type('Merci');
     await sp.keyboard.press('Enter');
     await waitFor(rp, () => _chat.sent.includes('a2'));
-    assert.deepEqual(await sp.evaluate(() => [...document.querySelectorAll('#screen-chat .scc-b')].map((b) => b.textContent)), ['Votre dossier est prêt.', 'Merci']);
+    assert.deepEqual(await sp.evaluate(() => [...document.querySelectorAll('#screen-chat .pt-b')].map((b) => b.textContent)), ['Votre dossier est prêt.', 'Merci']);
   });
 });

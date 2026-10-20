@@ -622,154 +622,379 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 #screen-identify{display:none;position:absolute;inset:0;z-index:200;background:#fff;pointer-events:none}
 #screen-identify.on{display:block;animation:sr-identify .5s steps(1,end) infinite}
 @keyframes sr-identify{0%{opacity:1}50%{opacity:0}}
-/* ── SIMULATEUR D'APPEL (écran de jeu) ──
-   Trois styles neutres (aucune marque ni logo tiers) :
-   .glass « Verre » · .tonal « Tonal » · .minimal « Épuré ».
-   z-index 95 : au-dessus du blackout (90) — comme un vrai téléphone éteint
-   dont l'écran se réveille à l'arrivée d'un appel ou d'une notification */
-#screen-call{display:none;position:absolute;inset:0;z-index:95;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif}
+/* ══ Faux téléphone de l'écran de jeu — phase 5 (maquettes 5a à 5m) ══
+   Un seul jeu de composants (73-phone-ui.js) : barre d'état .psb, carte de
+   notification .pn, écran verrouillé .pl, appels .pc/.pbc, pavé du code .pk,
+   accueil .ph-home, discussion .pt, alertes .pal, logo .pp-logo. Trois
+   habillages par jetons : .ph-glass « Verre », .ph-tonal « Tonal », .ph-minimal
+   « Épuré ». Couleurs diégétiques : volontairement hors du système visuel de la
+   régie. Aucune marque ni logo tiers. Superposition (z-index) : discussion 85,
+   appel 95, alerte 96, barre d'état 97, veille / extinction 98 (sous les
+   contrôles de l'écran, 100). */
+
+/* ── Conteneurs (rien d'autre n'est affiché tant qu'ils sont vides) ── */
+#screen-call{display:none;position:absolute;inset:0;z-index:95}
 #screen-call.notif{pointer-events:none}
-#screen-call.notif .sc-notif,#screen-call.notif .sc-callbar{pointer-events:auto}
-.sc-call{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;color:#fff;overflow:hidden;padding:calc(70px + env(safe-area-inset-top)) 30px calc(64px + env(safe-area-inset-bottom));animation:scFadeIn .45s ease}
-.sc-call>*{position:relative;z-index:1}
-/* Couches de fond : restent absolues SOUS le contenu */
-.sc-call>.sc-bg,.sc-call>.sc-fullshade{position:absolute;z-index:0}
-.sc-bg{inset:-50px;background-size:cover;background-position:center;filter:blur(50px) brightness(.5) saturate(1.35)}
-.sc-bg.full{inset:0;filter:none}
-.sc-fullshade{inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,0) 34%,rgba(0,0,0,0) 52%,rgba(0,0,0,.65));pointer-events:none}
-.sc-head{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
-.sc-kicker{font-size:.9rem;opacity:.72;letter-spacing:.02em}
-.sc-avatar{width:104px;height:104px;border-radius:50%;background-color:#3a4756;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:2.7rem;font-weight:600;margin-bottom:16px;flex-shrink:0}
-.sc-name{font-size:2.2rem;font-weight:600;line-height:1.15;text-align:center}
-.sc-sub{font-size:1rem;opacity:.65}
-.sc-timer{font-size:1.05rem;opacity:.8;margin-top:4px;font-variant-numeric:tabular-nums}
-.sc-bottom{margin-top:auto;width:100%;max-width:430px;display:flex;flex-direction:column;gap:26px}
-.sc-row{display:flex;justify-content:space-between;align-items:flex-start}
-.sc-col{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:.8rem;color:rgba(255,255,255,.88)}
-.sc-btn{border:none;color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}
-.sc-round{width:76px;height:76px;border-radius:50%}
-.sc-ok{background:#2fb553}
-.sc-no{background:#e5483e}
-.sc-mini{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.16)}
-.sc-mini svg{width:24px;height:24px}
-.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 16px;width:100%;max-width:340px;margin-top:44px}
-.sc-grid .sc-col{font-size:.74rem;color:rgba(255,255,255,.8)}
-.sc-gbtn{width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,.14)}
+#screen-call.notif .pb-wrap{pointer-events:auto}
+#screen-phone{display:none;position:absolute;inset:0;z-index:84;cursor:default}
+#screen-chat{display:none;position:absolute;inset:0;z-index:85}
+#screen-palert{display:none;position:absolute;inset:0;z-index:96;align-items:center;justify-content:center}
+#screen-sbar{display:none;position:absolute;top:0;left:0;right:0;z-index:97;pointer-events:none;animation:scFadeIn .3s ease}
+#screen-ppower{display:none;position:absolute;inset:0;z-index:98;background:#000;opacity:0;transition:opacity .6s ease;align-items:center;justify-content:center}
+#screen-ppower.on{opacity:1}
+#screen-ppower.instant{transition:none}
 
-/* Verre : translucidité, flou, boutons ronds en dégradé */
-.sc-call.glass{background:linear-gradient(180deg,#272c38,#0b0d13)}
-.sc-call.glass .sc-mini,.sc-call.glass .sc-gbtn{backdrop-filter:blur(22px) saturate(1.5);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.25)}
-.sc-call.glass .sc-round{box-shadow:0 10px 28px rgba(0,0,0,.4),inset 0 0 0 .5px rgba(255,255,255,.3)}
-.sc-call.glass .sc-ok{background:linear-gradient(180deg,#4cd964,#2db84d)}
-.sc-call.glass .sc-no{background:linear-gradient(180deg,#ff5146,#e5342a)}
-.sc-call.glass .sc-avatar{width:96px;height:96px;box-shadow:0 12px 44px rgba(0,0,0,.45)}
+/* ── Base commune ── */
+.ph,#screen-sbar{
+  --ph-font:'Lato',-apple-system,system-ui,Roboto,'Segoe UI',sans-serif;
+  --ph-ok:#1f9d4c; --ph-no:#d93a30; --ph-badge:#e5483d;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --sb-h:calc(48px + var(--safe-t))}
+.ph{position:absolute;inset:0;overflow:hidden;color:#fff;font-family:var(--ph-font);-webkit-font-smoothing:antialiased;line-height:1.25;background:var(--ph-bg);white-space:normal}
+.ph *,#screen-sbar *{box-sizing:border-box}
+.ph svg.li,#screen-sbar svg.li{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+:where(.ph) button{font-family:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#screen-sbar{height:var(--sb-h);font-family:var(--ph-font);color:#fff}
+.ph-call{animation:scFadeIn .45s ease}
+/* Calque transparent (bandeaux, alertes) : seuls les éléments posés dessus captent le toucher */
+.ph.ph-overlay{background:none;pointer-events:none}
+.ph.ph-overlay .pb-wrap,.ph.ph-overlay .pal{pointer-events:auto}
 
-/* Tonal : surfaces tonales, gros avatar, boutons pilule libellés */
-.sc-call.tonal{background:radial-gradient(130% 75% at 50% 0%,#2c3a4f 0%,#151a21 58%,#0d1014 100%)}
-.sc-call.tonal .sc-kicker{margin-bottom:26px}
-.sc-call.tonal .sc-avatar{width:136px;height:136px;font-size:3.3rem;margin-bottom:22px}
-.sc-call.tonal .sc-name{font-weight:400;font-size:2.1rem}
-.sc-pill{height:64px;border-radius:32px;padding:0 24px;font-size:1.02rem;font-weight:500;flex:1;max-width:190px}
-.sc-pill svg{width:22px;height:22px}
-.sc-call.tonal .sc-no,.sc-callbar.tonal .sc-no{background:#8c1d18;color:#ffdad6}
-.sc-call.tonal .sc-ok,.sc-callbar.tonal .sc-ok{background:#1d6b3a;color:#c8f5d2}
-.sc-call.tonal .sc-gbtn{border-radius:22px;width:76px;height:64px;background:rgba(255,255,255,.1)}
-.sc-call.tonal .sc-grid{margin-top:36px}
-.sc-call.tonal .sc-head .sc-avatar{width:88px;height:88px;font-size:2.2rem;margin-bottom:12px}
-.sc-hangup{width:min(240px,70vw);height:64px;border-radius:32px}
+/* ── Jetons des trois styles ── */
+.ph-glass{
+  --ph-bg:linear-gradient(180deg,#26354f 0%,#0d121c 100%);
+  --card-bg:rgba(78,88,114,.46); --card-blur:blur(26px) saturate(1.5); --card-r:22px; --card-bd:1px solid rgba(255,255,255,.2);
+  --card-shadow:0 8px 24px rgba(0,0,0,.28);
+  --ic-r:10px; --btn-bg:rgba(255,255,255,.18); --btn-blur:blur(20px);
+  --clock-w:600; --clock-fs:92px; --date-fs:20px; --date-w:500;
+  --bubble-in:rgba(255,255,255,.18); --bubble-in-c:#fff; --bubble-out:rgba(255,255,255,.92); --bubble-out-c:#111;
+  --bubble-r:20px; --head-bg:rgba(255,255,255,.07); --field-bg:rgba(255,255,255,.12); --accent:#7db4ff}
+.ph-tonal{
+  --ph-bg:#15171b;
+  --card-bg:#2b2e34; --card-blur:none; --card-r:28px; --card-bd:0 solid transparent;
+  --card-shadow:0 4px 14px rgba(0,0,0,.35);
+  --ic-r:50%; --btn-bg:#34373e; --btn-blur:none;
+  --clock-w:300; --clock-fs:104px; --date-fs:17px; --date-w:500;
+  --bubble-in:#2b2e34; --bubble-in-c:#e6e6e6; --bubble-out:#e3e1dc; --bubble-out-c:#1b1b1b;
+  --bubble-r:22px; --head-bg:#1f2227; --field-bg:#2b2e34; --accent:#a8c7fa}
+.ph-minimal{
+  --ph-bg:#000;
+  --card-bg:#14171c; --card-blur:none; --card-r:12px; --card-bd:1px solid rgba(255,255,255,.2);
+  --card-shadow:none;
+  --ic-r:7px; --btn-bg:transparent; --btn-blur:none;
+  --clock-w:200; --clock-fs:80px; --date-fs:16px; --date-w:400;
+  --bubble-in:#e9e9eb; --bubble-in-c:#111; --bubble-out:#1c1c1e; --bubble-out-c:#fff;
+  --bubble-r:16px; --head-bg:#fff; --field-bg:#fff; --accent:#fff}
+/* Appels : fond propre à chaque style (le dégradé du Verre, le sombre Tonal, le noir Épuré) */
+.ph-call.ph-tonal{--ph-bg:radial-gradient(130% 75% at 50% 0%,#2c3a4f 0%,#151a21 58%,#0d1014 100%)}
+.ph-call.ph-minimal{--ph-bg:linear-gradient(160deg,#1d2733,#0a0d12)}
 
-/* Épuré : sobre et contrasté */
-.sc-call.minimal{background:linear-gradient(160deg,#1d2733,#0a0d12)}
-.sc-call.minimal .sc-name{font-weight:500;font-size:2rem}
-.sc-call.minimal .sc-avatar{margin-bottom:26px}
+/* ── Fond d'écran + voile (lisibilité des textes blancs, y compris sur fond clair) ── */
+.ph:not(.has-wall)>.ph-wall,.ph:not(.has-wall)>.ph-scrim{display:none}
+.ph-wall{position:absolute;inset:0;background:var(--wall,none) center/cover no-repeat;z-index:0}
+.ph-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.34) 0%,rgba(0,0,0,.10) 30%,rgba(0,0,0,.12) 55%,rgba(0,0,0,.58) 100%)}
+.ph.ph-code>.ph-scrim{background:rgba(0,0,0,.5)}
+.ph.ph-homewall>.ph-scrim{background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.05) 40%,rgba(0,0,0,.22))}
+/* fond clair détecté (luminance moyenne > .55) : voile continu et cartes plus denses (texte ≥ 4,5:1) */
+.ph[data-wall=light]>.ph-scrim{background:linear-gradient(180deg,rgba(8,12,20,.7) 0%,rgba(8,12,20,.52) 38%,rgba(8,12,20,.72) 100%)}
+.ph.ph-homewall[data-wall=light]>.ph-scrim{background:linear-gradient(180deg,rgba(10,16,28,.46),rgba(10,16,28,.34) 50%,rgba(10,16,28,.46))}
+.ph[data-wall=light]{--card-bg:rgba(18,22,30,.78)}
+.ph-minimal[data-wall=light]{--card-bg:#14171c}
+.ph-tonal[data-wall=light]{--card-bg:#2b2e34}
 
-/* Bandeau d'appel entrant (téléphone en cours d'utilisation) */
-.sc-callbar{position:absolute;top:calc(14px + env(safe-area-inset-top));left:12px;right:12px;color:#fff;display:flex;flex-wrap:wrap;align-items:center;gap:11px;padding:10px 12px;animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
-.sc-callbar.glass{background:rgba(40,40,46,.78);backdrop-filter:blur(28px) saturate(1.6);border-radius:28px;box-shadow:0 10px 34px rgba(0,0,0,.5),inset 0 0 0 .5px rgba(255,255,255,.15)}
-.sc-callbar.tonal{background:#2b2e34;border-radius:26px;padding:14px;box-shadow:0 8px 28px rgba(0,0,0,.5)}
-.sc-callbar.minimal{background:#16191f;border:1px solid rgba(255,255,255,.12);border-radius:16px}
-.cb-avatar{width:42px;height:42px;border-radius:50%;background-color:#3a4756;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:1.1rem;flex-shrink:0}
-.cb-info{flex:1;min-width:0}
-.cb-name{font-size:.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cb-sub{font-size:.72rem;opacity:.6}
-.cb-btn{width:44px;height:44px;border-radius:50%;flex-shrink:0}
-.cb-btn svg{width:22px;height:22px}
-.cb-actions{display:flex;gap:10px;width:100%}
-.cb-actions .sc-pill{height:44px;max-width:none;font-size:.92rem}
+/* ── PhoneStatusBar (unique) ── */
+.psb{position:absolute;top:0;left:0;right:0;height:var(--sb-h);padding:var(--safe-t) 24px 0;display:flex;align-items:center;justify-content:space-between;
+  font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.psb[data-tone=dark]{color:#111}
+.psb::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.34),rgba(0,0,0,0));z-index:-1}
+.psb[data-tone=dark]::before{display:none}
+.psb.band{background:rgba(0,0,0,.6)}.psb.band::before{display:none}
+.psb-r{display:flex;align-items:center;gap:7px}
+.psb-sig{display:inline-flex;align-items:flex-end;gap:2px;height:12px}
+.psb-sig i{display:block;width:3.5px;border-radius:1px;background:currentColor;opacity:.32}
+.psb-sig i:nth-child(1){height:4.5px}.psb-sig i:nth-child(2){height:7px}.psb-sig i:nth-child(3){height:9.5px}.psb-sig i:nth-child(4){height:12px}
+.psb-sig i.on{opacity:1}
+.psb-net{font-size:13px;font-weight:600}
+.psb-nosvc{font-size:13px;font-weight:500}
+.psb-pct{font-size:13px;font-weight:500}
+.psb-ic{display:inline-flex;font-size:17px}
+.psb-bat{position:relative;display:inline-block;width:26px;height:12.5px;border:1.5px solid currentColor;border-radius:4px;padding:1.5px;opacity:.95;margin-right:3px}
+.psb-bat::after{content:'';position:absolute;right:-4.5px;top:2.5px;width:2px;height:4px;border-radius:0 1px 1px 0;background:currentColor;opacity:.6}
+.psb-bat i{display:block;height:100%;border-radius:1.5px;background:currentColor}
+.psb-bolt{margin-left:-4px;font-size:11px}.psb-bolt svg{width:1em;height:1em}
+.psb-bat.low i{background:#ff4d43}.psb-bat.chg i{background:#3fbf6f}
+.psb[data-tone=dark] .psb-bat.low i{background:#e0352b}
+.ph-tonal .psb{font-weight:500}.ph-tonal .psb-sig i{border-radius:0;clip-path:polygon(100% 0,100% 100%,0 100%)}
+.ph-minimal .psb{font-weight:400;padding:var(--safe-t) 26px 0;font-size:15px}.ph-minimal .psb-net,.ph-minimal .psb-pct{font-weight:400}
 
-/* Notifications (bannière et écran verrouillé) */
-.sc-notif{position:absolute;top:calc(14px + env(safe-area-inset-top));left:12px;right:12px;color:#fff;display:flex;gap:12px;align-items:flex-start;padding:12px 14px;text-align:left;cursor:pointer;animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
-.sc-notif.glass{background:rgba(40,40,46,.72);backdrop-filter:blur(28px) saturate(1.6);border-radius:22px;box-shadow:0 10px 34px rgba(0,0,0,.5),inset 0 0 0 .5px rgba(255,255,255,.14)}
-.sc-notif.tonal{background:#2b2e34;border-radius:26px;padding:14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.5)}
-.sc-notif.minimal{background:#16191f;border:1px solid rgba(255,255,255,.12);border-radius:14px}
-@keyframes notifIn{from{transform:translateY(-130%)}to{transform:translateY(0)}}
-.sc-notif-icon{width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.sc-notif.minimal .sc-notif-icon{width:34px;height:34px;border-radius:8px}
-.sc-notif-body{flex:1;min-width:0}
-.n-title{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.n-time{font-size:.72rem;opacity:.55;flex-shrink:0}
-.n-app{font-size:.68rem;opacity:.5;margin-top:4px}
-.n-head{display:flex;align-items:center;gap:7px;font-size:.74rem;opacity:.8;margin-bottom:4px}
-.n-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.n-dot svg{width:12px;height:12px}
-.n-avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;background-color:#3a4756;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:600;align-self:center}
-.sc-notif-name{font-size:.95rem;font-weight:600}
-.sc-notif.tonal .sc-notif-name{font-size:1rem}
-.sc-notif-msg{font-size:.9rem;opacity:.92;margin-top:2px;line-height:1.35;word-break:break-word}
+/* ── PhoneNotification (unique) ── */
+.pn{display:flex;gap:12px;padding:12px 14px;border-radius:var(--card-r);background:var(--card-bg);-webkit-backdrop-filter:var(--card-blur);backdrop-filter:var(--card-blur);
+  border:var(--card-bd);box-shadow:var(--card-shadow);text-align:left;color:#fff;min-width:0;flex:none}
+.pn-icon{position:relative;width:40px;height:40px;border-radius:var(--ic-r);flex:none;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:700;background:#4a5568 center/cover no-repeat}
+.pn-icon.sms{background:#2f8f55}.pn-icon.app{background:linear-gradient(135deg,#1e6fd9,#12b5e8)}.pn-icon.img{background-color:#000}
+.pn-icon.missed{background:#c0453a}
+.pn-icon.av{border-radius:50%;background-color:#6e7480;font-size:16px;font-weight:600}
+.pn-badge{position:absolute;right:-4px;bottom:-4px;width:18px;height:18px;border-radius:50%;background:var(--ph-badge);border:2px solid #23272f;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff}
+.ph-tonal .pn-badge{border-color:#2b2e34}.ph-minimal .pn-badge{border-color:#14171c}
+.pn-body{flex:1;min-width:0}
+.pn-head{display:flex;justify-content:space-between;gap:8px;font-size:13px;line-height:16px;color:rgba(255,255,255,.78)}
+.pn-app{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;letter-spacing:.01em}
+.pn-when{flex:none;font-variant-numeric:tabular-nums}
+.pn-title{font-size:16px;font-weight:700;margin-top:3px;line-height:1.2;overflow-wrap:anywhere}
+.pn-text{font-size:14.5px;color:rgba(255,255,255,.92);margin-top:2px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.ph-tonal .pn-head{font-weight:500}.ph-tonal .pn-title{font-weight:600}
+.ph-minimal .pn-title{font-weight:600}
+.pn-stack{display:flex;flex-direction:column;gap:8px;padding:0 12px;min-height:0}
+.pn-more{align-self:center;font-size:13px;color:rgba(255,255,255,.88);padding:2px 12px;border-radius:999px;background:rgba(0,0,0,.3)}
+.pn.pn-new{animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
 
-/* Apparitions / disparitions */
+/* ── PhoneLock (unique) ── */
+.pl{position:absolute;inset:0;display:flex;flex-direction:column;z-index:2;padding:calc(var(--sb-h) + 8px) 0 calc(112px + var(--safe-b))}
+.pl-head{text-align:center;flex:none;display:flex;flex-direction:column;align-items:center}
+.pl-lock{font-size:20px;opacity:.9;margin-bottom:6px}
+.pl-date{font-size:var(--date-fs);font-weight:var(--date-w);opacity:.95;text-shadow:0 1px 8px rgba(0,0,0,.35)}
+.pl-time{font-size:var(--clock-fs);font-weight:var(--clock-w);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.01em;text-shadow:0 2px 16px rgba(0,0,0,.32)}
+.pl .pn-stack{margin-top:24px} /* pas d'overflow : il rognerait l'ombre des cartes en une bande claire sous la dernière */
+.pl-colon{display:none}
+.ph-tonal .pl-head{align-items:flex-start;padding:0 28px;text-align:left}
+.ph-tonal .pl-time{display:flex;flex-direction:column;line-height:.92;order:1;margin-top:6px}
+.ph-tonal .pl-date{order:2;margin-top:10px}.ph-tonal .pl-lock{display:none}
+.ph-tonal .pl .pn-stack{margin-top:20px}
+.ph-minimal .pl-date{letter-spacing:.03em;opacity:.8}
+.ph-minimal .pl-head{margin-top:12px}
+.pl-bottom{position:absolute;left:0;right:0;bottom:calc(30px + var(--safe-b));display:flex;align-items:center;justify-content:space-between;padding:0 40px;z-index:3}
+.pl-circle{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(18,22,30,.55);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.ph-tonal .pl-circle{background:#34373e;border-radius:18px;-webkit-backdrop-filter:none;backdrop-filter:none}
+.ph-minimal .pl-circle{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4);-webkit-backdrop-filter:none;backdrop-filter:none}
+.pl-hint{font-size:14px;color:rgba(255,255,255,.88);text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.ph-home-ind{position:absolute;left:50%;bottom:calc(8px + var(--safe-b));width:136px;height:5px;margin-left:-68px;border-radius:3px;background:rgba(255,255,255,.88);z-index:4}
+.ph-tonal .ph-home-ind{width:108px;margin-left:-54px;opacity:.75}.ph-minimal .ph-home-ind{width:100px;margin-left:-50px;height:3px;opacity:.6}
+.ph-enter{animation:scFadeIn .5s ease}
+.ph-lock.ph-out{animation:scFadeOut .4s ease forwards}
+
+/* ── Appel entrant / en cours ── */
+.pc{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;padding:calc(var(--sb-h) + 28px) 28px calc(52px + var(--safe-b));text-align:center}
+.pc-photo{position:absolute;inset:-40px;background:var(--photo) center/cover no-repeat;filter:blur(48px) brightness(.5) saturate(1.3);z-index:0}
+.pc-photo.full{inset:0;filter:none}
+.pc-shade{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.1) 34%,rgba(0,0,0,.1) 52%,rgba(0,0,0,.7))}
+.pc-kicker{font-size:15px;color:rgba(255,255,255,.8);margin-bottom:14px;letter-spacing:.01em}
+.pc-avatar{width:112px;height:112px;border-radius:50%;background:#46566b center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:46px;font-weight:600;margin-bottom:18px;flex:none}
+.ph-tonal .pc-avatar{border-radius:36px}
+.ph-minimal .pc-avatar{background:transparent;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55);font-weight:300;width:96px;height:96px;font-size:40px}
+.pc-name{font-size:34px;font-weight:600;line-height:1.15;max-width:100%;overflow-wrap:anywhere}
+.pc-name.pc-name-s{font-size:30px}
+.ph-minimal .pc-name{font-weight:400;font-size:30px}.ph-tonal .pc-name{font-weight:500}
+.pc-sub{font-size:17px;color:rgba(255,255,255,.8);margin-top:4px}
+.pc-timer{font-size:19px;color:rgba(255,255,255,.9);margin-top:6px;font-variant-numeric:tabular-nums}
+.pc-info{display:flex;flex-direction:column;align-items:center;max-width:100%}
+.pc-bottom{margin-top:auto;width:100%;display:flex;flex-direction:column;gap:26px;align-items:center}
+.pc-row{display:flex;justify-content:space-around;width:100%;max-width:330px}
+.pc-row.pc-pills{gap:14px;max-width:360px}
+.pc-col{display:flex;flex-direction:column;align-items:center;gap:9px;font-size:15px;min-width:84px}
+.pc-btn{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff}
+.pc-btn.ok{background:var(--ph-ok)}.pc-btn.no{background:var(--ph-no)}
+.pc-btn.mini{width:56px;height:56px;font-size:24px;background:var(--btn-bg);-webkit-backdrop-filter:var(--btn-blur);backdrop-filter:var(--btn-blur)}
+.pc-btn.no svg{transform:rotate(135deg)}
+.pc-pill{height:60px;padding:0 18px;flex:1;justify-content:center;border-radius:30px;display:flex;align-items:center;gap:10px;font-size:17px;font-weight:600;color:#fff}
+.pc-pill.ok{background:var(--ph-ok)}.pc-pill.no{background:var(--ph-no)}.pc-pill svg{font-size:24px}.pc-pill.no svg{transform:rotate(135deg)}
+.ph-minimal .pc-btn.mini{box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
+.pc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px 14px;width:100%;max-width:330px;margin-top:34px}
+.pc-g{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px}
+.pc-gb{width:70px;height:70px;border-radius:50%;background:var(--btn-bg);-webkit-backdrop-filter:var(--btn-blur);backdrop-filter:var(--btn-blur);display:flex;align-items:center;justify-content:center;font-size:28px}
+.ph-tonal .pc-gb{border-radius:24px;width:84px;height:64px}
+.pc-hang{width:76px;height:76px;border-radius:50%;background:var(--ph-no);display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff}
+.pc-hang svg{transform:rotate(135deg)}
+.ph-tonal .pc-hang{width:164px;border-radius:38px}
+/* bandeau d'appel / de notification sur un téléphone allumé */
+.pb-wrap{position:absolute;left:10px;right:10px;max-width:560px;margin:0 auto;top:calc(var(--sb-h) + 2px);z-index:20;animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1);cursor:pointer}
+.pb-wrap.pb-out{animation:notifOut .35s ease-in forwards}
+.pbc{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--card-r);background:var(--card-bg);-webkit-backdrop-filter:var(--card-blur);backdrop-filter:var(--card-blur);border:var(--card-bd);box-shadow:0 12px 32px rgba(0,0,0,.45);text-align:left}
+.ph-tonal .pbc{flex-wrap:wrap}
+.pb-wrap .pn{box-shadow:0 12px 32px rgba(0,0,0,.45)}
+.pbc .pc-avatar{width:48px;height:48px;font-size:20px;margin:0;border-radius:50%}
+.ph-tonal .pbc .pc-avatar{border-radius:16px}
+.ph-minimal .pbc .pc-avatar{width:48px;height:48px;font-size:20px}
+.pbc-info{flex:1;min-width:0}.pbc-n{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pbc-s{font-size:14px;color:rgba(255,255,255,.82)}
+.pbc-b{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff}
+.pbc-b.ok{background:var(--ph-ok)}.pbc-b.no{background:var(--ph-no)}.pbc-b.no svg{transform:rotate(135deg)}
+.ph-tonal .pbc-acts{display:flex;gap:10px;width:100%;margin-top:2px}
+.ph-tonal .pbc-acts .pc-pill{flex:1;height:44px;justify-content:center;font-size:15px}
+
+/* ── Pavé du code ── */
+.pk{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;padding:calc(var(--sb-h) + 40px) 24px calc(32px + var(--safe-b))}
+.pk-top{display:flex;flex-direction:column;align-items:center}
+.pk-ic{font-size:22px;opacity:.9;margin-bottom:10px}
+.pk-title{font-size:20px;font-weight:500;margin-bottom:22px}
+.pk-dots{display:flex;gap:18px;margin-bottom:38px;height:16px}
+.pk-dot{width:15px;height:15px;border-radius:50%;border:2px solid #fff}.pk-dot.on{background:#fff}
+.ph-tonal .pk-dot{border-radius:5px}.ph-minimal .pk-dot{border-width:1.5px}
+.pk-keys{display:grid;grid-template-columns:repeat(3,78px);gap:16px 26px}
+.pk-key{width:78px;height:78px;border-radius:50%;background:var(--btn-bg);-webkit-backdrop-filter:var(--btn-blur);backdrop-filter:var(--btn-blur);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:32px;font-weight:400;line-height:1}
+.pk-key:active{background:rgba(255,255,255,.32)}
+.pk-key small{font-size:10px;letter-spacing:.18em;font-weight:600;opacity:.8;margin-top:2px;min-height:11px}
+.ph-tonal .pk-key{border-radius:26px;width:84px}
+.ph-tonal .pk-keys{grid-template-columns:repeat(3,84px);gap:14px 18px}
+.ph-minimal .pk-key{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.5);font-weight:300}
+.pk-key.gap{visibility:hidden}
+.pk-cancel{margin-top:auto;align-self:flex-end;font-size:17px;padding:10px 14px;color:#fff}
+
+/* ── Accueil générique (icônes neutres, widgets fictifs) ; image de l'utilisateur seule ou en fond ── */
+.ph-home{position:absolute;inset:0;z-index:2;padding:calc(var(--sb-h) + 10px) 18px calc(18px + var(--safe-b));display:flex;flex-direction:column}
+.ph-img{position:absolute;inset:0;background:var(--img) center/cover no-repeat;z-index:0}
+.ph-topshade{position:absolute;left:0;right:0;top:0;height:18%;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,0))}
+.ph-homeimg{background:linear-gradient(160deg,#3d5a80 0%,#98c1d9 60%,#e0fbfc 100%)}
+.ph-homegen.ph-glass{--ph-bg:linear-gradient(160deg,#2b3f66 0%,#1d6a96 55%,#0f2740 100%)}
+.phw{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 4px 18px}
+.phw-c{height:132px;border-radius:24px;background:rgba(255,255,255,.2);-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);padding:14px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid rgba(255,255,255,.18)}
+.phw-t{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;opacity:.95}
+.phw-big{font-size:44px;font-weight:300;line-height:1;font-variant-numeric:tabular-nums}
+.phw-s{font-size:13px;opacity:.92}
+.ph[data-wall=light] .phw-c{background:rgba(20,28,40,.42)}
+.ph-tonal .phw-c{background:rgba(43,46,52,.88);border-radius:28px;border:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+.ph-minimal .phw-c{background:rgba(0,0,0,.45);border-radius:14px;border:1px solid rgba(255,255,255,.3);-webkit-backdrop-filter:none;backdrop-filter:none}
+.pha{display:grid;grid-template-columns:repeat(4,1fr);gap:20px 6px;justify-items:center}
+.pha-i{display:flex;flex-direction:column;align-items:center;gap:7px;width:76px;font-size:12.5px;text-align:center;text-shadow:0 1px 5px rgba(0,0,0,.6)}
+.pha-ic{background:var(--g);width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.pha-notes{color:#2b2100}
+.ph-tonal .pha-ic{border-radius:50%;box-shadow:none}
+.ph-minimal .pha-ic{background:rgba(0,0,0,.4);border-radius:15px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
+.ph-home .dots{display:flex;gap:7px;justify-content:center;margin:auto 0 16px}
+.ph-home .dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.45)}.ph-home .dots i:first-child{background:#fff}
+.pdock{display:flex;justify-content:space-around;padding:14px 10px;border-radius:32px;background:rgba(255,255,255,.22);-webkit-backdrop-filter:blur(26px) saturate(1.4);backdrop-filter:blur(26px) saturate(1.4);margin-bottom:12px}
+.ph[data-wall=light] .pdock{background:rgba(20,28,40,.42)}
+.ph-tonal .pdock{background:transparent;padding:0;margin-bottom:10px;-webkit-backdrop-filter:none;backdrop-filter:none}
+.psearch{display:none}
+.ph-tonal .psearch{display:flex;align-items:center;gap:12px;height:52px;border-radius:26px;background:#2b2e34;padding:0 20px;font-size:16px;color:rgba(255,255,255,.88);margin-bottom:18px}
+.ph-minimal .pdock{background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.3);border-radius:22px;-webkit-backdrop-filter:none;backdrop-filter:none}
+.pdock .pha-ic{width:58px;height:58px}.pdock .pha-i{width:62px}
+.ph-unlocked{background:#000}
+
+/* ── Discussion (côté écran) ── */
+.pt{display:flex;flex-direction:column;animation:scFadeIn .35s ease}
+.pt.pt-instant{animation:none}
+.pt-head{flex:none;padding:calc(var(--sb-h) + 2px) 10px 10px;background:var(--head-bg);display:flex;align-items:center;gap:10px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom:.5px solid rgba(255,255,255,.14)}
+.pt-back{font-size:26px;width:36px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.pt-av{width:42px;height:42px;border-radius:50%;background:#556176 center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex:none;color:#fff}
+.ph-tonal .pt-av{border-radius:15px}
+.pt-name{font-size:18px;font-weight:700;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding:12px 12px}
+.pt-day{align-self:center;font-size:13px;color:rgba(255,255,255,.72);margin:6px 0 6px;flex:none}
+.pt-b{flex:none;max-width:76%;padding:9px 14px;border-radius:var(--bubble-r);font-size:16.5px;line-height:1.3;white-space:pre-wrap;word-break:break-word}
+.pt-b.in{align-self:flex-start;background:var(--bubble-in);color:var(--bubble-in-c);-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4)}
+.pt-b.out{align-self:flex-end;background:var(--bubble-out);color:var(--bubble-out-c)}
+.ph-tonal .pt-b.in{border-bottom-left-radius:6px}.ph-tonal .pt-b.out{border-bottom-right-radius:6px}
+.ph-tonal .pt-b.in,.ph-minimal .pt-b.in{-webkit-backdrop-filter:none;backdrop-filter:none}
+.pt-b.pt-new{animation:ptIn .28s cubic-bezier(.2,.9,.3,1.1)}
+@keyframes ptIn{from{transform:translateY(10px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+.pt-typing{display:flex;gap:5px;align-items:center;padding:14px 16px}
+.pt-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.45;animation:ptDot 1.2s infinite ease-in-out}
+.pt-dot:nth-child(2){animation-delay:.15s}
+.pt-dot:nth-child(3){animation-delay:.3s}
+@keyframes ptDot{0%,60%,100%{opacity:.25;transform:none}30%{opacity:.8;transform:translateY(-2px)}}
+.pt-comp{flex:none;display:flex;align-items:center;gap:8px;padding:8px 10px calc(10px + var(--safe-b));background:var(--head-bg)}
+.pt-plus{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--accent);flex:none}
+.pt-field{flex:1;min-width:0;min-height:40px;border-radius:20px;background:var(--field-bg);border:.5px solid rgba(255,255,255,.22);display:flex;align-items:center;padding:6px 14px;font-size:16.5px;position:relative;overflow:hidden}
+.pt-typed{white-space:pre-wrap;word-break:break-word}
+.pt-caret{display:none;width:2px;height:1.15em;margin-left:1px;flex:none;background:currentColor;animation:ptCaret 1s steps(1) infinite}
+.pt-field.ready .pt-caret{display:inline-block}
+@keyframes ptCaret{50%{opacity:0}}
+.pt-ph{opacity:.6}
+.pt-field.ready .pt-ph{margin-left:2px}
+.pt-keys{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;background:transparent;color:transparent;caret-color:transparent;font-size:16px;padding:0;margin:0;outline:none}
+.pt-send{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex:none;color:rgba(255,255,255,.7)}
+.pt-send:disabled{cursor:default}
+.pt-send.on{background:#fff;color:#111}
+.ph-tonal .pt-send{border-radius:14px;width:42px;height:42px;background:#34373e}
+.ph-tonal .pt-send.on{background:#e3e1dc;color:#1b1b1b}
+/* Épuré : discussion sur fond blanc, texte et barre d'état sombres */
+.ph-minimal.pt{background:#fff;color:#111}
+.ph-minimal .pt-head{border-bottom:1px solid #e5e5e5;color:#111;-webkit-backdrop-filter:none;backdrop-filter:none}.ph-minimal .pt-back{color:#111}
+.ph-minimal .pt-av{background-color:#9aa6b8}
+.ph-minimal .pt-day{color:#5c5c61}
+.ph-minimal .pt-comp{border-top:1px solid #e5e5e5}
+.ph-minimal .pt-field{border:1px solid #cfcfcf;color:#111}
+.ph-minimal .pt-send{background:#c9ccd3;color:#fff}.ph-minimal .pt-send.on{background:#1c1c1e;color:#fff}
+.ph-minimal .pt-plus{color:#111}
+/* Message du comédien non distribué (maquette 34) */
+.pt-und{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin:-4px 2px 2px auto;font-size:12px;color:#ff6b62;flex:none}
+.pt-und::before{content:'!';display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#ff453a;color:#fff;font-size:10px;font-weight:700}
+.ph-minimal .pt-und{color:#c4291f}
+
+/* ── Alerte batterie / réseau ── */
+.pal{position:absolute;inset:0;z-index:25;display:flex;align-items:center;justify-content:center;padding:0 30px;background:rgba(0,0,0,.5)}
+.pal-c{width:100%;max-width:320px;border-radius:22px;background:rgba(40,44,54,.96);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);text-align:center;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5);animation:scFadeIn .3s ease}
+.pal-ic{width:52px;height:52px;border-radius:50%;margin:22px auto 12px;display:flex;align-items:center;justify-content:center;font-size:26px;background:rgba(255,77,67,.18);color:#ff6b62}
+.pal-ic.net{background:rgba(255,255,255,.14);color:#fff}
+.pal-t{font-size:18px;font-weight:700;padding:0 20px}
+.pal-m{font-size:15px;color:rgba(255,255,255,.88);padding:6px 22px 18px;line-height:1.35}
+.pal-b{display:block;width:100%;height:52px;border-top:1px solid rgba(255,255,255,.16);font-size:17px;font-weight:600;color:var(--accent)}
+.ph-tonal .pal-c{background:#2b2e34;border-radius:30px;-webkit-backdrop-filter:none;backdrop-filter:none;padding-bottom:18px}
+.ph-tonal .pal-b{width:auto;display:inline-block;height:44px;border:0;border-radius:22px;background:#a8c7fa;color:#0b1b33;padding:0 32px;margin-top:2px}
+.ph-minimal .pal-c{background:#14171c;border:1px solid rgba(255,255,255,.22);border-radius:12px;-webkit-backdrop-filter:none;backdrop-filter:none}
+.ph-minimal .pal-b{color:#fff}
+
+/* ── Veille / extinction : logo neutre (cercle et trait d'alimentation) ── */
+.pp-logo{width:72px;height:72px;color:rgba(255,255,255,.88);stroke-width:2.6;filter:drop-shadow(0 0 18px rgba(255,255,255,.25));opacity:0;transition:opacity .5s ease;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+#screen-ppower.logo .pp-logo{opacity:1}
+
+/* ── Apparitions / disparitions ── */
 @keyframes scFadeIn{from{opacity:0}to{opacity:1}}
-@keyframes notifOut{to{transform:translateY(-140%);opacity:.4}}
-.sc-notif.sc-out,.sc-callbar.sc-out{animation:notifOut .35s ease-in forwards}
 @keyframes scFadeOut{to{opacity:0}}
-.sc-lock.sc-lockout{animation:scFadeOut .4s ease forwards}
-.sc-lock.sc-still{animation:none}
+@keyframes notifIn{from{transform:translateY(-130%)}to{transform:translateY(0)}}
+@keyframes notifOut{to{transform:translateY(-140%);opacity:.4}}
 
-/* Écran verrouillé simulé */
-.sc-lock{position:absolute;inset:0;background:linear-gradient(180deg,#2a3140,#0c0f16);background-size:cover;background-position:center;display:flex;flex-direction:column;align-items:center;color:#fff;padding:calc(46px + env(safe-area-inset-top)) 18px calc(14px + env(safe-area-inset-bottom));overflow:hidden;cursor:pointer;animation:scFadeIn .5s ease}
-.sc-lock-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,0) 32%,rgba(0,0,0,0) 62%,rgba(0,0,0,.32));pointer-events:none}
-.sc-lock>*{position:relative}
-.sc-lock>.sc-lock-shade{position:absolute}
-.sc-lock-date{font-size:1.15rem;font-weight:600;text-shadow:0 1px 12px rgba(0,0,0,.4)}
-.sc-lock-time{font-size:5.6rem;font-weight:600;line-height:1.04;letter-spacing:-2px;text-shadow:0 2px 26px rgba(0,0,0,.4);font-variant-numeric:tabular-nums}
-.sc-lock.glass .sc-lock-time{font-family:Georgia,'Times New Roman',serif}
-.sc-lock.tonal{align-items:flex-start;padding-left:28px;padding-right:28px}
-.sc-lock.tonal .sc-lock-date{order:2;font-weight:500;font-size:1.05rem;margin-top:6px}
-.sc-lock.tonal .sc-lock-time{order:1;font-weight:300;font-size:6.6rem;line-height:.95;letter-spacing:0;margin-top:24px}
-.sc-lock.minimal .sc-lock-time{font-weight:200;font-size:5rem;letter-spacing:0;margin-top:30px}
-.sc-lock.minimal .sc-lock-date{order:2;font-weight:400;opacity:.85}
-.sc-lock.minimal .sc-lock-time{order:1}
-.sc-notif.in-lock{position:absolute;top:auto;left:12px;right:12px;bottom:calc(128px + env(safe-area-inset-bottom));cursor:inherit}
-.sc-notif.glass.in-lock{background:rgba(84,84,94,.4);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.17)}
-.sc-notif.tonal.in-lock{bottom:auto;top:46%;background:rgba(43,46,52,.92)}
-.sc-notif.minimal.in-lock{bottom:calc(64px + env(safe-area-inset-bottom))}
-.sc-lock-bottom{position:absolute;left:0;right:0;bottom:calc(48px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;padding:0 46px}
-.sc-lock-circle{width:52px;height:52px;border-radius:50%;border:none;background:rgba(72,72,82,.46);backdrop-filter:blur(24px) saturate(1.5);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.18);color:#fff}
-.sc-lock.tonal .sc-lock-circle{border-radius:18px;background:rgba(43,46,52,.75);backdrop-filter:none}
-.sc-lock-home{position:absolute;bottom:calc(9px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:132px;height:5px;border-radius:3px;background:rgba(255,255,255,.92)}
-.sc-lock.tonal .sc-lock-home{width:110px;height:4px}
-.sc-lock.minimal .sc-lock-home{display:none}
-
-/* Paysage (téléphone couché, ex. 844 × 390) : Accepter / Refuser, Raccrocher
-   et la notification de l'écran verrouillé restent entiers. Marges réduites,
-   avatar et horloge plus petits, grille de l'appel en cours sur une ligne. */
+/* ── Paysage (téléphone tenu en travers, ex. 844 × 390) ── */
 @media (orientation:landscape) and (max-height:500px){
-  .sc-call{padding:calc(14px + env(safe-area-inset-top)) 30px calc(14px + env(safe-area-inset-bottom))}
-  .sc-avatar,.sc-call.glass .sc-avatar,.sc-call.tonal .sc-avatar,.sc-call.tonal .sc-head .sc-avatar,.sc-call.minimal .sc-avatar{width:56px;height:56px;font-size:1.5rem;margin-bottom:6px}
-  .sc-name,.sc-call.tonal .sc-name,.sc-call.minimal .sc-name{font-size:1.5rem}
-  .sc-call.tonal .sc-kicker{margin-bottom:6px}
-  .sc-bottom{gap:10px;padding-top:8px}
-  .sc-grid,.sc-call.tonal .sc-grid{grid-template-columns:repeat(6,1fr);max-width:620px;gap:10px;margin-top:12px}
-  .sc-lock{padding-top:calc(12px + env(safe-area-inset-top))}
-  .sc-lock-date{font-size:.95rem}
-  .sc-lock-time,.sc-lock.tonal .sc-lock-time,.sc-lock.minimal .sc-lock-time{font-size:3.4rem;margin-top:0}
-  .sc-lock-bottom{bottom:calc(20px + env(safe-area-inset-bottom))}
-  .sc-notif.in-lock,.sc-notif.minimal.in-lock{bottom:calc(84px + env(safe-area-inset-bottom))}
-  .sc-notif.tonal.in-lock{top:auto;bottom:calc(84px + env(safe-area-inset-bottom))}
-  /* Barre d'état du téléphone affichée (87-phone-status.css) : contenu dessous */
-  #screen-mode.sb-on .sc-call,#screen-mode.sb-on .sc-lock{padding-top:calc(44px + env(safe-area-inset-top))}
+  .ph,#screen-sbar{--sb-h:calc(34px + var(--safe-t))}
+  .psb{font-size:14px;padding:var(--safe-t) 28px 0}.psb-pct,.psb-net{font-size:12px}
+  .pl{flex-direction:row;flex-wrap:wrap;padding:calc(var(--sb-h) + 4px) 18px 74px;gap:0 12px;align-content:flex-start}
+  .pl-head{flex:0 0 42%;height:100%;justify-content:center;padding-bottom:30px}
+  .pl-lock{margin-bottom:2px;font-size:16px}
+  .pl-time,.ph-tonal .pl-time{font-size:68px}
+  .ph-tonal .pl-time{flex-direction:row;gap:0;font-size:64px}
+  .ph-tonal .pl-time .pl-br{display:none}.ph-tonal .pl-time .pl-colon{display:inline}
+  .pl-date,.ph-tonal .pl-date{font-size:16px}
+  .ph-minimal .pl-time{font-size:60px}
+  .pl .pn-stack,.ph-tonal .pl .pn-stack{flex:1;margin-top:0;padding:0;min-width:0;max-height:100%;justify-content:center;gap:6px;align-self:stretch;padding-bottom:30px;overflow-y:auto;overscroll-behavior:contain}
+  .pn{padding:8px 12px}.pl .pn{box-shadow:none}.pn-icon{width:34px;height:34px;font-size:17px}
+  .pn-title{font-size:15px;margin-top:1px}.pn-text{font-size:13.5px;-webkit-line-clamp:1}
+  .pl-bottom{bottom:16px;padding:0 26px}.pl-circle{width:42px;height:42px;font-size:18px}.pl-hint{display:none}
+  .pc{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:calc(var(--sb-h) + 10px) 36px 20px}
+  .pc-info{flex:1}.pc-avatar{width:84px;height:84px;font-size:34px;margin-bottom:10px}.ph-minimal .pc-avatar{width:76px;height:76px}
+  .pc-name,.pc-name.pc-name-s{font-size:30px}.pc-kicker{margin-bottom:8px}
+  .pc-bottom{margin-top:0;width:auto;flex:0 0 360px;gap:14px}
+  .pc-row{max-width:none;gap:20px}
+  .pc-grid{margin-top:0;flex:0 0 330px;gap:10px 12px}
+  .pc>.pc-bottom.solo{flex:0 0 260px}
+  .pc>.pc-bottom.pc-end{flex:0 0 120px}
+  .pc-btn.mini{width:46px;height:46px}.pc-btn{width:68px;height:68px}
+  .pc-gb{width:56px;height:56px;font-size:24px}.ph-tonal .pc-gb{width:76px;height:52px}
+  .pc-hang{width:62px;height:62px;font-size:26px}.ph-tonal .pc-hang{width:130px}
+  .pk{flex-direction:row;flex-wrap:wrap;justify-content:center;align-content:center;gap:0 56px;padding:calc(var(--sb-h) + 4px) 30px 16px}
+  .pk-keys{grid-template-columns:repeat(3,56px);gap:8px 18px}.pk-key{width:56px;height:56px;font-size:24px}.pk-key small{display:none}
+  .ph-tonal .pk-keys{grid-template-columns:repeat(3,64px)}.ph-tonal .pk-key{width:64px;height:52px}
+  .pk-cancel{position:absolute;right:20px;bottom:10px;margin:0}
+  .pk-top{align-self:center}
+  .pk-title{margin-bottom:12px}.pk-dots{margin-bottom:0}
+  .ph-home{padding:calc(var(--sb-h) + 6px) 24px 8px;overflow:hidden}
+  .phw{display:none}.pha{grid-template-columns:repeat(6,1fr);gap:10px 6px}
+  .pha-i{font-size:11.5px;gap:4px}.pha-ic{width:46px;height:46px;font-size:22px}
+  .ph-home .dots,.psearch,.ph-tonal .psearch{display:none}
+  .pdock{padding:8px 10px;margin:auto 0 6px}.pdock .pha-ic{width:42px;height:42px}
+  .pal{padding:0 24px}
+  .pal-ic{margin-top:12px;width:42px;height:42px;font-size:21px;margin-bottom:6px}.pal-m{padding-bottom:10px;font-size:14px}.pal-b{height:44px}
+  .pt-head{padding-bottom:6px}.pt-b{font-size:15.5px;padding:7px 12px}
 }
 
+/* Mouvement réduit : apparitions en fondu seulement, plus de glissement ni de rebond */
+@media (prefers-reduced-motion:reduce){
+  .pb-wrap,.pn.pn-new{animation:scFadeIn .2s ease}
+  .pb-wrap.pb-out{animation:scFadeOut .2s ease forwards}
+  .pt-b.pt-new{animation:none}
+  .pt-dot,.pt-caret{animation:none}
+  .pt-dot{opacity:.6}
+}
 /* ══ Onglet Tel : « Style et sonnerie » / « Style et son », appelants enregistrés (maquettes validées 36) ══
    Rangée résumé (comme la barre d'état de l'onglet Média) ouvrant la vue
    plein écran #tel-style-view (présentation de #phone-params-view : ss-head,
@@ -961,75 +1186,6 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .dc-ctl-close{color:var(--danger);border-color:rgba(255,90,79,.4)}
 .dc-ctl-btn:disabled{opacity:.4;cursor:default}
 
-/* ── Écran : discussion plein écran ──
-   z-index 85 : sous le noir total (90) et sous un appel / une notification (95) */
-#screen-chat{display:none;position:absolute;inset:0;z-index:85;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif}
-.scc{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;animation:scFadeIn .35s ease}
-.scc-head{display:flex;flex-direction:column;align-items:center;gap:4px;padding:calc(52px + env(safe-area-inset-top)) 16px 10px;flex:none}
-.scc-avatar{width:40px;height:40px;border-radius:50%;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:1rem;color:#fff}
-.scc-name{font-size:.75rem;max-width:80%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.scc-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:10px 12px}
-.scc-b{max-width:74%;border-radius:18px;padding:8px 12px;font-size:.9375rem;line-height:1.3;white-space:pre-wrap;word-break:break-word}
-.scc-b.in{align-self:flex-start}
-.scc-b.out{align-self:flex-end}
-.scc.scc-instant{animation:none}
-.scc-b.scc-new{animation:sccIn .28s cubic-bezier(.2,.9,.3,1.1)}
-@keyframes sccIn{from{transform:translateY(10px) scale(.96);opacity:0}to{transform:none;opacity:1}}
-.scc-typing{display:flex;gap:4px;align-items:center;padding:12px 14px}
-.scc-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.45;animation:sccDot 1.2s infinite ease-in-out}
-.scc-dot:nth-child(2){animation-delay:.15s}
-.scc-dot:nth-child(3){animation-delay:.3s}
-@keyframes sccDot{0%,60%,100%{opacity:.25;transform:none}30%{opacity:.8;transform:translateY(-2px)}}
-.scc-compose{display:flex;gap:8px;align-items:center;padding:8px 10px calc(8px + env(safe-area-inset-bottom));flex:none}
-.scc-field{flex:1;min-width:0;min-height:36px;border-radius:18px;display:flex;align-items:center;padding:6px 12px;font-size:.9375rem;position:relative;overflow:hidden}
-.scc-typed{white-space:pre-wrap;word-break:break-word}
-.scc-caret{display:none;width:2px;height:1.15em;margin-left:1px;flex:none;animation:sccCaret 1s steps(1) infinite}
-.scc-field.ready .scc-caret{display:inline-block}
-@keyframes sccCaret{50%{opacity:0}}
-.scc-ph{opacity:.45}
-.scc-field.ready .scc-ph{margin-left:2px}
-/* Champ caché : reçoit les touches (clavier du système sur mobile), invisible */
-.scc-keys{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;background:transparent;color:transparent;caret-color:transparent;font-size:16px;padding:0;margin:0;outline:none}
-.scc-send{width:32px;height:32px;border-radius:50%;border:none;flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
-.scc-send:disabled{cursor:default}
-
-/* Épuré : fond clair (maquette 27), bulles sobres ; la bulle envoyée est sombre */
-.scc.minimal{background:#fff;color:#111}
-.scc.minimal .scc-head{border-bottom:1px solid #e5e5e5;color:#111}
-.scc.minimal .scc-avatar{background-color:#9aa6b8}
-.scc.minimal .scc-b.in{background:#e9e9eb;color:#111}
-.scc.minimal .scc-b.out{background:#1c1c1e;color:#fff}
-.scc.minimal .scc-compose{border-top:1px solid #e5e5e5}
-.scc.minimal .scc-field{border:1px solid #d0d0d0;color:#111}
-.scc.minimal .scc-caret{background:#111}
-.scc.minimal .scc-send{background:#c9ccd3;color:#fff}
-.scc.minimal .scc-send.on{background:#1c1c1e}
-
-/* Verre : fond sombre, bulles translucides et floutées */
-.scc.glass{background:linear-gradient(180deg,#24324a 0%,#0e1420 100%);color:#fff}
-.scc.glass .scc-head{background:rgba(255,255,255,.06);backdrop-filter:blur(20px);border-bottom:.5px solid rgba(255,255,255,.12)}
-.scc.glass .scc-avatar{background-color:rgba(255,255,255,.22)}
-.scc.glass .scc-b.in{background:rgba(255,255,255,.16);backdrop-filter:blur(24px) saturate(1.4);color:#fff}
-.scc.glass .scc-b.out{background:rgba(255,255,255,.9);color:#111}
-.scc.glass .scc-compose{background:rgba(0,0,0,.18)}
-.scc.glass .scc-field{background:rgba(255,255,255,.1);border:.5px solid rgba(255,255,255,.22)}
-.scc.glass .scc-caret{background:#fff}
-.scc.glass .scc-send{background:rgba(255,255,255,.2);color:rgba(255,255,255,.6)}
-.scc.glass .scc-send.on{background:#fff;color:#111}
-
-/* Tonal : surfaces tonales, coins doux */
-.scc.tonal{background:#16181c;color:#e6e6e6}
-.scc.tonal .scc-head{background:#1f2227}
-.scc.tonal .scc-avatar{background-color:#4a5a70;width:44px;height:44px;border-radius:16px}
-.scc.tonal .scc-b{border-radius:20px}
-.scc.tonal .scc-b.in{background:#2b2e34;color:#e6e6e6;border-bottom-left-radius:6px}
-.scc.tonal .scc-b.out{background:#e3e1dc;color:#1b1b1b;border-bottom-right-radius:6px}
-.scc.tonal .scc-compose{background:#1f2227}
-.scc.tonal .scc-field{background:#2b2e34;border-radius:22px}
-.scc.tonal .scc-caret{background:#e6e6e6}
-.scc.tonal .scc-send{width:40px;height:40px;border-radius:14px;background:#2b2e34;color:#6d7178}
-.scc.tonal .scc-send.on{background:#e3e1dc;color:#1b1b1b}
-
 /* Timings et lecture automatique (maquette 26d) */
 .dc-pill{font-size:var(--fs-caption);color:#6fb4ff;border:1px solid #6fb4ff;border-radius:10px;padding:1px 6px;white-space:nowrap;align-self:center;font-variant-numeric:tabular-nums}
 .dc-timing{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;background:var(--mid);border:1px solid var(--border)}
@@ -1099,16 +1255,6 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .nt-note{font-size:var(--fs-caption);color:var(--text-2);text-align:center;margin-top:12px}
 .nt-wall-preview{width:36px;height:62px;border-radius:8px;background:var(--mid2);background-size:cover;background-position:center;border:1px solid var(--border);flex-shrink:0}
 
-/* Écran — carte de notification d'application (bandeau / écran verrouillé) */
-.nt-card .sc-notif-icon{background:linear-gradient(135deg,#3a7bd5,#00d2ff);background-size:cover;background-position:center;font-weight:700;font-size:1rem;color:#fff}
-.nt-card .sc-notif-icon.nt-img,.nt-card .n-dot.nt-img{background-color:#000}
-.nt-card .n-dot{background:linear-gradient(135deg,#3a7bd5,#00d2ff);background-size:cover;background-position:center;font-size:.6875rem;font-weight:700;color:#fff;border-radius:6px}
-.nt-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:.8125rem;opacity:.8}
-.nt-head .n-time{opacity:1;font-size:.8125rem}
-.nt-head .nt-app,.n-head .nt-app{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.nt-card.glass .sc-notif-name{margin-top:2px}
-.nt-card.glass.in-lock{background:rgba(255,255,255,.16);backdrop-filter:blur(28px) saturate(1.4);box-shadow:none}
-.nt-card.glass.in-lock{top:calc(196px + env(safe-area-inset-top));bottom:auto}
 /* ══ Onglet Appel : appels et SMS enregistrés, numérotés (maquette validée 18) ══
    Les 20 premiers de chaque liste sont les cibles des canaux Appel et SMS de
    la passerelle DMX (mode Étendu 16). */
@@ -1243,84 +1389,10 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .ss-del.ss-cancel{border-color:rgba(255,255,255,.14);color:var(--text)}
 .ss-save{flex:1.6;border:none;background:var(--accent);color:#000;font-size:.75rem}
 
-/* Écran — faux téléphone (maquettes 30 à 32), sous la discussion (85) et l'appel (95) */
-#screen-phone{display:none;position:absolute;inset:0;z-index:84;color:#fff;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif;cursor:default}
-.sp-lock,.sp-code,.sp-home,.sp-unlocked{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
-.sp-lock,.sp-code{background:linear-gradient(180deg,#24324a 0%,#0e1420 100%)}
-.sp-lock.sp-enter,.sp-code.sp-enter{animation:scFadeIn .35s ease}
-/* Fond d'écran de la séquence (maquette 42, __seqwall) : couvrant, centré, voile pour la lisibilité ; plus sombre sous le pavé */
-.sp-lock.has-wall{background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,0) 32%,rgba(0,0,0,0) 62%,rgba(0,0,0,.32)),var(--sp-wall) center/cover no-repeat,#0e1420}
-.sp-code.has-wall{background:linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)),var(--sp-wall) center/cover no-repeat,#0e1420}
-.sp-lock{gap:10px;padding:calc(60px + env(safe-area-inset-top)) 14px calc(22px + env(safe-area-inset-bottom))}
-.sp-lock-head{text-align:center}
-.sp-date{font-size:15px;opacity:.85}
-.sp-time{font-size:80px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
-.sp-stack{margin-top:14px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden}
-.sp-card{display:flex;gap:10px;padding:10px 12px;border-radius:20px;background:rgba(255,255,255,.16);text-align:left;cursor:pointer;flex:none}
-.sp-card.sp-new{animation:notifIn .45s cubic-bezier(.2,.9,.3,1.1)}
-.sp-icon{width:34px;height:34px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#3a7bd5,#00d2ff);font-size:16px;font-weight:700}
-.sp-card .sp-icon svg{width:18px;height:18px}
-.sp-body{flex:1;min-width:0}
-.sp-top{display:flex;justify-content:space-between;gap:8px;font-size:12px;opacity:.8}
-.sp-app{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sp-when{flex:none}
-.sp-name{font-size:14px;font-weight:600}
-.sp-msg{font-size:13px;opacity:.9;line-height:1.3;word-break:break-word}
-.sp-hint{margin-top:auto;text-align:center;color:rgba(255,255,255,.7);font-size:13px}
-/* SMS : bulle sur fond vert ; appel manqué : combiné sur fond rouge (maquette 30) */
-.sp-icon.sp-sms{background:#3a8f5c}
-.sp-icon.sp-missed{background:#c0453a}
-/* Maquette 44 : icône importée (carré arrondi) ; appel manqué en avatar rond gris
-   aux initiales (ou photo), pastille rouge au combiné bordée de la couleur de la carte */
-.sp-icon.has-img{background:#000 center/cover no-repeat}
-.sp-icon.sp-avatar{position:relative;border-radius:50%;background:#6e7480;font-size:15px;font-weight:600;--sp-ring:#2b3446}
-.sp-icon.sp-avatar.has-img{background:#6e7480 center/cover no-repeat}
-.sp-badge{position:absolute;right:-3px;bottom:-3px;width:15px;height:15px;box-sizing:border-box;border-radius:50%;background:#e5483d;border:1.5px solid var(--sp-ring);display:flex;align-items:center;justify-content:center}
-.sp-card .sp-badge svg{width:8px;height:8px}
-#screen-phone.tonal .sp-icon.sp-avatar{--sp-ring:#2b2e34}
-#screen-phone.minimal .sp-icon.sp-avatar{--sp-ring:#16191f}
-/* Verre : translucide et flouté */
-#screen-phone.glass .sp-card{backdrop-filter:blur(24px) saturate(1.4)}
-/* Tonal : surfaces tonales, heure fine en deux lignes */
-#screen-phone.tonal .sp-lock-head{text-align:left;padding:0 14px;display:flex;flex-direction:column}
-#screen-phone.tonal .sp-time{order:1;font-weight:300;font-size:88px;line-height:.95;margin-top:10px}
-#screen-phone.tonal .sp-date{order:2;font-weight:500;margin-top:8px}
-#screen-phone.tonal .sp-card{background:rgba(43,46,52,.92);border-radius:26px;padding:12px 14px}
-#screen-phone.tonal .sp-key{border-radius:24px;background:rgba(255,255,255,.1)}
-/* Épuré : sobre et contrasté */
-#screen-phone.minimal .sp-time{font-weight:200;font-size:72px}
-#screen-phone.minimal .sp-card{background:#16191f;border:1px solid rgba(255,255,255,.12);border-radius:14px}
-#screen-phone.minimal .sp-key{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
-/* Pavé du code (maquette 31) */
-.sp-code{gap:10px;padding:calc(90px + env(safe-area-inset-top)) 30px calc(30px + env(safe-area-inset-bottom))}
-.sp-code-title{text-align:center;font-size:18px}
-.sp-dots{display:flex;justify-content:center;gap:16px;margin:10px 0 26px}
-.sp-dot{width:13px;height:13px;border-radius:50%;border:1.5px solid #fff;background:transparent}
-.sp-dot.on{background:#fff}
-.sp-keys{display:grid;grid-template-columns:repeat(3,72px);gap:18px 26px;justify-content:center}
-.sp-key{width:72px;height:72px;border-radius:50%;border:none;background:rgba(255,255,255,.14);color:#fff;font-family:inherit;font-size:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
-.sp-key:active{background:rgba(255,255,255,.32)}
-/* Écran d'accueil (maquette 32) : image importée plein écran */
-.sp-home{background:linear-gradient(160deg,#3d5a80 0%,#98c1d9 60%,#e0fbfc 100%);background-size:cover;background-position:center;cursor:pointer}
-.sp-unlocked{background:#000}
-/* Paysage (ex. 844 × 390) : horloge réduite, pile de notifications qui défile
-   (comme un vrai écran verrouillé) au lieu d'être coupée ; pavé du code compact */
-@media (orientation:landscape) and (max-height:500px){
-  .sp-lock{gap:6px;padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:calc(10px + env(safe-area-inset-bottom))}
-  .sp-time,#screen-phone.tonal .sp-time,#screen-phone.minimal .sp-time{font-size:44px;margin-top:0}
-  .sp-stack{margin-top:4px;overflow-y:auto;overscroll-behavior:contain;width:100%;max-width:560px;align-self:center}
-  .sp-code{gap:4px;padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:calc(10px + env(safe-area-inset-bottom))}
-  .sp-dots{margin:4px 0 10px}
-  .sp-keys{grid-template-columns:repeat(3,52px);gap:8px 22px}
-  .sp-key{width:52px;height:52px;font-size:22px}
-  #screen-mode.sb-on .sp-lock,#screen-mode.sb-on .sp-code{padding-top:calc(44px + env(safe-area-inset-top))}
-}
-/* ══ Faux téléphone : barre d'état (28b), veille (29b), batterie faible et extinction (33), pas de réseau (34) ══
-   Barre : heure à gauche ; réseau, Wi-Fi, pourcentage, batterie à droite. Trois
-   styles neutres .glass .tonal .minimal ; .pb-band : bandeau au-dessus d'un
-   média ; .pb-dark : texte sombre sur fond clair (discussion Épurée).
-   z-index de l'écran : barre 96 (au-dessus de l'appel, 95), alerte 97,
-   veille / extinction 98 (sous les contrôles de l'écran, 100). */
+/* ══ Faux téléphone : barre d'état de l'APERÇU de la télécommande (28b) ══
+   La barre, les alertes, la veille et l'extinction de l'écran de jeu sont
+   rendues par 73-phone-ui.js et stylées dans 79-phone-ui.css (phase 5) ; ces
+   règles .pb* ne servent plus qu'à l'aperçu « Téléphone au départ » (98-phone-params.js). */
 .pb{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#fff;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif;font-size:15px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pb-right{display:flex;align-items:center;gap:6px}
 .pb-sig{display:inline-flex;align-items:flex-end;gap:1.5px;height:11px}
@@ -1340,37 +1412,6 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .pb-bolt{margin-left:-4px}
 .pb.tonal{font-weight:500}
 .pb.minimal{font-weight:500;letter-spacing:.01em}
-
-/* Écran de jeu : barre en haut, sans capter les touchers */
-#screen-sbar{display:none;position:absolute;top:0;left:0;right:0;z-index:96;height:calc(44px + env(safe-area-inset-top));box-sizing:border-box;padding:env(safe-area-inset-top) 18px 0;pointer-events:none;animation:scFadeIn .3s ease}
-#screen-sbar.pb-band{background:rgba(0,0,0,.6)}
-#screen-sbar.pb-dark{color:#111}
-#screen-sbar.pb-dark .pb-bat.low i{background:#e0352b}
-/* Bandeaux (SMS, notification, appel) sous la barre */
-#screen-mode.sb-on .sc-notif:not(.in-lock),#screen-mode.sb-on .sc-callbar{top:calc(48px + env(safe-area-inset-top))}
-
-/* Alerte « Batterie faible » (maquette 33) */
-#screen-palert{display:none;position:absolute;inset:0;z-index:97;align-items:center;justify-content:center;padding:0 34px;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif;color:#fff}
-.pa-card{width:100%;max-width:322px;margin-top:-120px;border-radius:14px;background:rgba(40,44,54,.97);box-shadow:0 20px 50px rgba(0,0,0,.45);text-align:center;overflow:hidden;animation:scFadeIn .3s ease}
-.pa-title{padding:20px 16px 0;font-size:16px;font-weight:600}
-.pa-msg{padding:6px 16px 16px;font-size:13px;opacity:.9}
-.pa-close{display:block;width:calc(100% - 32px);margin:0 16px;padding:12px 0 14px;border:none;border-top:1px solid rgba(255,255,255,.18);background:none;color:#6fb4ff;font-family:inherit;font-size:15px;cursor:pointer}
-#screen-palert.tonal .pa-card{background:rgba(43,46,52,.98);border-radius:26px}
-#screen-palert.tonal .pa-close{color:#a8c7fa}
-#screen-palert.minimal .pa-card{background:#16191f;border:1px solid rgba(255,255,255,.12);border-radius:12px}
-#screen-palert.minimal .pa-close{color:#fff}
-
-/* Veille (maquette 29b) et extinction (maquette 33) : écran noir en fondu, logo neutre */
-#screen-ppower{display:none;position:absolute;inset:0;z-index:98;background:#000;opacity:0;transition:opacity .6s ease;align-items:center;justify-content:center}
-#screen-ppower.on{opacity:1}
-#screen-ppower.instant{transition:none}
-.pp-logo{width:64px;height:64px;color:rgba(255,255,255,.82);opacity:0;transition:opacity .5s ease}
-#screen-ppower.logo .pp-logo{opacity:1}
-
-/* Discussion : message du comédien non distribué (maquette 34) */
-.scc-und{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin:-4px 2px 2px auto;font-size:11px;color:#ff6b62}
-.scc-und::before{content:'!';display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#ff453a;color:#fff;font-size:10px;font-weight:700}
-.scc.minimal .scc-und{color:#d4302a}
 
 /* Télécommande — Téléphone au départ (maquette 28b) ; aussi l'onglet Média */
 .pp-preview{background:#000;border-radius:10px;padding:12px 14px;font-size:14px}
@@ -4868,6 +4909,7 @@ const SPECS = {
         then: req(oneOf('app', 'home'), 'ensuite : l’app visée ou l’écran d’accueil (image)'),
       }), 'déverrouillage attendu : toucher l’écran verrouillé demande le code'),
       home: opt(bool, 'image d’écran d’accueil préchargée (__seqhome)'),
+      homeWall: opt(bool, 'écran d’accueil : l’image préchargée (__seqhome) sert de fond d’écran sous les icônes génériques (absent : l’image seule, plein écran)'),
       wall: opt(bool, 'fond d’écran de la séquence préchargé (__seqwall) : écran verrouillé et pavé du code'),
       watch: opt(arrayOf(oneOf(...PHONE_GESTURES.filter((g) => !PHONE_GESTURES_ALWAYS.includes(g))), PHONE_GESTURES.length), 'gestes attendus de cet écran'),
       chime: opt(object({
@@ -9395,6 +9437,7 @@ function _validPhoneState(m) {
   m.unlock = _P.isObj(u) && [0, 4, 6].includes(u.code) ? { code: u.code, then: u.then === 'home' ? 'home' : 'app' } : null;
   if (m.mode === 'code' && !(m.unlock && m.unlock.code)) return false;
   m.home = _P.bool(m.home);
+  m.homeWall = _P.bool(m.homeWall);
   m.wall = _P.bool(m.wall);
   m.watch = Array.isArray(m.watch) ? m.watch.filter((g, i, a) => _P.oneOf(g, PROTO.PHONE_GESTURES) && !PROTO.PHONE_GESTURES_ALWAYS.includes(g) && a.indexOf(g) === i) : [];
   const c = m.chime;
@@ -16826,6 +16869,283 @@ function projectOnNative(m) {
   }
   return true;
 }
+// ══════════════════════════ FAUX TÉLÉPHONE : COMPOSANTS PARTAGÉS (écran de jeu) ══════════════════════════
+// Phase 5 (maquettes 5a à 5m) : UN SEUL rendu pour le faux téléphone de l'onglet
+// Tel (80-call-simulator.js, 84-notification.js) et de la Séquence
+// (94-sequence-phone.js, 83-discussion.js, 97-phone-status.js). Chaque fonction
+// renvoie du HTML (chaîne) ; tout texte reçu passe par escapeHtml, jamais
+// interprété. Styles : web/styles/79-phone-ui.css (trois habillages par jetons,
+// .ph-glass « Verre », .ph-tonal « Tonal », .ph-minimal « Épuré »).
+//   • statusBar     : la barre d'état (heure, réseau, Wi-Fi, batterie), unique
+//   • notification  : la carte de notification (SMS, appel manqué, application)
+//   • lock          : l'écran verrouillé (date, heure, cartes, lampe, appareil photo)
+//   • incoming / inCall / callBanner / notifBanner : appels et bandeaux
+//   • code / home / alertBox / power : pavé du code, accueil générique, alertes, logo
+//   • root / paintWall : calque d'un écran, fond d'écran et voile (fond clair détecté)
+// Aucune marque : icônes Lucide (ISC), libellés français courants.
+// Les gestes passent par des attributs data-act, lus par les écouteurs de
+// 80-call-simulator.js et 94-sequence-phone.js (aucun onclick en ligne).
+const _PH_ICONS = {
+  "message-square": "<path d=\"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z\" />",
+  "phone": "<path d=\"M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384\" />",
+  "phone-off": "<path d=\"M10.1 13.9a14 14 0 0 0 3.732 2.668 1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2 18 18 0 0 1-12.728-5.272\" /> <path d=\"M22 2 2 22\" /> <path d=\"M4.76 13.582A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 .244.473\" />",
+  "phone-missed": "<path d=\"m16 2 6 6\" /> <path d=\"m22 2-6 6\" /> <path d=\"M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384\" />",
+  "image": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\" /> <circle cx=\"9\" cy=\"9\" r=\"2\" /> <path d=\"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\" />",
+  "settings": "<path d=\"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915\" /> <circle cx=\"12\" cy=\"12\" r=\"3\" />",
+  "clock": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 6v6l4 2\" />",
+  "cloud-sun": "<path d=\"M12 2v2\" /> <path d=\"m4.93 4.93 1.41 1.41\" /> <path d=\"M20 12h2\" /> <path d=\"m19.07 4.93-1.41 1.41\" /> <path d=\"M15.947 12.65a4 4 0 0 0-5.925-4.128\" /> <path d=\"M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z\" />",
+  "camera": "<path d=\"M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z\" /> <circle cx=\"12\" cy=\"13\" r=\"3\" />",
+  "flashlight": "<path d=\"M12 13v1\" /> <path d=\"M17 2a1 1 0 0 1 1 1v4a3 3 0 0 1-.6 1.8l-.6.8A4 4 0 0 0 16 12v8a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-8a4 4 0 0 0-.8-2.4l-.6-.8A3 3 0 0 1 6 7V3a1 1 0 0 1 1-1z\" /> <path d=\"M6 6h12\" />",
+  "calendar": "<path d=\"M8 2v3\" /> <path d=\"M16 2v3\" /> <rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\" /> <path d=\"M3 9h18\" />",
+  "calculator": "<rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\" /> <line x1=\"8\" x2=\"16\" y1=\"6\" y2=\"6\" /> <line x1=\"16\" x2=\"16\" y1=\"14\" y2=\"18\" /> <path d=\"M16 10h.01\" /> <path d=\"M12 10h.01\" /> <path d=\"M8 10h.01\" /> <path d=\"M12 14h.01\" /> <path d=\"M8 14h.01\" /> <path d=\"M12 18h.01\" /> <path d=\"M8 18h.01\" />",
+  "map": "<path d=\"M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z\" /> <path d=\"M15 5.764v15\" /> <path d=\"M9 3.236v15\" />",
+  "music": "<path d=\"M9 18V5l12-2v13\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" /> <circle cx=\"18\" cy=\"16\" r=\"3\" />",
+  "mic-off": "<path d=\"M12 19v3\" /> <path d=\"M15 9.34V5a3 3 0 0 0-5.68-1.33\" /> <path d=\"M16.95 16.95A7 7 0 0 1 5 12v-2\" /> <path d=\"M18.89 13.23A7 7 0 0 0 19 12v-2\" /> <path d=\"m2 2 20 20\" /> <path d=\"M9 9v3a3 3 0 0 0 5.12 2.12\" />",
+  "grid-3x3": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" /> <path d=\"M3 9h18\" /> <path d=\"M3 15h18\" /> <path d=\"M9 3v18\" /> <path d=\"M15 3v18\" />",
+  "volume-2": "<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\" /> <path d=\"M16 9a5 5 0 0 1 0 6\" /> <path d=\"M19.364 18.364a9 9 0 0 0 0-12.728\" />",
+  "video": "<path d=\"m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5\" /> <rect x=\"2\" y=\"6\" width=\"14\" height=\"12\" rx=\"2\" />",
+  "user-plus": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" /> <line x1=\"19\" x2=\"19\" y1=\"8\" y2=\"14\" /> <line x1=\"22\" x2=\"16\" y1=\"11\" y2=\"11\" />",
+  "pause": "<rect x=\"14\" y=\"3\" width=\"5\" height=\"18\" rx=\"1\" /> <rect x=\"5\" y=\"3\" width=\"5\" height=\"18\" rx=\"1\" />",
+  "battery-low": "<path d=\"M22 14v-4\" /> <path d=\"M6 14v-4\" /> <rect x=\"2\" y=\"6\" width=\"16\" height=\"12\" rx=\"2\" />",
+  "signal-zero": "<path d=\"M2 20h.01\" />",
+  "wifi": "<path d=\"M12 20h.01\" /> <path d=\"M2 8.82a15 15 0 0 1 20 0\" /> <path d=\"M5 12.859a10 10 0 0 1 14 0\" /> <path d=\"M8.5 16.429a5 5 0 0 1 7 0\" />",
+  "plane": "<path d=\"M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z\" />",
+  "lock": "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\" /> <path d=\"M7 11V7a5 5 0 0 1 10 0v4\" />",
+  "lock-keyhole": "<circle cx=\"12\" cy=\"16\" r=\"1\" /> <rect x=\"3\" y=\"10\" width=\"18\" height=\"12\" rx=\"2\" /> <path d=\"M7 10V7a5 5 0 0 1 10 0v3\" />",
+  "chevron-left": "<path d=\"m15 18-6-6 6-6\" />",
+  "send": "<path d=\"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z\" /> <path d=\"m21.854 2.147-10.94 10.939\" />",
+  "plus": "<path d=\"M5 12h14\" /> <path d=\"M12 5v14\" />",
+  "mic": "<path d=\"M12 19v3\" /> <path d=\"M19 10v2a7 7 0 0 1-14 0v-2\" /> <rect x=\"9\" y=\"2\" width=\"6\" height=\"13\" rx=\"3\" />",
+  "power": "<path d=\"M12 2v10\" /> <path d=\"M18.4 6.6a9 9 0 1 1-12.77.04\" />",
+  "mail": "<path d=\"m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7\" /> <rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\" />",
+  "folder": "<path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\" />",
+  "user-round": "<circle cx=\"12\" cy=\"8\" r=\"5\" /> <path d=\"M20 21a8 8 0 0 0-16 0\" />",
+  "delete": "<path d=\"M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z\" /> <path d=\"m12 9 6 6\" /> <path d=\"m18 9-6 6\" />",
+  "battery-charging": "<path d=\"m11 7-3 5h4l-3 5\" /> <path d=\"M14.856 6H16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.935\" /> <path d=\"M22 14v-4\" /> <path d=\"M5.14 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2.936\" />",
+  "signal": "<path d=\"M2 20h.01\" /> <path d=\"M7 20v-4\" /> <path d=\"M12 20v-8\" /> <path d=\"M17 20V8\" /> <path d=\"M22 4v16\" />",
+  "bell": "<path d=\"M10.268 21a2 2 0 0 0 3.464 0\" /> <path d=\"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326\" />",
+  "search": "<path d=\"m21 21-4.34-4.34\" /> <circle cx=\"11\" cy=\"11\" r=\"8\" />",
+  "chevron-up": "<path d=\"m18 15-6-6-6 6\" />",
+  "clapperboard": "<path d=\"m12.296 3.464 3.02 3.956\" /> <path d=\"M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z\" /> <path d=\"M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" /> <path d=\"m6.18 5.276 3.1 3.899\" />",
+  "notebook-pen": "<path d=\"M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4\" /> <path d=\"M2 6h4\" /> <path d=\"M2 10h4\" /> <path d=\"M2 14h4\" /> <path d=\"M2 18h4\" /> <path d=\"M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z\" />",
+  "signal-off": "<path d=\"M2 20h.01\" /> <path d=\"M7 20v-4\" /> <path d=\"M12 20v-8\" /> <path d=\"M17 20V8\" /> <path d=\"M22 4v16\" /><path d=\"m3 3 18 18\"/>",
+};
+const _PH_TXT = {
+  incoming: 'Appel entrant', mobile: 'mobile', unknown: 'Inconnu', remind: 'Me le rappeler', message: 'Message',
+  decline: 'Refuser', answer: 'Répondre', accept: 'Accepter', hangup: 'Raccrocher',
+  mute: 'Muet', keypad: 'Clavier', speaker: 'Haut-parleur', add: 'Ajouter', video: 'Vidéo', contacts: 'Contacts', hold: 'Attente',
+  torch: 'Lampe torche', camera: 'Appareil photo', more: '+ {n} notifications', now: 'maintenant',
+  codeTitle: 'Saisir le code', cancel: 'Annuler', codeKeys: 'Clavier du code',
+  search: 'Rechercher', clock: 'Horloge', weather: 'Météo', sunny: 'Éclaircies',
+  batteryTitle: 'Batterie faible', batteryMsg: 'Il reste {n} % de batterie.', batteryClose: 'Fermer',
+  netTitle: 'Aucun réseau', netMsg: 'Le réseau mobile n\'est plus disponible. Les appels et les SMS ne fonctionneront pas.', netClose: 'OK',
+  today: 'Aujourd’hui', powerOff: 'Extinction',
+};
+const _PH_DAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const _PH_MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+// Fond d'écran « clair » : luminance moyenne au-dessus de ce seuil → voile renforcé et cartes denses
+const PH_LIGHT_WALL = 0.55;
+
+const PhoneUI = (() => {
+  const esc = (s) => escapeHtml(s == null ? '' : String(s));
+  const ic = (name) => '<svg class="li" viewBox="0 0 24 24" aria-hidden="true">' + (_PH_ICONS[name] || '') + '</svg>';
+  const pad = (n) => String(n).padStart(2, '0');
+  const tpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
+  // UN SEUL format de date, partout : « vendredi 17 juillet »
+  const longDate = (d) => _PH_DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + _PH_MONTHS[d.getMonth()];
+  const hm = (d) => pad(d.getHours()) + ':' + pad(d.getMinutes());
+  // Initiales d'un nom (« Maman » → M, « Paul Martin » → PM) ; '' sans lettre (numéro seul)
+  function initials(name) {
+    const w = String(name || '').trim().split(/\s+/).filter((x) => /^\p{L}/u.test(x));
+    if (!w.length) return '';
+    const f = (x) => Array.from(x)[0].toUpperCase();
+    return w.length > 1 ? f(w[0]) + f(w[w.length - 1]) : f(w[0]);
+  };
+  const bgImg = (u) => (u ? ' style="background-image:url(' + u + ')"' : '');
+  const act = (a) => ' data-act="' + a + '"';
+
+  // ── PhoneStatusBar ── bar = { net:{bars,type,wifi,plane}, bat:{level,charging,pct,low} }
+  // Contenu de la barre (heure à gauche ; réseau, Wi-Fi, pourcentage, batterie à droite)
+  function statusBarInner(bar, time, hideTime) {
+    const n = bar.net, b = bar.bat;
+    let r = '';
+    if (n.plane) r += '<span class="psb-ic" role="img" aria-label="' + esc(_PB_TXT.plane) + '">' + ic('plane') + '</span>';
+    else if (n.bars === 0) r += '<span class="psb-nosvc">' + esc(_PB_TXT.noService) + '</span>';
+    else r += '<span class="psb-sig" role="img" aria-label="' + n.bars + ' / 4">' + [1, 2, 3, 4].map((i) => '<i' + (i <= n.bars ? ' class="on"' : '') + '></i>').join('') + '</span><span class="psb-net">' + esc(n.type) + '</span>';
+    if (n.wifi) r += '<span class="psb-ic psb-wifi" role="img" aria-label="' + esc(_PB_TXT.wifi) + '">' + ic('wifi') + '</span>';
+    if (b.pct) r += '<span class="psb-pct">' + b.level + ' %</span>';
+    const low = !b.charging && (b.low || b.level <= PB_LOW_BATTERY);
+    r += '<span class="psb-bat' + (b.charging ? ' chg' : low ? ' low' : '') + '" role="img" aria-label="' + esc(_PB_TXT.battery.replace('{n}', b.level) + (b.charging ? ' · ' + _PB_TXT.charging : '')) + '"><i style="width:' + Math.max(4, b.level) + '%"></i></span>';
+    if (b.charging) r += '<span class="psb-ic psb-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/></svg></span>';
+    return '<span class="psb-time">' + (hideTime ? '' : esc(time)) + '</span><span class="psb-r">' + r + '</span>';
+  }
+  function statusBar(bar, time, o) {
+    o = o || {};
+    return '<div class="psb' + (o.band ? ' band' : '') + '" data-tone="' + (o.tone === 'dark' ? 'dark' : 'light') + '">' + statusBarInner(bar, time, o.hideTime) + '</div>';
+  }
+
+  // ── PhoneNotification ── n = { id, kind:'sms'|'missed'|'app', app, name, msg, when, color, img, who }
+  function iconHtml(n) {
+    if (n.kind === 'missed') {
+      if (!n.who) return '<div class="pn-icon missed">' + ic('phone-missed') + '</div>';
+      const t = initials(n.who);
+      return '<div class="pn-icon av"' + bgImg(n.img) + '>' + (n.img ? '' : (t ? esc(t) : ic('user-round'))) + '<span class="pn-badge">' + ic('phone-missed') + '</span></div>';
+    }
+    if (n.kind === 'sms') return '<div class="pn-icon sms"' + (n.color ? ' style="background:' + esc(n.color) + '"' : '') + '>' + ic('message-square') + '</div>';
+    if (n.img) return '<div class="pn-icon img"' + bgImg(n.img) + '></div>';
+    return '<div class="pn-icon app"' + (n.color ? ' style="background:' + esc(n.color) + '"' : '') + '>' + esc((Array.from(String(n.app || '?').trim())[0] || '?').toUpperCase()) + '</div>';
+  }
+  function notification(n, extra) {
+    return '<article class="pn pn-k-' + esc(n.kind) + (extra ? ' ' + extra : '') + '"' + (n.id ? ' data-n="' + esc(n.id) + '"' : '') + '>' + iconHtml(n)
+      + '<div class="pn-body"><div class="pn-head"><span class="pn-app">' + esc(n.app) + '</span><span class="pn-when">' + esc(n.when || _PH_TXT.now) + '</span></div>'
+      + '<div class="pn-title">' + esc(n.name) + '</div>' + (n.msg ? '<div class="pn-text">' + esc(n.msg) + '</div>' : '') + '</div></article>';
+  }
+
+  // ── PhoneLock ── o = { style, clock:{time,date}, notifs:[…], hint, max, newIds:Set }
+  // Heure : Tonal l'empile (HH / MM) ; en paysage le « : » reparaît (CSS)
+  function clockHtml(style, time) {
+    const t = esc(time);
+    return style === 'tonal' ? t.replace(':', '<br class="pl-br"><span class="pl-colon">:</span>') : t;
+  }
+  function lock(o) {
+    const max = o.max || 3;
+    const more = o.notifs.length > max ? '<div class="pn-more">' + esc(tpl(_PH_TXT.more, { n: o.notifs.length - max })) + '</div>' : '';
+    return '<div class="pl"><div class="pl-head"><div class="pl-lock">' + ic('lock') + '</div><div class="pl-date">' + esc(o.clock.date) + '</div><div class="pl-time">' + clockHtml(o.style, o.clock.time) + '</div></div>'
+      + '<div class="pn-stack">' + o.notifs.slice(0, max).map((n) => notification(n, o.newIds && o.newIds.has(n.id) ? 'pn-new' : '')).join('') + more + '</div></div>'
+      + '<div class="pl-bottom"><button type="button" class="pl-circle" aria-label="' + esc(_PH_TXT.torch) + '"' + act('noop') + '>' + ic('flashlight') + '</button>'
+      + '<span class="pl-hint">' + esc(o.hint || '') + '</span>'
+      + '<button type="button" class="pl-circle" aria-label="' + esc(_PH_TXT.camera) + '"' + act('noop') + '>' + ic('camera') + '</button></div>'
+      + '<div class="ph-home-ind"></div>';
+  }
+
+  // ── PhoneCall ── m = { style, name, label, photo, photoMode, timer }
+  const initial = (m) => esc((String(m.name || '?').trim().charAt(0) || '?').toUpperCase());
+  const avatar = (m, cls) => '<div class="' + (cls || 'pc-avatar') + '"' + bgImg(m.photo) + '>' + (m.photo ? '' : initial(m)) + '</div>';
+  // Photo en fond : floutée (Verre) ou plein écran nette sous un voile (mode « photo plein écran », Verre et Tonal)
+  function callBg(m) {
+    if (!m.photo || m.style === 'minimal') return '';
+    if (m.photoMode === 'full') return '<div class="pc-photo full" style="--photo:url(' + m.photo + ')"></div><div class="pc-shade"></div>';
+    return m.style === 'glass' ? '<div class="pc-photo" style="--photo:url(' + m.photo + ')"></div>' : '';
+  }
+  // Avatar masqué quand la photo occupe déjà tout l'écran
+  const callAvatar = (m) => (m.photoMode === 'full' && m.photo && m.style !== 'minimal' ? '' : avatar(m));
+  const callBtn = (cls, icon, a, label) => '<div class="pc-col"><button type="button" class="pc-btn ' + cls + '" aria-label="' + esc(label) + '"' + act(a) + '>' + ic(icon) + '</button>' + esc(label) + '</div>';
+  function incoming(m) {
+    const st = m.style, T = _PH_TXT;
+    const head = '<div class="pc-info">' + (st === 'tonal' ? '<div class="pc-kicker">' + T.incoming + '</div>' : '') + callAvatar(m) + '<div class="pc-name">' + esc(m.name || T.unknown) + '</div><div class="pc-sub">' + esc(m.label || (st === 'minimal' ? T.incoming : T.mobile)) + '</div></div>';
+    let bot;
+    if (st === 'tonal') {
+      bot = '<div class="pc-bottom"><div class="pc-row pc-pills"><button type="button" class="pc-pill no"' + act('decline') + '>' + ic('phone') + T.decline + '</button><button type="button" class="pc-pill ok"' + act('answer') + '>' + ic('phone') + T.answer + '</button></div></div>';
+    } else {
+      bot = '<div class="pc-bottom">' + (st === 'glass' ? '<div class="pc-row pc-extra"><div class="pc-col"><button type="button" class="pc-btn mini" aria-label="' + T.remind + '"' + act('noop') + '>' + ic('clock') + '</button>' + T.remind + '</div><div class="pc-col"><button type="button" class="pc-btn mini" aria-label="' + T.message + '"' + act('noop') + '>' + ic('message-square') + '</button>' + T.message + '</div></div>' : '')
+        + '<div class="pc-row pc-main">' + callBtn('no', 'phone', 'decline', T.decline) + callBtn('ok', 'phone', 'answer', st === 'glass' ? T.accept : T.answer) + '</div></div>';
+    }
+    return callBg(m) + '<div class="pc">' + head + bot + '</div>';
+  }
+  function inCall(m) {
+    const st = m.style, T = _PH_TXT;
+    const g = (i, l) => '<div class="pc-g"><button type="button" class="pc-gb" aria-label="' + l + '"' + act('noop') + '>' + ic(i) + '</button>' + l + '</div>';
+    const grid = '<div class="pc-grid">' + g('mic-off', T.mute) + g('grid-3x3', T.keypad) + g('volume-2', T.speaker) + g('plus', T.add) + g('video', T.video) + (st === 'tonal' ? g('pause', T.hold) : g('user-round', T.contacts)) + '</div>';
+    const head = '<div class="pc-info">' + (st === 'glass' ? '' : callAvatar(m)) + '<div class="pc-name' + (st === 'glass' ? ' pc-name-s' : '') + '">' + esc(m.name || T.unknown) + '</div><div class="pc-timer" id="scCallTimer">' + esc(m.timer || '00:00') + '</div></div>';
+    if (st === 'minimal') return '<div class="pc">' + head + '<div class="pc-bottom solo">' + callBtn('no', 'phone', 'hangup', T.hangup) + '</div></div>';
+    return callBg(m) + '<div class="pc">' + head + grid + '<div class="pc-bottom pc-end"><button type="button" class="pc-hang" aria-label="' + T.hangup + '"' + act('hangup') + '>' + ic('phone') + '</button></div></div>';
+  }
+  // Bandeau d'appel entrant (téléphone en cours d'utilisation)
+  function callBanner(m) {
+    const T = _PH_TXT;
+    const info = '<div class="pbc-info"><div class="pbc-n">' + esc(m.name || T.unknown) + '</div><div class="pbc-s">' + esc(m.label || T.incoming) + '</div></div>';
+    const wrap = (h) => '<div class="pb-wrap"><div class="pbc">' + h + '</div></div>';
+    if (m.style === 'tonal') return wrap(avatar(m) + info + '<div class="pbc-acts"><button type="button" class="pc-pill no"' + act('decline') + '>' + T.decline + '</button><button type="button" class="pc-pill ok"' + act('answer') + '>' + T.answer + '</button></div>');
+    return wrap(avatar(m) + info + '<button type="button" class="pbc-b no" aria-label="' + T.decline + '"' + act('decline') + '>' + ic('phone') + '</button><button type="button" class="pbc-b ok" aria-label="' + T.answer + '"' + act('answer') + '>' + ic('phone') + '</button>');
+  }
+  // Bandeau de notification (SMS, application) : toucher = geste « notif »
+  const notifBanner = (n) => '<div class="pb-wrap"' + act('notif') + '>' + notification(n) + '</div>';
+
+  // ── PhoneCode ──
+  const LET = { 2: 'ABC', 3: 'DEF', 4: 'GHI', 5: 'JKL', 6: 'MNO', 7: 'PQRS', 8: 'TUV', 9: 'WXYZ' };
+  const dots = (len, typed) => Array.from({ length: len }, (_, i) => '<span class="pk-dot' + (i < typed ? ' on' : '') + '"></span>').join('');
+  function code(o) {
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', ''].map((d) => d ? '<button type="button" class="pk-key" data-key="' + d + '">' + d + '<small aria-hidden="true">' + (LET[d] || '') + '</small></button>' : '<span class="pk-key gap"></span>').join('');
+    return '<div class="pk"><div class="pk-top"><div class="pk-ic">' + ic('lock-keyhole') + '</div><div class="pk-title">' + esc(_PH_TXT.codeTitle) + '</div><div class="pk-dots">' + dots(o.len, o.typed) + '</div></div>'
+      + '<div class="pk-keys" aria-label="' + esc(_PH_TXT.codeKeys) + '">' + keys + '</div><span class="pk-cancel">' + esc(_PH_TXT.cancel) + '</span></div><div class="ph-home-ind"></div>';
+  }
+
+  // ── PhoneHome ── icônes génériques : mots courants et glyphes neutres, aucune marque ni logo
+  const APPS = {
+    photos: ['Photos', 'image', 'linear-gradient(135deg,#ff9f43,#ee5a8a)'], agenda: ['Agenda', 'calendar', 'linear-gradient(135deg,#ef5350,#c62828)'],
+    horloge: ['Horloge', 'clock', 'linear-gradient(135deg,#3a3f4a,#16181d)'], meteo: ['Météo', 'cloud-sun', 'linear-gradient(135deg,#4aa3ff,#2a62d9)'],
+    notes: ['Notes', 'notebook-pen', 'linear-gradient(135deg,#f6c445,#d99a12)'], calc: ['Calculatrice', 'calculator', 'linear-gradient(135deg,#ff9f43,#e0701a)'],
+    cartes: ['Cartes', 'map', 'linear-gradient(135deg,#34c3a0,#1b8f74)'], musique: ['Musique', 'music', 'linear-gradient(135deg,#ff5f7e,#d42b5e)'],
+    courrier: ['Courrier', 'mail', 'linear-gradient(135deg,#4aa3ff,#1f6fe0)'], dossiers: ['Dossiers', 'folder', 'linear-gradient(135deg,#5b8def,#3a58c8)'],
+    reglages: ['Réglages', 'settings', 'linear-gradient(135deg,#9aa1ad,#5d6470)'], video: ['Vidéo', 'clapperboard', 'linear-gradient(135deg,#8b6cf0,#5b3fc4)'],
+    tel: ['Téléphone', 'phone', 'linear-gradient(135deg,#3ccf6a,#1f9d4c)'], msg: ['Messages', 'message-square', 'linear-gradient(135deg,#3ccf6a,#1f9d4c)'],
+    camera: ['Caméra', 'camera', 'linear-gradient(135deg,#6b7280,#2f343c)'], contacts: ['Contacts', 'user-round', 'linear-gradient(135deg,#9aa1ad,#5d6470)'],
+  };
+  const HOME_GRID = ['photos', 'agenda', 'horloge', 'meteo', 'notes', 'calc', 'cartes', 'musique', 'courrier', 'dossiers', 'reglages', 'video'];
+  const HOME_DOCK = ['tel', 'msg', 'camera', 'contacts'];
+  const appIcon = (k) => { const a = APPS[k]; return '<div class="pha-i"><div class="pha-ic pha-' + k + '" style="--g:' + a[2] + '">' + ic(a[1]) + '</div>' + a[0] + '</div>'; };
+  // o = { clock:{time,date} } : widgets Horloge et Météo (valeurs fictives fixes), grille, dock
+  function home(o) {
+    const T = _PH_TXT;
+    const widgets = '<div class="phw"><div class="phw-c"><div class="phw-t">' + ic('clock') + T.clock + '</div><div class="phw-big">' + esc(o.clock.time) + '</div><div class="phw-s">' + esc(o.clock.date) + '</div></div>'
+      + '<div class="phw-c"><div class="phw-t">' + ic('cloud-sun') + T.weather + '</div><div class="phw-big">21°</div><div class="phw-s">' + T.sunny + '</div></div></div>';
+    return '<div class="ph-home">' + widgets + '<div class="pha">' + HOME_GRID.map(appIcon).join('') + '</div>'
+      + '<div class="dots"><i></i><i></i><i></i></div><div class="psearch">' + ic('search') + T.search + '</div>'
+      + '<div class="pdock">' + HOME_DOCK.map(appIcon).join('') + '</div></div><div class="ph-home-ind"></div>';
+  }
+  // Image d'accueil de l'utilisateur, seule et plein écran (souvent une capture complète)
+  const homeImage = (url) => '<div class="ph-img" style="--img:url(' + url + ')"></div><div class="ph-topshade"></div>';
+
+  // ── PhoneAlert ── o = { kind:'battery'|'net', level }
+  function alertBox(o) {
+    const T = _PH_TXT, net = o.kind === 'net';
+    return '<div class="pal"><div class="pal-c" role="alertdialog" aria-label="' + esc(net ? T.netTitle : T.batteryTitle) + '"><div class="pal-ic' + (net ? ' net' : '') + '">' + ic(net ? 'signal-off' : 'battery-low') + '</div>'
+      + '<div class="pal-t">' + esc(net ? T.netTitle : T.batteryTitle) + '</div><div class="pal-m">' + esc(net ? T.netMsg : tpl(T.batteryMsg, { n: o.level })) + '</div>'
+      + '<button type="button" class="pal-b"' + act('alert-close') + '>' + esc(net ? T.netClose : T.batteryClose) + '</button></div></div>';
+  }
+  // Logo neutre de l'extinction et du rallumage
+  const power = () => '<svg class="li pp-logo" viewBox="0 0 24 24" aria-hidden="true">' + _PH_ICONS.power + '</svg>';
+
+  // ── Calque d'un écran ── fond d'écran + voile (affichés seulement avec .has-wall), puis le contenu
+  function root(o) {
+    return '<div class="ph ph-' + esc(o.style) + (o.cls ? ' ' + o.cls : '') + '" data-wall="dark"' + (o.attrs || '') + '><div class="ph-wall"></div><div class="ph-scrim"></div>' + (o.body || '') + '</div>';
+  }
+  // Luminance moyenne d'une image (échantillon 16 × 16), gardée par image ; cb(luma) tout de suite si connue
+  const _lumaCache = new Map();
+  let _lumaPending = 0;
+  const lumaKey = (u) => u.length + ':' + u.slice(-48);
+  function wallLuma(url, cb) {
+    const k = lumaKey(url);
+    if (_lumaCache.has(k)) { cb(_lumaCache.get(k)); return; }
+    _lumaPending++;
+    const im = new Image();
+    const done = (v) => { _lumaCache.set(k, v); _lumaPending--; cb(v); };
+    im.onload = () => {
+      let v = 0;
+      try {
+        const c = document.createElement('canvas'); c.width = c.height = 16;
+        const g = c.getContext('2d'); g.drawImage(im, 0, 0, 16, 16);
+        const d = g.getImageData(0, 0, 16, 16).data;
+        let s = 0;
+        for (let i = 0; i < d.length; i += 4) s += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+        v = s / 256;
+      } catch (_) { v = 0; }
+      done(v);
+    };
+    im.onerror = () => done(0);
+    im.src = url;
+  }
+  // Pose (ou retire) le fond d'écran d'un calque ; fond clair → data-wall="light" (voile renforcé)
+  function paintWall(el, url) {
+    if (!el) return;
+    el.classList.toggle('has-wall', !!url);
+    if (url) el.style.setProperty('--wall', 'url(' + url + ')'); else el.style.removeProperty('--wall');
+    if (!url) { el.dataset.wall = 'dark'; return; }
+    wallLuma(url, (v) => { el.dataset.wall = v > PH_LIGHT_WALL ? 'light' : 'dark'; });
+  }
+
+  return { esc, ic, longDate, hm, initials, statusBar, statusBarInner, notification, lock, clockHtml, incoming, inCall, callBanner, notifBanner, code, dots, home, homeImage, alertBox, power, root, paintWall, wallLuma, pending: () => _lumaPending, APPS };
+})();
 // ══════════════════════════ PROJETS : INTERFACE (télécommande) ══════════════════════════
 // Maquettes validées 45 à 46c. Moteur : 72-project.js ; contrat : docs/PROJECTS.md.
 //   45   Réglages › carte « Projet » : projet ouvert (nom, compteurs) → « Projets › »,
@@ -19115,28 +19435,6 @@ function _scStyle(s) {
   s = legacy[s] || s;
   return _SC_STYLES.includes(s) ? s : 'glass';
 }
-function _scInitial(m) {
-  return escapeHtml(String(m.name || '?').trim().charAt(0).toUpperCase() || '?');
-}
-function _scAvatarHtml(m, cls) {
-  return m.photo
-    ? '<div class="' + (cls || 'sc-avatar') + '" style="background-image:url(' + m.photo + ')"></div>'
-    : '<div class="' + (cls || 'sc-avatar') + '">' + _scInitial(m) + '</div>';
-}
-// Fond : photo floutée (mode avatar) ou photo plein écran nette + voile
-function _scBg(m) {
-  if (!m.photo || m.style === 'minimal') return '';
-  if (m.photoMode === 'full') {
-    return '<div class="sc-bg full" style="background-image:url(' + m.photo + ')"></div>'
-      + '<div class="sc-fullshade"></div>';
-  }
-  return m.style === 'glass' ? '<div class="sc-bg" style="background-image:url(' + m.photo + ')"></div>' : '';
-}
-// Avatar masqué quand la photo occupe déjà tout l'écran
-function _scHeadAvatar(m) {
-  return (m.photoMode === 'full' && m.photo && m.style !== 'minimal') ? '' : _scAvatarHtml(m);
-}
-
 // Photo de l'appel : celle préparée pour cet appel enregistré (photoId), sinon
 // __callphoto. Photo préparée absente : aucune (jamais celle d'un autre appel).
 function _cachedCallPhoto(photoId, slot) {
@@ -19198,14 +19496,12 @@ function screenCallStart(m) {
       // Notification sur faux écran verrouillé (plein écran)
       el.classList.remove('notif');
       // Écran verrouillé déjà affiché : pas de nouveau fondu (flash de la couleur de fond), seule la notification glisse
-      const again = !!el.querySelector('.sc-lock:not(.sc-lockout)');
-      _scRenderLock();
-      if (again) el.querySelector('.sc-lock').classList.add('sc-still');
+      _scRenderLock(!!el.querySelector('.ph-lock:not(.ph-out)'));
       // Comme un vrai téléphone : l'écran se rendort tout seul après ~10 s
       _callAutoTimer = setTimeout(() => { if (_callState === 'notif') screenCallEnd(); }, 10000);
     } else {
       el.classList.add('notif');
-      el.innerHTML = _scNotifCard(_callCfg, '');
+      _scRenderNotifBar();
     }
     _playNotifSound(_callCfg);
     if (_callCfg.vib) screenVibrate(SCREEN_VIB_SHORT);
@@ -19233,189 +19529,72 @@ function screenVibrateStop() {
 
 // Application fictive affichée sur les notifications (nom + couleur réglables)
 function _scApp(m) {
-  return { name: m.appName || 'SMS', color: m.appColor || '#2f8cf0', icon: _SCI.bubble };
+  return { name: m.appName || 'SMS', color: m.appColor || '#2f8cf0' };
 }
-// Carte de notification (bannière ou écran verrouillé), selon le style
-function _scNotifCard(m, extraCls) {
-  if (m.kind === 'notif') return notifCardHtml(m, extraCls); // 84-notification.js
+// Notification (SMS ou application) → données de la carte partagée (PhoneUI.notification,
+// 73-phone-ui.js), la même que celle de l'écran verrouillé de la Séquence
+function _scNotifData(m) {
+  if (m.kind === 'notif') return { id: 'n0', kind: 'app', app: m.appName, name: m.name, msg: m.msg, when: notifReceivedLabel(m.received, notifPhoneNow(m.phone)), img: m.photo };
   const app = _scApp(m);
-  const cls = 'sc-notif ' + m.style + (extraCls ? ' ' + extraCls : '');
-  const click = extraCls ? '' : ' onclick="event.stopPropagation();screenNotifTap()"';
-  const name = escapeHtml(m.name || ''), msg = escapeHtml(m.msg || ''), appName = escapeHtml(app.name);
-  if (m.style === 'tonal') {
-    // En-tête discret (pastille + nom d'app), avatar de l'expéditeur à droite
-    return '<div class="' + cls + '"' + click + '>'
-      + '<div class="sc-notif-body">'
-      + '<div class="n-head"><span class="n-dot" style="background:' + app.color + '">' + app.icon + '</span>'
-      + appName + ' · maintenant</div>'
-      + '<div class="sc-notif-name">' + name + '</div>'
-      + '<div class="sc-notif-msg">' + msg + '</div>'
-      + '</div>'
-      + _scAvatarHtml(m, 'n-avatar')
-      + '</div>';
-  }
-  return '<div class="' + cls + '"' + click + '>'
-    + '<div class="sc-notif-icon" style="background:' + app.color + '">' + app.icon + '</div>'
-    + '<div class="sc-notif-body">'
-    + '<div class="n-title"><span class="sc-notif-name">' + name + '</span><span class="n-time">maintenant</span></div>'
-    + '<div class="sc-notif-msg">' + msg + '</div>'
-    + (m.style === 'minimal' ? '<div class="n-app">' + appName + '</div>' : '')
-    + '</div></div>';
+  return { id: 'n0', kind: 'sms', app: app.name, name: m.name, msg: m.msg, when: 'maintenant', color: app.color };
+}
+// Calque du faux téléphone dans #screen-call, au style de l'appel
+function _scHtml(cls, body, attrs) {
+  return PhoneUI.root({ style: _callCfg.style, cls, body, attrs });
 }
 
 // — Faux écran verrouillé : fond choisi, date + horloge, notification,
-// raccourcis et barre de navigation, déclinés selon le style. —
-function _scLockDate(d) {
-  const j = ['Dim.', 'Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.'];
-  const mo = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-  return j[d.getDay()] + ' ' + d.getDate() + ' ' + mo[d.getMonth()];
-}
-function _scRenderLock() {
+// lampe et appareil photo, déclinés selon le style (PhoneUI.lock). —
+function _scRenderLock(again) {
   const m = _callCfg, el = document.getElementById('screen-call');
-  // Notification : son propre fond (__notifwall), date longue du faux téléphone
+  // Notification : son propre fond (__notifwall), date et heure du faux téléphone
   const notif = m.kind === 'notif';
   const wall = _mediaCache.get(notif ? '__notifwall' : '__lockwall');
   const wallUrl = wall && wall.kind === 'img' ? safeImageData(wall.data) : null;
-  const now = notif ? notifPhoneNow(m.phone) : new Date();
-  const time = m.lock.time || (String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'));
-  const date = m.lock.date || (notif ? notifLongDate(now) : _scLockDate(now));
-  // Tonal : heures et minutes empilées
-  const clock = m.style === 'tonal'
-    ? escapeHtml(time).replace(':', '<br>')
-    : escapeHtml(time);
-  const shortcuts = m.style === 'minimal' ? '' :
-    '<div class="sc-lock-bottom">'
-    + '<button class="sc-lock-circle" onclick="event.stopPropagation()">' + (m.style === 'tonal' ? _SCI.handset : _SCI.flash) + '</button>'
-    + '<button class="sc-lock-circle" onclick="event.stopPropagation()">' + _SCI.camera + '</button>'
-    + '</div>';
-  el.innerHTML = '<div class="sc-lock ' + m.style + '"' + (wallUrl ? ' style="background-image:url(' + wallUrl + ')"' : '')
-    + ' onclick="event.stopPropagation();screenCallEnd()">'
-    + '<div class="sc-lock-shade"></div>'
-    + '<div class="sc-lock-date">' + escapeHtml(date) + '</div>'
-    + '<div class="sc-lock-time">' + clock + '</div>'
-    + _scNotifCard(m, 'in-lock')
-    + shortcuts
-    + '<div class="sc-lock-home"></div>'
-    + '</div>';
+  const now = notif ? notifPhoneNow(m.phone) : phoneClockNow();
+  const clock = { time: m.lock.time || PhoneUI.hm(now), date: m.lock.date || PhoneUI.longDate(now) };
+  el.innerHTML = _scHtml('ph-lock' + (again ? '' : ' ph-enter'), PhoneUI.lock({ style: m.style, clock, notifs: [_scNotifData(m)], max: 1, newIds: new Set(['n0']) }), ' data-act="end"');
+  PhoneUI.paintWall(el.firstChild, wallUrl);
 }
 
-// Icônes SVG génériques (aucun logo d'application tierce)
-const _HANDSET_PATH = 'M6.62 10.79c1.44 2.83 3.76 5.15 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z';
-const _SCI = {
-  handset: '<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor"><path d="' + _HANDSET_PATH + '"/></svg>',
-  handsetDown: '<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor"><g transform="rotate(135 12 12)"><path d="' + _HANDSET_PATH + '"/></g></svg>',
-  micSlash: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="4.5" y1="3.5" x2="19.5" y2="20.5"/></svg>',
-  keypad: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">' + [4.5, 9, 13.5, 18].map(y => [7, 12, 17].map(x => '<circle cx="' + x + '" cy="' + y + '" r="1.7"/>').join('')).join('') + '</svg>',
-  speaker: '<svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M3 9v6h4l5 4.5v-15L7 9H3z"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M15.5 8.5a5 5 0 0 1 0 7M18 6a9 9 0 0 1 0 12"/></svg>',
-  plus: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="4.5" x2="12" y2="19.5"/><line x1="4.5" y1="12" x2="19.5" y2="12"/></svg>',
-  video: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><rect x="2" y="6.5" width="13.5" height="11" rx="3.2"/><path d="M17 10.6l4.3-2.8c.3-.2.7 0 .7.4v7.6c0 .4-.4.6-.7.4L17 13.4v-2.8z"/></svg>',
-  contacts: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5v.5H3V19z"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.6 14.3c2.8.3 5.4 2.1 5.4 4.7v.5h-4.2c0-2-.4-3.8-1.2-5.2z"/></svg>',
-  pause: '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>',
-  clock: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg>',
-  bubble: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 3C6.5 3 2 6.9 2 11.7c0 2.8 1.5 5.3 3.9 6.9-.1 1-.5 2.3-1.6 3.4 1.9-.2 3.4-1 4.4-1.7 1 .2 2.1.4 3.3.4 5.5 0 10-3.9 10-8.7S17.5 3 12 3z"/></svg>',
-  chat: '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="#fff" d="M5 3.5h14a2.5 2.5 0 0 1 2.5 2.5v9a2.5 2.5 0 0 1-2.5 2.5H10l-4.6 3.6c-.4.3-.9 0-.9-.5v-3.1A2.5 2.5 0 0 1 2.5 15V6A2.5 2.5 0 0 1 5 3.5z"/><g fill="rgba(0,0,0,.35)"><circle cx="8" cy="10.5" r="1.3"/><circle cx="12" cy="10.5" r="1.3"/><circle cx="16" cy="10.5" r="1.3"/></g></svg>',
-  flash: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M8.5 2h7v3.2L13.6 8.6v10.9a1.6 1.6 0 0 1-3.2 0V8.6L8.5 5.2V2z"/><rect x="8.5" y="3.4" width="7" height="1.3" fill="#000" fill-opacity=".25"/></svg>',
-  camera: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M4.5 7h2.6l1.5-2h6.8l1.5 2h2.6A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-9A1.5 1.5 0 0 1 4.5 7z"/><circle cx="12" cy="12.8" r="3.6" fill="#3a3a42"/><circle cx="12" cy="12.8" r="2.2" fill="#fff"/></svg>',
-};
-
-// Boutons d'action (même handler pour les 3 styles) : gestes du comédien,
-// rapportés à une Séquence qui les attend (94-sequence-phone.js)
-const _SC_DECLINE = 'event.stopPropagation();screenTapDecline()';
-const _SC_ANSWER = 'event.stopPropagation();screenTapAnswer()';
-const _SC_HANGUP = 'event.stopPropagation();screenTapHangup()';
-
 function _scRenderIncoming() {
-  const m = _callCfg, el = document.getElementById('screen-call');
-  const name = escapeHtml(m.name || 'Inconnu');
-  let html;
-  if (m.style === 'glass') {
-    html = _scBg(m)
-      + '<div class="sc-head">' + _scHeadAvatar(m)
-      + '<div class="sc-name">' + name + '</div>'
-      + '<div class="sc-sub">' + escapeHtml(m.label || 'mobile') + '</div></div>'
-      + '<div class="sc-bottom">'
-      + '<div class="sc-row" style="padding:0 16px">'
-      + '<div class="sc-col"><button class="sc-btn sc-mini">' + _SCI.clock + '</button><span>Me le rappeler</span></div>'
-      + '<div class="sc-col"><button class="sc-btn sc-mini">' + _SCI.bubble + '</button><span>Message</span></div>'
-      + '</div>'
-      + '<div class="sc-row" style="padding:0 8px">'
-      + '<div class="sc-col"><button class="sc-btn sc-round sc-no" onclick="' + _SC_DECLINE + '">' + _SCI.handsetDown + '</button><span>Refuser</span></div>'
-      + '<div class="sc-col"><button class="sc-btn sc-round sc-ok" onclick="' + _SC_ANSWER + '">' + _SCI.handset + '</button><span>Accepter</span></div>'
-      + '</div></div>';
-  } else if (m.style === 'tonal') {
-    html = _scBg(m)
-      + '<div class="sc-kicker">Appel entrant</div>'
-      + '<div class="sc-head">' + _scHeadAvatar(m)
-      + '<div class="sc-name">' + name + '</div>'
-      + '<div class="sc-sub">' + escapeHtml(m.label || 'Mobile') + '</div></div>'
-      + '<div class="sc-bottom"><div class="sc-row" style="gap:16px;justify-content:center">'
-      + '<button class="sc-btn sc-pill sc-no" onclick="' + _SC_DECLINE + '">' + _SCI.handsetDown + 'Refuser</button>'
-      + '<button class="sc-btn sc-pill sc-ok" onclick="' + _SC_ANSWER + '">' + _SCI.handset + 'Répondre</button>'
-      + '</div></div>';
-  } else {
-    html = _scAvatarHtml(m)
-      + '<div class="sc-name">' + name + '</div>'
-      + '<div class="sc-sub" style="margin-top:6px">' + escapeHtml(m.label || 'Appel entrant') + '</div>'
-      + '<div class="sc-bottom"><div class="sc-row">'
-      + '<div class="sc-col"><button class="sc-btn sc-round sc-no" onclick="' + _SC_DECLINE + '">' + _SCI.handsetDown + '</button><span>Refuser</span></div>'
-      + '<div class="sc-col"><button class="sc-btn sc-round sc-ok" onclick="' + _SC_ANSWER + '">' + _SCI.handset + '</button><span>Répondre</span></div>'
-      + '</div></div>';
-  }
-  el.innerHTML = '<div class="sc-call ' + m.style + '">' + html + '</div>';
+  const el = document.getElementById('screen-call');
+  el.innerHTML = _scHtml('ph-call', PhoneUI.incoming(_callCfg));
 }
 
 function _scRenderInCall() {
-  const m = _callCfg, el = document.getElementById('screen-call');
-  const name = escapeHtml(m.name || 'Inconnu');
-  const g = (icon, lbl) => '<div class="sc-col"><button class="sc-btn sc-gbtn">' + icon + '</button><span>' + lbl + '</span></div>';
-  let html;
-  if (m.style === 'minimal') {
-    html = _scAvatarHtml(m)
-      + '<div class="sc-name">' + name + '</div>'
-      + '<div class="sc-timer" id="scCallTimer">00:00</div>'
-      + '<div class="sc-bottom" style="align-items:center">'
-      + '<div class="sc-col"><button class="sc-btn sc-round sc-no" onclick="' + _SC_HANGUP + '">' + _SCI.handsetDown + '</button><span>Raccrocher</span></div>'
-      + '</div>';
-  } else {
-    const tonal = m.style === 'tonal';
-    html = _scBg(m)
-      + '<div class="sc-head">'
-      + (tonal ? _scHeadAvatar(m) : '')
-      + '<div class="sc-name" style="font-size:1.7rem">' + name + '</div>'
-      + '<div class="sc-timer" id="scCallTimer">00:00</div></div>'
-      + '<div class="sc-grid">'
-      + g(_SCI.micSlash, tonal ? 'Muet' : 'muet') + g(_SCI.keypad, tonal ? 'Clavier' : 'clavier') + g(_SCI.speaker, tonal ? 'Haut-parleur' : 'haut-parleur')
-      + g(_SCI.plus, tonal ? 'Ajouter' : 'ajouter') + g(_SCI.video, tonal ? 'Vidéo' : 'vidéo') + (tonal ? g(_SCI.pause, 'Attente') : g(_SCI.contacts, 'contacts'))
-      + '</div>'
-      + '<div class="sc-bottom" style="align-items:center">'
-      + (tonal
-        ? '<button class="sc-btn sc-hangup sc-no" onclick="' + _SC_HANGUP + '">' + _SCI.handsetDown + '</button>'
-        : '<button class="sc-btn sc-round sc-no" onclick="' + _SC_HANGUP + '">' + _SCI.handsetDown + '</button>')
-      + '</div>';
-  }
-  el.innerHTML = '<div class="sc-call ' + m.style + '">' + html + '</div>';
+  const el = document.getElementById('screen-call');
+  el.innerHTML = _scHtml('ph-call', PhoneUI.inCall(Object.assign({}, _callCfg, { timer: '00:00' })));
 }
 
 // Bandeau d'appel entrant en haut (téléphone en cours d'utilisation)
 function _scRenderCallBar() {
-  const m = _callCfg, el = document.getElementById('screen-call');
-  const info = '<div class="cb-info"><div class="cb-name">' + escapeHtml(m.name || 'Inconnu') + '</div>'
-    + '<div class="cb-sub">' + escapeHtml(m.label || 'Appel entrant') + '</div></div>';
-  let html;
-  if (m.style === 'tonal') {
-    // Tonal : boutons pilule libellés sous l'identité de l'appelant
-    html = _scAvatarHtml(m, 'cb-avatar') + info
-      + '<div class="cb-actions">'
-      + '<button class="sc-btn sc-pill sc-no" onclick="' + _SC_DECLINE + '">Refuser</button>'
-      + '<button class="sc-btn sc-pill sc-ok" onclick="' + _SC_ANSWER + '">Répondre</button>'
-      + '</div>';
-  } else {
-    html = _scAvatarHtml(m, 'cb-avatar') + info
-      + '<button class="sc-btn cb-btn sc-no" onclick="' + _SC_DECLINE + '">' + _SCI.handsetDown + '</button>'
-      + '<button class="sc-btn cb-btn sc-ok" onclick="' + _SC_ANSWER + '">' + _SCI.handset + '</button>';
-  }
-  el.innerHTML = '<div class="sc-callbar ' + m.style + '">' + html + '</div>';
+  const el = document.getElementById('screen-call');
+  el.innerHTML = _scHtml('ph-overlay', PhoneUI.callBanner(_callCfg));
 }
+// Bandeau de SMS ou de notification d'application
+function _scRenderNotifBar() {
+  const el = document.getElementById('screen-call');
+  el.innerHTML = _scHtml('ph-overlay', PhoneUI.notifBanner(_scNotifData(_callCfg)));
+}
+// Gestes du comédien sur le faux appel / la notification (attributs data-act de PhoneUI),
+// rapportés à une Séquence qui les attend (94-sequence-phone.js)
+(function initCallTouch() {
+  const el = document.getElementById('screen-call');
+  if (!el) return;
+  el.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-act]');
+    if (!t) return;
+    e.stopPropagation();
+    switch (t.dataset.act) {
+      case 'decline': screenTapDecline(); break;
+      case 'answer': screenTapAnswer(); break;
+      case 'hangup': screenTapHangup(); break;
+      case 'notif': screenNotifTap(); break;
+      case 'end': screenCallEnd(); break;
+    }
+  });
+})();
 function _scTickInCall() {
   const el = document.getElementById('scCallTimer'); if (!el) return;
   const s = Math.floor((Date.now() - _callT0Scr) / 1000);
@@ -19485,17 +19664,16 @@ function screenCallHide() {
   if (!el) return;
   // Sortie animée : bannières/bandeaux remontent vers le haut, écran verrouillé
   // en fondu ; sinon disparition immédiate.
-  // (l'écran verrouillé contient lui-même une carte .sc-notif : on le teste en premier)
-  const lock = el.querySelector('.sc-lock');
-  const notif = lock ? null : el.querySelector('.sc-notif, .sc-callbar');
+  const lock = el.querySelector('.ph-lock');
+  const notif = lock ? null : el.querySelector('.pb-wrap');
   // Jeton : un nouvel appel déclenché pendant l'animation ne doit pas être effacé
   const tok = ++_callHideSeq;
   const done = () => {
     if (tok !== _callHideSeq) return;
     el.style.display = 'none'; el.innerHTML = ''; el.classList.remove('notif');
   };
-  if (lock) { lock.classList.add('sc-lockout'); setTimeout(done, 400); }
-  else if (notif) { notif.classList.add('sc-out'); setTimeout(done, 340); }
+  if (lock) { lock.classList.add('ph-out'); setTimeout(done, 400); }
+  else if (notif) { notif.classList.add('pb-out'); setTimeout(done, 340); }
   else done();
 }
 let _callHideSeq = 0;
@@ -21762,61 +21940,68 @@ function _sccEl(tag, cls, text) {
 }
 function _sccAvatar() {
   const c = _scChat;
-  const a = _sccEl('div', 'scc-avatar');
+  const a = _sccEl('div', 'pt-av');
   const cache = c.hasAvatar ? _mediaCache.get('__chatavatar') : null;
   const img = cache && cache.kind === 'img' ? safeImageData(cache.data) : null;
   if (img) a.style.backgroundImage = 'url(' + img + ')';
   else a.textContent = c.name.trim().charAt(0).toUpperCase() || '?';
   return a;
 }
+// Discussion de l'écran : composant PhoneChat de la maquette 5g (73-phone-ui.js pour les icônes et
+// l'habillage .ph-glass / .ph-tonal / .ph-minimal, 79-phone-ui.css) ; fil ancré en bas.
 function _sccRender(first) {
   const el = document.getElementById('screen-chat'), c = _scChat;
   if (!el || !c) return;
-  let root = el.querySelector('.scc');
+  let root = el.querySelector('.pt');
   if (!root || first) {
     el.textContent = '';
-    root = _sccEl('div', 'scc');
+    root = _sccEl('div', 'pt');
     root.addEventListener('click', (e) => { e.stopPropagation(); _sccFocus(); });
-    const head = _sccEl('div', 'scc-head');
-    const list = _sccEl('div', 'scc-list');
-    const comp = _sccEl('div', 'scc-compose');
-    const field = _sccEl('div', 'scc-field');
+    const head = _sccEl('div', 'pt-head');
+    const list = _sccEl('div', 'pt-list');
+    const comp = _sccEl('div', 'pt-comp');
+    const plus = _sccEl('span', 'pt-plus');
+    plus.innerHTML = PhoneUI.ic('plus');
+    const field = _sccEl('div', 'pt-field');
     const keys = document.createElement('input');
-    keys.id = 'sccKeys'; keys.className = 'scc-keys'; keys.type = 'text';
+    keys.id = 'sccKeys'; keys.className = 'pt-keys'; keys.type = 'text';
     for (const [k, v] of [['autocomplete', 'off'], ['autocorrect', 'off'], ['autocapitalize', 'off'], ['spellcheck', 'false'], ['enterkeyhint', 'send'], ['aria-label', 'Clavier']]) keys.setAttribute(k, v);
     keys.value = _SCC_KEYS_FILL;
     keys.addEventListener('input', _sccOnInput);
     keys.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); screenChatSend(); } });
-    const send = _sccEl('button', 'scc-send');
+    const send = _sccEl('button', 'pt-send');
     send.type = 'button'; send.setAttribute('aria-label', 'Envoyer');
-    send.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+    send.innerHTML = PhoneUI.ic('send');
     send.addEventListener('click', (e) => { e.stopPropagation(); screenChatSend(); _sccFocus(); });
-    field.append(_sccEl('span', 'scc-typed'), _sccEl('span', 'scc-caret'), _sccEl('span', 'scc-ph', 'Message'), keys);
-    comp.append(field, send);
+    field.append(_sccEl('span', 'pt-typed'), _sccEl('span', 'pt-caret'), _sccEl('span', 'pt-ph', 'Message'), keys);
+    comp.append(plus, field, send);
     root.append(head, list, comp);
     el.appendChild(root);
   }
-  root.className = 'scc ' + c.style + (c.instant ? ' scc-instant' : '');
+  root.className = 'ph ph-' + c.style + ' pt' + (c.instant ? ' pt-instant' : '');
   el.style.display = 'block';
-  // En-tête : avatar et nom du contact
-  const head = root.querySelector('.scc-head');
+  // En-tête : retour, avatar et nom du contact
+  const head = root.querySelector('.pt-head');
   head.textContent = '';
-  head.append(_sccAvatar(), _sccEl('div', 'scc-name', c.name));
-  // Bulles postées, dans l'ordre de publication
-  const list = root.querySelector('.scc-list');
+  const back = _sccEl('span', 'pt-back');
+  back.innerHTML = PhoneUI.ic('chevron-left');
+  head.append(back, _sccAvatar(), _sccEl('div', 'pt-name', c.name));
+  // Bulles postées, dans l'ordre de publication, sous l'heure du jour
+  const list = root.querySelector('.pt-list');
   list.textContent = '';
+  list.appendChild(_sccEl('div', 'pt-day', 'Aujourd’hui ' + PhoneUI.hm(phoneClockNow())));
   for (const id of c.sent) {
     const m = _scChatMsgs.get(id);
     if (!m) continue;
-    const b = _sccEl('div', 'scc-b ' + (m.from === 'actor' ? 'out' : 'in') + (_sccAnim.has(id) ? ' scc-new' : ''), m.text);
+    const b = _sccEl('div', 'pt-b ' + (m.from === 'actor' ? 'out' : 'in') + (_sccAnim.has(id) ? ' pt-new' : ''), m.text);
     list.appendChild(b);
-    if (c.pend.includes(id)) list.appendChild(_sccEl('div', 'scc-und', _CHAT_TXT.undelivered)); // point rouge (maquette 34)
+    if (c.pend.includes(id)) list.appendChild(_sccEl('div', 'pt-und', _CHAT_TXT.undelivered)); // point rouge (maquette 34)
   }
   _sccAnim.clear();
   if (_sccTypingOn) {
-    const t = _sccEl('div', 'scc-b in scc-typing');
+    const t = _sccEl('div', 'pt-b in pt-typing');
     t.setAttribute('aria-label', 'écrit…');
-    for (let i = 0; i < 3; i++) t.appendChild(_sccEl('span', 'scc-dot'));
+    for (let i = 0; i < 3; i++) t.appendChild(_sccEl('span', 'pt-dot'));
     list.appendChild(t);
   }
   list.scrollTop = list.scrollHeight;
@@ -21832,11 +22017,11 @@ function _sccRenderCompose() {
   const typed = cur ? Array.from(cur.text).slice(0, c.typed).join('') : '';
   const done = !!cur && c.typed >= _chatLen(cur.text);
   const q = (s) => el.querySelector(s);
-  if (!q('.scc-field')) return;
-  q('.scc-typed').textContent = typed;
-  q('.scc-ph').style.display = typed ? 'none' : '';
-  q('.scc-field').classList.toggle('ready', !!cur);
-  const send = q('.scc-send');
+  if (!q('.pt-field')) return;
+  q('.pt-typed').textContent = typed;
+  q('.pt-ph').style.display = typed ? 'none' : '';
+  q('.pt-field').classList.toggle('ready', !!cur);
+  const send = q('.pt-send');
   send.disabled = !done;
   send.classList.toggle('on', done);
 }
@@ -21920,7 +22105,7 @@ const _ntDateOk = (v) => typeof v === 'string' && SRP.DATE_RE.test(v);
 function _ntDate(ymd) { const [y, mo, d] = ymd.split('-').map(Number); return new Date(y, mo - 1, d); }
 // « ven. 17 oct. » (télécommande) et « vendredi 17 octobre » (écran verrouillé)
 function notifShortDate(ymd) { const d = _ntDate(ymd); return _NT_DAYS_SHORT[d.getDay()] + ' ' + d.getDate() + ' ' + _NT_MONTHS_SHORT[d.getMonth()]; }
-function notifLongDate(d) { return _NT_DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + _NT_MONTHS[d.getMonth()]; }
+function notifLongDate(d) { return PhoneUI.longDate(d); } // 73-phone-ui.js : UN SEUL format de date
 
 // Maintenant sur le faux téléphone : date et/ou heure imposées, le reste réel
 function notifPhoneNow(phone, real) {
@@ -22131,42 +22316,8 @@ function notifScreenCfg(m) {
     received: m.received || { mode: 'now' },
   };
 }
-// Icône : image en cache validée, sinon initiale du nom de l'application
-function _ntIconHtml(m, cls) {
-  const ini = escapeHtml(String(m.appName || '?').trim().charAt(0).toUpperCase() || '?');
-  return m.photo
-    ? '<div class="' + cls + ' nt-img" style="background-image:url(' + m.photo + ')"></div>'
-    : '<div class="' + cls + ' nt-ini">' + ini + '</div>';
-}
-// Carte de notification d'application (bandeau ou écran verrouillé), selon le style
-function notifCardHtml(m, extraCls) {
-  const cls = 'sc-notif nt-card ' + m.style + (extraCls ? ' ' + extraCls : '');
-  const click = extraCls ? '' : ' onclick="event.stopPropagation();screenNotifTap()"';
-  const when = escapeHtml(notifReceivedLabel(m.received, notifPhoneNow(m.phone)));
-  const app = escapeHtml(m.appName || ''), title = escapeHtml(m.name || ''), body = escapeHtml(m.msg || '');
-  if (m.style === 'tonal') {
-    return '<div class="' + cls + '"' + click + '><div class="sc-notif-body">'
-      + '<div class="n-head">' + _ntIconHtml(m, 'n-dot') + '<span class="nt-app">' + app + '</span> · ' + when + '</div>'
-      + '<div class="sc-notif-name">' + title + '</div>'
-      + '<div class="sc-notif-msg">' + body + '</div>'
-      + '</div></div>';
-  }
-  if (m.style === 'minimal') {
-    return '<div class="' + cls + '"' + click + '>' + _ntIconHtml(m, 'sc-notif-icon')
-      + '<div class="sc-notif-body">'
-      + '<div class="n-title"><span class="sc-notif-name">' + title + '</span><span class="n-time">' + when + '</span></div>'
-      + '<div class="sc-notif-msg">' + body + '</div>'
-      + '<div class="n-app">' + app + '</div>'
-      + '</div></div>';
-  }
-  // Verre (maquette 25) : application et heure en tête, titre, contenu
-  return '<div class="' + cls + '"' + click + '>' + _ntIconHtml(m, 'sc-notif-icon')
-    + '<div class="sc-notif-body">'
-    + '<div class="nt-head"><span class="nt-app">' + app + '</span><span class="n-time">' + when + '</span></div>'
-    + '<div class="sc-notif-name">' + title + '</div>'
-    + '<div class="sc-notif-msg">' + body + '</div>'
-    + '</div></div>';
-}
+// La carte de notification de l'écran (bandeau ou écran verrouillé) est rendue par PhoneUI.notification
+// (73-phone-ui.js), la même que celle de l'écran verrouillé de la Séquence ; données : _scNotifData (80-call-simulator.js).
 // — Comportement de fin de lecture (reçu de la télécommande) —
 let _screenVidEndMode = 'loop';
 function screenSetEndMode(m) {
@@ -23876,7 +24027,8 @@ const _SEQ_TXT = {
   code4: 'Code 4 chiffres', code6: 'Code 6 chiffres', swipe: 'Glisser seul',
   thenApp: 'Ouvrir l\'app visée', thenHome: 'Écran d\'accueil (image)',
   homeChange: 'Changer l\'image', homePick: 'Choisir l\'image', homeNote: 'toucher l\'image ouvre l\'étape suivante',
-  homeNone: 'Aucune image : fond dégradé',
+  homeNone: 'Aucune image : accueil générique',
+  homeImageOnly: 'Image seule', homeAsWall: 'Fond d\'écran',
   homeBad: '⚠ Image illisible',
   startGo: 'Au GO', startAfter: 'Après N s', startGesture: 'Geste du comédien',
   afterLabel: 'Après', fallbackLabel: 'Sinon après', never: 'jamais', seconds: '{n} s',
@@ -23991,7 +24143,7 @@ function seqSanitizeStep(s) {
   } else if (s.kind === 'unlock') {
     const o = s.opt || {};
     out.opt = {
-      code: [0, 4, 6].includes(o.code) ? o.code : 4, then: o.then === 'home' ? 'home' : 'app',
+      code: [0, 4, 6].includes(o.code) ? o.code : 4, then: o.then === 'home' ? 'home' : 'app', homeWall: o.homeWall === true,
       img: typeof o.img === 'string' && _SEQ_SIG_RE.test(o.img) ? o.img : null, imgName: _seqLine(o.imgName, 60),
     };
   } else if (s.kind === 'sleep') {
@@ -24230,7 +24382,7 @@ function remoteOnPhoneGesture(m) {
     const cfg = _seqUnlockFor(sid);
     if (p && (p.mode === 'locked' || p.mode === 'code')) {
       p.mode = cfg && cfg.then === 'home' ? 'home' : 'unlocked';
-      if (p.mode === 'home') p.home = cfg.img || null;
+      if (p.mode === 'home') { p.home = cfg.img || null; p.homeWall = cfg.homeWall === true; }
       p.awaitUnlock = null;
       p.sleep = null; // déverrouillé : réveillé pour de bon (maquette 29b)
     }
@@ -24618,6 +24770,7 @@ function _seqPhoneMsg(sid, homeOk, wallOk, imgOk) {
   };
   if (u) m.unlock = { code: u.code, then: u.then };
   if (homeOk) m.home = true;
+  if (homeOk && p.mode === 'home' && p.homeWall) m.homeWall = true; // phase 5 : l'image sert de fond d'écran sous les icônes
   if (wallOk) m.wall = true;
   const w = _seqWatchFor(sid);
   if (w.length) m.watch = w;
@@ -24650,7 +24803,7 @@ async function _seqPushPhones(only, force) {
     const chime = p && p.chime && m.notifs.some((n) => n.id === p.chime.id) ? p.chime : null;
     if (p) delete p.chime;
     const b = m.bar;
-    const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id + (n.img ? '/' + n.img : '')), m.unlock, m.home, m.wall, m.watch,
+    const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id + (n.img ? '/' + n.img : '')), m.unlock, m.home, m.homeWall, m.wall, m.watch,
       b ? [b.clock.mode, b.clock.date, b.clock.time, b.net, b.bat] : null, m.sleep, m.alert, m.power]);
     if (!force && !chime && _seqPhoneSent.get(sid) === sig) continue;
     if (!p && !m.watch && !_seqPhoneSent.has(sid)) continue; // rien à dire à cet écran
@@ -24892,7 +25045,7 @@ function renderSeqStep() {
       + '<span class="ss-label ss-sub">' + escapeHtml(_SEQ_TXT.labelThen) + '</span><div class="ss-row">'
       + _seqOpt(o.then === 'app', 'seqEditThen(\'app\')', _SEQ_TXT.thenApp) + _seqOpt(o.then === 'home', 'seqEditThen(\'home\')', _SEQ_TXT.thenHome) + '</div>';
     if (o.then === 'home') {
-      h += '<div class="ss-home"><button type="button" class="ss-home-thumb" id="ssHomeThumb" aria-label="' + escapeHtml(o.img ? _SEQ_TXT.homeChange : _SEQ_TXT.homePick) + '" onclick="document.getElementById(\'seqHomeInput\').click()"></button>'
+      h += '<div class="ss-row">' + _seqOpt(!o.homeWall, 'seqEditHomeWall(false)', _SEQ_TXT.homeImageOnly) + _seqOpt(o.homeWall === true, 'seqEditHomeWall(true)', _SEQ_TXT.homeAsWall) + '</div><div class="ss-home"><button type="button" class="ss-home-thumb" id="ssHomeThumb" aria-label="' + escapeHtml(o.img ? _SEQ_TXT.homeChange : _SEQ_TXT.homePick) + '" onclick="document.getElementById(\'seqHomeInput\').click()"></button>'
         + '<span class="ss-home-txt">' + escapeHtml(o.img ? (o.imgName || 'image') : _SEQ_TXT.homeNone) + '<br>'
         + '<button type="button" class="ss-link" onclick="document.getElementById(\'seqHomeInput\').click()">' + escapeHtml(o.img ? _SEQ_TXT.homeChange : _SEQ_TXT.homePick) + '</button> · ' + escapeHtml(_SEQ_TXT.homeNote) + '</span></div>';
     }
@@ -25027,6 +25180,7 @@ function seqEditRef(id) {
 }
 function seqEditEnd(v) { if (_seqEdit) { _seqEdit.step.opt.end = v; renderSeqStep(); } }
 function seqEditCode(n) { if (_seqEdit) { _seqEdit.step.opt.code = [0, 4, 6].includes(n) ? n : 4; renderSeqStep(); } }
+function seqEditHomeWall(on) { if (_seqEdit) { _seqEdit.step.opt.homeWall = on === true; renderSeqStep(); } }
 function seqEditThen(v) { if (_seqEdit) { _seqEdit.step.opt.then = v === 'home' ? 'home' : 'app'; renderSeqStep(); } }
 function seqEditTrig(k) {
   const e = _seqEdit;
@@ -25641,23 +25795,11 @@ async function prepSendVideo(it, sid) {
 // Textes affichés regroupés pour la traduction ; contenus reçus en textContent.
 const _SP_TXT = {
   unlockHint: 'Touchez pour déverrouiller',
-  codeTitle: 'Saisir le code',
   now: 'maintenant',
   agoMin: 'il y a {n} min',
   agoH: 'il y a {n} h',
-  keypad: 'Clavier du code',
-  batteryTitle: 'Batterie faible',
-  batteryMsg: 'Il reste {n} % de batterie.',
-  batteryClose: 'Fermer',
-  netTitle: 'Aucun réseau',
-  netMsg: 'Le réseau mobile n\'est plus disponible. Les appels et les SMS ne fonctionneront pas.',
-  netClose: 'OK',
 };
 const SP_POWER_FADE_MS = 600, SP_LOGO_MS = 1500, SP_BOOT_MS = 1200;
-// Logo neutre (aucune marque) : cercle et trait d'alimentation
-const _SP_LOGO = '<svg class="pp-logo" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" aria-hidden="true"><path d="M20.5 17.5a19 19 0 1 0 23 0"/><path d="M32 9v22"/></svg>';
-// Appelant sans lettre (numéro seul) : silhouette neutre
-const _SP_PERSON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5v.5H4z"/></svg>';
 const SP_GESTURE_GAP_MS = 400, SP_GESTURE_BURST = 5, SP_RELOCK_GUARD_MS = 1500, SP_REFRESH_MS = 15000;
 
 let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, wall, watch: Set, sleep, alert, power }
@@ -25674,12 +25816,6 @@ const _spGestureAt = new Map(); // geste → dernier envoi
 let _spBurst = [];
 
 function _spTpl(s, v) { return s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : '')); }
-function _spEl(tag, cls, text) {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (text !== undefined) e.textContent = text;
-  return e;
-}
 
 // ── Réception (phone:state, déjà validé et borné par _validPhoneState) ──
 function screenPhoneState(m) {
@@ -25700,7 +25836,7 @@ function screenPhoneState(m) {
   const fresh = !!prev && notifs.some((n) => !prev.notifs.some((o) => o.id === n.id));
   const alertNew = !!m.alert && !(prev && prev.alert && prev.alert.id === m.alert.id);
   if (!m.alert || (_spAlertClosed && m.alert.id !== _spAlertClosed)) _spAlertClosed = null;
-  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, wall: !!m.wall, watch: new Set(m.watch), sleep: m.sleep || null, alert: m.alert || null, power: m.power === 'off' ? 'off' : 'on' };
+  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, homeWall: m.homeWall === true, wall: !!m.wall, watch: new Set(m.watch), sleep: m.sleep || null, alert: m.alert || null, power: m.power === 'off' ? 'off' : 'on' };
   screenSeqBar(m.bar); // 97-phone-status.js
   _spRender();
   _spRenderAlert();
@@ -25732,12 +25868,10 @@ function screenPhoneOnHomeCached() { if (_scPhone && _scPhone.mode === 'home') _
 function screenPhoneOnWallCached() { _spPaintWall(); }
 function _spPaintWall() {
   const p = _scPhone;
-  const root = document.querySelector('#screen-phone .sp-lock, #screen-phone .sp-code');
+  const root = document.querySelector('#screen-phone .ph-lock, #screen-phone .ph-code');
   if (!root) return;
   const c = p && p.wall ? _mediaCache.get('__seqwall') : null;
-  const img = c && c.kind === 'img' ? safeImageData(c.data) : null;
-  if (img) root.style.setProperty('--sp-wall', 'url(' + img + ')'); else root.style.removeProperty('--sp-wall');
-  root.classList.toggle('has-wall', !!img);
+  PhoneUI.paintWall(root, c && c.kind === 'img' ? safeImageData(c.data) : null);
 }
 
 // ── Gestes ──
@@ -25802,40 +25936,14 @@ function _spWhen(at) {
   if (s < 3600) return _spTpl(_SP_TXT.agoMin, { n: Math.floor(s / 60) });
   return _spTpl(_SP_TXT.agoH, { n: Math.floor(s / 3600) });
 }
-// Initiales d'un appelant (« Maman » → M, « Paul Martin » → PM) ; '' sans lettre (numéro seul)
-function _spInitials(name) {
-  const w = String(name || '').trim().split(/\s+/).filter((x) => /^\p{L}/u.test(x));
-  if (!w.length) return '';
-  const first = (x) => Array.from(x)[0].toUpperCase();
-  return w.length > 1 ? first(w[0]) + first(w[w.length - 1]) : first(w[0]);
-}
 // Image préparée (icône, photo de l'appelant) déjà en cache, sinon null
 function _spImg(id) {
   const c = id ? _mediaCache.get(id) : null;
   return c && c.kind === 'img' ? safeImageData(c.data) : null;
 }
-function _spIcon(n) {
-  const i = _spEl('div', 'sp-icon');
-  const img = n.kind === 'sms' ? null : _spImg(n.img);
-  if (n.kind === 'missed' && n.who) {
-    // Appel manqué (maquette 44) : avatar rond, initiales ou photo, pastille rouge au combiné
-    i.classList.add('sp-avatar');
-    if (img) { i.classList.add('has-img'); i.style.backgroundImage = 'url(' + img + ')'; }
-    else {
-      const t = _spInitials(n.who);
-      if (t) i.appendChild(_spEl('span', 'sp-initials', t)); else i.innerHTML = _SP_PERSON;
-    }
-    const b = _spEl('span', 'sp-badge');
-    b.innerHTML = _SCI.handset;
-    i.appendChild(b);
-    return i;
-  }
-  if (n.kind === 'missed') { i.classList.add('sp-missed'); i.innerHTML = _SCI.handset; }
-  else if (n.kind === 'sms') { i.classList.add('sp-sms'); i.innerHTML = _SCI.bubble; }
-  else if (img) { i.classList.add('has-img'); i.style.backgroundImage = 'url(' + img + ')'; return i; } // icône importée
-  else i.textContent = Array.from((n.app || '?').trim())[0]?.toUpperCase() || '?';
-  if (n.color) i.style.background = n.color;
-  return i;
+// Notification de la pile → données de la carte partagée (PhoneUI.notification, 73-phone-ui.js)
+function _spData(n) {
+  return { id: n.id, kind: n.kind, app: n.app, name: n.name, msg: n.msg, when: _spWhen(n.at), color: n.color, who: n.who, img: n.kind === 'sms' ? null : _spImg(n.img) };
 }
 // Icône ou photo arrivée en cache après l'état (75-media-screen.js) : posée sans redessiner l'écran
 function screenPhoneOnImgCached(id) {
@@ -25843,94 +25951,85 @@ function screenPhoneOnImgCached(id) {
   if (!p || p.mode !== 'locked') return;
   for (const n of p.notifs) {
     if (n.img !== id) continue;
-    const c = document.querySelector('#screen-phone .sp-card[data-n="' + n.id + '"]'); // id : [A-Za-z0-9_-] (validé)
-    const old = c && c.querySelector('.sp-icon');
-    if (old) old.replaceWith(_spIcon(n));
+    const c = document.querySelector('#screen-phone .pn[data-n="' + n.id + '"]'); // id : [A-Za-z0-9_-] (validé)
+    const old = c && c.querySelector('.pn-icon');
+    if (!old) continue;
+    const t = document.createElement('div');
+    t.innerHTML = PhoneUI.notification(_spData(n));
+    const fresh = t.querySelector('.pn-icon');
+    if (fresh) old.replaceWith(fresh);
   }
-}
-function _spCard(n) {
-  const c = _spEl('div', 'sp-card');
-  c.dataset.n = n.id;
-  const body = _spEl('div', 'sp-body');
-  const top = _spEl('div', 'sp-top');
-  top.append(_spEl('span', 'sp-app', n.app), _spEl('span', 'sp-when', _spWhen(n.at)));
-  body.append(top, _spEl('div', 'sp-name', n.name));
-  if (n.msg) body.appendChild(_spEl('div', 'sp-msg', n.msg));
-  c.append(_spIcon(n), body);
-  return c;
 }
 function _spClock() {
   const d = phoneClockNow(); // 97-phone-status.js
-  return { time: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'), date: notifLongDate(d) };
+  return { time: PhoneUI.hm(d), date: PhoneUI.longDate(d) };
 }
+// Portrait : au plus 4 cartes sur l'écran verrouillé (« + N notifications » au-delà), la plus récente en haut ;
+// paysage (téléphone couché) : toute la pile, qui défile
+const SP_LOCK_MAX = 4;
+const _spLandscape = () => typeof matchMedia === 'function' && matchMedia('(orientation:landscape) and (max-height:500px)').matches;
 function _spRender() {
   const el = document.getElementById('screen-phone');
   const p = _scPhone;
   if (!el) return;
-  if (_spRefreshTimer && (!p || p.mode !== 'locked')) { clearInterval(_spRefreshTimer); _spRefreshTimer = null; }
+  const home = p && p.mode === 'home';
+  const live = !!p && (p.mode === 'locked' || (home && !_spHomeImg(p)) || (home && p.homeWall));
+  if (_spRefreshTimer && !live) { clearInterval(_spRefreshTimer); _spRefreshTimer = null; }
   if (!p || p.mode === 'off') { el.style.display = 'none'; el.textContent = ''; _spShown.mode = null; _spShown.ids.clear(); return; }
   const enter = _spShown.mode !== p.mode || el.style.display !== 'block';
   const seen = enter ? new Set() : _spShown.ids;
   _spShown.mode = p.mode;
   _spShown.ids = new Set(p.mode === 'locked' ? p.notifs.map((n) => n.id) : []);
-  el.textContent = '';
-  el.className = p.style;
+  el.className = '';
   el.style.display = 'block';
+  const k = _spClock(), ent = enter ? ' ph-enter' : '';
   if (p.mode === 'locked') {
-    const root = _spEl('div', 'sp-lock' + (enter ? ' sp-enter' : ''));
-    const head = _spEl('div', 'sp-lock-head');
-    const k = _spClock();
-    head.append(_spEl('div', 'sp-date', k.date), _spEl('div', 'sp-time', k.time));
-    const stack = _spEl('div', 'sp-stack');
-    for (const n of p.notifs.slice().reverse()) { const c = _spCard(n); if (!seen.has(n.id)) c.classList.add('sp-new'); stack.appendChild(c); } // la plus récente en haut
-    root.append(head, stack, _spEl('div', 'sp-hint', _SP_TXT.unlockHint));
-    el.appendChild(root);
+    const notifs = p.notifs.slice().reverse().map(_spData); // la plus récente en haut
+    const newIds = new Set(notifs.filter((n) => !seen.has(n.id)).map((n) => n.id));
+    el.innerHTML = PhoneUI.root({ style: p.style, cls: 'ph-lock' + ent, body: PhoneUI.lock({ style: p.style, clock: k, notifs, hint: _SP_TXT.unlockHint, max: _spLandscape() ? 99 : SP_LOCK_MAX, newIds }) });
     _spPaintWall();
-    if (!_spRefreshTimer) _spRefreshTimer = setInterval(_spRefresh, SP_REFRESH_MS);
   } else if (p.mode === 'code') {
-    const root = _spEl('div', 'sp-code' + (enter ? ' sp-enter' : ''));
-    root.appendChild(_spEl('div', 'sp-code-title', _SP_TXT.codeTitle));
-    root.appendChild(_spEl('div', 'sp-dots'));
-    const keys = _spEl('div', 'sp-keys');
-    keys.setAttribute('aria-label', _SP_TXT.keypad);
-    for (const d of ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '']) {
-      if (!d) { keys.appendChild(_spEl('span', 'sp-key-gap')); continue; }
-      const b = _spEl('button', 'sp-key', d);
-      b.type = 'button';
-      keys.appendChild(b);
-    }
-    root.appendChild(keys);
-    el.appendChild(root);
+    el.innerHTML = PhoneUI.root({ style: p.style, cls: 'ph-code' + ent, body: PhoneUI.code({ len: p.unlock.code, typed: _spTyped }) });
     _spPaintWall();
-    _spRenderDots();
   } else if (p.mode === 'home') {
-    const root = _spEl('div', 'sp-home');
-    const c = p.home ? _mediaCache.get('__seqhome') : null;
-    const img = c && c.kind === 'img' ? safeImageData(c.data) : null;
-    if (img) { root.style.backgroundImage = 'url(' + img + ')'; root.classList.add('has-img'); }
-    el.appendChild(root);
+    // Image de l'utilisateur : seule et plein écran (souvent une capture complète) ; en option, fond d'écran
+    // sous les icônes génériques. Sans image : accueil générique sur le dégradé du style.
+    const img = _spHomeImg(p);
+    if (img && !p.homeWall) el.innerHTML = PhoneUI.root({ style: p.style, cls: 'ph-homeimg' + ent, body: PhoneUI.homeImage(img) });
+    else {
+      el.innerHTML = PhoneUI.root({ style: p.style, cls: 'ph-homewall' + (img ? '' : ' ph-homegen') + ent, body: PhoneUI.home({ clock: k }) });
+      PhoneUI.paintWall(el.firstChild, img);
+    }
   } else {
-    el.appendChild(_spEl('div', 'sp-unlocked'));
+    el.innerHTML = PhoneUI.root({ style: p.style, cls: 'ph-unlocked' + ent });
   }
+  if (live && !_spRefreshTimer) _spRefreshTimer = setInterval(_spRefresh, SP_REFRESH_MS);
+}
+// Image d'accueil de l'utilisateur en cache (__seqhome), sinon null
+function _spHomeImg(p) {
+  const c = p.home ? _mediaCache.get('__seqhome') : null;
+  return c && c.kind === 'img' ? safeImageData(c.data) : null;
 }
 function _spRenderDots() {
-  const box = document.querySelector('#screen-phone .sp-dots');
+  const box = document.querySelector('#screen-phone .pk-dots');
   const p = _scPhone;
   if (!box || !p || !p.unlock) return;
-  box.textContent = '';
-  for (let i = 0; i < p.unlock.code; i++) box.appendChild(_spEl('span', 'sp-dot' + (i < _spTyped ? ' on' : '')));
+  box.innerHTML = PhoneUI.dots(p.unlock.code, _spTyped);
 }
 // Heures relatives et horloge à jour
 function _spRefresh() {
   const p = _scPhone;
-  if (!p || p.mode !== 'locked') return;
-  const k = _spClock();
-  const t = document.querySelector('#screen-phone .sp-time'), d = document.querySelector('#screen-phone .sp-date');
-  if (t) t.textContent = k.time;
+  if (!p || (p.mode !== 'locked' && p.mode !== 'home')) return;
+  const k = _spClock(), q = (s) => document.querySelector('#screen-phone ' + s);
+  const t = q('.pl-time'), d = q('.pl-date');
+  if (t) t.innerHTML = PhoneUI.clockHtml(p.style, k.time);
   if (d) d.textContent = k.date;
-  document.querySelectorAll('#screen-phone .sp-card').forEach((c) => {
+  const wt = q('.phw-big'), wd = q('.phw-s');
+  if (wt) wt.textContent = k.time;
+  if (wd) wd.textContent = k.date;
+  document.querySelectorAll('#screen-phone .pn').forEach((c) => {
     const n = p.notifs.find((x) => x.id === c.dataset.n);
-    const w = c.querySelector('.sp-when');
+    const w = c.querySelector('.pn-when');
     if (n && w) w.textContent = _spWhen(n.at);
   });
 }
@@ -25944,8 +26043,9 @@ function _spRefresh() {
     e.stopPropagation();
     const p = _scPhone;
     if (!p || Date.now() - swipedAt < 400) return;
-    if (p.mode === 'locked') { const c = e.target.closest('.sp-card'); _spLockTouch(c ? c.dataset.n : null); }
-    else if (p.mode === 'code') { if (e.target.closest('.sp-key')) _spKey(); }
+    if (e.target.closest('[data-act="noop"]')) return; // lampe, appareil photo : décor
+    if (p.mode === 'locked') { const c = e.target.closest('.pn'); _spLockTouch(c ? c.dataset.n : null); }
+    else if (p.mode === 'code') { if (e.target.closest('.pk-key[data-key]')) _spKey(); }
     else if (p.mode === 'home') phoneGesture('home');
     else phoneGesture('touch');
   });
@@ -26019,7 +26119,7 @@ function _spApplyPower(wasOff) {
   if (!pw) return;
   if (off && wasOff !== true) {
     const tok = ++_spPowerSeq;
-    pw.innerHTML = _SP_LOGO;
+    pw.innerHTML = PhoneUI.power();
     pw.style.display = 'flex';
     if (wasOff === null) { pw.className = 'on instant'; _sbRefresh(); return; } // écran rechargé : déjà éteint
     // Fondu au noir, logo neutre, puis noir
@@ -26034,7 +26134,7 @@ function _spApplyPower(wasOff) {
   } else if (!off && wasOff === true) {
     // Rallumage : logo neutre sur fond noir, puis le téléphone (endormi s'il est en veille)
     const tok = ++_spPowerSeq;
-    pw.innerHTML = _SP_LOGO;
+    pw.innerHTML = PhoneUI.power();
     pw.className = 'on logo'; pw.style.display = 'flex';
     setTimeout(() => { if (tok !== _spPowerSeq) return; pw.className = 'on'; _spPaint(); }, SP_BOOT_MS);
   }
@@ -26075,19 +26175,20 @@ function _spRenderAlert() {
   const net = a.kind === 'net'; // « Aucun réseau » (maquette 44b)
   const lv = net ? 'net' : String(a.level);
   if (el.dataset.id === a.id && el.style.display === 'flex' && el.dataset.level === lv) return;
-  el.textContent = '';
-  el.className = p.style;
+  el.className = '';
   el.dataset.id = a.id; el.dataset.level = lv;
-  const card = _spEl('div', 'pa-card' + (net ? ' pa-net' : ''));
-  const close = _spEl('button', 'pa-close', net ? _SP_TXT.netClose : _SP_TXT.batteryClose);
-  close.type = 'button';
-  close.addEventListener('click', (e) => { e.stopPropagation(); _spAlertClose(); });
-  card.append(_spEl('div', 'pa-title', net ? _SP_TXT.netTitle : _SP_TXT.batteryTitle),
-    _spEl('div', 'pa-msg', net ? _SP_TXT.netMsg : _spTpl(_SP_TXT.batteryMsg, { n: a.level })), close);
-  el.onclick = (e) => e.stopPropagation();
-  el.appendChild(card);
+  el.innerHTML = PhoneUI.root({ style: p.style, cls: 'ph-overlay', body: PhoneUI.alertBox({ kind: net ? 'net' : 'battery', level: a.level }) });
   el.style.display = 'flex';
 }
+// Toucher : « Fermer » / « OK » rapporte le geste dismiss ; rien ne traverse l'alerte
+(function initAlertTouch() {
+  const el = document.getElementById('screen-palert');
+  if (!el) return;
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (e.target.closest('[data-act="alert-close"]')) _spAlertClose();
+  });
+})();
 function _spAlertClose() {
   const p = _scPhone;
   if (!p || !p.alert) return;
@@ -26096,6 +26197,8 @@ function _spAlertClose() {
   _spPoke();
   phoneGesture('dismiss');
 }
+// Téléphone tourné : la pile de l'écran verrouillé est redessinée (toutes les cartes en paysage, 3 en portrait)
+window.addEventListener('resize', () => { if (_scPhone && _scPhone.mode === 'locked') _spRender(); });
 // ══════════════════════════ SPLASH — métiers qui défilent ══════════════════════════
 (function () {
   const roles = ['les accessoiristes', 'les électros', 'les pupitreurs', 'la mise en scène', 'les DOP'];
@@ -26536,7 +26639,10 @@ function phoneBarRender(root, bar, timeMs) {
 }
 
 // ── Écran de jeu : barre affichée ──
-// seq : barre de la séquence (phone:state.bar) ; media : barre de l'onglet Média (media:bar)
+// seq : barre de la séquence (phone:state.bar) ; media : barre de l'onglet Média (media:bar).
+// Rendue par PhoneUI.statusBar (73-phone-ui.js), la MÊME barre sur toutes les vues du faux
+// téléphone (écran verrouillé, accueil, appel, en cours d'appel, bandeaux, discussion, pavé du
+// code, alertes) quand la séquence ou l'onglet Média la demande ; jamais forcée ailleurs.
 const _sb = { seq: null, seqAt: 0, media: null, mediaAt: 0, timer: null, obs: null };
 function screenSeqBar(bar) {
   const was = _sb.seq;
@@ -26561,11 +26667,17 @@ function _sbSurfaces() {
   const call = document.getElementById('screen-call');
   const callOn = !!call && call.style.display === 'block';
   const chat = document.getElementById('screen-chat');
-  const chatRoot = chat && chat.style.display === 'block' ? chat.querySelector('.scc') : null;
+  const chatRoot = chat && chat.style.display === 'block' ? chat.querySelector('.pt') : null;
   const phone = document.getElementById('screen-phone');
   const phoneOn = !!phone && phone.style.display === 'block';
   const media = _sbShown('screen-media-img') || _sbShown('screen-media-video');
-  return { callOn, callFull: callOn && !call.classList.contains('notif'), chatOn: !!chatRoot, chatLight: !!chatRoot && chatRoot.classList.contains('minimal'), phoneOn, media };
+  const callFull = callOn && !call.classList.contains('notif');
+  // Écran verrouillé en vue : l'heure y est déjà en grand, comme sur un vrai téléphone (pas dans la barre)
+  const lock = callOn ? !!call.querySelector('.ph-lock') : chatRoot ? false : phoneOn && typeof _scPhone !== 'undefined' && !!_scPhone && _scPhone.mode === 'locked';
+  const style = callOn && typeof _callCfg !== 'undefined' && _callCfg ? _callCfg.style
+    : chatRoot && typeof _scChat !== 'undefined' && _scChat ? _scChat.style
+      : (typeof _scPhone !== 'undefined' && _scPhone && _scPhone.style) || 'glass';
+  return { callOn, callFull, chatOn: !!chatRoot, chatLight: !!chatRoot && chatRoot.classList.contains('ph-minimal'), phoneOn, media, lock, style };
 }
 function _sbRefresh() {
   const el = document.getElementById('screen-sbar');
@@ -26588,10 +26700,10 @@ function _sbRefresh() {
     if (_sb.timer) { clearInterval(_sb.timer); _sb.timer = null; }
     return;
   }
-  const style = (typeof _scPhone !== 'undefined' && _scPhone && _scPhone.style) || 'glass';
-  el.className = 'pb ' + style + (band ? ' pb-band' : '') + (s.chatLight && !s.callFull ? ' pb-dark' : '');
+  el.className = 'ph-' + (band ? 'glass' : s.style);
   el.style.display = 'flex';
-  phoneBarRender(el, bar, phoneBarClockAt(bar, at, Date.now()));
+  const dark = s.chatLight && !s.callFull && !band;
+  el.innerHTML = PhoneUI.statusBar(bar, PhoneUI.hm(new Date(phoneBarClockAt(bar, at, Date.now()))), { band, tone: dark ? 'dark' : 'light', hideTime: s.lock && !band });
   if (sm) sm.classList.add('sb-on');
   if (!_sb.timer) _sb.timer = setInterval(_sbTick, 1000);
 }
@@ -26600,10 +26712,10 @@ function _sbTick() {
   const el = document.getElementById('screen-sbar');
   const bar = _sb.seq || _sb.media;
   if (!el || !bar || el.style.display === 'none') return;
-  const t = el.querySelector('.pb-time');
-  const d = new Date(phoneBarClockAt(bar, _sb.seq ? _sb.seqAt : _sb.mediaAt, Date.now()));
-  const txt = _pbPad(d.getHours()) + ':' + _pbPad(d.getMinutes());
-  if (t && t.textContent !== txt) t.textContent = txt;
+  const t = el.querySelector('.psb-time');
+  if (!t || !t.textContent) return; // écran verrouillé : pas d'heure dans la barre
+  const txt = PhoneUI.hm(new Date(phoneBarClockAt(bar, _sb.seq ? _sb.seqAt : _sb.mediaAt, Date.now())));
+  if (t.textContent !== txt) t.textContent = txt;
 }
 // Surfaces affichées ou masquées (appel, discussion, téléphone, média, noir) : barre recalculée
 (function initScreenBarWatch() {

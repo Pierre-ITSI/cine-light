@@ -57,18 +57,18 @@ test('écran : bandeau ou écran verrouillé, 3 styles, heure du téléphone, te
     let o = await overlay(page);
     assert.equal(o.state, 'notif');
     assert.ok(o.notif, 'bandeau en haut, le reste de l\'écran reste visible');
-    assert.match(o.html, new RegExp(`class="sc-notif nt-card ${style}"`));
-    assert.doesNotMatch(o.html, /sc-lock/);
+    assert.match(o.html, new RegExp(`class="ph ph-${style} ph-overlay"`));
+    assert.doesNotMatch(o.html, /ph-lock/);
     for (const t of ['Banque Atlas', 'Virement reçu', 'Vous avez reçu 2 400,00 €.', 'maintenant']) assert.ok(o.html.includes(t), style + ' : ' + t);
     // Écran verrouillé : heure du téléphone imposée, reçue il y a 15 min
     await reset(page);
     await page.evaluate((m) => screenCallStart(m), { ...NOTIF, style, present: 'lock', phone: { date: '2025-10-17', time: '14:32' }, received: { mode: 'ago', min: 15 } });
     o = await overlay(page);
     assert.ok(!o.notif);
-    assert.match(o.html, new RegExp(`class="sc-lock ${style}"`));
-    assert.match(o.html, new RegExp(`sc-notif nt-card ${style} in-lock`));
-    assert.match(o.html, /sc-lock-date">vendredi 17 octobre</);
-    assert.match(o.html, style === 'tonal' ? /sc-lock-time">14<br>32</ : /sc-lock-time">14:32</);
+    assert.match(o.html, new RegExp(`class="ph ph-${style} ph-lock`));
+    assert.match(o.html, /class="pn pn-k-app/);
+    assert.match(o.html, /pl-date">vendredi 17 octobre</);
+    assert.match(o.html, style === 'tonal' ? /pl-time">14<br class="pl-br"><span class="pl-colon">:<\/span>32</ : /pl-time">14:32</);
     assert.ok(o.html.includes('il y a 15 min'));
   }
   // Heure du téléphone vide : celle de l'écran ; date et heure de réception → « hier »
@@ -76,13 +76,13 @@ test('écran : bandeau ou écran verrouillé, 3 styles, heure du téléphone, te
   await page.evaluate((m) => screenCallStart(m), { ...NOTIF, style: 'glass', present: 'lock', received: { mode: 'at', date: '2000-01-01', time: '10:00' } });
   const real = await page.evaluate(() => { const d = new Date(); return [notifLongDate(d), String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')]; });
   let o = await overlay(page);
-  assert.ok(o.html.includes('sc-lock-date">' + real[0] + '<'), 'date réelle');
-  assert.ok(o.html.includes('sc-lock-time">' + real[1] + '<'), 'heure réelle');
+  assert.ok(o.html.includes('pl-date">' + real[0] + '<'), 'date réelle');
+  assert.ok(o.html.includes('pl-time">' + real[1] + '<'), 'heure réelle');
   assert.ok(o.html.includes('01/01/2000'));
   // L'écran verrouillé se rendort seul ; toucher le bandeau le ferme
   await reset(page);
   await page.evaluate((m) => screenCallStart(m), { ...NOTIF, style: 'minimal', present: 'banner' });
-  await page.locator('#screen-call .sc-notif').click();
+  await page.locator('#screen-call .pn').click();
   assert.equal((await overlay(page)).state, 'idle');
   // Textes forgés : affichés tels quels
   await reset(page);
@@ -104,7 +104,7 @@ test('réseau : réception validée, ancienne messagerie affichée en SMS, champ
   await deliverFrame(page, await remote.seal({ type: 'call:start', kind: 'chat', style: 'tonal', name: 'Régie', msg: 'Moteur', appName: 'Chatly', appColor: '#22aa66', ring: 'silent', lock: null }));
   await waitFor(page, () => _callState === 'notif');
   assert.deepEqual(await page.evaluate(() => [_callCfg.kind, _callCfg.appName]), ['sms', 'Chatly']);
-  assert.match((await overlay(page)).html, /class="sc-notif tonal"/);
+  assert.match((await overlay(page)).html, /ph ph-tonal ph-overlay/);
   await reset(page);
   // Notification complète par le réseau
   await deliverFrame(page, await remote.seal({ type: 'call:start', ...NOTIF, style: 'minimal', present: 'lock', phone: { date: '2025-10-17', time: '14:32' }, received: { mode: 'ago', min: 15 } }));
@@ -215,9 +215,9 @@ describe('télécommande et écran reliés', () => {
       ['notif', 'lock', { date: '2025-10-17', time: '14:32' }, { mode: 'ago', min: 15 }, true, 'Virement reçu', 'Banque Atlas']);
     assert.deepEqual(await imgStarts('__notificon'), [], 'déjà en cache : rien à renvoyer');
     const html = await sp.evaluate(() => document.getElementById('screen-call').innerHTML);
-    assert.match(html, /nt-img" style="background-image:url\(data:image\/png;base64,/);
+    assert.match(html, /pn-icon img" style="background-image:url\(data:image\/png;base64,/);
     assert.match(html, /il y a 15 min/);
-    assert.match(html, /sc-lock-date">vendredi 17 octobre</);
+    assert.match(html, /pl-date">vendredi 17 octobre</);
     await sp.evaluate(() => screenCallEnd());
     await sleep(450);
     // Écran rechargé (cache perdu) : l'icône est renvoyée à la resynchronisation
@@ -270,7 +270,7 @@ describe('télécommande et écran reliés', () => {
     await rp.evaluate(() => { setCallKind('notif'); });
     await rp.click('#ntSendBtn');
     await waitFor(sp, () => _callState === 'notif');
-    let html = await sp.evaluate(() => document.querySelector('#screen-call .sc-lock').getAttribute('style'));
+    let html = await sp.evaluate(() => document.querySelector('#screen-call .ph-lock').getAttribute('style'));
     assert.ok(html.includes(walls[1].slice(0, 60)), 'fond des notifications');
     assert.equal(await sp.evaluate(() => _callCfg.style), 'minimal');
     await sp.evaluate(() => screenCallEnd());
@@ -278,7 +278,7 @@ describe('télécommande et écran reliés', () => {
     await rp.evaluate(() => { setCallKind('sms'); document.getElementById('lockToggle').checked = true; });
     await rp.click('#callTriggerBtn');
     await waitFor(sp, () => _callState === 'notif');
-    html = await sp.evaluate(() => document.querySelector('#screen-call .sc-lock').getAttribute('style'));
+    html = await sp.evaluate(() => document.querySelector('#screen-call .ph-lock').getAttribute('style'));
     assert.ok(html.includes(walls[0].slice(0, 60)), 'fond des SMS');
     assert.equal(await sp.evaluate(() => _callCfg.style), 'tonal');
     await sp.evaluate(() => screenCallEnd());

@@ -192,7 +192,7 @@ test('36d · discussion : son des messages et vibreur portés par chat:open, jou
   assert.equal(await page.evaluate(() => window.__chime.length), 1, 'historique : aucun son');
   // Sans son ni vibreur (ancienne télécommande) : silencieux, comme avant
   await page.evaluate(() => { screenChatOpen({ name: 'Maman', style: 'glass', ids: ['a', 'b', 'c'], sent: ['a', 'b'], typed: 0 }); screenChatPost({ id: 'c', typing: false }); });
-  assert.deepEqual(await page.evaluate(() => [window.__chime.length, window.__vib.length, document.querySelectorAll('#screen-chat .scc-b').length]), [1, 1, 3]);
+  assert.deepEqual(await page.evaluate(() => [window.__chime.length, window.__vib.length, document.querySelectorAll('#screen-chat .pt-b').length]), [1, 1, 3]);
   assert.deepEqual(errors, []);
   await close();
 });

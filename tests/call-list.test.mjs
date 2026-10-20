@@ -122,7 +122,7 @@ test('« Appeler n° X » : la photo de l\'entrée part avant l\'appel, l\'écra
   await waitFor(sp, () => _callState === 'ringing');
   const html = await sp.evaluate(() => document.getElementById('screen-call').innerHTML);
   assert.match(html, /Maman/);
-  assert.match(html, /sc-call glass/);
+  assert.match(html, /ph-glass ph-call/);
   assert.equal(await rp.evaluate(() => callList.call[0].hasPhoto), true);
   // L'appel affiche la photo de l'entrée n° 1 (et non celle du formulaire, Julien)
   const entryPhoto = await rp.evaluate(() => callAssetGet(callList.call[0].id + ':photo'));

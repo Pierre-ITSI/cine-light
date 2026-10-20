@@ -15,12 +15,12 @@ after(async () => { await browser?.close(); });
 const connected = (page) => waitFor(page, () => !!mqttClient && mqttClient.connected && !!_sec, null, { timeout: 8000 });
 const state = (page) => page.evaluate(() => [...document.querySelectorAll('#dcRows .dc-row')].map((r) => (r.classList.contains('sent') ? 'posté' : r.classList.contains('cur') ? 'en cours' : '')));
 const texts = (page) => page.evaluate(() => [...document.querySelectorAll('#dcRows .dc-row .dc-text')].map((t) => t.textContent));
-const bubbles = (page) => page.evaluate(() => [...document.querySelectorAll('#screen-chat .scc-b:not(.scc-typing)')].map((b) => (b.classList.contains('out') ? '> ' : '< ') + b.textContent));
+const bubbles = (page) => page.evaluate(() => [...document.querySelectorAll('#screen-chat .pt-b:not(.pt-typing)')].map((b) => (b.classList.contains('out') ? '> ' : '< ') + b.textContent));
 const compose = (page) => page.evaluate(() => {
   const el = document.getElementById('screen-chat');
-  return { typed: el.querySelector('.scc-typed').textContent, ready: el.querySelector('.scc-field').classList.contains('ready'), send: !el.querySelector('.scc-send').disabled };
+  return { typed: el.querySelector('.pt-typed').textContent, ready: el.querySelector('.pt-field').classList.contains('ready'), send: !el.querySelector('.pt-send').disabled };
 });
-const nBubbles = (k) => document.querySelectorAll('#screen-chat .scc-b:not(.scc-typing)').length === k;
+const nBubbles = (k) => document.querySelectorAll('#screen-chat .pt-b:not(.pt-typing)').length === k;
 const JULIE = 'je suis chez Léa, j\'arrive';
 
 test('télécommande seule : bouton « ↶ », « Repartir de zéro », repère de reprise gardé au rechargement', async () => {
@@ -111,15 +111,15 @@ describe('télécommande et écran reliés', () => {
     await rp.click('#dcGo');
     await rp.check('#dcTypingToggle');
     await rp.click('#dcGo');
-    await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-typing'));
+    await waitFor(sp, () => !!document.querySelector('#screen-chat .pt-typing'));
     await rp.click('#dcBackBtn');
-    await waitFor(sp, () => !document.querySelector('#screen-chat .scc-typing'));
+    await waitFor(sp, () => !document.querySelector('#screen-chat .pt-typing'));
     await sleep(2300);
     assert.deepEqual(await bubbles(sp), ['< Tu es où ?']);
-    assert.equal(await sp.evaluate(() => document.querySelector('#screen-chat .scc-typing')), null);
+    assert.equal(await sp.evaluate(() => document.querySelector('#screen-chat .pt-typing')), null);
     // Renvoyé : de nouveau avec « … écrit », puis la bulle
     await rp.click('#dcGo');
-    await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-typing'));
+    await waitFor(sp, () => !!document.querySelector('#screen-chat .pt-typing'));
     await waitFor(sp, nBubbles, 2, { timeout: 4000 });
     await rp.uncheck('#dcTypingToggle');
     assert.deepEqual(await state(rp), ['posté', 'posté', 'en cours', '', '']);
@@ -189,7 +189,7 @@ describe('télécommande et écran reliés', () => {
     await sp.keyboard.type('abcdef');
     await waitFor(rp, () => _chat.progress && _chat.progress.typed === 6);
     await reloadScreen();
-    await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 2, null, { timeout: 8000 });
+    await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b').length === 2, null, { timeout: 8000 });
     assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '< Ton père t\'attend depuis une heure']);
     assert.deepEqual(await compose(sp), { typed: 'je sui', ready: true, send: false });
   });
@@ -202,9 +202,9 @@ describe('télécommande et écran reliés', () => {
     await rp.click('#dcRows .dc-edit .dc-edit-resume');
     await waitFor(sp, nBubbles, 4, { timeout: 2000 });
     const look = await sp.evaluate(() => ({
-      typing: !!document.querySelector('#screen-chat .scc-typing'),
-      anim: document.querySelectorAll('#screen-chat .scc-new').length,
-      instant: document.querySelector('#screen-chat .scc').classList.contains('scc-instant'),
+      typing: !!document.querySelector('#screen-chat .pt-typing'),
+      anim: document.querySelectorAll('#screen-chat .pt-new').length,
+      instant: document.querySelector('#screen-chat .pt').classList.contains('pt-instant'),
     }));
     assert.deepEqual(look, { typing: false, anim: 0, instant: true });
     assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '< Ton père t\'attend depuis une heure', '> ' + JULIE, '< Je t\'ai vue avec lui. On en parlera ce soir.']);
@@ -227,13 +227,13 @@ describe('télécommande et écran reliés', () => {
     await waitFor(rp, () => _chat.progress && _chat.progress.typed === 4);
     // Écran rechargé : historique et lettres tapées retrouvés
     await reloadScreen();
-    await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 2, null, { timeout: 8000 });
+    await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b').length === 2, null, { timeout: 8000 });
     assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '< Ton père t\'attend depuis une heure']);
     assert.deepEqual(await compose(sp), { typed: 'je s', ready: true, send: false });
     // Reprise sur le message même en cours de frappe : il repart de zéro (télécommande comprise)
     await rp.locator('#dcRows .dc-row').nth(2).click();
     await rp.click('#dcRows .dc-edit .dc-edit-resume');
-    await waitFor(sp, () => document.querySelector('#screen-chat .scc-typed').textContent === '');
+    await waitFor(sp, () => document.querySelector('#screen-chat .pt-typed').textContent === '');
     await sleep(400);
     assert.equal(await rp.evaluate(() => (_chat.progress ? _chat.progress.typed : 0)), 0);
     assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '< Ton père t\'attend depuis une heure']);
@@ -242,7 +242,7 @@ describe('télécommande et écran reliés', () => {
     await sp.keyboard.press('Enter');
     await waitFor(rp, () => _chat.sent.includes('d3'));
     await rp.click('#dcGo');
-    await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-typing'));
+    await waitFor(sp, () => !!document.querySelector('#screen-chat .pt-typing'));
     await waitFor(sp, nBubbles, 4, { timeout: 4000 });
     await rp.uncheck('#dcTypingToggle');
     assert.equal(await rp.textContent('#dcResume'), 'Reprise ici · 1 et 2 affichés comme historique', 'le repère reste');
@@ -254,12 +254,12 @@ describe('télécommande et écran reliés', () => {
     await rp.locator('#dcRows .dc-row').nth(3).click();
     await rp.click('#dcRows .dc-edit .dc-edit-resume');
     await waitFor(sp, nBubbles, 3);
-    assert.equal(await sp.evaluate(() => document.querySelectorAll('#screen-chat .scc-new').length), 0);
+    assert.equal(await sp.evaluate(() => document.querySelectorAll('#screen-chat .pt-new').length), 0);
     assert.match(await rp.textContent('#dcState'), /^Discussion ouverte sur « /);
     assert.equal(await rp.textContent('#dcGo'), 'Envoyer n°4 (Maman)');
     // Écran rechargé : même historique
     await reloadScreen();
-    await waitFor(sp, () => document.querySelectorAll('#screen-chat .scc-b').length === 3, null, { timeout: 8000 });
+    await waitFor(sp, () => document.querySelectorAll('#screen-chat .pt-b').length === 3, null, { timeout: 8000 });
     assert.deepEqual(await bubbles(sp), ['< Tu es où ?', '< Ton père t\'attend depuis une heure', '> ' + JULIE]);
     // « Repartir de zéro »
     await rp.click('#dcRestartBtn');

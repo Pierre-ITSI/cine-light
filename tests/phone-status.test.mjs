@@ -63,8 +63,8 @@ const bar = (page) => page.evaluate(() => {
   if (!el || getComputedStyle(el).display === 'none') return null;
   const t = (s) => { const e = el.querySelector(s); return e ? e.textContent : null; };
   return {
-    time: t('.pb-time'), net: t('.pb-net'), nosvc: t('.pb-nosvc'), pct: t('.pb-pct'), wifi: !!el.querySelector('.pb-wifi'),
-    bars: el.querySelectorAll('.pb-sig i.on').length, low: !!el.querySelector('.pb-bat.low'), band: el.classList.contains('pb-band'), dark: el.classList.contains('pb-dark'),
+    time: t('.psb-time'), net: t('.psb-net'), nosvc: t('.psb-nosvc'), pct: t('.psb-pct'), wifi: !!el.querySelector('.psb-wifi'),
+    bars: el.querySelectorAll('.psb-sig i.on').length, low: !!el.querySelector('.psb-bat.low'), band: !!el.querySelector('.psb.band'), dark: !!el.querySelector('.psb[data-tone=dark]'),
   };
 });
 const showMedia = (page) => page.evaluate(() => {
@@ -92,15 +92,15 @@ describe('barre d\'état de la séquence (28b) : partout sur l\'écran visé, ri
   });
   test('écran verrouillé : barre et horloge de la séquence (figée)', async () => {
     await go(rp);
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 1);
-    assert.deepEqual(await bar(sp), { time: '23:47', net: '4G', nosvc: null, pct: '18 %', wifi: false, bars: 2, low: false, band: false, dark: false });
-    assert.equal(await sp.textContent('#screen-phone .sp-time'), '23:47');
-    assert.equal(await sp.textContent('#screen-phone .sp-date'), 'samedi 17 octobre');
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 1);
+    assert.deepEqual(await bar(sp), { time: '', net: '4G', nosvc: null, pct: '18 %', wifi: false, bars: 2, low: false, band: false, dark: false });
+    assert.equal(await sp.textContent('#screen-phone .pl-time'), '23:47');
+    assert.equal(await sp.textContent('#screen-phone .pl-date'), 'samedi 17 octobre');
   });
   test('déverrouillé : la barre reste', async () => {
     await go(rp);
     await waitFor(sp, () => _scPhone && !!_scPhone.unlock);
-    await sp.locator('#screen-phone .sp-lock').click();
+    await sp.locator('#screen-phone .ph-lock').click();
     await waitFor(sp, () => _scPhone.mode === 'unlocked');
     assert.equal((await bar(sp)).time, '23:47');
   });
@@ -110,12 +110,12 @@ describe('barre d\'état de la séquence (28b) : partout sur l\'écran visé, ri
     const z = await sp.evaluate(() => [getComputedStyle(document.getElementById('screen-sbar')).zIndex, getComputedStyle(document.getElementById('screen-call')).zIndex].map(Number));
     assert.ok(z[0] > z[1], 'au-dessus de l\'appel');
     assert.equal((await bar(sp)).time, '23:47');
-    await sp.locator('#screen-call .sc-no').click();
+    await sp.locator('#screen-call [data-act=decline], #screen-call [data-act=hangup]').click();
     await waitFor(sp, () => _callState === 'idle');
   });
   test('discussion (Épuré, fond clair) : barre en texte sombre', async () => {
     await go(rp);
-    await waitFor(sp, () => !!document.querySelector('#screen-chat .scc'));
+    await waitFor(sp, () => !!document.querySelector('#screen-chat .pt'));
     assert.equal((await bar(sp)).dark, true);
   });
   test('au-dessus d\'un média : bandeau ; Recommencer : plus aucune barre', async () => {
@@ -140,20 +140,20 @@ test('horloges (28b) : l\'heure avance, figée, heure réelle ; heures relatives
     mode: 'locked', style: 'glass', notifs: [{ id: 'n1', kind: 'sms', app: 'SMS', name: 'Maman', msg: 'Tu es où ?', ago: 125 }], unlock: null, home: false, watch: [], chime: null,
     bar: { clock, net: { bars: 4, type: '5G', plane: false, wifi: true }, bat: { level: 60, charging: true, pct: false } }, sleep: null, alert: null, power: 'on',
   }), clock);
-  const read = () => page.evaluate(() => [document.querySelector('#screen-sbar .pb-time').textContent, document.querySelector('#screen-phone .sp-time').textContent, document.querySelector('#screen-phone .sp-when').textContent]);
+  const read = () => page.evaluate(() => [document.querySelector('#screen-sbar .psb-time').textContent, document.querySelector('#screen-phone .pl-time').textContent, document.querySelector('#screen-phone .pn-when').textContent]);
   // L'heure avance : 23:47 et 50 s écoulées → 23:48 dans 10 s
   await state({ mode: 'run', date: '2026-10-17', time: '23:47', el: 50 });
-  assert.deepEqual(await read(), ['23:47', '23:47', 'il y a 2 min']);
+  assert.deepEqual(await read(), ['', '23:47', 'il y a 2 min']);
   await page.clock.runFor(16000);
-  assert.deepEqual(await read(), ['23:48', '23:48', 'il y a 2 min']);
+  assert.deepEqual(await read(), ['', '23:48', 'il y a 2 min']);
   // Figée : l'heure ne bouge pas, les notifications restent « maintenant »
   await state({ mode: 'frozen', date: '2026-10-17', time: '08:05' });
   await page.clock.runFor(120000);
-  assert.deepEqual(await read(), ['08:05', '08:05', 'maintenant']);
+  assert.deepEqual(await read(), ['', '08:05', 'maintenant']);
   // Heure réelle : celle de l'écran (00:10 à Paris, horloge des tests)
   await state({ mode: 'real' });
-  assert.deepEqual((await read()).slice(0, 2), ['00:12', '00:12']);
-  assert.equal(await page.evaluate(() => !!document.querySelector('#screen-sbar .pb-bat.chg') && !!document.querySelector('#screen-sbar .pb-bolt')), true, 'en charge');
+  assert.deepEqual((await read()).slice(0, 2), ['', '00:12']); // écran verrouillé : l'heure n'est pas dans la barre
+  assert.equal(await page.evaluate(() => !!document.querySelector('#screen-sbar .psb-bat.chg') && !!document.querySelector('#screen-sbar .psb-bolt')), true, 'en charge');
   assert.deepEqual(errors, []);
   await close();
 });
@@ -182,7 +182,7 @@ describe('veille (29b), batterie faible puis extinction (33)', () => {
     await waitFor(sp, () => _spDark(), null, { timeout: 3000 });
     // Notification : réveil
     await go(rp);
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 1);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 1);
     assert.equal(await dark(sp), false);
     await waitFor(sp, () => _spDark(), null, { timeout: 3000 });
     // Appel : allumé tant qu'il sonne, rendormi après la fin
@@ -190,13 +190,13 @@ describe('veille (29b), batterie faible puis extinction (33)', () => {
     await waitFor(sp, () => _callState === 'ringing');
     await sleep(1400);
     assert.equal(await dark(sp), false, 'pendant l\'appel');
-    await sp.locator('#screen-call .sc-no').click();
+    await sp.locator('#screen-call [data-act=decline], #screen-call [data-act=hangup]').click();
     await waitFor(sp, () => _spDark(), null, { timeout: 3000 });
     // Déverrouillage (glisser seul) : réveillé pour de bon
     await go(rp);
     await waitFor(sp, () => _scPhone.unlock);
     await sp.locator('#screen-ppower').click();
-    await sp.locator('#screen-phone .sp-lock').click();
+    await sp.locator('#screen-phone .ph-lock').click();
     await waitFor(sp, () => _scPhone.mode === 'unlocked');
     await sleep(1600);
     assert.equal(await dark(sp), false);
@@ -218,11 +218,11 @@ describe('veille (29b), batterie faible puis extinction (33)', () => {
     await setSeq(rp, [st('b1', 'battery', null, T, { level: 5 }), st('b2', 'off', null, T), st('b3', 'call', 'c1', T)]);
     await go(rp);
     await waitFor(sp, () => document.getElementById('screen-palert').style.display === 'flex');
-    assert.equal(await sp.textContent('#screen-palert .pa-title'), 'Batterie faible');
-    assert.equal(await sp.textContent('#screen-palert .pa-msg'), 'Il reste 5 % de batterie.');
+    assert.equal(await sp.textContent('#screen-palert .pal-t'), 'Batterie faible');
+    assert.equal(await sp.textContent('#screen-palert .pal-m'), 'Il reste 5 % de batterie.');
     assert.deepEqual(await bar(sp).then((b) => [b.pct, b.low]), ['5 %', true]);
     // « Fermer » : la télécommande l'apprend, l'alerte ne revient pas
-    await sp.locator('#screen-palert .pa-close').click();
+    await sp.locator('#screen-palert .pal-b').click();
     await waitFor(rp, () => !_seqPhones.values().next().value.alert);
     // Extinction : fondu, logo neutre, noir ; ne répond plus
     await go(rp);
@@ -265,26 +265,26 @@ describe('pas de réseau (34) et resynchronisation en pleine séquence', () => {
     ], Object.assign({}, PHONE, { net: { bars: 4, type: '4G', plane: false, wifi: true } }));
     await go(rp);
     await go(rp);
-    await waitFor(sp, () => !!document.querySelector('#screen-sbar .pb-nosvc'));
+    await waitFor(sp, () => !!document.querySelector('#screen-sbar .psb-nosvc'));
     assert.equal((await bar(sp)).nosvc, 'Pas de service');
     // Alerte « Aucun réseau » (maquette 44b) : « OK » la ferme, la télécommande l'apprend
     await waitFor(sp, () => document.getElementById('screen-palert').style.display === 'flex');
-    assert.deepEqual(await sp.evaluate(() => [...document.querySelectorAll('#screen-palert .pa-title, #screen-palert .pa-msg, #screen-palert .pa-close')].map((e) => e.textContent)),
+    assert.deepEqual(await sp.evaluate(() => [...document.querySelectorAll('#screen-palert .pal-t, #screen-palert .pal-m, #screen-palert .pal-b')].map((e) => e.textContent)),
       ['Aucun réseau', 'Le réseau mobile n\'est plus disponible. Les appels et les SMS ne fonctionneront pas.', 'OK']);
-    await sp.locator('#screen-palert .pa-close').click();
+    await sp.locator('#screen-palert .pal-b').click();
     await waitFor(rp, () => !_seqPhones.values().next().value.alert);
     assert.equal(await sp.evaluate(() => document.getElementById('screen-palert').style.display), 'none');
     await go(rp); // appel : impossible
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 2);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 2);
     assert.equal(await sp.evaluate(() => _callState), 'idle', 'ne sonne pas');
-    assert.deepEqual(await sp.evaluate(() => [...document.querySelector('#screen-phone .sp-card').querySelectorAll('.sp-app, .sp-name, .sp-msg')].map((e) => e.textContent)),
+    assert.deepEqual(await sp.evaluate(() => [...document.querySelector('#screen-phone .pn').querySelectorAll('.pn-app, .pn-title, .pn-text')].map((e) => e.textContent)),
       ['Téléphone', 'Appel impossible', 'Aucun réseau disponible.']);
     await go(rp); // discussion : le comédien répond sans réseau
-    await waitFor(sp, () => !!document.querySelector('#screen-chat .scc'));
+    await waitFor(sp, () => !!document.querySelector('#screen-chat .pt'));
     await sp.keyboard.type('ok');
     await sp.keyboard.press('Enter');
-    await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-und'));
-    assert.equal(await sp.textContent('#screen-chat .scc-und'), 'Non distribué');
+    await waitFor(sp, () => !!document.querySelector('#screen-chat .pt-und'));
+    assert.equal(await sp.textContent('#screen-chat .pt-und'), 'Non distribué');
     await waitFor(rp, () => _chat.pend.includes('d2'));
     await waitFor(sp, () => _scPhone.notifs.some((n) => n.name === 'Message non envoyé'));
     assert.equal(await sp.evaluate(() => _scPhone.notifs.find((n) => n.name === 'Message non envoyé').msg), '« ok » — Toucher pour réessayer');
@@ -292,11 +292,11 @@ describe('pas de réseau (34) et resynchronisation en pleine séquence', () => {
     await sp.reload();
     await sp.evaluate(() => { if (mode !== 'screen') startMode('screen'); });
     await connected(sp);
-    await waitFor(sp, () => !!document.querySelector('#screen-chat .scc-und') && !!document.querySelector('#screen-sbar .pb-nosvc'), null, { timeout: 8000 });
+    await waitFor(sp, () => !!document.querySelector('#screen-chat .pt-und') && !!document.querySelector('#screen-sbar .psb-nosvc'), null, { timeout: 8000 });
     assert.equal(await sp.evaluate(() => [!!_scPhone.alert, document.getElementById('screen-palert').style.display].join()), 'false,none', 'alerte fermée : ne revient pas');
     // Réseau rétabli : distribué, notification retirée
     await go(rp);
-    await waitFor(sp, () => !document.querySelector('#screen-chat .scc-und'));
+    await waitFor(sp, () => !document.querySelector('#screen-chat .pt-und'));
     assert.deepEqual(await rp.evaluate(() => _chat.pend), []);
     await waitFor(sp, () => !_scPhone.notifs.some((n) => n.name === 'Message non envoyé'));
     assert.deepEqual(await bar(sp).then((b) => [b.net, b.bars, b.wifi]), ['5G', 3, true]);
@@ -334,7 +334,7 @@ describe('aucun réseau (44b) : une fois par perte, retirée au retour, jamais e
     await fixtures(rp);
   });
   after(async () => { noErrors(r); await r?.close(); });
-  const shown = () => sp.evaluate(() => (document.getElementById('screen-palert').style.display === 'flex' ? document.querySelector('#screen-palert .pa-title').textContent : null));
+  const shown = () => sp.evaluate(() => (document.getElementById('screen-palert').style.display === 'flex' ? document.querySelector('#screen-palert .pal-t').textContent : null));
   const lost = (id) => st(id, 'net', null, T, { lost: true });
   const back4 = (id) => st(id, 'net', null, T, { lost: false, bars: 4, type: '4G', wifi: false });
 
@@ -390,21 +390,21 @@ describe('écran verrouillé (44) : icône importée, couleur du SMS, appel manq
   });
   after(async () => { noErrors(r); await r?.close(); });
   // Icônes affichées, de la plus récente à la plus ancienne
-  const icons = () => sp.evaluate(() => [...document.querySelectorAll('#screen-phone .sp-card .sp-icon')].map((i) => ({
-    cls: [...i.classList].filter((c) => c !== 'sp-icon').sort().join(' '), text: (i.querySelector('.sp-initials') || i).textContent,
-    img: /url\("?data:image/.test(i.style.backgroundImage), bg: getComputedStyle(i).backgroundColor, bgImg: getComputedStyle(i).backgroundImage, radius: getComputedStyle(i).borderRadius, badge: !!i.querySelector('.sp-badge svg'),
+  const icons = () => sp.evaluate(() => [...document.querySelectorAll('#screen-phone .pn .pn-icon')].map((i) => ({
+    cls: [...i.classList].filter((c) => c !== 'pn-icon').sort().join(' '), text: i.textContent.trim(),
+    img: /url\("?data:image/.test(i.style.backgroundImage), bg: getComputedStyle(i).backgroundColor, bgImg: getComputedStyle(i).backgroundImage, radius: getComputedStyle(i).borderRadius, badge: !!i.querySelector('.pn-badge svg'),
   })));
 
   test('notification, SMS, appels manqués ; écran rechargé : images renvoyées', async () => {
     await setSeq(rp, [st('i1', 'notif', 'b1', T), st('i2', 'sms', 's1', T), st('i3', 'missed', 'c1', T), st('i4', 'missed', 'c2', T)]);
     for (let i = 0; i < 4; i++) await go(rp);
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-card').length === 4);
-    await waitFor(sp, () => document.querySelectorAll('#screen-phone .sp-icon.has-img').length === 2, null, { timeout: 8000 });
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 4);
+    await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn-icon[style*="url("]').length === 2, null, { timeout: 8000 });
     const want = [
-      { cls: 'has-img sp-avatar', text: '', img: true, radius: '50%', badge: true },
-      { cls: 'sp-avatar', text: 'M', img: false, bg: 'rgb(110, 116, 128)', bgImg: 'none', radius: '50%', badge: true },
-      { cls: 'sp-sms', img: false, bg: 'rgb(45, 140, 255)', radius: '9px', badge: false },
-      { cls: 'has-img', text: '', img: true, radius: '9px', badge: false },
+      { cls: 'av', text: '', img: true, radius: '50%', badge: true },
+      { cls: 'av', text: 'M', img: false, bg: 'rgb(110, 116, 128)', bgImg: 'none', radius: '50%', badge: true },
+      { cls: 'sms', img: false, bg: 'rgb(45, 140, 255)', radius: '10px', badge: false },
+      { cls: 'img', text: '', img: true, radius: '10px', badge: false },
     ];
     const check = (got) => got.forEach((g, i) => { for (const k of Object.keys(want[i])) assert.equal(g[k], want[i][k], i + ' ' + k); });
     check(await icons());
@@ -418,13 +418,13 @@ describe('écran verrouillé (44) : icône importée, couleur du SMS, appel manq
     await sp.reload();
     await sp.evaluate(() => { if (mode !== 'screen') startMode('screen'); });
     await connected(sp);
-    await waitFor(sp, () => !!_scPhone && document.querySelectorAll('#screen-phone .sp-icon.has-img').length === 2, null, { timeout: 8000 });
+    await waitFor(sp, () => !!_scPhone && document.querySelectorAll('#screen-phone .pn-icon[style*="url("]').length === 2, null, { timeout: 8000 });
     check(await icons());
     await rp.evaluate(async () => { seqRestart(); await _seqChain; });
   });
 
   test('écran : initiales (1 ou 2 lettres), image arrivée après l\'état, « Appel impossible » inchangé', async () => {
-    assert.deepEqual(await sp.evaluate(() => ['Maman', 'Paul Martin', 'jean-paul de la tour', '  élise ', '+33 6 12', ''].map(_spInitials)), ['M', 'PM', 'JT', 'É', '', '']);
+    assert.deepEqual(await sp.evaluate(() => ['Maman', 'Paul Martin', 'jean-paul de la tour', '  élise ', '+33 6 12', ''].map(PhoneUI.initials)), ['M', 'PM', 'JT', 'É', '', '']);
     const id = '__ph_' + 'e'.repeat(40);
     await sp.evaluate((id) => {
       _mediaCache.delete(id);
@@ -435,17 +435,17 @@ describe('écran verrouillé (44) : icône importée, couleur du SMS, appel manq
       ], unlock: null, home: false, watch: [], chime: null, bar: null, sleep: null, alert: null, power: 'on' });
     }, id);
     const got = await icons();
-    assert.deepEqual(got.map((g) => g.cls), ['sp-avatar', '', 'sp-missed']);
+    assert.deepEqual(got.map((g) => g.cls), ['av', 'app', 'missed']);
     assert.equal(got[1].text, 'B', 'icône pas encore arrivée : la lettre');
-    assert.equal(await sp.evaluate(() => !!document.querySelector('#screen-phone .sp-avatar > svg')), true, 'numéro seul : silhouette');
+    assert.equal(await sp.evaluate(() => !!document.querySelector('#screen-phone .pn-icon.av > svg')), true, 'numéro seul : silhouette');
     // L'icône arrive : posée sans redessiner l'écran
     await sp.evaluate((id) => {
-      window.__c = document.querySelector('#screen-phone .sp-card[data-n="x2"]');
+      window.__c = document.querySelector('#screen-phone .pn[data-n="x2"]');
       const c = document.createElement('canvas'); c.width = 8; c.height = 8;
       _mediaCache.set(id, { kind: 'img', data: c.toDataURL('image/png') });
       screenPhoneOnImgCached(id);
     }, id);
-    assert.equal(await sp.evaluate(() => window.__c.isConnected && window.__c.querySelector('.sp-icon').classList.contains('has-img')), true);
+    assert.equal(await sp.evaluate(() => window.__c.isConnected && /url\(/.test(window.__c.querySelector('.pn-icon').style.backgroundImage)), true);
   });
 });
 
@@ -482,12 +482,12 @@ describe('onglet Média : barre d\'état hors séquence, priorité de la séquen
     await setSeq(rp, [st('m1', 'color', 'k1', { k: 'screen', id: sid })]);
     await go(rp);
     await waitFor(sp, () => !!_sb.seq);
-    await waitFor(sp, () => document.querySelector('#screen-sbar .pb-pct').textContent === '18 %');
+    await waitFor(sp, () => document.querySelector('#screen-sbar .psb-pct').textContent === '18 %');
     // Arrêtée (STOP) : la séquence garde la main jusqu'à « Recommencer »
     await rp.evaluate(async () => { seqStop(); await _seqChain; });
-    assert.equal(await sp.textContent('#screen-sbar .pb-pct'), '18 %');
+    assert.equal(await sp.textContent('#screen-sbar .psb-pct'), '18 %');
     await rp.evaluate(async () => { seqRestart(); await _seqChain; });
-    await waitFor(sp, () => !_sb.seq && document.querySelector('#screen-sbar .pb-pct') && document.querySelector('#screen-sbar .pb-pct').textContent === '76 %');
+    await waitFor(sp, () => !_sb.seq && document.querySelector('#screen-sbar .psb-pct') && document.querySelector('#screen-sbar .psb-pct').textContent === '76 %');
     // Réglages gardés pour la session sur la télécommande ; désactivée : retirée
     const stored = await rp.evaluate(() => JSON.parse(localStorage.getItem('setremote-mediabar-v1')));
     assert.equal(stored.s, await rp.evaluate(() => _session.channelId));

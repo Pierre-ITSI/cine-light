@@ -17,8 +17,8 @@ test('séquence : fondu à l\'apparition seulement, seule la nouvelle notificati
   const { page, errors, close } = await openPage(browser);
   const state = (notifs) => page.evaluate((n) => screenPhoneState({ style: 'glass', mode: 'locked', notifs: n, unlock: null, home: false, watch: [], chime: null }), notifs);
   const look = () => page.evaluate(() => ({
-    enter: document.querySelector('#screen-phone .sp-lock').classList.contains('sp-enter'),
-    fresh: [...document.querySelectorAll('#screen-phone .sp-card')].map((c) => c.dataset.n + (c.classList.contains('sp-new') ? '+' : '')),
+    enter: document.querySelector('#screen-phone .ph-lock').classList.contains('ph-enter'),
+    fresh: [...document.querySelectorAll('#screen-phone .pn')].map((c) => c.dataset.n + (c.classList.contains('pn-new') ? '+' : '')),
   }));
   await page.evaluate((s) => screenJoinSession(s), SESSION);
   await state([N('n1', 'Tu es où ?')]);
@@ -40,9 +40,9 @@ test('onglet Tel : deuxième notification sur écran verrouillé, sans nouveau f
   await page.evaluate((s) => screenJoinSession(s), SESSION);
   const send = (msg) => page.evaluate((msg) => screenCallStart({ kind: 'sms', name: 'Maman', msg, style: 'glass', ring: 'silent', lock: { time: '', date: '' } }), msg);
   await send('Tu es où ?');
-  assert.equal(await page.evaluate(() => document.querySelector('#screen-call .sc-lock').classList.contains('sc-still')), false);
+  assert.equal(await page.evaluate(() => document.querySelector('#screen-call .ph-lock').classList.contains('ph-enter')), true);
   await send('Rappelle-moi');
-  assert.equal(await page.evaluate(() => document.querySelector('#screen-call .sc-lock').classList.contains('sc-still')), true);
+  assert.equal(await page.evaluate(() => document.querySelector('#screen-call .ph-lock').classList.contains('ph-enter')), false);
   assert.deepEqual(errors, []);
   await close();
 });

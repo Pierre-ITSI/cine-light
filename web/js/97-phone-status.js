@@ -130,7 +130,10 @@ function phoneBarRender(root, bar, timeMs) {
 }
 
 // ── Écran de jeu : barre affichée ──
-// seq : barre de la séquence (phone:state.bar) ; media : barre de l'onglet Média (media:bar)
+// seq : barre de la séquence (phone:state.bar) ; media : barre de l'onglet Média (media:bar).
+// Rendue par PhoneUI.statusBar (73-phone-ui.js), la MÊME barre sur toutes les vues du faux
+// téléphone (écran verrouillé, accueil, appel, en cours d'appel, bandeaux, discussion, pavé du
+// code, alertes) quand la séquence ou l'onglet Média la demande ; jamais forcée ailleurs.
 const _sb = { seq: null, seqAt: 0, media: null, mediaAt: 0, timer: null, obs: null };
 function screenSeqBar(bar) {
   const was = _sb.seq;
@@ -155,11 +158,17 @@ function _sbSurfaces() {
   const call = document.getElementById('screen-call');
   const callOn = !!call && call.style.display === 'block';
   const chat = document.getElementById('screen-chat');
-  const chatRoot = chat && chat.style.display === 'block' ? chat.querySelector('.scc') : null;
+  const chatRoot = chat && chat.style.display === 'block' ? chat.querySelector('.pt') : null;
   const phone = document.getElementById('screen-phone');
   const phoneOn = !!phone && phone.style.display === 'block';
   const media = _sbShown('screen-media-img') || _sbShown('screen-media-video');
-  return { callOn, callFull: callOn && !call.classList.contains('notif'), chatOn: !!chatRoot, chatLight: !!chatRoot && chatRoot.classList.contains('minimal'), phoneOn, media };
+  const callFull = callOn && !call.classList.contains('notif');
+  // Écran verrouillé en vue : l'heure y est déjà en grand, comme sur un vrai téléphone (pas dans la barre)
+  const lock = callOn ? !!call.querySelector('.ph-lock') : chatRoot ? false : phoneOn && typeof _scPhone !== 'undefined' && !!_scPhone && _scPhone.mode === 'locked';
+  const style = callOn && typeof _callCfg !== 'undefined' && _callCfg ? _callCfg.style
+    : chatRoot && typeof _scChat !== 'undefined' && _scChat ? _scChat.style
+      : (typeof _scPhone !== 'undefined' && _scPhone && _scPhone.style) || 'glass';
+  return { callOn, callFull, chatOn: !!chatRoot, chatLight: !!chatRoot && chatRoot.classList.contains('ph-minimal'), phoneOn, media, lock, style };
 }
 function _sbRefresh() {
   const el = document.getElementById('screen-sbar');
@@ -182,10 +191,10 @@ function _sbRefresh() {
     if (_sb.timer) { clearInterval(_sb.timer); _sb.timer = null; }
     return;
   }
-  const style = (typeof _scPhone !== 'undefined' && _scPhone && _scPhone.style) || 'glass';
-  el.className = 'pb ' + style + (band ? ' pb-band' : '') + (s.chatLight && !s.callFull ? ' pb-dark' : '');
+  el.className = 'ph-' + (band ? 'glass' : s.style);
   el.style.display = 'flex';
-  phoneBarRender(el, bar, phoneBarClockAt(bar, at, Date.now()));
+  const dark = s.chatLight && !s.callFull && !band;
+  el.innerHTML = PhoneUI.statusBar(bar, PhoneUI.hm(new Date(phoneBarClockAt(bar, at, Date.now()))), { band, tone: dark ? 'dark' : 'light', hideTime: s.lock && !band });
   if (sm) sm.classList.add('sb-on');
   if (!_sb.timer) _sb.timer = setInterval(_sbTick, 1000);
 }
@@ -194,10 +203,10 @@ function _sbTick() {
   const el = document.getElementById('screen-sbar');
   const bar = _sb.seq || _sb.media;
   if (!el || !bar || el.style.display === 'none') return;
-  const t = el.querySelector('.pb-time');
-  const d = new Date(phoneBarClockAt(bar, _sb.seq ? _sb.seqAt : _sb.mediaAt, Date.now()));
-  const txt = _pbPad(d.getHours()) + ':' + _pbPad(d.getMinutes());
-  if (t && t.textContent !== txt) t.textContent = txt;
+  const t = el.querySelector('.psb-time');
+  if (!t || !t.textContent) return; // écran verrouillé : pas d'heure dans la barre
+  const txt = PhoneUI.hm(new Date(phoneBarClockAt(bar, _sb.seq ? _sb.seqAt : _sb.mediaAt, Date.now())));
+  if (t.textContent !== txt) t.textContent = txt;
 }
 // Surfaces affichées ou masquées (appel, discussion, téléphone, média, noir) : barre recalculée
 (function initScreenBarWatch() {
