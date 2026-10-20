@@ -290,7 +290,7 @@ test('« + Nouvelle séquence » : aussitôt sans modification ; sinon Enregistr
   });
   const state = () => page.evaluate(() => ({ steps: _seq.steps.length, saved: seqSaved.map((e) => e.name), sheet: _sheet && _sheet.kind }));
   await page.evaluate(() => switchTab('seq'));
-  assert.equal(await text(page, '#seqNewBtn'), '+ Nouvelle séquence');
+  assert.equal(await text(page, '#seqNewBtn'), 'Nouvelle séquence');
   await dirty();
   await page.click('#seqNewBtn');
   assert.equal(await text(page, '#srSheetTitle'), 'Enregistrer « Séq. 12 » avant ?');
@@ -328,7 +328,7 @@ test('« + Nouvelle discussion » : fil vierge ; Enregistrer / Ne pas enregistre
   const state = () => page.evaluate(() => ({ msgs: _chat.msgs.length, name: _chat.name, actor: _chat.actor, saved: chatSaved.map((e) => e.name), sheet: _sheet && _sheet.kind }));
   const dirty = () => page.evaluate(() => { _chat.name = 'Léa'; _chat.msgs.push({ id: 'x1', from: 'contact', text: 'Salut' }); chatSave(); renderChatPanel(); });
   await page.evaluate(() => { switchTab('call'); setCallKind('discussion'); });
-  assert.equal(await text(page, '#dcNewBtn'), '+ Nouvelle discussion');
+  assert.equal(await text(page, '#dcNewBtn'), 'Nouvelle discussion');
   // Fil d'exemple, inchangé : aussitôt
   await page.click('#dcNewBtn');
   await waitFor(page, () => _chat.msgs.length === 0);
