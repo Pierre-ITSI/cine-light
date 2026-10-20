@@ -1085,6 +1085,7 @@ function screenChatHide() {
   _scChatMsgs.clear();
   const el = document.getElementById('screen-chat');
   if (!el) return;
+  _sccUnlockFocus();
   const k = document.getElementById('sccKeys');
   if (k) k.blur();
   el.style.display = 'none';
@@ -1209,6 +1210,46 @@ function _sccRender(first) {
   _sccFitViewport();
   if (document.activeElement !== document.getElementById('sccKeys')) _sccFocus();
 }
+// ── Extinction du téléphone : clavier d'abord ──
+// Verrou anti-refocus : tant que le téléphone est éteint, ni _sccRender ni _sccFocus ne remontent le clavier.
+let _sccOffLock = false, _sccKbWait = null;
+const SCC_KB_MIN_MS = 350, SCC_KB_MAX_MS = 600, SCC_KB_STABLE_MS = 80;
+// Pose le verrou et, si le champ a le focus, le retire puis attend que le clavier soit rabaissé
+// (fin des « resize » de visualViewport, sinon ~350 ms, au plus 600 ms) avant d'appeler cb.
+function screenChatLockBlur(cb) {
+  _sccCancelKbWait();
+  _sccOffLock = true;
+  const k = document.getElementById('sccKeys');
+  const had = !!k && document.activeElement === k;
+  if (k) k.blur();
+  if (!had) { if (cb) cb(); return; }
+  const vv = window.visualViewport;
+  const w = _sccKbWait = { timers: [], off: null, stable: 0 };
+  let done = false;
+  const fin = () => { if (done) return; done = true; _sccCancelKbWait(); if (cb) cb(); };
+  if (vv) {
+    let resized = false;
+    const onResize = () => {
+      resized = true;
+      clearTimeout(w.stable);
+      w.stable = setTimeout(fin, SCC_KB_STABLE_MS); // fin du rabaissement : plus de resize depuis 80 ms
+    };
+    vv.addEventListener('resize', onResize);
+    w.off = () => { vv.removeEventListener('resize', onResize); clearTimeout(w.stable); };
+    w.timers.push(setTimeout(() => { if (!resized) fin(); }, SCC_KB_MIN_MS)); // aucun clavier qui bouge (ordinateur)
+  } else w.timers.push(setTimeout(fin, SCC_KB_MIN_MS));
+  w.timers.push(setTimeout(fin, SCC_KB_MAX_MS));
+}
+function _sccCancelKbWait() {
+  const w = _sccKbWait;
+  if (!w) return;
+  _sccKbWait = null;
+  w.timers.forEach(clearTimeout);
+  if (w.off) w.off();
+}
+// Téléphone rallumé (étape, Recommencer, ↶) ou discussion fermée : verrou levé, attente annulée
+function _sccUnlockFocus() { _sccOffLock = false; _sccCancelKbWait(); }
+function screenChatUnlockFocus() { _sccUnlockFocus(); }
 function _sccRenderCompose() {
   const el = document.getElementById('screen-chat'), c = _scChat;
   if (!el || !c) return;
@@ -1236,7 +1277,7 @@ function _sccOnInput(e) {
 }
 function _sccFocus() {
   const k = document.getElementById('sccKeys');
-  if (!k) return;
+  if (!k || _sccOffLock) return;
   try { k.focus({ preventScroll: true }); } catch (_) { try { k.focus(); } catch (__) {} }
 }
 // Clavier physique sans focus sur le champ (ordinateur, clavier Bluetooth) : mêmes touches

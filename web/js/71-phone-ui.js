@@ -250,6 +250,12 @@ const PhoneUI = (() => {
   }
   // Logo neutre de l'extinction et du rallumage
   const power = () => '<svg class="li pp-logo" viewBox="0 0 24 24" aria-hidden="true">' + _PH_ICONS.power + '</svg>';
+  // Loader d'extinction : batterie vide (liseré rouge qui clignote) + indicateur dessous, selon l'habillage
+  // (Verre : halo + anneau ; Tonal : pastille + barre fine ; Épuré : à plat + trois points)
+  const powerOff = (style) => '<div class="pp-off ph-' + esc(['glass', 'tonal', 'minimal'].includes(style) ? style : 'glass') + '" role="img" aria-label="' + esc(_PH_TXT.powerOff) + '">'
+    + '<svg class="pp-offbat" viewBox="0 0 64 32" aria-hidden="true"><rect x="1.5" y="2" width="55" height="28" rx="7" stroke="currentColor" stroke-width="3"/>'
+    + '<rect x="60" y="11" width="4" height="10" rx="2" fill="currentColor" opacity=".7"/><rect class="sliver" x="6.5" y="7" width="5" height="18" rx="2.5"/></svg>'
+    + '<div class="pp-spin"><i></i></div></div>';
 
   // ── Calque d'un écran ── fond d'écran + voile (affichés seulement avec .has-wall), puis le contenu
   function root(o) {
@@ -289,5 +295,5 @@ const PhoneUI = (() => {
     wallLuma(url, (v) => { el.dataset.wall = v > PH_LIGHT_WALL ? 'light' : 'dark'; });
   }
 
-  return { esc, ic, longDate, hm, initials, statusBar, statusBarInner, notification, lock, clockHtml, incoming, inCall, callBanner, notifBanner, code, dots, home, homeImage, alertBox, power, root, paintWall, wallLuma, pending: () => _lumaPending, APPS };
+  return { esc, ic, longDate, hm, initials, statusBar, statusBarInner, notification, lock, clockHtml, incoming, inCall, callBanner, notifBanner, code, dots, home, homeImage, alertBox, power, powerOff, root, paintWall, wallLuma, pending: () => _lumaPending, APPS };
 })();

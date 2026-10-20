@@ -89,6 +89,13 @@ const screenChat = (style) => async (page) => {
   await page.keyboard.press('a');
   await page.clock.runFor(600);
 };
+const screenPowerOff = (style) => async (page) => {
+  await screenChat(style)(page);
+  await page.evaluate((style) => screenPhoneState({ mode: 'locked', style, notifs: [], unlock: null, home: false, watch: [], chime: null, bar: null, sleep: null, alert: null, power: 'on' }), style);
+  await page.clock.runFor(100);
+  await page.evaluate((style) => screenPhoneState({ mode: 'locked', style, notifs: [], unlock: null, home: false, watch: [], chime: null, bar: null, sleep: null, alert: null, power: 'off' }), style);
+  await page.clock.runFor(1300); // clavier (350 ms) + fondu (350 ms) + loader affiché
+};
 const screenCall = (m, after) => async (page) => {
   await joinScreen(page);
   await page.evaluate((m) => screenCallStart({ ring: 'silent', ...m }), m);
@@ -852,6 +859,10 @@ export const SCENES = {
     }, SCR_IDS[0]);
     await scrollTo('dcThreadPanel', 84)(page);
   }),
+  // Extinction (loader d'extinction, 3 habillages) : depuis la discussion, clavier rabaissé, fondu au noir, puis loader centré
+  'screen-poweroff-loader-glass': screenPowerOff('glass'),
+  'screen-poweroff-loader-tonal': screenPowerOff('tonal'),
+  'screen-poweroff-loader-minimal': screenPowerOff('minimal'),
   // 33 · Batterie faible : alerte sur l'écran verrouillé, icône rouge, heure figée à 23:47
   'screen-seq-battery': screenPhone({
     mode: 'locked', style: 'glass', notifs: [], alert: { id: 'b1', level: 5 },

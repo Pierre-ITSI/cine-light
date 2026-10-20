@@ -643,6 +643,8 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 #screen-ppower{display:none;position:absolute;inset:0;z-index:98;background:#000;opacity:0;transition:opacity .6s ease;align-items:center;justify-content:center}
 #screen-ppower.on{opacity:1}
 #screen-ppower.instant{transition:none}
+/* Extinction : fondu au noir plus court (350 ms) pendant que le loader s'apprête */
+#screen-ppower.offing{transition-duration:.35s}
 
 /* ── Base commune ── */
 .ph,#screen-sbar{
@@ -1016,6 +1018,29 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .pc-slide-h.drag{cursor:grabbing}
 .pc-slide-h:focus-visible{outline:3px solid #fff;outline-offset:3px}
 @media (prefers-reduced-motion:reduce){.pc-slide-label{animation:none;color:rgba(255,255,255,.85);background:none}.pc-slide-h:not(.drag){transition:none}}
+
+/* ── Loader d'extinction : batterie vide (liseré rouge) + indicateur, sur fond noir pur ── */
+#screen-ppower .pp-off{display:flex;flex-direction:column;align-items:center;gap:26px;opacity:0;transition:opacity .3s ease;color:rgba(255,255,255,.9)}
+#screen-ppower.off-loader .pp-off{opacity:1}
+.pp-offbat{width:76px;height:38px;overflow:visible;fill:none}
+.pp-offbat .sliver{fill:#ff4d43;animation:ppBlink 1.2s ease-in-out infinite}
+.pp-spin{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.16);border-top-color:rgba(255,255,255,.7);animation:ppSpin .9s linear infinite}
+@keyframes ppSpin{to{transform:rotate(360deg)}}
+@keyframes ppBlink{0%,100%{opacity:1}50%{opacity:.3}}
+/* Verre : halo rouge doux */
+.pp-off.ph-glass .pp-offbat{filter:drop-shadow(0 0 14px rgba(255,77,67,.35))}
+/* Tonal : pastille ronde discrète, barre de progression fine */
+.pp-off.ph-tonal .pp-offbat{box-sizing:content-box;padding:22px 26px;border-radius:50%;background:rgba(201,212,230,.07);width:64px;height:32px;color:#c9d4e6}
+.pp-off.ph-tonal .pp-spin{width:64px;height:3px;border:0;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(201,212,230,.85),transparent) 0 0/40% 100% no-repeat,rgba(255,255,255,.12);animation:ppBar 1.1s ease-in-out infinite}
+@keyframes ppBar{from{background-position:-60% 0}to{background-position:160% 0}}
+/* Épuré : à plat, trois points qui pulsent */
+.pp-off.ph-minimal .pp-spin{width:auto;height:6px;border:0;border-radius:0;animation:none;display:flex;gap:7px;background:none}
+.pp-off.ph-minimal .pp-spin::before,.pp-off.ph-minimal .pp-spin::after,.pp-off.ph-minimal .pp-spin i{content:'';width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.75);animation:ppDot 1.2s ease-in-out infinite}
+.pp-off.ph-minimal .pp-spin::after{animation-delay:.3s;order:2}
+.pp-off.ph-minimal .pp-spin i{animation-delay:.15s;order:1}
+@keyframes ppDot{0%,100%{opacity:.25}50%{opacity:1}}
+/* Mouvement réduit : liseré et indicateur fixes */
+@media (prefers-reduced-motion:reduce){.pp-offbat .sliver,.pp-spin,.pp-spin::before,.pp-spin::after,.pp-spin i{animation:none!important}}
 /* ══ Onglet Tel : « Style et sonnerie » / « Style et son », appelants enregistrés (maquettes validées 36) ══
    Rangée résumé (comme la barre d'état de l'onglet Média) ouvrant la vue
    plein écran #tel-style-view (présentation de #phone-params-view : ss-head,
@@ -16485,6 +16510,12 @@ const PhoneUI = (() => {
   }
   // Logo neutre de l'extinction et du rallumage
   const power = () => '<svg class="li pp-logo" viewBox="0 0 24 24" aria-hidden="true">' + _PH_ICONS.power + '</svg>';
+  // Loader d'extinction : batterie vide (liseré rouge qui clignote) + indicateur dessous, selon l'habillage
+  // (Verre : halo + anneau ; Tonal : pastille + barre fine ; Épuré : à plat + trois points)
+  const powerOff = (style) => '<div class="pp-off ph-' + esc(['glass', 'tonal', 'minimal'].includes(style) ? style : 'glass') + '" role="img" aria-label="' + esc(_PH_TXT.powerOff) + '">'
+    + '<svg class="pp-offbat" viewBox="0 0 64 32" aria-hidden="true"><rect x="1.5" y="2" width="55" height="28" rx="7" stroke="currentColor" stroke-width="3"/>'
+    + '<rect x="60" y="11" width="4" height="10" rx="2" fill="currentColor" opacity=".7"/><rect class="sliver" x="6.5" y="7" width="5" height="18" rx="2.5"/></svg>'
+    + '<div class="pp-spin"><i></i></div></div>';
 
   // ── Calque d'un écran ── fond d'écran + voile (affichés seulement avec .has-wall), puis le contenu
   function root(o) {
@@ -16524,7 +16555,7 @@ const PhoneUI = (() => {
     wallLuma(url, (v) => { el.dataset.wall = v > PH_LIGHT_WALL ? 'light' : 'dark'; });
   }
 
-  return { esc, ic, longDate, hm, initials, statusBar, statusBarInner, notification, lock, clockHtml, incoming, inCall, callBanner, notifBanner, code, dots, home, homeImage, alertBox, power, root, paintWall, wallLuma, pending: () => _lumaPending, APPS };
+  return { esc, ic, longDate, hm, initials, statusBar, statusBarInner, notification, lock, clockHtml, incoming, inCall, callBanner, notifBanner, code, dots, home, homeImage, alertBox, power, powerOff, root, paintWall, wallLuma, pending: () => _lumaPending, APPS };
 })();
 // ══════════════════════════ PROJETS : EXPORT, IMPORT ET GESTION (télécommande) ══════════════════════════
 // Moteur. Interface (maquettes validées 45 à 46c : Réglages › Projet, vues
@@ -23176,6 +23207,7 @@ function screenChatHide() {
   _scChatMsgs.clear();
   const el = document.getElementById('screen-chat');
   if (!el) return;
+  _sccUnlockFocus();
   const k = document.getElementById('sccKeys');
   if (k) k.blur();
   el.style.display = 'none';
@@ -23300,6 +23332,46 @@ function _sccRender(first) {
   _sccFitViewport();
   if (document.activeElement !== document.getElementById('sccKeys')) _sccFocus();
 }
+// ── Extinction du téléphone : clavier d'abord ──
+// Verrou anti-refocus : tant que le téléphone est éteint, ni _sccRender ni _sccFocus ne remontent le clavier.
+let _sccOffLock = false, _sccKbWait = null;
+const SCC_KB_MIN_MS = 350, SCC_KB_MAX_MS = 600, SCC_KB_STABLE_MS = 80;
+// Pose le verrou et, si le champ a le focus, le retire puis attend que le clavier soit rabaissé
+// (fin des « resize » de visualViewport, sinon ~350 ms, au plus 600 ms) avant d'appeler cb.
+function screenChatLockBlur(cb) {
+  _sccCancelKbWait();
+  _sccOffLock = true;
+  const k = document.getElementById('sccKeys');
+  const had = !!k && document.activeElement === k;
+  if (k) k.blur();
+  if (!had) { if (cb) cb(); return; }
+  const vv = window.visualViewport;
+  const w = _sccKbWait = { timers: [], off: null, stable: 0 };
+  let done = false;
+  const fin = () => { if (done) return; done = true; _sccCancelKbWait(); if (cb) cb(); };
+  if (vv) {
+    let resized = false;
+    const onResize = () => {
+      resized = true;
+      clearTimeout(w.stable);
+      w.stable = setTimeout(fin, SCC_KB_STABLE_MS); // fin du rabaissement : plus de resize depuis 80 ms
+    };
+    vv.addEventListener('resize', onResize);
+    w.off = () => { vv.removeEventListener('resize', onResize); clearTimeout(w.stable); };
+    w.timers.push(setTimeout(() => { if (!resized) fin(); }, SCC_KB_MIN_MS)); // aucun clavier qui bouge (ordinateur)
+  } else w.timers.push(setTimeout(fin, SCC_KB_MIN_MS));
+  w.timers.push(setTimeout(fin, SCC_KB_MAX_MS));
+}
+function _sccCancelKbWait() {
+  const w = _sccKbWait;
+  if (!w) return;
+  _sccKbWait = null;
+  w.timers.forEach(clearTimeout);
+  if (w.off) w.off();
+}
+// Téléphone rallumé (étape, Recommencer, ↶) ou discussion fermée : verrou levé, attente annulée
+function _sccUnlockFocus() { _sccOffLock = false; _sccCancelKbWait(); }
+function screenChatUnlockFocus() { _sccUnlockFocus(); }
 function _sccRenderCompose() {
   const el = document.getElementById('screen-chat'), c = _scChat;
   if (!el || !c) return;
@@ -23327,7 +23399,7 @@ function _sccOnInput(e) {
 }
 function _sccFocus() {
   const k = document.getElementById('sccKeys');
-  if (!k) return;
+  if (!k || _sccOffLock) return;
   try { k.focus({ preventScroll: true }); } catch (_) { try { k.focus(); } catch (__) {} }
 }
 // Clavier physique sans focus sur le champ (ordinateur, clavier Bluetooth) : mêmes touches
@@ -27646,6 +27718,7 @@ const _SP_TXT = {
   agoH: 'il y a {n} h',
 };
 const SP_POWER_FADE_MS = 600, SP_LOGO_MS = 1500, SP_BOOT_MS = 1200;
+const SP_OFF_FADE_MS = 350, SP_OFFLOAD_MS = 2000, SP_OFFLOAD_OUT_MS = 300; // extinction : fondu au noir, loader, fondu du loader
 const SP_GESTURE_GAP_MS = 400, SP_GESTURE_BURST = 5, SP_RELOCK_GUARD_MS = 1500, SP_REFRESH_MS = 15000;
 
 let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, wall, watch: Set, sleep, alert, power }
@@ -27704,6 +27777,7 @@ function screenPhoneHide() {
   _spSleep = null;
   _spRenderAlert();
   _spPowerSeq++;
+  screenChatUnlockFocus();
   const pw = document.getElementById('screen-ppower');
   if (pw) { pw.style.display = 'none'; pw.className = ''; pw.textContent = ''; }
   screenBarsHide(); // 97-phone-status.js
@@ -27965,21 +28039,31 @@ function _spApplyPower(wasOff) {
   if (!pw) return;
   if (off && wasOff !== true) {
     const tok = ++_spPowerSeq;
-    pw.innerHTML = PhoneUI.power();
+    pw.innerHTML = PhoneUI.powerOff(_scPhone.style);
     pw.style.display = 'flex';
-    if (wasOff === null) { pw.className = 'on instant'; _sbRefresh(); return; } // écran rechargé : déjà éteint
-    // Fondu au noir, logo neutre, puis noir
-    if (!pw.classList.contains('on')) { pw.className = ''; void pw.offsetWidth; }
-    pw.className = 'on';
-    _sbRefresh();
-    setTimeout(() => {
+    if (wasOff === null) { screenChatLockBlur(); pw.className = 'on instant'; pw.textContent = ''; _sbRefresh(); return; } // écran rechargé : déjà éteint, noir direct
+    // Clavier d'abord (s'il est levé), puis fondu au noir, loader, fondu du loader, noir.
+    // Rien ne bloque la séquence de la télécommande : tout est en minuteries à jeton.
+    pw.className = '';
+    screenChatLockBlur(() => {
       if (tok !== _spPowerSeq) return;
-      pw.className = 'on logo';
-      setTimeout(() => { if (tok === _spPowerSeq) pw.className = 'on'; }, SP_LOGO_MS);
-    }, SP_POWER_FADE_MS);
+      void pw.offsetWidth;
+      pw.className = 'on offing';
+      _sbRefresh();
+      setTimeout(() => {
+        if (tok !== _spPowerSeq) return;
+        pw.className = 'on offing off-loader';
+        setTimeout(() => {
+          if (tok !== _spPowerSeq) return;
+          pw.className = 'on offing';
+          setTimeout(() => { if (tok === _spPowerSeq) { pw.className = 'on'; pw.textContent = ''; } }, SP_OFFLOAD_OUT_MS);
+        }, SP_OFFLOAD_MS);
+      }, SP_OFF_FADE_MS);
+    });
   } else if (!off && wasOff === true) {
     // Rallumage : logo neutre sur fond noir, puis le téléphone (endormi s'il est en veille)
     const tok = ++_spPowerSeq;
+    screenChatUnlockFocus(); // le clavier de la discussion peut de nouveau se lever
     pw.innerHTML = PhoneUI.power();
     pw.className = 'on logo'; pw.style.display = 'flex';
     setTimeout(() => { if (tok !== _spPowerSeq) return; pw.className = 'on'; _spPaint(); }, SP_BOOT_MS);

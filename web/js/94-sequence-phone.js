@@ -54,6 +54,7 @@ const _SP_TXT = {
   agoH: 'il y a {n} h',
 };
 const SP_POWER_FADE_MS = 600, SP_LOGO_MS = 1500, SP_BOOT_MS = 1200;
+const SP_OFF_FADE_MS = 350, SP_OFFLOAD_MS = 2000, SP_OFFLOAD_OUT_MS = 300; // extinction : fondu au noir, loader, fondu du loader
 const SP_GESTURE_GAP_MS = 400, SP_GESTURE_BURST = 5, SP_RELOCK_GUARD_MS = 1500, SP_REFRESH_MS = 15000;
 
 let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, wall, watch: Set, sleep, alert, power }
@@ -112,6 +113,7 @@ function screenPhoneHide() {
   _spSleep = null;
   _spRenderAlert();
   _spPowerSeq++;
+  screenChatUnlockFocus();
   const pw = document.getElementById('screen-ppower');
   if (pw) { pw.style.display = 'none'; pw.className = ''; pw.textContent = ''; }
   screenBarsHide(); // 97-phone-status.js
@@ -373,21 +375,31 @@ function _spApplyPower(wasOff) {
   if (!pw) return;
   if (off && wasOff !== true) {
     const tok = ++_spPowerSeq;
-    pw.innerHTML = PhoneUI.power();
+    pw.innerHTML = PhoneUI.powerOff(_scPhone.style);
     pw.style.display = 'flex';
-    if (wasOff === null) { pw.className = 'on instant'; _sbRefresh(); return; } // écran rechargé : déjà éteint
-    // Fondu au noir, logo neutre, puis noir
-    if (!pw.classList.contains('on')) { pw.className = ''; void pw.offsetWidth; }
-    pw.className = 'on';
-    _sbRefresh();
-    setTimeout(() => {
+    if (wasOff === null) { screenChatLockBlur(); pw.className = 'on instant'; pw.textContent = ''; _sbRefresh(); return; } // écran rechargé : déjà éteint, noir direct
+    // Clavier d'abord (s'il est levé), puis fondu au noir, loader, fondu du loader, noir.
+    // Rien ne bloque la séquence de la télécommande : tout est en minuteries à jeton.
+    pw.className = '';
+    screenChatLockBlur(() => {
       if (tok !== _spPowerSeq) return;
-      pw.className = 'on logo';
-      setTimeout(() => { if (tok === _spPowerSeq) pw.className = 'on'; }, SP_LOGO_MS);
-    }, SP_POWER_FADE_MS);
+      void pw.offsetWidth;
+      pw.className = 'on offing';
+      _sbRefresh();
+      setTimeout(() => {
+        if (tok !== _spPowerSeq) return;
+        pw.className = 'on offing off-loader';
+        setTimeout(() => {
+          if (tok !== _spPowerSeq) return;
+          pw.className = 'on offing';
+          setTimeout(() => { if (tok === _spPowerSeq) { pw.className = 'on'; pw.textContent = ''; } }, SP_OFFLOAD_OUT_MS);
+        }, SP_OFFLOAD_MS);
+      }, SP_OFF_FADE_MS);
+    });
   } else if (!off && wasOff === true) {
     // Rallumage : logo neutre sur fond noir, puis le téléphone (endormi s'il est en veille)
     const tok = ++_spPowerSeq;
+    screenChatUnlockFocus(); // le clavier de la discussion peut de nouveau se lever
     pw.innerHTML = PhoneUI.power();
     pw.className = 'on logo'; pw.style.display = 'flex';
     setTimeout(() => { if (tok !== _spPowerSeq) return; pw.className = 'on'; _spPaint(); }, SP_BOOT_MS);

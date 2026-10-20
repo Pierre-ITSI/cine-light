@@ -20,6 +20,8 @@
 #screen-ppower{display:none;position:absolute;inset:0;z-index:98;background:#000;opacity:0;transition:opacity .6s ease;align-items:center;justify-content:center}
 #screen-ppower.on{opacity:1}
 #screen-ppower.instant{transition:none}
+/* Extinction : fondu au noir plus court (350 ms) pendant que le loader s'apprête */
+#screen-ppower.offing{transition-duration:.35s}
 
 /* ── Base commune ── */
 .ph,#screen-sbar{
@@ -393,3 +395,26 @@
 .pc-slide-h.drag{cursor:grabbing}
 .pc-slide-h:focus-visible{outline:3px solid #fff;outline-offset:3px}
 @media (prefers-reduced-motion:reduce){.pc-slide-label{animation:none;color:rgba(255,255,255,.85);background:none}.pc-slide-h:not(.drag){transition:none}}
+
+/* ── Loader d'extinction : batterie vide (liseré rouge) + indicateur, sur fond noir pur ── */
+#screen-ppower .pp-off{display:flex;flex-direction:column;align-items:center;gap:26px;opacity:0;transition:opacity .3s ease;color:rgba(255,255,255,.9)}
+#screen-ppower.off-loader .pp-off{opacity:1}
+.pp-offbat{width:76px;height:38px;overflow:visible;fill:none}
+.pp-offbat .sliver{fill:#ff4d43;animation:ppBlink 1.2s ease-in-out infinite}
+.pp-spin{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.16);border-top-color:rgba(255,255,255,.7);animation:ppSpin .9s linear infinite}
+@keyframes ppSpin{to{transform:rotate(360deg)}}
+@keyframes ppBlink{0%,100%{opacity:1}50%{opacity:.3}}
+/* Verre : halo rouge doux */
+.pp-off.ph-glass .pp-offbat{filter:drop-shadow(0 0 14px rgba(255,77,67,.35))}
+/* Tonal : pastille ronde discrète, barre de progression fine */
+.pp-off.ph-tonal .pp-offbat{box-sizing:content-box;padding:22px 26px;border-radius:50%;background:rgba(201,212,230,.07);width:64px;height:32px;color:#c9d4e6}
+.pp-off.ph-tonal .pp-spin{width:64px;height:3px;border:0;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(201,212,230,.85),transparent) 0 0/40% 100% no-repeat,rgba(255,255,255,.12);animation:ppBar 1.1s ease-in-out infinite}
+@keyframes ppBar{from{background-position:-60% 0}to{background-position:160% 0}}
+/* Épuré : à plat, trois points qui pulsent */
+.pp-off.ph-minimal .pp-spin{width:auto;height:6px;border:0;border-radius:0;animation:none;display:flex;gap:7px;background:none}
+.pp-off.ph-minimal .pp-spin::before,.pp-off.ph-minimal .pp-spin::after,.pp-off.ph-minimal .pp-spin i{content:'';width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.75);animation:ppDot 1.2s ease-in-out infinite}
+.pp-off.ph-minimal .pp-spin::after{animation-delay:.3s;order:2}
+.pp-off.ph-minimal .pp-spin i{animation-delay:.15s;order:1}
+@keyframes ppDot{0%,100%{opacity:.25}50%{opacity:1}}
+/* Mouvement réduit : liseré et indicateur fixes */
+@media (prefers-reduced-motion:reduce){.pp-offbat .sliver,.pp-spin,.pp-spin::before,.pp-spin::after,.pp-spin i{animation:none!important}}

@@ -228,9 +228,9 @@ describe('veille (29b), batterie faible puis extinction (33)', () => {
     // Extinction : fondu, logo neutre, noir ; ne répond plus
     await go(rp);
     await waitFor(sp, () => _scPhone.power === 'off');
-    await waitFor(sp, () => document.getElementById('screen-ppower').classList.contains('logo'), null, { timeout: 2000 });
-    assert.equal(await sp.evaluate(() => !!document.querySelector('#screen-ppower .pp-logo')), true);
-    await waitFor(sp, () => !document.getElementById('screen-ppower').classList.contains('logo'), null, { timeout: 3000 });
+    await waitFor(sp, () => document.getElementById('screen-ppower').classList.contains('off-loader'), null, { timeout: 2000 });
+    assert.equal(await sp.evaluate(() => !!document.querySelector('#screen-ppower .pp-off .sliver')), true);
+    await waitFor(sp, () => document.getElementById('screen-ppower').className === 'on', null, { timeout: 4000 });
     assert.equal(await bar(sp), null, 'écran noir : pas de barre');
     assert.equal(await sp.evaluate(() => phoneGesture('touch')), false);
     await go(rp); // appel : n'arrive pas
