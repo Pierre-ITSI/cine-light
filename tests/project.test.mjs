@@ -319,7 +319,7 @@ test('contenu hostile : textes, ids, couleurs et types MIME piégés neutralisé
   assert.equal(r.ok, true, JSON.stringify(r));
   assert.equal(r.name, '<img src=x onerror="window.__pwned=1">');
   const s = await page.evaluate(() => ({
-    seq: seqSaved.map((e) => [e.id, e.name, e.steps.map((st) => [st.id, st.kind, st.target.k, st.trig.s, st.opt.img])]),
+    seq: seqSaved.map((e) => [e.id, e.name, e.steps.map((st) => [st.id, st.kind, (st.target || e.target).k, st.trig.s, st.opt.img])]),
     call: callList.call.map((e) => [e.style, e.appColor, e.ring, e.ringVolume, e.hasPhoto, e.hasAudio]), sms: callList.sms.length,
     chat: chatSaved.map((e) => [e.msgs.length, e.hasPhoto]), callers: callers.map((e) => e.name), mem: colorMemories.map((m) => m.spec),
     fx: fxMemories.length, rings: ringLib.length,

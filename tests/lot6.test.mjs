@@ -159,7 +159,7 @@ async function rig(n, seed) {
   return { broker, remote, rp, screens, close: async () => { for (const s of screens) await s.close(); await remote.close(); } };
 }
 const noErrors = (r) => { for (const p of [r.remote, ...r.screens]) assert.deepEqual(p.errors, []); };
-const setSteps = (rp, steps) => rp.evaluate((steps) => { _seq.steps = seqSanitizeSteps(steps); seqSave(); renderSeq(); }, steps);
+const setSteps = (rp, steps) => rp.evaluate((steps) => { _seq.steps = seqSanitizeSteps(steps); _seq.target = seqResolveTarget(null, _seq.steps); seqSave(); renderSeq(); }, steps);
 const st = (id, kind, ref, trig, target, opt) => ({ id, kind, ref, trig: trig || { k: 'go' }, target, opt: opt || {} });
 const fixtures = (rp) => rp.evaluate(() => {
   callList.call = [{ id: 'c1', kind: 'call', style: 'glass', name: 'Maman', label: 'mobile', ring: 'silent', ringVolume: 1, present: 'full', photoMode: 'avatar', autoAnswer: 0, hasPhoto: false, hasAudio: false }];

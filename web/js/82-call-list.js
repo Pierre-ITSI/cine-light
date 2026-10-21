@@ -106,7 +106,7 @@ function _clSanitize(e) {
   // type (sans ringVolume) portait la sonnerie de l'appel, que l'écran
   // ignorait : il garde son son d'origine (Classique).
   if (out.kind !== 'call' && out.ringVolume === undefined) out.ring = 'classic';
-  if (out.ring !== undefined && !ringBuiltinOk(out.kind, out.ring)) out.ring = 'classic'; // sons de message : pas pour un appel
+  if (out.ring !== undefined && !ringBuiltinOk(out.kind, out.ring)) out.ring = _ringDefault(out.kind).sound; // sons de message : pas pour un appel
   if (out.ringId !== undefined && !(typeof out.ringId === 'string' && SRP.RING_ID_RE.test(out.ringId))) delete out.ringId;
   if (out.ringVolume !== undefined) {
     if (typeof out.ringVolume === 'number' && Number.isFinite(out.ringVolume)) out.ringVolume = Math.min(1, Math.max(0, out.ringVolume));

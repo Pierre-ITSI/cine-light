@@ -26,6 +26,7 @@ const fixtures = (page) => page.evaluate(() => {
     { id: 'p3', kind: 'call', ref: 'c1', target: { k: 'all' }, trig: { k: 'gesture', g: 'hangup', t: 12 }, opt: {} },
     { id: 'p4', kind: 'sms', ref: 's2', target: { k: 'all' }, trig: { k: 'go' }, opt: {} },
   ]);
+  _seq.target = seqResolveTarget(null, _seq.steps);
   seqSave(); renderSeq();
 });
 const shown = (page, id) => page.evaluate((id) => { const e = document.getElementById(id); return !!e && getComputedStyle(e).display !== 'none'; }, id);

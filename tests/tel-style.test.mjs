@@ -45,7 +45,7 @@ test('36 · appel : rangée résumé, vue « Style et sonnerie », panneau « Au
   // Carte « À jouer » (phase 4) : rangées « Apparence » et « Sonnerie », chacune avec sa valeur courte
   assert.equal(await page.textContent('#telStyleLabel'), 'Apparence');
   assert.equal(await page.textContent('#telStyleSum'), 'Verre · plein écran');
-  assert.equal(await page.textContent('#telRingSum'), 'Classique · 100 %');
+  assert.equal(await page.textContent('#telRingSum'), 'Classique · 100 % · vibreur');
   // « Au décroché » : sa rangée ouvre la vue de la bande son et du décroché automatique
   assert.equal(await shown(page, 'callAnswerBlock'), true);
   assert.equal(await page.textContent('#telAnswerVal'), 'Silence · manuel');
@@ -62,13 +62,13 @@ test('36 · appel : rangée résumé, vue « Style et sonnerie », panneau « Au
     ['Style et sonnerie', 'Tel', 'Aperçu de l\'appel sur l\'écran de jeu', 'Sonnerie']);
   assert.equal(await page.textContent('#tsVibNote'), 'Vibre avec la sonnerie, même en Silencieux. Écran de jeu Android ou app SetRemote : iPhone dans Safari ne sait pas vibrer.');
   assert.equal(await page.textContent('#tsPreview .tp-nm'), 'Maman');
-  assert.equal(await page.evaluate(() => !!document.querySelector('#tsPreview .tp-vib')), false, 'vibreur coupé : pas de badge');
+  assert.equal(await page.textContent('#tsPreview .tp-vib'), '〰 vibreur', 'vibreur coché par défaut : badge');
   await page.click('#callstyle-tonal');
   await page.click('#callpres-banner');
   await page.click('#callring-digital');
   await page.click('#tsVibCard .ts-vib'); // l'interrupteur (case masquée sous son dessin)
-  assert.equal(await page.isChecked('#telVibToggle'), true);
-  assert.equal(await page.textContent('#tsPreview .tp-vib'), '〰 vibreur');
+  assert.equal(await page.isChecked('#telVibToggle'), false);
+  assert.equal(await page.evaluate(() => !!document.querySelector('#tsPreview .tp-vib')), false, 'vibreur coupé : pas de badge');
   assert.match(await page.getAttribute('#tsPreview', 'class'), /tonal banner/);
   await page.click('#callstyle-minimal');
   assert.equal(await shown(page, 'callPhotoModeRow'), false, 'Épuré : pas de photo plein écran');
@@ -76,7 +76,7 @@ test('36 · appel : rangée résumé, vue « Style et sonnerie », panneau « Au
   await page.keyboard.press('Escape');
   assert.equal(await shown(page, 'tel-style-view'), false, 'Échap ferme la vue');
   assert.equal(await page.textContent('#telStyleSum'), 'Tonal · bandeau haut');
-  assert.equal(await page.textContent('#telRingSum'), 'Digitale · 100 % · vibreur');
+  assert.equal(await page.textContent('#telRingSum'), 'Digitale · 100 %');
   // Titres et contenus selon le type
   const view = (k) => page.evaluate((k) => {
     setCallKind(k); openTelStyle();
@@ -101,22 +101,22 @@ test('vibreur : propre à chaque type, gardé au rechargement, envoyé (vib) ; e
   const { page, errors, close } = await openPage(browser);
   await remote(page);
   const vib = (k) => page.evaluate((k) => { setCallKind(k); return 'vib' in callFormFields() ? callFormFields().vib : null; }, k);
-  assert.deepEqual([await vib('call'), await vib('sms'), await vib('notif')], [null, null, null], 'par défaut : non, rien n\'est envoyé');
-  await page.evaluate(() => { setCallKind('sms'); setTelVib(true); setCallKind('discussion'); setTelVib(true); });
-  assert.deepEqual([await vib('call'), await vib('sms'), await vib('notif')], [null, true, null]);
-  assert.deepEqual(await page.evaluate(() => RING_KINDS.map((k) => ringSettings[k].vib)), [false, true, false, true]);
+  assert.deepEqual([await vib('call'), await vib('sms'), await vib('notif')], [true, true, true], 'par défaut : oui, partout');
+  await page.evaluate(() => { setCallKind('sms'); setTelVib(false); setCallKind('discussion'); setTelVib(false); });
+  assert.deepEqual([await vib('call'), await vib('sms'), await vib('notif')], [true, null, true]);
+  assert.deepEqual(await page.evaluate(() => RING_KINDS.map((k) => ringSettings[k].vib)), [true, false, true, false]);
   // Rechargement : chaque type retrouve son vibreur
   await page.reload();
   await remote(page, 'sms');
-  assert.deepEqual(await page.evaluate(() => RING_KINDS.map((k) => ringSettings[k].vib)), [false, true, false, true]);
+  assert.deepEqual(await page.evaluate(() => RING_KINDS.map((k) => ringSettings[k].vib)), [true, false, true, false], 'choix « vibreur non » gardé');
   await page.evaluate(() => openTelStyle());
-  assert.equal(await page.isChecked('#telVibToggle'), true);
+  assert.equal(await page.isChecked('#telVibToggle'), false);
   await page.evaluate(() => setCallKind('call'));
-  assert.equal(await page.isChecked('#telVibToggle'), false, 'la vue suit le type affiché');
+  assert.equal(await page.isChecked('#telVibToggle'), true, 'la vue suit le type affiché');
   await page.evaluate(() => closeTelStyle());
   // Entrée enregistrée : garde le vibreur ; rechargée, il revient ; ancienne entrée : non
   await page.evaluate(async () => {
-    setCallKind('sms'); document.getElementById('callName').value = 'Léa'; await saveCurrentCall();
+    setCallKind('sms'); setTelVib(true); document.getElementById('callName').value = 'Léa'; await saveCurrentCall();
     setTelVib(false);
     callList.sms.push(_clSanitize({ id: 'old1', kind: 'sms', name: 'Ancien', ring: 'soft', ringVolume: 1, vib: 'oui' }));
   });
@@ -176,17 +176,18 @@ test('36d · discussion : son des messages et vibreur portés par chat:open, jou
   const { page, errors, close } = await openPage(browser, { init: { fn: SPY.fn, arg: false } });
   await remote(page, 'discussion');
   await spySent(page);
-  assert.equal(await page.textContent('#telStyleSum2'), 'Épuré · Silencieux', 'par défaut : silencieux, comme avant');
+  assert.equal(await page.textContent('#telStyleSum2'), 'Épuré · Envoi · vibreur', 'par défaut : Envoi, vibreur oui');
   await page.evaluate(() => openChatOnTarget());
   let open = await page.evaluate(() => window.__sent.filter((m) => m.type === 'chat:open').at(-1));
-  assert.deepEqual(['ring', 'ringId', 'ringVolume', 'vib'].filter((k) => k in open), [], 'silencieux : aucun champ');
+  assert.deepEqual(['ring', 'ringId', 'ringVolume', 'vib'].filter((k) => k in open), ['ring', 'vib'], 'défaut : Envoi et vibreur');
+  assert.deepEqual([open.ring, open.vib], ['sent', true]);
   // Douce à 60 %, vibreur : renvoyés à l'écran de la discussion ouverte
   await page.evaluate(() => { openTelStyle(); setCallRing('soft'); document.getElementById('ringVolSlider').value = '60'; onRingVolume(); setTelVib(true); closeTelStyle(); window.__sent.length = 0; });
   await waitFor(page, () => window.__sent.some((m) => m.type === 'chat:open'));
   open = await page.evaluate(() => window.__sent.filter((m) => m.type === 'chat:open').at(-1));
   assert.deepEqual([open.ring, open.ringVolume, open.vib], ['soft', 0.6, true]);
   assert.equal(await page.textContent('#telStyleSum2'), 'Épuré · Douce · vibreur');
-  assert.deepEqual(await page.evaluate(() => [callFormFields().kind, ringSettings.call.sound, ringSettings.sms.vib]), ['discussion', 'classic', false], 'les autres types gardent les leurs');
+  assert.deepEqual(await page.evaluate(() => [callFormFields().kind, ringSettings.call.sound, ringSettings.sms.vib]), ['discussion', 'classic', true], 'les autres types gardent les leurs');
   await page.evaluate(() => closeChat());
   // Écran : chaque message du contact sonne et vibre ; l'historique d'une reprise, non
   await page.evaluate(() => startMode('screen'));

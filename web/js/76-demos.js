@@ -26,15 +26,15 @@ const DEMO_IDS = Object.freeze({ call: 'demo-call', sms: 'demo-sms', notif: 'dem
 
 const _demoCall = () => ({
   id: DEMO_IDS.call, kind: 'call', style: 'glass', name: _DEMO_TXT.contact, label: _DEMO_TXT.label,
-  ring: 'classic', ringVolume: 1, present: 'full', photoMode: 'avatar', autoAnswer: 0, hasPhoto: false, hasAudio: false,
+  ring: 'classic', ringVolume: 1, vib: true, present: 'full', photoMode: 'avatar', autoAnswer: 0, hasPhoto: false, hasAudio: false,
 });
 const _demoSms = () => ({
   id: DEMO_IDS.sms, kind: 'sms', style: 'glass', name: _DEMO_TXT.contact, label: _DEMO_TXT.label, msg: _DEMO_TXT.smsMsg,
-  appName: 'SMS', appColor: '#2f8cf0', ring: 'classic', ringVolume: 1, lock: null, autoAnswer: 0, hasPhoto: false, hasAudio: false,
+  appName: 'SMS', appColor: '#2f8cf0', ring: _ringDefault('sms').sound, ringVolume: 1, vib: true, lock: null, autoAnswer: 0, hasPhoto: false, hasAudio: false,
 });
 const _demoNotif = () => ({
   id: DEMO_IDS.notif, kind: 'notif', style: 'glass', name: _DEMO_TXT.notifTitle, label: '', msg: _DEMO_TXT.notifMsg,
-  appName: _DEMO_TXT.notifApp, ring: 'classic', ringVolume: 1, present: 'banner', phone: {}, received: { mode: 'now' },
+  appName: _DEMO_TXT.notifApp, ring: _ringDefault('notif').sound, ringVolume: 1, vib: true, present: 'banner', phone: {}, received: { mode: 'now' },
   autoAnswer: 0, hasPhoto: false, hasAudio: false,
 });
 // Messages de la discussion : le contact écrit, le comédien répond (timings par défaut)
@@ -46,9 +46,9 @@ const _demoSavedChat = () => ({
   id: DEMO_IDS.chat, name: _DEMO_TXT.chatName, contact: _DEMO_TXT.contact, actor: _DEMO_TXT.actor,
   style: 'minimal', msgs: _demoMsgs(), hasPhoto: false, photoSig: null,
 });
-const _demoStep = (id, kind, trig, opt, ref) => ({ id, kind, ref: ref || null, target: { k: 'all' }, trig, opt: opt || {} });
+const _demoStep = (id, kind, trig, opt, ref) => ({ id, kind, ref: ref || null, target: null, trig, opt: opt || {} });
 const _demoSeq = () => ({
-  v: 1, name: _DEMO_TXT.seqName, savedId: null,
+  v: 1, name: _DEMO_TXT.seqName, savedId: null, target: { k: 'all' }, // étapes sans cible : elles suivent celle de la séquence
   steps: [
     _demoStep('demo1', 'sms', { k: 'go' }, {}, DEMO_IDS.sms),
     _demoStep('demo2', 'unlock', { k: 'gesture', g: 'touch', t: 0 }, { code: 4, then: 'home', img: null, imgName: '' }),

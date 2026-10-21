@@ -150,14 +150,14 @@ test('choix par type : libellés, décroché, volume ; mémorisés au rechargeme
   assert.deepEqual(await label(page), ['Son de notification', 'Volume de la notification']);
   assert.equal(await shown(page, 'telCallRows'), false);
   assert.equal(await shown(page, 'callRingPanel'), true);
-  assert.deepEqual(await activeChips(page).then((c) => c.filter((x) => x.startsWith('callring'))), ['callring-classic']);
+  assert.deepEqual(await activeChips(page).then((c) => c.filter((x) => x.startsWith('callring'))), ['callring-metal-do']);
   assert.equal(await page.evaluate(() => document.getElementById('ringVolVal').textContent), '100 %');
   await importFile(page, tone('sms.wav', 1, 880));
   const B = await page.evaluate(() => ringSettings.sms.sound);
   assert.notEqual(A, B);
   await setVolume(page, 60);
   // La sonnerie de l'appel n'a pas bougé ; l'appel est sélectionnable depuis la ligne
-  assert.deepEqual(await page.evaluate(() => ringSettings.call), { sound: A, vol: 0.8, vib: false });
+  assert.deepEqual(await page.evaluate(() => ringSettings.call), { sound: A, vol: 0.8, vib: true });
   // Notification : Silencieux (panneau du son sous la tuile « Son »)
   await page.evaluate(() => { setCallKind('notif'); });
   await inView(page, () => page.click('#callring-silent'));
@@ -170,8 +170,8 @@ test('choix par type : libellés, décroché, volume ; mémorisés au rechargeme
   await page.evaluate(() => { startMode('remote'); switchTab('call'); });
   await waitFor(page, () => _ringLibLoaded && ringLib.length === 2);
   assert.deepEqual(await page.evaluate(() => ringSettings), {
-    call: { sound: A, vol: 0.8, vib: false }, sms: { sound: B, vol: 0.6, vib: false }, notif: { sound: 'silent', vol: 1, vib: false },
-    discussion: { sound: 'silent', vol: 1, vib: false },
+    call: { sound: A, vol: 0.8, vib: true }, sms: { sound: B, vol: 0.6, vib: true }, notif: { sound: 'silent', vol: 1, vib: true },
+    discussion: { sound: 'sent', vol: 1, vib: true },
   });
   assert.deepEqual((await rows(page)).map((r) => [r.name, r.sel]), [['appel.wav', true], ['sms.wav', false]]);
   assert.equal(await page.evaluate(() => document.getElementById('ringVolVal').textContent), '80 %');
@@ -210,7 +210,7 @@ test('liste : l\'entrée garde le son et le volume de son type ; ancien SMS et s
   // Toucher l'entrée : le formulaire reprend son son et son volume
   await page.locator('#callListRows .cl-row').nth(0).click();
   await waitFor(page, () => ringSettings.call.sound !== 'silent');
-  assert.deepEqual(await page.evaluate(() => ringSettings.call), { sound: A, vol: 0.6, vib: false });
+  assert.deepEqual(await page.evaluate(() => ringSettings.call), { sound: A, vol: 0.6, vib: true });
   // Rechargement : entrées intactes ; un SMS enregistré par une version
   // précédente (sonnerie de l'appel, sans volume) garde son son d'origine
   await page.evaluate(() => {

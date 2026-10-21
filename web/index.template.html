@@ -804,6 +804,7 @@
           <button type="button" class="tl-ib" id="seqMoreBtn" aria-label="Séquence : enregistrer, renommer" onclick="openSeqMenu()"><svg class="ic" aria-hidden="true"><use href="#i-ellipsis"></use></svg></button>
         </div>
         <!-- Rangée « Téléphone au départ » (maquette 28b) : barre d état de la séquence, modifiable ici seulement -->
+        <button type="button" class="tl-row tl-nav" id="seqTgtRow" onclick="openSeqDefaultTargetSheet()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-target"></use></svg><span class="tl-k"><b>Cible de la séquence</b><small id="seqTgtVal"></small></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
         <button type="button" class="tl-row tl-nav" id="seqPhoneBtn" onclick="openPhoneParams('seq')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-smartphone"></use></svg><span class="tl-k"><b>Téléphone au départ</b><small id="seqPhoneSum"></small></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
         <button type="button" class="tl-row tl-nav" id="seqSavedBtn" onclick="openSeqSaved()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-film"></use></svg><span class="tl-k"><b>Séquences enregistrées</b><small>Charger, dupliquer, supprimer</small></span><span class="tl-v" id="seqSavedCount">0</span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
       </div>
@@ -977,7 +978,7 @@
   </section>
   <section class="ss-q" id="ssQ4" aria-labelledby="ssQ4t">
     <h2 id="ssQ4t"><i class="g">4</i> Sur quel écran ?</h2>
-    <button type="button" class="ss-cur" id="ssTargetBtn" onclick="openSeqTargetSheet()"></button>
+    <div class="ss-targets" id="ssTargetCard" role="radiogroup" aria-labelledby="ssQ4t"></div>
   </section>
   <div class="ss-err" id="ssErr" role="alert" style="display:none"></div>
   <input type="file" id="seqHomeInput" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onSeqHomeImage(this.files);this.value=''">

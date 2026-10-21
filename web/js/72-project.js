@@ -507,7 +507,7 @@ function _prjRingSettings(o) {
     const s = o && typeof o === 'object' ? o[k] : null;
     const obj = !!s && typeof s === 'object';
     const ok = obj && (ringBuiltinOk(k, s.sound) || _ringIsId(s.sound));
-    out[k] = { sound: ok ? s.sound : _ringDefault(k).sound, vol: obj ? _ringVol(s.vol) : 1, vib: obj && s.vib === true };
+    out[k] = { sound: ok ? s.sound : _ringDefault(k).sound, vol: obj ? _ringVol(s.vol) : 1, vib: obj && typeof s.vib === 'boolean' ? s.vib : _ringDefault(k).vib };
   }
   return out;
 }
@@ -570,8 +570,9 @@ function _prjThread(o) {
 }
 function _prjCurSeq(o) {
   if (!o || typeof o !== 'object') return null;
+  const steps = seqSanitizeSteps(o.steps);
   return {
-    name: _seqLine(o.name, SEQ_NAME_MAX), steps: seqSanitizeSteps(o.steps), phone: phoneBarSanitize(o.phone), wall: seqWallSanitize(o.wall),
+    name: _seqLine(o.name, SEQ_NAME_MAX), steps, target: seqResolveTarget(o.target, steps), phone: phoneBarSanitize(o.phone), wall: seqWallSanitize(o.wall),
     savedId: typeof o.savedId === 'string' && _SEQ_ID_RE.test(o.savedId) ? o.savedId : null,
   };
 }
@@ -590,7 +591,8 @@ const _PRJ_OUT = {
     const o = _prjLsJson(SEQ_SAVED_KEY);
     const list = _prjSavedSeqs(o && o.list).slice(0, SEQ_SAVED_MAX), images = {};
     for (const e of list) await _prjImages(F, images, _prjSeqImgs(e.steps, e.wall));
-    return { list, images };
+    // Étapes qui suivent la cible : cible résolue écrite aussi (follow: true), pour les anciennes versions (seqStepsForStorage)
+    return { list: list.map(sqsvForStorage), images };
   },
   async chat(F) {
     const o = _prjLsJson(CHAT_SAVED_KEY);
@@ -659,6 +661,7 @@ const _PRJ_OUT = {
     if (seq) await _prjImages(F, images, _prjSeqImgs(seq.steps, seq.wall));
     const chat = _prjThread(_prjLsJson(CHAT_LS_KEY));
     const av = safeImageData(_prjLsRaw(CHAT_AVATAR_KEY));
+    if (seq) seq.steps = seqStepsForStorage(seq.steps, seq.target);
     return { seq, chat, avatar: av ? await F.dataUrl(av) : null, images };
   },
 };
@@ -945,7 +948,7 @@ const _PRJ_APPLY = {
       for (const k of RING_KINDS) {
         const v = d.settings[k];
         const sound = _ringIsId(v.sound) ? (maps.ring.get(v.sound) || v.sound) : v.sound;
-        s[k] = { sound: _ringIsId(sound) && !have.has(sound) ? 'classic' : sound, vol: v.vol, vib: v.vib };
+        s[k] = { sound: _ringIsId(sound) && !have.has(sound) ? _ringDefault(k).sound : sound, vol: v.vol, vib: v.vib };
       }
       _prjLsWrite(RING_SETTINGS_KEY, JSON.stringify(Object.assign({ v: 1 }, s)));
     }
@@ -1075,7 +1078,7 @@ const _PRJ_APPLY = {
     const ids = new Set(cur.map((e) => e.id)), names = new Set(cur.map((e) => e.name.toLowerCase()));
     for (const e0 of d.list) {
       if (cur.length >= SEQ_SAVED_MAX) { r.skipped++; continue; }
-      const e = { id: _prjFreshId(e0.id, ids, _sqsvNewId), name: e0.name, steps: await _prjSteps(p, e0.steps, maps), phone: e0.phone, wall: null };
+      const e = { id: _prjFreshId(e0.id, ids, _sqsvNewId), name: e0.name, steps: await _prjSteps(p, e0.steps, maps), target: e0.target, phone: e0.phone, wall: null };
       maps.seq.set(e0.id, e.id);
       if (e0.wall) { const sig = await _prjImg(p, e0.wall.img, maps); e.wall = sig ? { img: sig, name: e0.wall.name } : null; }
       const nm = _prjUnique(e.name, names, SEQ_NAME_MAX);
@@ -1084,7 +1087,7 @@ const _PRJ_APPLY = {
       if (!c) { r.skipped++; continue; }
       cur.push(c); r.added++;
     }
-    _prjLsWrite(SEQ_SAVED_KEY, JSON.stringify({ v: 1, list: cur }));
+    _prjLsWrite(SEQ_SAVED_KEY, JSON.stringify({ v: 1, list: cur.map(sqsvForStorage) }));
     if (dropped.length) maps.gcSeq.push(...dropped);
     return r;
   },
@@ -1099,7 +1102,7 @@ const _PRJ_APPLY = {
       const steps = await _prjSteps(p, s.steps, maps);
       let wall = null;
       if (s.wall) { const sig = await _prjImg(p, s.wall.img, maps); wall = sig ? { img: sig, name: s.wall.name } : null; }
-      _prjLsWrite(SEQ_LS_KEY, JSON.stringify({ v: 1, name: s.name, steps, savedId: s.savedId ? (maps.seq.get(s.savedId) || s.savedId) : null, phone: s.phone, wall }));
+      _prjLsWrite(SEQ_LS_KEY, JSON.stringify({ v: 1, name: s.name, target: s.target, steps: seqStepsForStorage(steps, s.target), savedId: s.savedId ? (maps.seq.get(s.savedId) || s.savedId) : null, phone: s.phone, wall }));
     } else _prjLsWrite(SEQ_LS_KEY, null);
     const c = d.chat;
     if (c) _prjLsWrite(CHAT_LS_KEY, JSON.stringify({ v: 2, name: c.name, actor: c.actor, style: c.style, typing: c.typing, msgs: c.msgs, sent: [], open: false, screens: null, resumeAt: null, savedId: c.savedId ? (maps.chat.get(c.savedId) || c.savedId) : null, pend: [] }));

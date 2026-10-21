@@ -117,6 +117,11 @@ const scrollTo = (id, top = 72) => (page) => page.evaluate(([id, top]) => {
   const el = document.getElementById(id), sc = document.getElementById('nv-scroll');
   sc.scrollTop += el.getBoundingClientRect().top - sc.getBoundingClientRect().top - top;
 }, [id, Math.max(top, 72)]);
+// Éditeur d'étape de la Séquence, défilé jusqu'à un élément
+const stepScroll = (id, top = 90) => (page) => page.evaluate(([id, top]) => {
+  const el = document.getElementById(id), sc = document.getElementById('seq-step-view');
+  sc.scrollTop += el.getBoundingClientRect().top - top;
+}, [id, top]);
 // Vue « Style et sonnerie » de l'onglet Tel (maquette 36b), défilée jusqu'à un élément
 const scrollView = (id, top = 120) => (page) => page.evaluate(([id, top]) => {
   const el = document.getElementById(id);
@@ -330,14 +335,14 @@ const seqScene = (extra) => multiScreen(async (page) => {
     _mediaPool = [{ id: 'm1', kind: 'img', name: 'photo plage', file: null, thumb: null }];
     const sig = seqImageSig(img);
     await callAssetPut(seqHomeKey(sig), img);
-    _seq = { name: 'Séq. 12 — « Le message »', savedId: null, steps: seqSanitizeSteps([
-      { id: 'a1', kind: 'color', ref: 'k1', target: T, trig: { k: 'go' } },
-      { id: 'a2', kind: 'sms', ref: 's1', target: T, trig: { k: 'go' } },
-      { id: 'a3', kind: 'call', ref: 'c1', target: T, trig: { k: 'after', s: 6 } },
-      { id: 'a4', kind: 'missed', ref: 'c1', target: T, trig: { k: 'gesture', g: 'hangup', t: 12 } },
-      { id: 'a5', kind: 'sms', ref: 's2', target: T, trig: { k: 'after', s: 4 } },
-      { id: 'a6', kind: 'unlock', target: T, trig: { k: 'gesture', g: 'touch' }, opt: { code: 4, then: 'home', img: sig, imgName: 'accueil-julie.jpg' } },
-      { id: 'a7', kind: 'chat', ref: 'cm', target: T, trig: { k: 'gesture', g: 'unlock' } },
+    _seq = { name: 'Séq. 12 — « Le message »', savedId: null, target: T, steps: seqSanitizeSteps([
+      { id: 'a1', kind: 'color', ref: 'k1', target: null, trig: { k: 'go' } },
+      { id: 'a2', kind: 'sms', ref: 's1', target: null, trig: { k: 'go' } },
+      { id: 'a3', kind: 'call', ref: 'c1', target: null, trig: { k: 'after', s: 6 } },
+      { id: 'a4', kind: 'missed', ref: 'c1', target: null, trig: { k: 'gesture', g: 'hangup', t: 12 } },
+      { id: 'a5', kind: 'sms', ref: 's2', target: null, trig: { k: 'after', s: 4 } },
+      { id: 'a6', kind: 'unlock', target: null, trig: { k: 'gesture', g: 'touch' }, opt: { code: 4, then: 'home', img: sig, imgName: 'accueil-julie.jpg' } },
+      { id: 'a7', kind: 'chat', ref: 'cm', target: null, trig: { k: 'gesture', g: 'unlock' } },
       { id: 'a8', kind: 'media', ref: { id: 'm1', name: 'photo plage', kind: 'img' }, target: { k: 'screen', id: tv }, trig: { k: 'go' }, opt: { end: 'loop' } },
     ]) };
     // Écrans « vierges » : l'appel et l'effet de la mise en place ne sont pas des envois à couper au premier GO
@@ -1126,6 +1131,26 @@ Object.assign(SCENES, {
   'remote-seq-step-questions': seqScene((page) => page.evaluate(() => { openSeqStep('a3'); })),
   // 4i · « + Nouvel appel ici » : création sur place, même composeur que Tel
   'remote-seq-step-new-here': seqScene((page) => page.evaluate(() => { openSeqStep('a3'); seqCreateInline(); })),
+  // Cible de la séquence par défaut : ligne de « Préparer » (a8 a sa propre cible : pastille), éditeur question 4
+  // (étape qui suit la cible ; étape « cet écran seulement » avec le lien Revenir)
+  'remote-seq-target-row': seqScene(async (page) => {
+    await page.evaluate(() => renderSeq());
+    await scrollTo('seqTgtRow', 150)(page);
+  }),
+  'remote-seq-step-target-default': seqScene(async (page) => {
+    await page.evaluate(() => openSeqStep('a3'));
+    await stepScroll('ssQ4')(page);
+  }),
+  'remote-seq-step-target-override': seqScene(async (page) => {
+    await page.evaluate(() => openSeqStep('a8'));
+    await stepScroll('ssQ4')(page);
+  }),
+  // Son de la notification d'un appel manqué : rangée sous « Lequel ? » et feuille
+  'remote-seq-step-missed-sound': seqScene(async (page) => {
+    await page.evaluate(() => openSeqStep('a4'));
+    await stepScroll('ssSoundBtn', 160)(page);
+  }),
+  'remote-seq-step-sound-sheet': seqScene((page) => page.evaluate(() => { openSeqStep('a4'); openSeqSoundSheet(); })),
 });
 
 // Fenêtre propre à une scène (sinon 390 × 844)

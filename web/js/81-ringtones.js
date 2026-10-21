@@ -6,10 +6,11 @@
 // intégrés (Classique, Digitale, Douce, Silencieux) ou sons importés par
 // l'utilisateur (MP3, M4A, WAV… ≤ 5 Mo, vérifiés par WebAudio). Chaque type
 // garde son choix, son volume et son vibreur (vib, maquette 36b) ; la
-// bibliothèque « Vos sonneries » est commune aux quatre types. Par défaut :
-// Classique à 100 %, c.-à-d. les sons d'avant (sonnerie classique, son SMS ;
-// pour la notification, l'ancien son de la messagerie) ; discussion :
-// Silencieux (elle n'avait pas de son) ; vibreur : non, pour tous les types.
+// bibliothèque « Vos sonneries » est commune aux quatre types. Par défaut, à
+// 100 % : appel Classique ; SMS et notification Métallophone Do ; discussion
+// Envoi ; vibreur COCHÉ pour tous les types (_ringDefault). Les choix déjà
+// enregistrés (setremote-ring-v1) sont gardés tels quels : seuls les champs
+// absents ou invalides et les installations neuves prennent ces défauts.
 // Migration : le choix enregistré pour l'ancienne « messagerie » (clé chat)
 // passe à la notification, qui la remplace (même son, même volume).
 //
@@ -39,7 +40,8 @@ const RING_DB = 'setremote-ringtones';
 const RING_NAME_MAX = 80;
 
 // ── Choix par type : { sound: son intégré ou id importé, vol: 0..1, vib: vibreur } ──
-const _ringDefault = (k) => ({ sound: k === 'discussion' ? 'silent' : 'classic', vol: 1, vib: false });
+// Défauts : appel Classique, SMS / notification Métallophone Do, discussion Envoi ; vibreur oui partout
+const _ringDefault = (k) => ({ sound: k === 'call' ? 'classic' : k === 'discussion' ? 'sent' : 'metal-do', vol: 1, vib: true });
 const ringSettings = { call: _ringDefault('call'), sms: _ringDefault('sms'), notif: _ringDefault('notif'), discussion: _ringDefault('discussion') };
 function _ringKind(k) { return k === 'chat' || k === 'whatsapp' ? 'sms' : (RING_KINDS.includes(k) ? k : 'call'); }
 function _ringIsId(s) { return typeof s === 'string' && SRP.RING_ID_RE.test(s); }
@@ -55,7 +57,7 @@ function loadRingSettings() {
     const s = o && typeof o === 'object' ? o[k] : null;
     const obj = !!s && typeof s === 'object';
     const ok = obj && (ringBuiltinOk(k, s.sound) || _ringIsId(s.sound));
-    ringSettings[k] = { sound: ok ? s.sound : _ringDefault(k).sound, vol: obj ? _ringVol(s.vol) : 1, vib: obj && s.vib === true };
+    ringSettings[k] = { sound: ok ? s.sound : _ringDefault(k).sound, vol: obj ? _ringVol(s.vol) : 1, vib: obj && typeof s.vib === 'boolean' ? s.vib : _ringDefault(k).vib };
   }
 }
 function persistRingSettings() {
@@ -68,8 +70,9 @@ function persistRingSettings() {
 //   ringVolume volume 0..1 (absent : 100 %, comme les versions précédentes)
 function ringMsgFields(sound, vol, kind) {
   const out = {};
+  const k = _ringKind(kind);
   if (_ringIsId(sound) && ringLibHas(sound)) { out.ring = 'classic'; out.ringId = sound; }
-  else out.ring = ringBuiltinOk(_ringKind(kind), sound) ? sound : 'classic';
+  else out.ring = ringBuiltinOk(k, sound) ? sound : _ringDefault(k).sound; // son absent ou invalide : défaut du type
   const v = _ringVol(vol);
   if (v < 1) out.ringVolume = v;
   return out;
@@ -142,7 +145,7 @@ async function ringLibLoad() {
   // Un choix vers un son disparu revient au son par défaut du type
   let changed = false;
   for (const k of RING_KINDS) {
-    if (_ringIsId(ringSettings[k].sound) && !ringLibHas(ringSettings[k].sound)) { ringSettings[k].sound = 'classic'; changed = true; }
+    if (_ringIsId(ringSettings[k].sound) && !ringLibHas(ringSettings[k].sound)) { ringSettings[k].sound = _ringDefault(k).sound; changed = true; }
   }
   if (changed) persistRingSettings();
   renderRingPanel();
@@ -254,7 +257,7 @@ function _ringChanged() {
   if (_ringKind(callKind) === 'discussion' && typeof chatOnSoundChange === 'function') chatOnSoundChange();
 }
 function setCallRing(r) {
-  ringSettings[_ringKind(callKind)].sound = ringBuiltinOk(_ringKind(callKind), r) ? r : 'classic';
+  ringSettings[_ringKind(callKind)].sound = ringBuiltinOk(_ringKind(callKind), r) ? r : _ringDefault(_ringKind(callKind)).sound;
   persistRingSettings();
   _ringSetStatus('');
   renderRingPanel();
@@ -292,7 +295,7 @@ function onRingVolume() {
 // enregistrés (entrée d'avant le vibreur : non)
 function ringApplyEntry(e) {
   const k = _ringKind(e && e.kind);
-  const sound = e && ringLibHas(e.ringId) ? e.ringId : (e && ringBuiltinOk(k, e.ring) ? e.ring : 'classic');
+  const sound = e && ringLibHas(e.ringId) ? e.ringId : (e && ringBuiltinOk(k, e.ring) ? e.ring : _ringDefault(k).sound);
   ringSettings[k] = { sound, vol: e && e.ringVolume !== undefined ? _ringVol(e.ringVolume) : 1, vib: !!(e && e.vib === true) };
   persistRingSettings();
   _ringSetStatus('');
@@ -304,11 +307,11 @@ function ringApplyEntry(e) {
 async function deleteRingTone(id) {
   const t = ringLib.find((x) => x.id === id);
   if (!t) return false;
-  if (!confirm('Supprimer « ' + t.name + ' » ? Les appels, SMS, notifications et discussions qui l\'utilisent reviennent au son Classique.')) return false;
+  if (!confirm('Supprimer « ' + t.name + ' » ? Les appels, SMS, notifications et discussions qui l\'utilisent reviennent à leur son par défaut.')) return false;
   if (_ringPrev && _ringPrev.id === id) _ringPrevStop();
   ringLib = ringLib.filter((x) => x.id !== id);
   const chatHad = ringSettings.discussion.sound === id;
-  for (const k of RING_KINDS) if (ringSettings[k].sound === id) ringSettings[k].sound = 'classic';
+  for (const k of RING_KINDS) if (ringSettings[k].sound === id) ringSettings[k].sound = _ringDefault(k).sound;
   persistRingSettings();
   _screenCached.delete(id);
   sendMsg({ type: 'media:evict', id }); // tous les écrans (oublié de leur état : 28-screens.js)
@@ -386,6 +389,8 @@ async function ringSendIfMissing(id, screens) {
 function ringNeededIds() {
   const ids = new Set();
   for (const k of RING_KINDS) if (ringLibHas(ringSettings[k].sound)) ids.add(ringSettings[k].sound);
+  // Sons importés des étapes « Appel manqué » de la séquence (91-sequence.js)
+  if (typeof _seq !== 'undefined') for (const st of _seq.steps) if (st.kind === 'missed' && st.opt && ringLibHas(st.opt.ring)) ids.add(st.opt.ring);
   if (typeof gwRunning === 'function' && gwRunning()) for (const id of ringGatewayIds()) ids.add(id);
   return [...ids];
 }

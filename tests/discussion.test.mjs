@@ -78,12 +78,12 @@ test('fil préparé : ajouter, modifier (texte, côté), glisser, supprimer ; ga
   assert.equal((await rows(page)).length, 5);
   assert.deepEqual(await page.evaluate(() => [_chat.name, _chat.actor, document.getElementById('dcName').value]), ['Papa', 'Léo', 'Papa']);
   // Style propre à la discussion (l'appel garde le sien), dans la vue « Style et son » (maquette 36d)
-  assert.equal(await page.textContent('#telStyleSum2'), 'Épuré · Silencieux');
+  assert.equal(await page.textContent('#telStyleSum2'), 'Épuré · Envoi · vibreur');
   await page.click('#telStyleRow');
   assert.deepEqual(await page.evaluate(() => [document.getElementById('tsTitle').textContent, document.getElementById('ringPanelLabel').textContent]), ['Style et son', 'Son des messages']);
   await page.click('#callstyle-glass');
   await page.click('#tsBack');
-  assert.equal(await page.textContent('#telStyleSum2'), 'Verre · Silencieux');
+  assert.equal(await page.textContent('#telStyleSum2'), 'Verre · Envoi · vibreur');
   assert.equal(await page.evaluate(() => [_chat.style, callStyle].join()), 'glass,glass');
   await page.evaluate(() => { setCallKind('call'); setCallStyle('tonal'); setCallKind('discussion'); });
   assert.equal(await page.evaluate(() => [_chat.style, callStyle].join()), 'glass,tonal');

@@ -66,7 +66,8 @@ let seqSaved = [];
 
 function _sqsvSanitize(e) {
   if (!e || typeof e !== 'object' || typeof e.id !== 'string' || !_SEQ_ID_RE.test(e.id)) return null;
-  return { id: e.id, name: _seqLine(e.name, SEQ_NAME_MAX) || _SQSV_TXT.untitled, steps: seqSanitizeSteps(e.steps), phone: phoneBarSanitize(e.phone), wall: seqWallSanitize(e.wall) };
+  const steps = seqSanitizeSteps(e.steps);
+  return { id: e.id, name: _seqLine(e.name, SEQ_NAME_MAX) || _SQSV_TXT.untitled, steps, target: seqResolveTarget(e.target, steps), phone: phoneBarSanitize(e.phone), wall: seqWallSanitize(e.wall) };
 }
 function loadSavedSeqs() {
   let o = null;
@@ -76,17 +77,19 @@ function loadSavedSeqs() {
   if (_seq.savedId && !ids.has(_seq.savedId)) _seq.savedId = null;
 }
 function _sqsvPersist() {
-  return _lsPut(SEQ_SAVED_KEY, JSON.stringify({ v: 1, list: seqSaved }));
+  return _lsPut(SEQ_SAVED_KEY, JSON.stringify({ v: 1, list: seqSaved.map(sqsvForStorage) }));
 }
 const _sqsvNewId = () => 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+// Entrée écrite (stockage, projet) : étapes qui suivent la cible avec la cible résolue en plus (compatibilité, seqStepsForStorage)
+const sqsvForStorage = (e) => Object.assign({}, e, { steps: seqStepsForStorage(e.steps, e.target) });
 const _sqsvClone = (steps) => JSON.parse(JSON.stringify(steps));
-const _sqsvSig = (steps, phone, wall) => JSON.stringify([steps, phone, wall ? wall.img : null]);
+const _sqsvSig = (steps, phone, wall, target) => JSON.stringify([steps, phone, wall ? wall.img : null, target]);
 // Images d'une séquence (accueil des déverrouillages, fond d'écran) : pour seqGcImages
 const _sqsvImages = (steps, wall) => steps.filter((s) => s.kind === 'unlock' && s.opt.img).map((s) => s.opt.img).concat(wall ? [wall.img] : []);
 // Modifications non enregistrées : différente de l'entrée d'origine ; sans entrée, toute séquence non vide
 function seqHasUnsavedChanges() {
   const e = seqSaved.find((x) => x.id === _seq.savedId);
-  if (e) return _sqsvSig(e.steps, e.phone, e.wall) !== _sqsvSig(_seq.steps, seqPhoneCfg(), _seq.wall);
+  if (e) return _sqsvSig(e.steps, e.phone, e.wall, e.target) !== _sqsvSig(_seq.steps, seqPhoneCfg(), _seq.wall, seqDefaultTarget());
   return _seq.steps.length > 0;
 }
 function _sqsvDefaultName() { return (_seq.name || _SQSV_TXT.untitled).slice(0, SEQ_NAME_MAX); }
@@ -94,7 +97,7 @@ function _sqsvDefaultName() { return (_seq.name || _SQSV_TXT.untitled).slice(0, 
 // « + Enregistrer la séquence en cours »
 function saveCurrentSeq(name) {
   if (seqSaved.length >= SEQ_SAVED_MAX) return null;
-  const e = { id: _sqsvNewId(), name: _seqLine(String(name || '').trim(), SEQ_NAME_MAX) || _sqsvDefaultName(), steps: _sqsvClone(_seq.steps), phone: _sqsvClone(seqPhoneCfg()), wall: _seq.wall ? Object.assign({}, _seq.wall) : null };
+  const e = { id: _sqsvNewId(), name: _seqLine(String(name || '').trim(), SEQ_NAME_MAX) || _sqsvDefaultName(), steps: _sqsvClone(_seq.steps), target: Object.assign({}, seqDefaultTarget()), phone: _sqsvClone(seqPhoneCfg()), wall: _seq.wall ? Object.assign({}, _seq.wall) : null };
   seqSaved.push(e);
   if (!_sqsvPersist()) { seqSaved.pop(); alert(_SQSV_TXT.storeFull); return null; }
   _seq.savedId = e.id;
@@ -110,8 +113,8 @@ function updateLoadedSeq() {
   if (licLocked('seq')) return false; // aperçu sans licence (77-licence-ui.js)
   const e = seqSaved.find((x) => x.id === _seq.savedId);
   if (!e) return false;
-  const prev = { steps: e.steps, phone: e.phone, wall: e.wall };
-  e.steps = _sqsvClone(_seq.steps); e.phone = _sqsvClone(seqPhoneCfg()); e.wall = _seq.wall ? Object.assign({}, _seq.wall) : null;
+  const prev = { steps: e.steps, target: e.target, phone: e.phone, wall: e.wall };
+  e.steps = _sqsvClone(_seq.steps); e.target = Object.assign({}, seqDefaultTarget()); e.phone = _sqsvClone(seqPhoneCfg()); e.wall = _seq.wall ? Object.assign({}, _seq.wall) : null;
   if (!_sqsvPersist()) { Object.assign(e, prev); alert(_SQSV_TXT.storeFull); return false; }
   renderSeq();
   undoSnack({
@@ -141,7 +144,7 @@ function loadSavedSeq(id, confirmed) {
   }
   if (seqPos() >= 0 || _seqRun.state !== 'idle') seqRestart();
   const dropped = _sqsvImages(_seq.steps, _seq.wall);
-  _seq = { name: e.name, steps: _sqsvClone(e.steps), savedId: e.id, phone: _sqsvClone(e.phone), wall: e.wall ? Object.assign({}, e.wall) : null };
+  _seq = { name: e.name, steps: _sqsvClone(e.steps), target: Object.assign({}, e.target), savedId: e.id, phone: _sqsvClone(e.phone), wall: e.wall ? Object.assign({}, e.wall) : null };
   seqSave();
   seqGcImages(dropped);
   setSeqView('cur');
@@ -161,7 +164,7 @@ function duplicateSavedSeq(id) {
   const i = seqSaved.findIndex((x) => x.id === id);
   if (i < 0 || seqSaved.length >= SEQ_SAVED_MAX) return null;
   const src = seqSaved[i];
-  const e = { id: _sqsvNewId(), name: _seqTpl(_SQSV_TXT.copy, { nom: src.name }).slice(0, SEQ_NAME_MAX), steps: _sqsvClone(src.steps), phone: _sqsvClone(src.phone), wall: src.wall ? Object.assign({}, src.wall) : null };
+  const e = { id: _sqsvNewId(), name: _seqTpl(_SQSV_TXT.copy, { nom: src.name }).slice(0, SEQ_NAME_MAX), steps: _sqsvClone(src.steps), target: Object.assign({}, src.target), phone: _sqsvClone(src.phone), wall: src.wall ? Object.assign({}, src.wall) : null };
   seqSaved.splice(i + 1, 0, e);
   if (!_sqsvPersist()) { seqSaved.splice(i + 1, 1); alert(_SQSV_TXT.storeFull); return null; }
   renderSeq();
@@ -192,9 +195,8 @@ function deleteSavedSeq(id) {
 // ── Rendu ──
 function _sqsvMeta(e) {
   const n = e.steps.length;
-  const s = e.steps.find((x) => SEQ_PHONE_KINDS.has(x.kind)) || e.steps[0];
   const miss = e.steps.filter((x) => !seqRefItem(x)).length;
-  let t = _seqTpl(_SQSV_TXT.meta, { n: n === 1 ? _SQSV_TXT.steps1 : _seqTpl(_SQSV_TXT.stepsN, { n }), cible: s ? seqTargetName(s.target) : _SQSV_TXT.noTarget });
+  let t = _seqTpl(_SQSV_TXT.meta, { n: n === 1 ? _SQSV_TXT.steps1 : _seqTpl(_SQSV_TXT.stepsN, { n }), cible: seqTargetName(e.target) });
   if (miss) t += ' · ' + (miss === 1 ? _SQSV_TXT.missing1 : _seqTpl(_SQSV_TXT.missingN, { n: miss }));
   return t;
 }
@@ -258,7 +260,7 @@ function openRenameSavedSeq(id) {
 // Contenu d'une feuille de séquence : { title, html, form } ; null : entrée disparue
 function seqSheetContent(s) {
   // Éditeur d'étape, fiche du Plateau, carte de séquence, création sur place (91-sequence.js)
-  if (['seqTarget', 'seqStepMenu', 'seqDetail', 'seqCard', 'seqNewEntry'].includes(s.kind)) return seqEditSheetContent(s);
+  if (['seqTarget', 'seqSound', 'seqStepMenu', 'seqDetail', 'seqCard', 'seqNewEntry'].includes(s.kind)) return seqEditSheetContent(s);
   if (s.kind === 'seqNew') {
     const saved = seqSaved.find((x) => x.id === _seq.savedId);
     return {

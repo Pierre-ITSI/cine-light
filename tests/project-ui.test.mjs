@@ -255,6 +255,7 @@ test('Projets : refus d\'ouvrir ou de créer un projet pendant qu\'une séquence
     setConnStatus('connected');
     remoteNoteScreen('s0SCRAAAAA', { type: 'caps', screenId: 'JulieScreen00001' });
     _seq.steps = seqSanitizeSteps([{ id: 'a1', kind: 'color', ref: 'col1', target: { k: 'all' }, trig: { k: 'go' } }, { id: 'a2', kind: 'color', ref: 'col2', target: { k: 'all' }, trig: { k: 'go' } }]);
+    _seq.target = seqResolveTarget(null, _seq.steps);
     seqSave(); renderSeq();
     seqGo(); await _seqChain;
     openSettings();

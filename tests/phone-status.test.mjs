@@ -53,7 +53,7 @@ const fixtures = (rp) => rp.evaluate(() => {
   persistColorMemories();
 });
 const PHONE = { clock: { mode: 'frozen', date: '2026-10-17', time: '23:47' }, net: { bars: 2, type: '4G', plane: false, wifi: false }, bat: { level: 18, charging: false, pct: true } };
-const setSeq = (rp, steps, phone = PHONE) => rp.evaluate(([steps, phone]) => { _seq.steps = seqSanitizeSteps(steps); _seq.phone = phone; seqSave(); renderSeq(); }, [steps, phone]);
+const setSeq = (rp, steps, phone = PHONE) => rp.evaluate(([steps, phone]) => { _seq.steps = seqSanitizeSteps(steps); _seq.target = seqResolveTarget(null, _seq.steps); _seq.phone = phone; seqSave(); renderSeq(); }, [steps, phone]);
 const st = (id, kind, ref, target, opt, trig) => ({ id, kind, ref, trig: trig || { k: 'go' }, target, opt: opt || {} });
 const go = (rp) => rp.evaluate(async () => { seqGo(); await _seqChain; });
 const back = (rp) => rp.evaluate(async () => { seqBack(); await _seqChain; });

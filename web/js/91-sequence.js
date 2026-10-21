@@ -99,7 +99,6 @@ const _SEQ_TXT = {
   rowNetLost: 'Réseau perdu (pas de service)',
   rowNetBack: 'Réseau rétabli ({barres} {type})',
   phoneRow: 'Téléphone au départ',
-  rowTargetSuffix: ' ({cible})',
   trigGo: 'GO',
   trigAfter: 'après {n} s',
   trigFallback: '{geste} / {n} s',
@@ -159,6 +158,16 @@ const _SEQ_TXT = {
   // Éditeur en quatre questions (maquette 4h)
   q2Which: 'Lequel ?', q2Settings: 'Réglages', q3: 'Quand ?', q4: 'Sur quel écran ?', change: 'Changer',
   targetHint: 'Changer : tous les écrans, un groupe, un écran', groupPrefix: 'Groupe ',
+  // Cible de la séquence par défaut (ligne de « Préparer », feuille, question 4 de l'éditeur)
+  seqTargetRow: 'Cible de la séquence', seqTargetSheetTitle: 'Cible de la séquence',
+  seqTargetNote: 'Les étapes qui suivent la cible changent avec elle. Les étapes déjà réglées sur un autre écran restent telles quelles.',
+  followNone: 'Aucune étape ne suit la cible de la séquence', follow1: '1 étape suit la cible de la séquence', followN: '{n} étapes suivent la cible de la séquence',
+  q4Follow: 'Cible de la séquence', q4Other: 'Autre écran…', q4BackLink: 'Revenir à la cible de la séquence',
+  q4OnlyScreen: 'Cet écran seulement', q4OnlyGroup: 'Ce groupe seulement', q4OnlyAll: 'Tous les écrans, cette étape', q4Change: '{nom} · changer',
+  // Son de la notification d'un appel manqué (feuille seqSound)
+  soundRow: 'Son de la notification', soundVibYes: 'vibreur oui', soundVibNo: 'vibreur non', soundSheetTitle: 'Son de la notification',
+  soundVol: 'Volume du son', soundVib: 'Vibreur', soundLib: 'Vos sonneries', soundOk: 'OK',
+  soundNote: 'Les sonneries importées sont envoyées et gardées sur l\'écran de jeu : elles sonnent même sans réseau.',
   duplicate: 'Dupliquer', moveUpStep: 'Monter d\'un rang', moveDownStep: 'Descendre d\'un rang', menuDirty: 'Enregistrez l\'étape pour la dupliquer ou la déplacer.',
   listFull: 'Liste pleine ({max} entrées).', unknownName: 'Inconnu',
   newCall: 'Nouvel appel ici', newSms: 'Nouveau SMS ici', newNotif: 'Nouvelle notification ici',
@@ -236,16 +245,54 @@ const _SEQ_SIG_RE = /^[0-9a-f]{8}-\d{1,9}$/;
 
 // ── Modèle ──
 // Étape : { id, kind, ref (id de l'élément ; média : { id, name, kind }),
-//   target ({ k: 'all' } | { k: 'group', id } | { k: 'screen', id }),
+//   target (null : suit la cible de la séquence _seq.target ; sinon { k: 'all' } | { k: 'group', id } | { k: 'screen', id } :
+//     « cet écran seulement ». Toute lecture passe par seqStepTarget(s)),
 //   trig ({ k: 'go' } | { k: 'after', s } | { k: 'gesture', g, t (secours, 0 = aucun) }),
 //   opt (média : { end } ; déverrouillage : { code: 4 | 6 | 0, then: 'app' | 'home', img, imgName } ;
 //        discussion : { auto, full } (lecture : manuelle, auto le comédien tape, auto complète :
 //        auto ET full ; ancienne étape { auto: true } : le comédien tape) ; veille : { notif, touch, after } ; batterie : { level } ;
 //        réseau : { lost, bars, type, wifi }) }
-// Séquence : { name, steps, savedId, phone (« Téléphone au départ », 97-phone-status.js),
+// Séquence : { name, steps, target (cible par défaut, toujours définie, même forme qu'une cible d'étape), savedId, phone (« Téléphone au départ », 97-phone-status.js),
 //   wall (fond d'écran du téléphone, maquette 42 : { img (empreinte), name } ou null) }
 let _seq = _seqEmpty();
-function _seqEmpty() { return { name: '', steps: [], savedId: null, phone: phoneBarDefaults(), wall: null }; }
+function _seqEmpty() { return { name: '', steps: [], target: _seqNewDefaultTarget(), savedId: null, phone: phoneBarDefaults(), wall: null }; }
+// Cible d'une séquence neuve : celle des commandes de la télécommande à cet instant
+function _seqNewDefaultTarget() { try { return _seqSanTarget(scrTarget()); } catch (_) { return { k: 'all' }; } }
+// Cible par défaut de la séquence en cours (séquence sans cible, jamais lue d'un fichier : tous les écrans)
+function seqDefaultTarget() { return (_seq && _seq.target) || { k: 'all' }; }
+// Cible EFFECTIVE d'une étape : la sienne, sinon celle de la séquence
+function seqStepTarget(s) { return s.target || seqDefaultTarget(); }
+// Cible lue (stockage, fichier) : null si absente ou illisible (le défaut vient alors de la migration)
+function _seqTargetOrNull(t) {
+  if (!t || typeof t !== 'object') return null;
+  const c = _seqSanTarget(t);
+  return c.k === t.k && (c.k === 'all' || c.id === t.id) ? c : null;
+}
+// Séquence relue : cible par défaut stockée ; sinon (séquence d'avant la cible par défaut) migration :
+// la cible la plus fréquente des étapes devient le défaut (égalité : la première étape du téléphone, puis
+// la première étape ; séquence vide : les commandes actuelles), et les étapes qui l'ont passent à null (suivent).
+// Idempotent. Modifie les étapes données ; renvoie la cible par défaut.
+function seqResolveTarget(raw, steps) {
+  const given = _seqTargetOrNull(raw);
+  if (given) return given;
+  const key = (t) => t.k + ':' + (t.id || '');
+  const n = new Map();
+  for (const st of steps) if (st.target) n.set(key(st.target), (n.get(key(st.target)) || 0) + 1);
+  let def = null;
+  if (n.size) {
+    const best = Math.max(...n.values());
+    const first = steps.find((x) => x.target && SEQ_PHONE_KINDS.has(x.kind) && n.get(key(x.target)) === best) || steps.find((x) => x.target && n.get(key(x.target)) === best);
+    def = first.target;
+  } else def = _seqNewDefaultTarget();
+  for (const st of steps) if (st.target && _seqSameTarget(st.target, def)) st.target = null;
+  return def;
+}
+// Étapes ÉCRITES (stockage, projet .rem) : celles qui suivent la cible reçoivent aussi la cible résolue
+// avec follow: true, pour qu'une ancienne version de l'app (qui ne connaît ni seq.target ni null) lise
+// la bonne cible ; cette version relit follow: true comme « suit la cible de la séquence ».
+function seqStepsForStorage(steps, def) {
+  return steps.map((st) => (st.target ? st : Object.assign({}, st, { target: def, follow: true })));
+}
 // Fond d'écran relu (stockage, séquence enregistrée) ; null : aucun (ancienne séquence comprise)
 function seqWallSanitize(w) {
   return w && typeof w === 'object' && typeof w.img === 'string' && _SEQ_SIG_RE.test(w.img) ? { img: w.img, name: _seqLine(w.name, 60) } : null;
@@ -273,7 +320,7 @@ function _seqSanTrig(t, kind) {
 // Étape relue (stockage, séquence enregistrée) : champs connus, bornés ; null si inutilisable
 function seqSanitizeStep(s) {
   if (!s || typeof s !== 'object' || typeof s.id !== 'string' || !_SEQ_ID_RE.test(s.id) || !SEQ_KINDS.includes(s.kind)) return null;
-  const out = { id: s.id, kind: s.kind, ref: null, target: _seqSanTarget(s.target), trig: _seqSanTrig(s.trig, s.kind), opt: {} };
+  const out = { id: s.id, kind: s.kind, ref: null, target: s.follow === true || s.target === null || s.target === undefined ? null : _seqSanTarget(s.target), trig: _seqSanTrig(s.trig, s.kind), opt: {} };
   if (s.kind === 'media') {
     const r = s.ref;
     if (r && typeof r === 'object' && typeof r.id === 'string' && _SEQ_ID_RE.test(r.id)) out.ref = { id: r.id, name: _seqLine(r.name, 120), kind: r.kind === 'vid' ? 'vid' : 'img' };
@@ -298,7 +345,22 @@ function seqSanitizeStep(s) {
     const auto = !!(s.opt && s.opt.auto === true);
     out.opt = { auto, full: auto && s.opt.full === true };
   }
+  if (s.kind === 'missed') out.opt = _seqMissedOpt(s.opt);
   return out;
+}
+// Son de la notification d'un appel manqué (opt.ring : son intégré ou id importé ; opt.vol ; opt.vib).
+// Sans ring (ancienne étape) : Métallophone Do. Sans vib (ancienne étape) : absent = le vibreur de
+// l'appel lié, comme avant ; une étape créée ou réglée depuis porte vib (vrai par défaut).
+function _seqMissedOpt(o) {
+  o = o && typeof o === 'object' ? o : {};
+  const out = { ring: ringBuiltinOk('notif', o.ring) || _ringIsId(o.ring) ? o.ring : _ringDefault('notif').sound, vol: _ringVol(o.vol) };
+  if (typeof o.vib === 'boolean') out.vib = o.vib;
+  return out;
+}
+// Son effectif de l'étape : { ring, vol, vib } (it : l'appel lié, pour le vibreur d'une ancienne étape)
+function seqMissedSound(s, it) {
+  const o = _seqMissedOpt(s.opt);
+  return { ring: o.ring, vol: o.vol, vib: o.vib !== undefined ? o.vib : !!(it && it.vib === true) };
 }
 function _seqClampInt(v, min, max, def) { const n = Math.round(Number(v)); return Number.isFinite(n) && v !== null && v !== undefined ? Math.min(max, Math.max(min, n)) : def; }
 function seqSanitizeSteps(list) {
@@ -312,13 +374,14 @@ function seqLoad() {
   if (o && typeof o === 'object') {
     _seq.name = _seqLine(o.name, SEQ_NAME_MAX);
     _seq.steps = seqSanitizeSteps(o.steps);
+    _seq.target = seqResolveTarget(o.target, _seq.steps);
     _seq.savedId = typeof o.savedId === 'string' && _SEQ_ID_RE.test(o.savedId) ? o.savedId : null;
     _seq.phone = phoneBarSanitize(o.phone);
     _seq.wall = seqWallSanitize(o.wall);
   }
 }
 function seqSave() {
-  return _lsPut(SEQ_LS_KEY, JSON.stringify({ v: 1, name: _seq.name, steps: _seq.steps, savedId: _seq.savedId, phone: seqPhoneCfg(), wall: _seq.wall || null }));
+  return _lsPut(SEQ_LS_KEY, JSON.stringify({ v: 1, name: _seq.name, target: seqDefaultTarget(), steps: seqStepsForStorage(_seq.steps, seqDefaultTarget()), savedId: _seq.savedId, phone: seqPhoneCfg(), wall: _seq.wall || null }));
 }
 
 // ── Éléments référencés ──
@@ -371,8 +434,6 @@ function seqStepLabel(s) {
     case 'off': t = _SEQ_TXT.rowOff; break;
     case 'net': t = it.lost ? _SEQ_TXT.rowNetLost : _seqTpl(_SEQ_TXT.rowNetBack, { barres: '▂▄▆█'.slice(0, it.bars), type: it.type }); break;
   }
-  const main = seqMainTarget();
-  if (main && !_seqSameTarget(main, s.target)) t += _seqTpl(_SEQ_TXT.rowTargetSuffix, { cible: seqTargetName(s.target) });
   return t;
 }
 function seqTrigBadge(s) {
@@ -400,16 +461,30 @@ function seqTargetName(t) {
 }
 // Écrans d'une étape (aucun repli : une cible disparue ne vise personne)
 function seqStepIds(s) {
-  const t = s.target;
+  const t = seqStepTarget(s);
   if (t.k === 'screen') return scrKnown(t.id) ? [t.id] : [];
   if (t.k === 'group') return scrGroup(t.id) ? scrGroupMembers(t.id) : [];
   return scrList();
 }
-// Cible principale : celle de la première étape du téléphone, sinon de la première étape
-function seqMainTarget() {
-  const s = _seq.steps.find((x) => SEQ_PHONE_KINDS.has(x.kind)) || _seq.steps[0];
-  return s ? s.target : null;
+// Cible principale = cible par défaut de la séquence (en-tête « Cible : … »)
+function seqMainTarget() { return seqDefaultTarget(); }
+// Change la cible par défaut : les étapes qui la suivent (target null) suivent la nouvelle ; les autres restent.
+// Renvoie le nombre d'étapes qui suivent. « Annuler » (snackbar) restitue l'ancienne cible.
+function seqSetDefaultTarget(k, id) {
+  if (licLocked('seq')) return -1;
+  const next = _seqSanTarget(k === 'all' ? { k } : { k, id }), prev = seqDefaultTarget();
+  const n = _seq.steps.filter((x) => !x.target).length;
+  if (_seqSameTarget(next, prev)) return n;
+  _seq.target = next;
+  seqSave(); renderSeq(); _seqArm();
+  _seqQueue(() => _seqPushPhones());
+  undoSnack({
+    text: n === 0 ? _SEQ_TXT.followNone : n === 1 ? _SEQ_TXT.follow1 : _seqTpl(_SEQ_TXT.followN, { n }),
+    undo: () => { _seq.target = prev; seqSave(); renderSeq(); _seqArm(); _seqQueue(() => _seqPushPhones()); },
+  });
+  return n;
 }
+function openSeqDefaultTargetSheet() { if (licLocked('seq')) return; _sheet = { kind: 'seqTarget', scope: 'seq' }; renderSheet(); }
 // Écrans dont on attend le geste : ceux de l'étape si elle est du téléphone,
 // sinon ceux de la dernière étape du téléphone avant elle (le téléphone que tient le comédien)
 function seqGestureIds(i) {
@@ -774,7 +849,13 @@ async function _seqExec(s, it, ids) {
       const off = ids.filter((id) => !on(id));
       if (off.length) _seqStack(off, card, null);
       const lit = ids.filter(on);
-      if (lit.length) _seqStack(lit, card, { ring: 'classic', ringId: null, vol: 1, vib: it.vib === true }); // vibreur de l'appel manqué
+      if (lit.length) {
+        // Son propre à l'étape (feuille « Son de la notification ») ; ancienne étape : Métallophone Do, vibreur de l'appel
+        const sd = seqMissedSound(s, it);
+        const f = ringMsgFields(sd.ring, sd.vol, 'notif');
+        if (f.ringId) await ensureCallAssets(null, null, [f.ringId], lit);
+        _seqStack(lit, card, { ring: f.ring, ringId: f.ringId || null, vol: f.ringVolume === undefined ? 1 : f.ringVolume, vib: sd.vib });
+      }
       break;
     }
     case 'unlock':
@@ -1113,6 +1194,12 @@ function _seqRowEl(s, i, pos, opts) {
   if (sub) { const sm = document.createElement('small'); sm.textContent = sub; lb.appendChild(sm); }
   const bd = document.createElement('span'); bd.className = 'sq-badge ' + b.cls; bd.textContent = b.text;
   row.append(num, ic, lb);
+  // Étape à cible propre (« cet écran seulement ») : pastille avec le nom ; celles qui suivent la séquence n'en ont pas
+  // (mode Trier : flèches ↑ ↓ à côté, pas de place sur 360 px : la pastille passe sous le libellé)
+  if (s.target) {
+    const tg = document.createElement('span'); tg.className = 'sq-badge sq-tgt'; tg.innerHTML = icon('target') + escapeHtml(seqTargetName(s.target));
+    if (opts.sort) { tg.classList.add('sq-tgt-in'); lb.appendChild(tg); } else row.appendChild(tg);
+  }
   if (opts.sort) {
     const mv = document.createElement('span'); mv.className = 'sq-mv';
     const btn = (d, ico, label, off) => {
@@ -1157,8 +1244,9 @@ function renderSeq() {
   _seqSet('seqName', _seq.name || _SEQ_TXT.untitled);
   _seqSet('seqCount', n === 0 ? _SEQ_TXT.steps0 : n === 1 ? _SEQ_TXT.steps1 : _seqTpl(_SEQ_TXT.stepsN, { n }));
   _seqSet('seqPhoneSum', phoneParamsSummary(seqPhoneCfg())); // 98-phone-params.js
-  const main = seqMainTarget();
-  _seqSet('seqTarget', main ? _seqTpl(_SEQ_TXT.target, { cible: seqTargetName(main) }) : _SEQ_TXT.noTarget);
+  const main = seqDefaultTarget();
+  _seqSet('seqTarget', _seqTpl(_SEQ_TXT.target, { cible: seqTargetName(main) }));
+  _seqSet('seqTgtVal', seqTargetName(main));
   _seqSet('seqStepsTitle', _seqTpl(_SEQ_TXT.stepsTitle, { n }));
   const sort = document.getElementById('seqSortBtn');
   if (sort) { sort.style.display = n > 1 ? '' : 'none'; sort.setAttribute('aria-pressed', _seqSort ? 'true' : 'false'); sort.classList.toggle('on', _seqSort); }
@@ -1273,8 +1361,8 @@ function _seqRenderNow() {
         tpl = st && st.state === 'incall' ? _SEQ_TXT.nowInCall : st ? _SEQ_TXT.nowRinging : _SEQ_TXT.nowSince;
       }
       const [a, b] = tpl.split('{n}');
-      p.append(a, el('b', '', s + ' s'), b + ' · ' + seqTargetName(cur.target));
-    } else p.textContent = _seqRun.state === 'stopped' ? _SEQ_TXT.stopped : seqTargetName(cur.target);
+      p.append(a, el('b', '', s + ' s'), b + ' · ' + seqTargetName(seqStepTarget(cur)));
+    } else p.textContent = _seqRun.state === 'stopped' ? _SEQ_TXT.stopped : seqTargetName(seqStepTarget(cur));
     box.appendChild(p);
     // Discussion en cours : où en est le fil, sous l'étape (maquette 4g2)
     if (cur.kind === 'chat' && (_seqRun.state === 'running' || _seqRun.state === 'ended' || _seqRun.state === 'stopped')) {
@@ -1375,8 +1463,7 @@ function openSeqStep(id) {
   const s = id ? _seq.steps.find((x) => x.id === id) : null;
   if (id && !s) return;
   if (!s && _seq.steps.length >= SEQ_STEPS_MAX) return;
-  const last = _seq.steps[_seq.steps.length - 1];
-  const draft = s ? JSON.parse(JSON.stringify(s)) : { id: _seqNewId(), kind: 'color', ref: null, target: last ? Object.assign({}, last.target) : _seqSanTarget(scrTarget()), trig: { k: 'go' }, opt: {} };
+  const draft = s ? JSON.parse(JSON.stringify(s)) : { id: _seqNewId(), kind: 'color', ref: null, target: null, trig: { k: 'go' }, opt: {} };
   if (s) Object.assign(draft, seqSanitizeStep(draft) || {}); // réglages complétés (anciennes étapes)
   _seqEdit = { id: s ? s.id : null, step: draft, err: '', kindsOpen: !s };
   if (!s) _seqEditDefaults(draft);
@@ -1412,6 +1499,7 @@ function _seqEditDefaults(s) {
     const list = _seqRefList(s.kind);
     s.ref = list.length ? list[0].id : null;
     if (s.kind === 'chat') s.opt = { auto: false, full: false };
+    if (s.kind === 'missed') s.opt = { ring: _ringDefault('notif').sound, vol: 1, vib: true }; // nouvelle étape : Métallophone Do, vibreur oui
   }
 }
 // Phrase de synthèse de l'étape (en tête de l'éditeur) : « 6 s après le SMS, l'écran « Téléphone de Julie »
@@ -1433,7 +1521,7 @@ function seqStepSummary(s, idx) {
   } else add(T.sumGo, true);
   add(', ');
   // Sur quel écran
-  const t = s.target;
+  const t = seqStepTarget(s);
   add(t.k === 'group' ? T.sumGroup : t.k === 'screen' ? T.sumScreen : T.sumAll);
   if (t.k !== 'all') add('« ' + seqTargetName(t) + ' »', true);
   add(' ');
@@ -1534,6 +1622,12 @@ function renderSeqStep() {
       if (s.ref && !seqRefItem(s)) h += '<div class="ss-note ss-warn">' + escapeHtml(T.refMissing) + '</div>';
     }
     if (!list.length && _SEQ_NEW_KINDS[s.kind] && !licLocked('tel')) h += '<div class="ss-grid"><button type="button" class="ss-opt ss-new" id="ssNewHere" onclick="seqCreateInline()">' + icon('plus', 'ic-sm') + escapeHtml(T[_SEQ_NEW_KINDS[s.kind]]) + '</button></div>';
+    // Appel manqué : son de la notification (rangée qui ouvre la feuille seqSound)
+    if (s.kind === 'missed') {
+      const sd = seqMissedSound(s, seqRefItem(s));
+      h += '<button type="button" class="ss-cur ss-sound" id="ssSoundBtn" onclick="openSeqSoundSheet()">' + icon('music') + '<span class="ss-cur-main"><b>' + escapeHtml(T.soundRow) + '</b><small>'
+        + escapeHtml(telSoundName(sd.ring) + ' · ' + (sd.vib ? T.soundVibYes : T.soundVibNo)) + '</small></span>' + icon('chevron-right', 'tl-tr') + '</button>';
+    }
     if (s.kind === 'media') {
       const it = _seqMediaItem(s.ref);
       if (it && it.kind === 'vid') {
@@ -1565,7 +1659,14 @@ function renderSeqStep() {
   }
   document.getElementById('ssTrigCard').innerHTML = t;
   // 4. Sur quel écran ? : une rangée, la feuille liste Tous / groupes / écrans
-  document.getElementById('ssTargetBtn').innerHTML = '<span class="ss-cur-main"><b>' + escapeHtml(seqTargetName(s.target)) + '</b><small>' + escapeHtml(T.targetHint) + '</small></span>' + icon('chevron-right', 'tl-tr');
+  // Deux choix : « Cible de la séquence » (par défaut) ou une cible propre à l'étape (« Autre écran… » / « Cet écran seulement »)
+  const dt = seqDefaultTarget();
+  const only = !s.target ? '' : s.target.k === 'group' ? T.q4OnlyGroup : s.target.k === 'screen' ? T.q4OnlyScreen : T.q4OnlyAll;
+  document.getElementById('ssTargetCard').innerHTML =
+    '<button type="button" class="ss-cur ss-tgt' + (s.target ? '' : ' on') + '" id="ssTargetFollow" role="radio" aria-checked="' + (s.target ? 'false' : 'true') + '" onclick="seqEditTargetFollow()"><span class="ss-cur-main"><b>' + escapeHtml(T.q4Follow) + '</b><small>' + escapeHtml(seqTargetName(dt)) + '</small></span></button>'
+    + '<button type="button" class="ss-cur ss-tgt' + (s.target ? ' on' : '') + '" id="ssTargetBtn" role="radio" aria-checked="' + (s.target ? 'true' : 'false') + '" onclick="openSeqTargetSheet()"><span class="ss-cur-main"><b>' + escapeHtml(s.target ? only : T.q4Other) + '</b>'
+    + (s.target ? '<small>' + escapeHtml(_seqTpl(T.q4Change, { nom: seqTargetName(s.target) })) + '</small>' : '') + '</span></button>'
+    + (s.target ? '<button type="button" class="ss-link ss-tgt-back" id="ssTargetBack" onclick="seqEditTargetFollow()">' + icon('undo-2', 'ic-sm') + escapeHtml(T.q4BackLink) + '</button>' : '');
   const err = document.getElementById('ssErr');
   if (err) { setIconText(err, e.err); err.style.display = e.err ? '' : 'none'; }
   // Pied : Annuler · Enregistrer l'étape · ⋯ (étape existante : supprimer, dupliquer, monter, descendre)
@@ -1674,12 +1775,15 @@ function seqEditDelay(d) {
   else if (tr.k === 'gesture') tr.t = _seqClampS(tr.t + d, 0);
   renderSeqStep();
 }
+// Choisir dans l'étape la même cible que la séquence : l'étape la SUIT (null), ce n'est pas un réglage à part
 function seqEditTarget(k, id) {
   const e = _seqEdit;
   if (!e) return;
-  e.step.target = _seqSanTarget(k === 'all' ? { k } : { k, id });
+  const t = _seqSanTarget(k === 'all' ? { k } : { k, id });
+  e.step.target = _seqSameTarget(t, seqDefaultTarget()) ? null : t;
   renderSeqStep();
 }
+function seqEditTargetFollow() { const e = _seqEdit; if (e) { e.step.target = null; renderSeqStep(); } }
 function _seqPaintHomeThumb(sig) {
   return _seqHomeData(sig).then((d) => {
     const th = document.getElementById('ssHomeThumb');
@@ -1837,23 +1941,78 @@ function seqReorder(order) {
 // ── Feuilles de l'éditeur et du Plateau (39-screens-ui.js : _sheet, renderSheet) ──
 // seqTarget : « Sur quel écran ? » · seqStepMenu : ⋯ du pied de l'éditeur · seqDetail : fiche d'une étape
 // au Plateau (lecture seule) · seqCard : ⋯ de la carte de séquence · seqNewEntry : « + Nouvel appel ici »
-function openSeqTargetSheet() { if (_seqEdit) { _sheet = { kind: 'seqTarget' }; renderSheet(); } }
-function seqTargetPick(k, id) { seqEditTarget(k, id); closeSheet(); }
+function openSeqTargetSheet() { if (_seqEdit) { _sheet = { kind: 'seqTarget', scope: 'step' }; renderSheet(); } }
+function seqTargetPick(k, id) {
+  if (_sheet && _sheet.scope === 'seq') seqSetDefaultTarget(k, id); else seqEditTarget(k, id);
+  closeSheet();
+}
+function openSeqSoundSheet() { if (_seqEdit && _seqEdit.step.kind === 'missed') { _sheet = { kind: 'seqSound' }; renderSheet(); } }
+// Sons proposés (ordre de la maquette) : intégrés valables pour une notification, puis la bibliothèque importée
+const _SEQ_SOUND_ORDER = ['metal-do', 'metal-sol', 'sent', 'classic', 'digital', 'soft', 'silent'];
+function seqSoundPick(id) {
+  const e = _seqEdit;
+  if (!e || e.step.kind !== 'missed') return;
+  if (!(ringBuiltinOk('notif', id) || ringLibHas(id))) return;
+  const sd = seqMissedSound(e.step, seqRefItem(e.step));
+  e.step.opt = { ring: id, vol: sd.vol, vib: sd.vib };
+  if (ringLibHas(id)) ensureCallAssets(null, null, [id], scrList()); // envoyé dès le choix, comme pour un SMS
+  else _notifBuiltin('notif', id, sd.vol); // écoute du son intégré
+  renderSeqStep(); renderSheet();
+}
+function seqSoundPreview(id) { if (ringLibHas(id) && typeof previewRingTone === 'function') previewRingTone(id); }
+function seqSoundVol(v) {
+  const e = _seqEdit;
+  if (!e || e.step.kind !== 'missed') return;
+  const sd = seqMissedSound(e.step, seqRefItem(e.step));
+  e.step.opt = { ring: sd.ring, vol: _ringVol(Number(v) / 100), vib: sd.vib };
+  const lb = document.getElementById('ssSoundVolVal');
+  if (lb) lb.innerHTML = Math.round(e.step.opt.vol * 100) + '<span> %</span>';
+  renderSeqStep(); // pas de renderSheet : le curseur en cours de glissement doit rester en place
+}
+function seqSoundVib(on) {
+  const e = _seqEdit;
+  if (!e || e.step.kind !== 'missed') return;
+  const sd = seqMissedSound(e.step, seqRefItem(e.step));
+  e.step.opt = { ring: sd.ring, vol: sd.vol, vib: !!on };
+  renderSeqStep(); renderSheet();
+}
 function openSeqStepMenu() { if (_seqEdit && _seqEdit.id) { _sheet = { kind: 'seqStepMenu' }; renderSheet(); } }
 function seqEditSheetContent(s) {
   const T = _SEQ_TXT, esc = escapeHtml;
   const close = (label) => '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + esc(label || T.close) + '</button></div>';
   const btn = (cls, fn, label, ico, off, id) => '<button type="button" class="dc-menu-btn' + cls + '"' + (id ? ' id="' + id + '"' : '') + (off ? ' disabled' : '') + ' onclick="' + fn + '">' + (ico ? icon(ico) : '') + esc(label) + '</button>';
   if (s.kind === 'seqTarget') {
-    const e = _seqEdit;
-    if (!e) return null;
-    const tg = e.step.target;
+    const e = _seqEdit, forSeq = s.scope === 'seq';
+    if (!e && !forSeq) return null;
+    const tg = forSeq ? seqDefaultTarget() : (e.step.target || seqDefaultTarget());
     const opts = [{ t: { k: 'all' }, label: T.allScreens }].concat(_scrReg.groups.map((g) => ({ t: { k: 'group', id: g.id }, label: T.groupPrefix + g.name })),
       scrList().map((id) => ({ t: { k: 'screen', id }, label: scrName(id) })));
     if (!opts.some((o) => _seqSameTarget(o.t, tg))) opts.push({ t: tg, label: seqTargetName(tg) });
     return {
-      title: T.q4, form: false,
-      html: '<div id="ssTargets">' + opts.map((o) => btn(_seqSameTarget(o.t, tg) ? ' on' : '', 'seqTargetPick(' + _seqArg(o.t.k) + (o.t.id ? ',' + _seqArg(o.t.id) : '') + ')', o.label, _seqSameTarget(o.t, tg) ? 'check' : null)).join('') + '</div>' + close(),
+      title: forSeq ? T.seqTargetSheetTitle : T.q4, form: false,
+      html: (forSeq ? '<p class="sr-sheet-note" id="ssTargetNote">' + esc(T.seqTargetNote) + '</p>' : '') + '<div id="ssTargets">' + opts.map((o) => btn(_seqSameTarget(o.t, tg) ? ' on' : '', 'seqTargetPick(' + _seqArg(o.t.k) + (o.t.id ? ',' + _seqArg(o.t.id) : '') + ')', o.label, _seqSameTarget(o.t, tg) ? 'check' : null)).join('') + '</div>' + close(),
+    };
+  }
+  if (s.kind === 'seqSound') {
+    const e = _seqEdit;
+    if (!e || e.step.kind !== 'missed') return null;
+    const sd = seqMissedSound(e.step, seqRefItem(e.step));
+    const chip = (id, label) => '<button type="button" class="chip' + (sd.ring === id ? ' active' : '') + '" data-ring="' + id + '" onclick="seqSoundPick(' + _seqArg(id) + ')">' + esc(label) + '</button>';
+    const lib = ringLib.map((t) => '<div class="rt-row' + (sd.ring === t.id ? ' selected' : '') + '" data-id="' + t.id + '" onclick="seqSoundPick(' + _seqArg(t.id) + ')">'
+      + '<button type="button" class="rt-play" aria-label="Écouter" onclick="event.stopPropagation();seqSoundPreview(' + _seqArg(t.id) + ')">' + _RING_ICON.play + '</button>'
+      + '<span class="rt-main"><span class="rt-name">' + esc(t.name) + '</span><span class="rt-meta">' + esc(ringFmtDur(t.dur)) + '</span></span></div>').join('');
+    const pct = Math.round(sd.vol * 100);
+    return {
+      title: T.soundSheetTitle, form: false,
+      html: '<div class="ss-card" id="ssSoundCard"><div class="panel-label">' + esc(T.soundRow) + '</div>'
+        + '<div class="chips-wrap" id="ssSoundChips">' + _SEQ_SOUND_ORDER.filter((id) => ringBuiltinOk('notif', id)).map((id) => chip(id, telSoundName(id))).join('') + '</div>'
+        + (ringLib.length ? '<div class="panel-label">' + esc(T.soundLib) + '</div><div class="rt-list" id="ssSoundLib">' + lib + '</div>' : '')
+        + '<div class="slider-block rt-vol"><div class="slider-header"><label for="ssSoundVol">' + esc(T.soundVol) + '</label><div class="slider-val" id="ssSoundVolVal">' + pct + '<span> %</span></div></div>'
+        + '<input type="range" id="ssSoundVol" min="0" max="100" step="5" value="' + pct + '" oninput="seqSoundVol(this.value)"></div>'
+        + '<label class="ts-vib"><span>' + esc(T.soundVib) + '</span><span class="toggle-switch" style="flex-shrink:0"><input type="checkbox" id="ssSoundVib"' + (sd.vib ? ' checked' : '') + ' onchange="seqSoundVib(this.checked)">'
+        + '<span class="toggle-track"></span><span class="toggle-thumb"></span></span></label>'
+        + '<div class="rt-note">' + esc(T.soundNote) + '</div></div>'
+        + '<div class="sr-actions"><button type="button" class="sr-ok" id="ssSoundOk" onclick="closeSheet()">' + esc(T.soundOk) + '</button></div>',
     };
   }
   if (s.kind === 'seqStepMenu') {
@@ -1878,7 +2037,7 @@ function seqEditSheetContent(s) {
     const sub = seqStepSub(st);
     return {
       title: _seqTpl(T.stepTitle, { n: i + 1, total: _seq.steps.length }), form: false,
-      html: '<div class="sr-detail">' + dt(T.detailKind, T.kindLong[st.kind]) + dt(T.detailItem, seqStepLabel(st) + (sub && !seqStepLabel(st).includes(sub) ? ' · ' + sub : '')) + dt(T.detailWhen, _seqWhenText(st)) + dt(T.detailTarget, seqTargetName(st.target)) + dt(T.detailState, state) + '</div>'
+      html: '<div class="sr-detail">' + dt(T.detailKind, T.kindLong[st.kind]) + dt(T.detailItem, seqStepLabel(st) + (sub && !seqStepLabel(st).includes(sub) ? ' · ' + sub : '')) + dt(T.detailWhen, _seqWhenText(st)) + dt(T.detailTarget, seqTargetName(seqStepTarget(st))) + dt(T.detailState, state) + '</div>'
         + '<p class="sr-sheet-note">' + esc(T.detailNote) + '</p>' + close(),
     };
   }

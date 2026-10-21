@@ -418,3 +418,15 @@ body.nv-plateau #content-scn .sq-mode{margin-top:var(--sp-3)}
 .tg-veil:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .tg-held .tg-allow{position:relative;z-index:6}
 #acText{white-space:pre-line}
+/* Cible de la séquence par défaut : choix de la question 4, pastille « écran propre » des lignes ; son de l'appel manqué */
+.ss-targets{display:flex;flex-direction:column;gap:var(--sp-2)}
+.ss-cur.ss-tgt{min-height:52px}
+.ss-cur.ss-tgt.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.ss-tgt-back{gap:6px;align-self:flex-start;padding:0;border:0;background:none;cursor:pointer}
+.ss-tgt-back .ic{width:16px;height:16px}
+.sq-badge.sq-tgt{display:inline-flex;align-items:center;gap:4px;color:var(--text-2);background:var(--surface-3)}
+.sq-badge.sq-tgt .ic{width:12px;height:12px;flex:none;vertical-align:0}
+.ss-cur.ss-sound{margin-top:var(--sp-2)}
+#ssSoundCard .chips-wrap{margin-bottom:14px}
+#ssSoundCard .rt-list{margin-bottom:14px}
+.sq-badge.sq-tgt-in{align-self:flex-start;margin-top:3px;max-width:100%}

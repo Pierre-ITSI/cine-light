@@ -62,7 +62,7 @@ const fixtures = (rp) => rp.evaluate(() => {
 });
 // Séquence en cours : étapes (cible par défaut : le premier écran)
 const setSteps = (rp, steps) => rp.evaluate((steps) => {
-  _seq.steps = seqSanitizeSteps(steps); seqSave(); renderSeq();
+  _seq.steps = seqSanitizeSteps(steps); _seq.target = seqResolveTarget(null, _seq.steps); seqSave(); renderSeq();
 }, steps);
 const st = (id, kind, ref, trig, target, opt) => ({ id, kind, ref, trig: trig || { k: 'go' }, target, opt: opt || {} });
 // Faux téléphone affiché sur l'écran
@@ -77,7 +77,7 @@ const phone = (page) => page.evaluate(() => {
 });
 const callShown = (page) => page.evaluate(() => getComputedStyle(document.getElementById('screen-call')).display !== 'none' && _callState);
 const rows = (rp) => rp.evaluate(() => [...document.querySelectorAll('#seqRows .sq-row')].map((r) => [
-  r.querySelector('.sq-num').textContent, r.querySelector('.sq-label b').textContent, r.querySelector('.sq-badge').textContent,
+  r.querySelector('.sq-num').textContent, r.querySelector('.sq-label b').textContent, r.querySelector('.sq-badge:not(.sq-tgt)').textContent,
   ['done', 'cur', 'next', 'missing'].filter((c) => r.classList.contains(c)).join(' '),
 ]));
 const pos = (rp) => rp.evaluate(() => seqPos() + 1);
@@ -304,7 +304,7 @@ describe('départs : après N s, geste, délai de secours, GO qui passe outre, P
     await waitFor(sp, () => document.querySelectorAll('#screen-phone .pn').length === 1 && _mediaCache.has('__seqhome'));
     await sp.locator('#screen-phone .pn').click(); // touche la notification : glisser seul → déverrouillé
     await waitFor(sp, () => _scPhone.mode === 'home' && !!document.querySelector('#screen-phone .ph-homeimg'));
-    await waitFor(rp, () => seqPos() === 1 && _seqPhones.get(_seq.steps[0].target.id).mode === 'home');
+    await waitFor(rp, () => seqPos() === 1 && _seqPhones.get(seqStepTarget(_seq.steps[0]).id).mode === 'home');
     const night = await rp.evaluate(() => memorySwatch(colorMemories[0].spec));
     await sp.locator('#screen-phone .ph-homeimg').click();
     await waitFor(sp, (c) => screenBaseColor === c, night);
@@ -359,7 +359,8 @@ describe('plusieurs écrans : cible de chaque étape, resynchronisation d\'un é
     await waitFor(A.page, () => _callState === 'ringing');
     await waitFor(B.page, () => _callState === 'ringing');
     assert.equal(await rp.textContent('#seqTarget'), 'Cible : Écran 2');
-    assert.match((await rows(rp))[2][1], /^Appel entrant « Maman · mobile » \(Tous les écrans\)$/);
+    assert.equal((await rows(rp))[2][1], 'Appel entrant « Maman · mobile »');
+    assert.deepEqual(await rp.$$eval('#seqRows .sq-tgt', (b) => b.map((x) => x.textContent)), ['Tous les écrans'], 'seule l\'étape à part porte une pastille de cible');
   });
 
   test('écran rechargé en pleine séquence : écran verrouillé, notifications et déverrouillage attendu retrouvés', async () => {
@@ -437,7 +438,8 @@ describe('éléments, séquences enregistrées, éditeur, avertissement strobosc
     // Phrase de synthèse en tête
     assert.equal(await page.textContent('#ssSummary'), '« 5 s après le départ, chaque écran reçoit un SMS de « Maman ». »');
     // 4. Sur quel écran ? : rangée → feuille Tous / groupes / écrans
-    assert.match(await page.textContent('#ssTargetBtn'), /^Tous les écrans/);
+    assert.match(await page.textContent('#ssTargetFollow'), /^Cible de la séquenceTous les écrans/);
+    assert.match(await page.textContent('#ssTargetBtn'), /^Autre écran…/);
     await page.click('#ssTargetBtn');
     assert.equal(await page.textContent('#srSheetTitle'), 'Sur quel écran ?');
     assert.deepEqual(await page.$$eval('#ssTargets .dc-menu-btn', (b) => b.map((x) => x.textContent)), ['Tous les écrans']);

@@ -131,6 +131,14 @@ data/work.json          { seq, chat, avatar: réf | null, images }
 files/<sha256>.<ext>    photos, sons, images, médias, dédupliqués par empreinte SHA-256
 ```
 
+Cible des séquences : chaque séquence (enregistrée, ou `work.seq`) porte `target` (sa cible par défaut,
+`{k:"all"}` | `{k:"group",id}` | `{k:"screen",id}`). Une étape qui la suit n'a pas de cible propre en mémoire
+(`null`) ; à l'écriture (stockage local et `.rem`) elle reçoit pourtant la cible résolue **et** `follow: true`, pour
+qu'une ancienne version de l'app (qui ne connaît que `step.target`) lise la bonne cible. Cette version relit
+`follow: true` comme « suit la cible de la séquence ». Fichier sans `target` (version d'avant) : la cible la plus
+fréquente des étapes devient celle de la séquence (égalité : la première étape du téléphone) et ces étapes la suivent.
+Étape « Appel manqué » : `opt: { ring, vol, vib }` (son de la notification ; absent : Métallophone Do).
+
 Référence de fichier : `{ "f": "files/<64 hex>.<ext>", "t": "<type MIME>" }`.
 Les JSON sont compressés (deflate, fflate) ; les fichiers binaires sont stockés
 tels quels quand deflate n'y gagne rien. Sans fflate (fichier absent), l'export

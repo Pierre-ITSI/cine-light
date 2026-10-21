@@ -138,7 +138,8 @@ test('migration : entrées « messagerie » → SMS, son de la messagerie → no
   const st = await page.evaluate(() => ({ sms: callList.sms.map((e) => [e.id, e.kind, e.appName || '', e.ring || '']), notif: callList.notif.length, ring: ringSettings }));
   assert.deepEqual(st.sms, [['s1', 'sms', '', ''], ['w1', 'sms', 'Chatly', 'digital'], ['w2', 'sms', '', 'classic']]);
   assert.equal(st.notif, 0, 'aucune notification inventée');
-  assert.deepEqual(st.ring, { call: { sound: 'classic', vol: 1, vib: false }, sms: { sound: 'soft', vol: 0.5, vib: false }, notif: { sound: 'digital', vol: 0.3, vib: false }, discussion: { sound: 'silent', vol: 1, vib: false } });
+  // réglages enregistrés sans vibreur (version d'avant) : vibreur coché par défaut ; discussion sans choix : Envoi
+  assert.deepEqual(st.ring, { call: { sound: 'classic', vol: 1, vib: true }, sms: { sound: 'soft', vol: 0.5, vib: true }, notif: { sound: 'digital', vol: 0.3, vib: true }, discussion: { sound: 'sent', vol: 1, vib: true } });
   // L'entrée migrée se recharge et part comme un SMS
   await page.locator('#callListRows .cl-row').nth(1).click();
   await waitFor(page, () => document.getElementById('callName').value === 'Tom');
@@ -247,7 +248,7 @@ describe('télécommande et écran reliés', () => {
     // Plus de tuiles : une rangée « Style et son » sous « Envoyer la notification »
     assert.equal(await rp.evaluate(() => !!document.querySelector('.nt-tiles, #ntSoundSlot')), false);
     assert.equal(await shown('telStyleRow'), false, 'rangée du type Notification sous l\'envoi');
-    assert.equal(await rp.textContent('#ntStyleSum'), 'Verre · Classique · 100 %');
+    assert.equal(await rp.textContent('#ntStyleSum'), 'Verre · Métallophone Do · 100 %');
     await rp.click('#ntStyleBtn');
     assert.equal(await shown('tel-style-view'), true);
     assert.equal(await rp.textContent('#tsTitle'), 'Style et son');

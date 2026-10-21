@@ -132,7 +132,7 @@ test('puces : présentes pour SMS, notification et discussion, absentes pour l\'
   assert.deepEqual(await page.evaluate(() => [ringSettings.sms.sound, ringSettings.notif.sound, ringSettings.discussion.sound, ringSettings.call.sound]), ['metal-sol', 'sent', 'metal-do', 'classic']);
   await page.evaluate(() => localStorage.setItem(RING_SETTINGS_KEY, JSON.stringify({ v: 1, call: { sound: 'sent' }, sms: { sound: 'sent' } })));
   await page.reload();
-  assert.deepEqual(await page.evaluate(() => [ringSettings.call.sound, ringSettings.sms.sound, ringSettings.discussion.sound]), ['classic', 'sent', 'silent']);
+  assert.deepEqual(await page.evaluate(() => [ringSettings.call.sound, ringSettings.sms.sound, ringSettings.discussion.sound]), ['classic', 'sent', 'sent']);
   assert.deepEqual(errors, []);
   await close();
 });
@@ -189,7 +189,7 @@ test('réseau, liste, projet, séquence : ids acceptés pour les messages, Class
   assert.equal(r.callOld, 'soft');
   assert.deepEqual(r.chat, ['metal-sol', 'classic'], 'discussion : id inconnu → classic (comme un ancien écran)');
   assert.deepEqual(r.chime, ['sent', 'classic']);
-  assert.deepEqual(r.list, ['classic', 'metal-do', 'sent', 'metal-sol', 'classic']);
+  assert.deepEqual(r.list, ['classic', 'metal-do', 'sent', 'metal-sol', 'metal-do'], 'son invalide d\'un message : défaut du type');
   assert.deepEqual(r.prj, ['classic', 'sent', 'metal-sol']);
   assert.deepEqual(r.rs, ['classic', 'metal-do', 'sent', 'metal-sol']);
   assert.deepEqual(r.msg, ['classic', 'metal-do', 'metal-do']);
