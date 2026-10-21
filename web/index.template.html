@@ -717,7 +717,7 @@
       <div id="telCallRows">
         <button type="button" class="tl-row tl-nav" id="telStyleBtn" onclick="openTelStyle()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-smartphone"></use></svg><span class="tl-k"><b id="telStyleLabel">Apparence</b></span><span class="tl-v" id="telStyleSum"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
         <button type="button" class="tl-row tl-nav" id="telRingBtn" onclick="openTelStyle()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-music"></use></svg><span class="tl-k"><b>Sonnerie</b></span><span class="tl-v" id="telRingSum"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
-        <button type="button" class="tl-row tl-nav" id="callAnswerBlock" onclick="openTelDetail('answer')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-audio-waveform"></use></svg><span class="tl-k"><b>Au décroché</b></span><span class="tl-v" id="telAnswerVal"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+        <button type="button" class="tl-row tl-nav tl-row2" id="callAnswerBlock" onclick="openTelDetail('answer')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-audio-waveform"></use></svg><span class="tl-k"><b>Au décroché</b></span><span class="tl-v" id="telAnswerVal"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg><span class="tl-sub2" id="telAnswerSub"></span></button>
       </div>
       <!-- Discussion (maquette 26) : contact, comédien -->
       <div class="tl-row dc-contact" id="dcContactPanel" style="display:none">
@@ -754,15 +754,22 @@
     </div>
     <div id="dcSavedPanel" style="display:none">
       <div class="tl-h"><b id="dcSavedTitle">Discussions enregistrées · 0</b></div>
+      <div class="memory-actions" id="dcMemActions">
+        <button type="button" class="memory-save-btn" id="dcMemSave" onclick="openSaveChatSheet()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Enregistrer</button>
+        <button type="button" class="memory-update-btn" id="dcMemUpdate" onclick="updateLoadedChat()" disabled><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Mettre à jour</button>
+      </div>
       <div class="tl-card">
         <div class="dc-saved-rows" id="dcSavedRows"></div>
         <div class="dc-saved-empty" id="dcSavedEmpty">Aucune discussion enregistrée pour l'instant.</div>
       </div>
-      <div class="cl-note" id="dcSavedNote">▶ charge la discussion dans le fil à jouer. ⋯ : renommer · dupliquer · supprimer. Une discussion enregistrée garde le contact (nom, photo), le comédien, le style et tous les messages ; pas le point de reprise.</div>
     </div>
     <!-- Appels, SMS et notifications enregistrés, numérotés (maquette 18) : la liste suit le type choisi ; appels et SMS = cibles des canaux Appel / SMS de la passerelle DMX -->
     <div id="callListPanel">
       <div class="tl-h"><b id="callListTitle">Appels enregistrés · 0</b><span class="tl-h-act"><button type="button" class="tl-link" id="callListSort" aria-pressed="false" onclick="toggleCallListSort()"><svg class="ic" aria-hidden="true"><use href="#i-list-ordered"></use></svg> Trier</button><button type="button" class="tl-link" id="callListAll" onclick="openCallListAll()">Tout voir <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button></span></div>
+      <div class="memory-actions" id="clMemActions">
+        <button type="button" class="memory-save-btn" id="clMemSave" onclick="openSaveCallSheet()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Enregistrer</button>
+        <button type="button" class="memory-update-btn" id="clMemUpdate" onclick="updateLoadedCallEntryUndo()" disabled><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Mettre à jour</button>
+      </div>
       <div class="tl-card">
         <div class="cl-rows" id="callListRows"></div>
         <div class="media-pool-empty" id="callListEmpty">Réglez l'appel ci-dessus puis enregistrez-le : il prend le numéro suivant.</div>
@@ -799,6 +806,10 @@
         <!-- Rangée « Téléphone au départ » (maquette 28b) : barre d état de la séquence, modifiable ici seulement -->
         <button type="button" class="tl-row tl-nav" id="seqPhoneBtn" onclick="openPhoneParams('seq')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-smartphone"></use></svg><span class="tl-k"><b>Téléphone au départ</b><small id="seqPhoneSum"></small></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
         <button type="button" class="tl-row tl-nav" id="seqSavedBtn" onclick="openSeqSaved()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-film"></use></svg><span class="tl-k"><b>Séquences enregistrées</b><small>Charger, dupliquer, supprimer</small></span><span class="tl-v" id="seqSavedCount">0</span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+      </div>
+      <div class="memory-actions" id="seqMemActions">
+        <button type="button" class="memory-save-btn" id="seqMemSave" onclick="openSaveSeqSheet()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Enregistrer</button>
+        <button type="button" class="memory-update-btn" id="seqMemUpdate" onclick="updateLoadedSeq()" disabled><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Mettre à jour</button>
       </div>
       <!-- Nouvelle séquence (maquette 47) : séquence vide, « Enregistrer avant ? » si la séquence a changé -->
       <button type="button" class="sq-new" id="seqNewBtn" onclick="seqNewAsk()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Nouvelle séquence</button>
@@ -888,8 +899,8 @@
       <div class="nb-live" id="dcLive" style="display:none"><i class="nb-dot"></i><span id="dcAutoState"></span></div>
       <div class="nb-prog" id="dcProg" style="display:none"><i id="dcAutoFill"></i></div>
       <div class="nb-row">
-        <button type="button" class="nb-ico" id="telSaveBtn" aria-label="Enregistrer dans la liste" onclick="telBarSave()"><svg class="ic" aria-hidden="true"><use href="#i-bookmark"></use></svg></button>
         <button type="button" class="nb-pri" id="callTriggerBtn" onclick="triggerCall()"><svg class="ic" aria-hidden="true" id="callTriggerIc"><use href="#i-phone"></use></svg><span class="nb-lbl"><b id="callTriggerLbl">FAIRE SONNER</b><small id="callTriggerSub"></small></span></button>
+        <button type="button" class="nb-ghost" id="callSpeakerBtn" aria-pressed="false" aria-label="Haut-parleur" onclick="telToggleSpeaker()"><svg class="ic" aria-hidden="true"><use href="#i-volume-2"></use></svg><b>Haut-parleur</b></button>
         <button type="button" class="nb-dng" id="callHangBtn" onclick="telHangup()"><svg class="ic" aria-hidden="true"><use href="#i-phone-off"></use></svg><span class="nb-lbl"><b>Raccrocher</b></span></button>
         <button type="button" class="nb-pri" id="callAnswerBtn" onclick="sendMsg({type:'call:answer'})"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg><span class="nb-lbl"><b>Décrocher</b></span></button>
         <button type="button" class="nb-pri" id="dcOpenBtn" onclick="openChatOnTarget()"><svg class="ic" aria-hidden="true"><use href="#i-message-circle"></use></svg><span class="nb-lbl"><b>OUVRIR SUR L'ÉCRAN</b><small id="dcOpenSub"></small></span></button>
@@ -1075,7 +1086,28 @@
       <div class="slider-header"><label for="callAutoSlider">Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
       <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
     </div>
+    <div class="slider-block rt-auto">
+      <div class="slider-header"><label for="callVoiceDelay">Délai avant la voix</label><div class="slider-val" id="callVoiceDelayVal">0 s</div></div>
+      <input type="range" id="callVoiceDelay" min="0" max="15" step="1" value="0" oninput="onCallAudioChange()">
+    </div>
   </div>
+  <!-- Sortie du son et écran noir : réglées ici, appliquées par l'ÉCRAN de jeu (app native seulement) ; jamais désactivées sur la télécommande -->
+  <div class="ss-card td-sec" id="tdAnswerRoute">
+    <div class="panel-label">Sortie du son</div>
+    <div class="nt-seg" role="group" aria-label="Sortie du son">
+      <button type="button" class="gw-seg-btn active" id="callroute-ear" aria-pressed="true" onclick="setCallRoute('ear')">À l'oreille</button>
+      <button type="button" class="gw-seg-btn" id="callroute-speaker" aria-pressed="false" onclick="setCallRoute('speaker')">Haut-parleur</button>
+    </div>
+    <div class="media-status rt-status" id="callRouteHint">Écouteur par défaut, comme un vrai appel. Modifiable en cours d'appel.</div>
+  </div>
+  <div class="ss-card td-sec" id="tdAnswerProx">
+    <div class="panel-label">Capteur de proximité</div>
+    <div class="toggle-row" style="margin:0">
+      <div><div class="toggle-label">Écran noir contre l'oreille</div><div class="toggle-sub">L'écran s'éteint quand le comédien porte le téléphone à l'oreille (désactivez pour les plans où l'écran doit rester visible)</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="callProxToggle" checked aria-label="Écran noir contre l'oreille" onchange="onCallAudioChange()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+    </div>
+  </div>
+  <div class="media-status td-note" id="tdAnswerNote">Son à l'oreille et écran noir : uniquement sur les écrans de jeu avec l'app native</div>
 </div>
 
 <!-- Téléphone au départ (maquette 28b) ; aussi « Barre d'état du téléphone » de l'onglet Média -->

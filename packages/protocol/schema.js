@@ -640,6 +640,13 @@ const SPECS = {
       audioId: opt(str(45, CALL_AUDIO_ID_RE), 'bande son PRÉPARÉE de l’appel enregistré (__au_…) à la place de __callaudio ; '
         + 'absente du cache : décroché silencieux'),
       autoAnswer: opt(int(0, 60), 'décroché automatique après n s (0 = non)'),
+      audio: opt(object({
+        delay: opt(int(0, 15), 'délai en secondes entre le décroché et le début de la voix (absent = 0)'),
+        route: opt(oneOf('ear', 'speaker'), 'sortie du son à l’écran de jeu : « ear » (écouteur, comme un vrai appel) ou « speaker » (haut-parleur) ; absent = « ear »'),
+        prox: opt(bool, 'écran noir contre l’oreille (capteur de proximité) pendant l’appel décroché ; absent = non'),
+      }), 'audio de l’appel décroché : délai avant la voix, sortie du son, capteur de proximité. L’ÉCRAN décide : navigateur '
+        + '(voix sur la sortie normale, proximité ignorée) ou app native (écouteur / haut-parleur, écran noir). '
+        + 'Absent (ancienne télécommande) = voix immédiate, sortie du système, aucun capteur. Un ancien écran ignore le champ'),
       lock: opt(nullable(object({
         time: req(line(8), 'heure affichée'),
         date: req(line(30), 'date affichée'),
@@ -672,6 +679,23 @@ const SPECS = {
     },
   },
   'call:answer': { dir: 'r2s', src: ['web'], doc: 'Décroche le faux appel.', fields: {} },
+  'call:speaker': {
+    dir: 'both', src: ['web'],
+    doc: 'Haut-parleur de l’appel décroché, dans les DEUX sens. Télécommande → écran : demande de bascule de la sortie du son '
+      + '(on = haut-parleur, sinon écouteur). Écran → télécommande : état RÉEL de l’écran, renvoyé après tout changement '
+      + '(toucher du comédien sur « Haut-parleur », ordre de la télécommande, décroché avec call:start.audio) ; l’écran fait foi '
+      + 'et la télécommande n’applique l’état qu’à réception (aucun renvoi : pas de boucle). Un ancien écran n’y répond pas.',
+    fields: {
+      on: req(bool, 'haut-parleur actif'),
+      from: req(oneOf('remote', 'screen'), 'émetteur (comme rtc-ice : fait respecter le sens et l’absence de target côté écran)'),
+    },
+    refine: (m, o) => {
+      if (o.direction === 'r2s' && m.from !== 'remote') return 'call:speaker r2s doit avoir from=remote';
+      if (o.direction === 's2r' && m.from !== 'screen') return 'call:speaker s2r doit avoir from=screen';
+      if (m.from === 'screen' && m.target !== undefined) return 'target interdit depuis un écran';
+      return null;
+    },
+  },
   'call:end': { dir: 'r2s', src: ['web'], doc: 'Termine le faux appel / la notification.', fields: {} },
 
   // ═══ Télécommande ↔ écran : discussion fictive (fil préparé) ═══
@@ -1023,6 +1047,7 @@ const SPECS = {
         kind: req(oneOf('call', 'sms', 'notif', 'chat'), 'appel, SMS, notification ou discussion (chat) affichés'),
         state: req(oneOf('ringing', 'incall', 'notif', 'open'), 'appel qui sonne / en ligne ; SMS ou notification affichés ; discussion ouverte'),
         name: opt(line(40), 'nom affiché (appelant, expéditeur, titre, contact), déjà connu de la télécommande qui l’a envoyé'),
+        speaker: opt(bool, 'appel en ligne seulement : haut-parleur actif sur l’écran (resynchronisation du bouton)'),
       })), 'couche affichée, ou null'),
     },
   },

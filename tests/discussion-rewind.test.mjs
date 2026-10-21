@@ -28,9 +28,9 @@ test('télécommande seule : bouton « ↶ », « Repartir de zéro », repère 
   await page.evaluate(() => { startMode('remote'); switchTab('call'); setCallKind('discussion'); });
   // Barre : fermée, « Ouvrir sur l'écran » seul ; ouverte, ↶ · Lecture auto · Envoyer (↶ inactif tant que rien n'est affiché)
   const barIds = () => page.evaluate(() => [...document.querySelectorAll('#tel-bar .nb-row button')].filter((b) => getComputedStyle(b).display !== 'none').map((b) => b.id));
-  assert.deepEqual(await barIds(), ['telSaveBtn', 'dcOpenBtn']);
+  assert.deepEqual(await barIds(), ['dcOpenBtn']);
   await page.click('#dcOpenBtn');
-  assert.deepEqual(await barIds(), ['telSaveBtn', 'dcBackBtn', 'dcAutoPlay', 'dcGo']);
+  assert.deepEqual(await barIds(), ['dcBackBtn', 'dcAutoPlay', 'dcGo']);
   assert.equal(await page.getAttribute('#dcBackBtn use', 'href'), '#i-undo-2');
   assert.equal(await page.getAttribute('#dcBackBtn', 'aria-label'), 'Pause et revenir d\'un message');
   assert.equal(await page.isDisabled('#dcBackBtn'), true);

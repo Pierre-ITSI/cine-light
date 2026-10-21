@@ -9,6 +9,7 @@ import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { ShouldStartLoadRequest, WebViewNavigationEvent } from 'react-native-webview/lib/WebViewTypes';
 import SetRemoteLink, { createLinkBridge, type LinkBridge } from '../modules/setremote-link';
 import SetRemoteUdp, { createDmxBridge, type DmxBridge } from '../modules/setremote-udp';
+import SetRemoteAudio, { createAudioBridge, type AudioBridge, type AudioTempFile } from '../modules/setremote-audio';
 import { createPdfPreviewer, type PdfPrintFn } from '../src/lib/pdfPreview';
 import { createProjectBridge, PROJECT_PICK_TYPES, type PickedFile, type TempFile } from '../src/lib/projectFiles';
 import { nativeBootstrapScript } from '../src/config';
@@ -23,7 +24,10 @@ import { nativeBootstrapScript } from '../src/config';
 // aperçu PDF in-app de la table des canaux DMX (expo-print, src/lib/pdfPreview.ts),
 // vibreur de l'écran de jeu (Vibration de React Native, la vue web n'en a pas),
 // fichiers projet .rem (feuille de partage, sélecteur de fichier :
-// src/lib/projectFiles.ts, docs/PROJECTS.md § 6).
+// src/lib/projectFiles.ts, docs/PROJECTS.md § 6),
+// audio de l'appel décroché de l'écran de jeu : voix jouée par le natif, écouteur ou
+// haut-parleur, écran noir contre l'oreille (module local modules/setremote-audio,
+// contrat du pont dans docs/CALL-AUDIO-NATIVE.md).
 // Les anciens écrans 100 % natifs (/native, /remote, /screen) et leurs
 // transports en clair ont été retirés : la vue web est la seule interface.
 //
@@ -61,7 +65,8 @@ const ORIGIN_WHITELIST = ['file://*', 'http://*', 'https://*', 'about:*', 'blob:
 
 // Exécuté avant le chargement de la page : la PWA sait qu'elle tourne dans
 // l'app et connaît son adresse publique (PUBLIC_WEB_URL, src/config.ts).
-const INJECT_BEFORE = nativeBootstrapScript(Platform.OS);
+// caps.audioRoute : la page n'envoie audio:* que si le binaire embarque le module (sinon : voix en WebAudio).
+const INJECT_BEFORE = nativeBootstrapScript(Platform.OS, undefined, { audioRoute: SetRemoteAudio != null });
 
 export default function AppShell() {
   useKeepAwake(); // l'écran de jeu comme la télécommande ne doivent jamais se mettre en veille
@@ -118,12 +123,40 @@ export default function AppShell() {
     return () => { bridge.dispose(); link.current = null; };
   }, []);
 
+  // Audio de l'appel décroché : audio:load (bande son en morceaux → fichier temporaire du cache),
+  // audio:call-start / audio:play / audio:route / audio:call-end venant de la page ; état du
+  // module (sortie, proximité) et erreurs remis via window.SRNative.receive(). Un nouveau document
+  // (rechargement) met fin à l'appel et efface les fichiers temporaires.
+  const audio = useRef<AudioBridge | null>(null);
+  useEffect(() => {
+    const bridge = createAudioBridge({
+      native: SetRemoteAudio,
+      createTemp: (name) => {
+        const dir = new Directory(Paths.cache, 'appels-audio');
+        if (!dir.exists) dir.create({ intermediates: true, idempotent: true });
+        const f = new File(dir, name);
+        if (f.exists) f.delete();
+        f.create();
+        const t: AudioTempFile = {
+          write: (b64, append) => f.write(b64, { encoding: 'base64', append }),
+          get uri() { return f.uri; },
+          delete: () => { try { f.delete(); } catch { /* déjà supprimé */ } },
+        };
+        return t;
+      },
+      inject: (script) => webRef.current?.injectJavaScript(script),
+    });
+    audio.current = bridge;
+    return () => { bridge.dispose(); audio.current = null; };
+  }, []);
+
   // Écoute DMX et liaisons appartiennent au document qui les a demandées : un
   // nouveau document (navigation, rechargement) les arrête ; un changement
   // d'ancre (#) non.
   const resetBridges = useCallback(() => {
     dmx.current?.reset();
     link.current?.reset();
+    audio.current?.reset();
   }, []);
   const currentDoc = useRef<string | null>(null);
   const onLoadStart = useCallback((e: WebViewNavigationEvent) => {
@@ -198,6 +231,7 @@ export default function AppShell() {
     try { msg = JSON.parse(e.nativeEvent.data); } catch { return; }
     if (link.current?.handle(msg)) return;
     if (dmx.current?.handle(msg)) return;
+    if (audio.current?.handle(msg)) return;
     if (pdf.handle(msg)) return;
     if (project.handle(msg)) return;
     if (msg.type === 'brightness-restore') { restoreBrightness(); return; }

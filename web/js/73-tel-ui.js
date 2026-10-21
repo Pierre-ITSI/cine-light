@@ -5,15 +5,18 @@
 // qui ouvrent leur vue de réglage, mêmes champs et mêmes identifiants qu'avant),
 // liste enregistrée du type (82-call-list.js), et UNE barre d'action fixe
 // au-dessus des onglets (#tel-bar) :
-//   Appel         [signet] FAIRE SONNER · pendant la sonnerie : ligne d'état +
-//                 progression, Raccrocher / Décrocher ; en ligne : Raccrocher
-//   SMS           [signet] ENVOYER LE SMS
-//   Notification  [signet] ENVOYER LA NOTIFICATION
-//   Discussion    [signet] OUVRIR SUR L'ÉCRAN ; ouverte : ↶ · Lecture auto /
+//   Appel         FAIRE SONNER · pendant la sonnerie : ligne d'état +
+//                 progression, Raccrocher / Décrocher ; en ligne : Haut-parleur
+//                 (bascule la sortie du son de l'écran) + Raccrocher
+//   SMS           ENVOYER LE SMS
+//   Notification  ENVOYER LA NOTIFICATION
+//   Discussion    OUVRIR SUR L'ÉCRAN ; ouverte : ↶ · Lecture auto /
 //                 Pause · ENVOYER N°n, avec l'état de la lecture auto au-dessus
-// Le signet enregistre (feuille « Enregistrer » ; entrée chargée : mettre à
-// jour ou enregistrer comme nouveau). Aperçu sans licence : signet et rangées
-// de réglage verrouillés, ▶ des lignes et barre d'envoi actifs (77-licence-ui.js).
+// Enregistrer et mettre à jour : rangée « + Enregistrer / ↻ Mettre à jour » au-dessus
+// de chaque liste enregistrée (82-call-list.js, 89-discussions-saved.js,
+// 96-sequences-saved.js), comme les Effets ; plus de signet dans la barre.
+// Aperçu sans licence : rangées de réglage et boutons d'enregistrement verrouillés,
+// ▶ des lignes et barre d'envoi actifs (77-licence-ui.js).
 // Textes affichés, regroupés pour la traduction ({…} : valeurs)
 const _TU_TXT = {
   on: 'sur {cible}', noScreen: 'aucun écran appairé',
@@ -23,7 +26,9 @@ const _TU_TXT = {
   goN: 'ENVOYER N°{n}', goNone: 'Plus de message', goSub: '{qui} : « {texte} »',
   unknown: 'Inconnu', labelNone: '—', photo: 'photo',
   lockOn: 'Arrive sur un faux écran verrouillé · {heure}', lockOff: 'Le SMS arrive en bandeau', lockScreenTime: 'heure de l\'écran',
-  answerNone: 'Silence · manuel', answerManual: 'manuel', answerAuto: 'décroché auto {n} s', answerAudio: 'bande son',
+  answerNone: 'Silence · manuel', answerManual: 'manuel', answerAuto: 'auto {n} s', answerAudio: 'bande son',
+  answerDelay: 'Voix après {n} s', answerEar: 'à l\'oreille', answerSpeaker: 'haut-parleur', answerProx: 'écran noir à l\'oreille',
+  speakerOn: 'haut-parleur',
   showBanner: 'Bandeau', showLock: 'Écran verrouillé', recvNow: 'reçue maintenant', recvAgo: 'reçue il y a {n} min', recvAt: 'reçue à une date précise',
   detailWho: 'Appelant', detailContact: 'Contact', detailApp: 'Application', detailLock: 'Écran verrouillé', detailShow: 'Affichage', detailAnswer: 'Au décroché',
   vibOn: 'vibreur',
@@ -33,20 +38,22 @@ const _tuShow = (id, on) => { const el = document.getElementById(id); if (el) el
 const _tuText = (id, t) => { const el = document.getElementById(id); if (el && el.textContent !== t) el.textContent = t; };
 
 // ── État de l'appel de la barre : idle · sent (envoyé) · ringing · incall ──
-const _telCall = { phase: 'idle', t0: 0, auto: 0, text: '' };
+const _telCall = { phase: 'idle', t0: 0, auto: 0, text: '', speaker: false };
 let _telTick = null;
 function _telSecs() { return Math.max(0, Math.floor((Date.now() - _telCall.t0) / 1000)); }
 // Appel envoyé (formulaire, ligne ▶) : Raccrocher / Décrocher dès l'envoi
-function telCallSent(kind, auto, text) {
+// audio : réglages de l'appel envoyé (call:start.audio) : pré-positionne le bouton Haut-parleur
+function telCallSent(kind, auto, text, audio) {
   if (kind !== 'call') return;
   _telCall.phase = 'sent'; _telCall.t0 = Date.now(); _telCall.auto = Math.max(0, Number(auto) || 0); _telCall.text = text || _TU_TXT.sent;
+  _telCall.speaker = !!(audio && audio.route === 'speaker');
   _telStartTick();
   renderTelBar();
 }
 // Retour de l'écran (call:state) : sonne, en ligne, ou retour au repos avec son message
 function telCallPhase(p, status) {
   if (p === 'idle') {
-    _telCall.phase = 'idle';
+    _telCall.phase = 'idle'; _telCall.speaker = false;
     if (_telTick) { clearInterval(_telTick); _telTick = null; }
     _setCallStatusUI(status || '');
     return;
@@ -65,7 +72,7 @@ function _telLiveRefresh() {
   let t = '';
   if (c.phase === 'sent') t = c.text || _TU_TXT.sent;
   else if (c.phase === 'ringing') t = _tuTpl(_TU_TXT.ringing, { n: s }) + (c.auto > 0 ? _tuTpl(_TU_TXT.autoIn, { n: Math.max(0, c.auto - s) }) : '');
-  else t = _tuTpl(_TU_TXT.inCall, { t: fmtTime(s) });
+  else t = _tuTpl(_TU_TXT.inCall, { t: fmtTime(s) }) + (c.speaker ? ' · ' + _TU_TXT.speakerOn : '');
   const el = document.getElementById('callStatus');
   if (el && el.textContent !== t) _setCallStatusUI(t, true); else renderTelBar();
   const f = document.getElementById('telProgFill');
@@ -75,6 +82,21 @@ function _telLiveRefresh() {
 function telHangup() {
   sendMsg({ type: 'call:end' });
   telCallPhase('idle', _TU_TXT.hungup);
+}
+// Haut-parleur (appel en ligne) : demande à l'écran de basculer la sortie du son. L'écran fait foi :
+// le bouton ne change qu'à son retour (call:speaker, remoteOnCallSpeaker), jamais d'emblée
+function telToggleSpeaker() {
+  if (_telCall.phase !== 'incall') return;
+  sendMsg({ type: 'call:speaker', on: !_telCall.speaker, from: 'remote' });
+}
+// État réel annoncé par l'écran (toucher du comédien, réponse à notre ordre, décroché) ; sans renvoi
+function remoteOnCallSpeaker(on) {
+  const id = typeof _rxFrom !== 'undefined' && _rxFrom && scrKnown(_rxFrom) ? _rxFrom : null;
+  if (id && !scrInTarget(id)) return; // l'interface suit les écrans de la cible
+  if (_telCall.phase === 'idle') return;
+  _telCall.speaker = on === true;
+  _telLiveRefresh();
+  renderTelBar();
 }
 
 // ── Barre d'action ──
@@ -87,8 +109,10 @@ function renderTelBar() {
   const sub = nScr ? _tuTpl(_TU_TXT.on, { cible: tg.name + tg.count }) : _TU_TXT.noScreen;
   const status = (document.getElementById('callStatus') || {}).textContent || '';
   renderTelOn(); // « Retirer de l'écran » (27-tab-gate.js)
-  _tuShow('telSaveBtn', !inCall);
   _tuShow('callTriggerBtn', !disc && !inCall);
+  const spk = document.getElementById('callSpeakerBtn');
+  _tuShow('callSpeakerBtn', !disc && inCall && ph === 'incall');
+  if (spk) { spk.classList.toggle('on', _telCall.speaker); spk.setAttribute('aria-pressed', _telCall.speaker ? 'true' : 'false'); }
   _tuShow('callHangBtn', !disc && inCall);
   _tuShow('callAnswerBtn', !disc && inCall && ph !== 'incall');
   _tuShow('telLive', !disc && !!status);
@@ -122,14 +146,7 @@ function renderTelBar() {
     const bk = document.getElementById('dcBackBtn');
     if (bk) bk.disabled = !_chat.sent.length;
   }
-  const sv = document.getElementById('telSaveBtn');
-  if (sv) sv.setAttribute('aria-label', disc ? 'Enregistrer le fil dans la liste' : k === 'call' ? 'Enregistrer l\'appel dans la liste' : k === 'sms' ? 'Enregistrer le SMS dans la liste' : 'Enregistrer la notification dans la liste');
 }
-// Signet : enregistrer l'appel / le SMS / la notification, ou le fil de la discussion
-function telBarSave() {
-  if (callKind === 'discussion') openSaveChatSheet(); else openSaveCallSheet();
-}
-
 // ── Rangées-résumé de la carte « À jouer » ──
 function renderTelRows() {
   const val = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
@@ -172,11 +189,20 @@ function renderTelRows() {
   if (!parts[0]) parts[0] = 'Silence';
   parts.push(auto > 0 ? _tuTpl(T.answerAuto, { n: auto }) : T.answerManual);
   _tuText('telAnswerVal', parts.join(' · '));
+  // 2e ligne (maquette M2) : délai avant la voix · sortie du son · écran noir. Réglages de la télécommande,
+  // affichés partout : c'est l'écran de jeu qui les applique
+  const au = callAudioFields(), sub = [];
+  if (au.delay > 0) sub.push(_tuTpl(T.answerDelay, { n: au.delay }));
+  sub.push(au.route === 'speaker' ? T.answerSpeaker : T.answerEar);
+  if (au.prox) sub.push(T.answerProx);
+  _tuText('telAnswerSub', sub.join(' · '));
   void k;
 }
 
 // ── Vues de réglage des rangées (même chrome que « Style et sonnerie ») ──
 const _TD_SECS = { who: 'tdWho', app: 'tdApp', lock: 'tdLock', ntapp: 'tdNtApp', ntshow: 'tdNtShow', answer: 'tdAnswer' };
+// Cartes qui suivent celle de la rubrique : « Au décroché » = bande son et délai, puis sortie du son, proximité et sa note
+const _TD_EXTRA = { answer: ['tdAnswerRoute', 'tdAnswerProx', 'tdAnswerNote'] };
 let _tdSec = null;
 function openTelDetail(sec) {
   if (licLocked('tel') || !_TD_SECS[sec]) return; // aperçu sans licence : réglages verrouillés
@@ -184,6 +210,7 @@ function openTelDetail(sec) {
   if (!v) return;
   _tdSec = sec;
   for (const [s, id] of Object.entries(_TD_SECS)) { const el = document.getElementById(id); if (el) el.style.display = s === sec ? 'flex' : 'none'; }
+  for (const [s, ids] of Object.entries(_TD_EXTRA)) for (const id of ids) { const el = document.getElementById(id); if (el) el.style.display = s === sec ? (id === 'tdAnswerNote' ? 'block' : 'flex') : 'none'; }
   const T = _TU_TXT;
   _tuText('tdTitle', sec === 'who' ? (callKind === 'call' ? T.detailWho : T.detailContact) : sec === 'app' || sec === 'ntapp' ? T.detailApp : sec === 'lock' ? T.detailLock : sec === 'ntshow' ? T.detailShow : T.detailAnswer);
   v.classList.toggle('over-sheet', !!_sheet); // ouverte depuis une feuille (création sur place) : passe devant

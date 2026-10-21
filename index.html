@@ -805,6 +805,9 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .pc-g{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px}
 .pc-gb{width:70px;height:70px;border-radius:50%;background:var(--btn-bg);-webkit-backdrop-filter:var(--btn-blur);backdrop-filter:var(--btn-blur);display:flex;align-items:center;justify-content:center;font-size:28px}
 .ph-tonal .pc-gb{border-radius:24px;width:84px;height:64px}
+/* Haut-parleur actif (codes de l'appel en cours des téléphones) : bouton plein blanc, icône sombre, libellé en gras */
+.pc-gb.on{background:#fff;color:#111;-webkit-backdrop-filter:none;backdrop-filter:none}
+.pc-g.on{font-weight:600}
 .pc-hang{width:76px;height:76px;border-radius:50%;background:var(--ph-no);display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff}
 .pc-hang svg{transform:rotate(135deg)}
 .ph-tonal .pc-hang{width:164px;border-radius:38px}
@@ -2481,6 +2484,9 @@ body.nv-kb #nv-main[data-bar] #nv-bar .nb{display:none}
 .nb .nb-ghost{flex:none;width:80px;background:transparent;box-shadow:inset 0 0 0 1px var(--border-strong);padding:0 6px;gap:4px}
 .nb .nb-ghost b{font-size:14px;font-weight:700;letter-spacing:0;white-space:nowrap}
 .nb .nb-ghost.on{box-shadow:inset 0 0 0 1.5px var(--accent);color:var(--accent-text)}
+/* Haut-parleur de l'appel en ligne (à gauche de Raccrocher) : contour et fond accent quand il est actif */
+.nb #callSpeakerBtn{width:128px;gap:6px}
+.nb #callSpeakerBtn.on{background:var(--accent-soft)}
 @media (max-width:399px){#dcGo>.ic,#dcOpenBtn>.ic{display:none}#dcGo .nb-lbl b{font-size:15px;letter-spacing:0}.nb .nb-ico{width:48px}.nb .nb-ghost{width:76px;padding:0 4px}.nb #dcGo{padding:0 8px}}
 .nb-lbl{display:flex;flex-direction:column;align-items:center;min-width:0;max-width:100%;text-align:center;gap:2px}
 .nb-lbl b{font-size:16px;font-weight:700;letter-spacing:.02em;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
@@ -2636,6 +2642,14 @@ body.nv-kb #nv-main[data-bar] #nv-bar .nb{display:none}
   padding:calc(var(--sp-4) + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(var(--sp-5) + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
 #tel-detail-view.over-sheet,#tel-style-view.over-sheet{z-index:600}
 #tel-detail-view .td-sec{flex-direction:column}
+#tel-detail-view .td-note{margin:0;padding:0 var(--sp-1);text-align:left}
+/* Vue « Au décroché » : titres de section et libellés de curseur en minuscules comme le reste de l'app, sans capitales espacées */
+#tdAnswer .panel-label,#tdAnswerRoute .panel-label,#tdAnswerProx .panel-label,#tdAnswer .slider-header label{text-transform:none;letter-spacing:0}
+#tdAnswer .panel-label,#tdAnswerRoute .panel-label,#tdAnswerProx .panel-label{font-size:var(--fs-body);color:var(--text)}
+#tdAnswer .media-status,#tdAnswerRoute .media-status,#tdAnswerNote{letter-spacing:0;font-size:var(--fs-secondary);color:var(--text-2)}
+/* Rangée-résumé sur deux lignes (« Au décroché ») : la 2e ligne passe sous l'icône et le libellé */
+.tl-row.tl-row2{flex-wrap:wrap;row-gap:2px;padding-bottom:var(--sp-2)}
+.tl-row2 .tl-sub2{flex:0 0 100%;order:9;padding-left:calc(20px + var(--sp-3));margin-top:calc(-1 * var(--sp-1));font-size:var(--fs-label);line-height:1.3;color:var(--text-2);text-align:left}
 #tel-detail-view .ss-card{gap:var(--sp-3)}
 #tel-detail-view .td-two{display:flex;gap:var(--sp-2)}
 #tel-detail-view .td-two .text-input{flex:1;min-width:0}
@@ -2934,6 +2948,7 @@ body.nv-plateau #content-scn .sq-mode{margin-top:var(--sp-3)}
 <symbol id="i-undo-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11" /></symbol>
 <symbol id="i-vibrate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 8 2 2-2 2 2 2-2 2" /><path d="m22 8-2 2 2 2-2 2 2 2" /><rect width="8" height="14" x="8" y="5" rx="1" /></symbol>
 <symbol id="i-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" /><rect x="2" y="6" width="14" height="12" rx="2" /></symbol>
+<symbol id="i-volume-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" /><path d="M16 9a5 5 0 0 1 0 6" /><path d="M19.364 18.364a9 9 0 0 0 0-12.728" /></symbol>
 <symbol id="i-wifi-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01" /><path d="M8.5 16.429a5 5 0 0 1 7 0" /><path d="M5 12.859a10 10 0 0 1 5.17-2.69" /><path d="M19 12.859a10 10 0 0 0-2.007-1.523" /><path d="M2 8.82a15 15 0 0 1 4.177-2.643" /><path d="M22 8.82a15 15 0 0 0-11.288-3.764" /><path d="m2 2 20 20" /></symbol>
 <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
 <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z" /></symbol>
@@ -3611,7 +3626,7 @@ body.nv-plateau #content-scn .sq-mode{margin-top:var(--sp-3)}
       <div id="telCallRows">
         <button type="button" class="tl-row tl-nav" id="telStyleBtn" onclick="openTelStyle()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-smartphone"></use></svg><span class="tl-k"><b id="telStyleLabel">Apparence</b></span><span class="tl-v" id="telStyleSum"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
         <button type="button" class="tl-row tl-nav" id="telRingBtn" onclick="openTelStyle()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-music"></use></svg><span class="tl-k"><b>Sonnerie</b></span><span class="tl-v" id="telRingSum"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
-        <button type="button" class="tl-row tl-nav" id="callAnswerBlock" onclick="openTelDetail('answer')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-audio-waveform"></use></svg><span class="tl-k"><b>Au décroché</b></span><span class="tl-v" id="telAnswerVal"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+        <button type="button" class="tl-row tl-nav tl-row2" id="callAnswerBlock" onclick="openTelDetail('answer')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-audio-waveform"></use></svg><span class="tl-k"><b>Au décroché</b></span><span class="tl-v" id="telAnswerVal"></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg><span class="tl-sub2" id="telAnswerSub"></span></button>
       </div>
       <!-- Discussion (maquette 26) : contact, comédien -->
       <div class="tl-row dc-contact" id="dcContactPanel" style="display:none">
@@ -3648,15 +3663,22 @@ body.nv-plateau #content-scn .sq-mode{margin-top:var(--sp-3)}
     </div>
     <div id="dcSavedPanel" style="display:none">
       <div class="tl-h"><b id="dcSavedTitle">Discussions enregistrées · 0</b></div>
+      <div class="memory-actions" id="dcMemActions">
+        <button type="button" class="memory-save-btn" id="dcMemSave" onclick="openSaveChatSheet()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Enregistrer</button>
+        <button type="button" class="memory-update-btn" id="dcMemUpdate" onclick="updateLoadedChat()" disabled><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Mettre à jour</button>
+      </div>
       <div class="tl-card">
         <div class="dc-saved-rows" id="dcSavedRows"></div>
         <div class="dc-saved-empty" id="dcSavedEmpty">Aucune discussion enregistrée pour l'instant.</div>
       </div>
-      <div class="cl-note" id="dcSavedNote">▶ charge la discussion dans le fil à jouer. ⋯ : renommer · dupliquer · supprimer. Une discussion enregistrée garde le contact (nom, photo), le comédien, le style et tous les messages ; pas le point de reprise.</div>
     </div>
     <!-- Appels, SMS et notifications enregistrés, numérotés (maquette 18) : la liste suit le type choisi ; appels et SMS = cibles des canaux Appel / SMS de la passerelle DMX -->
     <div id="callListPanel">
       <div class="tl-h"><b id="callListTitle">Appels enregistrés · 0</b><span class="tl-h-act"><button type="button" class="tl-link" id="callListSort" aria-pressed="false" onclick="toggleCallListSort()"><svg class="ic" aria-hidden="true"><use href="#i-list-ordered"></use></svg> Trier</button><button type="button" class="tl-link" id="callListAll" onclick="openCallListAll()">Tout voir <svg class="ic ic-trail" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button></span></div>
+      <div class="memory-actions" id="clMemActions">
+        <button type="button" class="memory-save-btn" id="clMemSave" onclick="openSaveCallSheet()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Enregistrer</button>
+        <button type="button" class="memory-update-btn" id="clMemUpdate" onclick="updateLoadedCallEntryUndo()" disabled><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Mettre à jour</button>
+      </div>
       <div class="tl-card">
         <div class="cl-rows" id="callListRows"></div>
         <div class="media-pool-empty" id="callListEmpty">Réglez l'appel ci-dessus puis enregistrez-le : il prend le numéro suivant.</div>
@@ -3693,6 +3715,10 @@ body.nv-plateau #content-scn .sq-mode{margin-top:var(--sp-3)}
         <!-- Rangée « Téléphone au départ » (maquette 28b) : barre d état de la séquence, modifiable ici seulement -->
         <button type="button" class="tl-row tl-nav" id="seqPhoneBtn" onclick="openPhoneParams('seq')"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-smartphone"></use></svg><span class="tl-k"><b>Téléphone au départ</b><small id="seqPhoneSum"></small></span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
         <button type="button" class="tl-row tl-nav" id="seqSavedBtn" onclick="openSeqSaved()"><svg class="ic tl-lead" aria-hidden="true"><use href="#i-film"></use></svg><span class="tl-k"><b>Séquences enregistrées</b><small>Charger, dupliquer, supprimer</small></span><span class="tl-v" id="seqSavedCount">0</span><svg class="ic tl-tr" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+      </div>
+      <div class="memory-actions" id="seqMemActions">
+        <button type="button" class="memory-save-btn" id="seqMemSave" onclick="openSaveSeqSheet()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Enregistrer</button>
+        <button type="button" class="memory-update-btn" id="seqMemUpdate" onclick="updateLoadedSeq()" disabled><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"></use></svg> Mettre à jour</button>
       </div>
       <!-- Nouvelle séquence (maquette 47) : séquence vide, « Enregistrer avant ? » si la séquence a changé -->
       <button type="button" class="sq-new" id="seqNewBtn" onclick="seqNewAsk()"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> Nouvelle séquence</button>
@@ -3782,8 +3808,8 @@ body.nv-plateau #content-scn .sq-mode{margin-top:var(--sp-3)}
       <div class="nb-live" id="dcLive" style="display:none"><i class="nb-dot"></i><span id="dcAutoState"></span></div>
       <div class="nb-prog" id="dcProg" style="display:none"><i id="dcAutoFill"></i></div>
       <div class="nb-row">
-        <button type="button" class="nb-ico" id="telSaveBtn" aria-label="Enregistrer dans la liste" onclick="telBarSave()"><svg class="ic" aria-hidden="true"><use href="#i-bookmark"></use></svg></button>
         <button type="button" class="nb-pri" id="callTriggerBtn" onclick="triggerCall()"><svg class="ic" aria-hidden="true" id="callTriggerIc"><use href="#i-phone"></use></svg><span class="nb-lbl"><b id="callTriggerLbl">FAIRE SONNER</b><small id="callTriggerSub"></small></span></button>
+        <button type="button" class="nb-ghost" id="callSpeakerBtn" aria-pressed="false" aria-label="Haut-parleur" onclick="telToggleSpeaker()"><svg class="ic" aria-hidden="true"><use href="#i-volume-2"></use></svg><b>Haut-parleur</b></button>
         <button type="button" class="nb-dng" id="callHangBtn" onclick="telHangup()"><svg class="ic" aria-hidden="true"><use href="#i-phone-off"></use></svg><span class="nb-lbl"><b>Raccrocher</b></span></button>
         <button type="button" class="nb-pri" id="callAnswerBtn" onclick="sendMsg({type:'call:answer'})"><svg class="ic" aria-hidden="true"><use href="#i-phone"></use></svg><span class="nb-lbl"><b>Décrocher</b></span></button>
         <button type="button" class="nb-pri" id="dcOpenBtn" onclick="openChatOnTarget()"><svg class="ic" aria-hidden="true"><use href="#i-message-circle"></use></svg><span class="nb-lbl"><b>OUVRIR SUR L'ÉCRAN</b><small id="dcOpenSub"></small></span></button>
@@ -3969,7 +3995,28 @@ body.nv-plateau #content-scn .sq-mode{margin-top:var(--sp-3)}
       <div class="slider-header"><label for="callAutoSlider">Décroché automatique</label><div class="slider-val" id="callAutoVal">Off</div></div>
       <input type="range" id="callAutoSlider" min="0" max="20" step="1" value="0" oninput="onCallAutoChange()">
     </div>
+    <div class="slider-block rt-auto">
+      <div class="slider-header"><label for="callVoiceDelay">Délai avant la voix</label><div class="slider-val" id="callVoiceDelayVal">0 s</div></div>
+      <input type="range" id="callVoiceDelay" min="0" max="15" step="1" value="0" oninput="onCallAudioChange()">
+    </div>
   </div>
+  <!-- Sortie du son et écran noir : réglées ici, appliquées par l'ÉCRAN de jeu (app native seulement) ; jamais désactivées sur la télécommande -->
+  <div class="ss-card td-sec" id="tdAnswerRoute">
+    <div class="panel-label">Sortie du son</div>
+    <div class="nt-seg" role="group" aria-label="Sortie du son">
+      <button type="button" class="gw-seg-btn active" id="callroute-ear" aria-pressed="true" onclick="setCallRoute('ear')">À l'oreille</button>
+      <button type="button" class="gw-seg-btn" id="callroute-speaker" aria-pressed="false" onclick="setCallRoute('speaker')">Haut-parleur</button>
+    </div>
+    <div class="media-status rt-status" id="callRouteHint">Écouteur par défaut, comme un vrai appel. Modifiable en cours d'appel.</div>
+  </div>
+  <div class="ss-card td-sec" id="tdAnswerProx">
+    <div class="panel-label">Capteur de proximité</div>
+    <div class="toggle-row" style="margin:0">
+      <div><div class="toggle-label">Écran noir contre l'oreille</div><div class="toggle-sub">L'écran s'éteint quand le comédien porte le téléphone à l'oreille (désactivez pour les plans où l'écran doit rester visible)</div></div>
+      <label class="toggle-switch"><input type="checkbox" id="callProxToggle" checked aria-label="Écran noir contre l'oreille" onchange="onCallAudioChange()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+    </div>
+  </div>
+  <div class="media-status td-note" id="tdAnswerNote">Son à l'oreille et écran noir : uniquement sur les écrans de jeu avec l'app native</div>
 </div>
 
 <!-- Téléphone au départ (maquette 28b) ; aussi « Barre d'état du téléphone » de l'onglet Média -->
@@ -5228,6 +5275,13 @@ const SPECS = {
       audioId: opt(str(45, CALL_AUDIO_ID_RE), 'bande son PRÉPARÉE de l’appel enregistré (__au_…) à la place de __callaudio ; '
         + 'absente du cache : décroché silencieux'),
       autoAnswer: opt(int(0, 60), 'décroché automatique après n s (0 = non)'),
+      audio: opt(object({
+        delay: opt(int(0, 15), 'délai en secondes entre le décroché et le début de la voix (absent = 0)'),
+        route: opt(oneOf('ear', 'speaker'), 'sortie du son à l’écran de jeu : « ear » (écouteur, comme un vrai appel) ou « speaker » (haut-parleur) ; absent = « ear »'),
+        prox: opt(bool, 'écran noir contre l’oreille (capteur de proximité) pendant l’appel décroché ; absent = non'),
+      }), 'audio de l’appel décroché : délai avant la voix, sortie du son, capteur de proximité. L’ÉCRAN décide : navigateur '
+        + '(voix sur la sortie normale, proximité ignorée) ou app native (écouteur / haut-parleur, écran noir). '
+        + 'Absent (ancienne télécommande) = voix immédiate, sortie du système, aucun capteur. Un ancien écran ignore le champ'),
       lock: opt(nullable(object({
         time: req(line(8), 'heure affichée'),
         date: req(line(30), 'date affichée'),
@@ -5260,6 +5314,23 @@ const SPECS = {
     },
   },
   'call:answer': { dir: 'r2s', src: ['web'], doc: 'Décroche le faux appel.', fields: {} },
+  'call:speaker': {
+    dir: 'both', src: ['web'],
+    doc: 'Haut-parleur de l’appel décroché, dans les DEUX sens. Télécommande → écran : demande de bascule de la sortie du son '
+      + '(on = haut-parleur, sinon écouteur). Écran → télécommande : état RÉEL de l’écran, renvoyé après tout changement '
+      + '(toucher du comédien sur « Haut-parleur », ordre de la télécommande, décroché avec call:start.audio) ; l’écran fait foi '
+      + 'et la télécommande n’applique l’état qu’à réception (aucun renvoi : pas de boucle). Un ancien écran n’y répond pas.',
+    fields: {
+      on: req(bool, 'haut-parleur actif'),
+      from: req(oneOf('remote', 'screen'), 'émetteur (comme rtc-ice : fait respecter le sens et l’absence de target côté écran)'),
+    },
+    refine: (m, o) => {
+      if (o.direction === 'r2s' && m.from !== 'remote') return 'call:speaker r2s doit avoir from=remote';
+      if (o.direction === 's2r' && m.from !== 'screen') return 'call:speaker s2r doit avoir from=screen';
+      if (m.from === 'screen' && m.target !== undefined) return 'target interdit depuis un écran';
+      return null;
+    },
+  },
   'call:end': { dir: 'r2s', src: ['web'], doc: 'Termine le faux appel / la notification.', fields: {} },
 
   'chat:open': {
@@ -5604,6 +5675,7 @@ const SPECS = {
         kind: req(oneOf('call', 'sms', 'notif', 'chat'), 'appel, SMS, notification ou discussion (chat) affichés'),
         state: req(oneOf('ringing', 'incall', 'notif', 'open'), 'appel qui sonne / en ligne ; SMS ou notification affichés ; discussion ouverte'),
         name: opt(line(40), 'nom affiché (appelant, expéditeur, titre, contact), déjà connu de la télécommande qui l’a envoyé'),
+        speaker: opt(bool, 'appel en ligne seulement : haut-parleur actif sur l’écran (resynchronisation du bouton)'),
       })), 'couche affichée, ou null'),
     },
   },
@@ -8384,6 +8456,17 @@ const IN_NATIVE_APP = !!(window.SETREMOTE_NATIVE && window.ReactNativeWebView);
 //                                                       l'écrit puis ouvre la feuille de partage
 //   project:open { id }                                 sélecteur de fichier de la coque (projet à importer)
 //                                                       docs/PROJECTS.md § 6, 72-project.js
+//   Audio de l'appel décroché (module setremote-audio, docs/CALL-AUDIO-NATIVE.md ; utilisé seulement si
+//   window.SETREMOTE_NATIVE.caps.audioRoute === true : coque à jour, bridge 2) ; ÉCRAN de jeu uniquement,
+//   80-call-simulator.js :
+//   audio:load { id, mime, size, i, n, data }           bande son par morceaux base64 (AUDIO_CHUNK = 512 Kio
+//                                                       de caractères, multiple de 4 sauf le dernier), envoyée
+//                                                       pendant que ça sonne ; id = empreinte du contenu
+//   audio:call-start { route: 'ear'|'speaker', proximity: bool }
+//                                                       décroché : session audio d'appel, sortie, capteur
+//   audio:play { id, delay }                            voix après `delay` s (0 à 15), jouée PAR le module
+//   audio:route { route }                               bascule de la sortie en cours d'appel
+//   audio:call-end {}                                   raccroché, refus, fin : sortie rendue, capteur coupé
 function nativePost(msg) {
   if (!IN_NATIVE_APP) return;
   try { window.ReactNativeWebView.postMessage(JSON.stringify(msg)); } catch (_) {}
@@ -8406,6 +8489,11 @@ if (IN_NATIVE_APP) document.documentElement.classList.add('in-app');
 //                                                             règles que project:save) ; { id, cancelled: true }
 //   project:error { id, reason }                              too-large, unavailable, read-failed,
 //                                                             write-failed, share-failed, bad-chunk
+//   audio:state { route, proximityNear?, proximityAvailable? } sortie réellement utilisée (casque branché,
+//                                                             refus du système…) : l'écran la reporte à la télécommande
+//   audio:loaded { id }                                       bande son complète dans le module (informatif)
+//   audio:error { reason }                                    bad-chunk, too-large, write-failed, play-failed,
+//                                                             unavailable : la voix repart en WebAudio
 // Tout le reste est ignoré ; une erreur de traitement ne remonte jamais à la coque.
 window.SRNative = window.SRNative || {};
 window.SRNative.receive = function (msg) {
@@ -8421,6 +8509,9 @@ window.SRNative.receive = function (msg) {
     if (m.type === 'link:peers') return linkOnPeers(m.peers);
     if (m.type === 'link:state') return linkOnState(m);
     if (m.type === 'link:error') return linkOnError(m.mode, m.reason);
+    if (m.type === 'audio:state') return screenAudioOnNativeState(m);
+    if (m.type === 'audio:error') return screenAudioOnNativeError(m.reason);
+    if (m.type === 'audio:loaded') return true;
     if (m.type === 'project:saved' || m.type === 'project:file' || m.type === 'project:error') return projectOnNative(m);
   } catch (e) { console.warn('SetRemote : message natif', m.type, e); }
   return false;
@@ -9799,6 +9890,7 @@ const PROTO = {
   SDP_MAX: 16000, ICE_MAX: 4096,               // = LIMITS du schéma (packages/protocol)
   ORDER_MAX: 500, MISSING_MAX: 400,
   VID_MAX_CHUNKS: 50000,                       // ≈ 600 Mo base64 en fragments de 12 000
+  AUDIO_DELAY_MAX: 15,                         // s : délai avant la voix (= schéma, call:start.audio.delay)
   CALL_RINGS: ['classic', 'digital', 'soft', 'silent'],
   // + 3 sons synthétisés réservés aux messages (SMS, notification, discussion) ; un appel les ramène à « classic »
   MSG_RINGS: ['classic', 'digital', 'soft', 'silent', 'metal-do', 'metal-sol', 'sent'],
@@ -9857,6 +9949,9 @@ function _validCallStart(m) {
     : null;
   m.autoAnswer = _P.num(m.autoAnswer, 0, 60) ?? 0;
   m.hasAudio = _P.bool(m.hasAudio);
+  // Audio de l'appel décroché : délai avant la voix, sortie du son, capteur de proximité.
+  // Absent (ancienne télécommande) : null = comportement d'avant (voix immédiate, sortie du système)
+  m.audio = callAudioNorm(m.audio); // 80-call-simulator.js ; null = absent (ancienne télécommande)
   // Photo / bande son PRÉPARÉES (tournage sans réseau) : ids dérivés du contenu
   if (!(typeof m.photoId === 'string' && SRP.CALL_PHOTO_ID_RE.test(m.photoId))) m.photoId = null;
   if (!(typeof m.audioId === 'string' && SRP.CALL_AUDIO_ID_RE.test(m.audioId))) m.audioId = null;
@@ -10056,6 +10151,13 @@ const MSG_ROUTES = {
   'call:start':        { roles: ['screen'], validate: _validCallStart, handle: (m) => screenCallStart(m) },
   'call:answer':       { roles: ['screen'], validate: () => true, handle: () => screenCallAnswer() },
   'call:end':          { roles: ['screen'], validate: () => true, handle: () => screenCallEnd() },
+  // Haut-parleur de l'appel décroché, dans les deux sens (80-call-simulator.js, 73-tel-ui.js) :
+  // la télécommande demande, l'écran fait foi et renvoie l'état réel (jamais de renvoi en retour)
+  'call:speaker': {
+    roles: ['screen', 'remote'],
+    validate: (m) => { m.on = m.on === true; return true; },
+    handle: (m) => (mode === 'screen' ? screenOnSpeaker(m.on) : remoteOnCallSpeaker(m.on)),
+  },
   // Discussion fictive (83-discussion.js) : jamais déclenchée par la console DMX
   'chat:open':         { roles: ['screen'], validate: _validChatOpen, handle: (m) => screenChatOpen(m) },
   'chat:msg':          { roles: ['screen'], validate: _validChatMsg, handle: (m) => screenChatMsg(m) },
@@ -10156,6 +10258,7 @@ const MSG_ROUTES = {
       if (t === null) return true;
       if (!_P.isObj(t) || !_P.oneOf(t.kind, ['call', 'sms', 'notif', 'chat']) || !_P.oneOf(t.state, ['ringing', 'incall', 'notif', 'open'])) return false;
       m.tel = { kind: t.kind, state: t.state, name: _P.text(t.name, PROTO.NAME_MAX).replace(/[\u0000-\u001F\u007F]/g, ' ') };
+      if (t.kind === 'call' && t.state === 'incall' && typeof t.speaker === 'boolean') m.tel.speaker = t.speaker;
       return true;
     },
     handle: (m) => remoteOnTelState(m.tel),
@@ -10259,6 +10362,13 @@ function clampOutgoing(m) {
       if (m.appColor !== undefined && !_P.hex(m.appColor)) delete m.appColor;
       clampKeys(m, ['autoAnswer'], 0, 60, true);
       clampKeys(m, ['ringVolume'], 0, 1);
+      if (_P.isObj(m.audio)) {
+        const a = {}, d = _P.num(m.audio.delay, 0, PROTO.AUDIO_DELAY_MAX);
+        if (d !== null) a.delay = Math.round(d);
+        if (m.audio.route === 'ear' || m.audio.route === 'speaker') a.route = m.audio.route;
+        if (typeof m.audio.prox === 'boolean') a.prox = m.audio.prox;
+        m.audio = a;
+      } else delete m.audio;
       if (m.ringId !== undefined && !_P.ringId(m.ringId)) delete m.ringId;
       break;
     }
@@ -11449,7 +11559,10 @@ function remoteOnTelState(tel) {
   scrChanged();
   if (!scrInTarget(id) || typeof telCallPhase !== 'function') return;
   // Barre Tel : Raccrocher / Décrocher pour l'appel retrouvé, retour au repos s'il n'y en a plus
-  if (tel && tel.kind === 'call') telCallPhase(tel.state === 'incall' ? 'incall' : 'ringing');
+  if (tel && tel.kind === 'call') {
+    telCallPhase(tel.state === 'incall' ? 'incall' : 'ringing');
+    if (tel.state === 'incall' && typeof tel.speaker === 'boolean') remoteOnCallSpeaker(tel.speaker); // bouton Haut-parleur retrouvé
+  }
   else if (wasCall && typeof _telCall !== 'undefined' && _telCall.phase !== 'idle') telCallPhase('idle');
   else if (typeof renderTelBar === 'function') renderTelBar();
 }
@@ -16561,7 +16674,9 @@ const PhoneUI = (() => {
   function inCall(m) {
     const st = m.style, T = _PH_TXT;
     const g = (i, l) => '<div class="pc-g"><button type="button" class="pc-gb" aria-label="' + l + '"' + act('noop') + '>' + ic(i) + '</button>' + l + '</div>';
-    const grid = '<div class="pc-grid">' + g('mic-off', T.mute) + g('grid-3x3', T.keypad) + g('volume-2', T.speaker) + g('plus', T.add) + g('video', T.video) + (st === 'tonal' ? g('pause', T.hold) : g('user-round', T.contacts)) + '</div>';
+    // « Haut-parleur » : seul bouton de la grille qui agit (sortie du son, 80-call-simulator.js) ; actif = plein blanc
+    const spk = '<div class="pc-g' + (m.speaker ? ' on' : '') + '"><button type="button" class="pc-gb' + (m.speaker ? ' on' : '') + '" aria-label="' + T.speaker + '" aria-pressed="' + (m.speaker ? 'true' : 'false') + '"' + act('speaker') + '>' + ic('volume-2') + '</button>' + T.speaker + '</div>';
+    const grid = '<div class="pc-grid">' + g('mic-off', T.mute) + g('grid-3x3', T.keypad) + spk + g('plus', T.add) + g('video', T.video) + (st === 'tonal' ? g('pause', T.hold) : g('user-round', T.contacts)) + '</div>';
     const head = '<div class="pc-info">' + (st === 'glass' ? '' : callAvatar(m)) + '<div class="pc-name' + (st === 'glass' ? ' pc-name-s' : '') + '">' + esc(m.name || T.unknown) + '</div><div class="pc-timer" id="scCallTimer">' + esc(m.timer || '00:00') + '</div></div>';
     if (st === 'minimal') return '<div class="pc">' + head + '<div class="pc-bottom solo">' + callBtn('no', 'phone', 'hangup', T.hangup) + '</div></div>';
     return callBg(m) + '<div class="pc">' + head + grid + '<div class="pc-bottom pc-end"><button type="button" class="pc-hang" aria-label="' + T.hangup + '"' + act('hangup') + '>' + ic('phone') + '</button></div></div>';
@@ -17282,6 +17397,8 @@ const _PRJ_OUT = {
         const photo = e.hasPhoto ? safeImageData(await _prjAssetGet(e.id + ':photo')) : null;
         const audio = e.hasAudio ? safeAudioData(await _prjAssetGet(e.id + ':audio')) : null;
         e.photo = photo ? await F.dataUrl(photo) : null;
+        // « audio » du fichier = la bande son ; les réglages audio de l'entrée (délai, sortie, proximité) passent sous « audioCfg »
+        if (e.audio) e.audioCfg = e.audio; else delete e.audioCfg;
         e.audio = audio ? await F.dataUrl(audio) : null;
         delete e.hasPhoto; delete e.hasAudio;
       }
@@ -17451,11 +17568,13 @@ const _PRJ_IN = {
       const raw = _prjArr(o && o[k], _PRJ_RAW_MAX);
       const ids = new Set();
       out[k] = raw.map((e) => {
-        const c = _prjCallEntry(Object.assign({}, e, { hasPhoto: false, hasAudio: false }), k);
+        const c = _prjCallEntry(Object.assign({}, e, { hasPhoto: false, hasAudio: false, audio: e.audioCfg }), k);
         if (!c || ids.has(c.id)) return null;
         ids.add(c.id);
+        const cfg = c.audio; // réglages audio normalisés (appel seulement)
         c.photo = _prjRef(z, e.photo, 'image');
         c.audio = c.kind === 'call' ? _prjRef(z, e.audio, 'audio') : null;
+        if (cfg) c.audioCfg = cfg; else delete c.audioCfg;
         return c;
       }).filter(Boolean);
     }
@@ -17685,6 +17804,8 @@ const _PRJ_APPLY = {
         if (cur[k].length >= CALL_LIST_MAX) { r.skipped++; continue; }
         const e = Object.assign({}, e0);
         delete e.photo; delete e.audio;
+        if (e0.audioCfg) e.audio = e0.audioCfg; // réglages audio de l'entrée (délai, sortie, proximité)
+        delete e.audioCfg;
         e.id = _prjFreshId(e0.id, ids, _clNewId);
         maps.call.set(e0.id, e.id);
         if (e.ringId && maps.ring.has(e.ringId)) e.ringId = maps.ring.get(e.ringId);
@@ -18169,15 +18290,18 @@ function projectOnNative(m) {
 // qui ouvrent leur vue de réglage, mêmes champs et mêmes identifiants qu'avant),
 // liste enregistrée du type (82-call-list.js), et UNE barre d'action fixe
 // au-dessus des onglets (#tel-bar) :
-//   Appel         [signet] FAIRE SONNER · pendant la sonnerie : ligne d'état +
-//                 progression, Raccrocher / Décrocher ; en ligne : Raccrocher
-//   SMS           [signet] ENVOYER LE SMS
-//   Notification  [signet] ENVOYER LA NOTIFICATION
-//   Discussion    [signet] OUVRIR SUR L'ÉCRAN ; ouverte : ↶ · Lecture auto /
+//   Appel         FAIRE SONNER · pendant la sonnerie : ligne d'état +
+//                 progression, Raccrocher / Décrocher ; en ligne : Haut-parleur
+//                 (bascule la sortie du son de l'écran) + Raccrocher
+//   SMS           ENVOYER LE SMS
+//   Notification  ENVOYER LA NOTIFICATION
+//   Discussion    OUVRIR SUR L'ÉCRAN ; ouverte : ↶ · Lecture auto /
 //                 Pause · ENVOYER N°n, avec l'état de la lecture auto au-dessus
-// Le signet enregistre (feuille « Enregistrer » ; entrée chargée : mettre à
-// jour ou enregistrer comme nouveau). Aperçu sans licence : signet et rangées
-// de réglage verrouillés, ▶ des lignes et barre d'envoi actifs (77-licence-ui.js).
+// Enregistrer et mettre à jour : rangée « + Enregistrer / ↻ Mettre à jour » au-dessus
+// de chaque liste enregistrée (82-call-list.js, 89-discussions-saved.js,
+// 96-sequences-saved.js), comme les Effets ; plus de signet dans la barre.
+// Aperçu sans licence : rangées de réglage et boutons d'enregistrement verrouillés,
+// ▶ des lignes et barre d'envoi actifs (77-licence-ui.js).
 // Textes affichés, regroupés pour la traduction ({…} : valeurs)
 const _TU_TXT = {
   on: 'sur {cible}', noScreen: 'aucun écran appairé',
@@ -18187,7 +18311,9 @@ const _TU_TXT = {
   goN: 'ENVOYER N°{n}', goNone: 'Plus de message', goSub: '{qui} : « {texte} »',
   unknown: 'Inconnu', labelNone: '—', photo: 'photo',
   lockOn: 'Arrive sur un faux écran verrouillé · {heure}', lockOff: 'Le SMS arrive en bandeau', lockScreenTime: 'heure de l\'écran',
-  answerNone: 'Silence · manuel', answerManual: 'manuel', answerAuto: 'décroché auto {n} s', answerAudio: 'bande son',
+  answerNone: 'Silence · manuel', answerManual: 'manuel', answerAuto: 'auto {n} s', answerAudio: 'bande son',
+  answerDelay: 'Voix après {n} s', answerEar: 'à l\'oreille', answerSpeaker: 'haut-parleur', answerProx: 'écran noir à l\'oreille',
+  speakerOn: 'haut-parleur',
   showBanner: 'Bandeau', showLock: 'Écran verrouillé', recvNow: 'reçue maintenant', recvAgo: 'reçue il y a {n} min', recvAt: 'reçue à une date précise',
   detailWho: 'Appelant', detailContact: 'Contact', detailApp: 'Application', detailLock: 'Écran verrouillé', detailShow: 'Affichage', detailAnswer: 'Au décroché',
   vibOn: 'vibreur',
@@ -18197,20 +18323,22 @@ const _tuShow = (id, on) => { const el = document.getElementById(id); if (el) el
 const _tuText = (id, t) => { const el = document.getElementById(id); if (el && el.textContent !== t) el.textContent = t; };
 
 // ── État de l'appel de la barre : idle · sent (envoyé) · ringing · incall ──
-const _telCall = { phase: 'idle', t0: 0, auto: 0, text: '' };
+const _telCall = { phase: 'idle', t0: 0, auto: 0, text: '', speaker: false };
 let _telTick = null;
 function _telSecs() { return Math.max(0, Math.floor((Date.now() - _telCall.t0) / 1000)); }
 // Appel envoyé (formulaire, ligne ▶) : Raccrocher / Décrocher dès l'envoi
-function telCallSent(kind, auto, text) {
+// audio : réglages de l'appel envoyé (call:start.audio) : pré-positionne le bouton Haut-parleur
+function telCallSent(kind, auto, text, audio) {
   if (kind !== 'call') return;
   _telCall.phase = 'sent'; _telCall.t0 = Date.now(); _telCall.auto = Math.max(0, Number(auto) || 0); _telCall.text = text || _TU_TXT.sent;
+  _telCall.speaker = !!(audio && audio.route === 'speaker');
   _telStartTick();
   renderTelBar();
 }
 // Retour de l'écran (call:state) : sonne, en ligne, ou retour au repos avec son message
 function telCallPhase(p, status) {
   if (p === 'idle') {
-    _telCall.phase = 'idle';
+    _telCall.phase = 'idle'; _telCall.speaker = false;
     if (_telTick) { clearInterval(_telTick); _telTick = null; }
     _setCallStatusUI(status || '');
     return;
@@ -18229,7 +18357,7 @@ function _telLiveRefresh() {
   let t = '';
   if (c.phase === 'sent') t = c.text || _TU_TXT.sent;
   else if (c.phase === 'ringing') t = _tuTpl(_TU_TXT.ringing, { n: s }) + (c.auto > 0 ? _tuTpl(_TU_TXT.autoIn, { n: Math.max(0, c.auto - s) }) : '');
-  else t = _tuTpl(_TU_TXT.inCall, { t: fmtTime(s) });
+  else t = _tuTpl(_TU_TXT.inCall, { t: fmtTime(s) }) + (c.speaker ? ' · ' + _TU_TXT.speakerOn : '');
   const el = document.getElementById('callStatus');
   if (el && el.textContent !== t) _setCallStatusUI(t, true); else renderTelBar();
   const f = document.getElementById('telProgFill');
@@ -18239,6 +18367,21 @@ function _telLiveRefresh() {
 function telHangup() {
   sendMsg({ type: 'call:end' });
   telCallPhase('idle', _TU_TXT.hungup);
+}
+// Haut-parleur (appel en ligne) : demande à l'écran de basculer la sortie du son. L'écran fait foi :
+// le bouton ne change qu'à son retour (call:speaker, remoteOnCallSpeaker), jamais d'emblée
+function telToggleSpeaker() {
+  if (_telCall.phase !== 'incall') return;
+  sendMsg({ type: 'call:speaker', on: !_telCall.speaker, from: 'remote' });
+}
+// État réel annoncé par l'écran (toucher du comédien, réponse à notre ordre, décroché) ; sans renvoi
+function remoteOnCallSpeaker(on) {
+  const id = typeof _rxFrom !== 'undefined' && _rxFrom && scrKnown(_rxFrom) ? _rxFrom : null;
+  if (id && !scrInTarget(id)) return; // l'interface suit les écrans de la cible
+  if (_telCall.phase === 'idle') return;
+  _telCall.speaker = on === true;
+  _telLiveRefresh();
+  renderTelBar();
 }
 
 // ── Barre d'action ──
@@ -18251,8 +18394,10 @@ function renderTelBar() {
   const sub = nScr ? _tuTpl(_TU_TXT.on, { cible: tg.name + tg.count }) : _TU_TXT.noScreen;
   const status = (document.getElementById('callStatus') || {}).textContent || '';
   renderTelOn(); // « Retirer de l'écran » (27-tab-gate.js)
-  _tuShow('telSaveBtn', !inCall);
   _tuShow('callTriggerBtn', !disc && !inCall);
+  const spk = document.getElementById('callSpeakerBtn');
+  _tuShow('callSpeakerBtn', !disc && inCall && ph === 'incall');
+  if (spk) { spk.classList.toggle('on', _telCall.speaker); spk.setAttribute('aria-pressed', _telCall.speaker ? 'true' : 'false'); }
   _tuShow('callHangBtn', !disc && inCall);
   _tuShow('callAnswerBtn', !disc && inCall && ph !== 'incall');
   _tuShow('telLive', !disc && !!status);
@@ -18286,14 +18431,7 @@ function renderTelBar() {
     const bk = document.getElementById('dcBackBtn');
     if (bk) bk.disabled = !_chat.sent.length;
   }
-  const sv = document.getElementById('telSaveBtn');
-  if (sv) sv.setAttribute('aria-label', disc ? 'Enregistrer le fil dans la liste' : k === 'call' ? 'Enregistrer l\'appel dans la liste' : k === 'sms' ? 'Enregistrer le SMS dans la liste' : 'Enregistrer la notification dans la liste');
 }
-// Signet : enregistrer l'appel / le SMS / la notification, ou le fil de la discussion
-function telBarSave() {
-  if (callKind === 'discussion') openSaveChatSheet(); else openSaveCallSheet();
-}
-
 // ── Rangées-résumé de la carte « À jouer » ──
 function renderTelRows() {
   const val = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
@@ -18336,11 +18474,20 @@ function renderTelRows() {
   if (!parts[0]) parts[0] = 'Silence';
   parts.push(auto > 0 ? _tuTpl(T.answerAuto, { n: auto }) : T.answerManual);
   _tuText('telAnswerVal', parts.join(' · '));
+  // 2e ligne (maquette M2) : délai avant la voix · sortie du son · écran noir. Réglages de la télécommande,
+  // affichés partout : c'est l'écran de jeu qui les applique
+  const au = callAudioFields(), sub = [];
+  if (au.delay > 0) sub.push(_tuTpl(T.answerDelay, { n: au.delay }));
+  sub.push(au.route === 'speaker' ? T.answerSpeaker : T.answerEar);
+  if (au.prox) sub.push(T.answerProx);
+  _tuText('telAnswerSub', sub.join(' · '));
   void k;
 }
 
 // ── Vues de réglage des rangées (même chrome que « Style et sonnerie ») ──
 const _TD_SECS = { who: 'tdWho', app: 'tdApp', lock: 'tdLock', ntapp: 'tdNtApp', ntshow: 'tdNtShow', answer: 'tdAnswer' };
+// Cartes qui suivent celle de la rubrique : « Au décroché » = bande son et délai, puis sortie du son, proximité et sa note
+const _TD_EXTRA = { answer: ['tdAnswerRoute', 'tdAnswerProx', 'tdAnswerNote'] };
 let _tdSec = null;
 function openTelDetail(sec) {
   if (licLocked('tel') || !_TD_SECS[sec]) return; // aperçu sans licence : réglages verrouillés
@@ -18348,6 +18495,7 @@ function openTelDetail(sec) {
   if (!v) return;
   _tdSec = sec;
   for (const [s, id] of Object.entries(_TD_SECS)) { const el = document.getElementById(id); if (el) el.style.display = s === sec ? 'flex' : 'none'; }
+  for (const [s, ids] of Object.entries(_TD_EXTRA)) for (const id of ids) { const el = document.getElementById(id); if (el) el.style.display = s === sec ? (id === 'tdAnswerNote' ? 'block' : 'flex') : 'none'; }
   const T = _TU_TXT;
   _tuText('tdTitle', sec === 'who' ? (callKind === 'call' ? T.detailWho : T.detailContact) : sec === 'app' || sec === 'ntapp' ? T.detailApp : sec === 'lock' ? T.detailLock : sec === 'ntshow' ? T.detailShow : T.detailAnswer);
   v.classList.toggle('over-sheet', !!_sheet); // ouverte depuis une feuille (création sur place) : passe devant
@@ -19398,14 +19546,14 @@ function licLocked(f) { return _licPreview[f] === true; }
 // Éléments verrouillés : estompés (dim) ou seulement figés (ro, lisibles)
 const _LIC_LOCKS = {
   tel: {
-    // Rangées de réglage, champs sur place, signet et listes : figés ; ▶ des lignes, barre d'envoi et vue des appels restent actifs
+    // Rangées de réglage, champs sur place, boutons Enregistrer / Mettre à jour et listes : figés ; ▶ des lignes, barre d'envoi et vue des appels restent actifs
     dim: ['telStyleBtn', 'telRingBtn', 'telStyleRow', 'ntStyleBtn', 'callWhoSaved', 'telWhoBtn', 'callMsgText', 'telAppBtn', 'callLockPanel', 'ntAppPanel',
-      'telNtTitleField', 'telNtBodyField', 'ntShowPanel', 'callAnswerBlock', 'telSaveBtn', 'dcContactPanel', 'dcActorRow', 'dcAdd', 'dcWriteBtn', 'dcThreadMore'],
+      'telNtTitleField', 'telNtBodyField', 'ntShowPanel', 'callAnswerBlock', 'clMemActions', 'dcMemActions', 'dcContactPanel', 'dcActorRow', 'dcAdd', 'dcWriteBtn', 'dcThreadMore'],
     ro: ['dcRows', 'dcTimingPanel'],
     ex: ['telPlayTitle'],
     banner: 'licPvTel',
   },
-  seq: { dim: ['seqAddBtn', 'seqAddRow', 'seqPhoneBtn', 'seqSavedBtn', 'seqNewBtn', 'seqMoreBtn', 'seqSortBtn'], ro: ['seqRows'], ex: [], banner: 'licPvSeq' },
+  seq: { dim: ['seqAddBtn', 'seqAddRow', 'seqPhoneBtn', 'seqSavedBtn', 'seqNewBtn', 'seqMemActions', 'seqMoreBtn', 'seqSortBtn'], ro: ['seqRows'], ex: [], banner: 'licPvSeq' },
 };
 function _licLockUi(f, on) {
   const L = _LIC_LOCKS[f];
@@ -20339,6 +20487,51 @@ function renderCallAudioRow(message) {
   }
   renderTelRows(); // rangée « Au décroché »
 }
+// Audio de l'appel décroché (vue « Au décroché », maquette M1) : délai avant la voix (0 à 15 s),
+// sortie du son (à l'oreille / haut-parleur) et écran noir contre l'oreille (capteur de proximité).
+// Réglages de la télécommande, jamais désactivés ici : c'est l'ÉCRAN de jeu qui décide (app native :
+// écouteur et écran noir ; navigateur : voix sur sa sortie normale, proximité ignorée). Ils partent
+// dans call:start.audio et font partie de l'entrée enregistrée (82-call-list.js). Valeurs d'origine :
+// voix tout de suite, à l'oreille, écran noir.
+const CALL_AUDIO_DEFAULT = Object.freeze({ delay: 0, route: 'ear', prox: true });
+let _callRoute = CALL_AUDIO_DEFAULT.route;
+// Normalise un objet audio (réseau, entrée enregistrée) ; null = absent (ancien comportement)
+function callAudioNorm(a) {
+  if (!a || typeof a !== 'object' || Array.isArray(a)) return null;
+  const d = Number(a.delay);
+  return {
+    delay: Number.isFinite(d) ? Math.min(15, Math.max(0, Math.round(d))) : 0,
+    route: a.route === 'speaker' ? 'speaker' : 'ear',
+    prox: a.prox === true,
+  };
+}
+function callAudioFields() {
+  const sl = document.getElementById('callVoiceDelay'), px = document.getElementById('callProxToggle');
+  return callAudioNorm({ delay: sl ? parseInt(sl.value) || 0 : 0, route: _callRoute, prox: px ? px.checked : CALL_AUDIO_DEFAULT.prox });
+}
+// Réglages d'une entrée chargée dans le formulaire (entrée d'avant : valeurs d'origine)
+function callAudioApply(a) {
+  const v = callAudioNorm(a) || CALL_AUDIO_DEFAULT;
+  const sl = document.getElementById('callVoiceDelay'), px = document.getElementById('callProxToggle');
+  if (sl) sl.value = String(v.delay);
+  if (px) px.checked = v.prox;
+  setCallRoute(v.route);
+}
+function setCallRoute(r) {
+  _callRoute = r === 'speaker' ? 'speaker' : 'ear';
+  for (const x of ['ear', 'speaker']) {
+    const b = document.getElementById('callroute-' + x);
+    if (b) { b.classList.toggle('active', x === _callRoute); b.setAttribute('aria-pressed', x === _callRoute ? 'true' : 'false'); }
+  }
+  onCallAudioChange();
+}
+function onCallAudioChange() {
+  const sl = document.getElementById('callVoiceDelay');
+  const v = sl ? parseInt(sl.value) || 0 : 0;
+  const out = document.getElementById('callVoiceDelayVal');
+  if (out) out.textContent = v + ' s';
+  renderTelRows();
+}
 function onCallAutoChange() {
   const v = parseInt(document.getElementById('callAutoSlider').value) || 0;
   document.getElementById('callAutoVal').textContent = v > 0 ? v + ' s' : 'Off';
@@ -20432,6 +20625,7 @@ function callFormFields() {
     photoMode: (callStyle !== 'minimal') ? callPhotoMode : 'avatar',
     hasAudio: !!_callAudioData,
     autoAnswer: parseInt(document.getElementById('callAutoSlider').value) || 0,
+  }, callKind === 'call' ? { audio: callAudioFields() } : {}, {
     lock: lockOn ? {
       time: (document.getElementById('lockTime').value || '').slice(0, 8),
       date: (document.getElementById('lockDate').value || '').slice(0, 30),
@@ -20496,7 +20690,7 @@ async function triggerCall() {
   }
   sendMsg(Object.assign({ type: 'call:start' }, fields));
   _setCallStatusUI(fields.kind === 'call' ? 'Sonnerie envoyée…' : notif ? 'Notification envoyée' : 'SMS envoyé');
-  telCallSent(fields.kind, fields.kind === 'call' ? fields.autoAnswer : 0);
+  telCallSent(fields.kind, fields.kind === 'call' ? fields.autoAnswer : 0, undefined, fields.audio);
 }
 // Ligne d'état de la barre Tel (au-dessus des boutons, vide au repos) ; un envoi de
 // SMS ou de notification s'efface seul après quelques secondes
@@ -20535,7 +20729,11 @@ function remoteOnCallState(m) {
 function screenTelState() {
   const line = (v) => String(v || '').replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, 40);
   const withName = (o, n) => (n ? Object.assign(o, { name: n }) : o);
-  if (_callState !== 'idle' && _callCfg) return withName({ kind: _callCfg.kind, state: _callState }, line(_callCfg.name));
+  if (_callState !== 'idle' && _callCfg) {
+    const o = withName({ kind: _callCfg.kind, state: _callState }, line(_callCfg.name));
+    if (_callCfg.kind === 'call' && _callState === 'incall') o.speaker = _callSpeaker;
+    return o;
+  }
   if (typeof _scChat !== 'undefined' && _scChat) return withName({ kind: 'chat', state: 'open' }, line(_scChat.name));
   return null;
 }
@@ -20719,6 +20917,7 @@ function screenCallStart(m) {
   screenCallStopTimers();
   _stopCallAudio();
   _callHideSeq++; // annule une éventuelle fermeture animée encore en attente
+  _callSpeaker = false;
   // Tout ce qui vient du réseau est normalisé/validé avant d'être affiché
   m = m || {};
   // Ancienne messagerie (chat, whatsapp) : affichée comme un SMS
@@ -20744,6 +20943,8 @@ function screenCallStart(m) {
     // Bande son préparée de l'appel enregistré (__au_…) ; absente : __callaudio
     audioId: typeof m.audioId === 'string' && SRP.CALL_AUDIO_ID_RE.test(m.audioId) ? m.audioId : null,
     autoAnswer: Math.max(0, Math.min(60, Number(m.autoAnswer) || 0)),
+    // Délai avant la voix, sortie du son, écran noir : null = ancienne télécommande (comportement d'avant)
+    audio: callAudioNorm(m.audio),
     lock: m.lock ? { time: String(m.lock.time || '').slice(0, 8), date: String(m.lock.date || '').slice(0, 30) } : null,
     vib: m.vib === true, // vibreur du type (maquette 36b) ; absent : ne vibre pas
   };
@@ -20763,6 +20964,8 @@ function screenCallStart(m) {
       _callVibTimer = setInterval(() => screenVibrate(SCREEN_VIB_RING), SCREEN_VIB_RING_EVERY);
     }
     if (_callCfg.autoAnswer > 0) _callAutoTimer = setTimeout(screenCallAnswer, _callCfg.autoAnswer * 1000);
+    _callSpeaker = !!(_callCfg.audio && _callCfg.audio.route === 'speaker');
+    _nativeAudioPreload(); // app native : bande son transmise au module pendant que ça sonne
     sendMsg({ type: 'call:state', state: 'ringing' });
   } else {
     _callState = 'notif';
@@ -20839,7 +21042,7 @@ function _scRenderIncoming() {
 
 function _scRenderInCall() {
   const el = document.getElementById('screen-call');
-  el.innerHTML = _scHtml('ph-call', PhoneUI.inCall(Object.assign({}, _callCfg, { timer: '00:00' })));
+  el.innerHTML = _scHtml('ph-call', PhoneUI.inCall(Object.assign({}, _callCfg, { timer: '00:00', speaker: _callSpeaker })));
 }
 
 // Bandeau d'appel entrant en haut (téléphone en cours d'utilisation)
@@ -20894,6 +21097,7 @@ function _scBannerRelease() { // doigt levé : reprise
       case 'decline': screenTapDecline(); break;
       case 'answer': screenTapAnswer(); break;
       case 'hangup': screenTapHangup(); break;
+      case 'speaker': screenTapSpeaker(); break;
       case 'notif': screenNotifTap(); break;
       case 'end': screenCallEnd(); break;
     }
@@ -20954,15 +21158,18 @@ let _callAudioEl = null;
 // l'écran : un élément <audio> serait bloqué par iOS quand le décroché vient
 // de la télécommande ou du décroché automatique (aucun geste en cours).
 let _callAudioSrc = null;
+let _callVoiceTimer = null;   // délai avant la voix (navigateur) ; en natif, le délai est tenu par le module
+let _callVoiceSeq = 0;        // jeton : une lecture annulée (raccroché) ne démarre pas
 async function _playCallAudio() {
-  _stopCallAudio();
+  _stopCallAudio(true);
+  const seq = ++_callVoiceSeq;
   const c = _mediaCache.get((_callCfg && _callCfg.audioId) || '__callaudio');
   if (!c || !c.data) return;
   const ctx = _ac();
   try {
     if (ctx) {
       if (!c._buf) c._buf = await _decodeAudio(ctx, _dataUrlBytes(c.data).buffer);
-      if (_callState !== 'incall') return; // raccroché pendant le décodage
+      if (_callState !== 'incall' || seq !== _callVoiceSeq) return; // raccroché pendant le décodage
       const src = ctx.createBufferSource();
       src.buffer = c._buf;
       src.connect(ctx.destination);
@@ -20971,16 +21178,133 @@ async function _playCallAudio() {
       return;
     }
   } catch (_) { /* format non décodable : repli sur <audio> */ }
+  if (_callState !== 'incall' || seq !== _callVoiceSeq) return;
   try {
     const a = new Audio(c.data);
     a.play().catch(() => {});
     _callAudioEl = a;
   } catch (_) {}
 }
-function _stopCallAudio() {
+// keepSeq : sans annuler une lecture que l'appelant va relancer aussitôt
+function _stopCallAudio(keepSeq) {
+  if (!keepSeq) _callVoiceSeq++;
+  if (_callVoiceTimer) { clearTimeout(_callVoiceTimer); _callVoiceTimer = null; }
   if (_callAudioSrc) { try { _callAudioSrc.stop(); } catch (_) {} _callAudioSrc = null; }
   if (_callAudioEl) { try { _callAudioEl.pause(); } catch (_) {} _callAudioEl = null; }
+  if (!keepSeq) _nativeAudioEnd();
 }
+
+// — Écran : audio de l'appel décroché, app native et haut-parleur —
+// App native (window.SETREMOTE_NATIVE.caps.audioRoute, coque à jour) : la voix est jouée PAR LE MODULE
+// natif (setremote-audio), seul à pouvoir la router vers l'écouteur, la faire suivre le capteur de
+// proximité et la tenir hors de portée des coupures de la vue web. La page le pilote par le pont
+// (00-native-bridge.js : audio:load, audio:call-start, audio:play, audio:route, audio:call-end).
+// Navigateur, ou coque sans le module : voix en WebAudio sur la sortie normale, après le délai, et
+// proximité ignorée ; le bouton « Haut-parleur » n'a alors qu'un effet visuel (et se synchronise).
+const AUDIO_CHUNK = 512 * 1024;      // caractères base64 par message (multiple de 4)
+let _callSpeaker = false;            // sortie du son : true = haut-parleur
+let _callNativeOn = false;           // session audio native ouverte pour l'appel en cours
+const _nativeAudioSent = new Set();  // ids de bandes son déjà transmises au module (cette page)
+let _nativeAudioPlay = null;         // { id } : lecture native demandée (repli WebAudio sur erreur)
+function nativeAudioAvailable() {
+  const n = window.SETREMOTE_NATIVE;
+  return IN_NATIVE_APP && !!(n && n.caps && n.caps.audioRoute === true);
+}
+// Id de la bande son pour le module : empreinte courte du contenu (caractères sûrs, ≤ 40)
+function _nativeAudioId(data) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < data.length; i++) { h ^= data.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return 'a' + h.toString(16).padStart(8, '0') + '-' + data.length.toString(36);
+}
+// { id, mime, b64 } de la bande son de l'appel, ou null (absente du cache de l'écran)
+function _callAudioSource() {
+  const c = _mediaCache.get((_callCfg && _callCfg.audioId) || '__callaudio');
+  if (!c || !c.data) return null;
+  const d = String(c.data), i = d.indexOf(',');
+  if (i < 0) return null;
+  return { id: _nativeAudioId(d), mime: (/^data:([^;,]+)/.exec(d) || [])[1] || '', b64: d.slice(i + 1) };
+}
+// Transmet la bande son au module par morceaux (une seule fois par contenu)
+function _nativeAudioSend(src) {
+  if (_nativeAudioSent.has(src.id)) return;
+  _nativeAudioSent.add(src.id);
+  const n = Math.max(1, Math.ceil(src.b64.length / AUDIO_CHUNK));
+  for (let i = 0; i < n; i++) {
+    nativePost({ type: 'audio:load', id: src.id, mime: src.mime, size: src.b64.length, i, n, data: src.b64.slice(i * AUDIO_CHUNK, (i + 1) * AUDIO_CHUNK) });
+  }
+}
+// Pendant que ça sonne : le module reçoit déjà la voix (le décroché automatique ne doit pas attendre)
+function _nativeAudioPreload() {
+  if (!nativeAudioAvailable() || !_callCfg || !_callCfg.audio || !_callCfg.hasAudio) return;
+  const src = _callAudioSource();
+  if (src) _nativeAudioSend(src);
+}
+// Décroché : ouvre la session audio native (sortie, capteur) et lance la voix après le délai
+function _callAudioAnswer() {
+  const cfg = _callCfg;
+  if (!cfg) return;
+  const a = cfg.audio;
+  if (a && nativeAudioAvailable()) {
+    _callNativeOn = true;
+    nativePost({ type: 'audio:call-start', route: _callSpeaker ? 'speaker' : 'ear', proximity: a.prox });
+    const src = cfg.hasAudio ? _callAudioSource() : null;
+    if (src) {
+      _nativeAudioSend(src);
+      _nativeAudioPlay = { id: src.id };
+      nativePost({ type: 'audio:play', id: src.id, delay: a.delay });
+    }
+    return;
+  }
+  if (!cfg.hasAudio) return;
+  const delay = a ? a.delay : 0; // ancienne télécommande : tout de suite
+  if (delay > 0) _callVoiceTimer = setTimeout(() => { _callVoiceTimer = null; if (_callState === 'incall') _playCallAudio(); }, delay * 1000);
+  else _playCallAudio();
+}
+// Fin d'appel (raccroché, refus, nouvel appel) : le module rend la sortie et coupe le capteur
+function _nativeAudioEnd() {
+  _nativeAudioPlay = null;
+  if (!_callNativeOn) return;
+  _callNativeOn = false;
+  nativePost({ type: 'audio:call-end' });
+}
+// Module → page (00-native-bridge.js) : audio:state { route, proximityNear?, proximityAvailable? }, audio:error { reason }
+function screenAudioOnNativeState(m) {
+  if (_callState !== 'incall' || !_callNativeOn) return false;
+  if (m.route === 'ear' || m.route === 'speaker') {
+    const on = m.route === 'speaker';
+    if (on !== _callSpeaker) { _callSpeaker = on; _paintSpeaker(); screenSendSpeaker(); }
+  }
+  return true;
+}
+// Lecture native impossible : la voix part quand même, en WebAudio
+function screenAudioOnNativeError(reason) {
+  if (reason === 'not-loaded') _nativeAudioSent.clear(); // le module a perdu la bande son : elle repartira à l'appel suivant
+  if (_callState !== 'incall' || !_callCfg || !_callCfg.hasAudio || !_nativeAudioPlay) return false;
+  _nativeAudioPlay = null;
+  _playCallAudio();
+  return true;
+}
+// Bouton « Haut-parleur » de l'écran : état visuel (aria-pressed, classe .on)
+function _paintSpeaker() {
+  const b = document.querySelector('#screen-call [data-act="speaker"]');
+  if (!b) return;
+  b.classList.toggle('on', _callSpeaker);
+  b.setAttribute('aria-pressed', _callSpeaker ? 'true' : 'false');
+  if (b.parentElement) b.parentElement.classList.toggle('on', _callSpeaker);
+}
+// Le comédien (toucher) ou la télécommande (call:speaker) change la sortie ; l'écran fait foi
+function screenSetSpeaker(on) {
+  if (_callState !== 'incall') return;
+  _callSpeaker = on === true;
+  if (_callNativeOn) nativePost({ type: 'audio:route', route: _callSpeaker ? 'speaker' : 'ear' });
+  _paintSpeaker();
+  screenSendSpeaker();
+}
+function screenTapSpeaker() { screenSetSpeaker(!_callSpeaker); }
+// Ordre de la télécommande (call:speaker) : l'écran applique puis renvoie l'état réel
+function screenOnSpeaker(on) { screenSetSpeaker(on); }
+// État renvoyé à la télécommande après tout changement (jamais en réponse à son propre renvoi)
+function screenSendSpeaker() { sendMsg({ type: 'call:speaker', on: _callSpeaker, from: 'screen' }); }
 function screenCallAnswer() {
   if (_callState !== 'ringing') return;
   _callState = 'incall';
@@ -20991,8 +21315,9 @@ function screenCallAnswer() {
   if (el) el.classList.remove('notif');
   _scRenderInCall();
   _callClockTimer = setInterval(_scTickInCall, 1000);
-  if (_callCfg && _callCfg.hasAudio) _playCallAudio();
+  _callAudioAnswer();
   sendMsg({ type: 'call:state', state: 'incall' });
+  screenSendSpeaker(); // état de départ du bouton « Haut-parleur » de la télécommande (l'écran fait foi)
 }
 function screenCallDecline() {
   if (_callState !== 'ringing') return;
@@ -21008,6 +21333,7 @@ function screenCallHide() {
   screenCallStopTimers();
   _stopCallAudio();
   _callState = 'idle';
+  _callSpeaker = false;
   const el = document.getElementById('screen-call');
   if (!el) return;
   // Sortie animée : bannières/bandeaux remontent vers le haut, écran verrouillé
@@ -21560,15 +21886,18 @@ function ringInit() {
 //     entrée, champ vidé) : « nom · sous-titre » (notification : titre, sinon
 //     application). Ce nom sert partout où les entrées sont listées : la liste,
 //     les étapes de la Séquence et leurs choix (callEntryName).
-//   • « + Enregistrer … » ouvre la feuille « Nom de l'enregistrement »
-//     (proposition préremplie ; laissée telle quelle ou vidée : pas de nom propre).
+//   • Rangée « + Enregistrer / ↻ Mettre à jour » au-dessus de la liste (même
+//     composant que les Effets). « + Enregistrer » ouvre la feuille « Nom de
+//     l'enregistrement » (proposition préremplie ; laissée telle quelle ou vidée :
+//     pas de nom propre) et crée TOUJOURS une nouvelle entrée.
 //   • Entrée CHARGÉE (touchée dans la liste, ou « Charger dans l'onglet ») :
-//     « ↻ Mettre à jour « nom » » (réglages actuels du formulaire, même id,
-//     même numéro donc même plage DMX, même nom) et « + Enregistrer comme
-//     nouveau » remplacent le bouton d'enregistrement. L'état « chargée » prend
-//     fin quand le type du formulaire change, quand on change d'onglet de liste,
-//     quand l'entrée est supprimée, après « Enregistrer comme nouveau » et au
-//     rechargement des listes (licence) : le bouton unique revient.
+//     « ↻ Mettre à jour » (grisé tant qu'aucune n'est chargée) y range les réglages
+//     actuels du formulaire, sans feuille (même id, même numéro donc même plage
+//     DMX, même nom), puis bandeau « « nom » mis à jour · Annuler » qui restitue
+//     l'ancienne entrée, sa photo et sa bande son. L'état « chargée » prend fin
+//     quand le type du formulaire change, quand on change d'onglet de liste,
+//     quand l'entrée est supprimée, après « + Enregistrer » et au rechargement
+//     des listes (licence).
 //   • « ⋯ » d'une ligne (la poignée reste) : charger, renommer, mettre à jour
 //     avec les réglages actuels (formulaire du même type), dupliquer (en fin de
 //     liste, photo et bande son copiées), supprimer (confirmation).
@@ -21594,7 +21923,7 @@ const _CL_TXT = {
   nameNote: 'Vide : « {defaut} ». Le nom sert dans la liste, la Séquence et la console (n° {n}, DMX {plage}).',
   nameNoteNoDmx: 'Vide : « {defaut} ». Le nom sert dans la liste et la Séquence (n° {n}).',
   cancel: 'Annuler', ok: 'Enregistrer', close: 'Fermer',
-  update: '↻ Mettre à jour « {nom} »',
+  updated: '« {nom} » mis à jour',
   menuLoad: 'Charger dans l\'onglet', menuRename: 'Renommer', menuUpdate: 'Mettre à jour avec les réglages actuels',
   menuDuplicate: 'Dupliquer', menuDelete: 'Supprimer', menuAria: 'Charger, renommer, mettre à jour, dupliquer, supprimer',
   menuTitle: '« {nom} »', copy: '{nom} (copie)',
@@ -21609,7 +21938,6 @@ const _CL_TXT = {
   dmxNote: 'Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16) : valeur n × 10 … n × 10 + 9 = entrée n. Valeur 0 : raccrocher. Glissez ou utilisez Trier / ⋯ pour changer l\'ordre.',
   dmxNoteNotif: 'Les notifications ne se déclenchent pas depuis la console : seulement d\'ici.',
   dmxEmpty: 'Aucune entrée dans cette liste.',
-  saveUpd: 'n° {n} · garde sa place dans la liste', saveNewSub: 'prend le n° {n}', saveNew: 'Enregistrer comme nouveau',
   sentCall: 'Appel n°{n} envoyé…', sentSms: 'SMS n°{n} envoyé', sentNotif: 'Notification n°{n} envoyée',
   genreCall: 'appel', genreSms: 'SMS', genreNotif: 'notification',
 };
@@ -21623,7 +21951,7 @@ function callEntryDefaultName(e) {
 }
 // Nom affiché d'une entrée : son nom propre, sinon le nom par défaut
 function callEntryName(e) { return (e && e.title) || callEntryDefaultName(e || {}); }
-const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'vib', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio', 'phone', 'received'];
+const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'vib', 'present', 'photoMode', 'autoAnswer', 'audio', 'lock', 'hasPhoto', 'hasAudio', 'phone', 'received'];
 
 // ── Persistance ──
 function _clListOf(kind) { return kind === 'call' || kind === 'notif' ? kind : 'sms'; }
@@ -21645,6 +21973,12 @@ function _clSanitize(e) {
     else delete out.ringVolume;
   }
   if (out.vib !== true) delete out.vib;
+  // Audio de l'appel décroché (délai, sortie du son, proximité) : appels seulement ; entrée d'avant : absent
+  // = ancien comportement (voix tout de suite, sortie du système)
+  if (out.kind === 'call') {
+    const au = callAudioNorm(out.audio);
+    if (au) out.audio = au; else delete out.audio;
+  } else delete out.audio;
   // Nom de l'enregistrement (maquette 43b) : facultatif (ancienne entrée : aucun)
   const title = _clLine(e.title);
   if (title) out.title = title;
@@ -21855,10 +22189,14 @@ function renderCallList() {
   }
   const sort = document.getElementById('callListSort');
   if (sort) { sort.setAttribute('aria-pressed', _clSort ? 'true' : 'false'); sort.classList.toggle('on', _clSort); sort.style.display = list.length > 1 ? '' : 'none'; }
+  // « + Enregistrer » / « ↻ Mettre à jour » : la mise à jour n'a de sens que pour une entrée chargée
+  const sv = document.getElementById('clMemSave'), up = document.getElementById('clMemUpdate');
+  if (sv) sv.disabled = list.length >= CALL_LIST_MAX;
+  if (up) up.disabled = !loaded;
   const empty = document.getElementById('callListEmpty');
   if (empty) {
     empty.style.display = list.length ? 'none' : 'block';
-    empty.textContent = 'Réglez ' + (kind === 'call' ? 'l\'appel' : kind === 'notif' ? 'la notification' : 'le SMS') + ' ci-dessus puis enregistrez-' + (kind === 'notif' ? 'la' : 'le') + ' (signet) : ' + (kind === 'notif' ? 'elle' : 'il') + ' prend le numéro suivant.';
+    empty.textContent = 'Réglez ' + (kind === 'call' ? 'l\'appel' : kind === 'notif' ? 'la notification' : 'le SMS') + ' ci-dessus puis enregistrez-' + (kind === 'notif' ? 'la' : 'le') + ' : ' + (kind === 'notif' ? 'elle' : 'il') + ' prend le numéro suivant.';
   }
   const dmx = document.getElementById('callListDmx');
   if (dmx) dmx.style.display = kind === 'notif' ? 'none' : '';
@@ -21939,7 +22277,7 @@ async function saveCurrentCall(title, over) {
 // réécrites sous les clés de l'entrée, ou effacées si elle n'en a plus (rien
 // d'ancien ne reste) ; ids préparés oubliés (contenu changé). Le formulaire doit
 // être du même type de liste ; false : impossible.
-async function updateCallEntry(id) {
+async function updateCallEntry(id, applied) {
   if (licLocked('tel')) return false; // aperçu sans licence (77-licence-ui.js)
   const kind = _clKindOf(id);
   if (!kind) return false;
@@ -21953,6 +22291,7 @@ async function updateCallEntry(id) {
   _clPrepIds.delete(id);
   persistCallList();
   renderCallList();
+  if (typeof applied === 'function') applied(); // partie immédiate faite (bandeau « mis à jour »)
   await Promise.all([
     photo ? callAssetPut(id + ':photo', photo) : callAssetDelete(id + ':photo'),
     audio ? callAssetPut(id + ':audio', audio) : callAssetDelete(id + ':audio'),
@@ -21960,6 +22299,30 @@ async function updateCallEntry(id) {
   return true;
 }
 function updateLoadedCallEntry() { const e = callListLoadedEntry(); return e ? updateCallEntry(e.id) : Promise.resolve(false); }
+// « ↻ Mettre à jour » de la rangée : sans feuille, avec bandeau « mis à jour · Annuler » (6 s) qui
+// restitue l'entrée d'avant, sa photo et sa bande son (relues avant l'écrasement)
+async function updateLoadedCallEntryUndo() {
+  const e = callListLoadedEntry();
+  if (!e || licLocked('tel')) return false;
+  const id = e.id, kind = _clKindOf(id);
+  const prev = JSON.parse(JSON.stringify(e));
+  const [photo, audio] = await Promise.all([prev.hasPhoto ? callAssetGet(id + ':photo') : null, prev.hasAudio ? callAssetGet(id + ':audio') : null]);
+  return updateCallEntry(id, () => undoSnack({
+    text: _clTpl(_CL_TXT.updated, { nom: callEntryName(prev) }),
+    undo: async () => {
+      const list = callList[kind], i = list.findIndex((x) => x.id === id);
+      if (i < 0) return; // supprimée depuis
+      list[i] = prev;
+      _clPrepIds.delete(id);
+      persistCallList();
+      renderCallList();
+      await Promise.all([
+        photo ? callAssetPut(id + ':photo', photo) : callAssetDelete(id + ':photo'),
+        audio ? callAssetPut(id + ':audio', audio) : callAssetDelete(id + ':audio'),
+      ]);
+    },
+  }));
+}
 // Renommer : vide (ou le nom par défaut) → plus de nom propre
 function renameCallEntry(id, value) {
   if (licLocked('tel')) return;
@@ -22074,6 +22437,7 @@ async function loadCallEntryIntoForm(e) {
   const lt = document.getElementById('lockToggle'); if (lt) lt.checked = e.kind === 'sms' && !!e.lock;
   val('lockTime', e.lock ? e.lock.time || '' : ''); val('lockDate', e.lock ? e.lock.date || '' : '');
   val('callAutoSlider', String(e.autoAnswer || 0)); onCallAutoChange();
+  callAudioApply(e.kind === 'call' ? e.audio : null); // délai, sortie du son, proximité (entrée d'avant : valeurs d'origine)
   renderCallListSaveLabel();
   const assets = await callEntryAssets(e);
   if (seq !== _clLoadSeq) return; // une autre entrée a été touchée entre-temps
@@ -22105,7 +22469,7 @@ async function playCallEntry(id) {
   const n = callList[kind].indexOf(e) + 1;
   const text = _clTpl(e.kind === 'call' ? _CL_TXT.sentCall : e.kind === 'notif' ? _CL_TXT.sentNotif : _CL_TXT.sentSms, { n });
   _setCallStatusUI(text);
-  telCallSent(e.kind, e.kind === 'call' ? (e.autoAnswer || 0) : 0, text);
+  telCallSent(e.kind, e.kind === 'call' ? (e.autoAnswer || 0) : 0, text, e.audio);
   const held = scrTargetIds().length - free.length;
   await sendCallEntry(e, held > 0 ? [{ screens: free }] : undefined);
 }
@@ -22184,31 +22548,24 @@ function callListSheetContent(s) {
     };
   }
   // Nom : de l'enregistrement à venir (proposition préremplie) ou de l'entrée à renommer
-  let def, val, n, list, title, choice = '';
+  let def, val, n, list, title;
   if (e) {
     def = callEntryDefaultName(e); val = e.title || def; list = kind; n = callList[kind].indexOf(e) + 1; title = _CL_TXT.sheetRename;
   } else {
     const f = _clFormEntry().e;
     def = callEntryDefaultName(f); val = def; list = _clListOf(f.kind); n = callList[list].length + 1;
     title = f.kind === 'call' ? _CL_TXT.sheetCall : f.kind === 'notif' ? _CL_TXT.sheetNotif : _CL_TXT.sheetSms;
-    // Entrée chargée (maquette 4e3) : « Mettre à jour » ou « Comme nouveau »
-    const loaded = callListLoadedEntry();
-    if (loaded) {
-      choice = '<button type="button" class="dc-menu-btn dc-menu-big" id="callSaveUpdate" onclick="closeSheet();updateLoadedCallEntry()">' + icon('refresh-cw')
-        + '<span><b>' + escapeHtml(_clTpl(_CL_TXT.update, { nom: callEntryName(loaded) }).replace(/^↻\s*/, '')) + '</b><small>' + escapeHtml(_clTpl(_CL_TXT.saveUpd, { n: callList[list].indexOf(loaded) + 1 })) + '</small></span></button>';
-      title = _CL_TXT.saveNew;
-    }
   }
   const dmx = callEntryDmxRange(n - 1, list);
   const note = _clTpl(dmx === '—' ? _CL_TXT.nameNoteNoDmx : _CL_TXT.nameNote, { defaut: def, n, plage: dmx });
   return {
-    title: choice ? _clTpl(list === 'call' ? _CL_TXT.sheetCall : list === 'notif' ? _CL_TXT.sheetNotif : _CL_TXT.sheetSms, {}) : title, form: true,
-    html: choice + '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
+    title, form: true,
+    html: '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
       + '<label class="sr-sublabel" for="srName">' + escapeHtml(_CL_TXT.nameLabel) + '</label>'
       + '<input type="text" id="srName" class="text-input sr-input" maxlength="' + CALL_TITLE_MAX + '" autocomplete="off" placeholder="' + escapeHtml(def) + '" value="' + escapeHtml(val.slice(0, CALL_TITLE_MAX)) + '">'
       + '<p class="sr-sheet-note">' + escapeHtml(note) + '</p>'
       + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CL_TXT.cancel) + '</button>'
-      + '<button type="submit" class="sr-ok" id="callSaveNew">' + escapeHtml(choice ? _CL_TXT.saveNew : _CL_TXT.ok) + '</button></div></form>',
+      + '<button type="submit" class="sr-ok" id="callSaveNew">' + escapeHtml(_CL_TXT.ok) + '</button></div></form>',
   };
 }
 function callListSheetSave(s, value) {
@@ -24950,7 +25307,10 @@ handleLaunchHash();
 // écriture, envoi) ; PAS le point de reprise (ni ce qui est posté).
 // Migration : une discussion enregistrée avant les timings les reçoit par
 // défaut (pause 0 s, le comédien tape, envoi au bouton) : rien ne change.
-//   • « + Enregistrer le fil en cours » : demande un nom, ajoute en fin de liste.
+//   • Rangée « + Enregistrer / ↻ Mettre à jour » au-dessus de la liste (même composant que
+//     les Effets). « + Enregistrer » : demande un nom, ajoute en fin de liste. « ↻ Mettre à jour »
+//     (grisé tant que le fil n'est pas celui d'une entrée) range le fil en cours dans l'entrée
+//     chargée, sans feuille, avec bandeau « « nom » mis à jour · Annuler ».
 //   • ▶ (ou toucher la ligne) : la charge dans le fil à jouer (confirmation si le
 //     fil a des modifications non enregistrées). Ouverte sur un
 //     écran, la discussion y repart de zéro avec le nouveau fil.
@@ -24984,7 +25344,7 @@ const _CHSV_TXT = {
   remove: 'Supprimer',
   copy: '{nom} (copie)',
   loadTitle: 'Charger « {nom} » ?', loadText: 'Le fil en cours a des modifications non enregistrées : elles seront perdues.', loadOk: 'Charger', loadCancel: 'Annuler',
-  deleted: '« {nom} » supprimée', playAria: 'Charger « {nom} » dans le fil',
+  deleted: '« {nom} » supprimée', updated: '« {nom} » mis à jour', playAria: 'Charger « {nom} » dans le fil',
   titleSaved: 'Discussions enregistrées · {n}',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Discussion',
@@ -25080,6 +25440,35 @@ async function saveCurrentChat(name) {
   renderSavedChats();
   if (_chatAvatar) await callAssetPut(_chsvPhotoKey(e.id), _chatAvatar);
   return e.id;
+}
+
+// « ↻ Mettre à jour » : le fil en cours (contact, photo, comédien, style, messages et leurs timings) remplace
+// le contenu de l'entrée chargée ; même id, même nom, même place. « Annuler » restitue l'entrée et sa photo.
+async function updateLoadedChat() {
+  if (licLocked('tel')) return false; // aperçu sans licence (77-licence-ui.js)
+  const i = chatSaved.findIndex((x) => x.id === _chat.savedId);
+  if (i < 0) return false;
+  const id = chatSaved[i].id, prev = chatSaved[i];
+  const prevPhoto = prev.hasPhoto ? await callAssetGet(_chsvPhotoKey(id)) : null; // relue avant l'écrasement
+  const cur = chatSaved.findIndex((x) => x.id === id);
+  if (cur < 0) return false; // supprimée pendant la lecture
+  const next = Object.assign({}, prev, _chsvSnapshot());
+  chatSaved[cur] = next;
+  if (!_chsvPersist()) { chatSaved[cur] = prev; alert(_CHSV_TXT.storeFull); return false; }
+  renderSavedChats();
+  undoSnack({
+    text: _tplChat(_CHSV_TXT.updated, { nom: prev.name }),
+    undo: async () => {
+      const j = chatSaved.findIndex((x) => x.id === id);
+      if (j < 0) return;
+      chatSaved[j] = prev;
+      _chsvPersist();
+      renderSavedChats();
+      if (prevPhoto) await callAssetPut(_chsvPhotoKey(id), prevPhoto); else await callAssetDelete(_chsvPhotoKey(id));
+    },
+  });
+  if (_chatAvatar) await callAssetPut(_chsvPhotoKey(id), _chatAvatar); else await callAssetDelete(_chsvPhotoKey(id));
+  return true;
 }
 
 // Toucher une ligne : charge l'entrée dans « Fil en cours »
@@ -25198,6 +25587,10 @@ function renderSavedChats() {
   }
   const empty = document.getElementById('dcSavedEmpty');
   if (empty) empty.style.display = chatSaved.length ? 'none' : '';
+  // « + Enregistrer » / « ↻ Mettre à jour » : la mise à jour n'a de sens que pour le fil d'une entrée
+  const sv = document.getElementById('dcMemSave'), up = document.getElementById('dcMemUpdate');
+  if (sv) sv.disabled = chatSaved.length >= CHAT_SAVED_MAX;
+  if (up) up.disabled = !chatSaved.some((x) => x.id === _chat.savedId);
 }
 
 // ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) ──
@@ -28369,7 +28762,10 @@ window.addEventListener('resize', () => { if (_scPhone && _scPhone.mode === 'loc
 // au départ » (maquette 28b : heure, réseau, batterie ; maquette 42 : fond
 // d'écran) ; pas le déroulé.
 // Anciennes séquences (sans ces réglages) : valeurs par défaut (heure réelle, sans fond).
-//   • « + Enregistrer la séquence en cours » : demande un nom, ajoute en fin de liste.
+//   • Rangée « + Enregistrer / ↻ Mettre à jour » sous la carte de la séquence (même composant que les
+//     Effets). « + Enregistrer » : demande un nom, ajoute en fin de liste. « ↻ Mettre à jour » (grisé
+//     tant que la séquence n'est pas celle d'une entrée) range étapes, téléphone au départ et fond dans
+//     l'entrée chargée, sans feuille, avec bandeau « « nom » mis à jour · Annuler ».
 //   • ▶ (ou toucher une ligne) : la charge dans la séquence en cours (confirmation par
 //     la boîte de l'app si elle a des modifications non enregistrées) ; un déroulé
 //     commencé repart de zéro (Recommencer).
@@ -28406,7 +28802,7 @@ const _SQSV_TXT = {
   remove: 'Supprimer',
   copy: '{nom} (copie)',
   loadTitle: 'Charger « {nom} » ?', loadText: 'La séquence en cours a des modifications non enregistrées : elles seront perdues.', loadOk: 'Charger', loadCancel: 'Annuler',
-  deleted: '« {nom} » supprimée', playAria: 'Charger « {nom} » dans la séquence en cours',
+  deleted: '« {nom} » supprimée', updated: '« {nom} » mis à jour', playAria: 'Charger « {nom} » dans la séquence en cours',
   titleSaved: 'Séquences enregistrées · {n}',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Séquence',
@@ -28460,6 +28856,31 @@ function saveCurrentSeq(name) {
   renderSeq();
   return e.id;
 }
+// « ↻ Mettre à jour » : étapes, « Téléphone au départ » et fond d'écran de la séquence en cours dans l'entrée
+// chargée (même id, même nom, même place). « Annuler » restitue l'entrée telle qu'elle était ; les images
+// que l'entrée n'utilise plus ne sont effacées (seqGcImages) qu'au bout du délai.
+function updateLoadedSeq() {
+  if (licLocked('seq')) return false; // aperçu sans licence (77-licence-ui.js)
+  const e = seqSaved.find((x) => x.id === _seq.savedId);
+  if (!e) return false;
+  const prev = { steps: e.steps, phone: e.phone, wall: e.wall };
+  e.steps = _sqsvClone(_seq.steps); e.phone = _sqsvClone(seqPhoneCfg()); e.wall = _seq.wall ? Object.assign({}, _seq.wall) : null;
+  if (!_sqsvPersist()) { Object.assign(e, prev); alert(_SQSV_TXT.storeFull); return false; }
+  renderSeq();
+  undoSnack({
+    text: _seqTpl(_SQSV_TXT.updated, { nom: e.name }),
+    undo: () => {
+      const cur = seqSaved.find((x) => x.id === e.id);
+      if (!cur) return;
+      Object.assign(cur, prev);
+      _sqsvPersist();
+      renderSeq();
+    },
+    commit: () => { seqGcImages(_sqsvImages(prev.steps, prev.wall)); },
+  });
+  return true;
+}
+
 // Toucher une ligne : charge l'entrée dans « Séquence en cours »
 function loadSavedSeq(id, confirmed) {
   const e = seqSaved.find((x) => x.id === id);
@@ -28561,6 +28982,10 @@ function renderSavedSeqs() {
   if (empty) empty.style.display = seqSaved.length ? 'none' : '';
   const hint = document.getElementById('seqSavedHint');
   if (hint) hint.style.display = seqSaved.length ? '' : 'none';
+  // « + Enregistrer » / « ↻ Mettre à jour » de la carte : la mise à jour n'a de sens que pour la séquence d'une entrée
+  const memSave = document.getElementById('seqMemSave'), memUp = document.getElementById('seqMemUpdate');
+  if (memSave) memSave.disabled = seqSaved.length >= SEQ_SAVED_MAX;
+  if (memUp) memUp.disabled = !seqSaved.some((x) => x.id === _seq.savedId);
   const btn = document.getElementById('seqSaveBtn');
   if (btn) {
     const full = seqSaved.length >= SEQ_SAVED_MAX;

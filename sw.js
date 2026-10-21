@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP
 /* Service Worker — SetRemote PWA */
-const CACHE = 'setremote-v93';
+const CACHE = 'setremote-v94';
 const SHELL = [
   './',
   './index.html',

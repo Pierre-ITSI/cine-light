@@ -613,6 +613,8 @@ const _PRJ_OUT = {
         const photo = e.hasPhoto ? safeImageData(await _prjAssetGet(e.id + ':photo')) : null;
         const audio = e.hasAudio ? safeAudioData(await _prjAssetGet(e.id + ':audio')) : null;
         e.photo = photo ? await F.dataUrl(photo) : null;
+        // « audio » du fichier = la bande son ; les réglages audio de l'entrée (délai, sortie, proximité) passent sous « audioCfg »
+        if (e.audio) e.audioCfg = e.audio; else delete e.audioCfg;
         e.audio = audio ? await F.dataUrl(audio) : null;
         delete e.hasPhoto; delete e.hasAudio;
       }
@@ -782,11 +784,13 @@ const _PRJ_IN = {
       const raw = _prjArr(o && o[k], _PRJ_RAW_MAX);
       const ids = new Set();
       out[k] = raw.map((e) => {
-        const c = _prjCallEntry(Object.assign({}, e, { hasPhoto: false, hasAudio: false }), k);
+        const c = _prjCallEntry(Object.assign({}, e, { hasPhoto: false, hasAudio: false, audio: e.audioCfg }), k);
         if (!c || ids.has(c.id)) return null;
         ids.add(c.id);
+        const cfg = c.audio; // réglages audio normalisés (appel seulement)
         c.photo = _prjRef(z, e.photo, 'image');
         c.audio = c.kind === 'call' ? _prjRef(z, e.audio, 'audio') : null;
+        if (cfg) c.audioCfg = cfg; else delete c.audioCfg;
         return c;
       }).filter(Boolean);
     }
@@ -1016,6 +1020,8 @@ const _PRJ_APPLY = {
         if (cur[k].length >= CALL_LIST_MAX) { r.skipped++; continue; }
         const e = Object.assign({}, e0);
         delete e.photo; delete e.audio;
+        if (e0.audioCfg) e.audio = e0.audioCfg; // réglages audio de l'entrée (délai, sortie, proximité)
+        delete e.audioCfg;
         e.id = _prjFreshId(e0.id, ids, _clNewId);
         maps.call.set(e0.id, e.id);
         if (e.ringId && maps.ring.has(e.ringId)) e.ringId = maps.ring.get(e.ringId);

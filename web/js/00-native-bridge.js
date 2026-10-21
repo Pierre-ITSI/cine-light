@@ -25,6 +25,17 @@ const IN_NATIVE_APP = !!(window.SETREMOTE_NATIVE && window.ReactNativeWebView);
 //                                                       l'écrit puis ouvre la feuille de partage
 //   project:open { id }                                 sélecteur de fichier de la coque (projet à importer)
 //                                                       docs/PROJECTS.md § 6, 72-project.js
+//   Audio de l'appel décroché (module setremote-audio, docs/CALL-AUDIO-NATIVE.md ; utilisé seulement si
+//   window.SETREMOTE_NATIVE.caps.audioRoute === true : coque à jour, bridge 2) ; ÉCRAN de jeu uniquement,
+//   80-call-simulator.js :
+//   audio:load { id, mime, size, i, n, data }           bande son par morceaux base64 (AUDIO_CHUNK = 512 Kio
+//                                                       de caractères, multiple de 4 sauf le dernier), envoyée
+//                                                       pendant que ça sonne ; id = empreinte du contenu
+//   audio:call-start { route: 'ear'|'speaker', proximity: bool }
+//                                                       décroché : session audio d'appel, sortie, capteur
+//   audio:play { id, delay }                            voix après `delay` s (0 à 15), jouée PAR le module
+//   audio:route { route }                               bascule de la sortie en cours d'appel
+//   audio:call-end {}                                   raccroché, refus, fin : sortie rendue, capteur coupé
 function nativePost(msg) {
   if (!IN_NATIVE_APP) return;
   try { window.ReactNativeWebView.postMessage(JSON.stringify(msg)); } catch (_) {}
@@ -47,6 +58,11 @@ if (IN_NATIVE_APP) document.documentElement.classList.add('in-app');
 //                                                             règles que project:save) ; { id, cancelled: true }
 //   project:error { id, reason }                              too-large, unavailable, read-failed,
 //                                                             write-failed, share-failed, bad-chunk
+//   audio:state { route, proximityNear?, proximityAvailable? } sortie réellement utilisée (casque branché,
+//                                                             refus du système…) : l'écran la reporte à la télécommande
+//   audio:loaded { id }                                       bande son complète dans le module (informatif)
+//   audio:error { reason }                                    bad-chunk, too-large, write-failed, play-failed,
+//                                                             unavailable : la voix repart en WebAudio
 // Tout le reste est ignoré ; une erreur de traitement ne remonte jamais à la coque.
 window.SRNative = window.SRNative || {};
 window.SRNative.receive = function (msg) {
@@ -62,6 +78,9 @@ window.SRNative.receive = function (msg) {
     if (m.type === 'link:peers') return linkOnPeers(m.peers);
     if (m.type === 'link:state') return linkOnState(m);
     if (m.type === 'link:error') return linkOnError(m.mode, m.reason);
+    if (m.type === 'audio:state') return screenAudioOnNativeState(m);
+    if (m.type === 'audio:error') return screenAudioOnNativeError(m.reason);
+    if (m.type === 'audio:loaded') return true;
     if (m.type === 'project:saved' || m.type === 'project:file' || m.type === 'project:error') return projectOnNative(m);
   } catch (e) { console.warn('SetRemote : message natif', m.type, e); }
   return false;

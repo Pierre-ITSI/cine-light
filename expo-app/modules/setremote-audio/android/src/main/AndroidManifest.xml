@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- Audio de l'appel décroché (docs/CALL-AUDIO-NATIVE.md). Deux permissions « normales » (accordées
+       à l'installation, aucune invite) : MODE_IN_COMMUNICATION et la sortie écouteur / haut-parleur,
+       puis le verrou PROXIMITY_SCREEN_OFF_WAKE_LOCK (écran noir contre l'oreille).
+       Pas de RECORD_AUDIO : rien n'est enregistré. -->
+  <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+</manifest>

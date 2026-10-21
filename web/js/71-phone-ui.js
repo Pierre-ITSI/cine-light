@@ -190,7 +190,9 @@ const PhoneUI = (() => {
   function inCall(m) {
     const st = m.style, T = _PH_TXT;
     const g = (i, l) => '<div class="pc-g"><button type="button" class="pc-gb" aria-label="' + l + '"' + act('noop') + '>' + ic(i) + '</button>' + l + '</div>';
-    const grid = '<div class="pc-grid">' + g('mic-off', T.mute) + g('grid-3x3', T.keypad) + g('volume-2', T.speaker) + g('plus', T.add) + g('video', T.video) + (st === 'tonal' ? g('pause', T.hold) : g('user-round', T.contacts)) + '</div>';
+    // « Haut-parleur » : seul bouton de la grille qui agit (sortie du son, 80-call-simulator.js) ; actif = plein blanc
+    const spk = '<div class="pc-g' + (m.speaker ? ' on' : '') + '"><button type="button" class="pc-gb' + (m.speaker ? ' on' : '') + '" aria-label="' + T.speaker + '" aria-pressed="' + (m.speaker ? 'true' : 'false') + '"' + act('speaker') + '>' + ic('volume-2') + '</button>' + T.speaker + '</div>';
+    const grid = '<div class="pc-grid">' + g('mic-off', T.mute) + g('grid-3x3', T.keypad) + spk + g('plus', T.add) + g('video', T.video) + (st === 'tonal' ? g('pause', T.hold) : g('user-round', T.contacts)) + '</div>';
     const head = '<div class="pc-info">' + (st === 'glass' ? '' : callAvatar(m)) + '<div class="pc-name' + (st === 'glass' ? ' pc-name-s' : '') + '">' + esc(m.name || T.unknown) + '</div><div class="pc-timer" id="scCallTimer">' + esc(m.timer || '00:00') + '</div></div>';
     if (st === 'minimal') return '<div class="pc">' + head + '<div class="pc-bottom solo">' + callBtn('no', 'phone', 'hangup', T.hangup) + '</div></div>';
     return callBg(m) + '<div class="pc">' + head + grid + '<div class="pc-bottom pc-end"><button type="button" class="pc-hang" aria-label="' + T.hangup + '"' + act('hangup') + '>' + ic('phone') + '</button></div></div>';

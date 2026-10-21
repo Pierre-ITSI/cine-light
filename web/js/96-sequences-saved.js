@@ -9,7 +9,10 @@
 // au départ » (maquette 28b : heure, réseau, batterie ; maquette 42 : fond
 // d'écran) ; pas le déroulé.
 // Anciennes séquences (sans ces réglages) : valeurs par défaut (heure réelle, sans fond).
-//   • « + Enregistrer la séquence en cours » : demande un nom, ajoute en fin de liste.
+//   • Rangée « + Enregistrer / ↻ Mettre à jour » sous la carte de la séquence (même composant que les
+//     Effets). « + Enregistrer » : demande un nom, ajoute en fin de liste. « ↻ Mettre à jour » (grisé
+//     tant que la séquence n'est pas celle d'une entrée) range étapes, téléphone au départ et fond dans
+//     l'entrée chargée, sans feuille, avec bandeau « « nom » mis à jour · Annuler ».
 //   • ▶ (ou toucher une ligne) : la charge dans la séquence en cours (confirmation par
 //     la boîte de l'app si elle a des modifications non enregistrées) ; un déroulé
 //     commencé repart de zéro (Recommencer).
@@ -46,7 +49,7 @@ const _SQSV_TXT = {
   remove: 'Supprimer',
   copy: '{nom} (copie)',
   loadTitle: 'Charger « {nom} » ?', loadText: 'La séquence en cours a des modifications non enregistrées : elles seront perdues.', loadOk: 'Charger', loadCancel: 'Annuler',
-  deleted: '« {nom} » supprimée', playAria: 'Charger « {nom} » dans la séquence en cours',
+  deleted: '« {nom} » supprimée', updated: '« {nom} » mis à jour', playAria: 'Charger « {nom} » dans la séquence en cours',
   titleSaved: 'Séquences enregistrées · {n}',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Séquence',
@@ -100,6 +103,31 @@ function saveCurrentSeq(name) {
   renderSeq();
   return e.id;
 }
+// « ↻ Mettre à jour » : étapes, « Téléphone au départ » et fond d'écran de la séquence en cours dans l'entrée
+// chargée (même id, même nom, même place). « Annuler » restitue l'entrée telle qu'elle était ; les images
+// que l'entrée n'utilise plus ne sont effacées (seqGcImages) qu'au bout du délai.
+function updateLoadedSeq() {
+  if (licLocked('seq')) return false; // aperçu sans licence (77-licence-ui.js)
+  const e = seqSaved.find((x) => x.id === _seq.savedId);
+  if (!e) return false;
+  const prev = { steps: e.steps, phone: e.phone, wall: e.wall };
+  e.steps = _sqsvClone(_seq.steps); e.phone = _sqsvClone(seqPhoneCfg()); e.wall = _seq.wall ? Object.assign({}, _seq.wall) : null;
+  if (!_sqsvPersist()) { Object.assign(e, prev); alert(_SQSV_TXT.storeFull); return false; }
+  renderSeq();
+  undoSnack({
+    text: _seqTpl(_SQSV_TXT.updated, { nom: e.name }),
+    undo: () => {
+      const cur = seqSaved.find((x) => x.id === e.id);
+      if (!cur) return;
+      Object.assign(cur, prev);
+      _sqsvPersist();
+      renderSeq();
+    },
+    commit: () => { seqGcImages(_sqsvImages(prev.steps, prev.wall)); },
+  });
+  return true;
+}
+
 // Toucher une ligne : charge l'entrée dans « Séquence en cours »
 function loadSavedSeq(id, confirmed) {
   const e = seqSaved.find((x) => x.id === id);
@@ -201,6 +229,10 @@ function renderSavedSeqs() {
   if (empty) empty.style.display = seqSaved.length ? 'none' : '';
   const hint = document.getElementById('seqSavedHint');
   if (hint) hint.style.display = seqSaved.length ? '' : 'none';
+  // « + Enregistrer » / « ↻ Mettre à jour » de la carte : la mise à jour n'a de sens que pour la séquence d'une entrée
+  const memSave = document.getElementById('seqMemSave'), memUp = document.getElementById('seqMemUpdate');
+  if (memSave) memSave.disabled = seqSaved.length >= SEQ_SAVED_MAX;
+  if (memUp) memUp.disabled = !seqSaved.some((x) => x.id === _seq.savedId);
   const btn = document.getElementById('seqSaveBtn');
   if (btn) {
     const full = seqSaved.length >= SEQ_SAVED_MAX;
