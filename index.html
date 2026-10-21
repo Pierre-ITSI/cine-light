@@ -27804,7 +27804,7 @@ function screenPhoneState(m) {
 }
 function screenPhoneHide() {
   _scPhone = null; _spTyped = 0; _spUnlockedAt = 0; _spAlertClosed = null;
-  _spShown.mode = null; _spShown.ids.clear();
+  _spShown.mode = null; _spShown.ids.clear(); _spAlertKb = null;
   if (_spRefreshTimer) { clearInterval(_spRefreshTimer); _spRefreshTimer = null; }
   const el = document.getElementById('screen-phone');
   if (el) { el.style.display = 'none'; el.textContent = ''; }
@@ -28132,14 +28132,33 @@ function _spPaint() {
 })();
 
 // ── Batterie faible (maquette 33), aucun réseau (maquette 44b) ──
+// Alerte pour laquelle le clavier a été rabaissé ; levée du verrou à sa fermeture (téléphone allumé)
+let _spAlertKb = null;
+function _spAlertKbRelease(p) {
+  if (!_spAlertKb) return;
+  _spAlertKb = null;
+  if (p && p.power === 'off') return; // extinction : le verrou reste jusqu'au rallumage
+  if (typeof screenChatUnlockFocus === 'function') screenChatUnlockFocus();
+  if (typeof _sccFocus === 'function' && typeof _scChat !== 'undefined' && _scChat) _sccFocus();
+}
 function _spRenderAlert() {
   const el = document.getElementById('screen-palert');
   if (!el) return;
   const p = _scPhone, a = p && p.alert;
-  if (!a || p.power === 'off' || _spAlertClosed === a.id) { el.style.display = 'none'; el.textContent = ''; delete el.dataset.id; return; }
+  if (!a || p.power === 'off' || _spAlertClosed === a.id) {
+    el.style.display = 'none'; el.textContent = ''; delete el.dataset.id;
+    _spAlertKbRelease(p);
+    return;
+  }
   const net = a.kind === 'net'; // « Aucun réseau » (maquette 44b)
   const lv = net ? 'net' : String(a.level);
   if (el.dataset.id === a.id && el.style.display === 'flex' && el.dataset.level === lv) return;
+  // Comme un vrai téléphone : le clavier du comédien se rabaisse avant l'alerte (83-discussion.js)
+  if (el.dataset.id !== a.id && _spAlertKb !== a.id && typeof screenChatLockBlur === 'function') {
+    _spAlertKb = a.id;
+    screenChatLockBlur(() => { if (_scPhone && _scPhone.alert && _scPhone.alert.id === a.id) _spRenderAlert(); });
+    return;
+  }
   el.className = '';
   el.dataset.id = a.id; el.dataset.level = lv;
   el.innerHTML = PhoneUI.root({ style: p.style, cls: 'ph-overlay', body: PhoneUI.alertBox({ kind: net ? 'net' : 'battery', level: a.level }) });

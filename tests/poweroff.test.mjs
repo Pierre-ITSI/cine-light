@@ -121,3 +121,23 @@ test('extinction depuis l\'écran verrouillé : loader sans attente de clavier',
   assert.equal(await cls(page), 'on');
   await close();
 });
+
+test('alertes batterie faible / aucun réseau : clavier rabaissé avant l\'alerte, rendu à la fermeture', async () => {
+  for (const alert of [{ id: 'a1', kind: 'battery', level: 5 }, { id: 'a2', kind: 'net' }]) {
+    const { page, errors, close } = await chatPage();
+    const shown = () => page.evaluate(() => document.getElementById('screen-palert').style.display === 'flex');
+    assert.equal(await focused(page), true);
+    await page.evaluate((a) => screenPhoneState(Object.assign({ mode: 'locked', style: 'glass', notifs: [], unlock: null, home: false, watch: [], chime: null, bar: null, sleep: null, power: 'on' }, { alert: a })), alert);
+    assert.equal(await focused(page), false, 'blur immédiat');
+    assert.equal(await shown(page), false, 'clavier d\'abord : alerte pas encore affichée');
+    await page.evaluate(() => _sccFocus());
+    assert.equal(await focused(page), false, 'pas de refocus pendant l\'alerte');
+    await page.clock.runFor(400);
+    assert.equal(await shown(page), true, 'alerte affichée une fois le clavier rabaissé');
+    await page.evaluate(() => _spAlertClose());
+    assert.equal(await shown(page), false);
+    assert.equal(await focused(page), true, 'clavier rendu au comédien après fermeture');
+    assert.deepEqual(errors, []);
+    await close();
+  }
+});
