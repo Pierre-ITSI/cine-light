@@ -347,16 +347,28 @@ function _spApplySleep(wake) {
   if (_spSleep && wake && _spSleep.cfg.notif) _spWake();
   else _spPaint();
 }
+// Règle de la veille automatique : elle ne se (ré)arme qu'après une notification, un SMS ou un appel
+// présenté sur écran verrouillé (ou un toucher qui rallume l'écran noir), jamais pendant une
+// discussion ouverte (le comédien y tape) ni après elle. Une étape « Veille » explicite, elle,
+// s'applique toujours tout de suite (c'est une commande), discussion ouverte ou non.
+const _spChatOpen = () => typeof _scChat !== 'undefined' && !!_scChat;
 function _spWake() {
   const s = _spSleep;
   if (!s) return;
   s.awake = true;
-  if (s.timer) clearTimeout(s.timer);
-  s.timer = setTimeout(() => { s.timer = null; if (_spSleep === s) { s.awake = false; _spPaint(); } }, s.cfg.after * 1000);
+  if (s.timer) { clearTimeout(s.timer); s.timer = null; }
+  if (!_spChatOpen()) s.timer = setTimeout(() => { s.timer = null; if (_spSleep === s && !_spChatOpen()) { s.awake = false; _spPaint(); } }, s.cfg.after * 1000);
   _spPaint();
 }
-// Toucher pendant l'éveil : le délai avant la mise en veille repart
-function _spPoke() { if (_spSleep && _spSleep.awake) _spWake(); }
+// Toucher pendant l'éveil : le délai déjà armé repart (jamais armé par un simple toucher)
+function _spPoke() { if (_spSleep && _spSleep.awake && _spSleep.timer) _spWake(); }
+// Discussion ouverte (83-discussion.js) : minuterie annulée, écran rallumé s'il dormait ; pas de nouveau délai à sa fermeture
+function screenPhoneChatChanged(open) {
+  const s = _spSleep;
+  if (!s || !open) return;
+  if (s.timer) { clearTimeout(s.timer); s.timer = null; }
+  if (!s.awake) { s.awake = true; _spPaint(); }
+}
 const _spCallOn = () => { const c = document.getElementById('screen-call'); return !!c && c.style.display === 'block'; };
 // Surfaces changées (97-phone-status.js) : un appel rallume, sa fin relance le délai
 function screenPhoneSurfacesChanged() {

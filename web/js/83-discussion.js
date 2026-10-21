@@ -976,6 +976,7 @@ function screenChatOpen(m) {
     if (hist && prev && prev.curId === cur.id && prev.typed) _sccProgress();
   }
   _sccRender(!prev);
+  if (!prev && typeof screenPhoneChatChanged === 'function') screenPhoneChatChanged(true); // veille (94) : annulée tant que la discussion est ouverte
   // Frappe automatique en cours (lecture auto, reprise) : repart où elle en était
   if (m.auto && cur && cur.id === m.auto.id) screenChatType(m.auto, m.auto.el || 0);
 }
@@ -1291,13 +1292,19 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'Enter') { e.preventDefault(); screenChatSend(); }
   else if (e.key && Array.from(e.key).length === 1) { e.preventDefault(); screenChatKey(1); }
 });
-// Clavier du système affiché : la discussion se cale au-dessus (zone visible)
+// Clavier du système affiché : la discussion se cale au-dessus (zone visible). Seul le contenu (.pt)
+// est redimensionné : le conteneur #screen-chat garde toute la hauteur et le fond de la discussion
+// (_sccBackdropSync), donc rien du fond d'écran du téléphone n'apparaît sous le clavier.
 function _sccFitViewport() {
   const el = document.getElementById('screen-chat');
   const vv = window.visualViewport;
   if (!el || !vv) return;
-  el.style.height = Math.round(vv.height) + 'px';
-  el.style.top = Math.round(vv.offsetTop) + 'px';
+  el.style.height = ''; el.style.top = '';
+  const root = el.querySelector('.pt');
+  if (!root) return;
+  root.style.height = Math.round(vv.height) + 'px';
+  root.style.top = Math.round(vv.offsetTop) + 'px';
+  root.style.bottom = 'auto';
 }
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => { if (_scChat) { _sccFitViewport(); _sccBackdropSync(); } });
