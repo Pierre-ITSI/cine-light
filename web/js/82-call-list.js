@@ -104,7 +104,7 @@ function _clSanitize(e) {
   // type (sans ringVolume) portait la sonnerie de l'appel, que l'écran
   // ignorait : il garde son son d'origine (Classique).
   if (out.kind !== 'call' && out.ringVolume === undefined) out.ring = 'classic';
-  if (out.ring !== undefined && !RING_BUILTINS.includes(out.ring)) out.ring = 'classic';
+  if (out.ring !== undefined && !ringBuiltinOk(out.kind, out.ring)) out.ring = 'classic'; // sons de message : pas pour un appel
   if (out.ringId !== undefined && !(typeof out.ringId === 'string' && SRP.RING_ID_RE.test(out.ringId))) delete out.ringId;
   if (out.ringVolume !== undefined) {
     if (typeof out.ringVolume === 'number' && Number.isFinite(out.ringVolume)) out.ringVolume = Math.min(1, Math.max(0, out.ringVolume));
@@ -188,7 +188,7 @@ function callEntryMessage(e, assets) {
   const m = { type: 'call:start' };
   for (const k of _CALL_ENTRY_FIELDS) if (e[k] !== undefined && k !== 'ring' && k !== 'ringId' && k !== 'ringVolume') m[k] = e[k];
   // Son enregistré (un son importé supprimé depuis → son Classique)
-  Object.assign(m, ringMsgFields(e.ringId || e.ring, e.ringVolume));
+  Object.assign(m, ringMsgFields(e.ringId || e.ring, e.ringVolume, e.kind));
   m.hasPhoto = !!(assets && assets.photo);
   m.hasAudio = !!(assets && assets.audio);
   if (m.kind === 'sms' && m.lock === undefined) m.lock = null;

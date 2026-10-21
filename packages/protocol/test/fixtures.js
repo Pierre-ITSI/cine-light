@@ -133,6 +133,22 @@ export const REAL_MESSAGES = [
     msg: { type: 'call:start', kind: 'chat', style: 'glass', name: 'Léa', msg: 'Moteur !', ring: 'digital', ringVolume: 0, lock: null },
   },
   {
+    direction: 'r2s', where: 'sendCallEntry (SMS, son synthétisé « Métallophone Do »)',
+    msg: { type: 'call:start', kind: 'sms', style: 'glass', name: 'Léa', msg: 'Moteur !', ring: 'metal-do', ringVolume: 0.8, lock: null },
+  },
+  {
+    direction: 'r2s', where: 'sendCallEntry (notification, son synthétisé « Envoi »)',
+    msg: { type: 'call:start', kind: 'notif', style: 'glass', name: 'Banque', msg: 'Virement', ring: 'sent', present: 'banner' },
+  },
+  {
+    direction: 'r2s', where: 'chat:open (son des messages synthétisé « Métallophone Sol »)',
+    msg: { type: 'chat:open', name: 'Maman', style: 'minimal', ids: ['d1'], sent: [], ring: 'metal-sol', ringVolume: 0.5 },
+  },
+  {
+    direction: 'r2s', where: 'phone:state (carillon synthétisé « Envoi »)',
+    msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [{ id: 'n1', kind: 'sms', app: 'SMS', name: 'A', ago: 0 }], chime: { id: 'n1', ring: 'sent', vol: 0.6 } },
+  },
+  {
     direction: 'r2s', where: 'sendImageChunks (son importé)',
     msg: { type: 'media-img-start', id: 'k3j2h1', total: 12, mediaId: '__ring_fedcba9876543210', show: false },
   },
@@ -502,6 +518,10 @@ export const ATTACKS = [
   { why: 'nom d’appel trop long', msg: { type: 'call:start', kind: 'call', name: 'A'.repeat(41) } },
   { why: 'nom avec caractère de contrôle', msg: { type: 'call:start', kind: 'call', name: 'A\u0000B' } },
   { why: 'autoAnswer hors bornes', msg: { type: 'call:start', kind: 'call', autoAnswer: 3600 } },
+  { why: 'sonnerie d’appel : son de message synthétisé', msg: { type: 'call:start', kind: 'call', ring: 'metal-do' } },
+  { why: 'sonnerie d’appel : son « Envoi »', msg: { type: 'call:start', kind: 'call', ring: 'sent' } },
+  { why: 'SMS : son intégré inconnu', msg: { type: 'call:start', kind: 'sms', ring: 'metal-la' } },
+  { why: 'discussion : son intégré inconnu', msg: { type: 'chat:open', name: 'M', style: 'glass', ids: [], sent: [], ring: '__proto__' } },
   { why: 'son importé : id hors format', msg: { type: 'call:start', kind: 'call', ringId: '__callaudio' } },
   { why: 'son importé : hex majuscule', msg: { type: 'call:start', kind: 'call', ringId: '__ring_0123456789ABCDEF' } },
   { why: 'son importé : id trop long', msg: { type: 'call:start', kind: 'call', ringId: '__ring_0123456789abcdef0' } },

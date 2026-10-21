@@ -30,7 +30,7 @@ const _TS_TXT = {
   vibYes: 'Vibreur oui', vibNo: 'Vibreur non', wall: 'Fond {fond}', wallPhoto: 'Photo', wallGradient: 'Dégradé',
   sep: ' · ', unknown: 'Inconnu', label: 'mobile', smsMsg: 'Tu es où ??', chatIn: 'Tu es où ?', chatOut: 'j\'arrive',
 };
-const _TS_SOUNDS = { classic: 'Classique', digital: 'Digitale', soft: 'Douce', silent: 'Silencieux' };
+const _TS_SOUNDS = { classic: 'Classique', digital: 'Digitale', soft: 'Douce', silent: 'Silencieux', 'metal-do': 'Métallophone Do', 'metal-sol': 'Métallophone Sol', sent: 'Envoi' };
 const _tsTpl = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? String(v[k]) : ''));
 
 // Nom du son choisi : son intégré, ou nom du son importé
