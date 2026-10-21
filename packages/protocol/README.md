@@ -249,7 +249,7 @@ et prioritaire ; `sleep { notif, touch, after 1..120 }` (écran verrouillé
 seulement), `alert { id, kind?, level? }` (« Batterie faible » avec `level` ;
 `kind: 'net'` : « Aucun réseau », maquette 44b, sans `level`, une fois par perte
 du réseau ; fermée par le geste `dismiss`, toujours rapporté comme `unlock`), `power: 'off'` (ni `chime` ni
-`watch` alors). `media:bar { bar | null }` (télécommande → écran) : même barre,
+`watch` alors ; `offStyle` `glass` | `tonal` | `minimal` règle l'habillage du loader d'extinction, étape « Extinction », absent : celui du téléphone ; un écran ancien l'ignore). `media:bar { bar | null }` (télécommande → écran) : même barre,
 réglée dans l'onglet Média, en bandeau au-dessus d'un média affiché seul ;
 celle de la séquence prime. Discussion : `chat:post.dur` (durée de « … écrit »,
 1–60 s, avec `typing`), `chat:type { id, dur?, send }` (lecture auto : le texte

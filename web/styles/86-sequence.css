@@ -95,3 +95,10 @@
 .ss-del.ss-cancel{border-color:rgba(255,255,255,.14);color:var(--text)}
 .ss-save{flex:1.6;border:none;background:var(--accent);color:#000;font-size:.75rem}
 
+/* Étape Extinction : aperçu du loader à côté des puces de style (91-sequence.js, B1 / B2) */
+.ss-off-prev{display:flex;gap:var(--sp-3);align-items:center;margin:var(--sp-3) 0}
+.ss-off-box{width:104px;height:150px;flex:none;border-radius:16px;background:#000;border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ss-off-box .pp-off{display:flex;flex-direction:column;align-items:center;gap:18px;color:rgba(255,255,255,.9);transform:scale(.72)}
+.ss-off-prev p{margin:0;font:400 13px/1.4 var(--font-ui);color:var(--text-2)}
+.ss-off-prev p b{color:var(--text)}
+

@@ -225,6 +225,8 @@ function _validPhoneState(m) {
     : al.kind === 'net' ? { id: al.id, kind: 'net' }
     : _P.int(al.level, 1, 100) !== null ? { id: al.id, kind: 'battery', level: al.level } : null;
   m.power = m.power === 'off' ? 'off' : 'on';
+  // Habillage du loader d'extinction (étape Extinction, B) : seulement avec power off ; inconnu = absent
+  m.offStyle = m.power === 'off' && _P.oneOf(m.offStyle, ['glass', 'tonal', 'minimal']) ? m.offStyle : null;
   if (m.power === 'off') { m.chime = null; m.watch = []; }
   return true;
 }

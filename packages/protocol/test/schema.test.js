@@ -394,7 +394,10 @@ test('Séquence (phone:*) : sens, pile de notifications, déverrouillage sans co
   for (const code of [0, 4, 6]) assert.equal(validate({ ...state, unlock: { code, then: 'app' } }), true, 'code ' + code);
   assert.equal(validate({ ...state, mode: 'code', unlock: { code: 6, then: 'home' } }), true);
   assert.equal(validate({ ...state, mode: 'code', unlock: { code: 0, then: 'home' } }), false, 'pavé : un code est attendu');
-  assert.deepEqual(Object.keys(MESSAGE_TYPES['phone:state'].fields).sort(), ['alert', 'bar', 'chime', 'home', 'homeWall', 'mode', 'notifs', 'power', 'sleep', 'style', 'unlock', 'wall', 'watch']);
+  // Habillage du loader d'extinction (étape Extinction) : Verre / Tonal / Épuré, sinon refusé
+  assert.equal(validate({ ...state, mode: 'off', power: 'off', offStyle: 'tonal' }), true);
+  assert.equal(validate({ ...state, mode: 'off', power: 'off', offStyle: 'auto' }), false, 'auto n\'est pas transmis : absent = celui du téléphone');
+  assert.deepEqual(Object.keys(MESSAGE_TYPES['phone:state'].fields).sort(), ['alert', 'bar', 'chime', 'home', 'homeWall', 'mode', 'notifs', 'offStyle', 'power', 'sleep', 'style', 'unlock', 'wall', 'watch']);
   assert.deepEqual(Object.keys(MESSAGE_TYPES['phone:gesture'].fields).sort(), ['g', 'n']);
   // Gestes : liste fermée ; « unlock » et « dismiss » toujours rapportés, donc jamais « attendus »
   assert.deepEqual([...PHONE_GESTURES], ['touch', 'notif', 'hangup', 'answer', 'unlock', 'home', 'dismiss']);

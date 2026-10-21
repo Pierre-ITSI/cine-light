@@ -52,6 +52,32 @@
 .nv-strip button{flex:none;height:var(--tap);padding:0 var(--sp-4);border:0;border-radius:var(--r-md);background:var(--danger-fill);color:#fff;
   font:700 var(--fs-secondary)/1 var(--font-ui);display:flex;align-items:center;gap:6px;cursor:pointer}
 .nv-strip button .ic{width:14px;height:14px;color:#fff}
+/* Format compact (bandeaux empilés, onglets hors Scénario) : 40 px, boutons 34 px dont la zone
+   de toucher déborde à 44 px (pseudo-élément invisible) */
+.nv-strip.cmp{height:40px;padding-left:10px}
+.nv-strip.cmp button{position:relative;height:34px;padding:0 12px;font-size:13px}
+.nv-strip.cmp button::after{content:"";position:absolute;inset:-5px -5px}
+
+/* Bandeau Scénario (#scnStrip, 31-nav-status.js) : orange ; « Tout arrêter » en contour rouge,
+   pour ne pas le confondre avec le plein rouge de la lumière. Complet sur l'onglet Scénario. */
+.nv-strip.scn{height:auto;min-height:52px;padding:6px 6px 6px 12px;gap:var(--sp-2);background:rgba(255,122,48,.12);border-color:var(--accent)}
+.nv-strip.on+.nv-strip.scn{margin-top:6px}
+.nv-strip.scn .scn-dot{flex:none;width:10px;height:10px;margin:0 2px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft);animation:scnPulse 1.6s ease-in-out infinite}
+.nv-strip.scn .cl{display:none}
+.nv-strip.scn .scn-txt{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:3px;height:auto;padding:0;border:0;background:transparent;color:var(--text);text-align:left;cursor:pointer;font:inherit}
+.nv-strip.scn .scn-txt b{font:700 14px/1.2 var(--font-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nv-strip.scn .scn-txt small{font:400 12px/1.2 var(--font-ui);color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nv-strip.scn .scn-stop{padding:0 var(--sp-3);background:transparent;color:var(--danger);box-shadow:inset 0 0 0 1.5px var(--danger-fill)}
+.nv-strip.scn .scn-stop .ic{color:var(--danger)}
+.nv-strip.scn.cmp{height:40px;min-height:40px;padding:0 3px 0 10px}
+.nv-strip.scn.cmp .scn-dot{display:none}
+.nv-strip.scn.cmp .cl{display:block;width:16px;height:16px;color:var(--accent-text)}
+.nv-strip.scn.cmp .scn-txt{flex-direction:row;align-items:center;height:34px}
+.nv-strip.scn .scn-txt>b,.nv-strip.scn .scn-txt>small{display:block;width:100%;min-width:0}
+.nv-strip.scn.cmp .scn-txt b{font-size:13px}
+.nv-strip.scn.cmp .scn-txt small{display:none}
+@media (prefers-reduced-motion: reduce){.nv-strip.scn .scn-dot{animation:none}}
+@keyframes scnPulse{50%{box-shadow:0 0 0 7px transparent}}
 
 /* ── Contenu : seul élément qui défile ── */
 #nv-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;

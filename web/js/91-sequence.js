@@ -215,6 +215,10 @@ const _SEQ_TXT = {
   labelOff: 'Extinction',
   offText: 'Fondu, logo neutre, écran noir : le téléphone ne répond plus à rien (ni appel, ni son, ni toucher).',
   offNote: 'Rallumer : une étape « Veille » plus loin (logo, puis écran verrouillé endormi) ou ↶.',
+  labelStyle: 'Style du loader', offStyleName: { auto: 'Auto', glass: 'Verre', tonal: 'Tonal', minimal: 'Épuré' },
+  offAuto: 'Auto : style du téléphone ({nom})', offAutoSub: 'Le même habillage que les SMS et appels de la séquence.',
+  offSet: 'Remplace le style du téléphone pour cette étape seulement.', offPreview: 'Aperçu du loader : batterie vide, puis indicateur.',
+  sumOffStyle: ' (habillage {nom})',
   labelNet: 'Réseau', netLost: 'Perdu', netBack: 'Rétabli',
   labelBars: 'Barres', labelNetType: 'Réseau mobile', labelWifi: 'Wi-Fi', yes: 'Oui', no: 'Non',
   netLostNote: '« Pas de service » dans la barre d\'état et alerte « Aucun réseau » (une fois, pas en mode avion) : un appel devient « Appel impossible », un message du comédien reste « Non distribué ».',
@@ -234,6 +238,8 @@ const SEQ_KINDS = ['color', 'effect', 'media', 'call', 'sms', 'notif', 'missed',
 const SEQ_PHONE_KINDS = new Set(['call', 'sms', 'notif', 'missed', 'unlock', 'chat', 'sleep', 'battery', 'off', 'net']);
 // Étapes sans élément enregistré : leurs réglages sont dans l'étape (opt)
 const SEQ_OPT_KINDS = new Set(['unlock', 'sleep', 'battery', 'off', 'net']);
+// Habillage du loader d'extinction (étape « Extinction ») : auto = style du téléphone (défaut)
+const SEQ_OFF_STYLES = ['auto', 'glass', 'tonal', 'minimal'];
 // Grille des types (maquette 29b) : 3, 3, 4 puis les étapes du téléphone
 const SEQ_KIND_ROWS = [['color', 'effect', 'media'], ['call', 'sms', 'notif'], ['sleep', 'missed', 'unlock', 'chat'], ['battery', 'off', 'net']];
 const SEQ_SLEEP_DEF = 8, SEQ_BATTERY_DEF = 5;
@@ -340,7 +346,10 @@ function seqSanitizeStep(s) {
   } else if (s.kind === 'net') {
     const o = s.opt || {};
     out.opt = { lost: o.lost !== false, bars: _seqClampInt(o.bars, 1, 4, 4), type: PB_NET_TYPES.includes(o.type) ? o.type : PB_NET_TYPES[1], wifi: o.wifi !== false };
-  } else if (s.kind !== 'off' && typeof s.ref === 'string' && _SEQ_ID_RE.test(s.ref)) out.ref = s.ref;
+  } else if (s.kind === 'off') {
+    // Habillage du loader d'extinction (B) : auto = style du téléphone de la séquence (défaut)
+    out.opt = { style: SEQ_OFF_STYLES.includes((s.opt || {}).style) ? s.opt.style : 'auto' };
+  } else if (typeof s.ref === 'string' && _SEQ_ID_RE.test(s.ref)) out.ref = s.ref;
   if (s.kind === 'chat') {
     const auto = !!(s.opt && s.opt.auto === true);
     out.opt = { auto, full: auto && s.opt.full === true };
@@ -910,7 +919,8 @@ async function _seqExec(s, it, ids) {
       // Extinction (maquette 33) : appel en cours coupé, alerte oubliée, plus rien ne répond
       const live = ids.filter((id) => scrState(id).call);
       if (live.length) sendMsg({ type: 'call:end', target: _seqTarget(live) });
-      for (const id of ids) { const p = _seqPhones.get(id); p.power = 'off'; p.alert = null; }
+      // Habillage du loader (B) : envoyé avec l'extinction seulement ; auto (absent) = style du téléphone
+      for (const id of ids) { const p = _seqPhones.get(id); p.power = 'off'; p.alert = null; p.offStyle = s.opt && s.opt.style && s.opt.style !== 'auto' ? s.opt.style : null; }
       break;
     }
     case 'net':
@@ -1090,7 +1100,7 @@ function _seqPhoneMsg(sid, homeOk, wallOk, imgOk) {
   // Barre d'état, veille, batterie, extinction : de la séquence commencée seulement
   if (_seqRun.state !== 'idle' && p.bar) {
     m.bar = phoneBarMsg(p.bar, _seqRun.clockT0 || now, now);
-    if (p.power === 'off') m.power = 'off';
+    if (p.power === 'off') { m.power = 'off'; if (p.offStyle) m.offStyle = p.offStyle; }
     if (p.sleep && (m.mode === 'locked' || m.mode === 'code')) m.sleep = Object.assign({}, p.sleep);
     if (p.alert && p.power !== 'off') m.alert = Object.assign({}, p.alert);
   }
@@ -1118,7 +1128,7 @@ async function _seqPushPhones(only, force) {
     if (p) delete p.chime;
     const b = m.bar;
     const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id + (n.img ? '/' + n.img : '')), m.unlock, m.home, m.homeWall, m.wall, m.watch,
-      b ? [b.clock.mode, b.clock.date, b.clock.time, b.net, b.bat] : null, m.sleep, m.alert, m.power]);
+      b ? [b.clock.mode, b.clock.date, b.clock.time, b.net, b.bat] : null, m.sleep, m.alert, m.power, m.offStyle]);
     if (!force && !chime && _seqPhoneSent.get(sid) === sig) continue;
     if (!p && !m.watch && !_seqPhoneSent.has(sid)) continue; // rien à dire à cet écran
     _seqPhoneSent.set(sid, sig);
@@ -1552,7 +1562,7 @@ function seqStepSummary(s, idx) {
     case 'unlock': add(it.code ? _seqTpl(T.sumUnlockCode, { n: it.code }) : T.sumUnlockSwipe); break;
     case 'sleep': add(T.sumSleep); break;
     case 'battery': add(T.sumBattery + ' '); add(_seqTpl(T.percent, { n: it.level }), true); break;
-    case 'off': add(T.sumOff); break;
+    case 'off': add(T.sumOff); if (s.opt && s.opt.style && s.opt.style !== 'auto') add(_seqTpl(T.sumOffStyle, { nom: T.offStyleName[s.opt.style] })); break;
     case 'net': add(it.lost ? T.sumNetLost : T.sumNetBack); break;
   }
   parts[parts.length - 1].t = parts[parts.length - 1].t.replace(/\s+$/, '') + '.';
@@ -1700,6 +1710,11 @@ function _seqWideStepper(label, val, fn) {
     + '<b class="ss-step-val" id="ssOptVal">' + escapeHtml(val) + '</b>'
     + '<button type="button" class="ss-step-btn" aria-label="Augmenter" onclick="' + fn + '(1)">' + icon('plus') + '</button></div>';
 }
+// Style du téléphone de la séquence sur la cible de l'étape (aperçu d'« Auto ») : Verre par défaut
+function _seqOffAutoStyle(s) {
+  const ids = seqStepIds(s).filter(scrKnown), p = ids.length ? _seqPhones.get(ids[0]) : null;
+  return p && _CALL_STYLE_HINTS[p.style] ? p.style : 'glass';
+}
 function _seqPhoneStepCard(s) {
   const o = s.opt, lbl = (k) => '<span class="ss-label">' + escapeHtml(_SEQ_TXT[k]) + '</span>';
   const txt = (t) => '<div class="ss-text">' + escapeHtml(t) + '</div>', note = (t) => '<div class="ss-note">' + escapeHtml(t) + '</div>';
@@ -1713,8 +1728,19 @@ function _seqPhoneStepCard(s) {
         + _seqWideStepper(_SEQ_TXT.labelResleep, _seqTpl(_SEQ_TXT.seconds, { n: o.after }), 'seqEditSleepDelay') + note(_SEQ_TXT.sleepNote);
     case 'battery':
       return lbl('labelBattery') + txt(_SEQ_TXT.batteryText) + _seqWideStepper(_SEQ_TXT.labelLevel, _seqTpl(_SEQ_TXT.percent, { n: o.level }), 'seqEditLevel');
-    case 'off':
-      return lbl('labelOff') + txt(_SEQ_TXT.offText) + note(_SEQ_TXT.offNote);
+    case 'off': {
+      // Habillage du loader (B1, B2) : puces, puis l'aperçu du loader du style retenu (Auto = celui du téléphone)
+      const T = _SEQ_TXT, st = SEQ_OFF_STYLES.includes(o.style) ? o.style : 'auto';
+      const auto = _seqOffAutoStyle(s), eff = st === 'auto' ? auto : st;
+      const legend = st === 'auto'
+        ? '<b>' + escapeHtml(_seqTpl(T.offAuto, { nom: T.offStyleName[auto] })) + '</b><br>' + escapeHtml(T.offAutoSub)
+        : '<b>' + escapeHtml(T.offStyleName[st]) + '</b><br>' + escapeHtml(T.offSet);
+      return lbl('labelOff') + txt(T.offText)
+        + '<span class="ss-label ss-sub">' + escapeHtml(T.labelStyle) + '</span>'
+        + '<div class="ss-row ss-offst" role="group" aria-label="' + escapeHtml(T.labelStyle) + '">' + SEQ_OFF_STYLES.map((k) => _seqOpt(st === k, set('style', k), T.offStyleName[k])).join('') + '</div>'
+        + '<div class="ss-off-prev"><div class="ss-off-box">' + PhoneUI.powerOff(eff) + '</div><p>' + legend + '<br><br>' + escapeHtml(T.offPreview) + '</p></div>'
+        + note(T.offNote);
+    }
     case 'net': {
       let h = lbl('labelNet') + row([_seqOpt(o.lost, set('lost', true), _SEQ_TXT.netLost), _seqOpt(!o.lost, set('lost', false), _SEQ_TXT.netBack)]);
       if (!o.lost) {

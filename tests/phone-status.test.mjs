@@ -574,7 +574,7 @@ test('éditeur d\'étape : veille (29b), batterie, extinction, réseau ; libell�
   assert.deepEqual(await page.$$eval('#seqRows .sq-label', (l) => l.map((x) => x.textContent)),
     ['Veille (écran noir)', 'Batterie faible 6 %', 'Extinction du téléphone', 'Réseau rétabli (▂▄ 3G)']);
   assert.deepEqual(await page.evaluate(() => _seq.steps.map((s) => s.opt)), [
-    { notif: true, touch: false, after: 9 }, { level: 6 }, {}, { lost: false, bars: 2, type: '3G', wifi: true }]);
+    { notif: true, touch: false, after: 9 }, { level: 6 }, { style: 'auto' }, { lost: false, bars: 2, type: '3G', wifi: true }]);
   assert.deepEqual(errors, []);
   await close();
 });

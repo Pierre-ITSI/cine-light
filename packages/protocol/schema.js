@@ -868,6 +868,7 @@ const SPECS = {
         level: opt(int(1, 100), 'pourcentage annoncé (batterie faible seulement, obligatoire)'),
       }), 'alerte « Batterie faible » ou « Aucun réseau »'),
       power: opt(oneOf('on', 'off'), 'off : téléphone éteint (absent : allumé)'),
+      offStyle: opt(STYLE3, 'habillage du loader d’extinction (étape Extinction : Verre / Tonal / Épuré), avec power off seulement ; absent : celui du téléphone (un écran ancien l’ignore)'),
     },
     refine: m => {
       if (!unique(m.notifs.map((/** @type {any} */ n) => n.id))) return 'phone:state : notification en double';

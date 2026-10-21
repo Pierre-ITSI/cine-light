@@ -1165,6 +1165,49 @@ export const SCENE_VIEWPORT = {
   'screen-seq-code-landscape': LANDSCAPE,
 };
 
+// ── Bandeau Scénario (maquettes A1 à A4) et habillage du loader d'extinction (B1) ──
+// A1 · Onglet Scénario : discussion ouverte sur Téléphone de Julie, un appel affiché sur la TV ;
+// bandeau complet (deux lignes) au-dessus des onglets Tel | Séquence
+Object.assign(SCENES, {
+  'nav-scenario-strip': multiScreen(async (page) => {
+    await page.evaluate(async ([julie, tv]) => {
+      switchTab('call');
+      for (const id of scrList()) sendMsg({ type: 'call:end', target: { screens: [id] } }); // rien d'autre affiché que la scène
+      _chat.name = 'Maman';
+      openChatOnTarget(true, [julie]);
+      await sendCallEntry({ id: 'cS1', kind: 'call', style: 'glass', name: 'Julien', label: 'mobile', ring: 'silent', ringVolume: 1, present: 'full', photoMode: 'avatar', autoAnswer: 0, lock: null, hasPhoto: false, hasAudio: false }, [{ screens: [tv] }]);
+    }, SCR_IDS.slice(0, 2));
+    await page.clock.runFor(400);
+  }),
+  // A2 · Onglet Lumière, un SMS affiché : bandeau compact (40 px) dans l'en-tête, sans bandeau lumière
+  'nav-scenario-strip-compact': multiScreen(async (page) => {
+    await page.evaluate(async (julie) => {
+      switchTab('color');
+      await sendCallEntry({ id: 'cS2', kind: 'sms', style: 'glass', name: 'Maman', msg: 'Tu es où ??', appName: 'Messages', ring: 'silent', ringVolume: 1, lock: null, hasPhoto: false, hasAudio: false }, [{ screens: [julie] }]);
+    }, SCR_IDS[0]);
+    await page.clock.runFor(400);
+  }),
+  // A3 · Stroboscope (bandeau lumière, violet) et appel qui sonne (bandeau Scénario, orange) : deux bandeaux compacts
+  'nav-two-strips': multiScreen(async (page) => {
+    await page.evaluate(async (julie) => {
+      switchTab('color');
+      setFlashWarningSkipped(true);
+      document.getElementById('strobeToggle').checked = true; onStrobeToggle();
+      await sendCallEntry({ id: 'cS3', kind: 'call', style: 'glass', name: 'Maman', label: 'mobile', ring: 'silent', ringVolume: 1, present: 'full', photoMode: 'avatar', autoAnswer: 0, lock: null, hasPhoto: false, hasAudio: false }, [{ screens: [julie] }]);
+    }, SCR_IDS[0]);
+    await page.clock.runFor(400);
+  }),
+  // A4 · Séquence en cours : « Séquence n / total en cours » et l'étape suivante, sur le Plateau
+  'remote-seq-strip': seqPlay(2),
+  // B1 · Étape Extinction : puces Auto | Verre | Tonal | Épuré, aperçu du loader (Auto = style du téléphone)
+  'remote-seq-step-off': seqScene((page) => page.evaluate(() => {
+    _seq.steps.unshift(seqSanitizeStep({ id: 'a0', kind: 'off', target: _seq.steps[0].target, trig: { k: 'go' }, opt: {} }));
+    openSeqStep('a0');
+    const chips = document.querySelector('#seq-step-view .ss-offst');
+    if (chips) chips.scrollIntoView({ block: 'center' });
+  })),
+});
+
 // Fige les effets canvas sur une frame déterministe : chaque moteur actif est
 // relancé (t = 0, frame dessinée immédiatement) ; l'horloge étant en pause,
 // toutes les frames suivantes sont identiques — plus de course entre la

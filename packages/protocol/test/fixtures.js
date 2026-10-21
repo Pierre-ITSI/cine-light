@@ -272,6 +272,14 @@ export const REAL_MESSAGES = [
     },
   },
   {
+    direction: 'r2s', where: '_seqPushPhones (extinction à habillage Tonal, étape Extinction)',
+    msg: { type: 'phone:state', mode: 'off', style: 'glass', notifs: [], power: 'off', offStyle: 'tonal' },
+  },
+  {
+    direction: 'r2s', where: '_seqPushPhones (extinction à habillage Épuré, étape Extinction)',
+    msg: { type: 'phone:state', mode: 'off', style: 'tonal', notifs: [], power: 'off', offStyle: 'minimal' },
+  },
+  {
     direction: 'r2s', where: 'mediaBarApply (onglet Média, hors séquence)',
     msg: { type: 'media:bar', target: { screens: [SCREEN_A] }, bar: { clock: { mode: 'run', date: '2026-10-17', time: '08:05', el: 0 }, net: { bars: 3, type: '3G', plane: true, wifi: true }, bat: { level: 100, charging: true, pct: true } } },
   },
@@ -433,6 +441,8 @@ export const ATTACKS = [
   { why: 'barre d’état : batterie 0 %', msg: { type: 'media:bar', bar: { clock: { mode: 'real' }, net: { bars: 1, type: '4G', plane: false, wifi: false }, bat: { level: 0, charging: false, pct: true } } } },
   { why: 'barre d’état : opérateur libre (texte affiché)', msg: { type: 'media:bar', bar: { clock: { mode: 'real' }, net: { bars: 1, type: '4G', plane: false, wifi: false, carrier: '<b>' }, bat: { level: 5, charging: false, pct: true } } } },
   { why: 'barre d’état absente (null exigé)', msg: { type: 'media:bar' } },
+  { why: 'habillage d’extinction inconnu', msg: { type: 'phone:state', mode: 'off', style: 'glass', notifs: [], power: 'off', offStyle: 'wifi' } },
+  { why: 'habillage d’extinction : auto (valeur non prévue par le protocole)', msg: { type: 'phone:state', mode: 'off', style: 'glass', notifs: [], power: 'off', offStyle: 'auto' } },
   { why: 'veille sur téléphone déverrouillé', msg: { type: 'phone:state', mode: 'unlocked', style: 'glass', notifs: [], sleep: { notif: true, touch: true, after: 8 } } },
   { why: 'veille : délai hors bornes', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [], sleep: { notif: true, touch: true, after: 0 } } },
   { why: 'veille incomplète', msg: { type: 'phone:state', mode: 'locked', style: 'glass', notifs: [], sleep: { notif: true, after: 8 } } },

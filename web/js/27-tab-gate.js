@@ -226,6 +226,7 @@ function _tgTabConcerned() {
   return t === 'light' || t === 'effects' || t === 'media' || (t === 'scenario' && navCurrentSub() === 'call');
 }
 function renderTabHold() {
+  renderScnStrip(); // bandeau Scénario (31-nav-status.js) : mêmes points de rendu, onglet compris
   if (mode !== 'remote') return;
   const sc = document.getElementById('nv-scroll');
   if (!sc) return;

@@ -170,6 +170,14 @@
       <span class="nv-strip-txt" id="nvStripTxt"></span>
       <button type="button" id="nvStopAll" onclick="stopEverything()"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> Tout arrêter</button>
     </div>
+    <!-- Ce que le Scénario a posé sur les écrans (séquence, discussion, appel, SMS, notification) et son
+         « Tout arrêter » (31-nav-status.js). Sous le bandeau lumière ; jamais la lumière. -->
+    <div class="nv-strip scn" id="scnStrip" role="status" style="display:none">
+      <span class="nb-dot scn-dot" aria-hidden="true"></span>
+      <svg class="ic cl" aria-hidden="true"><use href="#i-clapperboard"></use></svg>
+      <button type="button" class="scn-txt" id="scnTxt" onclick="scnOpen()"><b id="scnTitle"></b><small id="scnSub"></small></button>
+      <button type="button" class="scn-stop" id="scnStopAll" onclick="scnStopAll()" aria-label="Tout arrêter le scénario"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> Tout arrêter</button>
+    </div>
   </header>
 
   <main id="nv-scroll">

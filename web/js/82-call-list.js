@@ -238,6 +238,7 @@ async function callEntryPrepIds(e, assets) {
 // n'est envoyé non plus ; un écran non préparé sonne sans photo ni bande son
 // (jamais celles d'un autre appel restées en cache).
 async function sendCallEntry(e, targets) {
+  scnNoteEntry(e, targets); // dernier SMS / notification par écran : « Annuler » du Scénario (31-nav-status.js)
   const assets = await callEntryAssets(e);
   const base = callEntryMessage(e, assets);
   const rings = base.ringId ? [base.ringId] : null;

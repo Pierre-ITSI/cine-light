@@ -1413,6 +1413,13 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .ss-del.ss-cancel{border-color:rgba(255,255,255,.14);color:var(--text)}
 .ss-save{flex:1.6;border:none;background:var(--accent);color:#000;font-size:.75rem}
 
+/* Étape Extinction : aperçu du loader à côté des puces de style (91-sequence.js, B1 / B2) */
+.ss-off-prev{display:flex;gap:var(--sp-3);align-items:center;margin:var(--sp-3) 0}
+.ss-off-box{width:104px;height:150px;flex:none;border-radius:16px;background:#000;border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ss-off-box .pp-off{display:flex;flex-direction:column;align-items:center;gap:18px;color:rgba(255,255,255,.9);transform:scale(.72)}
+.ss-off-prev p{margin:0;font:400 13px/1.4 var(--font-ui);color:var(--text-2)}
+.ss-off-prev p b{color:var(--text)}
+
 /* ══ Faux téléphone : barre d'état de l'APERÇU de la télécommande (28b) ══
    La barre, les alertes, la veille et l'extinction de l'écran de jeu sont
    rendues par 71-phone-ui.js et stylées dans 79-phone-ui.css (phase 5) ; ces
@@ -2318,6 +2325,32 @@ input[type=range]:focus-visible::-moz-range-thumb{box-shadow:var(--focus)}
 .nv-strip button{flex:none;height:var(--tap);padding:0 var(--sp-4);border:0;border-radius:var(--r-md);background:var(--danger-fill);color:#fff;
   font:700 var(--fs-secondary)/1 var(--font-ui);display:flex;align-items:center;gap:6px;cursor:pointer}
 .nv-strip button .ic{width:14px;height:14px;color:#fff}
+/* Format compact (bandeaux empilés, onglets hors Scénario) : 40 px, boutons 34 px dont la zone
+   de toucher déborde à 44 px (pseudo-élément invisible) */
+.nv-strip.cmp{height:40px;padding-left:10px}
+.nv-strip.cmp button{position:relative;height:34px;padding:0 12px;font-size:13px}
+.nv-strip.cmp button::after{content:"";position:absolute;inset:-5px -5px}
+
+/* Bandeau Scénario (#scnStrip, 31-nav-status.js) : orange ; « Tout arrêter » en contour rouge,
+   pour ne pas le confondre avec le plein rouge de la lumière. Complet sur l'onglet Scénario. */
+.nv-strip.scn{height:auto;min-height:52px;padding:6px 6px 6px 12px;gap:var(--sp-2);background:rgba(255,122,48,.12);border-color:var(--accent)}
+.nv-strip.on+.nv-strip.scn{margin-top:6px}
+.nv-strip.scn .scn-dot{flex:none;width:10px;height:10px;margin:0 2px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft);animation:scnPulse 1.6s ease-in-out infinite}
+.nv-strip.scn .cl{display:none}
+.nv-strip.scn .scn-txt{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:3px;height:auto;padding:0;border:0;background:transparent;color:var(--text);text-align:left;cursor:pointer;font:inherit}
+.nv-strip.scn .scn-txt b{font:700 14px/1.2 var(--font-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nv-strip.scn .scn-txt small{font:400 12px/1.2 var(--font-ui);color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nv-strip.scn .scn-stop{padding:0 var(--sp-3);background:transparent;color:var(--danger);box-shadow:inset 0 0 0 1.5px var(--danger-fill)}
+.nv-strip.scn .scn-stop .ic{color:var(--danger)}
+.nv-strip.scn.cmp{height:40px;min-height:40px;padding:0 3px 0 10px}
+.nv-strip.scn.cmp .scn-dot{display:none}
+.nv-strip.scn.cmp .cl{display:block;width:16px;height:16px;color:var(--accent-text)}
+.nv-strip.scn.cmp .scn-txt{flex-direction:row;align-items:center;height:34px}
+.nv-strip.scn .scn-txt>b,.nv-strip.scn .scn-txt>small{display:block;width:100%;min-width:0}
+.nv-strip.scn.cmp .scn-txt b{font-size:13px}
+.nv-strip.scn.cmp .scn-txt small{display:none}
+@media (prefers-reduced-motion: reduce){.nv-strip.scn .scn-dot{animation:none}}
+@keyframes scnPulse{50%{box-shadow:0 0 0 7px transparent}}
 
 /* ── Contenu : seul élément qui défile ── */
 #nv-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;
@@ -3090,6 +3123,14 @@ body.nv-plateau #content-scn .sq-mode{margin-top:var(--sp-3)}
       <svg class="ic" aria-hidden="true"><use href="#i-zap"></use></svg>
       <span class="nv-strip-txt" id="nvStripTxt"></span>
       <button type="button" id="nvStopAll" onclick="stopEverything()"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> Tout arrêter</button>
+    </div>
+    <!-- Ce que le Scénario a posé sur les écrans (séquence, discussion, appel, SMS, notification) et son
+         « Tout arrêter » (31-nav-status.js). Sous le bandeau lumière ; jamais la lumière. -->
+    <div class="nv-strip scn" id="scnStrip" role="status" style="display:none">
+      <span class="nb-dot scn-dot" aria-hidden="true"></span>
+      <svg class="ic cl" aria-hidden="true"><use href="#i-clapperboard"></use></svg>
+      <button type="button" class="scn-txt" id="scnTxt" onclick="scnOpen()"><b id="scnTitle"></b><small id="scnSub"></small></button>
+      <button type="button" class="scn-stop" id="scnStopAll" onclick="scnStopAll()" aria-label="Tout arrêter le scénario"><svg class="ic" aria-hidden="true"><use href="#i-square"></use></svg> Tout arrêter</button>
     </div>
   </header>
 
@@ -5512,6 +5553,7 @@ const SPECS = {
         level: opt(int(1, 100), 'pourcentage annoncé (batterie faible seulement, obligatoire)'),
       }), 'alerte « Batterie faible » ou « Aucun réseau »'),
       power: opt(oneOf('on', 'off'), 'off : téléphone éteint (absent : allumé)'),
+      offStyle: opt(STYLE3, 'habillage du loader d’extinction (étape Extinction : Verre / Tonal / Épuré), avec power off seulement ; absent : celui du téléphone (un écran ancien l’ignore)'),
     },
     refine: m => {
       if (!unique(m.notifs.map((/** @type {any} */ n) => n.id))) return 'phone:state : notification en double';
@@ -10079,6 +10121,8 @@ function _validPhoneState(m) {
     : al.kind === 'net' ? { id: al.id, kind: 'net' }
     : _P.int(al.level, 1, 100) !== null ? { id: al.id, kind: 'battery', level: al.level } : null;
   m.power = m.power === 'off' ? 'off' : 'on';
+  // Habillage du loader d'extinction (étape Extinction, B) : seulement avec power off ; inconnu = absent
+  m.offStyle = m.power === 'off' && _P.oneOf(m.offStyle, ['glass', 'tonal', 'minimal']) ? m.offStyle : null;
   if (m.power === 'off') { m.chime = null; m.watch = []; }
   return true;
 }
@@ -11110,6 +11154,7 @@ function _tgTabConcerned() {
   return t === 'light' || t === 'effects' || t === 'media' || (t === 'scenario' && navCurrentSub() === 'call');
 }
 function renderTabHold() {
+  renderScnStrip(); // bandeau Scénario (31-nav-status.js) : mêmes points de rendu, onglet compris
   if (mode !== 'remote') return;
   const sc = document.getElementById('nv-scroll');
   if (!sc) return;
@@ -12530,6 +12575,10 @@ function switchTab(t) {
 // « Tout arrêter » ne fait QUE couper : il n'active rien, donc ne contourne
 // jamais l'avertissement stroboscope (46-strobe-warning.js), qui garde la main
 // sur toute (ré)activation.
+// Second bandeau, #scnStrip (sous le bandeau lumière) : ce que le SCÉNARIO a
+// posé sur les écrans (séquence en cours, discussion, appel, SMS, notification),
+// avec son propre « Tout arrêter » (scnStopAll). Il ne touche jamais la lumière,
+// et le « Tout arrêter » de la lumière ne touche jamais le Scénario.
 const _NV_TXT = {
   strobe: 'Stroboscope actif',
   effect: (name) => 'Effet ' + name + ' en cours',
@@ -12569,6 +12618,7 @@ function renderNavStatus() {
     const b = document.getElementById('tab-' + t);
     if (b) b.classList.toggle('run', run.some((x) => x.tab === t));
   }
+  renderScnStrip(); // le bandeau Scénario se range sous celui-ci (formats compacts)
 }
 
 // Nombre d'écrans hors ligne (liaison établie) : la pastille jaune de l'onglet Écrans
@@ -12594,6 +12644,159 @@ function stopEverything() {
   if (remoteTorchOn) onRemoteTorchToggle(); // éteint aussi le motif de torche en cours
   else if (activeEffect) sendTorchEffect('stop');
   renderNavStatus();
+}
+
+// ── Bandeau Scénario (#scnStrip) ──
+// Textes du bandeau (français, regroupés pour la traduction)
+const _SCN_TXT = {
+  seq: (n, total) => 'Séquence ' + n + ' / ' + total + ' en cours',
+  call: (name, ringing) => 'Appel « ' + name + ' » · ' + (ringing ? 'sonne' : 'en ligne'),
+  chat: (name) => 'Discussion « ' + name + ' » en cours',
+  sms: (name) => 'SMS « ' + name + ' » affiché',
+  notif: (name) => 'Notification « ' + name + ' » affichée',
+  on: (ecrans) => 'sur ' + ecrans,
+  next: (label) => 'prochaine : ' + label,
+  noScreen: 'aucun écran',
+  more: (n, kind) => '+' + n + ' ' + _SCN_MORE[kind][n > 1 ? 1 : 0] + ' ' + _SCN_MORE[kind][n > 1 ? 3 : 2],
+  moreMixed: (n) => '+' + n + ' autres',
+  askTitle: 'Arrêter la séquence ?',
+  askText: 'La séquence s\'arrête à l\'étape {n} / {total} : elle reste en pause là où elle en est. Le SMS, l\'appel et la discussion affichés sont retirés de {ecrans} ; l\'écran redevient libre. GO reprend à l\'étape suivante.',
+  askOk: 'Tout arrêter', askCancel: 'Continuer',
+  undoText: 'Scénario arrêté',
+  undoSub: 'Annuler rétablit la discussion, le SMS et la notification. Un appel raccroché ne se rappelle pas.',
+};
+// Autres affichages : nom (sing., plur.), participe (sing., plur.)
+const _SCN_MORE = {
+  call: ['appel', 'appels', 'affiché', 'affichés'], sms: ['SMS', 'SMS', 'affiché', 'affichés'],
+  notif: ['notification', 'notifications', 'affichée', 'affichées'], chat: ['discussion', 'discussions', 'ouverte', 'ouvertes'],
+};
+const _SCN_ORDER = ['seq', 'chat', 'call', 'sms', 'notif']; // priorité : le premier s'affiche, les autres se comptent
+// Dernier SMS ou notification envoyé à chaque écran (copie) : « Annuler » après « Tout arrêter » le renvoie
+const _scnLast = new Map();
+function scnNoteEntry(e, targets) {
+  if (!e || (e.kind !== 'sms' && e.kind !== 'notif')) return;
+  const ids = targets ? targets.flatMap((t) => (t && Array.isArray(t.screens) ? t.screens : [])) : scrTargetIds();
+  for (const id of ids) _scnLast.set(id, Object.assign({}, e));
+}
+// Ce que le Scénario a posé sur les écrans, par priorité : [{ k, name, ids, ringing }]
+function scnItems() {
+  if (mode !== 'remote') return [];
+  const out = [], all = scrList();
+  if (typeof _seqRun !== 'undefined' && _seqRun.state === 'running') {
+    out.push({ k: 'seq', name: '', ids: [...seqOwnedIds()].filter(scrKnown) });
+  }
+  if (_chat.open) out.push({ k: 'chat', name: _chat.name || '…', ids: _chat.screens ? _chat.screens.filter(scrKnown) : all.slice() });
+  for (const id of all) {
+    const sh = scrState(id).chatShown; // discussion retrouvée à la reconnexion
+    if (sh && !(_chat.open && (!_chat.screens || _chat.screens.includes(id)))) out.push({ k: 'chat', name: sh.name || '…', ids: [id] });
+  }
+  for (const id of all) {
+    const c = scrState(id).call;
+    if (!c) continue;
+    const k = c.kind === 'call' ? 'call' : c.kind === 'notif' ? 'notif' : 'sms', name = c.name || '…';
+    const it = out.find((x) => x.k === k && x.name === name);
+    if (it) it.ids.push(id);
+    else out.push({ k, name, ids: [id], ringing: k === 'call' && c.state !== 'incall' });
+  }
+  return out.sort((a, b) => _SCN_ORDER.indexOf(a.k) - _SCN_ORDER.indexOf(b.k));
+}
+function _scnTitle(it) {
+  switch (it.k) {
+    case 'seq': return _SCN_TXT.seq(Math.max(1, seqPos() + 1), _seq.steps.length);
+    case 'chat': return _SCN_TXT.chat(it.name);
+    case 'call': return _SCN_TXT.call(it.name, it.ringing);
+    case 'sms': return _SCN_TXT.sms(it.name);
+    default: return _SCN_TXT.notif(it.name);
+  }
+}
+// Texte d'un bandeau : titre (le premier élément), cible, autres affichages
+function scnView(items, full) {
+  const it = items[0], rest = items.slice(1), n = rest.length;
+  const names = it.ids.length ? _tgNames(it.ids) : _SCN_TXT.noScreen;
+  const kinds = [...new Set(rest.map((x) => x.k))];
+  const more = !n ? '' : kinds.length === 1 ? _SCN_TXT.more(n, kinds[0]) : _SCN_TXT.moreMixed(n);
+  const next = it.k === 'seq' && seqPending() ? seqStepLabel(seqPending()) : '';
+  if (!full) return { title: _scnTitle(it) + ' · ' + names + (n ? ' · ' + more : ''), sub: '' };
+  const sub = it.k === 'seq' ? names + (next ? ' · ' + _SCN_TXT.next(next) : '') : _SCN_TXT.on(names);
+  return { title: _scnTitle(it), sub: sub + (n ? ' · ' + more : '') };
+}
+// Le bandeau Scénario : visible dès qu'il y a quelque chose à arrêter ; complet sur l'onglet
+// Scénario, compact ailleurs et dès que le bandeau lumière est là (les deux empilés, A3)
+function renderScnStrip() {
+  const strip = document.getElementById('scnStrip');
+  if (!strip) return;
+  const items = scnItems(), light = document.getElementById('nvStrip');
+  const on = items.length > 0, lightOn = !!light && light.classList.contains('on');
+  const full = navCurrentTab() === 'scenario';
+  strip.style.display = on ? 'flex' : 'none';
+  strip.classList.toggle('cmp', on && (!full || lightOn));
+  if (light) light.classList.toggle('cmp', on && lightOn);
+  if (!on) return;
+  const v = scnView(items, full);
+  const t = document.getElementById('scnTitle'), s = document.getElementById('scnSub');
+  if (t.textContent !== v.title) t.textContent = v.title;
+  s.textContent = v.sub; s.style.display = v.sub ? '' : 'none';
+}
+// Toucher le texte : ouvre le Scénario (séquence si elle tourne, sinon Tel)
+function scnOpen() { switchTab(typeof _seqRun !== 'undefined' && _seqRun.state === 'running' ? 'seq' : 'call'); }
+// « Tout arrêter » du Scénario : jamais la lumière. Séquence en cours : confirmation, puis pause
+// (position gardée) et écrans libérés. Sinon immédiat, avec « Annuler » (6 s) pour la discussion,
+// le SMS et la notification (un appel raccroché ne se rappelle pas).
+function scnStopAll() {
+  if (mode !== 'remote') return;
+  if (typeof _seqRun !== 'undefined' && _seqRun.state === 'running') {
+    const shown = scnItems().find((x) => x.k === 'seq');
+    const ecrans = shown && shown.ids.length ? _tgNames(shown.ids) : _SCN_TXT.noScreen;
+    openAppConfirm({ title: _SCN_TXT.askTitle, text: _tgTpl(_SCN_TXT.askText, { n: Math.max(1, seqPos() + 1), total: _seq.steps.length, ecrans }), ok: _SCN_TXT.askOk, cancel: _SCN_TXT.askCancel }, () => scnHalt(true));
+    return;
+  }
+  scnHalt(false);
+}
+// Arrêt effectif. seqWasRunning : la séquence tournait (elle reste en pause, sans « Annuler »)
+function scnHalt(seqWasRunning) {
+  const ids = scrList(), undo = [];
+  // 1. Séquence : pause, position gardée, écrans libérés (comme « Reprendre la main »)
+  if (typeof _seqRun !== 'undefined' && _seqRun.state !== 'idle') {
+    if (!_seqRun.released) seqTakeOver();
+    _scnClearSeqPhones();
+  }
+  // 2. Discussion : fermée (le fil reste enregistré), rouverte par Annuler
+  if (_chat.open) {
+    const chatIds = _chat.screens ? ids.filter((id) => _chat.screens.includes(id)) : ids.slice();
+    const all = _chat.screens ? _chat.screens.slice() : ids.slice();
+    if (chatIds.length) _tgCloseChat(chatIds, false); else closeChat();
+    if (all.length) undo.push(() => openChatOnTarget(true, all));
+  }
+  const foreign = ids.filter((id) => scrState(id).chatShown && !(_chat.open && (!_chat.screens || _chat.screens.includes(id))));
+  if (foreign.length) sendMsg({ type: 'chat:close', target: { screens: foreign } });
+  // 3. Appels, SMS, notifications : retirés (call:end) ; SMS et notifications rendus par Annuler.
+  // Lus avant l'ordre : l'envoi remet l'état de l'écran à vide (scrTrack).
+  const live = ids.filter((id) => scrState(id).call);
+  const back = new Map();
+  for (const id of live) {
+    const c = scrState(id).call, e = _scnLast.get(id);
+    if (c.kind !== 'call' && e && e.kind === c.kind && (e.name || '') === (c.name || '')) {
+      if (!back.has(e)) back.set(e, []);
+      back.get(e).push(id);
+    }
+  }
+  if (live.length) sendMsg({ type: 'call:end', target: { screens: live } });
+  for (const [e, sids] of back) undo.push(() => { Promise.resolve(sendCallEntry(e, [{ screens: sids }])).catch(() => {}); });
+  scrChanged();
+  renderScnStrip();
+  if (!seqWasRunning && undo.length) {
+    undoSnack({ text: _SCN_TXT.undoText, sub: _SCN_TXT.undoSub, undo: () => undo.forEach((f) => f()) });
+  }
+}
+// Faux téléphones de la séquence : remis à vide sur les écrans (rien d'affiché, ni SMS, ni
+// notification, ni verrou). Position et réglages gardés dans le modèle : un GO les renvoie.
+function _scnClearSeqPhones() {
+  for (const [id, p] of _seqPhones) {
+    if (!scrKnown(id)) continue;
+    Object.assign(p, { mode: 'off', power: 'on', notifs: [], alert: null, sleep: null, awaitUnlock: null, chime: null, home: null, homeWall: false, offStyle: null });
+    sendMsg({ type: 'phone:state', target: { screens: [id] }, mode: 'off', style: p.style, notifs: [] });
+    _seqPhoneSent.delete(id);
+  }
 }
 
 // Clavier (Android surtout) : un champ de texte actif masque la barre d'onglets,
@@ -22123,6 +22326,7 @@ async function callEntryPrepIds(e, assets) {
 // n'est envoyé non plus ; un écran non préparé sonne sans photo ni bande son
 // (jamais celles d'un autre appel restées en cache).
 async function sendCallEntry(e, targets) {
+  scnNoteEntry(e, targets); // dernier SMS / notification par écran : « Annuler » du Scénario (31-nav-status.js)
   const assets = await callEntryAssets(e);
   const base = callEntryMessage(e, assets);
   const rings = base.ringId ? [base.ringId] : null;
@@ -26101,6 +26305,10 @@ const _SEQ_TXT = {
   labelOff: 'Extinction',
   offText: 'Fondu, logo neutre, écran noir : le téléphone ne répond plus à rien (ni appel, ni son, ni toucher).',
   offNote: 'Rallumer : une étape « Veille » plus loin (logo, puis écran verrouillé endormi) ou ↶.',
+  labelStyle: 'Style du loader', offStyleName: { auto: 'Auto', glass: 'Verre', tonal: 'Tonal', minimal: 'Épuré' },
+  offAuto: 'Auto : style du téléphone ({nom})', offAutoSub: 'Le même habillage que les SMS et appels de la séquence.',
+  offSet: 'Remplace le style du téléphone pour cette étape seulement.', offPreview: 'Aperçu du loader : batterie vide, puis indicateur.',
+  sumOffStyle: ' (habillage {nom})',
   labelNet: 'Réseau', netLost: 'Perdu', netBack: 'Rétabli',
   labelBars: 'Barres', labelNetType: 'Réseau mobile', labelWifi: 'Wi-Fi', yes: 'Oui', no: 'Non',
   netLostNote: '« Pas de service » dans la barre d\'état et alerte « Aucun réseau » (une fois, pas en mode avion) : un appel devient « Appel impossible », un message du comédien reste « Non distribué ».',
@@ -26120,6 +26328,8 @@ const SEQ_KINDS = ['color', 'effect', 'media', 'call', 'sms', 'notif', 'missed',
 const SEQ_PHONE_KINDS = new Set(['call', 'sms', 'notif', 'missed', 'unlock', 'chat', 'sleep', 'battery', 'off', 'net']);
 // Étapes sans élément enregistré : leurs réglages sont dans l'étape (opt)
 const SEQ_OPT_KINDS = new Set(['unlock', 'sleep', 'battery', 'off', 'net']);
+// Habillage du loader d'extinction (étape « Extinction ») : auto = style du téléphone (défaut)
+const SEQ_OFF_STYLES = ['auto', 'glass', 'tonal', 'minimal'];
 // Grille des types (maquette 29b) : 3, 3, 4 puis les étapes du téléphone
 const SEQ_KIND_ROWS = [['color', 'effect', 'media'], ['call', 'sms', 'notif'], ['sleep', 'missed', 'unlock', 'chat'], ['battery', 'off', 'net']];
 const SEQ_SLEEP_DEF = 8, SEQ_BATTERY_DEF = 5;
@@ -26226,7 +26436,10 @@ function seqSanitizeStep(s) {
   } else if (s.kind === 'net') {
     const o = s.opt || {};
     out.opt = { lost: o.lost !== false, bars: _seqClampInt(o.bars, 1, 4, 4), type: PB_NET_TYPES.includes(o.type) ? o.type : PB_NET_TYPES[1], wifi: o.wifi !== false };
-  } else if (s.kind !== 'off' && typeof s.ref === 'string' && _SEQ_ID_RE.test(s.ref)) out.ref = s.ref;
+  } else if (s.kind === 'off') {
+    // Habillage du loader d'extinction (B) : auto = style du téléphone de la séquence (défaut)
+    out.opt = { style: SEQ_OFF_STYLES.includes((s.opt || {}).style) ? s.opt.style : 'auto' };
+  } else if (typeof s.ref === 'string' && _SEQ_ID_RE.test(s.ref)) out.ref = s.ref;
   if (s.kind === 'chat') {
     const auto = !!(s.opt && s.opt.auto === true);
     out.opt = { auto, full: auto && s.opt.full === true };
@@ -26796,7 +27009,8 @@ async function _seqExec(s, it, ids) {
       // Extinction (maquette 33) : appel en cours coupé, alerte oubliée, plus rien ne répond
       const live = ids.filter((id) => scrState(id).call);
       if (live.length) sendMsg({ type: 'call:end', target: _seqTarget(live) });
-      for (const id of ids) { const p = _seqPhones.get(id); p.power = 'off'; p.alert = null; }
+      // Habillage du loader (B) : envoyé avec l'extinction seulement ; auto (absent) = style du téléphone
+      for (const id of ids) { const p = _seqPhones.get(id); p.power = 'off'; p.alert = null; p.offStyle = s.opt && s.opt.style && s.opt.style !== 'auto' ? s.opt.style : null; }
       break;
     }
     case 'net':
@@ -26976,7 +27190,7 @@ function _seqPhoneMsg(sid, homeOk, wallOk, imgOk) {
   // Barre d'état, veille, batterie, extinction : de la séquence commencée seulement
   if (_seqRun.state !== 'idle' && p.bar) {
     m.bar = phoneBarMsg(p.bar, _seqRun.clockT0 || now, now);
-    if (p.power === 'off') m.power = 'off';
+    if (p.power === 'off') { m.power = 'off'; if (p.offStyle) m.offStyle = p.offStyle; }
     if (p.sleep && (m.mode === 'locked' || m.mode === 'code')) m.sleep = Object.assign({}, p.sleep);
     if (p.alert && p.power !== 'off') m.alert = Object.assign({}, p.alert);
   }
@@ -27004,7 +27218,7 @@ async function _seqPushPhones(only, force) {
     if (p) delete p.chime;
     const b = m.bar;
     const sig = JSON.stringify([m.mode, m.style, m.notifs.map((n) => n.id + (n.img ? '/' + n.img : '')), m.unlock, m.home, m.homeWall, m.wall, m.watch,
-      b ? [b.clock.mode, b.clock.date, b.clock.time, b.net, b.bat] : null, m.sleep, m.alert, m.power]);
+      b ? [b.clock.mode, b.clock.date, b.clock.time, b.net, b.bat] : null, m.sleep, m.alert, m.power, m.offStyle]);
     if (!force && !chime && _seqPhoneSent.get(sid) === sig) continue;
     if (!p && !m.watch && !_seqPhoneSent.has(sid)) continue; // rien à dire à cet écran
     _seqPhoneSent.set(sid, sig);
@@ -27438,7 +27652,7 @@ function seqStepSummary(s, idx) {
     case 'unlock': add(it.code ? _seqTpl(T.sumUnlockCode, { n: it.code }) : T.sumUnlockSwipe); break;
     case 'sleep': add(T.sumSleep); break;
     case 'battery': add(T.sumBattery + ' '); add(_seqTpl(T.percent, { n: it.level }), true); break;
-    case 'off': add(T.sumOff); break;
+    case 'off': add(T.sumOff); if (s.opt && s.opt.style && s.opt.style !== 'auto') add(_seqTpl(T.sumOffStyle, { nom: T.offStyleName[s.opt.style] })); break;
     case 'net': add(it.lost ? T.sumNetLost : T.sumNetBack); break;
   }
   parts[parts.length - 1].t = parts[parts.length - 1].t.replace(/\s+$/, '') + '.';
@@ -27586,6 +27800,11 @@ function _seqWideStepper(label, val, fn) {
     + '<b class="ss-step-val" id="ssOptVal">' + escapeHtml(val) + '</b>'
     + '<button type="button" class="ss-step-btn" aria-label="Augmenter" onclick="' + fn + '(1)">' + icon('plus') + '</button></div>';
 }
+// Style du téléphone de la séquence sur la cible de l'étape (aperçu d'« Auto ») : Verre par défaut
+function _seqOffAutoStyle(s) {
+  const ids = seqStepIds(s).filter(scrKnown), p = ids.length ? _seqPhones.get(ids[0]) : null;
+  return p && _CALL_STYLE_HINTS[p.style] ? p.style : 'glass';
+}
 function _seqPhoneStepCard(s) {
   const o = s.opt, lbl = (k) => '<span class="ss-label">' + escapeHtml(_SEQ_TXT[k]) + '</span>';
   const txt = (t) => '<div class="ss-text">' + escapeHtml(t) + '</div>', note = (t) => '<div class="ss-note">' + escapeHtml(t) + '</div>';
@@ -27599,8 +27818,19 @@ function _seqPhoneStepCard(s) {
         + _seqWideStepper(_SEQ_TXT.labelResleep, _seqTpl(_SEQ_TXT.seconds, { n: o.after }), 'seqEditSleepDelay') + note(_SEQ_TXT.sleepNote);
     case 'battery':
       return lbl('labelBattery') + txt(_SEQ_TXT.batteryText) + _seqWideStepper(_SEQ_TXT.labelLevel, _seqTpl(_SEQ_TXT.percent, { n: o.level }), 'seqEditLevel');
-    case 'off':
-      return lbl('labelOff') + txt(_SEQ_TXT.offText) + note(_SEQ_TXT.offNote);
+    case 'off': {
+      // Habillage du loader (B1, B2) : puces, puis l'aperçu du loader du style retenu (Auto = celui du téléphone)
+      const T = _SEQ_TXT, st = SEQ_OFF_STYLES.includes(o.style) ? o.style : 'auto';
+      const auto = _seqOffAutoStyle(s), eff = st === 'auto' ? auto : st;
+      const legend = st === 'auto'
+        ? '<b>' + escapeHtml(_seqTpl(T.offAuto, { nom: T.offStyleName[auto] })) + '</b><br>' + escapeHtml(T.offAutoSub)
+        : '<b>' + escapeHtml(T.offStyleName[st]) + '</b><br>' + escapeHtml(T.offSet);
+      return lbl('labelOff') + txt(T.offText)
+        + '<span class="ss-label ss-sub">' + escapeHtml(T.labelStyle) + '</span>'
+        + '<div class="ss-row ss-offst" role="group" aria-label="' + escapeHtml(T.labelStyle) + '">' + SEQ_OFF_STYLES.map((k) => _seqOpt(st === k, set('style', k), T.offStyleName[k])).join('') + '</div>'
+        + '<div class="ss-off-prev"><div class="ss-off-box">' + PhoneUI.powerOff(eff) + '</div><p>' + legend + '<br><br>' + escapeHtml(T.offPreview) + '</p></div>'
+        + note(T.offNote);
+    }
     case 'net': {
       let h = lbl('labelNet') + row([_seqOpt(o.lost, set('lost', true), _SEQ_TXT.netLost), _seqOpt(!o.lost, set('lost', false), _SEQ_TXT.netBack)]);
       if (!o.lost) {
@@ -28509,7 +28739,7 @@ const SP_POWER_FADE_MS = 600, SP_LOGO_MS = 1500, SP_BOOT_MS = 1200;
 const SP_OFF_FADE_MS = 350, SP_OFFLOAD_MS = 2000, SP_OFFLOAD_OUT_MS = 300; // extinction : fondu au noir, loader, fondu du loader
 const SP_GESTURE_GAP_MS = 400, SP_GESTURE_BURST = 5, SP_RELOCK_GUARD_MS = 1500, SP_REFRESH_MS = 15000;
 
-let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, wall, watch: Set, sleep, alert, power }
+let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, wall, watch: Set, sleep, alert, power, offStyle }
 let _spSleep = null;          // veille : { cfg, awake, timer, callOn }
 let _spAlertClosed = null;    // alerte fermée ici (id), pas encore confirmée par la télécommande
 let _spPowerSeq = 0;          // jeton des animations d'extinction / rallumage
@@ -28543,7 +28773,7 @@ function screenPhoneState(m) {
   const fresh = !!prev && notifs.some((n) => !prev.notifs.some((o) => o.id === n.id));
   const alertNew = !!m.alert && !(prev && prev.alert && prev.alert.id === m.alert.id);
   if (!m.alert || (_spAlertClosed && m.alert.id !== _spAlertClosed)) _spAlertClosed = null;
-  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, homeWall: m.homeWall === true, wall: !!m.wall, watch: new Set(m.watch), sleep: m.sleep || null, alert: m.alert || null, power: m.power === 'off' ? 'off' : 'on' };
+  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, homeWall: m.homeWall === true, wall: !!m.wall, watch: new Set(m.watch), sleep: m.sleep || null, alert: m.alert || null, power: m.power === 'off' ? 'off' : 'on', offStyle: m.offStyle || null };
   screenSeqBar(m.bar); // 97-phone-status.js
   _spRender();
   _spRenderAlert();
@@ -28839,7 +29069,7 @@ function _spApplyPower(wasOff) {
   if (!pw) return;
   if (off && wasOff !== true) {
     const tok = ++_spPowerSeq;
-    pw.innerHTML = PhoneUI.powerOff(_scPhone.style);
+    pw.innerHTML = PhoneUI.powerOff(_scPhone.offStyle || _scPhone.style); // habillage de l'étape Extinction, sinon celui du téléphone (B)
     pw.style.display = 'flex';
     if (wasOff === null) { screenChatLockBlur(); screenChatBackdropSync(); pw.className = 'on instant'; pw.textContent = ''; _sbRefresh(); return; } // écran rechargé : déjà éteint, noir direct
     // Clavier d'abord (s'il est levé), puis fondu au noir, loader, fondu du loader, noir.

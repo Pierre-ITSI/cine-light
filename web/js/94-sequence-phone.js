@@ -57,7 +57,7 @@ const SP_POWER_FADE_MS = 600, SP_LOGO_MS = 1500, SP_BOOT_MS = 1200;
 const SP_OFF_FADE_MS = 350, SP_OFFLOAD_MS = 2000, SP_OFFLOAD_OUT_MS = 300; // extinction : fondu au noir, loader, fondu du loader
 const SP_GESTURE_GAP_MS = 400, SP_GESTURE_BURST = 5, SP_RELOCK_GUARD_MS = 1500, SP_REFRESH_MS = 15000;
 
-let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, wall, watch: Set, sleep, alert, power }
+let _scPhone = null;          // état reçu : { mode, style, notifs, unlock, home, wall, watch: Set, sleep, alert, power, offStyle }
 let _spSleep = null;          // veille : { cfg, awake, timer, callOn }
 let _spAlertClosed = null;    // alerte fermée ici (id), pas encore confirmée par la télécommande
 let _spPowerSeq = 0;          // jeton des animations d'extinction / rallumage
@@ -91,7 +91,7 @@ function screenPhoneState(m) {
   const fresh = !!prev && notifs.some((n) => !prev.notifs.some((o) => o.id === n.id));
   const alertNew = !!m.alert && !(prev && prev.alert && prev.alert.id === m.alert.id);
   if (!m.alert || (_spAlertClosed && m.alert.id !== _spAlertClosed)) _spAlertClosed = null;
-  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, homeWall: m.homeWall === true, wall: !!m.wall, watch: new Set(m.watch), sleep: m.sleep || null, alert: m.alert || null, power: m.power === 'off' ? 'off' : 'on' };
+  _scPhone = { mode, style: m.style, notifs, unlock: m.unlock, home: !!m.home, homeWall: m.homeWall === true, wall: !!m.wall, watch: new Set(m.watch), sleep: m.sleep || null, alert: m.alert || null, power: m.power === 'off' ? 'off' : 'on', offStyle: m.offStyle || null };
   screenSeqBar(m.bar); // 97-phone-status.js
   _spRender();
   _spRenderAlert();
@@ -387,7 +387,7 @@ function _spApplyPower(wasOff) {
   if (!pw) return;
   if (off && wasOff !== true) {
     const tok = ++_spPowerSeq;
-    pw.innerHTML = PhoneUI.powerOff(_scPhone.style);
+    pw.innerHTML = PhoneUI.powerOff(_scPhone.offStyle || _scPhone.style); // habillage de l'étape Extinction, sinon celui du téléphone (B)
     pw.style.display = 'flex';
     if (wasOff === null) { screenChatLockBlur(); screenChatBackdropSync(); pw.className = 'on instant'; pw.textContent = ''; _sbRefresh(); return; } // écran rechargé : déjà éteint, noir direct
     // Clavier d'abord (s'il est levé), puis fondu au noir, loader, fondu du loader, noir.
