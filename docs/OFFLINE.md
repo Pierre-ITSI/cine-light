@@ -180,7 +180,7 @@ sinon le Wi-Fi local, sinon le Bluetooth.
   liaisons peuvent se doubler (trame perdue en Bluetooth, rattrapée plus tard
   par Internet). Pour les états où « le dernier gagne » (`color`, `strobe`,
   `effect`, `blackout`, `screen:brightness`, torche, `media:autoadvance`,
-  `media:endmode`, `dmx:look`, `media-progress`, `call:state`), une trame d'un
+  `media:nav`, `media:endmode`, `dmx:look`, `media-progress`, `call:state`), une trame d'un
   n° de séquence inférieur au dernier appliqué (même émetteur, même type) est
   ignorée (`lastError = 'order'`).
 

@@ -556,6 +556,13 @@ const SPECS = {
     doc: 'Option « tap sur l’écran = média suivant ».',
     fields: { on: req(bool, 'activée') },
   },
+  'media:nav': {
+    dir: 'r2s', src: ['web'],
+    doc: 'Navigation de l’acteur sur l’écran de jeu : fixe (off), toucher (tap), glisser en carrousel (swipe) ou défiler en fil (scroll), '
+      + 'avec l’habillage du fil (none / social). Remplace media:autoadvance, que la télécommande envoie encore pendant la transition '
+      + '(on = mode « tap »). Ciblé, suivi et renvoyé à la resynchronisation.',
+    fields: { mode: req(oneOf('off', 'tap', 'swipe', 'scroll'), 'mode'), skin: req(oneOf('none', 'social'), 'habillage (fil seulement)') },
+  },
   'media-ctrl': {
     dir: 'r2s', src: ['web'],
     doc: 'Lecture / pause / recherche de la vidéo affichée.',
@@ -994,6 +1001,18 @@ const SPECS = {
     dir: 's2r', src: ['web'],
     doc: 'L’écran a avancé seul (média suivant déjà en cache).',
     fields: { id: req(MEDIA_ID, 'id affiché') },
+  },
+  'media:view': {
+    dir: 's2r', src: ['web'],
+    doc: 'Média en vue sur l’écran (glisser / défiler) : id dominant, rang dans l’ordre du pool, taille du pool, et jusqu’à 4 médias visibles. '
+      + 'Envoyé à la fin du geste, au plus 4 fois par seconde en défilement. media:advanced en est le cas particulier du toucher.',
+    fields: {
+      id: req(MEDIA_ID, 'id du média dominant'),
+      idx: req(int(0, LIMITS.poolSize - 1), 'rang (0 = premier)'),
+      n: req(int(1, LIMITS.poolSize), 'taille du pool'),
+      vis: opt(arrayOf(MEDIA_ID, 4), 'ids visibles (4 au plus)'),
+    },
+    refine: m => (m.idx >= m.n ? 'idx hors du pool' : null),
   },
   'media:cached': {
     dir: 's2r', src: ['web'],

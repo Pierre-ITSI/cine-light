@@ -222,6 +222,27 @@ test('valeurs non JSON et prototypes piégés', () => {
   assert.equal(validate({ type: 'media:advance', dir: 2 }), false);
 });
 
+test('navigation média : media:nav (télécommande → écran) et media:view (écran → télécommande)', () => {
+  const r2s = { direction: 'r2s' }, s2r = { direction: 's2r' };
+  for (const mode of ['off', 'tap', 'swipe', 'scroll']) for (const skin of ['none', 'social']) assert.equal(validate({ type: 'media:nav', mode, skin }, r2s), true);
+  assert.equal(validate({ type: 'media:nav', mode: 'swipe', skin: 'none', target: { screens: ['AbCdEfGh12345678'] } }, r2s), true, 'ciblé');
+  assert.equal(validate({ type: 'media:nav', mode: 'swipe', skin: 'none' }, s2r), false, 'un écran ne règle pas la navigation');
+  assert.equal(validate({ type: 'media:nav', mode: 'zoom', skin: 'none' }), false);
+  assert.equal(validate({ type: 'media:nav', mode: 'scroll', skin: 'neon' }), false);
+  assert.equal(validate({ type: 'media:nav', mode: 'scroll' }), false, 'habillage obligatoire');
+  assert.equal(validate({ type: 'media:nav', mode: 'scroll', skin: 'none', x: 1 }), false, 'champ inconnu');
+  const v = { type: 'media:view', id: 'm4', idx: 3, n: 6, vis: ['m4', 'm5'] };
+  assert.equal(validate(v, s2r), true);
+  assert.equal(validate({ type: 'media:view', id: 'm1', idx: 0, n: 1 }, s2r), true, 'vis facultatif');
+  assert.equal(validate(v, r2s), false, 'la télécommande ne rapporte pas de vue');
+  assert.equal(validate({ ...v, idx: 6 }), false, 'idx hors du pool');
+  assert.equal(validate({ ...v, idx: -1 }), false);
+  assert.equal(validate({ ...v, n: 0 }), false);
+  assert.equal(validate({ ...v, vis: ['m1', 'm2', 'm3', 'm4', 'm5'] }), false, '4 médias visibles au plus');
+  assert.equal(validate({ ...v, vis: ['<x>'] }), false);
+  assert.equal(validate({ ...v, id: '../x' }), false);
+});
+
 test('MESSAGE_TYPES documente sens, sources et champs, et est figé', () => {
   for (const [type, d] of Object.entries(MESSAGE_TYPES)) {
     assert.ok(['r2s', 's2r', 'both'].includes(d.direction), type);
