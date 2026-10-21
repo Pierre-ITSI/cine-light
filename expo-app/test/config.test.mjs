@@ -38,3 +38,11 @@ test('script injecté : window.SETREMOTE_NATIVE identique à l\'ancien littéral
   assert.deepEqual(run(nativeBootstrapScript('ios', 'https://set-remote.itsi-app.com/')).n.publicUrl, 'https://set-remote.itsi-app.com/');
   assert.throws(() => nativeBootstrapScript('ios', "https://h.fr/'};alert(1);//"), /invalide/);
 });
+
+test('script injecté : caps.audioRoute (module setremote-audio présent) passe le pont à 2 ; sans le module, comme avant', () => {
+  const run = (src) => { const ctx = vm.createContext({ window: {} }); vm.runInContext(src, ctx); return JSON.parse(JSON.stringify(ctx.window.SETREMOTE_NATIVE)); };
+  assert.deepEqual(run(nativeBootstrapScript('ios', undefined, { audioRoute: true })), { platform: 'ios', bridge: 2, publicUrl: PUBLIC_WEB_URL, caps: { audioRoute: true } });
+  for (const caps of [undefined, {}, { audioRoute: false }, { audioRoute: 'oui' }]) {
+    assert.deepEqual(run(nativeBootstrapScript('android', undefined, caps)), { platform: 'android', bridge: 1, publicUrl: PUBLIC_WEB_URL }, JSON.stringify(caps));
+  }
+});
