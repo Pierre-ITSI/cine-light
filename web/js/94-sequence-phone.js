@@ -377,12 +377,13 @@ function _spApplyPower(wasOff) {
     const tok = ++_spPowerSeq;
     pw.innerHTML = PhoneUI.powerOff(_scPhone.style);
     pw.style.display = 'flex';
-    if (wasOff === null) { screenChatLockBlur(); pw.className = 'on instant'; pw.textContent = ''; _sbRefresh(); return; } // écran rechargé : déjà éteint, noir direct
+    if (wasOff === null) { screenChatLockBlur(); screenChatBackdropSync(); pw.className = 'on instant'; pw.textContent = ''; _sbRefresh(); return; } // écran rechargé : déjà éteint, noir direct
     // Clavier d'abord (s'il est levé), puis fondu au noir, loader, fondu du loader, noir.
     // Rien ne bloque la séquence de la télécommande : tout est en minuteries à jeton.
     pw.className = '';
     screenChatLockBlur(() => {
       if (tok !== _spPowerSeq) return;
+      screenChatBackdropSync(); // éteint : fond d'origine rendu
       void pw.offsetWidth;
       pw.className = 'on offing';
       _sbRefresh();
@@ -402,7 +403,7 @@ function _spApplyPower(wasOff) {
     screenChatUnlockFocus(); // le clavier de la discussion peut de nouveau se lever
     pw.innerHTML = PhoneUI.power();
     pw.className = 'on logo'; pw.style.display = 'flex';
-    setTimeout(() => { if (tok !== _spPowerSeq) return; pw.className = 'on'; _spPaint(); }, SP_BOOT_MS);
+    setTimeout(() => { if (tok !== _spPowerSeq) return; pw.className = 'on'; _spPaint(); screenChatBackdropSync(); }, SP_BOOT_MS);
   }
 }
 // Écran noir de la veille affiché / retiré en fondu (pas pendant l'extinction ni le rallumage)
@@ -441,6 +442,7 @@ function _spAlertKbRelease(p) {
   if (p && p.power === 'off') return; // extinction : le verrou reste jusqu'au rallumage
   if (typeof screenChatUnlockFocus === 'function') screenChatUnlockFocus();
   if (typeof _sccFocus === 'function' && typeof _scChat !== 'undefined' && _scChat) _sccFocus();
+  if (typeof screenChatBackdropSync === 'function') screenChatBackdropSync();
 }
 function _spRenderAlert() {
   const el = document.getElementById('screen-palert');

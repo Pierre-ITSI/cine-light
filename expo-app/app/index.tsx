@@ -311,6 +311,9 @@ export default function AppShell() {
 }
 
 const styles = StyleSheet.create({
+  // Fond natif noir : visible sous le clavier (Android adjustResize) et au rebond iOS. La page web
+  // colore html/body (83-discussion.js) mais pas cette vue ; pour un fond identique à la discussion,
+  // relayer la couleur via un message pont (ex. {type:'bg', color}) et l'appliquer ici (état React).
   root: { flex: 1, backgroundColor: '#000000' },
   web: { flex: 1, backgroundColor: '#000000' },
   error: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, backgroundColor: '#0a0a0f' },

@@ -1088,6 +1088,7 @@ function screenChatHide() {
   _sccUnlockFocus();
   const k = document.getElementById('sccKeys');
   if (k) k.blur();
+  _sccBackdropRelease();
   el.style.display = 'none';
   el.textContent = '';
 }
@@ -1208,6 +1209,7 @@ function _sccRender(first) {
   list.scrollTop = list.scrollHeight;
   _sccRenderCompose();
   _sccFitViewport();
+  _sccBackdropSync();
   if (document.activeElement !== document.getElementById('sccKeys')) _sccFocus();
 }
 // ── Extinction du téléphone : clavier d'abord ──
@@ -1298,6 +1300,40 @@ function _sccFitViewport() {
   el.style.top = Math.round(vv.offsetTop) + 'px';
 }
 if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => { if (_scChat) _sccFitViewport(); });
+  window.visualViewport.addEventListener('resize', () => { if (_scChat) { _sccFitViewport(); _sccBackdropSync(); } });
   window.visualViewport.addEventListener('scroll', () => { if (_scChat) _sccFitViewport(); });
 }
+// ── Fond derrière le clavier du système ──
+// Pendant la discussion, html/body, la couleur de thème (barre du navigateur) et le color-scheme
+// (apparence claire/sombre du clavier iOS/Android) prennent le fond de messagerie du style actif
+// (jeton --pt-kb de 79-phone-ui.css) : plus de bande sombre sous le clavier ni dans le rebond.
+// Les valeurs d'origine sont restituées à la fermeture, à l'extinction ou si une autre couche prend la place.
+let _sccBd = null;
+function _sccBackdropSync() {
+  const root = document.querySelector('#screen-chat .pt');
+  const cs = root ? getComputedStyle(root) : null;
+  const col = cs ? cs.getPropertyValue('--pt-kb').trim() : '';
+  const vis = (id) => { const e = document.getElementById(id); return !!e && e.style.display !== 'none' && e.style.display !== '' && (id !== 'screen-ppower' || e.classList.contains('on') || e.classList.contains('logo')); };
+  // Éteint, ou appel plein écran par-dessus (une alerte est transparente : le fond reste) : le fond de la discussion n'a plus lieu d'être
+  const off = (typeof _scPhone !== 'undefined' && _scPhone && _scPhone.power === 'off') || vis('screen-ppower') || vis('screen-call');
+  if (!_scChat || !col || off) { _sccBackdropRelease(); return; }
+  const scheme = cs.getPropertyValue('--pt-scheme').trim() || 'dark';
+  const de = document.documentElement, meta = document.querySelector('meta[name="theme-color"]');
+  if (!_sccBd) _sccBd = { html: de.style.background, body: document.body.style.background, scheme: de.style.colorScheme, meta: meta ? meta.getAttribute('content') : null };
+  de.style.background = col; document.body.style.background = col; de.style.colorScheme = scheme;
+  if (meta) meta.setAttribute('content', col);
+  const k = document.getElementById('sccKeys');
+  if (k) k.style.colorScheme = scheme;
+  document.getElementById('screen-chat').style.background = col; // conteneur : aucun interstice sous la discussion
+}
+function _sccBackdropRelease() {
+  const b = _sccBd;
+  if (!b) return;
+  _sccBd = null;
+  const ce = document.getElementById('screen-chat');
+  if (ce) ce.style.background = '';
+  const de = document.documentElement, meta = document.querySelector('meta[name="theme-color"]');
+  de.style.background = b.html; document.body.style.background = b.body; de.style.colorScheme = b.scheme;
+  if (meta && b.meta !== null) meta.setAttribute('content', b.meta);
+}
+function screenChatBackdropSync() { _sccBackdropSync(); }

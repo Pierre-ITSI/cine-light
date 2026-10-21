@@ -670,7 +670,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
   --ic-r:10px; --btn-bg:rgba(255,255,255,.18); --btn-blur:blur(20px);
   --clock-w:600; --clock-fs:92px; --date-fs:20px; --date-w:500;
   --bubble-in:rgba(255,255,255,.18); --bubble-in-c:#fff; --bubble-out:rgba(255,255,255,.92); --bubble-out-c:#111;
-  --bubble-r:20px; --head-bg:rgba(255,255,255,.07); --field-bg:rgba(255,255,255,.12); --accent:#7db4ff}
+  --pt-kb:#0d121c; --pt-scheme:dark; --bubble-r:20px; --head-bg:rgba(255,255,255,.07); --field-bg:rgba(255,255,255,.12); --accent:#7db4ff}
 .ph-tonal{
   --ph-bg:#15171b;
   --card-bg:#2b2e34; --card-blur:none; --card-r:28px; --card-bd:0 solid transparent;
@@ -678,7 +678,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
   --ic-r:50%; --btn-bg:#34373e; --btn-blur:none;
   --clock-w:300; --clock-fs:104px; --date-fs:17px; --date-w:500;
   --bubble-in:#2b2e34; --bubble-in-c:#e6e6e6; --bubble-out:#e3e1dc; --bubble-out-c:#1b1b1b;
-  --bubble-r:22px; --head-bg:#1f2227; --field-bg:#2b2e34; --accent:#a8c7fa}
+  --pt-kb:#15171b; --pt-scheme:dark; --bubble-r:22px; --head-bg:#1f2227; --field-bg:#2b2e34; --accent:#a8c7fa}
 .ph-minimal{
   --ph-bg:#000;
   --card-bg:#14171c; --card-blur:none; --card-r:12px; --card-bd:1px solid rgba(255,255,255,.2);
@@ -910,7 +910,7 @@ input[type="color"]::-moz-color-swatch{border:none;border-radius:5px}
 .ph-tonal .pt-send{border-radius:14px;width:42px;height:42px;background:#34373e}
 .ph-tonal .pt-send.on{background:#e3e1dc;color:#1b1b1b}
 /* Épuré : discussion sur fond blanc, texte et barre d'état sombres */
-.ph-minimal.pt{background:#fff;color:#111}
+.ph-minimal.pt{--pt-kb:#fff;--pt-scheme:light;background:#fff;color:#111}
 .ph-minimal .pt-head{border-bottom:1px solid #e5e5e5;color:#111;-webkit-backdrop-filter:none;backdrop-filter:none}.ph-minimal .pt-back{color:#111}
 .ph-minimal .pt-av{background-color:#9aa6b8}
 .ph-minimal .pt-day{color:#5c5c61}
@@ -23367,6 +23367,7 @@ function screenChatHide() {
   _sccUnlockFocus();
   const k = document.getElementById('sccKeys');
   if (k) k.blur();
+  _sccBackdropRelease();
   el.style.display = 'none';
   el.textContent = '';
 }
@@ -23487,6 +23488,7 @@ function _sccRender(first) {
   list.scrollTop = list.scrollHeight;
   _sccRenderCompose();
   _sccFitViewport();
+  _sccBackdropSync();
   if (document.activeElement !== document.getElementById('sccKeys')) _sccFocus();
 }
 // ── Extinction du téléphone : clavier d'abord ──
@@ -23577,9 +23579,43 @@ function _sccFitViewport() {
   el.style.top = Math.round(vv.offsetTop) + 'px';
 }
 if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => { if (_scChat) _sccFitViewport(); });
+  window.visualViewport.addEventListener('resize', () => { if (_scChat) { _sccFitViewport(); _sccBackdropSync(); } });
   window.visualViewport.addEventListener('scroll', () => { if (_scChat) _sccFitViewport(); });
 }
+// ── Fond derrière le clavier du système ──
+// Pendant la discussion, html/body, la couleur de thème (barre du navigateur) et le color-scheme
+// (apparence claire/sombre du clavier iOS/Android) prennent le fond de messagerie du style actif
+// (jeton --pt-kb de 79-phone-ui.css) : plus de bande sombre sous le clavier ni dans le rebond.
+// Les valeurs d'origine sont restituées à la fermeture, à l'extinction ou si une autre couche prend la place.
+let _sccBd = null;
+function _sccBackdropSync() {
+  const root = document.querySelector('#screen-chat .pt');
+  const cs = root ? getComputedStyle(root) : null;
+  const col = cs ? cs.getPropertyValue('--pt-kb').trim() : '';
+  const vis = (id) => { const e = document.getElementById(id); return !!e && e.style.display !== 'none' && e.style.display !== '' && (id !== 'screen-ppower' || e.classList.contains('on') || e.classList.contains('logo')); };
+  // Éteint, ou appel plein écran par-dessus (une alerte est transparente : le fond reste) : le fond de la discussion n'a plus lieu d'être
+  const off = (typeof _scPhone !== 'undefined' && _scPhone && _scPhone.power === 'off') || vis('screen-ppower') || vis('screen-call');
+  if (!_scChat || !col || off) { _sccBackdropRelease(); return; }
+  const scheme = cs.getPropertyValue('--pt-scheme').trim() || 'dark';
+  const de = document.documentElement, meta = document.querySelector('meta[name="theme-color"]');
+  if (!_sccBd) _sccBd = { html: de.style.background, body: document.body.style.background, scheme: de.style.colorScheme, meta: meta ? meta.getAttribute('content') : null };
+  de.style.background = col; document.body.style.background = col; de.style.colorScheme = scheme;
+  if (meta) meta.setAttribute('content', col);
+  const k = document.getElementById('sccKeys');
+  if (k) k.style.colorScheme = scheme;
+  document.getElementById('screen-chat').style.background = col; // conteneur : aucun interstice sous la discussion
+}
+function _sccBackdropRelease() {
+  const b = _sccBd;
+  if (!b) return;
+  _sccBd = null;
+  const ce = document.getElementById('screen-chat');
+  if (ce) ce.style.background = '';
+  const de = document.documentElement, meta = document.querySelector('meta[name="theme-color"]');
+  de.style.background = b.html; document.body.style.background = b.body; de.style.colorScheme = b.scheme;
+  if (meta && b.meta !== null) meta.setAttribute('content', b.meta);
+}
+function screenChatBackdropSync() { _sccBackdropSync(); }
 // ══════════════════════════ NOTIFICATION D'APPLICATION (onglet Tel) ══════════════════════════
 // Maquettes validées 24 (télécommande) et 25 (écran). Remplace l'ancienne
 // « messagerie » : une application fictive (icône importée, nom), un titre et
@@ -28198,12 +28234,13 @@ function _spApplyPower(wasOff) {
     const tok = ++_spPowerSeq;
     pw.innerHTML = PhoneUI.powerOff(_scPhone.style);
     pw.style.display = 'flex';
-    if (wasOff === null) { screenChatLockBlur(); pw.className = 'on instant'; pw.textContent = ''; _sbRefresh(); return; } // écran rechargé : déjà éteint, noir direct
+    if (wasOff === null) { screenChatLockBlur(); screenChatBackdropSync(); pw.className = 'on instant'; pw.textContent = ''; _sbRefresh(); return; } // écran rechargé : déjà éteint, noir direct
     // Clavier d'abord (s'il est levé), puis fondu au noir, loader, fondu du loader, noir.
     // Rien ne bloque la séquence de la télécommande : tout est en minuteries à jeton.
     pw.className = '';
     screenChatLockBlur(() => {
       if (tok !== _spPowerSeq) return;
+      screenChatBackdropSync(); // éteint : fond d'origine rendu
       void pw.offsetWidth;
       pw.className = 'on offing';
       _sbRefresh();
@@ -28223,7 +28260,7 @@ function _spApplyPower(wasOff) {
     screenChatUnlockFocus(); // le clavier de la discussion peut de nouveau se lever
     pw.innerHTML = PhoneUI.power();
     pw.className = 'on logo'; pw.style.display = 'flex';
-    setTimeout(() => { if (tok !== _spPowerSeq) return; pw.className = 'on'; _spPaint(); }, SP_BOOT_MS);
+    setTimeout(() => { if (tok !== _spPowerSeq) return; pw.className = 'on'; _spPaint(); screenChatBackdropSync(); }, SP_BOOT_MS);
   }
 }
 // Écran noir de la veille affiché / retiré en fondu (pas pendant l'extinction ni le rallumage)
@@ -28262,6 +28299,7 @@ function _spAlertKbRelease(p) {
   if (p && p.power === 'off') return; // extinction : le verrou reste jusqu'au rallumage
   if (typeof screenChatUnlockFocus === 'function') screenChatUnlockFocus();
   if (typeof _sccFocus === 'function' && typeof _scChat !== 'undefined' && _scChat) _sccFocus();
+  if (typeof screenChatBackdropSync === 'function') screenChatBackdropSync();
 }
 function _spRenderAlert() {
   const el = document.getElementById('screen-palert');

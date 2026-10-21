@@ -47,7 +47,7 @@
   --ic-r:10px; --btn-bg:rgba(255,255,255,.18); --btn-blur:blur(20px);
   --clock-w:600; --clock-fs:92px; --date-fs:20px; --date-w:500;
   --bubble-in:rgba(255,255,255,.18); --bubble-in-c:#fff; --bubble-out:rgba(255,255,255,.92); --bubble-out-c:#111;
-  --bubble-r:20px; --head-bg:rgba(255,255,255,.07); --field-bg:rgba(255,255,255,.12); --accent:#7db4ff}
+  --pt-kb:#0d121c; --pt-scheme:dark; --bubble-r:20px; --head-bg:rgba(255,255,255,.07); --field-bg:rgba(255,255,255,.12); --accent:#7db4ff}
 .ph-tonal{
   --ph-bg:#15171b;
   --card-bg:#2b2e34; --card-blur:none; --card-r:28px; --card-bd:0 solid transparent;
@@ -55,7 +55,7 @@
   --ic-r:50%; --btn-bg:#34373e; --btn-blur:none;
   --clock-w:300; --clock-fs:104px; --date-fs:17px; --date-w:500;
   --bubble-in:#2b2e34; --bubble-in-c:#e6e6e6; --bubble-out:#e3e1dc; --bubble-out-c:#1b1b1b;
-  --bubble-r:22px; --head-bg:#1f2227; --field-bg:#2b2e34; --accent:#a8c7fa}
+  --pt-kb:#15171b; --pt-scheme:dark; --bubble-r:22px; --head-bg:#1f2227; --field-bg:#2b2e34; --accent:#a8c7fa}
 .ph-minimal{
   --ph-bg:#000;
   --card-bg:#14171c; --card-blur:none; --card-r:12px; --card-bd:1px solid rgba(255,255,255,.2);
@@ -287,7 +287,7 @@
 .ph-tonal .pt-send{border-radius:14px;width:42px;height:42px;background:#34373e}
 .ph-tonal .pt-send.on{background:#e3e1dc;color:#1b1b1b}
 /* Épuré : discussion sur fond blanc, texte et barre d'état sombres */
-.ph-minimal.pt{background:#fff;color:#111}
+.ph-minimal.pt{--pt-kb:#fff;--pt-scheme:light;background:#fff;color:#111}
 .ph-minimal .pt-head{border-bottom:1px solid #e5e5e5;color:#111;-webkit-backdrop-filter:none;backdrop-filter:none}.ph-minimal .pt-back{color:#111}
 .ph-minimal .pt-av{background-color:#9aa6b8}
 .ph-minimal .pt-day{color:#5c5c61}
