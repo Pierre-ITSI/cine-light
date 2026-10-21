@@ -121,6 +121,17 @@ export const REAL_MESSAGES = [
     },
   },
   {
+    direction: 'r2s', where: 'triggerCall (appel, audio : voix après 2 s, écouteur, écran noir)',
+    msg: {
+      type: 'call:start', kind: 'call', style: 'glass', name: 'Maman', label: 'mobile', hasAudio: true, autoAnswer: 8,
+      audio: { delay: 2, route: 'ear', prox: true },
+    },
+  },
+  { direction: 'r2s', where: 'triggerCall (appel, audio : haut-parleur, sans capteur)', msg: { type: 'call:start', kind: 'call', name: 'Régie', hasAudio: true, audio: { delay: 0, route: 'speaker', prox: false } } },
+  { direction: 'r2s', where: 'ancien appel enregistré (audio partiel)', msg: { type: 'call:start', kind: 'call', name: 'Maman', audio: { delay: 15 } } },
+  { direction: 'r2s', where: 'telToggleSpeaker (haut-parleur demandé par la télécommande)', msg: { type: 'call:speaker', on: true, from: 'remote' } },
+  { direction: 'r2s', where: 'telToggleSpeaker (écouteur demandé, un écran)', msg: { type: 'call:speaker', on: false, from: 'remote', target: { screens: ['S000000000000000'] } } },
+  {
     direction: 'r2s', where: 'triggerCall (sonnerie importée, volume 80 %)',
     msg: {
       type: 'call:start', kind: 'call', style: 'tonal', name: 'Régie', label: '', msg: '', appName: '', appColor: '#2f8cf0',
@@ -342,6 +353,8 @@ export const REAL_MESSAGES = [
   { direction: 's2r', where: 'screenSendTel : SMS sans nom', msg: { type: 'tel:state', tel: { kind: 'sms', state: 'notif' } } },
   { direction: 's2r', where: 'screenSendTel : aucune couche Tel', msg: { type: 'tel:state', tel: null } },
   { direction: 's2r', where: 'screenCallStart', msg: { type: 'call:state', state: 'ringing' } },
+  { direction: 's2r', where: 'screenSendSpeaker (le comédien touche « Haut-parleur »)', msg: { type: 'call:speaker', on: true, from: 'screen' } },
+  { direction: 's2r', where: 'screenSendTel : appel en ligne, haut-parleur actif', msg: { type: 'tel:state', tel: { kind: 'call', state: 'incall', name: 'Maman', speaker: true } } },
   { direction: 's2r', where: 'signe de vie de l’écran (toutes les 15 s)', msg: { type: 'screen:alive' } },
   { direction: 's2r', where: 'screenCallEnd', msg: { type: 'call:state', state: 'ended' } },
   {
@@ -362,6 +375,16 @@ export const REAL_MESSAGES = [
 
 /** Charges d'attaque de la revue de sécurité (+ variantes « presque valides »). */
 export const ATTACKS = [
+  { why: 'audio : délai hors plage', msg: { type: 'call:start', kind: 'call', audio: { delay: 16 } } },
+  { why: 'audio : délai négatif', msg: { type: 'call:start', kind: 'call', audio: { delay: -1 } } },
+  { why: 'audio : délai décimal', msg: { type: 'call:start', kind: 'call', audio: { delay: 1.5 } } },
+  { why: 'audio : sortie inconnue', msg: { type: 'call:start', kind: 'call', audio: { route: 'bluetooth' } } },
+  { why: 'audio : proximité non booléenne', msg: { type: 'call:start', kind: 'call', audio: { prox: 'yes' } } },
+  { why: 'audio : champ inconnu', msg: { type: 'call:start', kind: 'call', audio: { volume: 1 } } },
+  { why: 'audio : null', msg: { type: 'call:start', kind: 'call', audio: null } },
+  { why: 'call:speaker : on manquant', msg: { type: 'call:speaker', from: 'remote' } },
+  { why: 'call:speaker : on non booléen', msg: { type: 'call:speaker', on: 1, from: 'remote' } },
+  { why: 'call:speaker : écran qui adresse un autre écran', msg: { type: 'call:speaker', on: true, from: 'screen', target: { screens: ['S000000000000000'] } } },
   { why: 'notification : heure du téléphone hors format', msg: { type: 'call:start', kind: 'notif', phone: { time: '25:00' } } },
   { why: 'notification : date avec script', msg: { type: 'call:start', kind: 'notif', phone: { date: '<img src=x>' } } },
   { why: 'notification : champ inconnu dans phone', msg: { type: 'call:start', kind: 'notif', phone: { tz: 'UTC' } } },

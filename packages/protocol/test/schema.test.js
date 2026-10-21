@@ -88,6 +88,35 @@ test('call:start : son intégré, son importé (ringId) et volume, champs facult
   assert.equal(MESSAGE_TYPES['call:start'].fields.ringVolume.required, false);
 });
 
+test('call:start.audio et call:speaker : bornes, sens, rétrocompatibilité', () => {
+  const c = (/** @type {object} */ o) => validate({ type: 'call:start', kind: 'call', ...o }, { direction: 'r2s' });
+  assert.equal(c({}), true, 'sans audio : comportement d’avant');
+  assert.equal(MESSAGE_TYPES['call:start'].fields.audio.required, false);
+  assert.equal(c({ audio: {} }), true, 'tous les champs facultatifs');
+  assert.equal(c({ audio: { delay: 0, route: 'ear', prox: false } }), true);
+  assert.equal(c({ audio: { delay: 15, route: 'speaker', prox: true } }), true);
+  for (const delay of [-1, 16, 0.5, '2', null]) assert.equal(c({ audio: { delay } }), false, 'délai ' + delay);
+  for (const route of ['bluetooth', 'EAR', '', null, 1]) assert.equal(c({ audio: { route } }), false, 'route ' + route);
+  assert.equal(c({ audio: { prox: 1 } }), false);
+  assert.equal(c({ audio: { extra: true } }), false);
+  // Les trois sont aussi acceptés sur un SMS (ignorés de l'écran) : le schéma ne s'y oppose pas
+  assert.equal(validate({ type: 'call:start', kind: 'sms', audio: { delay: 1 } }), true);
+  // call:speaker : deux sens, `from` fait respecter le sens et l'absence de target côté écran
+  const spk = MESSAGE_TYPES['call:speaker'];
+  assert.equal(spk.direction, 'both');
+  assert.equal(validate({ type: 'call:speaker', on: true, from: 'remote' }, { direction: 'r2s' }), true);
+  assert.equal(validate({ type: 'call:speaker', on: false, from: 'screen' }, { direction: 's2r' }), true);
+  assert.equal(validate({ type: 'call:speaker', on: true, from: 'screen' }, { direction: 'r2s' }), false);
+  assert.equal(validate({ type: 'call:speaker', on: true, from: 'remote' }, { direction: 's2r' }), false);
+  assert.equal(validate({ type: 'call:speaker', on: true, from: 'remote', target: { screens: ['S000000000000000'] } }, { direction: 'r2s' }), true);
+  assert.equal(validate({ type: 'call:speaker', on: true, from: 'screen', target: { screens: ['S000000000000000'] } }), false);
+  assert.equal(validate({ type: 'call:speaker', on: 'oui', from: 'remote' }), false);
+  assert.equal(validate({ type: 'call:speaker', from: 'remote' }), false);
+  // tel:state : haut-parleur de l'appel en ligne (resynchronisation)
+  assert.equal(validate({ type: 'tel:state', tel: { kind: 'call', state: 'incall', speaker: true } }, { direction: 's2r' }), true);
+  assert.equal(validate({ type: 'tel:state', tel: { kind: 'call', state: 'incall', speaker: 'x' } }), false);
+});
+
 test('préparation hors ligne : photo / bande son préparées (photoId, audioId), vidéo mise en cache sans affichage', () => {
   const c = (/** @type {object} */ o) => validate({ type: 'call:start', kind: 'call', hasPhoto: true, hasAudio: true, ...o }, { direction: 'r2s' });
   const ph = '__ph_' + '0123456789abcdef'.repeat(2) + '01234567', au = '__au_' + 'f'.repeat(40);
@@ -264,7 +293,9 @@ const NON_RELAY = new Set(['brightness', 'brightness-restore',
   // liaisons locales Wi-Fi / Bluetooth : le pont porte des trames déjà scellées (docs/OFFLINE.md)
   'link:start', 'link:stop', 'link:send', 'link:state', 'link:frames', 'link:peers', 'link:error',
   // fichiers projet .rem par morceaux (feuille de partage, sélecteur de la coque, docs/PROJECTS.md)
-  'project:save', 'project:open', 'project:saved', 'project:file', 'project:error']);
+  'project:save', 'project:open', 'project:saved', 'project:file', 'project:error',
+  // audio de l'appel décroché dans la coque (module setremote-audio, docs/CALL-AUDIO-NATIVE.md)
+  'audio:load', 'audio:loaded', 'audio:call-start', 'audio:play', 'audio:route', 'audio:call-end', 'audio:state', 'audio:error']);
 
 /** @param {string} src */
 function extractTypes(src) {

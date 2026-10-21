@@ -188,6 +188,19 @@ hors schéma : seule l'enveloppe change). Champs ajoutés : `call:start.photoId`
 `CALL_AUDIO_ID_RE`), `rtc-offer.kind: 'cache'` et `media:upload.show: false`
 (vidéo mise en cache sans interrompre ni afficher quoi que ce soit).
 
+**Audio de l'appel décroché** (vue « Au décroché ») : `call:start.audio`
+`{ delay?, route?, prox? }` (délai 0 à 15 s avant la voix, `route` `ear` / `speaker`,
+`prox` : écran noir contre l'oreille), et `call:speaker { on, from }` dans les
+**deux sens** (`from` : `remote` ou `screen`, comme `rtc-ice`). L'écran de jeu
+décide : navigateur = voix sur la sortie normale, proximité ignorée ; app native =
+écouteur / haut-parleur et écran noir (module `setremote-audio`, pont `audio:*`
+hors schéma, `docs/CALL-AUDIO-NATIVE.md`). L'écran renvoie `call:speaker` après tout
+changement (toucher du comédien, ordre de la télécommande) : la télécommande
+n'applique l'état qu'à réception, sans renvoi. `tel:state.tel.speaker` resynchronise
+le bouton d'une télécommande rechargée. Un **ancien écran** ignore `audio` et ne
+répond pas à `call:speaker` ; une **ancienne télécommande** n'envoie pas `audio`
+(voix immédiate, sortie du système).
+
 **Onglet Tel** : `call:start.kind: 'notif'` (notification d'application :
 `present` `banner` / `lock`, `phone { date?, time? }` au format `AAAA-MM-JJ` /
 `HH:MM`, `received { mode: now | ago (min ≤ 10 080) | at (date, time) }` ;
