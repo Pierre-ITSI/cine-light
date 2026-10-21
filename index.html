@@ -20663,6 +20663,7 @@ function screenCallStart(m) {
     } else {
       el.classList.add('notif');
       _scRenderNotifBar();
+      _scBannerArm(SC_BANNER_MS); // le bandeau repart tout seul, comme sur un vrai téléphone
     }
     _playNotifSound(_callCfg);
     if (_callCfg.vib) screenVibrate(SCREEN_VIB_SHORT);
@@ -20738,6 +20739,35 @@ function _scRenderNotifBar() {
   const el = document.getElementById('screen-call');
   el.innerHTML = _scHtml('ph-overlay', PhoneUI.notifBanner(_scNotifData(_callCfg)));
 }
+// Bandeau de SMS / notification (jamais l'appel entrant, jamais l'écran verrouillé) : il
+// repart tout seul au bout de SC_BANNER_MS ; le doigt posé dessus met le compte à rebours en
+// pause, relâché il reprend là où il en était. Même sortie qu'un toucher (screenCallEnd), puis
+// l'écran redit sa couche Tel (aucune) pour que la télécommande retire sa ligne.
+const SC_BANNER_MS = 5000;
+let _scBannerTimer = null, _scBannerLeft = 0, _scBannerAt = 0;
+function _scBannerArm(ms) {
+  _scBannerClear();
+  _scBannerLeft = ms; _scBannerAt = Date.now();
+  _scBannerTimer = setTimeout(() => {
+    _scBannerTimer = null;
+    if (_callState !== 'notif' || !_callCfg || _callCfg.lock) return;
+    screenCallEnd();
+    screenSendTel();
+  }, ms);
+}
+function _scBannerClear() {
+  if (_scBannerTimer) { clearTimeout(_scBannerTimer); _scBannerTimer = null; }
+  _scBannerLeft = 0;
+}
+function _scBannerHold() { // doigt posé : pause
+  if (!_scBannerTimer) return;
+  const left = Math.max(0, _scBannerLeft - (Date.now() - _scBannerAt));
+  _scBannerClear(); _scBannerLeft = left;
+}
+function _scBannerRelease() { // doigt levé : reprise
+  if (_scBannerTimer || !_scBannerLeft || _callState !== 'notif') return;
+  _scBannerArm(_scBannerLeft);
+}
 // Gestes du comédien sur le faux appel / la notification (attributs data-act de PhoneUI),
 // rapportés à une Séquence qui les attend (94-sequence-phone.js)
 (function initCallTouch() {
@@ -20756,6 +20786,10 @@ function _scRenderNotifBar() {
     }
   });
   initCallSlider(el);
+  // Doigt sur le bandeau : le départ automatique attend
+  el.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('.pb-wrap')) _scBannerHold(); });
+  document.addEventListener('pointerup', _scBannerRelease, true); // relâché hors du bandeau aussi
+  document.addEventListener('pointercancel', _scBannerRelease, true);
 })();
 // Piste « faire glisser pour répondre » de l'appel Verre verrouillé (PhoneUI.incomingLocked) :
 // glisser le rond vert jusqu'à CALL_SLIDE_OK de la course = geste « répondre » (rapporté à la
@@ -20888,6 +20922,7 @@ function _scStopRing() {
   if (_callVibOn) { _callVibOn = false; screenVibrateStop(); }
 }
 function screenCallStopTimers() {
+  _scBannerClear();
   _scStopRing();
   if (_callClockTimer) { clearInterval(_callClockTimer); _callClockTimer = null; }
 }
