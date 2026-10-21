@@ -26,15 +26,18 @@
 //     entrée, champ vidé) : « nom · sous-titre » (notification : titre, sinon
 //     application). Ce nom sert partout où les entrées sont listées : la liste,
 //     les étapes de la Séquence et leurs choix (callEntryName).
-//   • « + Enregistrer … » ouvre la feuille « Nom de l'enregistrement »
-//     (proposition préremplie ; laissée telle quelle ou vidée : pas de nom propre).
+//   • Rangée « + Enregistrer / ↻ Mettre à jour » au-dessus de la liste (même
+//     composant que les Effets). « + Enregistrer » ouvre la feuille « Nom de
+//     l'enregistrement » (proposition préremplie ; laissée telle quelle ou vidée :
+//     pas de nom propre) et crée TOUJOURS une nouvelle entrée.
 //   • Entrée CHARGÉE (touchée dans la liste, ou « Charger dans l'onglet ») :
-//     « ↻ Mettre à jour « nom » » (réglages actuels du formulaire, même id,
-//     même numéro donc même plage DMX, même nom) et « + Enregistrer comme
-//     nouveau » remplacent le bouton d'enregistrement. L'état « chargée » prend
-//     fin quand le type du formulaire change, quand on change d'onglet de liste,
-//     quand l'entrée est supprimée, après « Enregistrer comme nouveau » et au
-//     rechargement des listes (licence) : le bouton unique revient.
+//     « ↻ Mettre à jour » (grisé tant qu'aucune n'est chargée) y range les réglages
+//     actuels du formulaire, sans feuille (même id, même numéro donc même plage
+//     DMX, même nom), puis bandeau « « nom » mis à jour · Annuler » qui restitue
+//     l'ancienne entrée, sa photo et sa bande son. L'état « chargée » prend fin
+//     quand le type du formulaire change, quand on change d'onglet de liste,
+//     quand l'entrée est supprimée, après « + Enregistrer » et au rechargement
+//     des listes (licence).
 //   • « ⋯ » d'une ligne (la poignée reste) : charger, renommer, mettre à jour
 //     avec les réglages actuels (formulaire du même type), dupliquer (en fin de
 //     liste, photo et bande son copiées), supprimer (confirmation).
@@ -60,7 +63,7 @@ const _CL_TXT = {
   nameNote: 'Vide : « {defaut} ». Le nom sert dans la liste, la Séquence et la console (n° {n}, DMX {plage}).',
   nameNoteNoDmx: 'Vide : « {defaut} ». Le nom sert dans la liste et la Séquence (n° {n}).',
   cancel: 'Annuler', ok: 'Enregistrer', close: 'Fermer',
-  update: '↻ Mettre à jour « {nom} »',
+  updated: '« {nom} » mis à jour',
   menuLoad: 'Charger dans l\'onglet', menuRename: 'Renommer', menuUpdate: 'Mettre à jour avec les réglages actuels',
   menuDuplicate: 'Dupliquer', menuDelete: 'Supprimer', menuAria: 'Charger, renommer, mettre à jour, dupliquer, supprimer',
   menuTitle: '« {nom} »', copy: '{nom} (copie)',
@@ -75,7 +78,6 @@ const _CL_TXT = {
   dmxNote: 'Les 20 premiers appels et SMS se déclenchent depuis la console (mode Étendu 16) : valeur n × 10 … n × 10 + 9 = entrée n. Valeur 0 : raccrocher. Glissez ou utilisez Trier / ⋯ pour changer l\'ordre.',
   dmxNoteNotif: 'Les notifications ne se déclenchent pas depuis la console : seulement d\'ici.',
   dmxEmpty: 'Aucune entrée dans cette liste.',
-  saveUpd: 'n° {n} · garde sa place dans la liste', saveNewSub: 'prend le n° {n}', saveNew: 'Enregistrer comme nouveau',
   sentCall: 'Appel n°{n} envoyé…', sentSms: 'SMS n°{n} envoyé', sentNotif: 'Notification n°{n} envoyée',
   genreCall: 'appel', genreSms: 'SMS', genreNotif: 'notification',
 };
@@ -89,7 +91,7 @@ function callEntryDefaultName(e) {
 }
 // Nom affiché d'une entrée : son nom propre, sinon le nom par défaut
 function callEntryName(e) { return (e && e.title) || callEntryDefaultName(e || {}); }
-const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'vib', 'present', 'photoMode', 'autoAnswer', 'lock', 'hasPhoto', 'hasAudio', 'phone', 'received'];
+const _CALL_ENTRY_FIELDS = ['kind', 'style', 'name', 'label', 'msg', 'appName', 'appColor', 'ring', 'ringId', 'ringVolume', 'vib', 'present', 'photoMode', 'autoAnswer', 'audio', 'lock', 'hasPhoto', 'hasAudio', 'phone', 'received'];
 
 // ── Persistance ──
 function _clListOf(kind) { return kind === 'call' || kind === 'notif' ? kind : 'sms'; }
@@ -111,6 +113,12 @@ function _clSanitize(e) {
     else delete out.ringVolume;
   }
   if (out.vib !== true) delete out.vib;
+  // Audio de l'appel décroché (délai, sortie du son, proximité) : appels seulement ; entrée d'avant : absent
+  // = ancien comportement (voix tout de suite, sortie du système)
+  if (out.kind === 'call') {
+    const au = callAudioNorm(out.audio);
+    if (au) out.audio = au; else delete out.audio;
+  } else delete out.audio;
   // Nom de l'enregistrement (maquette 43b) : facultatif (ancienne entrée : aucun)
   const title = _clLine(e.title);
   if (title) out.title = title;
@@ -321,10 +329,14 @@ function renderCallList() {
   }
   const sort = document.getElementById('callListSort');
   if (sort) { sort.setAttribute('aria-pressed', _clSort ? 'true' : 'false'); sort.classList.toggle('on', _clSort); sort.style.display = list.length > 1 ? '' : 'none'; }
+  // « + Enregistrer » / « ↻ Mettre à jour » : la mise à jour n'a de sens que pour une entrée chargée
+  const sv = document.getElementById('clMemSave'), up = document.getElementById('clMemUpdate');
+  if (sv) sv.disabled = list.length >= CALL_LIST_MAX;
+  if (up) up.disabled = !loaded;
   const empty = document.getElementById('callListEmpty');
   if (empty) {
     empty.style.display = list.length ? 'none' : 'block';
-    empty.textContent = 'Réglez ' + (kind === 'call' ? 'l\'appel' : kind === 'notif' ? 'la notification' : 'le SMS') + ' ci-dessus puis enregistrez-' + (kind === 'notif' ? 'la' : 'le') + ' (signet) : ' + (kind === 'notif' ? 'elle' : 'il') + ' prend le numéro suivant.';
+    empty.textContent = 'Réglez ' + (kind === 'call' ? 'l\'appel' : kind === 'notif' ? 'la notification' : 'le SMS') + ' ci-dessus puis enregistrez-' + (kind === 'notif' ? 'la' : 'le') + ' : ' + (kind === 'notif' ? 'elle' : 'il') + ' prend le numéro suivant.';
   }
   const dmx = document.getElementById('callListDmx');
   if (dmx) dmx.style.display = kind === 'notif' ? 'none' : '';
@@ -405,7 +417,7 @@ async function saveCurrentCall(title, over) {
 // réécrites sous les clés de l'entrée, ou effacées si elle n'en a plus (rien
 // d'ancien ne reste) ; ids préparés oubliés (contenu changé). Le formulaire doit
 // être du même type de liste ; false : impossible.
-async function updateCallEntry(id) {
+async function updateCallEntry(id, applied) {
   if (licLocked('tel')) return false; // aperçu sans licence (77-licence-ui.js)
   const kind = _clKindOf(id);
   if (!kind) return false;
@@ -419,6 +431,7 @@ async function updateCallEntry(id) {
   _clPrepIds.delete(id);
   persistCallList();
   renderCallList();
+  if (typeof applied === 'function') applied(); // partie immédiate faite (bandeau « mis à jour »)
   await Promise.all([
     photo ? callAssetPut(id + ':photo', photo) : callAssetDelete(id + ':photo'),
     audio ? callAssetPut(id + ':audio', audio) : callAssetDelete(id + ':audio'),
@@ -426,6 +439,30 @@ async function updateCallEntry(id) {
   return true;
 }
 function updateLoadedCallEntry() { const e = callListLoadedEntry(); return e ? updateCallEntry(e.id) : Promise.resolve(false); }
+// « ↻ Mettre à jour » de la rangée : sans feuille, avec bandeau « mis à jour · Annuler » (6 s) qui
+// restitue l'entrée d'avant, sa photo et sa bande son (relues avant l'écrasement)
+async function updateLoadedCallEntryUndo() {
+  const e = callListLoadedEntry();
+  if (!e || licLocked('tel')) return false;
+  const id = e.id, kind = _clKindOf(id);
+  const prev = JSON.parse(JSON.stringify(e));
+  const [photo, audio] = await Promise.all([prev.hasPhoto ? callAssetGet(id + ':photo') : null, prev.hasAudio ? callAssetGet(id + ':audio') : null]);
+  return updateCallEntry(id, () => undoSnack({
+    text: _clTpl(_CL_TXT.updated, { nom: callEntryName(prev) }),
+    undo: async () => {
+      const list = callList[kind], i = list.findIndex((x) => x.id === id);
+      if (i < 0) return; // supprimée depuis
+      list[i] = prev;
+      _clPrepIds.delete(id);
+      persistCallList();
+      renderCallList();
+      await Promise.all([
+        photo ? callAssetPut(id + ':photo', photo) : callAssetDelete(id + ':photo'),
+        audio ? callAssetPut(id + ':audio', audio) : callAssetDelete(id + ':audio'),
+      ]);
+    },
+  }));
+}
 // Renommer : vide (ou le nom par défaut) → plus de nom propre
 function renameCallEntry(id, value) {
   if (licLocked('tel')) return;
@@ -540,6 +577,7 @@ async function loadCallEntryIntoForm(e) {
   const lt = document.getElementById('lockToggle'); if (lt) lt.checked = e.kind === 'sms' && !!e.lock;
   val('lockTime', e.lock ? e.lock.time || '' : ''); val('lockDate', e.lock ? e.lock.date || '' : '');
   val('callAutoSlider', String(e.autoAnswer || 0)); onCallAutoChange();
+  callAudioApply(e.kind === 'call' ? e.audio : null); // délai, sortie du son, proximité (entrée d'avant : valeurs d'origine)
   renderCallListSaveLabel();
   const assets = await callEntryAssets(e);
   if (seq !== _clLoadSeq) return; // une autre entrée a été touchée entre-temps
@@ -571,7 +609,7 @@ async function playCallEntry(id) {
   const n = callList[kind].indexOf(e) + 1;
   const text = _clTpl(e.kind === 'call' ? _CL_TXT.sentCall : e.kind === 'notif' ? _CL_TXT.sentNotif : _CL_TXT.sentSms, { n });
   _setCallStatusUI(text);
-  telCallSent(e.kind, e.kind === 'call' ? (e.autoAnswer || 0) : 0, text);
+  telCallSent(e.kind, e.kind === 'call' ? (e.autoAnswer || 0) : 0, text, e.audio);
   const held = scrTargetIds().length - free.length;
   await sendCallEntry(e, held > 0 ? [{ screens: free }] : undefined);
 }
@@ -650,31 +688,24 @@ function callListSheetContent(s) {
     };
   }
   // Nom : de l'enregistrement à venir (proposition préremplie) ou de l'entrée à renommer
-  let def, val, n, list, title, choice = '';
+  let def, val, n, list, title;
   if (e) {
     def = callEntryDefaultName(e); val = e.title || def; list = kind; n = callList[kind].indexOf(e) + 1; title = _CL_TXT.sheetRename;
   } else {
     const f = _clFormEntry().e;
     def = callEntryDefaultName(f); val = def; list = _clListOf(f.kind); n = callList[list].length + 1;
     title = f.kind === 'call' ? _CL_TXT.sheetCall : f.kind === 'notif' ? _CL_TXT.sheetNotif : _CL_TXT.sheetSms;
-    // Entrée chargée (maquette 4e3) : « Mettre à jour » ou « Comme nouveau »
-    const loaded = callListLoadedEntry();
-    if (loaded) {
-      choice = '<button type="button" class="dc-menu-btn dc-menu-big" id="callSaveUpdate" onclick="closeSheet();updateLoadedCallEntry()">' + icon('refresh-cw')
-        + '<span><b>' + escapeHtml(_clTpl(_CL_TXT.update, { nom: callEntryName(loaded) }).replace(/^↻\s*/, '')) + '</b><small>' + escapeHtml(_clTpl(_CL_TXT.saveUpd, { n: callList[list].indexOf(loaded) + 1 })) + '</small></span></button>';
-      title = _CL_TXT.saveNew;
-    }
   }
   const dmx = callEntryDmxRange(n - 1, list);
   const note = _clTpl(dmx === '—' ? _CL_TXT.nameNoteNoDmx : _CL_TXT.nameNote, { defaut: def, n, plage: dmx });
   return {
-    title: choice ? _clTpl(list === 'call' ? _CL_TXT.sheetCall : list === 'notif' ? _CL_TXT.sheetNotif : _CL_TXT.sheetSms, {}) : title, form: true,
-    html: choice + '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
+    title, form: true,
+    html: '<form class="sr-form" onsubmit="event.preventDefault();sheetSave()">'
       + '<label class="sr-sublabel" for="srName">' + escapeHtml(_CL_TXT.nameLabel) + '</label>'
       + '<input type="text" id="srName" class="text-input sr-input" maxlength="' + CALL_TITLE_MAX + '" autocomplete="off" placeholder="' + escapeHtml(def) + '" value="' + escapeHtml(val.slice(0, CALL_TITLE_MAX)) + '">'
       + '<p class="sr-sheet-note">' + escapeHtml(note) + '</p>'
       + '<div class="sr-actions"><button type="button" class="sr-cancel" onclick="closeSheet()">' + escapeHtml(_CL_TXT.cancel) + '</button>'
-      + '<button type="submit" class="sr-ok" id="callSaveNew">' + escapeHtml(choice ? _CL_TXT.saveNew : _CL_TXT.ok) + '</button></div></form>',
+      + '<button type="submit" class="sr-ok" id="callSaveNew">' + escapeHtml(_CL_TXT.ok) + '</button></div></form>',
   };
 }
 function callListSheetSave(s, value) {

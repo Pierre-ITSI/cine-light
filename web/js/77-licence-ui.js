@@ -61,14 +61,14 @@ function licLocked(f) { return _licPreview[f] === true; }
 // Éléments verrouillés : estompés (dim) ou seulement figés (ro, lisibles)
 const _LIC_LOCKS = {
   tel: {
-    // Rangées de réglage, champs sur place, signet et listes : figés ; ▶ des lignes, barre d'envoi et vue des appels restent actifs
+    // Rangées de réglage, champs sur place, boutons Enregistrer / Mettre à jour et listes : figés ; ▶ des lignes, barre d'envoi et vue des appels restent actifs
     dim: ['telStyleBtn', 'telRingBtn', 'telStyleRow', 'ntStyleBtn', 'callWhoSaved', 'telWhoBtn', 'callMsgText', 'telAppBtn', 'callLockPanel', 'ntAppPanel',
-      'telNtTitleField', 'telNtBodyField', 'ntShowPanel', 'callAnswerBlock', 'telSaveBtn', 'dcContactPanel', 'dcActorRow', 'dcAdd', 'dcWriteBtn', 'dcThreadMore'],
+      'telNtTitleField', 'telNtBodyField', 'ntShowPanel', 'callAnswerBlock', 'clMemActions', 'dcMemActions', 'dcContactPanel', 'dcActorRow', 'dcAdd', 'dcWriteBtn', 'dcThreadMore'],
     ro: ['dcRows', 'dcTimingPanel'],
     ex: ['telPlayTitle'],
     banner: 'licPvTel',
   },
-  seq: { dim: ['seqAddBtn', 'seqAddRow', 'seqPhoneBtn', 'seqSavedBtn', 'seqNewBtn', 'seqMoreBtn', 'seqSortBtn'], ro: ['seqRows'], ex: [], banner: 'licPvSeq' },
+  seq: { dim: ['seqAddBtn', 'seqAddRow', 'seqPhoneBtn', 'seqSavedBtn', 'seqNewBtn', 'seqMemActions', 'seqMoreBtn', 'seqSortBtn'], ro: ['seqRows'], ex: [], banner: 'licPvSeq' },
 };
 function _licLockUi(f, on) {
   const L = _LIC_LOCKS[f];

@@ -227,9 +227,9 @@ test('onglet Tel : « Décrocher » seulement pendant l\'appel qui sonne ; la li
       empty: document.getElementById('callListEmpty').textContent,
     };
   }, k);
-  assert.deepEqual(await st('sms'), { answer: 'none', list: 'SMS enregistrés · 0', empty: 'Réglez le SMS ci-dessus puis enregistrez-le (signet) : il prend le numéro suivant.' });
-  assert.deepEqual(await st('notif'), { answer: 'none', list: 'Notifications enregistrées · 0', empty: 'Réglez la notification ci-dessus puis enregistrez-la (signet) : elle prend le numéro suivant.' });
-  assert.deepEqual(await st('call'), { answer: 'none', list: 'Appels enregistrés · 0', empty: 'Réglez l\'appel ci-dessus puis enregistrez-le (signet) : il prend le numéro suivant.' });
+  assert.deepEqual(await st('sms'), { answer: 'none', list: 'SMS enregistrés · 0', empty: 'Réglez le SMS ci-dessus puis enregistrez-le : il prend le numéro suivant.' });
+  assert.deepEqual(await st('notif'), { answer: 'none', list: 'Notifications enregistrées · 0', empty: 'Réglez la notification ci-dessus puis enregistrez-la : elle prend le numéro suivant.' });
+  assert.deepEqual(await st('call'), { answer: 'none', list: 'Appels enregistrés · 0', empty: 'Réglez l\'appel ci-dessus puis enregistrez-le : il prend le numéro suivant.' });
   // Pendant la sonnerie seulement
   await page.evaluate(() => { telCallSent('call', 0); });
   assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('callAnswerBtn')).display), 'flex');

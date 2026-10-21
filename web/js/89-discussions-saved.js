@@ -7,7 +7,10 @@
 // écriture, envoi) ; PAS le point de reprise (ni ce qui est posté).
 // Migration : une discussion enregistrée avant les timings les reçoit par
 // défaut (pause 0 s, le comédien tape, envoi au bouton) : rien ne change.
-//   • « + Enregistrer le fil en cours » : demande un nom, ajoute en fin de liste.
+//   • Rangée « + Enregistrer / ↻ Mettre à jour » au-dessus de la liste (même composant que
+//     les Effets). « + Enregistrer » : demande un nom, ajoute en fin de liste. « ↻ Mettre à jour »
+//     (grisé tant que le fil n'est pas celui d'une entrée) range le fil en cours dans l'entrée
+//     chargée, sans feuille, avec bandeau « « nom » mis à jour · Annuler ».
 //   • ▶ (ou toucher la ligne) : la charge dans le fil à jouer (confirmation si le
 //     fil a des modifications non enregistrées). Ouverte sur un
 //     écran, la discussion y repart de zéro avec le nouveau fil.
@@ -41,7 +44,7 @@ const _CHSV_TXT = {
   remove: 'Supprimer',
   copy: '{nom} (copie)',
   loadTitle: 'Charger « {nom} » ?', loadText: 'Le fil en cours a des modifications non enregistrées : elles seront perdues.', loadOk: 'Charger', loadCancel: 'Annuler',
-  deleted: '« {nom} » supprimée', playAria: 'Charger « {nom} » dans le fil',
+  deleted: '« {nom} » supprimée', updated: '« {nom} » mis à jour', playAria: 'Charger « {nom} » dans le fil',
   titleSaved: 'Discussions enregistrées · {n}',
   storeFull: 'Enregistrement impossible : la mémoire de l\'appareil est pleine.',
   untitled: 'Discussion',
@@ -137,6 +140,35 @@ async function saveCurrentChat(name) {
   renderSavedChats();
   if (_chatAvatar) await callAssetPut(_chsvPhotoKey(e.id), _chatAvatar);
   return e.id;
+}
+
+// « ↻ Mettre à jour » : le fil en cours (contact, photo, comédien, style, messages et leurs timings) remplace
+// le contenu de l'entrée chargée ; même id, même nom, même place. « Annuler » restitue l'entrée et sa photo.
+async function updateLoadedChat() {
+  if (licLocked('tel')) return false; // aperçu sans licence (77-licence-ui.js)
+  const i = chatSaved.findIndex((x) => x.id === _chat.savedId);
+  if (i < 0) return false;
+  const id = chatSaved[i].id, prev = chatSaved[i];
+  const prevPhoto = prev.hasPhoto ? await callAssetGet(_chsvPhotoKey(id)) : null; // relue avant l'écrasement
+  const cur = chatSaved.findIndex((x) => x.id === id);
+  if (cur < 0) return false; // supprimée pendant la lecture
+  const next = Object.assign({}, prev, _chsvSnapshot());
+  chatSaved[cur] = next;
+  if (!_chsvPersist()) { chatSaved[cur] = prev; alert(_CHSV_TXT.storeFull); return false; }
+  renderSavedChats();
+  undoSnack({
+    text: _tplChat(_CHSV_TXT.updated, { nom: prev.name }),
+    undo: async () => {
+      const j = chatSaved.findIndex((x) => x.id === id);
+      if (j < 0) return;
+      chatSaved[j] = prev;
+      _chsvPersist();
+      renderSavedChats();
+      if (prevPhoto) await callAssetPut(_chsvPhotoKey(id), prevPhoto); else await callAssetDelete(_chsvPhotoKey(id));
+    },
+  });
+  if (_chatAvatar) await callAssetPut(_chsvPhotoKey(id), _chatAvatar); else await callAssetDelete(_chsvPhotoKey(id));
+  return true;
 }
 
 // Toucher une ligne : charge l'entrée dans « Fil en cours »
@@ -255,6 +287,10 @@ function renderSavedChats() {
   }
   const empty = document.getElementById('dcSavedEmpty');
   if (empty) empty.style.display = chatSaved.length ? 'none' : '';
+  // « + Enregistrer » / « ↻ Mettre à jour » : la mise à jour n'a de sens que pour le fil d'une entrée
+  const sv = document.getElementById('dcMemSave'), up = document.getElementById('dcMemUpdate');
+  if (sv) sv.disabled = chatSaved.length >= CHAT_SAVED_MAX;
+  if (up) up.disabled = !chatSaved.some((x) => x.id === _chat.savedId);
 }
 
 // ── Feuilles (39-screens-ui.js : _sheet, renderSheet, closeSheet) ──

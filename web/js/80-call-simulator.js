@@ -188,6 +188,51 @@ function renderCallAudioRow(message) {
   }
   renderTelRows(); // rangée « Au décroché »
 }
+// Audio de l'appel décroché (vue « Au décroché », maquette M1) : délai avant la voix (0 à 15 s),
+// sortie du son (à l'oreille / haut-parleur) et écran noir contre l'oreille (capteur de proximité).
+// Réglages de la télécommande, jamais désactivés ici : c'est l'ÉCRAN de jeu qui décide (app native :
+// écouteur et écran noir ; navigateur : voix sur sa sortie normale, proximité ignorée). Ils partent
+// dans call:start.audio et font partie de l'entrée enregistrée (82-call-list.js). Valeurs d'origine :
+// voix tout de suite, à l'oreille, écran noir.
+const CALL_AUDIO_DEFAULT = Object.freeze({ delay: 0, route: 'ear', prox: true });
+let _callRoute = CALL_AUDIO_DEFAULT.route;
+// Normalise un objet audio (réseau, entrée enregistrée) ; null = absent (ancien comportement)
+function callAudioNorm(a) {
+  if (!a || typeof a !== 'object' || Array.isArray(a)) return null;
+  const d = Number(a.delay);
+  return {
+    delay: Number.isFinite(d) ? Math.min(15, Math.max(0, Math.round(d))) : 0,
+    route: a.route === 'speaker' ? 'speaker' : 'ear',
+    prox: a.prox === true,
+  };
+}
+function callAudioFields() {
+  const sl = document.getElementById('callVoiceDelay'), px = document.getElementById('callProxToggle');
+  return callAudioNorm({ delay: sl ? parseInt(sl.value) || 0 : 0, route: _callRoute, prox: px ? px.checked : CALL_AUDIO_DEFAULT.prox });
+}
+// Réglages d'une entrée chargée dans le formulaire (entrée d'avant : valeurs d'origine)
+function callAudioApply(a) {
+  const v = callAudioNorm(a) || CALL_AUDIO_DEFAULT;
+  const sl = document.getElementById('callVoiceDelay'), px = document.getElementById('callProxToggle');
+  if (sl) sl.value = String(v.delay);
+  if (px) px.checked = v.prox;
+  setCallRoute(v.route);
+}
+function setCallRoute(r) {
+  _callRoute = r === 'speaker' ? 'speaker' : 'ear';
+  for (const x of ['ear', 'speaker']) {
+    const b = document.getElementById('callroute-' + x);
+    if (b) { b.classList.toggle('active', x === _callRoute); b.setAttribute('aria-pressed', x === _callRoute ? 'true' : 'false'); }
+  }
+  onCallAudioChange();
+}
+function onCallAudioChange() {
+  const sl = document.getElementById('callVoiceDelay');
+  const v = sl ? parseInt(sl.value) || 0 : 0;
+  const out = document.getElementById('callVoiceDelayVal');
+  if (out) out.textContent = v + ' s';
+  renderTelRows();
+}
 function onCallAutoChange() {
   const v = parseInt(document.getElementById('callAutoSlider').value) || 0;
   document.getElementById('callAutoVal').textContent = v > 0 ? v + ' s' : 'Off';
@@ -281,6 +326,7 @@ function callFormFields() {
     photoMode: (callStyle !== 'minimal') ? callPhotoMode : 'avatar',
     hasAudio: !!_callAudioData,
     autoAnswer: parseInt(document.getElementById('callAutoSlider').value) || 0,
+  }, callKind === 'call' ? { audio: callAudioFields() } : {}, {
     lock: lockOn ? {
       time: (document.getElementById('lockTime').value || '').slice(0, 8),
       date: (document.getElementById('lockDate').value || '').slice(0, 30),
@@ -345,7 +391,7 @@ async function triggerCall() {
   }
   sendMsg(Object.assign({ type: 'call:start' }, fields));
   _setCallStatusUI(fields.kind === 'call' ? 'Sonnerie envoyée…' : notif ? 'Notification envoyée' : 'SMS envoyé');
-  telCallSent(fields.kind, fields.kind === 'call' ? fields.autoAnswer : 0);
+  telCallSent(fields.kind, fields.kind === 'call' ? fields.autoAnswer : 0, undefined, fields.audio);
 }
 // Ligne d'état de la barre Tel (au-dessus des boutons, vide au repos) ; un envoi de
 // SMS ou de notification s'efface seul après quelques secondes
@@ -384,7 +430,11 @@ function remoteOnCallState(m) {
 function screenTelState() {
   const line = (v) => String(v || '').replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, 40);
   const withName = (o, n) => (n ? Object.assign(o, { name: n }) : o);
-  if (_callState !== 'idle' && _callCfg) return withName({ kind: _callCfg.kind, state: _callState }, line(_callCfg.name));
+  if (_callState !== 'idle' && _callCfg) {
+    const o = withName({ kind: _callCfg.kind, state: _callState }, line(_callCfg.name));
+    if (_callCfg.kind === 'call' && _callState === 'incall') o.speaker = _callSpeaker;
+    return o;
+  }
   if (typeof _scChat !== 'undefined' && _scChat) return withName({ kind: 'chat', state: 'open' }, line(_scChat.name));
   return null;
 }
@@ -568,6 +618,7 @@ function screenCallStart(m) {
   screenCallStopTimers();
   _stopCallAudio();
   _callHideSeq++; // annule une éventuelle fermeture animée encore en attente
+  _callSpeaker = false;
   // Tout ce qui vient du réseau est normalisé/validé avant d'être affiché
   m = m || {};
   // Ancienne messagerie (chat, whatsapp) : affichée comme un SMS
@@ -593,6 +644,8 @@ function screenCallStart(m) {
     // Bande son préparée de l'appel enregistré (__au_…) ; absente : __callaudio
     audioId: typeof m.audioId === 'string' && SRP.CALL_AUDIO_ID_RE.test(m.audioId) ? m.audioId : null,
     autoAnswer: Math.max(0, Math.min(60, Number(m.autoAnswer) || 0)),
+    // Délai avant la voix, sortie du son, écran noir : null = ancienne télécommande (comportement d'avant)
+    audio: callAudioNorm(m.audio),
     lock: m.lock ? { time: String(m.lock.time || '').slice(0, 8), date: String(m.lock.date || '').slice(0, 30) } : null,
     vib: m.vib === true, // vibreur du type (maquette 36b) ; absent : ne vibre pas
   };
@@ -612,6 +665,8 @@ function screenCallStart(m) {
       _callVibTimer = setInterval(() => screenVibrate(SCREEN_VIB_RING), SCREEN_VIB_RING_EVERY);
     }
     if (_callCfg.autoAnswer > 0) _callAutoTimer = setTimeout(screenCallAnswer, _callCfg.autoAnswer * 1000);
+    _callSpeaker = !!(_callCfg.audio && _callCfg.audio.route === 'speaker');
+    _nativeAudioPreload(); // app native : bande son transmise au module pendant que ça sonne
     sendMsg({ type: 'call:state', state: 'ringing' });
   } else {
     _callState = 'notif';
@@ -688,7 +743,7 @@ function _scRenderIncoming() {
 
 function _scRenderInCall() {
   const el = document.getElementById('screen-call');
-  el.innerHTML = _scHtml('ph-call', PhoneUI.inCall(Object.assign({}, _callCfg, { timer: '00:00' })));
+  el.innerHTML = _scHtml('ph-call', PhoneUI.inCall(Object.assign({}, _callCfg, { timer: '00:00', speaker: _callSpeaker })));
 }
 
 // Bandeau d'appel entrant en haut (téléphone en cours d'utilisation)
@@ -743,6 +798,7 @@ function _scBannerRelease() { // doigt levé : reprise
       case 'decline': screenTapDecline(); break;
       case 'answer': screenTapAnswer(); break;
       case 'hangup': screenTapHangup(); break;
+      case 'speaker': screenTapSpeaker(); break;
       case 'notif': screenNotifTap(); break;
       case 'end': screenCallEnd(); break;
     }
@@ -803,15 +859,18 @@ let _callAudioEl = null;
 // l'écran : un élément <audio> serait bloqué par iOS quand le décroché vient
 // de la télécommande ou du décroché automatique (aucun geste en cours).
 let _callAudioSrc = null;
+let _callVoiceTimer = null;   // délai avant la voix (navigateur) ; en natif, le délai est tenu par le module
+let _callVoiceSeq = 0;        // jeton : une lecture annulée (raccroché) ne démarre pas
 async function _playCallAudio() {
-  _stopCallAudio();
+  _stopCallAudio(true);
+  const seq = ++_callVoiceSeq;
   const c = _mediaCache.get((_callCfg && _callCfg.audioId) || '__callaudio');
   if (!c || !c.data) return;
   const ctx = _ac();
   try {
     if (ctx) {
       if (!c._buf) c._buf = await _decodeAudio(ctx, _dataUrlBytes(c.data).buffer);
-      if (_callState !== 'incall') return; // raccroché pendant le décodage
+      if (_callState !== 'incall' || seq !== _callVoiceSeq) return; // raccroché pendant le décodage
       const src = ctx.createBufferSource();
       src.buffer = c._buf;
       src.connect(ctx.destination);
@@ -820,16 +879,133 @@ async function _playCallAudio() {
       return;
     }
   } catch (_) { /* format non décodable : repli sur <audio> */ }
+  if (_callState !== 'incall' || seq !== _callVoiceSeq) return;
   try {
     const a = new Audio(c.data);
     a.play().catch(() => {});
     _callAudioEl = a;
   } catch (_) {}
 }
-function _stopCallAudio() {
+// keepSeq : sans annuler une lecture que l'appelant va relancer aussitôt
+function _stopCallAudio(keepSeq) {
+  if (!keepSeq) _callVoiceSeq++;
+  if (_callVoiceTimer) { clearTimeout(_callVoiceTimer); _callVoiceTimer = null; }
   if (_callAudioSrc) { try { _callAudioSrc.stop(); } catch (_) {} _callAudioSrc = null; }
   if (_callAudioEl) { try { _callAudioEl.pause(); } catch (_) {} _callAudioEl = null; }
+  if (!keepSeq) _nativeAudioEnd();
 }
+
+// — Écran : audio de l'appel décroché, app native et haut-parleur —
+// App native (window.SETREMOTE_NATIVE.caps.audioRoute, coque à jour) : la voix est jouée PAR LE MODULE
+// natif (setremote-audio), seul à pouvoir la router vers l'écouteur, la faire suivre le capteur de
+// proximité et la tenir hors de portée des coupures de la vue web. La page le pilote par le pont
+// (00-native-bridge.js : audio:load, audio:call-start, audio:play, audio:route, audio:call-end).
+// Navigateur, ou coque sans le module : voix en WebAudio sur la sortie normale, après le délai, et
+// proximité ignorée ; le bouton « Haut-parleur » n'a alors qu'un effet visuel (et se synchronise).
+const AUDIO_CHUNK = 512 * 1024;      // caractères base64 par message (multiple de 4)
+let _callSpeaker = false;            // sortie du son : true = haut-parleur
+let _callNativeOn = false;           // session audio native ouverte pour l'appel en cours
+const _nativeAudioSent = new Set();  // ids de bandes son déjà transmises au module (cette page)
+let _nativeAudioPlay = null;         // { id } : lecture native demandée (repli WebAudio sur erreur)
+function nativeAudioAvailable() {
+  const n = window.SETREMOTE_NATIVE;
+  return IN_NATIVE_APP && !!(n && n.caps && n.caps.audioRoute === true);
+}
+// Id de la bande son pour le module : empreinte courte du contenu (caractères sûrs, ≤ 40)
+function _nativeAudioId(data) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < data.length; i++) { h ^= data.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return 'a' + h.toString(16).padStart(8, '0') + '-' + data.length.toString(36);
+}
+// { id, mime, b64 } de la bande son de l'appel, ou null (absente du cache de l'écran)
+function _callAudioSource() {
+  const c = _mediaCache.get((_callCfg && _callCfg.audioId) || '__callaudio');
+  if (!c || !c.data) return null;
+  const d = String(c.data), i = d.indexOf(',');
+  if (i < 0) return null;
+  return { id: _nativeAudioId(d), mime: (/^data:([^;,]+)/.exec(d) || [])[1] || '', b64: d.slice(i + 1) };
+}
+// Transmet la bande son au module par morceaux (une seule fois par contenu)
+function _nativeAudioSend(src) {
+  if (_nativeAudioSent.has(src.id)) return;
+  _nativeAudioSent.add(src.id);
+  const n = Math.max(1, Math.ceil(src.b64.length / AUDIO_CHUNK));
+  for (let i = 0; i < n; i++) {
+    nativePost({ type: 'audio:load', id: src.id, mime: src.mime, size: src.b64.length, i, n, data: src.b64.slice(i * AUDIO_CHUNK, (i + 1) * AUDIO_CHUNK) });
+  }
+}
+// Pendant que ça sonne : le module reçoit déjà la voix (le décroché automatique ne doit pas attendre)
+function _nativeAudioPreload() {
+  if (!nativeAudioAvailable() || !_callCfg || !_callCfg.audio || !_callCfg.hasAudio) return;
+  const src = _callAudioSource();
+  if (src) _nativeAudioSend(src);
+}
+// Décroché : ouvre la session audio native (sortie, capteur) et lance la voix après le délai
+function _callAudioAnswer() {
+  const cfg = _callCfg;
+  if (!cfg) return;
+  const a = cfg.audio;
+  if (a && nativeAudioAvailable()) {
+    _callNativeOn = true;
+    nativePost({ type: 'audio:call-start', route: _callSpeaker ? 'speaker' : 'ear', proximity: a.prox });
+    const src = cfg.hasAudio ? _callAudioSource() : null;
+    if (src) {
+      _nativeAudioSend(src);
+      _nativeAudioPlay = { id: src.id };
+      nativePost({ type: 'audio:play', id: src.id, delay: a.delay });
+    }
+    return;
+  }
+  if (!cfg.hasAudio) return;
+  const delay = a ? a.delay : 0; // ancienne télécommande : tout de suite
+  if (delay > 0) _callVoiceTimer = setTimeout(() => { _callVoiceTimer = null; if (_callState === 'incall') _playCallAudio(); }, delay * 1000);
+  else _playCallAudio();
+}
+// Fin d'appel (raccroché, refus, nouvel appel) : le module rend la sortie et coupe le capteur
+function _nativeAudioEnd() {
+  _nativeAudioPlay = null;
+  if (!_callNativeOn) return;
+  _callNativeOn = false;
+  nativePost({ type: 'audio:call-end' });
+}
+// Module → page (00-native-bridge.js) : audio:state { route, proximityNear?, proximityAvailable? }, audio:error { reason }
+function screenAudioOnNativeState(m) {
+  if (_callState !== 'incall' || !_callNativeOn) return false;
+  if (m.route === 'ear' || m.route === 'speaker') {
+    const on = m.route === 'speaker';
+    if (on !== _callSpeaker) { _callSpeaker = on; _paintSpeaker(); screenSendSpeaker(); }
+  }
+  return true;
+}
+// Lecture native impossible : la voix part quand même, en WebAudio
+function screenAudioOnNativeError(reason) {
+  if (reason === 'not-loaded') _nativeAudioSent.clear(); // le module a perdu la bande son : elle repartira à l'appel suivant
+  if (_callState !== 'incall' || !_callCfg || !_callCfg.hasAudio || !_nativeAudioPlay) return false;
+  _nativeAudioPlay = null;
+  _playCallAudio();
+  return true;
+}
+// Bouton « Haut-parleur » de l'écran : état visuel (aria-pressed, classe .on)
+function _paintSpeaker() {
+  const b = document.querySelector('#screen-call [data-act="speaker"]');
+  if (!b) return;
+  b.classList.toggle('on', _callSpeaker);
+  b.setAttribute('aria-pressed', _callSpeaker ? 'true' : 'false');
+  if (b.parentElement) b.parentElement.classList.toggle('on', _callSpeaker);
+}
+// Le comédien (toucher) ou la télécommande (call:speaker) change la sortie ; l'écran fait foi
+function screenSetSpeaker(on) {
+  if (_callState !== 'incall') return;
+  _callSpeaker = on === true;
+  if (_callNativeOn) nativePost({ type: 'audio:route', route: _callSpeaker ? 'speaker' : 'ear' });
+  _paintSpeaker();
+  screenSendSpeaker();
+}
+function screenTapSpeaker() { screenSetSpeaker(!_callSpeaker); }
+// Ordre de la télécommande (call:speaker) : l'écran applique puis renvoie l'état réel
+function screenOnSpeaker(on) { screenSetSpeaker(on); }
+// État renvoyé à la télécommande après tout changement (jamais en réponse à son propre renvoi)
+function screenSendSpeaker() { sendMsg({ type: 'call:speaker', on: _callSpeaker, from: 'screen' }); }
 function screenCallAnswer() {
   if (_callState !== 'ringing') return;
   _callState = 'incall';
@@ -840,8 +1016,9 @@ function screenCallAnswer() {
   if (el) el.classList.remove('notif');
   _scRenderInCall();
   _callClockTimer = setInterval(_scTickInCall, 1000);
-  if (_callCfg && _callCfg.hasAudio) _playCallAudio();
+  _callAudioAnswer();
   sendMsg({ type: 'call:state', state: 'incall' });
+  screenSendSpeaker(); // état de départ du bouton « Haut-parleur » de la télécommande (l'écran fait foi)
 }
 function screenCallDecline() {
   if (_callState !== 'ringing') return;
@@ -857,6 +1034,7 @@ function screenCallHide() {
   screenCallStopTimers();
   _stopCallAudio();
   _callState = 'idle';
+  _callSpeaker = false;
   const el = document.getElementById('screen-call');
   if (!el) return;
   // Sortie animée : bannières/bandeaux remontent vers le haut, écran verrouillé

@@ -148,7 +148,7 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
     name: document.getElementById('callName').value, label: document.getElementById('callLabel').value,
     lists: [callList.call.map((e) => e.name), callList.sms.map((e) => e.msg), callList.notif.map((e) => e.appName)],
     chat: [_chat.name, _chat.msgs.length], saved: chatSaved.map((e) => e.contact), callers: callers.map((e) => e.name),
-    inert: ['telStyleBtn', 'telRingBtn', 'telWhoBtn', 'telSaveBtn', 'dcAdd', 'dcContactPanel', 'callWhoSaved', 'callAnswerBlock'].map((id) => document.getElementById(id).inert),
+    inert: ['telStyleBtn', 'telRingBtn', 'telWhoBtn', 'clMemActions', 'dcMemActions', 'dcAdd', 'dcContactPanel', 'callWhoSaved', 'callAnswerBlock'].map((id) => document.getElementById(id).inert),
     free: ['callTriggerBtn', 'dcGo', 'dcOpenBtn', 'callkind-sms'].map((id) => document.getElementById(id).inert).concat(document.querySelector('#callListRows .cl-play').inert),
     ex: getComputedStyle(document.getElementById('telPlayTitle'), '::after').content,
   }));
@@ -173,7 +173,7 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
     // mettre à jour, renommer, dupliquer, supprimer : sans effet
     const id = callList.call[0].id;
     await selectCallEntry(id);
-    const upd = [document.getElementById('telSaveBtn').inert, (openSaveCallSheet(), !!_sheet)];
+    const upd = [document.getElementById('clMemActions').inert, (openSaveCallSheet(), !!_sheet)];
     openCallEntryMenu(id);
     const menu = [...document.querySelectorAll('#srSheetBody button')].map((b) => b.textContent);
     closeSheet();
@@ -201,7 +201,7 @@ test('aperçu sans licence : bandeaux, démos jouables, verrous, données de l\'
       text: document.querySelector('#licPvSeq p').textContent,
       sms: __sent.filter((m) => m.type === 'call:start' && m.kind === 'sms').map((m) => m.msg),
       editor: !!_seqEdit, pp: !!_pp, sheet: !!_sheet, saved: seqSaved.length, chatOpt: _seq.steps[2].opt, label: seqStepLabel(_seq.steps[2]),
-      inert: ['seqAddBtn', 'seqAddRow', 'seqPhoneBtn', 'seqSavedBtn', 'seqRows', 'seqNewBtn'].map((id) => document.getElementById(id).inert),
+      inert: ['seqAddBtn', 'seqAddRow', 'seqPhoneBtn', 'seqSavedBtn', 'seqRows', 'seqNewBtn', 'seqMemActions'].map((id) => document.getElementById(id).inert),
       ctl: ['seqGoBtn', 'seqBackBtn', 'seqStopBtn'].map((id) => document.getElementById(id).inert),
       prj: ['stPrjOpen', 'stPrjExport', 'stPrjImport', 'project-view'].map((id) => document.getElementById(id).inert || !!document.getElementById(id).closest('[inert]')),
     };

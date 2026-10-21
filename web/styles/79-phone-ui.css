@@ -182,6 +182,9 @@
 .pc-g{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px}
 .pc-gb{width:70px;height:70px;border-radius:50%;background:var(--btn-bg);-webkit-backdrop-filter:var(--btn-blur);backdrop-filter:var(--btn-blur);display:flex;align-items:center;justify-content:center;font-size:28px}
 .ph-tonal .pc-gb{border-radius:24px;width:84px;height:64px}
+/* Haut-parleur actif (codes de l'appel en cours des téléphones) : bouton plein blanc, icône sombre, libellé en gras */
+.pc-gb.on{background:#fff;color:#111;-webkit-backdrop-filter:none;backdrop-filter:none}
+.pc-g.on{font-weight:600}
 .pc-hang{width:76px;height:76px;border-radius:50%;background:var(--ph-no);display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff}
 .pc-hang svg{transform:rotate(135deg)}
 .ph-tonal .pc-hang{width:164px;border-radius:38px}

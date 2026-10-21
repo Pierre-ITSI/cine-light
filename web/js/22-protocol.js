@@ -49,6 +49,7 @@ const PROTO = {
   SDP_MAX: 16000, ICE_MAX: 4096,               // = LIMITS du schéma (packages/protocol)
   ORDER_MAX: 500, MISSING_MAX: 400,
   VID_MAX_CHUNKS: 50000,                       // ≈ 600 Mo base64 en fragments de 12 000
+  AUDIO_DELAY_MAX: 15,                         // s : délai avant la voix (= schéma, call:start.audio.delay)
   CALL_RINGS: ['classic', 'digital', 'soft', 'silent'],
   // + 3 sons synthétisés réservés aux messages (SMS, notification, discussion) ; un appel les ramène à « classic »
   MSG_RINGS: ['classic', 'digital', 'soft', 'silent', 'metal-do', 'metal-sol', 'sent'],
@@ -107,6 +108,9 @@ function _validCallStart(m) {
     : null;
   m.autoAnswer = _P.num(m.autoAnswer, 0, 60) ?? 0;
   m.hasAudio = _P.bool(m.hasAudio);
+  // Audio de l'appel décroché : délai avant la voix, sortie du son, capteur de proximité.
+  // Absent (ancienne télécommande) : null = comportement d'avant (voix immédiate, sortie du système)
+  m.audio = callAudioNorm(m.audio); // 80-call-simulator.js ; null = absent (ancienne télécommande)
   // Photo / bande son PRÉPARÉES (tournage sans réseau) : ids dérivés du contenu
   if (!(typeof m.photoId === 'string' && SRP.CALL_PHOTO_ID_RE.test(m.photoId))) m.photoId = null;
   if (!(typeof m.audioId === 'string' && SRP.CALL_AUDIO_ID_RE.test(m.audioId))) m.audioId = null;
@@ -306,6 +310,13 @@ const MSG_ROUTES = {
   'call:start':        { roles: ['screen'], validate: _validCallStart, handle: (m) => screenCallStart(m) },
   'call:answer':       { roles: ['screen'], validate: () => true, handle: () => screenCallAnswer() },
   'call:end':          { roles: ['screen'], validate: () => true, handle: () => screenCallEnd() },
+  // Haut-parleur de l'appel décroché, dans les deux sens (80-call-simulator.js, 73-tel-ui.js) :
+  // la télécommande demande, l'écran fait foi et renvoie l'état réel (jamais de renvoi en retour)
+  'call:speaker': {
+    roles: ['screen', 'remote'],
+    validate: (m) => { m.on = m.on === true; return true; },
+    handle: (m) => (mode === 'screen' ? screenOnSpeaker(m.on) : remoteOnCallSpeaker(m.on)),
+  },
   // Discussion fictive (83-discussion.js) : jamais déclenchée par la console DMX
   'chat:open':         { roles: ['screen'], validate: _validChatOpen, handle: (m) => screenChatOpen(m) },
   'chat:msg':          { roles: ['screen'], validate: _validChatMsg, handle: (m) => screenChatMsg(m) },
@@ -406,6 +417,7 @@ const MSG_ROUTES = {
       if (t === null) return true;
       if (!_P.isObj(t) || !_P.oneOf(t.kind, ['call', 'sms', 'notif', 'chat']) || !_P.oneOf(t.state, ['ringing', 'incall', 'notif', 'open'])) return false;
       m.tel = { kind: t.kind, state: t.state, name: _P.text(t.name, PROTO.NAME_MAX).replace(/[\u0000-\u001F\u007F]/g, ' ') };
+      if (t.kind === 'call' && t.state === 'incall' && typeof t.speaker === 'boolean') m.tel.speaker = t.speaker;
       return true;
     },
     handle: (m) => remoteOnTelState(m.tel),
@@ -509,6 +521,13 @@ function clampOutgoing(m) {
       if (m.appColor !== undefined && !_P.hex(m.appColor)) delete m.appColor;
       clampKeys(m, ['autoAnswer'], 0, 60, true);
       clampKeys(m, ['ringVolume'], 0, 1);
+      if (_P.isObj(m.audio)) {
+        const a = {}, d = _P.num(m.audio.delay, 0, PROTO.AUDIO_DELAY_MAX);
+        if (d !== null) a.delay = Math.round(d);
+        if (m.audio.route === 'ear' || m.audio.route === 'speaker') a.route = m.audio.route;
+        if (typeof m.audio.prox === 'boolean') a.prox = m.audio.prox;
+        m.audio = a;
+      } else delete m.audio;
       if (m.ringId !== undefined && !_P.ringId(m.ringId)) delete m.ringId;
       break;
     }

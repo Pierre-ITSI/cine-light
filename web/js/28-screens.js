@@ -425,7 +425,10 @@ function remoteOnTelState(tel) {
   scrChanged();
   if (!scrInTarget(id) || typeof telCallPhase !== 'function') return;
   // Barre Tel : Raccrocher / Décrocher pour l'appel retrouvé, retour au repos s'il n'y en a plus
-  if (tel && tel.kind === 'call') telCallPhase(tel.state === 'incall' ? 'incall' : 'ringing');
+  if (tel && tel.kind === 'call') {
+    telCallPhase(tel.state === 'incall' ? 'incall' : 'ringing');
+    if (tel.state === 'incall' && typeof tel.speaker === 'boolean') remoteOnCallSpeaker(tel.speaker); // bouton Haut-parleur retrouvé
+  }
   else if (wasCall && typeof _telCall !== 'undefined' && _telCall.phase !== 'idle') telCallPhase('idle');
   else if (typeof renderTelBar === 'function') renderTelBar();
 }

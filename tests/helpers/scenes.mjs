@@ -551,6 +551,8 @@ export const SCENES = {
   'screen-call-tonal-banner': screenCall({ kind: 'call', style: 'tonal', name: 'Agent Martin', label: 'Bureau', present: 'banner' }),
   'screen-incall-tonal': screenCall({ kind: 'call', style: 'tonal', name: 'Maman' }, (page) => page.evaluate(() => screenCallAnswer())),
   'screen-incall-glass': screenCall({ kind: 'call', style: 'glass', name: 'Maman' }, (page) => page.evaluate(() => screenCallAnswer())),
+  // M4 · Appel en cours (Verre) : « Haut-parleur » touché, bouton plein blanc
+  'screen-incall-glass-speaker': screenCall({ kind: 'call', style: 'glass', name: 'Maman', audio: { delay: 0, route: 'ear', prox: true } }, (page) => page.evaluate(() => { screenCallAnswer(); screenTapSpeaker(); })),
   'screen-sms-lock-minimal': screenCall({ kind: 'sms', style: 'minimal', name: 'Léa', msg: 'Tu es où ??', lock: { time: '', date: '' } }),
   // 25 · Notification d'application sur le faux écran verrouillé (heure du téléphone imposée, reçue il y a 15 min)
   'screen-notif-lock-glass': screenCall({ ...NOTIF, style: 'glass', present: 'lock' }),
@@ -1033,8 +1035,36 @@ Object.assign(SCENES, {
   }),
   // 4e2 · Menu ⋯ d'une ligne : monter / descendre, console DMX (n° 3, DMX 30–39)
   'remote-tel-list-menu': telScene((page) => page.evaluate(() => openCallEntryMenu('e3'))),
-  // 4e3 · Signet d'une entrée chargée : mettre à jour / enregistrer comme nouveau
+  // 4e3 · « + Enregistrer » avec une entrée chargée : toujours la feuille du nom (nouvelle entrée) ; la mise à jour a son bouton
   'remote-tel-save-loaded': telScene((page) => page.evaluate(() => openSaveCallSheet())),
+  // M1 · Vue « Au décroché » : bande son, décroché auto, délai avant la voix, sortie du son, capteur de proximité
+  'remote-tel-answer': telScene(async (page) => {
+    await page.evaluate(() => {
+      _callAudioData = 'data:audio/wav;base64,AAAA'; _callAudioName = 'Voix Maman.m4a'; _callAudioDur = 24;
+      document.getElementById('callAutoSlider').value = '8'; onCallAutoChange();
+      document.getElementById('callVoiceDelay').value = '2'; onCallAudioChange();
+      renderCallAudioRow(); openTelDetail('answer');
+      const v = document.getElementById('tel-detail-view'); v.scrollTop = v.scrollHeight;
+    });
+  }),
+  // M3b · Appel en ligne : « Haut-parleur » actif à gauche de Raccrocher, statut « En ligne · 00:14 · haut-parleur »
+  'remote-tel-call-incall-speaker': telScene(async (page) => {
+    await page.evaluate(() => { telCallSent('call', 0, undefined, { route: 'speaker' }); remoteOnCallState({ state: 'incall' }); });
+    await page.clock.runFor(14000);
+  }),
+  // M5a · Liste des appels, entrée chargée : « + Enregistrer » et « ↻ Mettre à jour » actifs
+  'remote-tel-list-loaded': telScene(scrollTo('callListPanel', 72)),
+  // M5b · Rien de chargé : « ↻ Mettre à jour » grisé
+  'remote-tel-list-none': telScene(async (page) => {
+    await page.evaluate(() => { _clLoadedId = null; renderCallList(); });
+    await scrollTo('callListPanel', 72)(page);
+  }),
+  // M5e · Après « ↻ Mettre à jour » : bandeau « « Maman — scène 12 » mis à jour · Annuler »
+  'remote-tel-list-updated': telScene(async (page) => {
+    await scrollTo('callListPanel', 72)(page);
+    await page.evaluate(() => updateLoadedCallEntryUndo());
+    await page.clock.runFor(300);
+  }),
   // 6b · « Retirer de l'écran » : un SMS affiché sur l'écran de Julie, une ligne dans la barre fixe de Tel
   'remote-tel-onscreen-sms': telKind('sms', async (page) => {
     await page.evaluate(async () => { document.getElementById('callMsgText').value = 'Tu es où ??'; await triggerCall(); });

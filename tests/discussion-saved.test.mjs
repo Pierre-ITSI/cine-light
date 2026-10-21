@@ -52,7 +52,7 @@ test('enregistrer, charger, renommer, dupliquer, supprimer ; photo gardée ; con
   const unexpected = [];
   const noDialog = (d) => { unexpected.push(d.message()); d.dismiss(); };
   page.on('dialog', noDialog);
-  await page.click('#telSaveBtn');
+  await page.click('#dcMemSave');
   await nameSheet(page, 'Enregistrer le fil en cours', 'Séq. 12 — Maman inquiète');
   assert.deepEqual(await savedRows(page), [['Séq. 12 — Maman inquiète', 'Maman ‹› Julie · 5 messages · Épuré', 'chargée']]);
   assert.equal(await page.textContent('#dcSavedTitle'), 'Discussions enregistrées · 1');
@@ -71,7 +71,7 @@ test('enregistrer, charger, renommer, dupliquer, supprimer ; photo gardée ; con
   await page.locator('#dcRows .dc-edit .dc-edit-ok').click();
   await page.evaluate(() => resumeChatAt('d3'));
   assert.equal(await page.evaluate(() => chatHasUnsavedChanges()), true);
-  await page.click('#telSaveBtn');
+  await page.click('#dcMemSave');
   assert.equal(await page.getAttribute('#srName', 'placeholder'), 'Thomas ‹› Julie');
   await nameSheet(page, 'Enregistrer le fil en cours', 'Séq. 14 — Rupture');
   assert.deepEqual(await savedRows(page), [['Séq. 12 — Maman inquiète', 'Maman ‹› Julie · 5 messages · Épuré', ''], ['Séq. 14 — Rupture', 'Thomas ‹› Julie · 6 messages · Verre', 'chargée']]);

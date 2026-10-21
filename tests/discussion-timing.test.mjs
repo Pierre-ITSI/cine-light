@@ -152,7 +152,7 @@ test('timings réglés dans le fil, enregistrés avec la discussion ; anciennes 
   assert.match(await page.textContent('#dcTimingPanel'), /Contact : « … écrit » pendant la durée d'écriture\. Comédien : le texte s'écrit tout seul lettre par lettre\./);
   assert.equal(await page.locator('#dcRows .dc-pill').nth(1).textContent(), '1 s · auto 4 s');
   // Enregistrer, recharger : timings gardés
-  await page.click('#telSaveBtn');
+  await page.click('#dcMemSave');
   await page.fill('#srName', 'Avec timings');
   await page.click('#sr-sheet .sr-ok');
   await page.reload();

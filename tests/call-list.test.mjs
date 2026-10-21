@@ -158,7 +158,7 @@ test('nom de l\'enregistrement (feuille), entrée chargée : mettre à jour / en
   page.on('dialog', (d) => { confirms++; d.accept(); });
   // Signet de la barre : feuille du nom, proposition préremplie
   await page.evaluate(() => { document.getElementById('callName').value = 'Maman'; document.getElementById('callLabel').value = 'mobile'; });
-  await page.click('#telSaveBtn');
+  await page.click('#clMemSave');
   assert.equal(await page.textContent('#srSheetTitle'), 'Enregistrer l\'appel');
   assert.equal(await page.inputValue('#srName'), 'Maman · mobile');
   assert.equal(await page.textContent('#srSheetBody .sr-sheet-note'), 'Vide : « Maman · mobile ». Le nom sert dans la liste, la Séquence et la console (n° 1, DMX 10–19).');
@@ -167,7 +167,7 @@ test('nom de l\'enregistrement (feuille), entrée chargée : mettre à jour / en
   await waitFor(page, () => callList.call.length === 1);
   // Vidé : nom par défaut (rien d'enregistré comme nom)
   await page.evaluate(() => { document.getElementById('callName').value = 'Agence'; document.getElementById('callLabel').value = ''; });
-  await page.click('#telSaveBtn');
+  await page.click('#clMemSave');
   await page.fill('#srName', '');
   await page.click('#sr-sheet .sr-ok');
   await waitFor(page, () => callList.call.length === 2);
@@ -175,24 +175,35 @@ test('nom de l\'enregistrement (feuille), entrée chargée : mettre à jour / en
   assert.deepEqual(await page.evaluate(() => callList.call.map((e) => e.title)), ['Maman — scène 12', undefined]);
   assert.equal(await page.evaluate(() => _seqRefList('call').map((x) => x.label).join(' | ')), 'Maman — scène 12 | Agence');
   assert.equal(await page.evaluate(() => !!callListLoadedEntry()), false, 'rien de chargé : le signet enregistre une nouvelle entrée');
-  // Toucher l'entrée n° 1 : chargée → le signet propose « Mettre à jour » et « Enregistrer comme nouveau »
+  // Rien de chargé : « ↻ Mettre à jour » grisé
+  assert.equal(await page.evaluate(() => document.getElementById('clMemUpdate').disabled), true);
+  // Toucher l'entrée n° 1 : chargée → « Mettre à jour » actif ; « + Enregistrer » ouvre toujours la feuille du nom (nouvelle entrée)
   await page.locator('#callListRows .cl-row').nth(0).click();
   await waitFor(page, () => document.getElementById('callName').value === 'Maman');
-  await page.click('#telSaveBtn');
+  assert.equal(await page.evaluate(() => document.getElementById('clMemUpdate').disabled), false);
+  await page.click('#clMemSave');
   assert.equal(await page.textContent('#srSheetTitle'), 'Enregistrer l\'appel');
-  assert.deepEqual(await page.$$eval('#callSaveUpdate b, #callSaveUpdate small, #callSaveNew', (b) => b.map((x) => x.textContent)),
-    ['Mettre à jour « Maman — scène 12 »', 'n° 1 · garde sa place dans la liste', 'Enregistrer comme nouveau']);
+  assert.equal(await page.evaluate(() => !!document.getElementById('callSaveUpdate')), false, 'plus de choix « mettre à jour » dans la feuille');
+  assert.equal(await page.textContent('#callSaveNew'), 'Enregistrer');
   await page.click('#sr-sheet .sr-cancel');
-  // Mettre à jour : même id, même numéro, même nom ; une photo là où il n'y en avait pas
+  // Mettre à jour : même id, même numéro, même nom, SANS feuille ; une photo là où il n'y en avait pas
   const id1 = await page.evaluate(() => callList.call[0].id);
   const red = await photoOf(page, '#ff0000');
   await page.evaluate((p) => { document.getElementById('callName').value = 'Mère'; setCallStyle('tonal'); _callPhoto = p; }, red);
-  await page.click('#telSaveBtn');
-  await page.click('#callSaveUpdate');
+  await page.click('#clMemUpdate');
   await waitFor(page, (id) => callAssetGet(id + ':photo').then((v) => !!v), id1);
+  assert.equal(await page.evaluate(() => !!_sheet), false, 'aucune feuille');
+  assert.equal(await page.textContent('#usText'), '« Maman — scène 12 » mis à jour');
   assert.deepEqual(await page.evaluate(() => [callList.call[0].id, callList.call[0].name, callList.call[0].style, callList.call[0].title, callList.call[0].hasPhoto, callList.call.length]),
     [id1, 'Mère', 'tonal', 'Maman — scène 12', true, 2]);
   assert.deepEqual((await rows(page))[0], { n: '1', name: 'Maman — scène 12', meta: 'Tonal · photo', dmx: '10–19', sel: true });
+  // Annuler : l'entrée d'avant revient (réglages, plus de photo)
+  await page.click('#usUndo');
+  await waitFor(page, (id) => callAssetGet(id + ':photo').then((v) => !v), id1);
+  assert.deepEqual(await page.evaluate(() => [callList.call[0].name, callList.call[0].style, callList.call[0].hasPhoto]), ['Maman', 'glass', false]);
+  // Refaire la mise à jour (la photo revient), pour la suite
+  await page.click('#clMemUpdate');
+  await waitFor(page, (id) => callAssetGet(id + ':photo').then((v) => !!v), id1);
   // Photo retirée puis mise à jour : l'ancienne photo est effacée (rien ne reste)
   await page.evaluate(async () => { _callPhoto = null; await updateLoadedCallEntry(); });
   assert.deepEqual(await page.evaluate((id) => Promise.all([callAssetGet(id + ':photo'), callList.call[0].hasPhoto]), id1), [null, false]);
@@ -202,7 +213,7 @@ test('nom de l\'enregistrement (feuille), entrée chargée : mettre à jour / en
   // « Enregistrer comme nouveau » : feuille, nouvelle entrée ; plus d'entrée chargée
   await page.locator('#callListRows .cl-row').nth(1).click();
   await waitFor(page, () => document.getElementById('callName').value === 'Agence');
-  await page.click('#telSaveBtn');
+  await page.click('#clMemSave');
   assert.equal(await page.textContent('#srSheetBody .sr-sheet-note'), 'Vide : « Agence ». Le nom sert dans la liste, la Séquence et la console (n° 3, DMX 30–39).');
   await page.fill('#srName', 'Agence — rappel');
   await page.click('#callSaveNew');
@@ -282,13 +293,13 @@ test('barre d\'action : une seule par type de Tel (Faire sonner, Envoyer le SMS,
   await page.evaluate(() => { startMode('remote'); switchTab('call'); });
   assert.deepEqual(await visibleBars(page), ['tel-bar'], 'une seule barre');
   const lbl = () => page.evaluate(() => [...document.querySelectorAll('#tel-bar .nb-row button')].filter((b) => getComputedStyle(b).display !== 'none').map((b) => b.textContent.replace(/\s+/g, ' ').trim()));
-  assert.deepEqual(await barButtons(page), ['telSaveBtn', 'callTriggerBtn']);
-  assert.match((await lbl())[1], /^FAIRE SONNER/);
+  assert.deepEqual(await barButtons(page), ['callTriggerBtn']);
+  assert.match((await lbl())[0], /^FAIRE SONNER/);
   for (const [k, text] of [['sms', 'ENVOYER LE SMS'], ['notif', 'ENVOYER LA NOTIFICATION'], ['discussion', 'OUVRIR SUR L\'ÉCRAN']]) {
     await page.click('#callkind-' + k);
     const ids = await barButtons(page);
-    assert.deepEqual(ids, ['telSaveBtn', k === 'discussion' ? 'dcOpenBtn' : 'callTriggerBtn'], k);
-    assert.match((await lbl())[1], new RegExp('^' + text), k);
+    assert.deepEqual(ids, [k === 'discussion' ? 'dcOpenBtn' : 'callTriggerBtn'], k);
+    assert.match((await lbl())[0], new RegExp('^' + text), k);
     assert.equal(await shown(page, 'callAnswerBtn'), false, k + ' : ni Décrocher ni Raccrocher');
     assert.equal(await shown(page, 'callHangBtn'), false);
   }
@@ -316,18 +327,18 @@ test('barre d\'appel : Raccrocher / Décrocher pendant la sonnerie, Raccrocher e
   await page.evaluate(() => remoteOnCallState({ state: 'ringing' }));
   assert.match(await page.textContent('#callStatus'), /^Ça sonne depuis \d+ s$/);
   await page.evaluate(() => remoteOnCallState({ state: 'incall' }));
-  assert.deepEqual(await barButtons(page), ['callHangBtn'], 'en ligne : Raccrocher seul');
+  assert.deepEqual(await barButtons(page), ['callSpeakerBtn', 'callHangBtn'], 'en ligne : Haut-parleur puis Raccrocher');
   assert.match(await page.textContent('#callStatus'), /^En ligne · /);
   await page.click('#callHangBtn');
   assert.equal(await page.evaluate(() => __m.filter((m) => m.type === 'call:end').length), 1);
-  assert.deepEqual(await barButtons(page), ['telSaveBtn', 'callTriggerBtn'], 'retour au repos');
+  assert.deepEqual(await barButtons(page), ['callTriggerBtn'], 'retour au repos');
   // Décrocher envoie call:answer ; refusé sur l'écran : retour au repos avec son message
   await page.click('#callTriggerBtn');
   await page.click('#callAnswerBtn');
   assert.equal(await page.evaluate(() => __m.filter((m) => m.type === 'call:answer').length), 1);
   await page.evaluate(() => remoteOnCallState({ state: 'declined' }));
   assert.equal(await page.textContent('#callStatus'), 'Refusé sur l\'écran');
-  assert.deepEqual(await barButtons(page), ['telSaveBtn', 'callTriggerBtn']);
+  assert.deepEqual(await barButtons(page), ['callTriggerBtn']);
   // Décroché automatique : progression de la sonnerie
   await page.evaluate(() => { document.getElementById('callAutoSlider').value = '8'; onCallAutoChange(); });
   await page.click('#callTriggerBtn');
@@ -336,7 +347,7 @@ test('barre d\'appel : Raccrocher / Décrocher pendant la sonnerie, Raccrocher e
   await page.evaluate(() => { remoteOnCallState({ state: 'ended' }); setCallKind('sms'); });
   await page.click('#callTriggerBtn');
   assert.equal(await page.textContent('#callStatus'), 'SMS envoyé');
-  assert.deepEqual(await barButtons(page), ['telSaveBtn', 'callTriggerBtn']);
+  assert.deepEqual(await barButtons(page), ['callTriggerBtn']);
   assert.deepEqual(errors, []);
   await close();
 });

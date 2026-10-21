@@ -28,6 +28,9 @@ body.nv-kb #nv-main[data-bar] #nv-bar .nb{display:none}
 .nb .nb-ghost{flex:none;width:80px;background:transparent;box-shadow:inset 0 0 0 1px var(--border-strong);padding:0 6px;gap:4px}
 .nb .nb-ghost b{font-size:14px;font-weight:700;letter-spacing:0;white-space:nowrap}
 .nb .nb-ghost.on{box-shadow:inset 0 0 0 1.5px var(--accent);color:var(--accent-text)}
+/* Haut-parleur de l'appel en ligne (à gauche de Raccrocher) : contour et fond accent quand il est actif */
+.nb #callSpeakerBtn{width:128px;gap:6px}
+.nb #callSpeakerBtn.on{background:var(--accent-soft)}
 @media (max-width:399px){#dcGo>.ic,#dcOpenBtn>.ic{display:none}#dcGo .nb-lbl b{font-size:15px;letter-spacing:0}.nb .nb-ico{width:48px}.nb .nb-ghost{width:76px;padding:0 4px}.nb #dcGo{padding:0 8px}}
 .nb-lbl{display:flex;flex-direction:column;align-items:center;min-width:0;max-width:100%;text-align:center;gap:2px}
 .nb-lbl b{font-size:16px;font-weight:700;letter-spacing:.02em;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
@@ -183,6 +186,14 @@ body.nv-kb #nv-main[data-bar] #nv-bar .nb{display:none}
   padding:calc(var(--sp-4) + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(var(--sp-5) + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
 #tel-detail-view.over-sheet,#tel-style-view.over-sheet{z-index:600}
 #tel-detail-view .td-sec{flex-direction:column}
+#tel-detail-view .td-note{margin:0;padding:0 var(--sp-1);text-align:left}
+/* Vue « Au décroché » : titres de section et libellés de curseur en minuscules comme le reste de l'app, sans capitales espacées */
+#tdAnswer .panel-label,#tdAnswerRoute .panel-label,#tdAnswerProx .panel-label,#tdAnswer .slider-header label{text-transform:none;letter-spacing:0}
+#tdAnswer .panel-label,#tdAnswerRoute .panel-label,#tdAnswerProx .panel-label{font-size:var(--fs-body);color:var(--text)}
+#tdAnswer .media-status,#tdAnswerRoute .media-status,#tdAnswerNote{letter-spacing:0;font-size:var(--fs-secondary);color:var(--text-2)}
+/* Rangée-résumé sur deux lignes (« Au décroché ») : la 2e ligne passe sous l'icône et le libellé */
+.tl-row.tl-row2{flex-wrap:wrap;row-gap:2px;padding-bottom:var(--sp-2)}
+.tl-row2 .tl-sub2{flex:0 0 100%;order:9;padding-left:calc(20px + var(--sp-3));margin-top:calc(-1 * var(--sp-1));font-size:var(--fs-label);line-height:1.3;color:var(--text-2);text-align:left}
 #tel-detail-view .ss-card{gap:var(--sp-3)}
 #tel-detail-view .td-two{display:flex;gap:var(--sp-2)}
 #tel-detail-view .td-two .text-input{flex:1;min-width:0}
