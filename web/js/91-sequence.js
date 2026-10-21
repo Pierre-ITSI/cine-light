@@ -753,7 +753,7 @@ async function _seqExec(s, it, ids) {
       }, s.kind === 'notif' ? await _seqEntryImg(it) : null);
       if (silent.length) _seqStack(silent, card, null);
       if (stack.length) {
-        const f = ringMsgFields(it.ringId || it.ring, it.ringVolume);
+        const f = ringMsgFields(it.ringId || it.ring, it.ringVolume, s.kind);
         if (f.ringId) await ensureCallAssets(null, null, [f.ringId], stack);
         _seqStack(stack, card, { ring: f.ring, ringId: f.ringId || null, vol: f.ringVolume === undefined ? 1 : f.ringVolume, vib: it.vib === true });
       }

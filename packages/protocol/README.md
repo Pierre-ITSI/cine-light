@@ -300,6 +300,15 @@ Des tests de **dérive** relisent `web/js/*.js` (ou `index.html` à défaut) et
   écarte ce seul message : c'est pourquoi il n'est pas un champ de `caps`, qu'elle
   aurait rejeté en entier. Les états du faux téléphone d'une Séquence
   (`phone:state`) ne sont pas rapportés : la séquence tient l'écran.
+- **Sons intégrés** (`ring` de `call:start`, `chat:open`, `phone:state.chime`) :
+  `classic`, `digital`, `soft`, `silent` pour tous les types ; `metal-do`
+  (« Métallophone Do »), `metal-sol` (« Métallophone Sol ») et `sent`
+  (« Envoi ») en plus pour les **messages seulement** (SMS, notification,
+  discussion, carillon d'une Séquence) : le schéma refuse un de ces trois sons
+  sur `call:start` de `kind: 'call'`. Ils ne sont pas des fichiers : l'écran
+  les synthétise à la lecture. Un **ancien écran web** qui ne les connaît pas
+  les ramène à `classic` (il ne rejette pas le message) ; une validation stricte
+  d'une ancienne version du schéma rejetterait en revanche tout le message.
 - `screen:identify { target: { screens: [...] } }` : l'écran ciblé clignote
   3 s (« Identifier » du moniteur de la passerelle), sans changer son état.
 

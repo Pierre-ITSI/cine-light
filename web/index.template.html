@@ -1156,6 +1156,10 @@
       <button class="chip" id="callring-digital" onclick="setCallRing('digital')">Digitale</button>
       <button class="chip" id="callring-soft" onclick="setCallRing('soft')">Douce</button>
       <button class="chip" id="callring-silent" onclick="setCallRing('silent')">Silencieux</button>
+      <!-- Sons synthétisés : messages seulement (SMS, notification, discussion), masqués pour l'appel -->
+      <button class="chip" id="callring-metal-do" style="display:none" onclick="setCallRing('metal-do')">Métallophone Do</button>
+      <button class="chip" id="callring-metal-sol" style="display:none" onclick="setCallRing('metal-sol')">Métallophone Sol</button>
+      <button class="chip" id="callring-sent" style="display:none" onclick="setCallRing('sent')">Envoi</button>
     </div>
     <div class="panel-label" id="ringLibLabel" style="display:none">Vos sonneries</div>
     <div class="rt-list" id="ringLibRows"></div>

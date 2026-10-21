@@ -471,6 +471,8 @@ function _playNotifSound(cfg) {
 function _notifBuiltin(kind, ring, vol) {
   const v = typeof vol === 'number' ? vol : 1;
   if (ring === 'silent') return;
+  // Sons synthétisés réservés aux messages (69-msg-sounds.js) ; jamais pour un appel
+  if (kind !== 'call' && msgSoundIsSynth(ring)) { playMsgSound(ring, v); return; }
   if (ring === 'digital') { _tone(1250, 0, 0.07, 0.13 * v, 'square'); _tone(1250, 0.13, 0.07, 0.13 * v, 'square'); }
   else if (ring === 'soft') { [659, 988].forEach((f, i) => _tone(f, i * 0.2, 0.4, 0.13 * v, 'sine')); }
   else if (kind === 'notif') { _tone(880, 0, 0.09, 0.16 * v, 'sine'); _tone(1174, 0.12, 0.12, 0.16 * v, 'sine'); } // son de l'ancienne messagerie

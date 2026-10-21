@@ -50,6 +50,8 @@ const PROTO = {
   ORDER_MAX: 500, MISSING_MAX: 400,
   VID_MAX_CHUNKS: 50000,                       // ≈ 600 Mo base64 en fragments de 12 000
   CALL_RINGS: ['classic', 'digital', 'soft', 'silent'],
+  // + 3 sons synthétisés réservés aux messages (SMS, notification, discussion) ; un appel les ramène à « classic »
+  MSG_RINGS: ['classic', 'digital', 'soft', 'silent', 'metal-do', 'metal-sol', 'sent'],
   TORCH_EFFECTS: ['stop', 'sos', 'blink-slow', 'blink-fast', 'police', 'heartbeat'],
 };
 
@@ -95,7 +97,7 @@ function _validCallStart(m) {
   m.hasPhoto = _P.bool(m.hasPhoto);
   // Sonnerie inconnue → classique (une clé comme « __proto__ » ne doit pas
   // fausser la cadence de répétition)
-  if (!_P.oneOf(m.ring, PROTO.CALL_RINGS)) m.ring = 'classic';
+  if (!_P.oneOf(m.ring, m.kind === 'call' ? PROTO.CALL_RINGS : PROTO.MSG_RINGS)) m.ring = 'classic';
   // Son importé (__ring_…, préchargé en fragments) et volume du son
   if (!_P.ringId(m.ringId)) m.ringId = null;
   m.ringVolume = _P.num(m.ringVolume, 0, 1) ?? 1;
@@ -138,7 +140,7 @@ function _validChatOpen(m) {
   m.auto = m.history ? null : _validChatType(m.auto, true);
   if (m.auto && (!m.ids.includes(m.auto.id) || m.sent.includes(m.auto.id))) m.auto = null;
   // Son des messages du contact (absent : aucun) et vibreur (maquette 36d)
-  if (m.ring !== undefined && !_P.oneOf(m.ring, PROTO.CALL_RINGS)) m.ring = 'classic';
+  if (m.ring !== undefined && !_P.oneOf(m.ring, PROTO.MSG_RINGS)) m.ring = 'classic';
   if (!_P.ringId(m.ringId)) m.ringId = null;
   if (m.ringId && !m.ring) m.ring = 'classic';
   m.ringVolume = _P.num(m.ringVolume, 0, 1) ?? 1;
@@ -207,7 +209,7 @@ function _validPhoneState(m) {
   m.wall = _P.bool(m.wall);
   m.watch = Array.isArray(m.watch) ? m.watch.filter((g, i, a) => _P.oneOf(g, PROTO.PHONE_GESTURES) && !PROTO.PHONE_GESTURES_ALWAYS.includes(g) && a.indexOf(g) === i) : [];
   const c = m.chime;
-  m.chime = _P.isObj(c) && seen.has(c.id) ? { id: c.id, ring: _P.oneOf(c.ring, PROTO.CALL_RINGS) ? c.ring : 'classic', ringId: _P.ringId(c.ringId) ? c.ringId : null, vol: _P.num(c.vol, 0, 1) ?? 1, vib: c.vib === true } : null;
+  m.chime = _P.isObj(c) && seen.has(c.id) ? { id: c.id, ring: _P.oneOf(c.ring, PROTO.MSG_RINGS) ? c.ring : 'classic', ringId: _P.ringId(c.ringId) ? c.ringId : null, vol: _P.num(c.vol, 0, 1) ?? 1, vib: c.vib === true } : null;
   // Barre d'état, veille, batterie faible, extinction (maquettes 28b, 29b, 33)
   m.bar = m.bar === undefined ? null : _validPhoneBar(m.bar);
   const sl = m.sleep;

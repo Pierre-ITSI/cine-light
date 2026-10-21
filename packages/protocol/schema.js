@@ -170,6 +170,9 @@ const TIME = str(5, TIME_RE);
 const STYLE3 = oneOf('glass', 'tonal', 'minimal');
 const PHONE_ID = str(12, PHONE_NOTIF_ID_RE);
 const RINGS = oneOf('classic', 'digital', 'soft', 'silent');
+/** Sons intégrés d'un message (SMS, notification, discussion) : les 4 d'origine + 3 sons synthétisés à la lecture par l'écran */
+const MSG_RING_IDS = ['classic', 'digital', 'soft', 'silent', 'metal-do', 'metal-sol', 'sent'];
+const MSG_RINGS = oneOf(...MSG_RING_IDS);
 /** Tableau sans doublon */
 const unique = (/** @type {unknown[]} */ a) => new Set(a).size === a.length;
 
@@ -622,8 +625,9 @@ const SPECS = {
       appColor: opt(HEX, 'couleur de l’application fictive'),
       hasPhoto: opt(bool, 'photo de l’appelant préchargée en fragments (media-img-*, mediaId __callphoto) ; notification : icône de '
         + 'l’application (__notificon) ; plus jamais en ligne'),
-      ring: opt(oneOf('classic', 'digital', 'soft', 'silent'), 'son intégré : sonnerie (appel, en boucle) ou son de notification '
-        + '(SMS / notification, une fois) ; repli quand le son importé ringId manque à l’écran'),
+      ring: opt(MSG_RINGS, 'son intégré : sonnerie (appel, en boucle : classic, digital, soft, silent) ou son de notification '
+        + '(SMS / notification, une fois : en plus metal-do, metal-sol, sent, synthétisés par l’écran, réservés aux messages) ; '
+        + 'repli quand le son importé ringId manque à l’écran. Un ancien écran ne connaissant pas un son le joue en « classic »'),
       ringId: opt(str(23, RING_ID_RE), 'son importé préchargé en fragments (media-img-*, mediaId = cet id) ; absent = son intégré'),
       ringVolume: opt(num(0, 1), 'volume du son 0..1 (absent = 1)'),
       vib: opt(bool, 'vibreur du type (maquette 36b) : appel = motif répété tant que ça sonne ; SMS / notification = motif court '
@@ -653,6 +657,7 @@ const SPECS = {
     },
     refine: m => {
       const notif = m.kind === 'notif';
+      if (m.kind === 'call' && m.ring !== undefined && !RINGS(m.ring)) return 'ring : son réservé aux messages (SMS, notification), pas à un appel';
       if (!notif && (m.phone !== undefined || m.received !== undefined)) return 'phone / received : notification seulement';
       if (m.present === 'lock' && !notif) return 'present « lock » : notification seulement';
       if (notif && m.present === 'full') return 'notification : present « banner » ou « lock »';
@@ -686,7 +691,7 @@ const SPECS = {
       history: opt(bool, '« Reprendre ici » / « Repartir de zéro » : sent = les messages du fil AVANT le point de reprise (début exact de ids), '
         + 'affichés d’un coup comme historique (ni « … écrit », ni animation, ni son) ; frappe locale et file d’attente de l’écran remises à zéro'),
       pend: opt(arrayOf(CHAT_ID, LIMITS.chatMessages), 'messages du comédien postés sans réseau : « Non distribué » (point rouge) jusqu’au retour du réseau'),
-      ring: opt(RINGS, 'son des messages du contact (maquette 36d), joué à l’arrivée de chacun (jamais pour l’historique) ; '
+      ring: opt(MSG_RINGS, 'son des messages du contact (maquette 36d), joué à l’arrivée de chacun (jamais pour l’historique) ; '
         + 'absent = aucun son ; repli quand le son importé ringId manque à l’écran'),
       ringId: opt(str(23, RING_ID_RE), 'son des messages importé, préchargé en fragments (__ring_…, comme les sonneries)'),
       ringVolume: opt(num(0, 1), 'volume du son des messages 0..1 (absent = 1)'),
@@ -822,7 +827,7 @@ const SPECS = {
       watch: opt(arrayOf(oneOf(...PHONE_GESTURES.filter((g) => !PHONE_GESTURES_ALWAYS.includes(g))), PHONE_GESTURES.length), 'gestes attendus de cet écran'),
       chime: opt(object({
         id: req(PHONE_ID, 'notification qui vient d’arriver'),
-        ring: req(RINGS, 'son intégré (repli)'),
+        ring: req(MSG_RINGS, 'son intégré (repli) ; SMS / notification : metal-do, metal-sol, sent acceptés'),
         ringId: opt(str(23, RING_ID_RE), 'son importé préchargé (__ring_…)'),
         vol: opt(num(0, 1), 'volume 0..1'),
         vib: opt(bool, 'vibreur de l’entrée (motif court ; absent = non)'),

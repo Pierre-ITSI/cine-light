@@ -26,7 +26,13 @@
 // DMX en marche, pour les entrées 1 à 20 des listes (déclenchement instantané
 // depuis la console).
 const RING_KINDS = ['call', 'sms', 'notif', 'discussion'];
-const RING_BUILTINS = ['classic', 'digital', 'soft', 'silent'];
+// Sons intégrés : 4 pour tous les types ; 3 sons synthétisés (69-msg-sounds.js)
+// réservés aux messages (SMS, notification, discussion), jamais à un appel.
+const RING_CALL_BUILTINS = ['classic', 'digital', 'soft', 'silent'];
+const RING_MSG_ONLY = ['metal-do', 'metal-sol', 'sent'];
+const RING_BUILTINS = RING_CALL_BUILTINS.concat(RING_MSG_ONLY);
+// Le son intégré id existe-t-il pour ce type ? (appel : les 4 d'origine seulement)
+function ringBuiltinOk(kind, id) { return RING_CALL_BUILTINS.includes(id) || (kind !== 'call' && RING_MSG_ONLY.includes(id)); }
 const RING_MAX_BYTES = 5 * 1024 * 1024;
 const RING_SETTINGS_KEY = 'setremote-ring-v1';
 const RING_DB = 'setremote-ringtones';
@@ -48,7 +54,7 @@ function loadRingSettings() {
   for (const k of RING_KINDS) {
     const s = o && typeof o === 'object' ? o[k] : null;
     const obj = !!s && typeof s === 'object';
-    const ok = obj && (RING_BUILTINS.includes(s.sound) || _ringIsId(s.sound));
+    const ok = obj && (ringBuiltinOk(k, s.sound) || _ringIsId(s.sound));
     ringSettings[k] = { sound: ok ? s.sound : _ringDefault(k).sound, vol: obj ? _ringVol(s.vol) : 1, vib: obj && s.vib === true };
   }
 }
@@ -60,10 +66,10 @@ function persistRingSettings() {
 //   ring       son intégré (et repli de l'écran si le son importé lui manque)
 //   ringId     son importé (absent : son intégré seul)
 //   ringVolume volume 0..1 (absent : 100 %, comme les versions précédentes)
-function ringMsgFields(sound, vol) {
+function ringMsgFields(sound, vol, kind) {
   const out = {};
   if (_ringIsId(sound) && ringLibHas(sound)) { out.ring = 'classic'; out.ringId = sound; }
-  else out.ring = RING_BUILTINS.includes(sound) ? sound : 'classic';
+  else out.ring = ringBuiltinOk(_ringKind(kind), sound) ? sound : 'classic';
   const v = _ringVol(vol);
   if (v < 1) out.ringVolume = v;
   return out;
@@ -71,13 +77,13 @@ function ringMsgFields(sound, vol) {
 // Son du type et son vibreur (vib : présent seulement s'il est activé)
 function ringFormFields(kind) {
   const s = ringSettings[_ringKind(kind)];
-  return Object.assign(ringMsgFields(s.sound, s.vol), s.vib ? { vib: true } : {});
+  return Object.assign(ringMsgFields(s.sound, s.vol, kind), s.vib ? { vib: true } : {});
 }
 // Discussion (chat:open) : son des messages du contact, absent quand il est
 // silencieux (rien à jouer), et vibreur
 function ringChatFields() {
   const s = ringSettings.discussion;
-  return Object.assign(s.sound === 'silent' ? {} : ringMsgFields(s.sound, s.vol), s.vib ? { vib: true } : {});
+  return Object.assign(s.sound === 'silent' ? {} : ringMsgFields(s.sound, s.vol, 'discussion'), s.vib ? { vib: true } : {});
 }
 
 // ── Bibliothèque : IndexedDB, repli en mémoire ──
@@ -248,7 +254,7 @@ function _ringChanged() {
   if (_ringKind(callKind) === 'discussion' && typeof chatOnSoundChange === 'function') chatOnSoundChange();
 }
 function setCallRing(r) {
-  ringSettings[_ringKind(callKind)].sound = RING_BUILTINS.includes(r) ? r : 'classic';
+  ringSettings[_ringKind(callKind)].sound = ringBuiltinOk(_ringKind(callKind), r) ? r : 'classic';
   persistRingSettings();
   _ringSetStatus('');
   renderRingPanel();
@@ -286,7 +292,7 @@ function onRingVolume() {
 // enregistrés (entrée d'avant le vibreur : non)
 function ringApplyEntry(e) {
   const k = _ringKind(e && e.kind);
-  const sound = e && ringLibHas(e.ringId) ? e.ringId : (e && RING_BUILTINS.includes(e.ring) ? e.ring : 'classic');
+  const sound = e && ringLibHas(e.ringId) ? e.ringId : (e && ringBuiltinOk(k, e.ring) ? e.ring : 'classic');
   ringSettings[k] = { sound, vol: e && e.ringVolume !== undefined ? _ringVol(e.ringVolume) : 1, vib: !!(e && e.vib === true) };
   persistRingSettings();
   _ringSetStatus('');
@@ -456,7 +462,10 @@ function renderRingPanel() {
   set('ringVolLabel', _RING_TXT[k].vol);
   RING_BUILTINS.forEach((x) => {
     const b = document.getElementById('callring-' + x);
-    if (b) b.classList.toggle('active', s.sound === x);
+    if (!b) return;
+    b.classList.toggle('active', s.sound === x);
+    // Sons de message : pas dans la liste d'une sonnerie d'appel
+    if (RING_MSG_ONLY.includes(x)) b.style.display = isCall ? 'none' : '';
   });
   const lbl = document.getElementById('ringLibLabel');
   if (lbl) lbl.style.display = ringLib.length ? 'block' : 'none';

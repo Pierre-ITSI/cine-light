@@ -506,7 +506,7 @@ function _prjRingSettings(o) {
   for (const k of RING_KINDS) {
     const s = o && typeof o === 'object' ? o[k] : null;
     const obj = !!s && typeof s === 'object';
-    const ok = obj && (RING_BUILTINS.includes(s.sound) || _ringIsId(s.sound));
+    const ok = obj && (ringBuiltinOk(k, s.sound) || _ringIsId(s.sound));
     out[k] = { sound: ok ? s.sound : _ringDefault(k).sound, vol: obj ? _ringVol(s.vol) : 1, vib: obj && s.vib === true };
   }
   return out;

@@ -63,6 +63,14 @@ test('call:start : son intégré, son importé (ringId) et volume, champs facult
   assert.equal(c({}), true, 'sans champ de son : son intégré classique à 100 % (comportement d’avant)');
   for (const ring of ['classic', 'digital', 'soft', 'silent']) assert.equal(c({ ring }), true, ring);
   assert.equal(c({ ring: 'classic', ringId: '__ring_0123456789abcdef', ringVolume: 1 }), true);
+  // Sons synthétisés par l'écran : messages seulement, jamais une sonnerie d'appel
+  for (const ring of ['metal-do', 'metal-sol', 'sent']) {
+    assert.equal(c({ ring }), false, 'appel : ' + ring);
+    for (const kind of ['sms', 'notif', 'chat', 'whatsapp']) assert.equal(validate({ type: 'call:start', kind, ring }), true, kind + ' : ' + ring);
+    assert.equal(validate({ type: 'chat:open', name: 'M', style: 'glass', ids: [], sent: [], ring }), true, 'discussion : ' + ring);
+    assert.equal(validate({ type: 'phone:state', mode: 'locked', style: 'glass', notifs: [{ id: 'n', kind: 'sms', app: 'S', name: 'A', ago: 0 }], chime: { id: 'n', ring } }), true, 'carillon : ' + ring);
+  }
+  assert.equal(validate({ type: 'call:start', kind: 'sms', ring: 'metal-la' }), false, 'son intégré inconnu');
   assert.equal(c({ ringVolume: 0 }), true, 'volume 0 accepté (muet)');
   assert.equal(c({ ringVolume: 1.0000001 }), false);
   assert.equal(c({ ringVolume: null }), false, 'pas de null : champ absent = 100 %');
