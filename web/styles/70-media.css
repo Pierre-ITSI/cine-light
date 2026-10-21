@@ -44,3 +44,18 @@
 
 /* GLOBAL SCREEN ON/OFF (au-dessus des onglets) */
 
+
+/* Navigation de l'acteur sur l'écran de jeu : segmenté Fixe | Toucher | Glisser | Défiler (maquettes M1, M2) */
+.mnav{margin:10px 0 6px}
+.mnav .panel-label{margin-bottom:8px}
+.mnav-seg .chip{flex-direction:column;gap:2px;height:52px;padding:0 2px;font-size:var(--fs-label)}
+.mnav-hint{font-size:var(--fs-caption);color:var(--text-2);line-height:1.5;margin:8px 2px 12px}
+#mediaNavSkin .panel-label{margin-top:4px}
+/* Pastille de position : « 3 / 6 · plan-3 », tenue à jour par l'écran (media:view) */
+.mnav-inview{align-items:center;gap:10px;margin:2px 0 8px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface-2)}
+.mnav-inview img{width:34px;height:34px;border-radius:6px;object-fit:cover;flex:none;background:var(--mid2)}
+.mnav-inview-txt{flex:1;min-width:0;font-size:var(--fs-body);color:var(--text)}
+.mnav-inview-txt>div:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mnav-vis{color:var(--text-2)}
+.mnav-inview-live{font-size:var(--fs-caption);color:var(--green)}
+.mnav-inview-live::before{content:'● '}

@@ -39,7 +39,7 @@ const SCR_GROUPS_MAX = 16;    // = LIMITS.screenGroups
 const SCR_NAME_MAX = 40;      // = LIMITS.screenNameChars
 const SCR_GLOBAL_TYPES = ['hello', 'media:order', 'media:evict'];
 // Ordres qui modifient l'état attendu d'un écran
-const SCR_TRACKED = new Set(['color', 'effect', 'strobe', 'blackout', 'screen:brightness', 'media:autoadvance',
+const SCR_TRACKED = new Set(['color', 'effect', 'strobe', 'blackout', 'screen:brightness', 'media:nav',
   'media:endmode', 'media:show', 'media-stop', 'media-img-start', 'media:evict', 'call:start', 'call:end', 'dmx:look', 'chat:open', 'chat:close']);
 
 let _scrReg = _scrEmptyReg(null);
@@ -303,7 +303,7 @@ function scrSnapshotView() {
     effect: activeScreenEffect ? { name: activeScreenEffect, params: buildEffectParams(), tvBlocks: activeScreenEffect === 'tv' ? _scrClone(tvBlocks) : null } : null,
     strobe: strobeActive ? buildStrobePayload() : null,
     blackout: !!remoteBlackout, blackoutTouched: !!_blackoutTouched,
-    brightness: screenBrightnessPct, endMode: _videoEndMode, autoAdvance: !!_autoAdvance,
+    brightness: screenBrightnessPct, endMode: _videoEndMode, nav: _mediaNav, skin: _mediaSkin,
     media: _activeMediaId || null,
   };
 }
@@ -312,7 +312,7 @@ function scrAll() { scrInitAll(); return _scrAllState; }
 function _scrLook(s) {
   return {
     color: s.color, colorSpec: _scrClone(s.colorSpec), colorMeta: s.colorMeta, effect: _scrClone(s.effect), strobe: _scrClone(s.strobe),
-    blackout: s.blackout, blackoutTouched: s.blackoutTouched, brightness: s.brightness, endMode: s.endMode, autoAdvance: s.autoAdvance, media: s.media,
+    blackout: s.blackout, blackoutTouched: s.blackoutTouched, brightness: s.brightness, endMode: s.endMode, nav: s.nav, skin: s.skin, media: s.media,
   };
 }
 // État d'un écran connu (créé à partir de l'état « Tous » à sa première apparition)
@@ -362,7 +362,7 @@ function _scrApply(s, m, x) {
     case 'strobe': { if (!m.active) { s.strobe = null; break; } const p = _scrClone(m); delete p.target; s.strobe = p; break; }
     case 'blackout': s.blackout = !!m.on; s.blackoutTouched = true; break;
     case 'screen:brightness': s.brightness = Math.round(Math.min(1, Math.max(0, Number(m.value) || 0)) * 100); break;
-    case 'media:autoadvance': s.autoAdvance = !!m.on; break;
+    case 'media:nav': s.nav = m.mode; s.skin = m.skin; break;
     case 'media:endmode': s.endMode = m.mode; break;
     case 'media:show': s.media = m.id; break;
     case 'media-stop': s.media = null; s.progress = null; break;
@@ -477,8 +477,11 @@ function scrLoadView() {
     const bl = document.getElementById('screenBrightnessVal'); if (bl) bl.innerHTML = st.brightness + '<span>%</span>';
     _videoEndMode = st.endMode;
     ['loop', 'pause', 'off'].forEach((k) => { const b = document.getElementById('vmode-' + k); if (b) b.classList.toggle('active', k === _videoEndMode); });
-    _autoAdvance = !!st.autoAdvance;
-    const aa = document.getElementById('mediaAutoAdvToggle'); if (aa) aa.checked = _autoAdvance;
+    // Anciens états (booléen autoAdvance) : activé = Toucher, désactivé = Fixe
+    _mediaNav = MEDIA_NAV_MODES.includes(st.nav) ? st.nav : mediaNavFromLegacy(!!st.autoAdvance);
+    _mediaSkin = MEDIA_SKINS.includes(st.skin) ? st.skin : 'none';
+    _mediaView = null;
+    renderMediaNav();
     _scrViewMedia(st);
     if (typeof renderMediaBarRow === 'function') renderMediaBarRow(); // barre d'état de la cible (98-phone-params.js)
   } finally {

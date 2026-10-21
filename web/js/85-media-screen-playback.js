@@ -5,11 +5,13 @@ function screenSetEndMode(m) {
   _screenVidEndMode = (m === 'pause' || m === 'off') ? m : 'loop';
   const vid = document.getElementById('screen-media-video');
   if (vid) vid.loop = _screenVidEndMode === 'loop'; // s'applique aussi à la vidéo en cours
+  const nv = screenMediaVideoEl();
+  if (nv && nv !== vid) nv.loop = _screenVidEndMode === 'loop';
 }
 
 // — Contrôle de lecture envoyé par la télécommande —
 function screenMediaCtrl(msg) {
-  const vid = document.getElementById('screen-media-video');
+  const vid = screenMediaVideoEl(); // la vidéo dominante en Glisser / Défiler
   if (!vid || !vid.src) return;
   if (msg.action === 'play')  { playScreenVid(vid); }
   else if (msg.action === 'pause') { vid._wantPlay = false; try { vid.pause(); } catch (_) {} }
@@ -66,6 +68,7 @@ function screenAssembleVideo() {
     if (old && old.url && old.url !== url && old.url !== _screenVidUrl) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
     _mediaCache.set(mediaId, { kind: 'vid', url });
     sendMsg({ type: 'media:cached', id: mediaId });
+    screenNavOnCached(mediaId);
     if (!show) return;
     // Console prioritaire (passerelle DMX) : mise en cache seulement
     if (screenDmxLive()) { screenDmxOnCached(mediaId); return; }
@@ -78,6 +81,10 @@ function screenAssembleVideo() {
 function screenPlayVideoUrl(url) {
   const vid = document.getElementById('screen-media-video');
   if (!vid) return;
+  // Glisser / Défiler : la vidéo vient du cache, dans le carrousel ou le fil (67-media-nav.js)
+  const cur = _screenActiveId && _mediaCache.get(_screenActiveId);
+  if (cur && cur.kind === 'vid' && cur.url === url && screenNavActive(_screenActiveId)) { screenNavShow(_screenActiveId); return; }
+  screenNavHide();
   // Libère l'ancienne URL seulement si elle n'appartient pas au cache
   if (_screenVidUrl && _screenVidUrl !== url && !_urlIsCached(_screenVidUrl)) {
     try { URL.revokeObjectURL(_screenVidUrl); } catch (_) {}

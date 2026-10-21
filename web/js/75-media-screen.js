@@ -20,6 +20,11 @@ function screenShowCached(id) {
   const c = _mediaCache.get(id);
   if (!c) { sendMsg({ type: 'media:need', id }); return; }
   _screenActiveId = id;
+  // Glisser / Défiler : le média est visé dans le carrousel ou le fil (67-media-nav.js)
+  if ((c.kind === 'img' && c.data) || (c.kind === 'vid' && c.url)) {
+    if (screenNavActive(id)) { screenNavShow(id); return; }
+    screenNavHide();
+  }
   if (c.kind === 'img') {
     const im = document.getElementById('screen-media-img');
     if (im) { im.src = c.data; showScreenMedia('img'); }
@@ -33,6 +38,7 @@ function screenEvictCached(id) {
   if (c && c.url && c.url !== _screenVidUrl) { try { URL.revokeObjectURL(c.url); } catch (_) {} }
   _mediaCache.delete(id);
   screenRingForget(id);
+  screenNavOrderChanged(); // le média retiré quitte le carrousel / le fil
 }
 
 function showScreenMedia(kind) {
@@ -46,6 +52,7 @@ function showScreenMedia(kind) {
 }
 
 function hideScreenMedia() {
+  screenNavHide();
   const img = document.getElementById('screen-media-img');
   const vid = document.getElementById('screen-media-video');
   if (img) { img.style.display = 'none'; img.removeAttribute('src'); }
@@ -113,6 +120,7 @@ function mediaImgChunk(msg) {
     const prev = _mediaCache.get(b.mediaId);
     if (!prev || prev.data !== dataUrl) _mediaCache.set(b.mediaId, { kind: isAudio ? 'audio' : 'img', data: dataUrl });
     sendMsg({ type: 'media:cached', id: b.mediaId });
+    if (!isAudio) screenNavOnCached(b.mediaId);
     screenDmxOnCached(b.mediaId);
     // Décodé dès réception : la sonnerie part sans délai au prochain appel
     if (isRing) screenRingWarm(b.mediaId);
@@ -121,9 +129,13 @@ function mediaImgChunk(msg) {
     if (SRP.CALL_PHOTO_ID_RE.test(b.mediaId)) screenPhoneOnImgCached(b.mediaId); // icône / photo d'une notification de Séquence (maquette 44)
   }
   if (b.show && !isAudio) {
-    const im = document.getElementById('screen-media-img');
-    if (im) { im.src = dataUrl; showScreenMedia('img'); }
     _screenActiveId = b.mediaId || null;
+    if (screenNavActive(b.mediaId)) screenNavShow(b.mediaId);
+    else {
+      screenNavHide();
+      const im = document.getElementById('screen-media-img');
+      if (im) { im.src = dataUrl; showScreenMedia('img'); }
+    }
     cleanupScreenRtc(); // une image remplace la vidéo : libère la connexion de transfert
   }
 }
@@ -192,6 +204,7 @@ function screenVidUploadPlay(msg) {
       if (old && old.url && old.url !== url && old.url !== _screenVidUrl) { try { URL.revokeObjectURL(old.url); } catch (_) {} }
       _mediaCache.set(up.poolId, { kind: 'vid', url });
       sendMsg({ type: 'media:cached', id: up.poolId });
+      screenNavOnCached(up.poolId);
       if (!up.show) return; // préparation hors ligne : en cache, rien d'affiché ni d'interrompu
       // Console prioritaire (passerelle DMX) : mise en cache seulement
       if (screenDmxLive()) { screenDmxOnCached(up.poolId); return; }

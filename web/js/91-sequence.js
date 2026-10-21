@@ -143,6 +143,10 @@ const _SEQ_TXT = {
   labelEffect: 'Mémoire d\'effet',
   labelMedia: 'Média du pool',
   labelEnd: 'Fin de lecture',
+  // Média : navigation de l'acteur sur l'écran de jeu pendant la scène (maquette S1)
+  labelNav: 'Navigation sur l\'écran', navInherit: 'Hérité', labelSkin: 'Habillage (si Défiler)', skinNone: 'Aucun', skinSocial: 'Fil social',
+  labelStart: 'Départ du fil', startCur: 'Ce média', startPool: 'Début du pool',
+  navNote: '« Hérité » = réglage de l\'onglet Média. L\'étape l\'impose le temps de la scène, puis le réglage précédent revient.',
   labelCall: 'Appel enregistré',
   labelSms: 'SMS enregistré',
   labelNotif: 'Notification enregistrée',
@@ -324,6 +328,7 @@ function _seqSanTrig(t, kind) {
   return { k: 'go' };
 }
 // Étape relue (stockage, séquence enregistrée) : champs connus, bornés ; null si inutilisable
+const SEQ_NAVS = ['inherit'].concat(MEDIA_NAV_MODES);
 function seqSanitizeStep(s) {
   if (!s || typeof s !== 'object' || typeof s.id !== 'string' || !_SEQ_ID_RE.test(s.id) || !SEQ_KINDS.includes(s.kind)) return null;
   const out = { id: s.id, kind: s.kind, ref: null, target: s.follow === true || s.target === null || s.target === undefined ? null : _seqSanTarget(s.target), trig: _seqSanTrig(s.trig, s.kind), opt: {} };
@@ -331,7 +336,13 @@ function seqSanitizeStep(s) {
     const r = s.ref;
     if (r && typeof r === 'object' && typeof r.id === 'string' && _SEQ_ID_RE.test(r.id)) out.ref = { id: r.id, name: _seqLine(r.name, 120), kind: r.kind === 'vid' ? 'vid' : 'img' };
     const end = s.opt && s.opt.end;
-    out.opt = { end: ['loop', 'pause', 'off'].includes(end) ? end : 'loop' };
+    const o = s.opt || {};
+    out.opt = {
+      end: ['loop', 'pause', 'off'].includes(end) ? end : 'loop',
+      nav: SEQ_NAVS.includes(o.nav) ? o.nav : 'inherit',            // Hérité = réglage de l'onglet Média
+      skin: MEDIA_SKINS.includes(o.skin) ? o.skin : 'none',          // habillage du fil (Défiler)
+      start: o.start === 'pool' ? 'pool' : 'cur',                    // départ du carrousel / du fil : ce média ou le début du pool
+    };
   } else if (s.kind === 'unlock') {
     const o = s.opt || {};
     out.opt = {
@@ -601,6 +612,7 @@ function seqCutOthers() {
 }
 // Reprendre la main (27-tab-gate.js) : suspend la séquence et libère ses écrans jusqu'au prochain GO
 function seqTakeOver() {
+  _seqNavRestore(); // la télécommande reprend la main : réglage de l'onglet Média
   _seqRun.released = true;
   _seqClearTimer();
   if (_seqRun.state === 'running') _seqRun.state = 'stopped';
@@ -735,6 +747,7 @@ function seqStop() {
 // de la séquence fermés, retour avant l'étape 1 (couleurs et médias laissés tels quels)
 function seqRestart() {
   _seqClearTimer();
+  _seqNavRestore(); // fin de la scène : réglage de l'onglet Média
   const calls = new Set(), chat = [..._seqRun.undo.values()].some((u) => u.chat);
   for (const u of _seqRun.undo.values()) for (const id of u.callIds || []) calls.add(id);
   _seqRun.released = false;
@@ -776,10 +789,67 @@ function _seqStrobeMsg(st) {
 // L'interface montre la cible : rechargée si l'étape l'a touchée
 function _seqRefreshView(ids) { if (ids.some(scrInTarget)) scrLoadView(); }
 
+// ── Navigation de l'acteur pendant une scène « Média » (opt.nav / opt.skin) ──
+// L'étape remplace le réglage de l'onglet Média sur ses écrans le temps de la scène ; le réglage
+// d'avant est gardé par écran (_seqNavBase) et rendu à la prochaine étape qui n'est pas une scène
+// avec navigation, à « Recommencer » et quand la télécommande reprend la main.
+const _seqNavBase = new Map(); // screenId → { nav, skin } : réglage de l'onglet Média avant la scène
+function _seqNavSend(ids, nav, skin) {
+  if (!ids.length) return;
+  const t = { screens: ids.slice() };
+  sendMsg({ type: 'media:nav', mode: nav, skin, target: t });
+  sendMsg({ type: 'media:autoadvance', on: nav === 'tap', target: t }); // écrans d'une version précédente
+}
+// Envois groupés par réglage identique
+function _seqNavSendEach(m) {
+  const groups = new Map();
+  for (const [id, v] of m) {
+    const k = v.nav + '|' + v.skin;
+    if (!groups.has(k)) groups.set(k, { v, ids: [] });
+    groups.get(k).ids.push(id);
+  }
+  for (const g of groups.values()) _seqNavSend(g.ids, g.v.nav, g.v.skin);
+}
+function _seqNavApply(s, ids) {
+  const o = s.opt || {};
+  if (o.nav === 'inherit' || !MEDIA_NAV_MODES.includes(o.nav)) { _seqNavRestore(ids); return; }
+  for (const id of ids) if (!_seqNavBase.has(id)) { const st = scrState(id); _seqNavBase.set(id, { nav: st.nav, skin: st.skin }); }
+  _seqNavSend(ids, o.nav, o.skin);
+}
+// Rend le réglage de l'onglet Média (écrans donnés, ou tous ceux que la séquence a modifiés)
+function _seqNavRestore(ids) {
+  const back = new Map();
+  for (const id of ids || [..._seqNavBase.keys()]) {
+    const b = _seqNavBase.get(id);
+    if (!b) continue;
+    _seqNavBase.delete(id);
+    back.set(id, b);
+  }
+  _seqNavSendEach(back);
+  if (back.size) _seqRefreshView([...back.keys()]);
+}
+// État d'avant l'étape, pour ↶
+function _seqNavSnap(ids) {
+  const m = new Map();
+  for (const id of ids) { const st = scrState(id); m.set(id, { cur: { nav: st.nav, skin: st.skin }, base: _seqNavBase.get(id) || null }); }
+  return m;
+}
+function _seqNavUndo(snap) {
+  const back = new Map();
+  for (const [id, v] of snap) {
+    if (v.base) _seqNavBase.set(id, v.base); else _seqNavBase.delete(id);
+    const st = scrState(id);
+    if (st.nav !== v.cur.nav || st.skin !== v.cur.skin) back.set(id, v.cur);
+  }
+  _seqNavSendEach(back);
+}
+
 async function _seqExec(s, it, ids) {
   const t = _seqTarget(ids);
-  const u = { looks: null, phones: _seqSnapPhones(ids), callIds: null, banner: null, chat: false };
+  const u = { looks: null, phones: _seqSnapPhones(ids), callIds: null, banner: null, chat: false, nav: _seqNavSnap(ids) };
   _seqRun.undo.set(s.id, u);
+  // Navigation de l'acteur : une scène « Média » impose la sienne, toute autre étape rend la main à l'onglet Média
+  if (s.kind === 'media') _seqNavApply(s, ids); else _seqNavRestore(ids);
   // Écrans de l'étape : la barre d'état de la séquence s'y affiche désormais
   for (const id of ids) _seqPhone(id);
   const on = (id) => _seqPhones.get(id).power !== 'off';
@@ -801,7 +871,8 @@ async function _seqExec(s, it, ids) {
       u.looks = _seqSnapLooks(ids);
       if (it.kind === 'vid') sendMsg({ type: 'media:endmode', mode: s.opt.end, target: t });
       _vidStopJobs(ids);
-      mediaShowOn(it, ids);
+      // Départ du fil : « Début du pool » rejoue la scène à l'identique, quel que soit le média choisi
+      mediaShowOn((s.opt.start === 'pool' && (s.opt.nav === 'swipe' || s.opt.nav === 'scroll') && _mediaPool[0]) || it, ids);
       _seqRefreshView(ids);
       break;
     case 'call': {
@@ -1020,6 +1091,7 @@ async function _seqOpenChat(e, ids) {
 function seqOnChatSent(sid) { seqOnGesture('chat', sid); renderSeq(); }
 
 async function _seqUndo(s, u) {
+  if (u.nav) _seqNavUndo(u.nav);
   // Téléphone d'avant l'étape
   for (const [id, p] of u.phones) {
     if (p) _seqPhones.set(id, p); else if (_seqPhones.has(id)) Object.assign(_seqPhones.get(id), _seqPhoneBlank(_seqPhones.get(id).style));
@@ -1194,7 +1266,7 @@ function seqStepSub(s) {
     case 'sms': return _seqCut(it.msg, 36) + (_seqSmsLock(it) ? (it.msg ? ' · ' : '') + _SEQ_TXT.subLocked : '');
     case 'notif': return _seqCut(it.msg, 40);
     case 'chat': return _seqTpl(it.msgs.length === 1 ? _SEQ_TXT.subMsg1 : _SEQ_TXT.subMsgN, { n: it.msgs.length });
-    case 'media': return it.kind === 'vid' ? _SEQ_TXT.subVideo : _SEQ_TXT.subImage;
+    case 'media': return (it.kind === 'vid' ? _SEQ_TXT.subVideo : _SEQ_TXT.subImage) + (s.opt && s.opt.nav && s.opt.nav !== 'inherit' ? ' · ' + _MNAV_TXT.modes[s.opt.nav] : '');
     case 'unlock': return s.opt.then === 'home' ? _SEQ_TXT.subHome : _SEQ_TXT.subApp;
   }
   return '';
@@ -1512,7 +1584,7 @@ function closeSeqStep() {
 // Valeurs par défaut d'un type : premier élément de la liste, réglages propres
 function _seqEditDefaults(s) {
   s.ref = null;
-  if (s.kind === 'media') { const it = _mediaPool[0]; s.ref = it ? { id: it.id, name: it.name, kind: it.kind } : null; s.opt = { end: 'loop' }; }
+  if (s.kind === 'media') { const it = _mediaPool[0]; s.ref = it ? { id: it.id, name: it.name, kind: it.kind } : null; s.opt = { end: 'loop', nav: 'inherit', skin: 'none', start: 'cur' }; }
   else if (s.kind === 'unlock') s.opt = { code: 4, then: 'app', img: null, imgName: '' };
   else if (SEQ_OPT_KINDS.has(s.kind)) s.opt = seqSanitizeStep({ id: s.id, kind: s.kind, opt: {} }).opt;
   else {
@@ -1558,7 +1630,7 @@ function seqStepSummary(s, idx) {
     case 'chat': add(T.sumChat + ' '); add(q(it.name || it.contact || T.sumUnknown), true); break;
     case 'color': add(T.sumColor + ' '); add(_seqColorSpecText(it.spec) || it.name, true); break;
     case 'effect': add(T.sumEffect + ' '); add(q(it.name), true); break;
-    case 'media': add(T.sumMedia + ' '); add(q(it.name), true); break;
+    case 'media': add(T.sumMedia + ' '); add(q(it.name), true); if (s.opt && s.opt.nav && s.opt.nav !== 'inherit') add(' · ' + _MNAV_TXT.modes[s.opt.nav]); break;
     case 'unlock': add(it.code ? _seqTpl(T.sumUnlockCode, { n: it.code }) : T.sumUnlockSwipe); break;
     case 'sleep': add(T.sumSleep); break;
     case 'battery': add(T.sumBattery + ' '); add(_seqTpl(T.percent, { n: it.level }), true); break;
@@ -1656,6 +1728,21 @@ function renderSeqStep() {
           + _seqOpt(s.opt.end === 'loop', 'seqEditEnd(\'loop\')', T.endLoop) + _seqOpt(s.opt.end === 'pause', 'seqEditEnd(\'pause\')', T.endPause)
           + _seqOpt(s.opt.end === 'off', 'seqEditEnd(\'off\')', T.endOff) + '</div>';
       }
+    }
+    // Média : navigation de l'acteur pendant la scène, habillage du fil, départ (maquette S1)
+    if (s.kind === 'media') {
+      const o = s.opt, NT = _MNAV_TXT.modes;
+      h += '<span class="ss-label ss-sub">' + escapeHtml(T.labelNav) + '</span><div class="ss-row" id="ssNavRow">'
+        + SEQ_NAVS.map((k) => _seqOpt(o.nav === k, 'seqEditNav(\'' + k + '\')', k === 'inherit' ? T.navInherit : NT[k])).join('') + '</div>';
+      if (o.nav === 'scroll') {
+        h += '<span class="ss-label ss-sub">' + escapeHtml(T.labelSkin) + '</span><div class="ss-row" id="ssSkinRow">'
+          + _seqOpt(o.skin === 'none', 'seqEditSkin(\'none\')', T.skinNone) + _seqOpt(o.skin === 'social', 'seqEditSkin(\'social\')', T.skinSocial) + '</div>';
+      }
+      if (o.nav === 'swipe' || o.nav === 'scroll') {
+        h += '<span class="ss-label ss-sub">' + escapeHtml(T.labelStart) + '</span><div class="ss-row" id="ssStartRow">'
+          + _seqOpt(o.start === 'cur', 'seqEditStart(\'cur\')', T.startCur) + _seqOpt(o.start === 'pool', 'seqEditStart(\'pool\')', T.startPool) + '</div>';
+      }
+      h += '<div class="ss-note">' + escapeHtml(T.navNote) + '</div>';
     }
     // Discussion : lecture manuelle, auto (le comédien tape) ou tout automatique (maquette 41)
     if (s.kind === 'chat') {
@@ -1790,6 +1877,9 @@ function seqEditRef(id) {
   e.err = '';
   renderSeqStep();
 }
+function seqEditNav(v) { if (_seqEdit && SEQ_NAVS.includes(v)) { _seqEdit.step.opt.nav = v; renderSeqStep(); } }
+function seqEditSkin(v) { if (_seqEdit) { _seqEdit.step.opt.skin = MEDIA_SKINS.includes(v) ? v : 'none'; renderSeqStep(); } }
+function seqEditStart(v) { if (_seqEdit) { _seqEdit.step.opt.start = v === 'pool' ? 'pool' : 'cur'; renderSeqStep(); } }
 function seqEditEnd(v) { if (_seqEdit) { _seqEdit.step.opt.end = v; renderSeqStep(); } }
 function seqEditCode(n) { if (_seqEdit) { _seqEdit.step.opt.code = [0, 4, 6].includes(n) ? n : 4; renderSeqStep(); } }
 function seqEditHomeWall(on) { if (_seqEdit) { _seqEdit.step.opt.homeWall = on === true; renderSeqStep(); } }

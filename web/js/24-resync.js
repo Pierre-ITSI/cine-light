@@ -3,7 +3,7 @@
 // Un écran annonce ses capacités (« caps ») à chaque (re)connexion et en
 // réponse au « hello » de la télécommande (envoyé à chaque (re)connexion de
 // celle-ci). La télécommande renvoie alors à CET écran SON état attendu
-// (28-screens.js : couleur, noir, luminosité, effet, strobe, avance au clic,
+// (28-screens.js : couleur, noir, luminosité, effet, strobe, navigation sur l'écran (media:nav),
 // fin de lecture, ordre du pool), adressé à lui seul (target.screens) : les
 // autres écrans ne sont pas dérangés (une vidéo n'y redémarre plus). Ne part
 // ensuite que ce qui lui MANQUE, d'après la liste exacte de son cache
@@ -28,7 +28,7 @@ function remoteScheduleResync(caps) {
 // Ce qui définit l'état « lumière et réglages » d'un écran
 function _resyncSig(st) {
   return JSON.stringify([st.color, st.blackoutTouched ? st.blackout : null, st.brightness, st.effect && [st.effect.name, st.effect.params],
-    st.strobe, st.autoAdvance, st.endMode]);
+    st.strobe, st.nav, st.skin, st.endMode]);
 }
 // État connu renvoyé tel quel (non suivi : rien de nouveau)
 function _resyncLights(st, target) {
@@ -40,7 +40,8 @@ function _resyncLights(st, target) {
     sendMsg(Object.assign({ type: 'screen:brightness', value: st.brightness / 100 }, t));
     if (st.effect) sendMsg(Object.assign({ type: 'effect', name: st.effect.name, active: true, params: st.effect.params }, t));
     if (st.strobe) sendMsg(Object.assign({}, st.strobe, t)); // après l'effet : le strobe prime
-    sendMsg(Object.assign({ type: 'media:autoadvance', on: st.autoAdvance }, t));
+    sendMsg(Object.assign({ type: 'media:nav', mode: st.nav, skin: st.skin }, t));
+    sendMsg(Object.assign({ type: 'media:autoadvance', on: st.nav === 'tap' }, t)); // écrans d'une version précédente
     sendMsg(Object.assign({ type: 'media:endmode', mode: st.endMode }, t));
   } finally { _scrReplay = false; }
 }

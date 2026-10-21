@@ -83,6 +83,8 @@ function setupScreenAutohide() {
     if (el) {
       ['mousemove', 'touchstart', 'click'].forEach(ev =>
         el.addEventListener(ev, pokeScreenControls, { passive: true }));
+      // Toucher : un déplacement de plus de 8 px n'est pas un toucher (le clic est ignoré)
+      el.addEventListener('pointerdown', (e) => { _advDown = { x: e.clientX, y: e.clientY }; }, { passive: true, capture: true });
       el.addEventListener('click', onScreenAdvanceClick, { passive: true });
     }
     _autohideBound = true;
@@ -98,8 +100,10 @@ function screenMediaVisible() {
 }
 // Tap sur l'écran : si la télécommande a activé l'option, demande le média suivant.
 // On ignore les clics sur la barre de contrôle (boutons), seul le plein écran avance.
+let _advDown = null;
 function onScreenAdvanceClick(e) {
-  if (mode !== 'screen' || !_screenAutoAdvance || !screenMediaVisible()) return;
+  if (mode !== 'screen' || _screenNav !== 'tap' || !_screenAutoAdvance || !screenMediaVisible()) return;
+  if (_advDown && e && Math.hypot((e.clientX || 0) - _advDown.x, (e.clientY || 0) - _advDown.y) > 8) return;
   if (e && e.target && e.target.closest && e.target.closest('#screen-bar')) return;
   // Avance locale instantanée : si l'ordre du pool est connu et que le média
   // suivant est déjà en cache, on l'affiche sans aller-retour réseau.

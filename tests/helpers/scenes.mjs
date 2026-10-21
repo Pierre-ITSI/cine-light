@@ -321,6 +321,55 @@ const seqWallImage = (w, h) => {
   g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(0, h * 0.42, w, h * 0.02);
   return c.toDataURL('image/jpeg', 0.85);
 };
+
+// ── Média : navigation de l'acteur (maquettes M1 à M5) ──
+// Paysages générés (aucune photo réelle), aspects variés (hauteur / largeur)
+const navImage = (seed, w, h, q) => {
+  let s = seed * 9301 + 49297; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  const pal = [['#1b2a5e', '#e8795a', '#f4c27a', '#14213d'], ['#0f3d3e', '#5fb7a5', '#f2e2b1', '#0b2b2b'], ['#3b1f4a', '#d9669a', '#ffc58f', '#22112e'],
+    ['#12355b', '#79b8e0', '#fbe7b2', '#0b2542'], ['#2b2d42', '#ef8354', '#ffd9a0', '#1b1c2e'], ['#17412d', '#8cc084', '#f0efb0', '#0e2a1d'],
+    ['#4a2c2a', '#e09f6b', '#ffe6b0', '#2e1a19'], ['#1d3557', '#a8dadc', '#f1faee', '#10213a']][seed % 8];
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+  const sk = g.createLinearGradient(0, 0, 0, h); sk.addColorStop(0, pal[0]); sk.addColorStop(.62, pal[1]); sk.addColorStop(1, pal[2]);
+  g.fillStyle = sk; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(w * (.25 + rnd() * .5), h * (.38 + rnd() * .12), w * .07, 0, 7); g.fill();
+  for (let L = 0; L < 3; L++) {
+    g.fillStyle = L === 0 ? pal[1] + 'cc' : L === 1 ? pal[0] + 'dd' : pal[3];
+    g.globalAlpha = L === 0 ? .55 : 1; g.beginPath(); g.moveTo(0, h);
+    const base = h * (.62 + L * .1), amp = h * (.1 - L * .02), ph = rnd() * 6;
+    for (let x = 0; x <= w; x += 6) g.lineTo(x, base - amp * (Math.sin(x / w * (3 + L * 2) + ph) * .6 + Math.sin(x / w * 9 + ph * 2) * .25));
+    g.lineTo(w, h); g.closePath(); g.fill(); g.globalAlpha = 1;
+  }
+  return c.toDataURL('image/jpeg', q || .85);
+};
+const NAV_RATIO = [1.25, 1, 1.33, .56, 1.25, 1.12]; // hauteur / largeur de chaque plan
+// Télécommande : pool de six plans (le dernier est une vidéo), un média en vue
+const navRemoteScene = (nav, skin, cur, view, up) => remote('media', async (page) => {
+  await page.evaluate(([imgFn, nav, skin, cur, view, up]) => {
+    const mk = (0, eval)('(' + imgFn + ')');
+    _mediaPool = Array.from({ length: 6 }, (_, i) => ({ id: 'm' + (i + 1), kind: i === 5 ? 'vid' : 'img', name: 'plan-' + (i + 1), file: null, thumb: mk(i, 160, 160, .6) }));
+    _activeMediaId = 'm' + cur; _mediaNav = nav; _mediaSkin = skin; _mediaView = view;
+    renderPool(); showMediaStop(false);
+    const st = document.getElementById('mediaStatus'); st.classList.add('live');
+    st.textContent = '🖼 plan-' + cur + ' (' + (nav === 'swipe' ? 'glissé' : 'défilé') + ' sur l\'écran)';
+    const t = document.querySelector('#mediaPool .pool-tile[data-id="m4"]'); t.scrollIntoView({ block: 'start' }); document.getElementById('nv-scroll').scrollTop -= up;
+  }, [navImage.toString(), nav, skin, cur, view, up]);
+});
+// Écran de jeu : six plans en cache (aspects naturels), un mode de navigation
+const navScreenScene = (nav, skin, bar, after) => async (page) => {
+  await joinScreen(page);
+  await page.evaluate(([imgFn, nav, skin, bar]) => {
+    const mk = (0, eval)('(' + imgFn + ')'), ratios = [1.25, 1, 1.33, .56, 1.25, 1.12], ids = [];
+    ratios.forEach((r, i) => { const id = 'm' + (i + 1); ids.push(id); _mediaCache.set(id, { kind: 'img', data: mk(i, 390, Math.round(390 * r), .88), ar: 1 / r }); });
+    _mediaOrder = ids;
+    screenShowCached(nav === 'swipe' ? 'm3' : 'm1');
+    screenSetNav(nav, skin);
+    if (bar) screenMediaBar({ clock: { mode: 'run', date: '2026-10-17', time: '08:05', el: 0 }, net: { bars: 4, type: '5G', plane: false, wifi: true }, bat: { level: 76, charging: false, pct: true } });
+  }, [navImage.toString(), nav, skin, bar]);
+  await page.clock.runFor(600);
+  if (after) await after(page);
+  await page.clock.runFor(600);
+};
 const seqScene = (extra) => multiScreen(async (page) => {
   await page.evaluate(async ([julie, tv, imgFn]) => {
     const T = { k: 'screen', id: julie };
@@ -888,6 +937,30 @@ export const SCENES = {
   'screen-seq-nonetwork-popup': screenPhone({
     mode: 'locked', style: 'glass', notifs: [], alert: { id: 'r1', kind: 'net' },
     bar: { clock: { mode: 'frozen', date: '2026-10-17', time: '23:47' }, net: { bars: 0, type: '4G', plane: false, wifi: false }, bat: { level: 52, charging: false, pct: false } },
+  }),
+  // M1 · Média : Glisser, 3 / 6 en vue (segmenté « Sur l'écran de jeu »)
+  'remote-media-nav-swipe': navRemoteScene('swipe', 'none', 3, null, 21),
+  // M2 · Média : Défiler + Fil social, 4 / 6 en vue, 4 et 5 visibles
+  'remote-media-nav-scroll': navRemoteScene('scroll', 'social', 4, { id: 'm4', vis: ['m4', 'm5'] }, 144),
+  // M3 · Écran de jeu : Glisser, geste en cours (3 part à gauche, 4 entre par la droite), barre d'état
+  'screen-media-swipe': navScreenScene('swipe', 'none', true, async (page) => {
+    await page.mouse.move(300, 430); await page.mouse.down(); await page.mouse.move(152, 430, { steps: 4 });
+  }),
+  // M4 · Écran de jeu : Défiler sans habillage, ni barre d'état
+  'screen-media-feed': navScreenScene('scroll', 'none', false, (page) => page.evaluate(() => {
+    const sc = _nav.scroller; sc.scrollTop = sc.querySelector('.mn-item[data-id="m2"]').offsetTop + 118;
+  })),
+  // M5 · Écran de jeu : Défiler, Fil social, barre d'état active
+  'screen-media-feed-social': navScreenScene('scroll', 'social', true, (page) => page.evaluate(() => {
+    const sc = _nav.scroller; sc.scrollTop = 250;
+  })),
+  // S1 · Étape « Média » : navigation sur l'écran (Défiler, Fil social, départ au début du pool)
+  'remote-seq-step-media-nav': seqScene(async (page) => {
+    await page.evaluate(() => {
+      _seq.steps.find((s) => s.id === 'a8').opt = { end: 'loop', nav: 'scroll', skin: 'social', start: 'pool' };
+      openSeqStep('a8');
+    });
+    await stepScroll('ssNavRow', 150)(page);
   }),
   // Barre d'état en bandeau au-dessus d'un média du pool (photo), réglée dans l'onglet Média
   'screen-media-statusbar': async (page) => {

@@ -167,8 +167,33 @@ function onSeekEnd() {
 let _mediaPool = [];        // { id, kind:'img'|'vid', name, file, thumb }
 let _activeMediaId = null;
 let _poolSeq = 0;
-let _autoAdvance = false;          // télécommande : « avancer au clic sur l'écran »
-let _screenAutoAdvance = false;    // écran : option reçue de la télécommande
+// Navigation de l'acteur sur l'écran de jeu (remplace l'ancien « avancer au clic »)
+const MEDIA_NAV_MODES = ['off', 'tap', 'swipe', 'scroll'];   // Fixe | Toucher | Glisser | Défiler
+const MEDIA_SKINS = ['none', 'social'];                      // Habillage du fil (Défiler)
+let _mediaNav = 'off';             // télécommande : mode choisi (onglet Média ou état de la cible)
+let _mediaSkin = 'none';           // télécommande : habillage du fil
+let _mediaView = null;             // télécommande : { id, vis[] } rapporté par l'écran (media:view)
+let _screenAutoAdvance = false;    // écran : « toucher = suivant » (dérivé du mode, voir 67-media-nav.js)
+
+// Textes de la navigation média (tableau propre au fichier)
+const _MNAV_TXT = {
+  label: 'Sur l\'écran de jeu', skinLabel: 'Habillage',
+  modes: { off: 'Fixe', tap: 'Toucher', swipe: 'Glisser', scroll: 'Défiler' },
+  skins: { none: 'Aucun', social: 'Fil social' },
+  hints: {
+    off: 'L\'écran de jeu ne change jamais de média tout seul.',
+    tap: 'Un toucher sur l\'écran de jeu passe au média suivant, en boucle.',
+    swipe: 'Les médias se suivent côte à côte, comme dans la galerie d\'un téléphone : l\'acteur glisse du doigt, le média s\'accroche.',
+    scroll: 'Les médias sont empilés les uns sous les autres, comme un fil d\'actualité : l\'acteur fait défiler avec inertie.',
+  },
+  skinHint: 'Fil social : avatar, pseudo, cœur, commentaire, partage — générique, sans marque ni vrai logo.',
+  inView: 'En vue sur l\'écran de jeu', visible: 'visible : ', and: ' et ',
+  swiped: 'glissé sur l\'écran', scrolled: 'défilé sur l\'écran',
+};
+
+// Ancien réglage booléen (« avancer au clic ») → mode : activé = Toucher, désactivé = Fixe.
+// Sert aux anciens états (resynchronisation) et au repli de setAutoAdvance.
+function mediaNavFromLegacy(on) { return on ? 'tap' : 'off'; }
 let screenBrightnessPct = 100;     // télécommande : luminosité de l'écran de jeu (%)
 
 // Règle à distance la luminosité de l'écran de jeu (slider de l'onglet Média).
@@ -247,11 +272,9 @@ function renderPool() {
   const empty = document.getElementById('mediaPoolEmpty');
   if (empty) empty.style.display = _mediaPool.length ? 'none' : 'block';
   const nav = document.getElementById('mediaNav');
-  const advRow = document.getElementById('mediaAutoAdvRow');
   const hasItems = _mediaPool.length > 0;
   if (nav) nav.style.display = hasItems ? 'flex' : 'none';
-  // Le toggle « avancer au clic sur l'écran » est toujours visible (comme le natif).
-  if (advRow) advRow.style.display = 'flex';
+  renderMediaNav(); // segmenté « Sur l'écran de jeu » toujours visible (comme le natif) + indicateur « en vue »
   if (!grid) return;
   grid.innerHTML = _mediaPool.map((it, idx) => {
     const active = it.id === _activeMediaId;
@@ -367,18 +390,68 @@ function advancePool(dir) {
   selectMedia(_mediaPool[_poolNext(_activeMediaId, dir)].id);
 }
 
-// Active/désactive « l'écran de jeu passe au média suivant d'un clic ».
-function setAutoAdvance(on) {
-  _autoAdvance = !!on;
-  const t = document.getElementById('mediaAutoAdvToggle');
-  if (t) t.checked = _autoAdvance;
-  sendMsg({ type: 'media:autoadvance', on: _autoAdvance });
+// Mode de navigation sur l'écran de jeu : media:nav (+ media:autoadvance pour les écrans
+// d'une version précédente, pendant la transition : activé = mode Toucher)
+function _sendMediaNav() {
+  sendMsg({ type: 'media:nav', mode: _mediaNav, skin: _mediaSkin });
+  sendMsg({ type: 'media:autoadvance', on: _mediaNav === 'tap' });
+}
+function setMediaNav(mode) {
+  _mediaNav = MEDIA_NAV_MODES.includes(mode) ? mode : 'off';
+  _mediaView = null;
+  renderMediaNav();
+  _sendMediaNav();
+}
+function setMediaSkin(skin) {
+  _mediaSkin = MEDIA_SKINS.includes(skin) ? skin : 'none';
+  renderMediaNav();
+  _sendMediaNav();
+}
+// Ancienne API booléenne (anciens appelants, tests) : activé = Toucher, désactivé = Fixe
+function setAutoAdvance(on) { setMediaNav(mediaNavFromLegacy(!!on)); }
+
+// Segmenté, habillage (seulement avec Défiler), aide et indicateur « en vue »
+function renderMediaNav() {
+  for (const k of MEDIA_NAV_MODES) {
+    const b = document.getElementById('mnav-' + k);
+    if (b) { b.classList.toggle('active', k === _mediaNav); b.setAttribute('aria-checked', String(k === _mediaNav)); }
+  }
+  for (const k of MEDIA_SKINS) {
+    const b = document.getElementById('mskin-' + k);
+    if (b) { b.classList.toggle('active', k === _mediaSkin); b.setAttribute('aria-checked', String(k === _mediaSkin)); }
+  }
+  const hint = document.getElementById('mediaNavHint');
+  if (hint) hint.textContent = _MNAV_TXT.hints[_mediaNav];
+  const skin = document.getElementById('mediaNavSkin');
+  if (skin) skin.style.display = _mediaNav === 'scroll' ? 'block' : 'none';
+  renderMediaInView();
+}
+// Pastille de position : « 3 / 6 · plan-3 » (Défiler : « · visible : 4 et 5 »), tenue à jour par media:view
+function renderMediaInView() {
+  const el = document.getElementById('mediaInView');
+  if (!el) return;
+  const idx = _mediaPool.findIndex((m) => m.id === _activeMediaId);
+  const show = (_mediaNav === 'swipe' || _mediaNav === 'scroll') && idx >= 0;
+  el.style.display = show ? 'flex' : 'none';
+  if (!show) return;
+  const it = _mediaPool[idx];
+  let vis = '';
+  if (_mediaNav === 'scroll' && _mediaView && _mediaView.id === it.id) {
+    const nums = _mediaView.vis.map((id) => _mediaPool.findIndex((m) => m.id === id) + 1).filter((n) => n > 0).sort((a, b) => a - b);
+    if (nums.length > 1) vis = _MNAV_TXT.visible + nums.slice(0, -1).join(', ') + _MNAV_TXT.and + nums[nums.length - 1];
+  }
+  const th = document.getElementById('mediaInViewThumb');
+  if (th) { if (it.thumb) { th.src = it.thumb; th.style.visibility = 'visible'; } else th.style.visibility = 'hidden'; }
+  const pos = document.getElementById('mediaInViewPos');
+  if (pos) pos.innerHTML = '<b>' + (idx + 1) + '</b> / ' + _mediaPool.length + ' · ' + escapeHtml(it.name)
+    + (vis ? ' <span class="mnav-vis">· ' + escapeHtml(vis) + '</span>' : '');
 }
 
 function selectMedia(id) {
   if (_poolSuppressClick) return; // ignore le clic résiduel après un glisser-déposer
   const it = _mediaPool.find(m => m.id === id);
   if (!it) return;
+  _mediaView = null;
   const ids = scrTargetIds();
   _vidStopJobs(ids); // transferts en cours vers ces écrans : remplacés
   _mediaViewReset();
@@ -437,8 +510,20 @@ function mediaShowOn(it, ids, fromUi) {
   }
 }
 
+// L'écran rapporte le média en vue (Glisser / Défiler) : dominant, et jusqu'à 4 visibles.
+// Le média dominant se traite comme une avance de l'écran ; seuls les visibles changent
+// pendant un défilement.
+function remoteOnScreenView(m) {
+  if (!_mediaPool.some((x) => x.id === m.id)) return;
+  const sid = _rxFrom && scrKnown(_rxFrom) ? _rxFrom : null;
+  if (m.id !== _activeMediaId || (sid && scrState(sid).media !== m.id)) remoteOnScreenAdvanced(m.id, m.vis ? _MNAV_TXT.scrolled : _MNAV_TXT.swiped);
+  if (!_mediaFromTarget()) return;
+  _mediaView = { id: m.id, vis: Array.isArray(m.vis) ? m.vis.slice(0, 4) : [m.id] };
+  renderMediaInView();
+}
+
 // L'écran a avancé tout seul (avance locale) : son état, et l'interface s'il est dans la cible
-function remoteOnScreenAdvanced(id) {
+function remoteOnScreenAdvanced(id, how) {
   const it = _mediaPool.find(m => m.id === id);
   if (!it) return;
   const sid = _rxFrom;
@@ -453,7 +538,7 @@ function remoteOnScreenAdvanced(id) {
     _mediaIsVideo = true; _remotePlaying = true;
     showMediaPlay(true); setPlayBtn(true); showMediaTimeline(true);
   }
-  setMediaStatus((it.kind === 'vid' ? '🎬 ' : '🖼 ') + it.name + ' (avance écran)', true);
+  setMediaStatus((it.kind === 'vid' ? '🎬 ' : '🖼 ') + it.name + ' (' + (how || 'avance écran') + ')', true);
 }
 
 // Un écran ne possède pas ce média en cache : transfert complet, à lui seul
@@ -944,7 +1029,7 @@ function _mediaViewReset() {
 function stopMediaBroadcast(notify = true, everywhere = false) {
   _vidStopJobs(everywhere ? null : scrTargetIds());
   _mediaViewReset();
-  _activeMediaId = null;
+  _activeMediaId = null; _mediaView = null;
   if (scrTarget().k === 'all') scrAll().media = null;
   renderPool();
   showMediaStop(false);

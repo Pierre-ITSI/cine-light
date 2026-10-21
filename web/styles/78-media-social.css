@@ -1,0 +1,21 @@
+/* SPDX-License-Identifier: AGPL-3.0-only — © 2026 ITSI APP */
+/* MÉDIA — HABILLAGE « FIL SOCIAL » du mode Défiler : générique, aucune marque, aucun logo, aucune police de marque.
+   Statique : ni filtre ni ombre (appareils modestes). Fond sombre propre au faux téléphone. */
+#screen-media-nav.mn-social{background:#0c0c0e;font-family:-apple-system,system-ui,Roboto,'Segoe UI',sans-serif}
+.mn-social .mn-scroller{padding-top:80px}
+.mn-social .mn-feed{gap:0}
+.mn-social .mn-item{background:#0c0c0e;padding-bottom:6px}
+.mn-social .mn-media{background:#16161a}
+.mn-top{position:absolute;left:0;right:0;top:0;z-index:2;height:80px;box-sizing:border-box;padding-bottom:10px;display:flex;align-items:flex-end;justify-content:center;background:#0c0c0e;border-bottom:1px solid #26262b;font-size:16px;font-weight:700;letter-spacing:.01em;pointer-events:none}
+.mn-ph-head{display:flex;align-items:center;gap:10px;height:52px;padding:0 12px}
+.mn-av{width:32px;height:32px;border-radius:50%;flex:none;padding:2px;box-sizing:border-box;background:conic-gradient(from 200deg,#ff8a55,#d9669a,#6a7bd8,#ff8a55)}
+.mn-av i{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:#2a2a30;border:2px solid #0c0c0e;box-sizing:border-box;font-style:normal;font-size:12px;font-weight:700;color:#f2f2f2}
+.mn-name{flex:1;min-width:0;font-size:14px;font-weight:600;line-height:1.15;color:#f2f2f2}
+.mn-name small{display:block;font-weight:400;font-size:11px;color:#9a9aa3}
+.mn-dots{letter-spacing:2px;font-weight:700;color:#cfcfd6}
+.mn-ph-acts{display:flex;align-items:center;gap:16px;height:44px;padding:0 12px}
+.mn-ph-acts .mn-ic{width:24px;height:24px;color:#f2f2f2;stroke:#f2f2f2;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.mn-ph-acts .mn-ic.liked{fill:#ff3b5c;stroke:#ff3b5c}
+.mn-sp{flex:1}
+.mn-ph-txt{padding:0 12px 14px;font-size:13px;line-height:1.4;color:#e6e6ea}
+.mn-ph-txt b{font-weight:600}

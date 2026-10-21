@@ -132,6 +132,7 @@ function _dmxPlayback(pb) {
 
 // Masque le média sans toucher aux transferts en cours (préchargements)
 function _dmxHideMedia() {
+  screenNavHide();
   const img = document.getElementById('screen-media-img');
   const vid = document.getElementById('screen-media-video');
   if (img) { img.style.display = 'none'; img.removeAttribute('src'); }

@@ -12,6 +12,9 @@ function requestFS() {
     if (vid._autoMuted) { vid.muted = false; vid._autoMuted = false; }
     if (vid.paused) vid.play().catch(() => {});
   }
+  // Glisser : la vidéo du carrousel retrouve son son au premier geste (jamais celle d'un fil, muette)
+  const nv = screenMediaVideoEl();
+  if (nv && nv !== vid && nv._wantPlay && nv._autoMuted && _nav.mode === 'swipe') { nv.muted = false; nv._autoMuted = false; if (nv.paused) nv.play().catch(() => {}); }
 }
 // Quitter le plein écran si on quitte le mode écran
 function exitFS() {

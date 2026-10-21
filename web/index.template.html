@@ -107,6 +107,8 @@
   <canvas id="screen-fx-canvas" width="240" height="136"></canvas>
   <img id="screen-media-img" alt="">
   <video id="screen-media-video" playsinline autoplay></video>
+  <!-- Navigation de l'acteur : carrousel (Glisser) ou fil (Défiler), 67-media-nav.js -->
+  <div id="screen-media-nav" aria-hidden="true"></div>
   <div id="screen-dim"></div>
   <div id="screen-phone"></div>
   <div id="screen-chat"></div>
@@ -619,17 +621,33 @@
       <input type="file" id="mediaVidInput" accept="video/*" multiple style="display:none" onchange="onAddVideos(this.files);this.value=''">
       <div id="mediaPool" class="media-pool"></div>
       <div id="mediaPoolEmpty" class="media-pool-empty">Ajoutez des images ou vidéos, puis touchez-les pour les diffuser.</div>
+      <div id="mediaInView" class="mnav-inview" style="display:none" aria-live="polite">
+        <img id="mediaInViewThumb" alt="">
+        <div class="mnav-inview-txt"><div id="mediaInViewPos"></div><div class="mnav-inview-live">En vue sur l'écran de jeu</div></div>
+      </div>
       <div id="mediaNav" style="display:none;gap:8px;margin:8px 0">
         <button class="media-btn" onclick="advancePool(-1)" style="flex:1"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"></use></svg> Précédent</button>
         <button class="media-btn" onclick="advancePool(1)" style="flex:1">Suivant <svg class="ic" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
       </div>
-      <label id="mediaAutoAdvRow" style="display:none;align-items:center;justify-content:space-between;gap:12px;font-size:.72rem;color:var(--text);margin:6px 2px 10px;cursor:pointer">
-        <span>Avancer au clic sur l'écran de jeu</span>
-        <span class="toggle-switch" style="flex-shrink:0">
-          <input type="checkbox" id="mediaAutoAdvToggle" onchange="setAutoAdvance(this.checked)">
-          <span class="toggle-track"></span><span class="toggle-thumb"></span>
-        </span>
-      </label>
+      <!-- Navigation de l'acteur sur l'écran de jeu : Fixe | Toucher | Glisser | Défiler (+ habillage du fil) -->
+      <div id="mediaNavRow" class="mnav">
+        <div class="panel-label" id="mediaNavLabel">Sur l'écran de jeu</div>
+        <div class="chips-wrap seg mnav-seg" id="mediaNavSeg" role="radiogroup" aria-labelledby="mediaNavLabel">
+          <button type="button" class="chip active" role="radio" aria-checked="true" id="mnav-off" onclick="setMediaNav('off')"><svg class="ic" aria-hidden="true"><use href="#i-lock"></use></svg><span>Fixe</span></button>
+          <button type="button" class="chip" role="radio" aria-checked="false" id="mnav-tap" onclick="setMediaNav('tap')"><svg class="ic" aria-hidden="true"><use href="#i-pointer"></use></svg><span>Toucher</span></button>
+          <button type="button" class="chip" role="radio" aria-checked="false" id="mnav-swipe" onclick="setMediaNav('swipe')"><svg class="ic" aria-hidden="true"><use href="#i-gallery-horizontal"></use></svg><span>Glisser</span></button>
+          <button type="button" class="chip" role="radio" aria-checked="false" id="mnav-scroll" onclick="setMediaNav('scroll')"><svg class="ic" aria-hidden="true"><use href="#i-gallery-vertical"></use></svg><span>Défiler</span></button>
+        </div>
+        <p class="mnav-hint" id="mediaNavHint">L'écran de jeu ne change jamais de média tout seul.</p>
+        <div id="mediaNavSkin" style="display:none">
+          <div class="panel-label" id="mediaSkinLabel">Habillage</div>
+          <div class="chips-wrap seg" id="mediaSkinSeg" role="radiogroup" aria-labelledby="mediaSkinLabel">
+            <button type="button" class="chip active" role="radio" aria-checked="true" id="mskin-none" onclick="setMediaSkin('none')">Aucun</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" id="mskin-social" onclick="setMediaSkin('social')">Fil social</button>
+          </div>
+          <p class="mnav-hint">Fil social : avatar, pseudo, cœur, commentaire, partage — générique, sans marque ni vrai logo.</p>
+        </div>
+      </div>
       <!-- Barre d'état du téléphone au-dessus des médias, hors séquence (réglages de la maquette 28b) -->
       <div class="mbar" id="mediaBarRow">
         <label class="mbar-toggle">

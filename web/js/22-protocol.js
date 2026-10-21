@@ -277,10 +277,16 @@ const MSG_ROUTES = {
       if (m.ids == null) { m.ids = []; return true; }
       return Array.isArray(m.ids) && m.ids.length <= PROTO.ORDER_MAX && m.ids.every(_P.id);
     },
-    handle: (m) => { _mediaOrder = m.ids; },
+    handle: (m) => { _mediaOrder = m.ids; screenNavOrderChanged(); },
   },
   'media:evict':       { roles: ['screen'], validate: (m) => _P.id(m.id), handle: (m) => screenEvictCached(m.id) },
-  'media:autoadvance': { roles: ['screen'], validate: (m) => { m.on = _P.bool(m.on); return true; }, handle: (m) => { _screenAutoAdvance = m.on; } },
+  // Ancien interrupteur « avancer au clic » : lu comme le mode Toucher tant qu'aucun media:nav n'est reçu (télécommande plus ancienne)
+  'media:autoadvance': { roles: ['screen'], validate: (m) => { m.on = _P.bool(m.on); return true; }, handle: (m) => screenNavLegacy(m.on) },
+  'media:nav': {
+    roles: ['screen'],
+    validate: (m) => _P.oneOf(m.mode, ['off', 'tap', 'swipe', 'scroll']) && _P.oneOf(m.skin, ['none', 'social']),
+    handle: (m) => screenSetNav(m.mode, m.skin),
+  },
   'media-ctrl': {
     roles: ['screen'],
     validate(m) {
@@ -425,6 +431,16 @@ const MSG_ROUTES = {
     handle: (m) => remoteOnTelState(m.tel),
   },
   'media:advanced':    { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenAdvanced(m.id) },
+  'media:view': {
+    roles: ['remote'],
+    validate(m) {
+      const n = _P.int(m.n, 1, PROTO.ORDER_MAX), idx = _P.int(m.idx, 0, PROTO.ORDER_MAX - 1);
+      if (!_P.id(m.id) || n === null || idx === null || idx >= n) return false;
+      if (m.vis == null) { delete m.vis; return true; }
+      return Array.isArray(m.vis) && m.vis.length <= 4 && m.vis.every(_P.id);
+    },
+    handle: (m) => remoteOnScreenView(m),
+  },
   'media:need':        { roles: ['remote'], validate: (m) => _P.id(m.id), handle: (m) => remoteOnScreenNeeds(m.id) },
   'key:answer': {
     roles: ['remote'],
