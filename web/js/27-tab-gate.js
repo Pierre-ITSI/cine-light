@@ -5,8 +5,12 @@
 //   6c  Séquence prioritaire : tant qu'une séquence tient des écrans (commencée, pas
 //       recommencée, pas reprise par l'utilisateur), les envois de ces onglets vers
 //       ces écrans sont SUSPENDUS : bandeau « Séquence en cours » + voile, et
-//       « Reprendre la main » (confirmation → Pause auto, voile levé jusqu'au
-//       prochain GO). Cible partielle : l'envoi n'atteint que les écrans libres.
+//       « Reprendre la main » (confirmation → séquence SUSPENDUE : écrans
+//       libérés tout de suite, bandeau et voile levés partout, plus de minuterie, de
+//       geste ni d'envoi de la séquence, rien n'est éteint ; seul un GO / Reprise /
+//       Recommencer depuis Séquence la reprend, avec la logique du premier GO).
+//       Distinction : « Pause auto » du Plateau garde les écrans (l'opérateur est
+//       toujours dans la séquence) ; « Reprendre la main » les libère. Cible partielle : l'envoi n'atteint que les écrans libres.
 //       Toujours permis : Noir, arrêts (strobe, effet, torche, média), Raccrocher /
 //       Retirer de l'écran, Identifier, transport média (lecture, pause, position).
 //   6b  « Retirer de l'écran » : une ligne dans la barre fixe de Tel pour un SMS, une

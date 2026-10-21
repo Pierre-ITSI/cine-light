@@ -501,7 +501,12 @@ function seqGestureIds(i) {
 // noAuto : après ↶, pas de minuterie (GO ou le geste attendu repartent)
 // clockT0 : départ de l'horloge du téléphone (premier GO), pour « L'heure avance »
 const _seqRun = { state: 'idle', curId: null, started: new Map(), undo: new Map(), timer: null, tick: null, warn: '', noAuto: false, clockT0: null, released: false };
-// released : l'utilisateur a repris la main (27-tab-gate.js) ; les écrans sont libérés jusqu'au prochain GO ou Recommencer
+// released : « Reprendre la main » (27-tab-gate.js) = séquence SUSPENDUE : écrans libérés tout de suite
+// (bandeau, voile et garde levés sur tous les onglets), plus aucune minuterie, aucun départ d'étape par
+// geste, aucun envoi de la séquence (pas même l'état du faux téléphone). Seul un GO / Reprise /
+// Recommencer explicite depuis Séquence la reprend (et elle reprend alors ses écrans).
+// À distinguer de « Pause auto » seule (Plateau) : mêmes minuteries et gestes arrêtés, mais la séquence
+// GARDE ses écrans (l'opérateur est toujours dans la séquence).
 let _seqChain = Promise.resolve();
 function seqPos() { return _seqRun.curId ? _seq.steps.findIndex((s) => s.id === _seqRun.curId) : -1; }
 function seqPending() { return _seq.steps[seqPos() + 1] || null; }
@@ -531,8 +536,10 @@ function seqGo(acked, cutOk) {
     }
   }
   if (_seqRun.state === 'idle') { _seqRun.clockT0 = Date.now(); seqCutOthers(); } // l'horloge du téléphone part au premier GO
+  const wasReleased = _seqRun.released;
   _seqRun.released = false;
   _seqRun.state = 'running';
+  if (wasReleased) _seqQueue(() => _seqPushPhones(undefined, true)); // la séquence reprend ses écrans : état du téléphone renvoyé
   _seqStartNext();
 }
 // Ce que le premier GO coupera : lignes lisibles et noms des écrans de la séquence concernés
@@ -583,11 +590,14 @@ function seqCutOthers() {
   for (const id of ids) scrState(id).colorSpec = null;
   _seqRefreshView(ids);
 }
-// Reprendre la main (27-tab-gate.js) : Pause auto, écrans libérés jusqu'au prochain GO
+// Reprendre la main (27-tab-gate.js) : suspend la séquence et libère ses écrans jusqu'au prochain GO
 function seqTakeOver() {
   _seqRun.released = true;
-  seqStop();
+  _seqClearTimer();
+  if (_seqRun.state === 'running') _seqRun.state = 'stopped';
+  renderSeq(); // lève bandeau et voile partout, sans rien envoyer ni éteindre
 }
+const seqSuspended = () => _seqRun.state !== 'idle' && _seqRun.released;
 // GO touché sur la télécommande : un second GO dans les 600 ms qui suivent un
 // départ d'étape est ignoré (un double toucher ne saute pas d'étape), et une
 // vibration courte confirme le départ. Les autres déclencheurs (minuterie,
@@ -636,17 +646,17 @@ function _seqNoteOwn(ids) {
 // comptés depuis le départ de l'étape qui vient de démarrer
 function _seqArm() {
   _seqClearTimer();
-  if (_seqRun.state !== 'running' || _seqRun.noAuto) return;
+  if (_seqRun.state !== 'running' || _seqRun.released || _seqRun.noAuto) return;
   const next = seqPending(), cur = _seqRun.curId;
   if (!next) return;
   const sec = next.trig.k === 'after' ? next.trig.s : next.trig.k === 'gesture' ? next.trig.t : 0;
   if (next.trig.k === 'go' || (next.trig.k === 'gesture' && !sec)) return;
   const t0 = (cur && _seqRun.started.get(cur)) || Date.now();
-  _seqRun.timer = setTimeout(() => { _seqRun.timer = null; if (_seqRun.state === 'running' && seqPending() === next) _seqStartNext(); }, Math.max(0, sec * 1000 - (Date.now() - t0)));
+  _seqRun.timer = setTimeout(() => { _seqRun.timer = null; if (_seqRun.state === 'running' && !_seqRun.released && seqPending() === next) _seqStartNext(); }, Math.max(0, sec * 1000 - (Date.now() - t0)));
 }
 // Geste rapporté par un écran (phone:gesture, chat:sent)
 function seqOnGesture(g, sid) {
-  if (_seqRun.state !== 'running') return;
+  if (_seqRun.state !== 'running' || _seqRun.released) return;
   let i = seqPos() + 1;
   let s = _seq.steps[i];
   if (!s) return;
@@ -693,7 +703,7 @@ function seqBack() {
   _seqClearTimer();
   _seqRun.curId = i > 0 ? _seq.steps[i - 1].id : null;
   _seqRun.noAuto = true;
-  if (_seqRun.state === 'ended') _seqRun.state = 'running';
+  if (_seqRun.state === 'ended') _seqRun.state = _seqRun.released ? 'stopped' : 'running'; // suspendue : ↶ ne relance rien
   if (i === 0) _seqRun.state = 'idle';
   const u = _seqRun.undo.get(s.id);
   _seqRun.undo.delete(s.id);
@@ -1088,6 +1098,7 @@ function _seqPhoneMsg(sid, homeOk, wallOk, imgOk) {
 }
 // Envoie l'état des écrans dont il a changé (force : tous ceux qu'il concerne, resynchronisation)
 async function _seqPushPhones(only, force) {
+  if (seqSuspended()) return; // suspendue (Reprendre la main) : la séquence n'envoie plus rien aux écrans
   _seqDeliverPending();
   const sids = new Set([..._seqPhones.keys(), ..._seqPhoneSent.keys()]);
   const i = seqPos() + 1;

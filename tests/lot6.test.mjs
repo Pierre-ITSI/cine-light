@@ -378,6 +378,46 @@ describe('B · envois suspendus, Reprendre la main, cible partielle, actions per
   });
 });
 
+// Reprendre la main = séquence SUSPENDUE : écrans libérés tout de suite, ni minuterie ni geste ne la relancent
+describe('B2 · Reprendre la main suspend la séquence (écrans libérés, gestes sans effet, GO reprend)', () => {
+  let r, rp, A;
+  before(async () => {
+    r = await rig(1, 66); rp = r.rp; [A] = r.screens;
+    await fixtures(rp);
+    await rp.evaluate(() => { switchTab('seq'); setSeqMode('play'); });
+    await setSteps(rp, [st('g1', 'sms', 's1', { k: 'go' }, { k: 'screen', id: A.id }), st('g2', 'color', 'k1', { k: 'gesture', g: 'touch', t: 0 }, { k: 'screen', id: A.id }), st('g3', 'color', 'k1', { k: 'go' }, { k: 'screen', id: A.id })]);
+    await rp.click('#seqGoBtn');
+    await waitFor(A.page, () => document.querySelectorAll('#screen-phone .pn').length === 1);
+  });
+  after(async () => { noErrors(r); await r?.close(); });
+  test('bandeau puis Reprendre la main : tout est libéré sans rien éteindre ni Recommencer', async () => {
+    await rp.evaluate((id) => { scrSetTarget({ k: 'screen', id }); switchTab('light'); }, A.id);
+    assert.equal(await rp.evaluate(() => !!document.getElementById('tabHold')), true);
+    await sleep(1300);
+    await rp.click('#tabHoldTake');
+    await waitFor(rp, () => appConfirmShown());
+    await confirmOk(rp);
+    assert.equal(await rp.evaluate(() => !document.getElementById('tabHold') && !document.querySelector('.tg-veil') && seqOwnedIds().size === 0 && tabHoldState().mode === 'none'), true);
+    assert.equal(await A.page.evaluate(() => document.querySelectorAll('#screen-phone .pn').length), 1, 'rien n\'est éteint');
+    await rp.evaluate(() => sendMsg({ type: 'color', color: '#224466' }));
+    await waitFor(A.page, () => screenBaseColor.toLowerCase() === '#224466');
+  });
+  test('geste du comédien : la séquence suspendue n\'avance pas et ne reprend pas les écrans', async () => {
+    await rp.evaluate(() => { remoteOnPhoneGesture({ g: 'touch' }); seqOnGesture('touch', null); });
+    await sleep(400);
+    assert.deepEqual(await rp.evaluate(() => [_seqRun.curId, _seqRun.state, _seqRun.released, _seqRun.timer]), ['g1', 'stopped', true, null]);
+    assert.equal(await baseColor(A.page), '#224466');
+    assert.equal(await rp.evaluate(() => !document.getElementById('tabHold')), true);
+  });
+  test('GO dans Séquence : la séquence reprend ses écrans (bandeau de retour)', async () => {
+    await rp.evaluate(() => switchTab('seq'));
+    await rp.click('#seqGoBtn');
+    await waitFor(rp, () => _seqRun.state === 'running' && _seqRun.released === false);
+    await rp.evaluate(() => switchTab('light'));
+    assert.equal(await rp.evaluate(() => !!document.getElementById('tabHold') && seqOwnedIds().size > 0), true);
+  });
+});
+
 // ───────────────────────── C · Retirer de l'écran, dernier envoi gagne ─────────────────────────
 describe('C · Retirer de l\'écran', () => {
   let r, rp, sp, sid;
