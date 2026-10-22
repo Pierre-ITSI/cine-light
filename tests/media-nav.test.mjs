@@ -243,6 +243,8 @@ describe('écran : Glisser (carrousel)', () => {
     await dragTo(sp, 300, 60);
     await sleep(150);
     assert.equal(await sp.evaluate(() => _screenActiveId), 'm3');
+    await setNav(r, 'scroll', 'none');
+    await waitFor(sp, () => _nav.skin === 'none');
   });
 });
 
@@ -254,39 +256,62 @@ describe('écran : Défiler (fil)', () => {
   const items = (sp) => sp.$$eval('#screen-media-nav .mn-item', (els) => els.map((e) => e.dataset.id));
   const lastView = async (rr) => (await sentBy(rr, rr.sp, 'media:view')).slice(-1)[0];
 
-  test('fil de tous les médias du pool, à leur aspect naturel, 6 px entre eux, défilement natif', async () => {
+  test('sans habillage : un média par écran, plein écran, le défilement s\'arrête sur chacun (comme Glisser)', async () => {
     const { rp, sp } = r;
     await setNav(r, 'scroll', 'none');
     await rp.evaluate(() => selectMedia('m1'));
     await r.broker.flush();
     await waitFor(sp, () => _nav.on && _nav.mode === 'scroll');
     assert.deepEqual(await items(sp), ['m1', 'm2', 'm3', 'm4', 'm5']);
-    // Aspects mesurés une fois : hauteur = largeur / ratio (390 px de large)
     await waitFor(sp, () => ['m1', 'm2', 'm3', 'm4', 'm5'].every((i) => _mediaCache.get(i).ar), null, { timeout: 5000 });
-    const hs = await sp.$$eval('.mn-media', (els) => els.map((e) => Math.round(e.getBoundingClientRect().height)));
-    assert.deepEqual(hs, SIZES.map(([w, h]) => Math.round(390 * h / w)));
-    const gap = await sp.evaluate(() => { const [a, b] = [...document.querySelectorAll('.mn-item')].map((e) => e.getBoundingClientRect()); return Math.round(b.top - a.bottom); });
-    assert.equal(gap, 6);
-    const css = await sp.evaluate(() => { const c = getComputedStyle(document.querySelector('.mn-scroller')); return [c.overflowY, c.scrollSnapType, c.touchAction]; });
-    assert.deepEqual(css, ['auto', 'none', 'pan-y']);
+    const g = await sp.evaluate(() => {
+      const sc = _nav.scroller, its = [...document.querySelectorAll('.mn-item')].map((e) => e.getBoundingClientRect());
+      const c = getComputedStyle(sc), it = getComputedStyle(document.querySelector('.mn-item'));
+      return { H: sc.clientHeight, hs: [...new Set([...document.querySelectorAll('.mn-media')].map((e) => Math.round(e.getBoundingClientRect().height)))],
+        gap: Math.round(its[1].top - its[0].bottom), css: [c.overflowY, c.scrollSnapType, c.touchAction, it.scrollSnapAlign, it.scrollSnapStop],
+        fit: getComputedStyle(document.querySelector('.mn-media img')).objectFit };
+    });
+    assert.deepEqual(g.hs, [g.H], 'chaque média occupe tout l\'écran');
+    assert.equal(g.gap, 0);
+    assert.deepEqual(g.css, ['auto', 'y mandatory', 'pan-y', 'start', 'always']);
+    assert.equal(g.fit, 'contain', 'le média entier, sans recadrage');
     // Pas d'habillage
     assert.equal(await sp.evaluate(() => document.querySelectorAll('.mn-top, .mn-ph-head, .mn-ph-acts').length), 0);
   });
 
   test('défiler change le média dominant : media:view (dominant et visibles), indicateur de la télécommande', async () => {
     const { rp, sp, broker } = r;
+    // Plein écran : arrêté à 60 px du haut de m3, le défilement se cale sur m3 seul
     broker.clear();
     await sp.evaluate(() => { const sc = _nav.scroller; sc.scrollTop = sc.querySelector('.mn-item[data-id="m3"]').offsetTop - 60; });
+    await waitFor(sp, () => Math.abs(_nav.scroller.scrollTop - _nav.scroller.querySelector('.mn-item[data-id="m3"]').offsetTop) < 2);
     await waitFor(sp, () => _nav.dom === 'm3');
     await sleep(NAV_REPORT_WAIT);
     await broker.flush();
-    const v = await lastView(r);
-    assert.equal(v.id, 'm3'); assert.equal(v.idx, 2); assert.equal(v.n, 5);
-    assert.deepEqual(v.vis, ['m3', 'm4'], 'visibles : ' + JSON.stringify(v.vis));
+    assert.deepEqual((await lastView(r)).vis, ['m3']);
     await waitFor(rp, () => _activeMediaId === 'm3');
+    assert.equal(await rp.evaluate(() => document.getElementById('mediaInViewPos').textContent), '3 / 5 · plan-3.png');
+    // Fil social : plusieurs médias visibles à la fois
+    await setNav(r, 'scroll', 'social');
+    await waitFor(sp, () => _nav.skin === 'social');
+    await waitFor(sp, () => ['m1', 'm2', 'm3', 'm4', 'm5'].every((i) => _mediaCache.get(i).ar), null, { timeout: 5000 });
+    broker.clear();
+    await sp.evaluate(() => { const sc = _nav.scroller; sc.scrollTop = 0; });
+    await sleep(NAV_REPORT_WAIT);
+    // Haut de m4 au tiers de la zone visible : m3 et m4 visibles, m4 dominant
+    await sp.evaluate(() => { const sc = _nav.scroller; sc.scrollTop = sc.querySelector('.mn-item[data-id="m4"]').offsetTop - 80 - Math.round((sc.clientHeight - 80) / 3); });
+    await waitFor(sp, () => _nav.dom === 'm4');
+    await sleep(NAV_REPORT_WAIT);
+    await broker.flush();
+    const v = await lastView(r);
+    assert.equal(v.id, 'm4'); assert.equal(v.idx, 3); assert.equal(v.n, 5);
+    assert.ok(v.vis.includes('m3') && v.vis.includes('m4'), 'visibles : ' + JSON.stringify(v.vis));
+    await waitFor(rp, () => _activeMediaId === 'm4');
     await waitFor(rp, () => /visible/.test(document.getElementById('mediaInViewPos').textContent));
-    assert.equal(await rp.evaluate(() => document.getElementById('mediaInViewPos').textContent), '3 / 5 · plan-3.png · visible : 3 et 4');
-    assert.equal(await sp.evaluate(() => _screenActiveId), 'm3');
+    assert.match(await rp.evaluate(() => document.getElementById('mediaInViewPos').textContent), /^4 \/ 5 · plan-4\.png · visible : 3(, | et )4/);
+    assert.equal(await sp.evaluate(() => _screenActiveId), 'm4');
+    await setNav(r, 'scroll', 'none');
+    await waitFor(sp, () => _nav.skin === 'none');
   });
 
   test('rapports limités : jamais à chaque image du défilement', async () => {
@@ -343,6 +368,10 @@ describe('écran : Défiler (fil)', () => {
     assert.match(c.likes, /J'aime$/);
     assert.equal(c.brand, false);
     assert.equal(c.pad, '80px');
+    // Fil social : médias à leur aspect naturel (390 px de large), 6 px entre eux, sans accrochage
+    const hs = await sp.$$eval('.mn-media', (els) => els.map((e) => Math.round(e.getBoundingClientRect().height)));
+    assert.deepEqual(hs, SIZES.map(([w, h]) => Math.round(390 * h / w)));
+    assert.equal(await sp.evaluate(() => getComputedStyle(document.querySelector('.mn-scroller')).scrollSnapType), 'none');
     // Retour à « Aucun » : même fil, sans habillage, au même endroit
     await setNav(r, 'scroll', 'none');
     await waitFor(sp, () => _nav.skin === 'none');
@@ -368,7 +397,7 @@ describe('écran : vidéos du fil, décodage paresseux', () => {
   before(async () => { r = await rig(24); });
   after(async () => { noErrors(r); await r?.close(); });
 
-  test('une vidéo ne joue (muette) que dominante et visible à 60 % ; hors vue, en pause', async () => {
+  test('une vidéo joue avec le son quand elle occupe plus de 50 % de l\'écran ; en dessous, pause et son coupé', async () => {
     const { rp, sp } = r;
     // Lecteur simulé : l'app ne décode pas de vrai fichier ici, seules la lecture et la pause comptent
     await sp.evaluate(() => {
@@ -378,28 +407,41 @@ describe('écran : vidéos du fil, décodage paresseux', () => {
       Object.defineProperty(HTMLMediaElement.prototype, 'paused', { configurable: true, get() { return !this.__pl; } });
       // m2 et m4 deviennent des vidéos du cache (URL factice : pas de décodage)
       for (const id of ['m2', 'm4']) _mediaCache.set(id, { kind: 'vid', url: 'blob:fake-' + id });
-      // Médias plus hauts que l'écran : chacun, calé en haut, est dominant et visible à plus de 60 %
+      // Médias plus hauts que l'écran : chacun, calé en haut, est dominant et occupe plus de 50 % de l'écran
       for (const id of ['m1', 'm2', 'm3', 'm4', 'm5']) _mediaCache.get(id).ar = 0.45;
     });
-    await setNav(r, 'scroll', 'none');
+    await setNav(r, 'scroll', 'social'); // le fil social : plusieurs médias peuvent être visibles à la fois
     await rp.evaluate(() => selectMedia('m1'));
     await r.broker.flush();
     await waitFor(sp, () => _nav.on && _nav.mode === 'scroll');
     const state = () => sp.$$eval('.mn-item video', (vs) => vs.map((v) => [v.closest('.mn-item').dataset.id, !v.paused, v.muted]));
     await waitFor(sp, () => document.querySelectorAll('.mn-item video').length >= 1);
     assert.ok((await state()).every(([, playing]) => !playing), 'aucune vidéo en vue : aucune ne joue');
-    // m2 passe en haut de l'écran : dominante, visible à plus de 60 %
+    // m2 passe en haut de l'écran : dominante, plus de 50 % de l'écran
     await sp.evaluate(() => { const sc = _nav.scroller; sc.scrollTop = sc.querySelector('.mn-item[data-id="m2"]').offsetTop; });
     await waitFor(sp, () => _nav.dom === 'm2');
     await waitFor(sp, () => { const v = document.querySelector('.mn-item[data-id="m2"] video'); return !!v && !v.paused; });
     const s1 = await state();
-    assert.deepEqual(s1.filter(([, p]) => p).map(([id, , m]) => [id, m]), [['m2', true]], 'une seule vidéo, muette');
+    assert.deepEqual(s1.filter(([, p]) => p).map(([id, , m]) => [id, m]), [['m2', false]], 'une seule vidéo, avec le son');
     assert.equal(await sp.evaluate(() => screenMediaVideoEl().closest('.mn-item').dataset.id), 'm2', 'les commandes visent la dominante');
     // Loin de m2 : en pause ; m4 prend le relais plus bas
     await sp.evaluate(() => { const sc = _nav.scroller; sc.scrollTop = sc.querySelector('.mn-item[data-id="m4"]').offsetTop; });
     await waitFor(sp, () => _nav.dom === 'm4');
     await waitFor(sp, () => { const v = document.querySelector('.mn-item[data-id="m4"] video'); return !!v && !v.paused; });
-    assert.deepEqual((await state()).filter(([, p]) => p).map(([id]) => id), ['m4']);
+    assert.deepEqual((await state()).filter(([, p]) => p).map(([id, , m]) => [id, m]), [['m4', false]]);
+    assert.deepEqual((await state()).find(([id]) => id === 'm2')?.slice(1) ?? [false, true], [false, true], 'm2 : en pause, son coupé');
+    // Moins de 50 % de l'écran (m4 à moitié sortie par le haut) : pause et son coupé
+    await sp.evaluate(() => { const sc = _nav.scroller; const it = sc.querySelector('.mn-item[data-id="m4"] .mn-media'); sc.scrollTop = it.closest('.mn-item').offsetTop + it.offsetHeight - sc.clientHeight * 0.4; });
+    await waitFor(sp, () => { const v = document.querySelector('.mn-item[data-id="m4"] video'); return !v || (v.paused && v.muted); });
+    // Autoplay avec le son refusé par le navigateur : la vidéo joue muette, un toucher de l'écran lui rend le son
+    await sp.evaluate(() => {
+      HTMLMediaElement.prototype.play = function () { if (!this.muted && !window.__gesture) return Promise.reject(new Error('NotAllowedError')); this.__pl = true; return Promise.resolve(); };
+    });
+    await sp.evaluate(() => { const sc = _nav.scroller; sc.scrollTop = sc.querySelector('.mn-item[data-id="m2"]').offsetTop; });
+    await waitFor(sp, () => { const v = document.querySelector('.mn-item[data-id="m2"] video'); return !!v && !v.paused && v.muted && v._autoMuted; });
+    await sp.evaluate(() => { window.__gesture = true; document.dispatchEvent(new Event('pointerup')); });
+    await waitFor(sp, () => { const v = document.querySelector('.mn-item[data-id="m2"] video'); return !v.paused && !v.muted; });
+    await sp.evaluate(() => { window.__gesture = false; });
     // Retour sur une image : plus aucune vidéo ne joue
     await sp.evaluate(() => { const sc = _nav.scroller; sc.scrollTop = sc.querySelector('.mn-item[data-id="m5"]').offsetTop; });
     await waitFor(sp, () => _nav.dom === 'm5');
@@ -408,6 +450,7 @@ describe('écran : vidéos du fil, décodage paresseux', () => {
 
   test('décodage paresseux : les images lointaines n\'ont pas de source (cadre vide de la bonne hauteur)', async () => {
     const { rp, sp } = r;
+    await setNav(r, 'scroll', 'none');
     // Pool de 12 images : les premières seulement sont décodées
     await sp.evaluate(() => {
       const ids = [];
@@ -427,7 +470,7 @@ describe('écran : vidéos du fil, décodage paresseux', () => {
     assert.equal(r2.all, 12);
     assert.ok(r2.withImg < 12 && r2.withImg >= 1, 'seules les images proches sont décodées : ' + r2.withImg);
     assert.equal(r2.lastEmpty, true);
-    assert.equal(r2.lastH, 390, 'cadre vide de la bonne hauteur');
+    assert.equal(r2.lastH, await sp.evaluate(() => _nav.scroller.clientHeight), 'cadre vide de la bonne hauteur (plein écran)');
     // En approchant, l'image apparaît
     await sp.evaluate(() => { const sc = _nav.scroller; sc.scrollTop = sc.scrollHeight; });
     await waitFor(sp, () => !!document.querySelector('.mn-item[data-id="z12"] img'));

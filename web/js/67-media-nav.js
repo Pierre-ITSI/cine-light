@@ -31,7 +31,7 @@ const NAV_FLICK_VEL = 0.35;     // px/ms : vitesse d'un coup de doigt
 const NAV_FLICK_MIN = 30;       // px : déplacement minimal d'un coup de doigt
 const NAV_ANIM_MS = 260;        // accrochage
 const NAV_REPORT_MS = 250;      // media:view : 4 messages par seconde au plus
-const NAV_PLAY_RATIO = 0.6;     // une vidéo du fil joue à partir de 60 % de visibilité
+const NAV_PLAY_RATIO = 0.5;     // une vidéo du fil joue, avec le son, au-delà de 50 % de l'écran (ou d'elle-même si plus petite)
 const NAV_SOCIAL_TOP = 80;      // px réservés en haut par le titre du fil social (barre d'état comprise)
 const NAV_VIS_MAX = 4;          // médias visibles rapportés
 
@@ -221,7 +221,7 @@ function _navNoteAspect(v) {
 }
 function _navApplyAspect(id) {
   const c = _mediaCache.get(id);
-  if (!c || !c.ar || !_nav.scroller) return;
+  if (!c || !c.ar || !_nav.scroller || _nav.skin !== 'social') return;
   const it = _nav.scroller.querySelector('.mn-item[data-id="' + id + '"] .mn-media');
   if (it) it.style.aspectRatio = String(c.ar);
 }
@@ -361,7 +361,7 @@ function _navBuildScroll() {
   const layer = _navLayer();
   const social = _nav.skin === 'social';
   const sc = document.createElement('div');
-  sc.className = 'mn-scroller';
+  sc.className = social ? 'mn-scroller' : 'mn-scroller mn-pages'; // sans habillage : un média par écran, calé comme Glisser
   const feed = document.createElement('div');
   feed.className = 'mn-feed';
   _nav.ids.forEach((id, i) => feed.appendChild(_navItemEl(id, i, social)));
@@ -379,7 +379,7 @@ function _navBuildScroll() {
   sc.addEventListener('wheel', touch, { passive: true });
   sc.addEventListener('touchstart', touch, { passive: true });
   sc.addEventListener('scrollend', () => _navProgDone());
-  // Visibilité : dominant, visibles, lecture des vidéos (au moins 60 %), rapport à la télécommande
+  // Visibilité : dominant, visibles, lecture des vidéos (plus de 50 %), rapport à la télécommande
   const top = social ? NAV_SOCIAL_TOP : 0;
   _nav.io = new IntersectionObserver(_navOnVisibility, { root: sc, rootMargin: '-' + top + 'px 0px 0px 0px', threshold: [0, 0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9, 1] });
   // Décodage paresseux : un écran de marge autour de la zone visible
@@ -393,10 +393,11 @@ function _navItemEl(id, i, social) {
   it.className = 'mn-item'; it.dataset.id = id;
   const c = _mediaCache.get(id);
   const ar = c && c.ar ? c.ar : 0;
+  const pages = !social; // sans habillage, le cadre fait tout l'écran : pas d'aspect imposé
   if (social) it.insertAdjacentHTML('beforeend', _navSocialHead(i));
   const wrap = document.createElement('div');
   wrap.className = 'mn-media';
-  if (ar) wrap.style.aspectRatio = String(ar);
+  if (ar && !pages) wrap.style.aspectRatio = String(ar);
   it.appendChild(wrap);
   if (social) it.insertAdjacentHTML('beforeend', _navSocialFoot(i));
   return it;
@@ -449,7 +450,8 @@ function _navPickDominant() {
   }
   if (best) { _nav.dom = best; _screenActiveId = best; }
 }
-// Une seule vidéo joue, muette, quand elle est dominante et visible à 60 % ; les autres sont en pause
+// Une seule vidéo joue, avec le son, quand elle est dominante et occupe plus de 50 % de l'écran
+// (une vidéo plus petite que la moitié de l'écran : plus de 50 % d'elle-même) ; les autres sont en pause et muettes
 function _navUpdatePlayback() {
   const sc = _nav.scroller;
   if (!sc) return;
@@ -457,12 +459,17 @@ function _navUpdatePlayback() {
   let dominantVid = null;
   for (const v of sc.querySelectorAll('video')) {
     const id = v.closest('.mn-item').dataset.id, vis = _nav.vis.get(id);
-    const want = id === _nav.dom && !!vis && (vis.r >= NAV_PLAY_RATIO || vis.h >= NAV_PLAY_RATIO * H);
-    if (want) { dominantVid = v; if (v.paused) { v.muted = true; v._wantPlay = true; const p = v.play(); if (p && p.catch) p.catch(() => {}); } }
-    else { v._wantPlay = false; if (!v.paused) { try { v.pause(); } catch (_) {} } }
+    const want = id === _nav.dom && !!vis && (vis.h > NAV_PLAY_RATIO * H || vis.r > NAV_PLAY_RATIO);
+    if (want) {
+      dominantVid = v;
+      if (v.paused || (v.muted && !v._autoMuted)) { v.muted = false; v._autoMuted = false; playScreenVid(v); } // repli muet si l'autoplay est bloqué
+    } else {
+      v._wantPlay = false; v._autoMuted = false; v.muted = true;
+      if (!v.paused) { try { v.pause(); } catch (_) {} }
+    }
   }
   const dom = _nav.dom && sc.querySelector('.mn-item[data-id="' + _nav.dom + '"] video');
-  if (dom && dom !== _navVid) _navSetVideo(dom, false, true);
+  if (dom && dom !== _navVid) _navSetVideo(dom, false, dom.muted);
   else if (!dom && _navVid) _navVid = null;
   return dominantVid;
 }
