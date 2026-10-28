@@ -19224,6 +19224,10 @@ async function projectSave(blob, name) {
   return done;
 }
 // Choisir un fichier : web <input type=file>, app : sélecteur de la coque → File | null (annulé)
+// iPadOS se présente comme un Mac : on le reconnaît à l'écran tactile
+function _prjMobilePicker(ua = navigator.userAgent, touch = navigator.maxTouchPoints || 0) {
+  return /iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && touch > 1);
+}
 function projectPick() {
   if (IN_NATIVE_APP) {
     if (_prjNat.open) _prjNat.open.done(null);
@@ -19236,7 +19240,9 @@ function projectPick() {
   return new Promise((resolve) => {
     const inp = document.createElement('input');
     inp.type = 'file';
-    inp.accept = PRJ_EXTS_IN.join(',') + ',' + PRJ_MIME;
+    // iPhone, iPad, Android : .rem n'a pas de type connu, le sélecteur grise le fichier
+    // si on filtre ; aucun filtre sur mobile (le contenu est validé à la lecture)
+    if (!_prjMobilePicker()) inp.accept = PRJ_EXTS_IN.join(',') + ',' + PRJ_MIME;
     let settled = false;
     const end = (f) => { if (!settled) { settled = true; resolve(f); } };
     inp.addEventListener('change', () => end(inp.files && inp.files[0] ? inp.files[0] : null));
